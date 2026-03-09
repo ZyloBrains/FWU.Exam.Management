@@ -1,0 +1,49 @@
+@model IEnumerable<fwu_examination_management_system.Models.Organization>
+
+@{
+    ViewData["Title"] = "Organizations";
+}
+
+<h1>Organizations</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th></th>
+            <th>@Html.DisplayNameFor(model => model.Name)</th>
+            <th>@Html.DisplayNameFor(model => model.OfficeCode)</th>
+            <th>@Html.DisplayNameFor(model => model.ContactNumber)</th>
+            <th>@Html.DisplayNameFor(model => model.Address)</th>
+            <th>@Html.DisplayNameFor(model => model.Email)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @if (!string.IsNullOrEmpty(item.LogoPath))
+                    {
+                        <img src="@item.LogoPath" alt="@item.Name logo" style="max-height:48px; max-width:80px; object-fit:contain;" />
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </td>
+                <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                <td>@Html.DisplayFor(modelItem => item.OfficeCode)</td>
+                <td>@Html.DisplayFor(modelItem => item.ContactNumber)</td>
+                <td>@Html.DisplayFor(modelItem => item.Address)</td>
+                <td>@Html.DisplayFor(modelItem => item.Email)</td>
+                <td>@Html.DisplayFor(modelItem => item.LogoPath)</td>
+              
+            </tr>
+        }
+    </tbody>
+</table>

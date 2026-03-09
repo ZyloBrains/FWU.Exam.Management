@@ -1,0 +1,75 @@
+@model fwu_examination_management_system.Models.Organization
+
+@{
+    ViewData["Title"] = "Edit Organization";
+}
+
+<h1>Edit Organization</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="LogoPath" />
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="OfficeCode" class="form-label"></label>
+                <input asp-for="OfficeCode" class="form-control" />
+                <span asp-validation-for="OfficeCode" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ContactNumber" class="form-label"></label>
+                <input asp-for="ContactNumber" class="form-control" />
+                <span asp-validation-for="ContactNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Logo</label>
+                @if (!string.IsNullOrEmpty(Model.LogoPath))
+                {
+                    <div class="mb-2">
+                        <img id="logoPreview" src="@Model.LogoPath" alt="Current logo" style="max-height:120px;" />
+                    </div>
+                }
+                else
+                {
+                    <img id="logoPreview" src="#" alt="Logo preview" class="mb-2 d-none" style="max-height:120px;" />
+                }
+                <input type="file" name="logoFile" id="logoFile" class="form-control" accept="image/*" />
+                <small class="text-muted">Leave empty to keep the current logo.</small>
+            </div>
+            <div>
+                <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.getElementById('logoFile').addEventListener('change', function () {
+            const preview = document.getElementById('logoPreview');
+            if (this.files && this.files[0]) {
+                preview.src = URL.createObjectURL(this.files[0]);
+                preview.classList.remove('d-none');
+            }
+        });
+    </script>
+}

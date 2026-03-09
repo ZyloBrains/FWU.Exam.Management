@@ -1,0 +1,34 @@
+@model fwu_examination_management_system.Models.Organization
+
+@{
+    ViewData["Title"] = "Organization Details";
+}
+
+<h1>Organization Details</h1>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.OfficeCode)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.OfficeCode)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ContactNumber)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.ContactNumber)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Address)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Address)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Email)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.Email)</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LogoPath)</dt>
+        <dd class="col-sm-9">@Html.DisplayFor(model => model.LogoPath)</dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>

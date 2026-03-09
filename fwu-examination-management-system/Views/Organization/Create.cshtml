@@ -1,0 +1,66 @@
+@model fwu_examination_management_system.Models.Organization
+
+@{
+    ViewData["Title"] = "Create Organization";
+}
+
+<h1>Create Organization</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="OfficeCode" class="form-label"></label>
+                <input asp-for="OfficeCode" class="form-control" />
+                <span asp-validation-for="OfficeCode" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="ContactNumber" class="form-label"></label>
+                <input asp-for="ContactNumber" class="form-control" />
+                <span asp-validation-for="ContactNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Logo</label>
+                <input type="file" name="logoFile" id="logoFile" class="form-control" accept="image/*" />
+                <img id="logoPreview" src="#" alt="Logo preview" class="mt-2 d-none" style="max-height:120px;" />
+            </div>
+            <div>
+                <input type="submit" value="Create" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.getElementById('logoFile').addEventListener('change', function () {
+            const preview = document.getElementById('logoPreview');
+            if (this.files && this.files[0]) {
+                preview.src = URL.createObjectURL(this.files[0]);
+                preview.classList.remove('d-none');
+            } else {
+                preview.src = '#';
+                preview.classList.add('d-none');
+            }
+        });
+    </script>
+}
