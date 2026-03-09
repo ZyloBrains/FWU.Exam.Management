@@ -1,0 +1,41 @@
+@model fwu_examination_management_system.Models.AppUser
+
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<h1>User Details</h1>
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Organization</dt>
+        <dd class="col-sm-9">@(Model.Organization?.Name ?? "—")</dd>
+
+        <dt class="col-sm-3">Email Confirmed</dt>
+        <dd class="col-sm-9">@Model.EmailConfirmed</dd>
+
+        <dt class="col-sm-3">Roles</dt>
+        <dd class="col-sm-9">
+            @{
+                var roles = ViewBag.Roles as IList<string>;
+            }
+            @if (roles != null && roles.Count > 0)
+            {
+                @string.Join(", ", roles)
+            }
+            else
+            {
+                <span class="text-muted">No roles assigned</span>
+            }
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+    <a asp-action="AssignRoles" asp-route-id="@Model.Id" class="btn btn-outline-primary">Assign Roles</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
