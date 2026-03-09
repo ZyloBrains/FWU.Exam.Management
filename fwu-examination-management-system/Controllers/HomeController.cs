@@ -1,13 +1,30 @@
+using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(UserManager<AppUser> userManager, ApplicationDbContext context) : Controller
     {
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var user = await userManager.GetUserAsync(User);
+                if (user?.OrganizationId != null)
+                {
+                    var org = await context.Organizations.FindAsync(user.OrganizationId);
+                    if (org != null)
+                    {
+                        ViewBag.Organization = org;
+                        ViewBag.UserCount = await userManager.Users
+                            .CountAsync(u => u.OrganizationId == org.Id);
+                    }
+                }
+            }
             return View();
         }
 

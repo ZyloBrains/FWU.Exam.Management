@@ -41,8 +41,10 @@
                 <td>@Html.DisplayFor(modelItem => item.ContactNumber)</td>
                 <td>@Html.DisplayFor(modelItem => item.Address)</td>
                 <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.DisplayFor(modelItem => item.LogoPath)</td>
-              
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
             </tr>
         }
     </tbody>
