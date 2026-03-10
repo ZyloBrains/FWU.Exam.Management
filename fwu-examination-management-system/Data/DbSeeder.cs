@@ -1,13 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace fwu_examination_management_system.Data
 {
     public static class DbSeeder
     {
-        private static readonly string[] Roles = new[] { "SystemAdmin", "Admin", "ReportAdmin", "Student" };
+        private static readonly string[] Roles = ["SystemAdmin", "Admin", "ReportAdmin", "Student"];
 
         public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
         {
