@@ -373,23 +373,6 @@ namespace fwu_examination_management_system.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CPrograms",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    LevelId = table.Column<int>(type: "integer", nullable: false),
-                    FacultyId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramName = table.Column<string>(type: "text", nullable: true),
-                    Duration = table.Column<int>(type: "integer", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CPrograms", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ExamRegistration",
                 columns: table => new
                 {
@@ -468,6 +451,24 @@ namespace fwu_examination_management_system.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ExamSchedule", x => x.ExamScheduleID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Program",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    LevelId = table.Column<int>(type: "integer", nullable: false),
+                    FacultyId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ShortName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Duration = table.Column<int>(type: "integer", maxLength: 100, nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Program", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -681,13 +682,13 @@ namespace fwu_examination_management_system.Data.Migrations
                 name: "College");
 
             migrationBuilder.DropTable(
-                name: "CPrograms");
-
-            migrationBuilder.DropTable(
                 name: "ExamRegistration");
 
             migrationBuilder.DropTable(
                 name: "ExamSchedule");
+
+            migrationBuilder.DropTable(
+                name: "Program");
 
             migrationBuilder.DropTable(
                 name: "StudentRegistration");

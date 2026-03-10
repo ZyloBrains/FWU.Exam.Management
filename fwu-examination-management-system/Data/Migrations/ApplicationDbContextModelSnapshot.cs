@@ -619,28 +619,41 @@ namespace fwu_examination_management_system.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("Id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Duration")
-                        .HasColumnType("integer");
+                        .HasMaxLength(100)
+                        .HasColumnType("integer")
+                        .HasColumnName("Duration");
 
                     b.Property<int>("FacultyId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("FacultyId");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsActive");
 
                     b.Property<int>("LevelId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("LevelId");
 
                     b.Property<string>("ProgramName")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ProgramName");
+
+                    b.Property<string>("ShortName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ShortName");
 
                     b.HasKey("Id");
 
-                    b.ToTable("CPrograms");
+                    b.ToTable("Program");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.College", b =>
