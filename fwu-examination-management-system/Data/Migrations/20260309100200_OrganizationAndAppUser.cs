@@ -13,7 +13,7 @@ namespace fwu_examination_management_system.Data.Migrations
         {
             migrationBuilder.AddColumn<int>(
                 name: "OrganizationId",
-                table: "AspNetUsers",
+                table: "Users",
                 type: "integer",
                 nullable: true);
 
@@ -36,13 +36,13 @@ namespace fwu_examination_management_system.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_OrganizationId",
-                table: "AspNetUsers",
+                name: "IX_Users_OrganizationId",
+                table: "Users",
                 column: "OrganizationId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_AspNetUsers_Organizations_OrganizationId",
-                table: "AspNetUsers",
+                name: "FK_Users_Organizations_OrganizationId",
+                table: "Users",
                 column: "OrganizationId",
                 principalTable: "Organizations",
                 principalColumn: "Id");
@@ -52,19 +52,19 @@ namespace fwu_examination_management_system.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_AspNetUsers_Organizations_OrganizationId",
-                table: "AspNetUsers");
+                name: "FK_Users_Organizations_OrganizationId",
+                table: "Users");
 
             migrationBuilder.DropTable(
                 name: "Organizations");
 
             migrationBuilder.DropIndex(
-                name: "IX_AspNetUsers_OrganizationId",
-                table: "AspNetUsers");
+                name: "IX_Users_OrganizationId",
+                table: "Users");
 
             migrationBuilder.DropColumn(
                 name: "OrganizationId",
-                table: "AspNetUsers");
+                table: "Users");
         }
     }
 }

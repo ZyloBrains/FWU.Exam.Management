@@ -49,6 +49,10 @@ app.MapRazorPages()
 
 using (var scope = app.Services.CreateScope())
 {
+    // Ensure database is migrated before seeding roles
+    var db = scope.ServiceProvider.GetRequiredService<fwu_examination_management_system.Data.ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
     await DbSeeder.SeedRolesAsync(scope.ServiceProvider);
 }
 
