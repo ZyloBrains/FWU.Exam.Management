@@ -12,7 +12,7 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260310104520_AllInOne")]
+    [Migration("20260310110509_AllInOne")]
     partial class AllInOne
     {
         /// <inheritdoc />

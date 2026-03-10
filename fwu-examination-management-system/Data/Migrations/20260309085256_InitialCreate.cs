@@ -66,7 +66,7 @@ namespace fwu_examination_management_system.Data.Migrations
                 {
                     table.PrimaryKey("PK_RoleClaims", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_RoleClaims_Roles_RoleId",
+                        name: "FK_Roles",
                         column: x => x.RoleId,
                         principalTable: "Roles",
                         principalColumn: "Id",
@@ -87,7 +87,7 @@ namespace fwu_examination_management_system.Data.Migrations
                 {
                     table.PrimaryKey("PK_UserClaims", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UserClaims_Users_UserId",
+                        name: "FK_Users",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -107,7 +107,7 @@ namespace fwu_examination_management_system.Data.Migrations
                 {
                     table.PrimaryKey("PK_UserLogins", x => new { x.LoginProvider, x.ProviderKey });
                     table.ForeignKey(
-                        name: "FK_UserLogins_Users_UserId",
+                        name: "FK_Users_Login",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -125,13 +125,13 @@ namespace fwu_examination_management_system.Data.Migrations
                 {
                     table.PrimaryKey("PK_UserRoles", x => new { x.UserId, x.RoleId });
                     table.ForeignKey(
-                        name: "FK_UserRoles_Roles_RoleId",
+                        name: "FK_Roles_UserRole",
                         column: x => x.RoleId,
                         principalTable: "Roles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserRoles_Users_UserId",
+                        name: "FK_Users_Role",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -151,7 +151,7 @@ namespace fwu_examination_management_system.Data.Migrations
                 {
                     table.PrimaryKey("PK_UserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
                     table.ForeignKey(
-                        name: "FK_UserTokens_Users_UserId",
+                        name: "FK_User_Tokens",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
