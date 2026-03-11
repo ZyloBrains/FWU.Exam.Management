@@ -1,65 +1,450 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - fwu_examination_management_system</title>
-    <script type="importmap"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@(ViewData["Title"] ?? "Admin Dashboard") - FWU Examination System</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/fwu_examination_management_system.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'admin-blue': '#1d4ed8',
+                        'admin-blue-light': '#2563eb',
+                        'admin-blue-dark': '#1e40af',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Enhanced responsive utilities */
+        @@media (max-width: 768px) {
+            .mobile-card-view {
+                display: block !important;
+            }
+
+            .mobile-hide-table {
+                display: none !important;
+            }
+
+            .text-responsive {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Custom sidebar animations and styles */
+        #sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+            /* Sidebar scrollbar styling */
+            #sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            #sidebar::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            #sidebar::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 3px;
+            }
+
+                #sidebar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.5);
+                }
+
+        /* Mobile-first table improvements */
+        @@media (max-width: 640px) {
+            .table-responsive {
+                font-size: 0.75rem;
+            }
+
+                .table-responsive th,
+                .table-responsive td {
+                    padding: 0.5rem 0.25rem;
+                }
+        }
+            
+        /* Smooth overlay fade */
+        #sidebar-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Mobile menu item responsive text */
+        @@media (max-width: 640px) {
+            #sidebar nav li a span,
+            #sidebar nav li a button span {
+                font-size: 0.875rem;
+            }
+
+            #sidebar nav li a,
+            #sidebar nav li button {
+                padding: 0.5rem 0.75rem !important;
+            }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <header>
-        <nav class="bg-white border-b shadow-sm mb-3">
-            <div class="mx-auto px-4 flex flex-wrap items-center justify-between py-2">
-                <a class="text-lg font-semibold text-gray-800 whitespace-normal break-all" asp-area="" asp-controller="Home" asp-action="Index">fwu_examination_management_system</a>
-                <button id="nav-toggle" class="sm:hidden p-2 rounded text-gray-600 hover:bg-gray-100" type="button" aria-expanded="false" aria-label="Toggle navigation">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-                <div id="nav-menu" class="hidden sm:flex sm:items-center sm:justify-between sm:flex-1 sm:ml-4 w-full sm:w-auto">
-                    <ul class="flex flex-col sm:flex-row flex-grow">
-                        <li>
-                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li>
-                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        <li>
-                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Organization" asp-action="Index">Organizations</a>
-                        </li>
-                        <li>
-                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="User" asp-action="Index">Users</a>
-                        </li>
-                        <li>
-                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Role" asp-action="Index">Roles</a>
-                        </li>
-                    </ul>
-                    <partial name="_LoginPartial" />
+
+<body class="bg-gray-50 font-poppins">
+    @{
+        var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+        var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
+        var roleLabel = "Guest";
+        if (appUser != null)
+        {
+            var roles = await UserManager.GetRolesAsync(appUser);
+            var firstRole = roles.FirstOrDefault();
+            roleLabel = firstRole != null
+                ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(firstRole.Replace("_", " "))
+                : "User";
+        }
+    }
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+               class="bg-admin-blue text-white w-72 h-screen overflow-y-auto transform transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full fixed lg:static z-30 lg:w-72 md:w-72 sm:w-72">
+            <div class="p-4 lg:p-6 border-b border-admin-blue-light flex items-center space-x-3 lg:space-x-4 sticky top-0 bg-admin-blue z-10">
+                <!-- Desktop: show FWU logo -->
+                <img src="~/images/oce.png" alt="FWU Logo" class="hidden lg:block h-20 w-80 object-contain">
+
+                <!-- Mobile: show icon + text -->
+                <div class="flex items-center gap-3 lg:hidden">
+                    <i class="fas fa-graduation-cap text-2xl text-blue-200"></i>
+                    <div class="min-w-0">
+                        <h2 class="text-base font-bold truncate">FWU OCE</h2>
+                        <p class="text-xs text-blue-100 truncate">FWU Examination System</p>
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container mx-auto px-4">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <nav class="mt-4 lg:mt-6 pb-6">
+                @if (IsSectionDefined("SideMenu"))
+                {
+                    @RenderSection("SideMenu")
+                }
+                else
+                {
+                    <partial name="_SideMenu" />
+                }
+            </nav>
+        </aside>
+
+        <div class="flex flex-col flex-1 overflow-hidden">
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="flex items-center px-3 sm:px-4 lg:px-6 py-3 lg:py-4 w-full">
+                    <div class="flex-1">
+                        <!-- Mobile View (optimized for small screens) -->
+                        <div class="lg:hidden bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-4 text-white">
+                            <div class="flex items-center justify-between gap-3">
+                                <!-- Left: Toggle + Welcome (compact) -->
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <!-- Mobile Sidebar Toggle Button -->
+                                    <button id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false"
+                                            class="flex-shrink-0 p-2 rounded-md bg-white/15 hover:bg-white/25 active:scale-95 transition-all duration-200">
+                                        <i id="sidebar-open-icon" class="fas fa-bars text-white text-lg"></i>
+                                        <i id="sidebar-close-icon" class="fas fa-times text-white text-lg hidden"></i>
+                                    </button>
+
+                                    <!-- Welcome Section (compact) -->
+                                    <div class="flex-1 min-w-0">
+                                        <h2 class="text-sm font-bold truncate">Welcome back, @displayName</h2>
+                                        <p class="text-xs text-blue-100 truncate">@roleLabel Dashboard</p>
+                                    </div>
+                                </div>
+
+                                <!-- Right: User Profile (compact) -->
+                                <div class="relative flex-shrink-0" id="user-dropdown">
+                                    <button id="user-dropdown-toggle" aria-controls="dropdown-menu" aria-expanded="false"
+                                            class="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-white/20 active:scale-95 transition-all duration-200">
+                                        <div class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                                            <i class="fas fa-user text-white text-base font-bold"></i>
+                                        </div>
+                                        <i id="user-chevron" class="fas fa-chevron-down text-white text-xs transition-transform duration-300"></i>
+                                    </button>
+
+                                    <!-- Dropdown Menu (mobile optimized) -->
+                                    <div id="dropdown-menu"
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 hidden">
+                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
+                                           class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                            <i class="fas fa-user-circle text-gray-400 text-base"></i>
+                                            <span>Profile</span>
+                                        </a>
+                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
+                                           class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                            <i class="fas fa-cog text-gray-400 text-base"></i>
+                                            <span>Settings</span>
+                                        </a>
+                                        <div class="border-t border-gray-200 my-1"></div>
+                                        <form asp-area="Identity" asp-page="/Account/Logout"
+                                              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" class="block">
+                                            <button type="submit"
+                                                    class="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200">
+                                                <i class="fas fa-sign-out-alt text-red-500 text-base"></i>
+                                                <span>Logout</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Desktop View -->
+                        <div class="hidden lg:block bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <!-- Left: welcome text -->
+                                <div class="flex-1 flex items-center">
+                                    <div>
+                                        <h2 class="text-2xl lg:text-3xl font-bold">Welcome back, @displayName</h2>
+                                        <p class="mt-1 text-sm text-blue-100">@roleLabel Dashboard</p>
+                                    </div>
+                                </div>
+
+                                <!-- Right: enlarged icon button -->
+                                <div class="relative" id="user-dropdown-desktop">
+                                    <button id="user-dropdown-toggle-desktop" aria-controls="dropdown-menu-desktop" aria-expanded="false"
+                                            class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 transition-colors duration-200 ml-6">
+                                        <div class="w-10 h-10 lg:w-12 lg:h-12 bg-white/10 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-white text-lg lg:text-xl"></i>
+                                        </div>
+                                        <div class="hidden sm:flex flex-col text-left">
+                                            <span class="text-sm font-medium">@displayName</span>
+                                            <span class="text-xs opacity-80">@roleLabel</span>
+                                        </div>
+                                        <i id="user-chevron-desktop" class="fas fa-chevron-down ml-2 hidden sm:inline transition-transform duration-200"></i>
+                                    </button>
+
+                                    <div id="dropdown-menu-desktop"
+                                         class="absolute right-0 mt-2 w-44 lg:w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 hidden">
+                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
+                                           class="flex items-center px-3 lg:px-4 py-2 text-xs lg:text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                            <i class="fas fa-user-circle mr-2 lg:mr-3 text-gray-400"></i>
+                                            Profile
+                                        </a>
+                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
+                                           class="flex items-center px-3 lg:px-4 py-2 text-xs lg:text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                            <i class="fas fa-cog mr-2 lg:mr-3 text-gray-400"></i>
+                                            Settings
+                                        </a>
+                                        <div class="border-t border-gray-200 my-1"></div>
+                                        <form asp-area="Identity" asp-page="/Account/Logout"
+                                              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" class="block">
+                                            <button type="submit"
+                                                    class="flex items-center w-full px-3 lg:px-4 py-2 text-xs lg:text-sm text-red-600 hover:bg-red-50 transition-colors duration-200">
+                                                <i class="fas fa-sign-out-alt mr-2 lg:mr-3 text-red-500"></i>
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-3 lg:p-3">
+                @RenderBody()
+            </main>
+        </div>
     </div>
 
-    <footer class="border-t text-gray-500 absolute bottom-0 w-full whitespace-nowrap leading-[60px]">
-        <div class="container mx-auto px-4">
-            &copy; 2026 - fwu_examination_management_system - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden hidden"></div>
+
     <script>
-        document.getElementById('nav-toggle').addEventListener('click', function () {
-            document.getElementById('nav-menu').classList.toggle('hidden');
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+            const overlay = document.getElementById('sidebar-overlay');
+            const openIcon = document.getElementById('sidebar-open-icon');
+            const closeIcon = document.getElementById('sidebar-close-icon');
+            const MOBILE_BREAKPOINT = 1024;
+
+             if (!sidebar || !toggleBtn || !overlay) return;
+
+             let isOpen = window.innerWidth >= MOBILE_BREAKPOINT;
+
+             const applyState = () => {
+                 if (isOpen) {
+                     sidebar.classList.remove('-translate-x-full');
+                     overlay.classList.remove('hidden');
+                     toggleBtn.setAttribute('aria-expanded', 'true');
+                     if (openIcon) openIcon.classList.add('hidden');
+                     if (closeIcon) closeIcon.classList.remove('hidden');
+                     if (window.innerWidth < MOBILE_BREAKPOINT) document.body.style.overflow = 'hidden';
+                 } else {
+                     sidebar.classList.add('-translate-x-full');
+                     overlay.classList.add('hidden');
+                     toggleBtn.setAttribute('aria-expanded', 'false');
+                     if (openIcon) openIcon.classList.remove('hidden');
+                     if (closeIcon) closeIcon.classList.add('hidden');
+                     document.body.style.overflow = 'auto';
+                 }
+             };
+
+             const openSidebar = () => { isOpen = true; applyState(); };
+             const closeSidebar = () => { isOpen = false; applyState(); };
+             const toggleSidebar = () => { isOpen = !isOpen; applyState(); };
+
+             applyState();
+
+             toggleBtn.addEventListener('click', function (e) {
+                 e.stopPropagation();
+                 toggleSidebar();
+             });
+
+             overlay.addEventListener('click', closeSidebar);
+
+             document.addEventListener('keydown', function (event) {
+                 if (event.key === 'Escape' && isOpen && window.innerWidth < MOBILE_BREAKPOINT) {
+                     closeSidebar();
+                 }
+             });
+
+             let resizeTimer;
+             const handleResize = () => {
+                 const isDesktop = window.innerWidth >= MOBILE_BREAKPOINT;
+                 if (isDesktop) {
+                     isOpen = true;
+                 } else {
+                     isOpen = false;
+                 }
+                 applyState();
+             };
+             window.addEventListener('resize', function () {
+                 clearTimeout(resizeTimer);
+                 resizeTimer = setTimeout(handleResize, 150);
+             });
+
+             sidebar.querySelectorAll('a').forEach(link => {
+                 link.addEventListener('click', function () {
+                     if (window.innerWidth < MOBILE_BREAKPOINT) {
+                         setTimeout(closeSidebar, 120);
+                     }
+                 });
+             });
+
+             document.addEventListener('click', function (e) {
+                 if (window.innerWidth < MOBILE_BREAKPOINT && isOpen) {
+                     const target = e.target;
+                     if (!sidebar.contains(target) && !toggleBtn.contains(target) && !overlay.contains(target)) {
+                         closeSidebar();
+                     }
+                 }
+             }, true);
+
+            // Mobile User dropdown toggle
+            const userDropdownToggle = document.getElementById('user-dropdown-toggle');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            const userChevron = document.getElementById('user-chevron');
+            let dropdownOpen = false;
+
+            const toggleDropdown = () => {
+                dropdownOpen = !dropdownOpen;
+                if (dropdownOpen) {
+                    dropdownMenu.classList.remove('hidden');
+                    userDropdownToggle.setAttribute('aria-expanded', 'true');
+                    if (userChevron) userChevron.classList.add('rotate-180');
+                } else {
+                    dropdownMenu.classList.add('hidden');
+                    userDropdownToggle.setAttribute('aria-expanded', 'false');
+                    if (userChevron) userChevron.classList.remove('rotate-180');
+                }
+            };
+
+            const closeDropdown = () => {
+                dropdownOpen = false;
+                dropdownMenu.classList.add('hidden');
+                userDropdownToggle.setAttribute('aria-expanded', 'false');
+                if (userChevron) userChevron.classList.remove('rotate-180');
+            };
+
+            if (userDropdownToggle) {
+                userDropdownToggle.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    toggleDropdown();
+                });
+
+                document.addEventListener('click', function (e) {
+                    const userDropdown = document.getElementById('user-dropdown');
+                    if (!userDropdown.contains(e.target) && dropdownOpen) {
+                        closeDropdown();
+                    }
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && dropdownOpen) {
+                        closeDropdown();
+                    }
+                });
+            }
+
+            // Desktop User dropdown toggle
+            const userDropdownToggleDesktop = document.getElementById('user-dropdown-toggle-desktop');
+            const dropdownMenuDesktop = document.getElementById('dropdown-menu-desktop');
+            const userChevronDesktop = document.getElementById('user-chevron-desktop');
+            let dropdownOpenDesktop = false;
+
+            const toggleDropdownDesktop = () => {
+                dropdownOpenDesktop = !dropdownOpenDesktop;
+                if (dropdownOpenDesktop) {
+                    dropdownMenuDesktop.classList.remove('hidden');
+                    userDropdownToggleDesktop.setAttribute('aria-expanded', 'true');
+                    if (userChevronDesktop) userChevronDesktop.classList.add('rotate-180');
+                } else {
+                    dropdownMenuDesktop.classList.add('hidden');
+                    userDropdownToggleDesktop.setAttribute('aria-expanded', 'false');
+                    if (userChevronDesktop) userChevronDesktop.classList.remove('rotate-180');
+                }
+            };
+
+            const closeDropdownDesktop = () => {
+                dropdownOpenDesktop = false;
+                dropdownMenuDesktop.classList.add('hidden');
+                userDropdownToggleDesktop.setAttribute('aria-expanded', 'false');
+                if (userChevronDesktop) userChevronDesktop.classList.remove('rotate-180');
+            };
+
+            if (userDropdownToggleDesktop) {
+                userDropdownToggleDesktop.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    toggleDropdownDesktop();
+                });
+
+                document.addEventListener('click', function (e) {
+                    const userDropdownDesktop = document.getElementById('user-dropdown-desktop');
+                    if (!userDropdownDesktop.contains(e.target) && dropdownOpenDesktop) {
+                        closeDropdownDesktop();
+                    }
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && dropdownOpenDesktop) {
+                        closeDropdownDesktop();
+                    }
+                });
+            }
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

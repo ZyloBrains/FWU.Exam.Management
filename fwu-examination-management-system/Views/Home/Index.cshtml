@@ -7,75 +7,72 @@
 {
     var userCount = (int)(ViewBag.UserCount ?? 0);
 
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <li class="breadcrumb-item active">@org.Name</li>
+    <!-- Breadcrumb -->
+    <nav class="mb-4" aria-label="breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm text-gray-500">
+            <li><a asp-controller="Home" asp-action="Index" class="text-blue-600 hover:underline">Home</a></li>
+            <li><i class="fas fa-chevron-right text-xs text-gray-400"></i></li>
+            <li class="text-gray-700 font-medium">@org.Name</li>
         </ol>
     </nav>
 
-    <div class="row g-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Logo + identity card -->
-        <div class="col-md-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column align-items-center text-center py-4">
-                    @if (!string.IsNullOrEmpty(org.LogoPath))
-                    {
-                        <img src="@org.LogoPath" alt="@org.Name logo"
-                             class="mb-3 rounded" style="max-height:120px;object-fit:contain;" />
-                    }
-                    else
-                    {
-                        <div class="bg-secondary bg-opacity-10 rounded d-flex align-items-center justify-content-center mb-3"
-                             style="width:100px;height:100px;">
-                            <span class="text-secondary fs-1">🏛</span>
-                        </div>
-                    }
-                    <h4 class="fw-bold mb-1">@org.Name</h4>
-                    <span class="badge bg-primary mb-2">@org.OfficeCode</span>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center text-center">
+            @if (!string.IsNullOrEmpty(org.LogoPath))
+            {
+                <img src="@org.LogoPath" alt="@org.Name logo"
+                     class="mb-4 rounded-lg max-h-[120px] object-contain" />
+            }
+            else
+            {
+                <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                    <span class="text-4xl">🏛</span>
                 </div>
-            </div>
+            }
+            <h4 class="text-lg font-bold text-gray-800 mb-1">@org.Name</h4>
+            <span class="inline-block px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full">@org.OfficeCode</span>
         </div>
 
         <!-- Details card -->
-        <div class="col-md-5">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header fw-semibold">Organization Details</div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4">Address</dt>
-                        <dd class="col-sm-8">@org.Address</dd>
-
-                        <dt class="col-sm-4">Phone</dt>
-                        <dd class="col-sm-8">@org.ContactNumber</dd>
-
-                        <dt class="col-sm-4">Email</dt>
-                        <dd class="col-sm-8"><a href="mailto:@org.Email">@org.Email</a></dd>
-                    </dl>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 md:col-span-1">
+            <div class="px-6 py-4 border-b border-gray-100 font-semibold text-gray-700">
+                <i class="fas fa-info-circle mr-2 text-blue-500"></i>Organization Details
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-start gap-1">
+                    <span class="text-sm font-medium text-gray-500 sm:w-28 shrink-0">Address</span>
+                    <span class="text-sm text-gray-800">@org.Address</span>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-start gap-1">
+                    <span class="text-sm font-medium text-gray-500 sm:w-28 shrink-0">Phone</span>
+                    <span class="text-sm text-gray-800">@org.ContactNumber</span>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-start gap-1">
+                    <span class="text-sm font-medium text-gray-500 sm:w-28 shrink-0">Email</span>
+                    <a href="mailto:@org.Email" class="text-sm text-blue-600 hover:underline">@org.Email</a>
                 </div>
             </div>
         </div>
 
         <!-- Stats card -->
-        <div class="col-md-3">
-            <div class="card h-100 shadow-sm text-center">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
-                    <span class="display-5 fw-bold text-primary">@userCount</span>
-                    <span class="text-muted small mt-1">Registered Users</span>
-                    <a asp-controller="OrgDashboard" asp-action="Users"
-                       asp-route-officeCode="@org.OfficeCode"
-                       class="btn btn-sm btn-outline-primary mt-3">
-                        Manage Users
-                    </a>
-                </div>
-            </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center text-center">
+            <span class="text-5xl font-bold text-blue-600">@userCount</span>
+            <span class="text-sm text-gray-500 mt-2">Registered Users</span>
+            <a asp-controller="OrgDashboard" asp-action="Users" asp-route-officeCode="@org.OfficeCode"
+               class="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200">
+                <i class="fas fa-users text-xs"></i> Manage Users
+            </a>
         </div>
     </div>
 }
 else
 {
-    <div class="text-center py-5">
-        <h1 class="display-4">Welcome</h1>
-        <p class="text-muted">Sign in to access your organization's dashboard.</p>
+    <div class="flex flex-col items-center justify-center py-16">
+        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+            <i class="fas fa-graduation-cap text-3xl text-blue-600"></i>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">Welcome</h1>
+        <p class="text-gray-500 text-lg">Sign in to access your organization's dashboard.</p>
     </div>
 }

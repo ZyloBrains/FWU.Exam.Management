@@ -4,46 +4,103 @@
     ViewData["Title"] = "Organizations";
 }
 
-<h1>Organizations</h1>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-building text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Organizations</h1>
+        </div>
+        <a asp-action="Create"
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+            <i class="fas fa-plus text-xs"></i> Create New
+        </a>
+    </div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
+    <!-- Desktop Table -->
+    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Logo</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Office Code</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4">
+                                @if (!string.IsNullOrEmpty(item.LogoPath))
+                                {
+                                    <img src="@item.LogoPath" alt="@item.Name logo" class="h-10 max-w-[80px] object-contain rounded" />
+                                }
+                                else
+                                {
+                                    <span class="text-gray-300">—</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 font-medium text-gray-800">@item.Name</td>
+                            <td class="px-6 py-4">
+                                <span class="inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">@item.OfficeCode</span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">@item.ContactNumber</td>
+                            <td class="px-6 py-4 text-gray-600 max-w-[200px] truncate">@item.Address</td>
+                            <td class="px-6 py-4 text-gray-600">@item.Email</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details"><i class="fas fa-eye text-xs"></i></a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit"><i class="fas fa-edit text-xs"></i></a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th></th>
-            <th>@Html.DisplayNameFor(model => model.Name)</th>
-            <th>@Html.DisplayNameFor(model => model.OfficeCode)</th>
-            <th>@Html.DisplayNameFor(model => model.ContactNumber)</th>
-            <th>@Html.DisplayNameFor(model => model.Address)</th>
-            <th>@Html.DisplayNameFor(model => model.Email)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
+    <!-- Mobile Cards -->
+    <div class="md:hidden space-y-4">
         @foreach (var item in Model)
         {
-            <tr>
-                <td>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="flex items-start gap-3 mb-3">
                     @if (!string.IsNullOrEmpty(item.LogoPath))
                     {
-                        <img src="@item.LogoPath" alt="@item.Name logo" style="max-height:48px; max-width:80px; object-fit:contain;" />
+                        <img src="@item.LogoPath" alt="@item.Name logo" class="h-12 max-w-[60px] object-contain rounded flex-shrink-0" />
                     }
                     else
                     {
-                        <span class="text-muted">—</span>
+                        <div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-building text-gray-400"></i>
+                        </div>
                     }
-                </td>
-                <td>@Html.DisplayFor(modelItem => item.Name)</td>
-                <td>@Html.DisplayFor(modelItem => item.OfficeCode)</td>
-                <td>@Html.DisplayFor(modelItem => item.ContactNumber)</td>
-                <td>@Html.DisplayFor(modelItem => item.Address)</td>
-                <td>@Html.DisplayFor(modelItem => item.Email)</td>
-                <td>@Html.DisplayFor(modelItem => item.LogoPath)</td>
-              
-            </tr>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="font-semibold text-gray-800 truncate">@item.Name</h3>
+                        <span class="inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded mt-1">@item.OfficeCode</span>
+                    </div>
+                </div>
+                <div class="space-y-1.5 text-sm text-gray-600 mb-3">
+                    <div class="flex items-center gap-2"><i class="fas fa-phone text-xs text-gray-400 w-4"></i> @item.ContactNumber</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-envelope text-xs text-gray-400 w-4"></i> @item.Email</div>
+                    <div class="flex items-start gap-2"><i class="fas fa-map-marker-alt text-xs text-gray-400 w-4 mt-0.5"></i> <span class="truncate">@item.Address</span></div>
+                </div>
+                <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">Details</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">Delete</a>
+                </div>
+            </div>
         }
-    </tbody>
-</table>
+    </div>
+</div>

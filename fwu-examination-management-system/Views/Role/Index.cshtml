@@ -4,29 +4,70 @@
     ViewData["Title"] = "Roles";
 }
 
-<h1>Roles</h1>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-shield text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Roles</h1>
+        </div>
+        <a asp-action="Create"
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+            <i class="fas fa-plus text-xs"></i> Create New
+        </a>
+    </div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
+    <!-- Desktop Table -->
+    <div class="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role Name</th>
+                    <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @foreach (var item in Model)
+                {
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-shield-alt text-purple-600 text-xs"></i>
+                                </div>
+                                <span class="font-medium text-gray-800">@item.Name</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit"><i class="fas fa-edit text-xs"></i></a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Role Name</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
+    <!-- Mobile Cards -->
+    <div class="md:hidden space-y-3">
         @foreach (var item in Model)
         {
-            <tr>
-                <td>@item.Name</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Delete</a>
-                </td>
-            </tr>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-shield-alt text-purple-600 text-sm"></i>
+                    </div>
+                    <span class="font-semibold text-gray-800 text-sm">@item.Name</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">Delete</a>
+                </div>
+            </div>
         }
-    </tbody>
-</table>
+    </div>
+</div>

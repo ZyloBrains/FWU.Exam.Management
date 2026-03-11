@@ -1,7 +1,96 @@
-﻿
-@{
-    ViewData["Title"] = "Index";
+﻿@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<h1>Index</h1>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-tachometer-alt text-blue-600"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+    </div>
 
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Organizations</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-building text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Users</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Roles</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-shield text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Programs</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-amber-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <a asp-controller="Organization" asp-action="Create"
+               class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <i class="fas fa-building text-blue-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">New Organization</span>
+            </a>
+            <a asp-controller="User" asp-action="Create"
+               class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 group">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-user-plus text-green-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">New User</span>
+            </a>
+            <a asp-controller="Role" asp-action="Create"
+               class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 group">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-shield-alt text-purple-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">New Role</span>
+            </a>
+            <a asp-controller="Home" asp-action="Privacy"
+               class="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-amber-300 hover:bg-amber-50 transition-all duration-200 group">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center group-hover:bg-amber-200 transition-colors">
+                    <i class="fas fa-cog text-amber-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-700">Settings</span>
+            </a>
+        </div>
+    </div>
+</div>
