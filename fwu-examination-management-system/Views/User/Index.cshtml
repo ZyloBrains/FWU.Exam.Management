@@ -2,21 +2,46 @@
 
 @{
     ViewData["Title"] = "Users";
+    var totalCount = Model.Count();
 }
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ search: '', get filtered() { return this.search.toLowerCase(); } }">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-users text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Users</h1>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Users</h1>
+                <p class="text-sm text-gray-500 mt-0.5">
+                    <span class="inline-flex items-center gap-1">
+                        <span class="font-semibold text-gray-700">@totalCount</span> total records
+                    </span>
+                </p>
+            </div>
         </div>
         <a asp-action="Create"
            class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
             <i class="fas fa-plus text-xs"></i> Create New
         </a>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" x-model="search" placeholder="Search by email, organization, or role..."
+                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
+            </div>
+            <div class="flex items-center gap-2">
+                <button x-show="search.length > 0" x-on:click="search = ''"
+                        class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-times text-xs"></i> Clear
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Desktop Table -->
@@ -34,7 +59,9 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach (var item in Model)
                     {
-                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <tr class="hover:bg-gray-50 transition-colors duration-150"
+                            x-show="search === '' || '@item.Email?.ToLower()'.includes(filtered) || '@(item.OrganizationName?.ToLower() ?? "")'.includes(filtered) || '@(string.Join(" ", item.Roles).ToLower())'.includes(filtered)"
+                            x-transition>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -78,7 +105,9 @@
     <div class="md:hidden space-y-4">
         @foreach (var item in Model)
         {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="user-card bg-white rounded-xl shadow-sm border border-gray-200 p-4"
+                 x-show="search === '' || '@item.Email?.ToLower()'.includes(filtered) || '@(item.OrganizationName?.ToLower() ?? "")'.includes(filtered) || '@(string.Join(" ", item.Roles).ToLower())'.includes(filtered)"
+                 x-transition>
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-user text-blue-600 text-sm"></i>
@@ -112,4 +141,20 @@
             </div>
         }
     </div>
+
+    @if (totalCount == 0)
+    {
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-4xl text-green-300"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">No users yet</h3>
+            <p class="text-sm text-gray-500 mb-6">Get started by creating your first user</p>
+            <a asp-action="Create"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <i class="fas fa-plus text-xs"></i> Create User
+            </a>
+        </div>
+    }
 </div>
