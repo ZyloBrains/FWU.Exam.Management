@@ -1,29 +1,29 @@
 @model fwu_examination_management_system.Models.College
 @{ ViewData["Title"] = "Create College"; }
 
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="max-w-4xl mx-auto space-y-6">
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"><i class="fas fa-arrow-left text-gray-600"></i></a>
         <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-school text-amber-600"></i></div>
         <h1 class="text-2xl font-bold text-gray-800">Create College</h1>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 form-card">
         <form asp-action="Create" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-4"></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label asp-for="CollegeCode" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="CollegeCode" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="CollegeCode" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="CollegeName" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="CollegeName" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="CollegeName" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="ShortName" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="ShortName" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="ShortName" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="EmailAddress" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="EmailAddress" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="EmailAddress" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="Phone1" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="Phone1" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="Phone1" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="PrincipalName" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="PrincipalName" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="PrincipalName" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="WebAddress" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="WebAddress" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="WebAddress" class="text-red-500 text-xs"></span></div>
-                <div><label asp-for="DistrictID" class="block text-sm font-medium text-gray-700 mb-1"></label><input asp-for="DistrictID" type="number" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" /><span asp-validation-for="DistrictID" class="text-red-500 text-xs"></span></div>
-                <div class="flex items-center gap-2 pt-6"><input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-blue-600 border-gray-300 rounded" /><label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label></div>
+            <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-6"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div><label asp-for="CollegeCode" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="CollegeCode" class="w-full" placeholder="Enter college code" /><span asp-validation-for="CollegeCode" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="CollegeName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="CollegeName" class="w-full" placeholder="Enter college name" /><span asp-validation-for="CollegeName" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="ShortName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="ShortName" class="w-full" placeholder="Enter short name" /><span asp-validation-for="ShortName" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="EmailAddress" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="EmailAddress" class="w-full" placeholder="Enter email address" /><span asp-validation-for="EmailAddress" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="Phone1" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="Phone1" class="w-full" placeholder="Enter phone number" /><span asp-validation-for="Phone1" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="PrincipalName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="PrincipalName" class="w-full" placeholder="Enter principal name" /><span asp-validation-for="PrincipalName" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="WebAddress" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="WebAddress" class="w-full" placeholder="Enter web address" /><span asp-validation-for="WebAddress" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="DistrictID" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="DistrictID" type="number" class="w-full" placeholder="Enter district ID" /><span asp-validation-for="DistrictID" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div class="flex items-center gap-3 pt-4"><input asp-for="IsActive" type="checkbox" class="text-blue-600" /><label asp-for="IsActive" class="text-sm font-semibold text-gray-700">Active</label></div>
             </div>
-            <div class="flex items-center gap-3 mt-6 pt-6 border-t border-gray-200">
-                <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"><i class="fas fa-save mr-2"></i>Save</button>
-                <a asp-action="Index" class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cancel</a>
+            <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"><i class="fas fa-save mr-2"></i>Save</button>
+                <a asp-action="Index" class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">Cancel</a>
             </div>
         </form>
     </div>
