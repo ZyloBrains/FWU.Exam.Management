@@ -5,35 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - fwu_examination_management_system</title>
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/fwu_examination_management_system.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">fwu_examination_management_system</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+        <nav class="bg-white border-b shadow-sm mb-3">
+            <div class="mx-auto px-4 flex flex-wrap items-center justify-between py-2">
+                <a class="text-lg font-semibold text-gray-800 whitespace-normal break-all" asp-area="" asp-controller="Home" asp-action="Index">fwu_examination_management_system</a>
+                <button id="nav-toggle" class="sm:hidden p-2 rounded text-gray-600 hover:bg-gray-100" type="button" aria-expanded="false" aria-label="Toggle navigation">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                <div id="nav-menu" class="hidden sm:flex sm:items-center sm:justify-between sm:flex-1 sm:ml-4 w-full sm:w-auto">
+                    <ul class="flex flex-col sm:flex-row flex-grow">
+                        <li>
+                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <li>
+                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Organization" asp-action="Index">Organizations</a>
+                        <li>
+                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Organization" asp-action="Index">Organizations</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Index">Users</a>
+                        <li>
+                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="User" asp-action="Index">Users</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Role" asp-action="Index">Roles</a>
+                        <li>
+                            <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="" asp-controller="Role" asp-action="Index">Roles</a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />
@@ -41,20 +42,24 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="container mx-auto px-4">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
+    <footer class="border-t text-gray-500 absolute bottom-0 w-full whitespace-nowrap leading-[60px]">
+        <div class="container mx-auto px-4">
             &copy; 2026 - fwu_examination_management_system - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById('nav-toggle').addEventListener('click', function () {
+            document.getElementById('nav-menu').classList.toggle('hidden');
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
