@@ -15,10 +15,10 @@ namespace fwu_examination_management_system.Models
         public int YearPartID { get; set; }
         [Required]
         [StringLength(50)]
-        public string SubjectCode { get; set; }
+        public string SubjectCode { get; set; } = string.Empty;
         [Required]
         [StringLength(100)]
-        public string SubjectName { get; set; }
+        public string SubjectName { get; set; } = string.Empty;
         public decimal TheoryFullMark { get; set; }
         public decimal TheoryPassMark { get; set; }
         public decimal? PracticalFullMark { get; set; }
@@ -32,7 +32,7 @@ namespace fwu_examination_management_system.Models
         public bool HasInternal { get; set; }
         public int? DisplayOrder { get; set; }
         [StringLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
@@ -40,15 +40,15 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
         public bool IsCompulsory { get; set; }
         [StringLength(50)]
-        public string ShortName { get; set; }
+        public string? ShortName { get; set; }
         [StringLength(50)]
-        public string ConSubjectCode { get; set; }
+        public string? ConSubjectCode { get; set; }
         public int SubjectTypeId { get; set; }
         public bool HasTheory { get; set; }
         [StringLength(50)]
-        public string year { get; set; }
+        public string? Year { get; set; }
         [StringLength(50)]
-        public string part { get; set; }
+        public string? Part { get; set; }
     }
 
 }

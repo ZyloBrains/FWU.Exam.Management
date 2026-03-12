@@ -11,15 +11,15 @@ namespace fwu_examination_management_system.Models
         public int AcademicYearID { get; set; }
         public int AcademicYearCode { get; set; }
         [StringLength(50)]
-        public string AcademicYearCodeNep { get; set; }
+        public string? AcademicYearCodeNep { get; set; }
         [Required]
         [StringLength(50)]
-        public string AcademicYearName { get; set; }
+        public string AcademicYearName { get; set; } = string.Empty;
         [Required]
         [StringLength(50)]
-        public string AcademicYearNameNep { get; set; }
+        public string AcademicYearNameNep { get; set; } = string.Empty;
         [StringLength(50)]
-        public string Remark { get; set; }
+        public string? Remark { get; set; }
         public bool IsRunning { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

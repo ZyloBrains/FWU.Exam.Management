@@ -15,7 +15,7 @@ namespace fwu_examination_management_system.Models
         public int? ExamCenterID { get; set; }
         public int CollegeID { get; set; }
         [StringLength(20)]
-        public string ExamRollNo { get; set; }
+        public string? ExamRollNo { get; set; }
         public long? ExamRollNoCoding { get; set; }
         public decimal? FeeEnclosed { get; set; }
         public decimal? AttendancePercentage { get; set; }
@@ -25,9 +25,9 @@ namespace fwu_examination_management_system.Models
         public DateTime? VerifiedDate { get; set; }
         public bool? IsWithHeld { get; set; }
         [StringLength(50)]
-        public string SGPA { get; set; }
+        public string? SGPA { get; set; }
         [StringLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }

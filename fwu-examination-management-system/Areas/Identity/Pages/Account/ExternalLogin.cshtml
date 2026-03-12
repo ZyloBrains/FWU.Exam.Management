@@ -4,26 +4,34 @@
     ViewData["Title"] = "Register";
 }
 
-<h1>@ViewData["Title"]</h1>
-<h2 id="external-login-title">Associate your @Model.ProviderDisplayName account.</h2>
-<hr />
-
-<p id="external-login-description" class="text-info">
-    You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</p>
-
-<div class="row">
-    <div class="col-md-4">
-        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email."/>
-                <label asp-for="Input.Email" class="form-label"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+<div class="max-w-lg mx-auto mt-10">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-link text-blue-600"></i>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">@ViewData["Title"]</h1>
+                <p class="text-sm text-gray-500">Associate your @Model.ProviderDisplayName account.</p>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-4 mb-6 text-sm">
+            <i class="fas fa-info-circle mr-1"></i>
+            You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
+            Please enter an email address for this site below and click the Register button to finish logging in.
+        </div>
+
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-5">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
+            <div>
+                <label asp-for="Input.Email" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                <input asp-for="Input.Email" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" autocomplete="email" placeholder="Please enter your email." />
+                <span asp-validation-for="Input.Email" class="text-xs text-red-500 mt-1 block"></span>
+            </div>
+            <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <i class="fas fa-user-plus mr-1"></i> Register
+            </button>
         </form>
     </div>
 </div>

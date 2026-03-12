@@ -12,9 +12,9 @@ namespace fwu_examination_management_system.Models
         public int BillTitleId { get; set; }
         [Required]
         [StringLength(255)]
-        public string BillTitleName { get; set; }
+        public string BillTitleName { get; set; } = string.Empty;
         [StringLength(1024)]
-        public string Category { get; set; }
+        public string? Category { get; set; }
         public bool Active { get; set; }
         public int CreatedByUserId { get; set; }
         public DateTime CreatedDateTime { get; set; }

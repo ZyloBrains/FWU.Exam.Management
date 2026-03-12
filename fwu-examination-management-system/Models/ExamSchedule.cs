@@ -16,18 +16,18 @@ namespace fwu_examination_management_system.Models
         public int ExamTypeID { get; set; }
         [Required]
         [StringLength(50)]
-        public string ExamScheduleName { get; set; }
+        public string ExamScheduleName { get; set; } = string.Empty;
         public DateTime? StartFromAD { get; set; }
         public DateTime? EndToAD { get; set; }
         [StringLength(10)]
-        public string StartFromBS { get; set; }
+        public string? StartFromBS { get; set; }
         [StringLength(10)]
-        public string EndToBS { get; set; }
+        public string? EndToBS { get; set; }
         public DateTime? PublishedDate { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         [StringLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
         public bool Active { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
@@ -36,17 +36,17 @@ namespace fwu_examination_management_system.Models
         public int? ExamScheduleParentId { get; set; }
         public int? NegativeMark { get; set; }
         [StringLength(500)]
-        public string ProgramIds { get; set; }
+        public string? ProgramIds { get; set; }
         [StringLength(500)]
-        public string RegularBatchIds { get; set; }
+        public string? RegularBatchIds { get; set; }
         [StringLength(500)]
-        public string PartialBatchIds { get; set; }
+        public string? PartialBatchIds { get; set; }
         public DateTime? ExtendedDate { get; set; }
         public decimal? ExtendedDateCharge { get; set; }
         public DateTime? CollegeApproveDate { get; set; }
         public DateTime? AdmissionCardReleaseDate { get; set; }
         [StringLength(50)]
-        public string ExamScheduleCode { get; set; }
+        public string? ExamScheduleCode { get; set; }
     }
 
 }

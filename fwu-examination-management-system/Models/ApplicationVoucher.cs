@@ -12,21 +12,21 @@ namespace fwu_examination_management_system.Models
         public int ApplicationVoucherId { get; set; }
         [Required]
         [StringLength(50)]
-        public string VoucherNo { get; set; }
+        public string VoucherNo { get; set; } = string.Empty;
         [Required]
         [StringLength(1024)]
-        public string StudentName { get; set; }
+        public string StudentName { get; set; } = string.Empty;
         public DateTime? DOBAD { get; set; }
         [StringLength(50)]
-        public string DOBBS { get; set; }
+        public string? DOBBS { get; set; }
         public decimal Amount { get; set; }
         public DateTime? VoucherDate { get; set; }
         public DateTime? Timestamp { get; set; }
         [Required]
         [StringLength(1024)]
-        public string ContactNo { get; set; }
+        public string ContactNo { get; set; } = string.Empty;
         [StringLength(1024)]
-        public string Branch { get; set; }
+        public string? Branch { get; set; }
         public int ExamScheduleId { get; set; }
         public int? StudentRegistrationId { get; set; }
     }

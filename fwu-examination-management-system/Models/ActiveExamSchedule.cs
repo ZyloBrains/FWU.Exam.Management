@@ -15,7 +15,7 @@ namespace fwu_examination_management_system.Models
         public TimeSpan? OpenTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         [StringLength(1024)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
     }
 
 }

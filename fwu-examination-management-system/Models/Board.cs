@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Models
         public int CountryID { get; set; }
         [Required]
         [StringLength(50)]
-        public string BoardName { get; set; }
+        public string BoardName { get; set; } = string.Empty;
         [StringLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }

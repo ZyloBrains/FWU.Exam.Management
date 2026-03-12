@@ -11,11 +11,11 @@ namespace fwu_examination_management_system.Models
         public int BankID { get; set; }
         [Required]
         [StringLength(100)]
-        public string BankName { get; set; }
+        public string BankName { get; set; } = string.Empty;
         [StringLength(25)]
-        public string BankCode { get; set; }
+        public string? BankCode { get; set; }
         [StringLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
