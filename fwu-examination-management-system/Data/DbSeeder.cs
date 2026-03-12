@@ -1,3 +1,4 @@
+using fwu_examination_management_system.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace fwu_examination_management_system.Data
@@ -13,6 +14,19 @@ namespace fwu_examination_management_system.Data
             {
                 if (!await roleManager.RoleExistsAsync(role))
                     await roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
+
+        public static async Task SeedSuperAdminAsync(IServiceProvider serviceProvider)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
+
+            const string email = "hrkshnagtm@gmail.com";
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user != null && !await userManager.IsInRoleAsync(user, "SystemAdmin"))
+            {
+                await userManager.AddToRoleAsync(user, "SystemAdmin");
             }
         }
     }

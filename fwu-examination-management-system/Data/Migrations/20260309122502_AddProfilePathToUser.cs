@@ -20,7 +20,7 @@ namespace fwu_examination_management_system.Data.Migrations
 
             migrationBuilder.AddColumn<string>(
                 name: "ProfilePath",
-                table: "AspNetUsers",
+                table: "Users",
                 type: "text",
                 nullable: true);
         }
@@ -30,7 +30,7 @@ namespace fwu_examination_management_system.Data.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "ProfilePath",
-                table: "AspNetUsers");
+                table: "Users");
 
             migrationBuilder.AlterColumn<string>(
                 name: "LogoPath",

@@ -1,5 +1,5 @@
 ﻿@{
-    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
+    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout != null)
     {
         Layout = parentLayout.ToString();
     }
@@ -9,16 +9,29 @@
     }
 }
 
-<h1>Manage your account</h1>
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-controller="Dashboard" asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-user-cog text-blue-600"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Manage Account</h1>
+            <p class="text-sm text-gray-500">Change your account settings</p>
+        </div>
+    </div>
 
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-3">
+    <!-- Content -->
+    <div class="flex flex-col md:flex-row gap-6">
+        <!-- Side Navigation -->
+        <div class="md:w-64 flex-shrink-0">
             <partial name="_ManageNav" />
         </div>
-        <div class="col-md-9">
+        <!-- Page Content -->
+        <div class="flex-1 min-w-0">
             @RenderBody()
         </div>
     </div>

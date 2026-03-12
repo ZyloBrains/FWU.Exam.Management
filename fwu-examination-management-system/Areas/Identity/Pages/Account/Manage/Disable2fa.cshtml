@@ -5,21 +5,26 @@
     ViewData["ActivePage"] = ManageNavPages.TwoFactorAuthentication;
 }
 
-<partial name="_StatusMessage" for="StatusMessage" />
-<h3>@ViewData["Title"]</h3>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-shield-alt text-amber-600 text-sm"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">@ViewData["Title"]</h3>
+    </div>
+    <partial name="_StatusMessage" for="StatusMessage" />
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>This action only disables 2FA.</strong>
-    </p>
-    <p>
-        Disabling 2FA does not change the keys used in authenticator apps. If you wish to change the key
-        used in an authenticator app you should <a asp-page="./ResetAuthenticator">reset your authenticator keys.</a>
-    </p>
-</div>
+    <div class="bg-amber-50 border border-amber-200 text-amber-700 rounded-lg p-4 mb-6 text-sm" role="alert">
+        <p class="font-semibold"><i class="fas fa-exclamation-triangle mr-1"></i> This action only disables 2FA.</p>
+        <p class="mt-1">
+            Disabling 2FA does not change the keys used in authenticator apps. If you wish to change the key
+            used in an authenticator app you should <a asp-page="./ResetAuthenticator" class="text-amber-800 underline hover:text-amber-900">reset your authenticator keys.</a>
+        </p>
+    </div>
 
-<div>
     <form method="post">
-        <button class="btn btn-danger" type="submit">Disable 2FA</button>
+        <button type="submit" class="px-6 py-3 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+            <i class="fas fa-ban mr-1"></i> Disable 2FA
+        </button>
     </form>
 </div>

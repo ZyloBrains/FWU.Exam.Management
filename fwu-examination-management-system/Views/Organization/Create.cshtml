@@ -4,46 +4,70 @@
     ViewData["Title"] = "Create Organization";
 }
 
-<h1>Create Organization</h1>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-building text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create Organization</h1>
+        </div>
+    </div>
 
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="OfficeCode" class="form-label"></label>
-                <input asp-for="OfficeCode" class="form-control" />
-                <span asp-validation-for="OfficeCode" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="ContactNumber" class="form-label"></label>
-                <input asp-for="ContactNumber" class="form-control" />
-                <span asp-validation-for="ContactNumber" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Address" class="form-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Logo</label>
-                <input type="file" name="logoFile" id="logoFile" class="form-control" accept="image/*" />
-                <img id="logoPreview" src="#" alt="Logo preview" class="mt-2 d-none" style="max-height:120px;" />
-            </div>
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 form-card">
+        <form asp-action="Create" enctype="multipart/form-data" class="space-y-5">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
+
             <div>
-                <input type="submit" value="Create" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+                <label asp-for="Name" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                <input asp-for="Name" class="w-full" placeholder="Enter organization name" />
+                <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label asp-for="OfficeCode" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="OfficeCode" class="w-full" placeholder="Enter office code" />
+                    <span asp-validation-for="OfficeCode" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ContactNumber" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="ContactNumber" class="w-full" placeholder="Enter contact number" />
+                    <span asp-validation-for="ContactNumber" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+            </div>
+
+            <div>
+                <label asp-for="Address" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                <input asp-for="Address" class="w-full" placeholder="Enter address" />
+                <span asp-validation-for="Address" class="text-xs text-red-500 mt-1 block"></span>
+            </div>
+
+            <div>
+                <label asp-for="Email" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                <input asp-for="Email" class="w-full" placeholder="Enter email" />
+                <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Logo</label>
+                <input type="file" name="logoFile" id="logoFile" accept="image/*"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" />
+                <img id="logoPreview" src="#" alt="Logo preview" class="mt-3 hidden max-h-[120px] rounded-lg border border-gray-200" />
+            </div>
+
+            <div class="flex items-center gap-3 pt-6 border-t border-gray-200">
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" class="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
@@ -56,10 +80,10 @@
             const preview = document.getElementById('logoPreview');
             if (this.files && this.files[0]) {
                 preview.src = URL.createObjectURL(this.files[0]);
-                preview.classList.remove('d-none');
+                preview.classList.remove('hidden');
             } else {
                 preview.src = '#';
-                preview.classList.add('d-none');
+                preview.classList.add('hidden');
             }
         });
     </script>

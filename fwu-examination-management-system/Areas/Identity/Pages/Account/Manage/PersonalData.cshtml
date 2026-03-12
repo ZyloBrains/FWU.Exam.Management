@@ -5,20 +5,30 @@
     ViewData["ActivePage"] = ManageNavPages.PersonalData;
 }
 
-<h3>@ViewData["Title"]</h3>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-database text-blue-600 text-sm"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">@ViewData["Title"]</h3>
+    </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
-        <p>
+    <div class="max-w-lg space-y-4">
+        <p class="text-sm text-gray-600">Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
             <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-        </p>
-        <form id="download-data" asp-page="DownloadPersonalData" method="post">
-            <button class="btn btn-primary" type="submit">Download</button>
-        </form>
-        <p>
-            <a id="delete" asp-page="DeletePersonalData" class="btn btn-danger">Delete</a>
-        </p>
+        </div>
+        <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
+            <form id="download-data" asp-page="DownloadPersonalData" method="post">
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <i class="fas fa-download mr-1"></i> Download
+                </button>
+            </form>
+            <a id="delete" asp-page="DeletePersonalData" class="px-6 py-3 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                <i class="fas fa-trash-alt mr-1"></i> Delete
+            </a>
+        </div>
     </div>
 </div>
 

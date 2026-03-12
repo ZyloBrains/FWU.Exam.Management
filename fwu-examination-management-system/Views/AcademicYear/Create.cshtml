@@ -1,0 +1,18 @@
+@model fwu_examination_management_system.Models.AcademicYear
+@{ ViewData["Title"] = "Create Academic Year"; }
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex items-center gap-3"><a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><i class="fas fa-arrow-left text-gray-600"></i></a><div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center"><i class="fas fa-calendar text-pink-600"></i></div><h1 class="text-2xl font-bold text-gray-800">Create Academic Year</h1></div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 form-card">
+        <form asp-action="Create" method="post"><div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-6"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div><label asp-for="AcademicYearName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="AcademicYearName" class="w-full" placeholder="Enter academic year name" /><span asp-validation-for="AcademicYearName" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="AcademicYearNameNep" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="AcademicYearNameNep" class="w-full" placeholder="Enter name in Nepali" /><span asp-validation-for="AcademicYearNameNep" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="AcademicYearCode" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="AcademicYearCode" type="number" class="w-full" placeholder="Enter code" /><span asp-validation-for="AcademicYearCode" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="Remark" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="Remark" class="w-full" placeholder="Enter remark" /><span asp-validation-for="Remark" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div class="flex items-center gap-6 pt-4 md:col-span-2"><div class="flex items-center gap-3"><input asp-for="IsRunning" type="checkbox" class="text-blue-600" /><label asp-for="IsRunning" class="text-sm font-semibold text-gray-700">Running</label></div><div class="flex items-center gap-3"><input asp-for="IsActive" type="checkbox" class="text-blue-600" /><label asp-for="IsActive" class="text-sm font-semibold text-gray-700">Active</label></div></div>
+            </div>
+            <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200"><button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 shadow-sm"><i class="fas fa-save mr-2"></i>Save</button><a asp-action="Index" class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200">Cancel</a></div>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

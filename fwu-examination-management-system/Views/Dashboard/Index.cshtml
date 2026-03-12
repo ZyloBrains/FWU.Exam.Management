@@ -1,0 +1,358 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="space-y-6">
+    <!-- Header with Search -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tachometer-alt text-blue-600"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Overview of your examination management system</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Search anything..."
+                       class="pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white w-48 sm:w-64 transition-all duration-200" />
+            </div>
+            <button class="p-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors relative">
+                <i class="fas fa-bell text-gray-500"></i>
+                <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Organizations Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Organizations</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-building text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center">
+                    <span class="text-xs text-green-600 font-medium">
+                        <i class="fas fa-check-circle mr-1"></i>All registered
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Users</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-users text-green-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center">
+                    <span class="text-xs text-green-600 font-medium">
+                        <i class="fas fa-arrow-up mr-1"></i>Currently active
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Roles</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-shield text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center">
+                    <span class="text-xs text-blue-600 font-medium">
+                        <i class="fas fa-shield-alt mr-1"></i>Access levels
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programs Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Programs</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-amber-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center">
+                    <span class="text-xs text-gray-500 font-medium">
+                        <i class="fas fa-book mr-1"></i>Academic programs
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exams Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+            <div class="p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Examinations</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-red-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center">
+                    <span class="text-xs text-gray-500 font-medium">
+                        <i class="fas fa-calendar-check mr-1"></i>Scheduled exams
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Section: Activity Chart + System Status -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Monthly Activity Chart -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Monthly Activity</h3>
+                        <p class="text-sm text-gray-500 mt-1">System activity trends throughout the year</p>
+                    </div>
+                    <span class="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">@DateTime.Now.Year</span>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    @{
+                        var months = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                        var sampleData = new[] { 12, 19, 8, 25, 32, 18, 29, 35, 22, 15, 27, 20 };
+                        var maxVal = sampleData.Max();
+                    }
+                    @for (int i = 0; i < months.Length; i++)
+                    {
+                        var pct = (int)((double)sampleData[i] / maxVal * 100);
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-medium text-gray-600 w-8">@months[i]</span>
+                                <span class="text-xs font-semibold text-gray-800">@sampleData[i]</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                                     style="width: @(pct)%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">System Status</h3>
+                <p class="text-sm text-gray-500 mt-1">Current system health</p>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- Database -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-database text-green-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Database</p>
+                            <p class="text-xs text-gray-500">Operational</p>
+                        </div>
+                    </div>
+                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                </div>
+                <!-- API Services -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-cloud text-green-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">API Services</p>
+                            <p class="text-xs text-gray-500">Operational</p>
+                        </div>
+                    </div>
+                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                </div>
+                <!-- File Storage -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-hdd text-yellow-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">File Storage</p>
+                            <p class="text-xs text-gray-500">Healthy</p>
+                        </div>
+                    </div>
+                    <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                </div>
+                <!-- Backup System -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-blue-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Backup System</p>
+                            <p class="text-xs text-gray-500">Up to date</p>
+                        </div>
+                    </div>
+                    <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                </div>
+                <!-- Identity Service -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-key text-green-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Identity Service</p>
+                            <p class="text-xs text-gray-500">Operational</p>
+                        </div>
+                    </div>
+                    <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Distribution -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Recent Activity</h3>
+                        <p class="text-sm text-gray-500 mt-1">Latest system events</p>
+                    </div>
+                    <a asp-controller="Home" asp-action="Index"
+                       class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center py-10">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-inbox text-3xl text-gray-300"></i>
+                    </div>
+                    <p class="text-gray-500 font-medium">No recent activity</p>
+                    <p class="text-xs text-gray-400 mt-1">Activity will appear here as the system is used</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Distribution -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Role Distribution</h3>
+                        <p class="text-sm text-gray-500 mt-1">Users by role</p>
+                    </div>
+                    <a asp-controller="Role" asp-action="Index"
+                       class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                        View all <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center py-10">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-pie text-3xl text-gray-300"></i>
+                    </div>
+                    <p class="text-gray-500 font-medium">No distribution data</p>
+                    <p class="text-xs text-gray-400 mt-1">Data will populate as users and roles are created</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Quick Actions</h3>
+            <p class="text-sm text-gray-500 mt-1">Frequently used features</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <a asp-controller="Organization" asp-action="Create"
+                   class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200">
+                    <div class="w-12 h-12 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
+                        <i class="fas fa-building text-xl text-blue-600"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">New Organization</span>
+                </a>
+
+                <a asp-controller="User" asp-action="Create"
+                   class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 hover:shadow-md transition-all duration-200">
+                    <div class="w-12 h-12 bg-green-100 group-hover:bg-green-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
+                        <i class="fas fa-user-plus text-xl text-green-600"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-green-700 text-center">New User</span>
+                </a>
+
+                <a asp-controller="Role" asp-action="Create"
+                   class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-purple-50 hover:shadow-md transition-all duration-200">
+                    <div class="w-12 h-12 bg-purple-100 group-hover:bg-purple-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
+                        <i class="fas fa-shield-alt text-xl text-purple-600"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-purple-700 text-center">New Role</span>
+                </a>
+
+                <a asp-controller="Organization" asp-action="Index"
+                   class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-amber-50 hover:shadow-md transition-all duration-200">
+                    <div class="w-12 h-12 bg-amber-100 group-hover:bg-amber-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
+                        <i class="fas fa-list text-xl text-amber-600"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-amber-700 text-center">Organizations</span>
+                </a>
+
+                <a asp-controller="User" asp-action="Index"
+                   class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-red-50 hover:shadow-md transition-all duration-200">
+                    <div class="w-12 h-12 bg-red-100 group-hover:bg-red-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
+                        <i class="fas fa-users-cog text-xl text-red-600"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-red-700 text-center">Manage Users</span>
+                </a>
+
+                <a asp-controller="Home" asp-action="Privacy"
+                   class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-indigo-50 hover:shadow-md transition-all duration-200">
+                    <div class="w-12 h-12 bg-indigo-100 group-hover:bg-indigo-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
+                        <i class="fas fa-cog text-xl text-indigo-600"></i>
+                    </div>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-indigo-700 text-center">Settings</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

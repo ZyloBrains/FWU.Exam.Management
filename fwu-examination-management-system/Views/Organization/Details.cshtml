@@ -4,31 +4,44 @@
     ViewData["Title"] = "Organization Details";
 }
 
-<h1>Organization Details</h1>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-building text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Organization Details</h1>
+        </div>
+    </div>
 
-<div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
-
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.OfficeCode)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.OfficeCode)</dd>
-
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ContactNumber)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.ContactNumber)</dd>
-
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Address)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Address)</dd>
-
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Email)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Email)</dd>
-
-        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.LogoPath)</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.LogoPath)</dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
-    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        @if (!string.IsNullOrEmpty(Model.LogoPath))
+        {
+            <div class="pb-6 mb-6 border-b border-gray-200 flex justify-center">
+                <img src="@Model.LogoPath" alt="@Model.Name logo" class="max-h-[100px] object-contain rounded-lg" />
+            </div>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="detail-field"><p class="field-label">Name</p><p class="field-value">@Model.Name</p></div>
+            <div class="detail-field"><p class="field-label">Office Code</p><p class="field-value">@Model.OfficeCode</p></div>
+            <div class="detail-field"><p class="field-label">Contact Number</p><p class="field-value">@Model.ContactNumber</p></div>
+            <div class="detail-field"><p class="field-label">Address</p><p class="field-value">@Model.Address</p></div>
+            <div class="detail-field md:col-span-2"><p class="field-label">Email</p><p class="field-value"><a href="mailto:@Model.Email" class="text-blue-600 hover:underline">@Model.Email</a></p></div>
+        </div>
+        <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
+            <a asp-action="Edit" asp-route-id="@Model.Id"
+               class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <i class="fas fa-edit mr-1"></i> Edit
+            </a>
+            <a asp-action="Index"
+               class="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                Back to List
+            </a>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,35 @@
+@model fwu_examination_management_system.Models.ExamSchedule
+@{ ViewData["Title"] = "Create Exam Schedule"; }
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"><i class="fas fa-arrow-left text-gray-600"></i></a>
+        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center"><i class="fas fa-clock text-orange-600"></i></div>
+        <h1 class="text-2xl font-bold text-gray-800">Create Exam Schedule</h1>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 form-card">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-6"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="md:col-span-2"><label asp-for="ExamScheduleName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="ExamScheduleName" class="w-full" placeholder="Enter schedule name" /><span asp-validation-for="ExamScheduleName" class="text-red-500 text-xs mt-1 block"></span></div>
+                <div><label asp-for="ExamScheduleCode" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="ExamScheduleCode" class="w-full" placeholder="Enter schedule code" /></div>
+                <div><label asp-for="AcademicYearID" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="AcademicYearID" type="number" class="w-full" placeholder="Enter academic year ID" /></div>
+                <div><label asp-for="LevelID" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="LevelID" type="number" class="w-full" placeholder="Enter level ID" /></div>
+                <div><label asp-for="YearPartID" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="YearPartID" type="number" class="w-full" placeholder="Enter year part ID" /></div>
+                <div><label asp-for="ExamTypeID" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="ExamTypeID" type="number" class="w-full" placeholder="Enter exam type ID" /></div>
+                <div><label asp-for="StartFromAD" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="StartFromAD" type="date" class="w-full" /></div>
+                <div><label asp-for="EndToAD" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="EndToAD" type="date" class="w-full" /></div>
+                <div><label asp-for="StartFromBS" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="StartFromBS" class="w-full" placeholder="e.g. 2081-01-01" /></div>
+                <div><label asp-for="EndToBS" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="EndToBS" class="w-full" placeholder="e.g. 2081-03-30" /></div>
+                <div><label asp-for="StartTime" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="StartTime" type="time" class="w-full" /></div>
+                <div><label asp-for="EndTime" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="EndTime" type="time" class="w-full" /></div>
+                <div class="md:col-span-2"><label asp-for="Remarks" class="block text-sm font-semibold text-gray-700 mb-2"></label><textarea asp-for="Remarks" rows="3" class="w-full" placeholder="Enter remarks"></textarea></div>
+                <div class="flex items-center gap-3 pt-2"><input asp-for="Active" type="checkbox" class="text-blue-600" /><label asp-for="Active" class="text-sm font-semibold text-gray-700"></label></div>
+            </div>
+            <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"><i class="fas fa-save mr-2"></i>Create</button>
+                <a asp-action="Index" class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

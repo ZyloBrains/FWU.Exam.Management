@@ -8,10 +8,6 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
 html {
   position: relative;
   min-height: 100%;
@@ -21,11 +17,73 @@ body {
   margin-bottom: 60px;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+/* Professional form input styling */
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="email"],
+.form-card input[type="date"],
+.form-card input[type="time"],
+.form-card input[type="password"],
+.form-card input[type="url"],
+.form-card input[type="tel"],
+.form-card textarea,
+.form-card select {
+  background-color: #f9fafb;
+  border: 2px solid #d1d5db;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.form-card input[type="text"]:focus,
+.form-card input[type="number"]:focus,
+.form-card input[type="email"]:focus,
+.form-card input[type="date"]:focus,
+.form-card input[type="time"]:focus,
+.form-card input[type="password"]:focus,
+.form-card input[type="url"]:focus,
+.form-card input[type="tel"]:focus,
+.form-card textarea:focus,
+.form-card select:focus {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.form-card input[type="text"]::placeholder,
+.form-card input[type="number"]::placeholder,
+.form-card textarea::placeholder {
+  color: #9ca3af;
+}
+
+.form-card input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+/* Details view field styling */
+.detail-field {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
+}
+
+.detail-field .field-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 0.375rem;
+}
+
+.detail-field .field-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1f2937;
 }

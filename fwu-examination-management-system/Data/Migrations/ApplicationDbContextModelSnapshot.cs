@@ -45,7 +45,7 @@ namespace fwu_examination_management_system.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -70,7 +70,7 @@ namespace fwu_examination_management_system.Data.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
+                    b.ToTable("RoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -95,7 +95,7 @@ namespace fwu_examination_management_system.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
+                    b.ToTable("UserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -119,7 +119,7 @@ namespace fwu_examination_management_system.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
+                    b.ToTable("UserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -134,7 +134,7 @@ namespace fwu_examination_management_system.Data.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -155,7 +155,94 @@ namespace fwu_examination_management_system.Data.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
+                    b.ToTable("UserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.AcademicYear", b =>
+                {
+                    b.Property<int>("AcademicYearID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AcademicYearID"));
+
+                    b.Property<int>("AcademicYearCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AcademicYearCodeNep")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AcademicYearName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AcademicYearNameNep")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRunning")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remark")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("AcademicYearID");
+
+                    b.ToTable("AcademicYear");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.ActiveExamSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan?>("EndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<int>("ExamScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeSpan?>("OpenTime")
+                        .HasColumnType("interval");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ActiveExamSchedule");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.AppUser", b =>
@@ -227,7 +314,695 @@ namespace fwu_examination_management_system.Data.Migrations
 
                     b.HasIndex("OrganizationId");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.ApplicationVoucher", b =>
+                {
+                    b.Property<int>("ApplicationVoucherId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ApplicationVoucherId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Branch")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("ContactNo")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime?>("DOBAD")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DOBBS")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("ExamScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StudentName")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<int?>("StudentRegistrationId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("VoucherDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VoucherNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("ApplicationVoucherId");
+
+                    b.ToTable("ApplicationVoucher");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.Bank", b =>
+                {
+                    b.Property<int>("BankID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BankID"));
+
+                    b.Property<string>("BankCode")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("BankID");
+
+                    b.ToTable("Bank");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.BankVoucher", b =>
+                {
+                    b.Property<int>("BankVoucherID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BankVoucherID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BankAddress")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("BankID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BankVoucherUserAttachmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BillTitleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CollegeID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExamScheduleParentId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<decimal>("VoucherAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("VoucherDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VoucherNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("BankVoucherID");
+
+                    b.ToTable("BankVoucher");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.Batch", b =>
+                {
+                    b.Property<int>("BatchID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BatchID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BatchName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("BatchID");
+
+                    b.ToTable("Batch");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.BillTitle", b =>
+                {
+                    b.Property<int>("BillTitleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BillTitleId"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("ApplicableDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BillTitleName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExamScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifedDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ModifiedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ThroughDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("BillTitleId");
+
+                    b.ToTable("BillTitle");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.Board", b =>
+                {
+                    b.Property<int>("BoardID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BoardID"));
+
+                    b.Property<string>("BoardName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("CountryID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("BoardID");
+
+                    b.ToTable("Board");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.CProgram", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("Id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Duration")
+                        .HasMaxLength(100)
+                        .HasColumnType("integer")
+                        .HasColumnName("Duration");
+
+                    b.Property<int>("FacultyId")
+                        .HasColumnType("integer")
+                        .HasColumnName("FacultyId");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("IsActive");
+
+                    b.Property<int>("LevelId")
+                        .HasColumnType("integer")
+                        .HasColumnName("LevelId");
+
+                    b.Property<string>("ProgramName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ProgramName");
+
+                    b.Property<string>("ShortName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ShortName");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Program");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.College", b =>
+                {
+                    b.Property<int>("CollegeID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CollegeID"));
+
+                    b.Property<decimal?>("AllocatedAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CollapseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CollegeCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("CollegeName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CollegeNameNep")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("CollegeTypeID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DistrictID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EmailAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("EstablishedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Fax")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("HouseNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsExamCentreOnly")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MunicipalityVdc")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Phone1")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Phone2")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("PrincipalContactNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PrincipalName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int?>("QuestionSetId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("WardNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("WebAddress")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("CollegeID");
+
+                    b.ToTable("College");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.ExamRegistration", b =>
+                {
+                    b.Property<int>("ExamRegistrationID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamRegistrationID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AdminVerifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("AdminVerifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ApplicationVoucherId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("AttendancePercentage")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("CollegeID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExamCenterID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ExamRollNo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long?>("ExamRollNoCoding")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ExamScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("FeeEnclosed")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsAppliedByStudent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsExamRegistered")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsVerifiedByCollege")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsWithHeld")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ProgramId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RegistrationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int?>("RollNoIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SGPA")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("StudentProgramYearPartID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TypeID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("VerifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("VerifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ExamRegistrationID");
+
+                    b.ToTable("ExamRegistration");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.ExamSchedule", b =>
+                {
+                    b.Property<int>("ExamScheduleID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamScheduleID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AdmissionCardReleaseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CollegeApproveDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<DateTime?>("EndToAD")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EndToBS")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("ExamScheduleCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ExamScheduleName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("ExamScheduleParentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ExamTypeID")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ExtendedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("ExtendedDateCharge")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("LevelID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("NegativeMark")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PartialBatchIds")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ProgramIds")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("PublishedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RegularBatchIds")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("StartFromAD")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StartFromBS")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("interval");
+
+                    b.Property<int>("YearPartID")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ExamScheduleID");
+
+                    b.ToTable("ExamSchedule");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.Organization", b =>
@@ -264,6 +1039,300 @@ namespace fwu_examination_management_system.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Organizations");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.StudentRegistration", b =>
+                {
+                    b.Property<int>("StudentRegistrationID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("StudentRegistrationID"));
+
+                    b.Property<int>("AcademicYearID")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("BirthDateAD")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BirthDateBS")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("BloodGroup")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<int>("CollegeID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ContactNo")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DistrictID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("EntranceRollNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("EntryFormatID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("EthnicityID")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FacultyID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text");
+
+                    b.Property<int>("GenderID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("IndexGroupID")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsRegNoGenerated")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("LevelID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LocalLevelId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MiddleName")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MunVDC")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Nationality")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("NepaliName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<int?>("PhotoAttachmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PreviousSymbolNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PreviousYear")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RegistrationNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Religion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RowIndex")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("StudentCategoryID")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StudentRegistrationIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StudentRegistrationSearchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("VerifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("VerifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WardNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("StudentRegistrationID");
+
+                    b.ToTable("StudentRegistration");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Models.SubjectDetail", b =>
+                {
+                    b.Property<int>("SubjectDetailID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectDetailID"));
+
+                    b.Property<string>("ConSubjectCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreditHour")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("HasInternal")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasPractical")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasTheory")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("InternalPracticalFullMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("InternalPracticalPassMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("InternalTheoryFullMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("InternalTheoryPassMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsCompulsory")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("PracticalFullMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("PracticalPassMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("ProgramID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SubjectCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("SubjectGroupID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SubjectName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SubjectTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TheoryFullMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TheoryPassMark")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("YearPartID")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("part")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("year")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("SubjectDetailID");
+
+                    b.ToTable("SubjectDetail");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

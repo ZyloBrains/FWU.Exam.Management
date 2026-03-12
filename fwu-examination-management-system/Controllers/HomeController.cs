@@ -13,19 +13,10 @@ namespace fwu_examination_management_system.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                var user = await userManager.GetUserAsync(User);
-                if (user?.OrganizationId != null)
-                {
-                    var org = await context.Organizations.FindAsync(user.OrganizationId);
-                    if (org != null)
-                    {
-                        ViewBag.Organization = org;
-                        ViewBag.UserCount = await userManager.Users
-                            .CountAsync(u => u.OrganizationId == org.Id);
-                    }
-                }
+                return RedirectToAction("Index", "Dashboard");
             }
-            return View();
+
+            return Redirect("/Identity/Account/Login");
         }
 
         public IActionResult Privacy()
