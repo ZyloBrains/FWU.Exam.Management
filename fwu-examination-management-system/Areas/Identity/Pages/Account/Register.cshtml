@@ -87,7 +87,7 @@
                     @* Model-level Validation Errors *@
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
 
-                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
 
                         <!-- Email -->
@@ -122,6 +122,21 @@
                                    aria-required="true"
                                    placeholder="Re-enter your password" />
                             <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Profile Image -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium small text-dark">Profile Image <span class="text-muted fw-normal">(optional)</span></label>
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <img id="profilePreview"
+                                     src="~/images/default-avatar.png"
+                                     alt="Preview"
+                                     class="rounded-circle border"
+                                     style="width:64px;height:64px;object-fit:cover;" />
+                                <input type="file" name="ProfileImage" id="profileImageInput"
+                                       class="form-control form-control-sm py-2"
+                                       accept="image/*" />
+                            </div>
                         </div>
 
                         <!-- Register Button -->
@@ -184,6 +199,15 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.getElementById('profileImageInput').addEventListener('change', function () {
+            const preview = document.getElementById('profilePreview');
+            if (this.files && this.files[0]) {
+                preview.src = URL.createObjectURL(this.files[0]);
+            }
+        });
+    </script>
 
     @section Scripts {
         <partial name="_ValidationScriptsPartial" />
