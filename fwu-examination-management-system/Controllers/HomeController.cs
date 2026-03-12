@@ -8,7 +8,12 @@ namespace fwu_examination_management_system.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            return Redirect("/Identity/Account/Login");
         }
 
         public IActionResult Privacy()

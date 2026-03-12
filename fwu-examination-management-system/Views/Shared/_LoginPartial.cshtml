@@ -9,7 +9,7 @@
         <a class="block px-3 py-2 text-gray-700 hover:text-gray-900" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
     </li>
     <li>
-        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/Identity/Account/Login">
             <button type="submit" class="px-3 py-2 text-gray-700 hover:text-gray-900 bg-transparent border-none cursor-pointer">Logout</button>
         </form>
     </li>
