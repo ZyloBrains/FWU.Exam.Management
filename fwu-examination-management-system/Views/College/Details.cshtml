@@ -1,29 +1,81 @@
 @model fwu_examination_management_system.Models.College
-@{ ViewData["Title"] = "College Details"; }
+@{
+    ViewData["Title"] = "College Details";
+}
 
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
     <div class="flex items-center gap-3">
-        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"><i class="fas fa-arrow-left text-gray-600"></i></a>
-        <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-school text-amber-600"></i></div>
-        <h1 class="text-2xl font-bold text-gray-800">College Details</h1>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div class="detail-field"><p class="field-label">Code</p><p class="field-value">@Model.CollegeCode</p></div>
-            <div class="detail-field"><p class="field-label">Name</p><p class="field-value">@Model.CollegeName</p></div>
-            <div class="detail-field"><p class="field-label">Short Name</p><p class="field-value">@(Model.ShortName ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Email</p><p class="field-value">@(Model.EmailAddress ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Phone</p><p class="field-value">@(Model.Phone1 ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Principal</p><p class="field-value">@(Model.PrincipalName ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Web Address</p><p class="field-value">@(Model.WebAddress ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Status</p><p class="mt-1">@if (Model.IsActive) { <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span> } else { <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Inactive</span> }</p></div>
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-school text-amber-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">College Details</h1>
         </div>
-        <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Code</p>
+                <p class="text-base font-semibold text-gray-800">@Model.CollegeCode</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Name</p>
+                <p class="text-base font-semibold text-gray-800">@Model.CollegeName</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Short Name</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.ShortName ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Email</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.EmailAddress ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Phone</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.Phone1 ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Principal</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.PrincipalName ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Web Address</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.WebAddress ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Status</p>
+                <p class="mt-1">
+                    @if (Model.IsActive)
+                    {
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
+                    }
+                    else
+                    {
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Inactive</span>
+                    }
+                </p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 mt-8 pt-6 border-t border-gray-200">
             @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
             {
-                <a asp-action="Edit" asp-route-id="@Model.CollegeID" class="px-6 py-3 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition-colors shadow-sm"><i class="fas fa-edit mr-2"></i>Edit</a>
+                <a asp-action="Edit" asp-route-id="@Model.CollegeID"
+                   class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </a>
             }
-            <a asp-action="Index" class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">Back to List</a>
+            <a asp-action="Index"
+               class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back
+            </a>
         </div>
     </div>
 </div>

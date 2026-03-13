@@ -1,37 +1,121 @@
 @model fwu_examination_management_system.Models.SubjectDetail
-@{ ViewData["Title"] = "Subject Details"; }
-<div class="max-w-4xl mx-auto space-y-6">
+@{
+    ViewData["Title"] = "Subject Details";
+}
+
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
     <div class="flex items-center gap-3">
-        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"><i class="fas fa-arrow-left text-gray-600"></i></a>
-        <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center"><i class="fas fa-book text-teal-600"></i></div>
-        <h1 class="text-2xl font-bold text-gray-800">Subject Details</h1>
+        <a asp-action="Index"
+           class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-book text-teal-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Subject Details</h1>
+        </div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div class="detail-field"><p class="field-label">Subject Code</p><p class="field-value">@Model.SubjectCode</p></div>
-            <div class="detail-field"><p class="field-label">Subject Name</p><p class="field-value">@Model.SubjectName</p></div>
-            <div class="detail-field"><p class="field-label">Short Name</p><p class="field-value">@(Model.ShortName ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Program ID</p><p class="field-value">@Model.ProgramID</p></div>
-            <div class="detail-field"><p class="field-label">Year Part ID</p><p class="field-value">@Model.YearPartID</p></div>
-            <div class="detail-field"><p class="field-label">Subject Type ID</p><p class="field-value">@Model.SubjectTypeId</p></div>
-            <div class="detail-field"><p class="field-label">Theory Full Mark</p><p class="field-value">@Model.TheoryFullMark</p></div>
-            <div class="detail-field"><p class="field-label">Theory Pass Mark</p><p class="field-value">@Model.TheoryPassMark</p></div>
-            <div class="detail-field"><p class="field-label">Practical Full Mark</p><p class="field-value">@(Model.PracticalFullMark?.ToString() ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Practical Pass Mark</p><p class="field-value">@(Model.PracticalPassMark?.ToString() ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Credit Hour</p><p class="field-value">@(Model.CreditHour?.ToString() ?? "—")</p></div>
-            <div class="detail-field"><p class="field-label">Display Order</p><p class="field-value">@(Model.DisplayOrder?.ToString() ?? "—")</p></div>
-            <div class="md:col-span-2 detail-field"><p class="field-label">Remarks</p><p class="field-value">@(Model.Remarks ?? "—")</p></div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Subject Code</p>
+                <p class="text-base font-semibold text-gray-800">@Model.SubjectCode</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Subject Name</p>
+                <p class="text-base font-semibold text-gray-800">@Model.SubjectName</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Short Name</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.ShortName ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Program ID</p>
+                <p class="text-base font-semibold text-gray-800">@Model.ProgramID</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Year Part ID</p>
+                <p class="text-base font-semibold text-gray-800">@Model.YearPartID</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Subject Type ID</p>
+                <p class="text-base font-semibold text-gray-800">@Model.SubjectTypeId</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Theory Full Mark</p>
+                <p class="text-base font-semibold text-gray-800">@Model.TheoryFullMark</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Theory Pass Mark</p>
+                <p class="text-base font-semibold text-gray-800">@Model.TheoryPassMark</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Practical Full Mark</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.PracticalFullMark?.ToString() ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Practical Pass Mark</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.PracticalPassMark?.ToString() ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Credit Hour</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.CreditHour?.ToString() ?? "—")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Display Order</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.DisplayOrder?.ToString() ?? "—")</p>
+            </div>
+            <div class="md:col-span-2">
+                <p class="text-sm font-medium text-gray-600">Remarks</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.Remarks ?? "—")</p>
+            </div>
+
+            <!-- Options Badges -->
             <div class="md:col-span-2 flex flex-wrap gap-3 pt-1">
-                @if (Model.HasTheory) { <span class="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">Theory</span> }
-                @if (Model.HasPractical) { <span class="px-3 py-1.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">Practical</span> }
-                @if (Model.HasInternal) { <span class="px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">Internal</span> }
-                @if (Model.IsCompulsory) { <span class="px-3 py-1.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full">Compulsory</span> }
-                @if (Model.IsActive) { <span class="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span> } else { <span class="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Inactive</span> }
+                @if (Model.HasTheory)
+                {
+                    <span class="px-3 py-1.5 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">Theory</span>
+                }
+                @if (Model.HasPractical)
+                {
+                    <span class="px-3 py-1.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">Practical</span>
+                }
+                @if (Model.HasInternal)
+                {
+                    <span class="px-3 py-1.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">Internal</span>
+                }
+                @if (Model.IsCompulsory)
+                {
+                    <span class="px-3 py-1.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full">Compulsory</span>
+                }
+                @if (Model.IsActive)
+                {
+                    <span class="px-3 py-1.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Inactive</span>
+                }
             </div>
         </div>
-        <div class="flex items-center gap-3 mt-8 pt-6 border-t border-gray-200">
-            @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin")) { <a asp-action="Edit" asp-route-id="@Model.SubjectDetailID" class="px-6 py-3 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition-colors shadow-sm"><i class="fas fa-edit mr-2"></i>Edit</a> }
-            <a asp-action="Index" class="px-6 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">Back to List</a>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 mt-8 pt-6 border-t border-gray-200">
+            @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.SubjectDetailID"
+                   class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </a>
+            }
+            <a asp-action="Index"
+               class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
         </div>
     </div>
 </div>

@@ -4,10 +4,10 @@
     ViewData["Title"] = "Edit User";
 }
 
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
     <!-- Header -->
     <div class="flex items-center gap-3">
-        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
             <i class="fas fa-arrow-left text-gray-600"></i>
         </a>
         <div class="flex items-center gap-3">
@@ -19,30 +19,38 @@
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 form-card">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <form asp-action="Edit" class="space-y-5">
-            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
             <input type="hidden" asp-for="Id" />
 
+            <!-- Section: User Information -->
             <div>
-                <label asp-for="Email" class="block text-sm font-semibold text-gray-700 mb-2"></label>
-                <input asp-for="Email" class="w-full" />
-                <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">User Information</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label asp-for="Email" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="Email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email address" />
+                        <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="OrganizationId" class="text-sm font-medium text-gray-700"></label>
+                        <select asp-for="OrganizationId" asp-items="ViewBag.Organizations"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                            <option value="">-- Select Organization --</option>
+                        </select>
+                        <span asp-validation-for="OrganizationId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <label asp-for="OrganizationId" class="block text-sm font-semibold text-gray-700 mb-2"></label>
-                <select asp-for="OrganizationId" asp-items="ViewBag.Organizations"
-                        class="w-full bg-white">
-                    <option value="">-- Select Organization --</option>
-                </select>
-            </div>
-
-            <div class="flex items-center gap-3 pt-6 border-t border-gray-200">
-                <button type="submit" class="px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
                     <i class="fas fa-save mr-1"></i> Save
                 </button>
-                <a asp-action="Index" class="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
                     Cancel
                 </a>
             </div>
@@ -51,5 +59,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

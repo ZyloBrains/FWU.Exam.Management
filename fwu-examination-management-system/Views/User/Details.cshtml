@@ -4,11 +4,11 @@
     ViewData["Title"] = "User Details";
 }
 
-<div class="max-w-2xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
     <!-- Header -->
     <div class="flex items-center gap-3">
-        <a asp-action="Index" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fas fa-arrow-left"></i>
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
         </a>
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -19,17 +19,19 @@
     </div>
 
     <!-- Details Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-        <div class="flex flex-col sm:flex-row gap-1">
-            <span class="text-sm font-medium text-gray-500 sm:w-40 shrink-0">Email</span>
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-5">
+        <div class="flex flex-col sm:flex-row gap-2">
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Email</span>
             <span class="text-sm text-gray-800 font-medium">@Model.Email</span>
         </div>
-        <div class="flex flex-col sm:flex-row gap-1">
-            <span class="text-sm font-medium text-gray-500 sm:w-40 shrink-0">Organization</span>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Organization</span>
             <span class="text-sm text-gray-800">@(Model.Organization?.Name ?? "—")</span>
         </div>
-        <div class="flex flex-col sm:flex-row gap-1">
-            <span class="text-sm font-medium text-gray-500 sm:w-40 shrink-0">Email Confirmed</span>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Email Confirmed</span>
             @if (Model.EmailConfirmed)
             {
                 <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded w-fit">
@@ -43,8 +45,9 @@
                 </span>
             }
         </div>
-        <div class="flex flex-col sm:flex-row gap-1">
-            <span class="text-sm font-medium text-gray-500 sm:w-40 shrink-0">Roles</span>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Roles</span>
             <div>
                 @{
                     var roles = ViewBag.Roles as IList<string>;
@@ -67,18 +70,18 @@
     </div>
 
     <!-- Actions -->
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
         <a asp-action="Edit" asp-route-id="@Model.Id"
-           class="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+           class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
             <i class="fas fa-edit mr-1"></i> Edit
         </a>
         <a asp-action="AssignRoles" asp-route-id="@Model.Id"
-           class="px-5 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 shadow-sm">
+           class="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-md">
             <i class="fas fa-user-shield mr-1"></i> Assign Roles
         </a>
-        <a asp-action="Index"
-           class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-            Back to List
+        <a asp-action="Delete" asp-route-id="@Model.Id"
+           class="px-6 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition shadow-md">
+            <i class="fas fa-trash mr-1"></i> Delete
         </a>
     </div>
 </div>
