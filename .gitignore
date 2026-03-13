@@ -362,4 +362,3 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /fwu-examination-management-system/wwwroot/images
-/fwu-examination-management-system/appsettings.json
