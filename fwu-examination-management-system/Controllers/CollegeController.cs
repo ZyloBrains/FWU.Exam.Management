@@ -1,6 +1,7 @@
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,12 @@ namespace fwu_examination_management_system.Controllers
     public class CollegeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public CollegeController(ApplicationDbContext context)
+        public CollegeController(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -42,7 +45,17 @@ namespace fwu_examination_management_system.Controllers
         {
             if (ModelState.IsValid)
             {
-                college.CreatedDate = DateTime.UtcNow;
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    college.CreatedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                }
+                college.CreatedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                if (college.EstablishedDate.HasValue)
+                    college.EstablishedDate = DateTime.SpecifyKind(college.EstablishedDate.Value, DateTimeKind.Utc);
+                if (college.CollapseDate.HasValue)
+                    college.CollapseDate = DateTime.SpecifyKind(college.CollapseDate.Value, DateTimeKind.Utc);
+
                 _context.Colleges.Add(college);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -67,10 +80,31 @@ namespace fwu_examination_management_system.Controllers
             if (id != college.CollegeID) return NotFound();
             if (ModelState.IsValid)
             {
-                college.ModifiedDate = DateTime.UtcNow;
-                _context.Update(college);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var user = await _userManager.GetUserAsync(User);
+                    if (user != null)
+                    {
+                        college.ModifiedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                    }
+                    college.ModifiedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                    if (college.EstablishedDate.HasValue)
+                        college.EstablishedDate = DateTime.SpecifyKind(college.EstablishedDate.Value, DateTimeKind.Utc);
+                    if (college.CollapseDate.HasValue)
+                        college.CollapseDate = DateTime.SpecifyKind(college.CollapseDate.Value, DateTimeKind.Utc);
+
+                    _context.Update(college);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!CollegeExists(college.CollegeID))
+                    {
+                        return NotFound();
+                    }
+                    throw;
+                }
             }
             return View(college);
         }
@@ -96,6 +130,11 @@ namespace fwu_examination_management_system.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool CollegeExists(int id)
+        {
+            return _context.Colleges.Any(e => e.CollegeID == id);
         }
     }
 }
