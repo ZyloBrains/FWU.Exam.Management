@@ -1,6 +1,7 @@
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,12 @@ namespace fwu_examination_management_system.Controllers
     public class ExamScheduleController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public ExamScheduleController(ApplicationDbContext context)
+        public ExamScheduleController(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -42,7 +45,27 @@ namespace fwu_examination_management_system.Controllers
         {
             if (ModelState.IsValid)
             {
-                item.CreatedDate = DateTime.UtcNow;
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    item.CreatedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                }
+
+                // Convert all DateTime fields to UTC for PostgreSQL compatibility
+                item.CreatedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                if (item.StartFromAD.HasValue)
+                    item.StartFromAD = DateTime.SpecifyKind(item.StartFromAD.Value, DateTimeKind.Utc);
+                if (item.EndToAD.HasValue)
+                    item.EndToAD = DateTime.SpecifyKind(item.EndToAD.Value, DateTimeKind.Utc);
+                if (item.PublishedDate.HasValue)
+                    item.PublishedDate = DateTime.SpecifyKind(item.PublishedDate.Value, DateTimeKind.Utc);
+                if (item.ExtendedDate.HasValue)
+                    item.ExtendedDate = DateTime.SpecifyKind(item.ExtendedDate.Value, DateTimeKind.Utc);
+                if (item.CollegeApproveDate.HasValue)
+                    item.CollegeApproveDate = DateTime.SpecifyKind(item.CollegeApproveDate.Value, DateTimeKind.Utc);
+                if (item.AdmissionCardReleaseDate.HasValue)
+                    item.AdmissionCardReleaseDate = DateTime.SpecifyKind(item.AdmissionCardReleaseDate.Value, DateTimeKind.Utc);
+
                 _context.ExamSchedules.Add(item);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -65,12 +88,44 @@ namespace fwu_examination_management_system.Controllers
         public async Task<IActionResult> Edit(int id, ExamSchedule item)
         {
             if (id != item.ExamScheduleID) return NotFound();
+
             if (ModelState.IsValid)
             {
-                item.ModifiedDate = DateTime.UtcNow;
-                _context.Update(item);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var user = await _userManager.GetUserAsync(User);
+                    if (user != null)
+                    {
+                        item.ModifiedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                    }
+
+                    // Convert all DateTime fields to UTC for PostgreSQL compatibility
+                    item.ModifiedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                    if (item.StartFromAD.HasValue)
+                        item.StartFromAD = DateTime.SpecifyKind(item.StartFromAD.Value, DateTimeKind.Utc);
+                    if (item.EndToAD.HasValue)
+                        item.EndToAD = DateTime.SpecifyKind(item.EndToAD.Value, DateTimeKind.Utc);
+                    if (item.PublishedDate.HasValue)
+                        item.PublishedDate = DateTime.SpecifyKind(item.PublishedDate.Value, DateTimeKind.Utc);
+                    if (item.ExtendedDate.HasValue)
+                        item.ExtendedDate = DateTime.SpecifyKind(item.ExtendedDate.Value, DateTimeKind.Utc);
+                    if (item.CollegeApproveDate.HasValue)
+                        item.CollegeApproveDate = DateTime.SpecifyKind(item.CollegeApproveDate.Value, DateTimeKind.Utc);
+                    if (item.AdmissionCardReleaseDate.HasValue)
+                        item.AdmissionCardReleaseDate = DateTime.SpecifyKind(item.AdmissionCardReleaseDate.Value, DateTimeKind.Utc);
+
+                    _context.Update(item);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ExamScheduleExists(item.ExamScheduleID))
+                    {
+                        return NotFound();
+                    }
+                    throw;
+                }
             }
             return View(item);
         }
@@ -96,6 +151,11 @@ namespace fwu_examination_management_system.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool ExamScheduleExists(int id)
+        {
+            return _context.ExamSchedules.Any(e => e.ExamScheduleID == id);
         }
     }
 }

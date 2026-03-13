@@ -1,6 +1,7 @@
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,12 @@ namespace fwu_examination_management_system.Controllers
     public class AcademicYearController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
 
-        public AcademicYearController(ApplicationDbContext context)
+        public AcademicYearController(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -42,7 +45,12 @@ namespace fwu_examination_management_system.Controllers
         {
             if (ModelState.IsValid)
             {
-                item.CreatedDate = DateTime.UtcNow;
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    item.CreatedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                }
+                item.CreatedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 _context.AcademicYears.Add(item);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -67,10 +75,26 @@ namespace fwu_examination_management_system.Controllers
             if (id != item.AcademicYearID) return NotFound();
             if (ModelState.IsValid)
             {
-                item.ModifiedDate = DateTime.UtcNow;
-                _context.Update(item);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    var user = await _userManager.GetUserAsync(User);
+                    if (user != null)
+                    {
+                        item.ModifiedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                    }
+                    item.ModifiedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                    _context.Update(item);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!AcademicYearExists(item.AcademicYearID))
+                    {
+                        return NotFound();
+                    }
+                    throw;
+                }
             }
             return View(item);
         }
@@ -96,6 +120,11 @@ namespace fwu_examination_management_system.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        private bool AcademicYearExists(int id)
+        {
+            return _context.AcademicYears.Any(e => e.AcademicYearID == id);
         }
     }
 }

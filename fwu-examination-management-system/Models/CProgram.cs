@@ -23,7 +23,6 @@ namespace fwu_examination_management_system.Models {
         [StringLength(100)]
         [Column("ShortName")]
         public string? ShortName { get; set; }
-        [StringLength(100)]
         [Column("Duration")]
         public int Duration { get; set; }
         //[StringLength(100)]
