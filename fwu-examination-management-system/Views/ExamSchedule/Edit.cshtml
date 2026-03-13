@@ -12,6 +12,7 @@
             <input type="hidden" asp-for="ExamScheduleID" />
             <input type="hidden" asp-for="CreatedBy" />
             <input type="hidden" asp-for="CreatedDate" />
+            <!-- Note: ModifiedDate and ModifiedBy are set server-side only, not posted from form -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="md:col-span-2"><label asp-for="ExamScheduleName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="ExamScheduleName" class="w-full" /><span asp-validation-for="ExamScheduleName" class="text-red-500 text-xs mt-1 block"></span></div>
                 <div><label asp-for="ExamScheduleCode" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="ExamScheduleCode" class="w-full" /></div>

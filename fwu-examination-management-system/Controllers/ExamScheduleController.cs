@@ -93,28 +93,49 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
+                    var existingItem = await _context.ExamSchedules.FindAsync(id);
+                    if (existingItem == null) return NotFound();
+
+                    existingItem.ExamScheduleName = item.ExamScheduleName;
+                    existingItem.ExamScheduleCode = item.ExamScheduleCode;
+                    existingItem.AcademicYearID = item.AcademicYearID;
+                    existingItem.LevelID = item.LevelID;
+                    existingItem.YearPartID = item.YearPartID;
+                    existingItem.ExamTypeID = item.ExamTypeID;
+                    existingItem.StartFromBS = item.StartFromBS;
+                    existingItem.EndToBS = item.EndToBS;
+                    existingItem.StartTime = item.StartTime;
+                    existingItem.EndTime = item.EndTime;
+                    existingItem.Remarks = item.Remarks;
+                    existingItem.Active = item.Active;
+
+                    existingItem.StartFromAD = item.StartFromAD.HasValue
+                        ? DateTime.SpecifyKind(item.StartFromAD.Value, DateTimeKind.Utc)
+                        : null;
+                    existingItem.EndToAD = item.EndToAD.HasValue
+                        ? DateTime.SpecifyKind(item.EndToAD.Value, DateTimeKind.Utc)
+                        : null;
+                    existingItem.PublishedDate = item.PublishedDate.HasValue
+                        ? DateTime.SpecifyKind(item.PublishedDate.Value, DateTimeKind.Utc)
+                        : null;
+                    existingItem.ExtendedDate = item.ExtendedDate.HasValue
+                        ? DateTime.SpecifyKind(item.ExtendedDate.Value, DateTimeKind.Utc)
+                        : null;
+                    existingItem.CollegeApproveDate = item.CollegeApproveDate.HasValue
+                        ? DateTime.SpecifyKind(item.CollegeApproveDate.Value, DateTimeKind.Utc)
+                        : null;
+                    existingItem.AdmissionCardReleaseDate = item.AdmissionCardReleaseDate.HasValue
+                        ? DateTime.SpecifyKind(item.AdmissionCardReleaseDate.Value, DateTimeKind.Utc)
+                        : null;
+
                     var user = await _userManager.GetUserAsync(User);
                     if (user != null)
                     {
-                        item.ModifiedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
+                        existingItem.ModifiedBy = int.TryParse(user.Id, out var userId) ? userId : 0;
                     }
 
-                    // Convert all DateTime fields to UTC for PostgreSQL compatibility
-                    item.ModifiedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-                    if (item.StartFromAD.HasValue)
-                        item.StartFromAD = DateTime.SpecifyKind(item.StartFromAD.Value, DateTimeKind.Utc);
-                    if (item.EndToAD.HasValue)
-                        item.EndToAD = DateTime.SpecifyKind(item.EndToAD.Value, DateTimeKind.Utc);
-                    if (item.PublishedDate.HasValue)
-                        item.PublishedDate = DateTime.SpecifyKind(item.PublishedDate.Value, DateTimeKind.Utc);
-                    if (item.ExtendedDate.HasValue)
-                        item.ExtendedDate = DateTime.SpecifyKind(item.ExtendedDate.Value, DateTimeKind.Utc);
-                    if (item.CollegeApproveDate.HasValue)
-                        item.CollegeApproveDate = DateTime.SpecifyKind(item.CollegeApproveDate.Value, DateTimeKind.Utc);
-                    if (item.AdmissionCardReleaseDate.HasValue)
-                        item.AdmissionCardReleaseDate = DateTime.SpecifyKind(item.AdmissionCardReleaseDate.Value, DateTimeKind.Utc);
+                    existingItem.ModifiedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
 
-                    _context.Update(item);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
                 }
@@ -125,6 +146,11 @@ namespace fwu_examination_management_system.Controllers
                         return NotFound();
                     }
                     throw;
+                }
+                catch (DbUpdateException ex)
+                {
+                    ModelState.AddModelError("", $"Database error: {ex.InnerException?.Message ?? ex.Message}");
+                    return View(item);
                 }
             }
             return View(item);

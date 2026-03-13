@@ -10,8 +10,7 @@
         <form asp-action="Edit" method="post">
             <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-6"></div>
             <input type="hidden" asp-for="SubjectDetailID" />
-            <input type="hidden" asp-for="CreatedBy" />
-            <input type="hidden" asp-for="CreatedDate" />
+            <!-- CreatedBy/CreatedDate and ModifiedBy/ModifiedDate are controlled server-side -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div><label asp-for="SubjectCode" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="SubjectCode" class="w-full" /><span asp-validation-for="SubjectCode" class="text-red-500 text-xs mt-1 block"></span></div>
                 <div><label asp-for="SubjectName" class="block text-sm font-semibold text-gray-700 mb-2"></label><input asp-for="SubjectName" class="w-full" /><span asp-validation-for="SubjectName" class="text-red-500 text-xs mt-1 block"></span></div>
