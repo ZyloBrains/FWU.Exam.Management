@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace fwu_examination_management_system.Models
 {
 
-    // 6. Batch
     [Table("Batch")]
     public class Batch
     {
