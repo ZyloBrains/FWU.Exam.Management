@@ -20,7 +20,7 @@
     <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <form asp-action="Edit" method="post" class="space-y-5">
-            <input type="hidden" asp-for="CollegeID" />
+            <input type="hidden" asp-for="CollegeId" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
 
             <!-- Section: Basic Info -->
@@ -46,10 +46,10 @@
                         <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="EmailAddress" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="EmailAddress" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
+                        <label asp-for="Email" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="Email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                        <span asp-validation-for="EmailAddress" class="text-xs text-red-500 mt-1 block"></span>
+                        <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="Phone1" class="text-sm font-medium text-gray-700"></label>
@@ -64,10 +64,10 @@
                         <span asp-validation-for="PrincipalName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="DistrictID" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="DistrictID" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
+                        <label asp-for="DistrictId" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="DistrictId" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
                                focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                        <span asp-validation-for="DistrictID" class="text-xs text-red-500 mt-1 block"></span>
+                        <span asp-validation-for="DistrictId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
             </div>

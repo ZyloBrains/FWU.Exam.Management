@@ -21,7 +21,7 @@ namespace fwu_examination_management_system.Data
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
 
-            const string email = "hrkshnagtm@gmail.com";
+            const string email = "admin@gmail.com";
             var user = await userManager.FindByEmailAsync(email);
 
             if (user != null && !await userManager.IsInRoleAsync(user, "SystemAdmin"))

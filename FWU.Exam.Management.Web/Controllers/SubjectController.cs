@@ -48,8 +48,8 @@ namespace fwu_examination_management_system.Controllers
                 try
                 {
                     // Set default values for required fields if not provided
-                    if (item.ProgramID == 0) item.ProgramID = 1;
-                    if (item.YearPartID == 0) item.YearPartID = 1;
+                    if (item.ProgramId == 0) item.ProgramId = 1;
+                    if (item.YearPartId == 0) item.YearPartId = 1;
                     if (item.SubjectTypeId == 0) item.SubjectTypeId = 1;
 
                     var user = await _userManager.GetUserAsync(User);
@@ -97,7 +97,7 @@ namespace fwu_examination_management_system.Controllers
         [Authorize(Roles = "SystemAdmin,Admin")]
         public async Task<IActionResult> Edit(int id, SubjectDetail item)
         {
-            if (id != item.SubjectDetailID) return NotFound();
+            if (id != item.SubjectDetailId) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -106,24 +106,24 @@ namespace fwu_examination_management_system.Controllers
                     var existingItem = await _context.SubjectDetails.FindAsync(id);
                     if (existingItem == null) return NotFound();
 
-                    if (item.ProgramID == 0) item.ProgramID = 1;
-                    if (item.YearPartID == 0) item.YearPartID = 1;
+                    if (item.ProgramId == 0) item.ProgramId = 1;
+                    if (item.YearPartId == 0) item.YearPartId = 1;
                     if (item.SubjectTypeId == 0) item.SubjectTypeId = 1;
 
-                    existingItem.SubjectGroupID = item.SubjectGroupID;
-                    existingItem.ProgramID = item.ProgramID;
-                    existingItem.YearPartID = item.YearPartID;
+                    existingItem.SubjectGroupId = item.SubjectGroupId;
+                    existingItem.ProgramId = item.ProgramId;
+                    existingItem.YearPartId = item.YearPartId;
                     existingItem.SubjectCode = item.SubjectCode;
                     existingItem.SubjectName = item.SubjectName;
-                    existingItem.TheoryFullMark = item.TheoryFullMark;
-                    existingItem.TheoryPassMark = item.TheoryPassMark;
-                    existingItem.PracticalFullMark = item.PracticalFullMark;
-                    existingItem.PracticalPassMark = item.PracticalPassMark;
-                    existingItem.InternalTheoryFullMark = item.InternalTheoryFullMark;
-                    existingItem.InternalTheoryPassMark = item.InternalTheoryPassMark;
-                    existingItem.InternalPracticalFullMark = item.InternalPracticalFullMark;
-                    existingItem.InternalPracticalPassMark = item.InternalPracticalPassMark;
-                    existingItem.CreditHour = item.CreditHour;
+                    existingItem.TheoryFullMarks = item.TheoryFullMarks;
+                    existingItem.TheoryPassMarks = item.TheoryPassMarks;
+                    existingItem.PracticalFullMarks = item.PracticalFullMarks;
+                    existingItem.PracticalPassMarks = item.PracticalPassMarks;
+                    existingItem.InternalTheoryFullMarks = item.InternalTheoryFullMarks;
+                    existingItem.InternalTheoryPassMarks = item.InternalTheoryPassMarks;
+                    existingItem.InternalPracticalFullMarks = item.InternalPracticalFullMarks;
+                    existingItem.InternalPracticalPassMarks = item.InternalPracticalPassMarks;
+                    existingItem.CreditHours = item.CreditHours;
                     existingItem.HasPractical = item.HasPractical;
                     existingItem.HasInternal = item.HasInternal;
                     existingItem.DisplayOrder = item.DisplayOrder;
@@ -131,7 +131,7 @@ namespace fwu_examination_management_system.Controllers
                     existingItem.IsActive = item.IsActive;
                     existingItem.IsCompulsory = item.IsCompulsory;
                     existingItem.ShortName = item.ShortName;
-                    existingItem.ConSubjectCode = item.ConSubjectCode;
+                    existingItem.ConcurrentSubjectCode = item.ConcurrentSubjectCode;
                     existingItem.SubjectTypeId = item.SubjectTypeId;
                     existingItem.HasTheory = item.HasTheory;
                     existingItem.Year = item.Year;
@@ -150,7 +150,7 @@ namespace fwu_examination_management_system.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!SubjectExists(item.SubjectDetailID))
+                    if (!SubjectExists(item.SubjectDetailId))
                     {
                         return NotFound();
                     }
@@ -190,7 +190,7 @@ namespace fwu_examination_management_system.Controllers
 
         private bool SubjectExists(int id)
         {
-            return _context.SubjectDetails.Any(e => e.SubjectDetailID == id);
+            return _context.SubjectDetails.Any(e => e.SubjectDetailId == id);
         }
     }
 }

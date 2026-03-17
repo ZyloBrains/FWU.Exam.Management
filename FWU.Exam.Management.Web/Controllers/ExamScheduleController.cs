@@ -53,16 +53,16 @@ namespace fwu_examination_management_system.Controllers
 
                 // Convert all DateTime fields to UTC for PostgreSQL compatibility
                 item.CreatedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-                if (item.StartFromAD.HasValue)
-                    item.StartFromAD = DateTime.SpecifyKind(item.StartFromAD.Value, DateTimeKind.Utc);
-                if (item.EndToAD.HasValue)
-                    item.EndToAD = DateTime.SpecifyKind(item.EndToAD.Value, DateTimeKind.Utc);
+                if (item.StartDateAd.HasValue)
+                    item.StartDateAd = DateTime.SpecifyKind(item.StartDateAd.Value, DateTimeKind.Utc);
+                if (item.EndDateAd.HasValue)
+                    item.EndDateAd = DateTime.SpecifyKind(item.EndDateAd.Value, DateTimeKind.Utc);
                 if (item.PublishedDate.HasValue)
                     item.PublishedDate = DateTime.SpecifyKind(item.PublishedDate.Value, DateTimeKind.Utc);
                 if (item.ExtendedDate.HasValue)
                     item.ExtendedDate = DateTime.SpecifyKind(item.ExtendedDate.Value, DateTimeKind.Utc);
-                if (item.CollegeApproveDate.HasValue)
-                    item.CollegeApproveDate = DateTime.SpecifyKind(item.CollegeApproveDate.Value, DateTimeKind.Utc);
+                if (item.CollegeApprovalDate.HasValue)
+                    item.CollegeApprovalDate = DateTime.SpecifyKind(item.CollegeApprovalDate.Value, DateTimeKind.Utc);
                 if (item.AdmissionCardReleaseDate.HasValue)
                     item.AdmissionCardReleaseDate = DateTime.SpecifyKind(item.AdmissionCardReleaseDate.Value, DateTimeKind.Utc);
 
@@ -87,7 +87,7 @@ namespace fwu_examination_management_system.Controllers
         [Authorize(Roles = "SystemAdmin,Admin")]
         public async Task<IActionResult> Edit(int id, ExamSchedule item)
         {
-            if (id != item.ExamScheduleID) return NotFound();
+            if (id != item.ExamScheduleId) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -98,22 +98,22 @@ namespace fwu_examination_management_system.Controllers
 
                     existingItem.ExamScheduleName = item.ExamScheduleName;
                     existingItem.ExamScheduleCode = item.ExamScheduleCode;
-                    existingItem.AcademicYearID = item.AcademicYearID;
-                    existingItem.LevelID = item.LevelID;
-                    existingItem.YearPartID = item.YearPartID;
-                    existingItem.ExamTypeID = item.ExamTypeID;
-                    existingItem.StartFromBS = item.StartFromBS;
-                    existingItem.EndToBS = item.EndToBS;
+                    existingItem.AcademicYearId = item.AcademicYearId;
+                    existingItem.LevelId = item.LevelId;
+                    existingItem.YearPartId = item.YearPartId;
+                    existingItem.ExamTypeId = item.ExamTypeId;
+                    existingItem.StartDateBs = item.StartDateBs;
+                    existingItem.EndDateBs = item.EndDateBs;
                     existingItem.StartTime = item.StartTime;
                     existingItem.EndTime = item.EndTime;
                     existingItem.Remarks = item.Remarks;
-                    existingItem.Active = item.Active;
+                    existingItem.IsActive = item.IsActive;
 
-                    existingItem.StartFromAD = item.StartFromAD.HasValue
-                        ? DateTime.SpecifyKind(item.StartFromAD.Value, DateTimeKind.Utc)
+                    existingItem.StartDateAd = item.StartDateAd.HasValue
+                        ? DateTime.SpecifyKind(item.StartDateAd.Value, DateTimeKind.Utc)
                         : null;
-                    existingItem.EndToAD = item.EndToAD.HasValue
-                        ? DateTime.SpecifyKind(item.EndToAD.Value, DateTimeKind.Utc)
+                    existingItem.EndDateAd = item.EndDateAd.HasValue
+                        ? DateTime.SpecifyKind(item.EndDateAd.Value, DateTimeKind.Utc)
                         : null;
                     existingItem.PublishedDate = item.PublishedDate.HasValue
                         ? DateTime.SpecifyKind(item.PublishedDate.Value, DateTimeKind.Utc)
@@ -121,8 +121,8 @@ namespace fwu_examination_management_system.Controllers
                     existingItem.ExtendedDate = item.ExtendedDate.HasValue
                         ? DateTime.SpecifyKind(item.ExtendedDate.Value, DateTimeKind.Utc)
                         : null;
-                    existingItem.CollegeApproveDate = item.CollegeApproveDate.HasValue
-                        ? DateTime.SpecifyKind(item.CollegeApproveDate.Value, DateTimeKind.Utc)
+                    existingItem.CollegeApprovalDate = item.CollegeApprovalDate.HasValue
+                        ? DateTime.SpecifyKind(item.CollegeApprovalDate.Value, DateTimeKind.Utc)
                         : null;
                     existingItem.AdmissionCardReleaseDate = item.AdmissionCardReleaseDate.HasValue
                         ? DateTime.SpecifyKind(item.AdmissionCardReleaseDate.Value, DateTimeKind.Utc)
@@ -141,7 +141,7 @@ namespace fwu_examination_management_system.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ExamScheduleExists(item.ExamScheduleID))
+                    if (!ExamScheduleExists(item.ExamScheduleId))
                     {
                         return NotFound();
                     }
@@ -181,7 +181,7 @@ namespace fwu_examination_management_system.Controllers
 
         private bool ExamScheduleExists(int id)
         {
-            return _context.ExamSchedules.Any(e => e.ExamScheduleID == id);
+            return _context.ExamSchedules.Any(e => e.ExamScheduleId == id);
         }
     }
 }

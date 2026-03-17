@@ -35,11 +35,11 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Program ID</p>
-                <p class="text-base font-semibold text-gray-800">@Model.ProgramID</p>
+                <p class="text-base font-semibold text-gray-800">@Model.ProgramId</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Year Part ID</p>
-                <p class="text-base font-semibold text-gray-800">@Model.YearPartID</p>
+                <p class="text-base font-semibold text-gray-800">@Model.YearPartId</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Subject Type ID</p>
@@ -47,23 +47,23 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Theory Full Mark</p>
-                <p class="text-base font-semibold text-gray-800">@Model.TheoryFullMark</p>
+                <p class="text-base font-semibold text-gray-800">@Model.TheoryFullMarks</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Theory Pass Mark</p>
-                <p class="text-base font-semibold text-gray-800">@Model.TheoryPassMark</p>
+                <p class="text-base font-semibold text-gray-800">@Model.TheoryPassMarks</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Practical Full Mark</p>
-                <p class="text-base font-semibold text-gray-800">@(Model.PracticalFullMark?.ToString() ?? "—")</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.PracticalFullMarks?.ToString() ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Practical Pass Mark</p>
-                <p class="text-base font-semibold text-gray-800">@(Model.PracticalPassMark?.ToString() ?? "—")</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.PracticalPassMarks?.ToString() ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Credit Hour</p>
-                <p class="text-base font-semibold text-gray-800">@(Model.CreditHour?.ToString() ?? "—")</p>
+                <p class="text-base font-semibold text-gray-800">@(Model.CreditHours?.ToString() ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Display Order</p>
@@ -107,7 +107,7 @@
         <div class="flex items-center gap-4 mt-8 pt-6 border-t border-gray-200">
             @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
             {
-                <a asp-action="Edit" asp-route-id="@Model.SubjectDetailID"
+                <a asp-action="Edit" asp-route-id="@Model.SubjectDetailId"
                    class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                     <i class="fas fa-edit mr-1"></i> Edit
                 </a>

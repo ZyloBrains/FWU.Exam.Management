@@ -1,4 +1,4 @@
-@model fwu_examination_management_system.Models.CProgram
+@model fwu_examination_management_system.Models.Programs
 @{
     ViewData["Title"] = "Edit Program";
 }
@@ -20,7 +20,7 @@
     <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <form asp-action="Edit" method="post" class="space-y-5">
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ProgramId" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
 
             <!-- Section: Basic Info -->

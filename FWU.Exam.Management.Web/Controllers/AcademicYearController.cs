@@ -72,7 +72,7 @@ namespace fwu_examination_management_system.Controllers
         [Authorize(Roles = "SystemAdmin,Admin")]
         public async Task<IActionResult> Edit(int id, AcademicYear item)
         {
-            if (id != item.AcademicYearID) return NotFound();
+            if (id != item.AcademicYearId) return NotFound();
             if (ModelState.IsValid)
             {
                 try
@@ -89,7 +89,7 @@ namespace fwu_examination_management_system.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!AcademicYearExists(item.AcademicYearID))
+                    if (!AcademicYearExists(item.AcademicYearId))
                     {
                         return NotFound();
                     }
@@ -124,7 +124,7 @@ namespace fwu_examination_management_system.Controllers
 
         private bool AcademicYearExists(int id)
         {
-            return _context.AcademicYears.Any(e => e.AcademicYearID == id);
+            return _context.AcademicYears.Any(e => e.AcademicYearId == id);
         }
     }
 }

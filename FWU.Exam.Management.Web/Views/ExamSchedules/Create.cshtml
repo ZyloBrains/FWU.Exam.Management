@@ -1,0 +1,163 @@
+﻿@model fwu_examination_management_system.Models.ExamSchedule
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>ExamSchedule</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="AcademicYearId" class="control-label"></label>
+                <select asp-for="AcademicYearId" class ="form-control" asp-items="ViewBag.AcademicYearId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="LevelId" class="control-label"></label>
+                <select asp-for="LevelId" class ="form-control" asp-items="ViewBag.LevelId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="YearPartId" class="control-label"></label>
+                <select asp-for="YearPartId" class ="form-control" asp-items="ViewBag.YearPartId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExamTypeId" class="control-label"></label>
+                <select asp-for="ExamTypeId" class ="form-control" asp-items="ViewBag.ExamTypeId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExamScheduleName" class="control-label"></label>
+                <input asp-for="ExamScheduleName" class="form-control" />
+                <span asp-validation-for="ExamScheduleName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StartDateAd" class="control-label"></label>
+                <input asp-for="StartDateAd" class="form-control" />
+                <span asp-validation-for="StartDateAd" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EndDateAd" class="control-label"></label>
+                <input asp-for="EndDateAd" class="form-control" />
+                <span asp-validation-for="EndDateAd" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StartDateBs" class="control-label"></label>
+                <input asp-for="StartDateBs" class="form-control" />
+                <span asp-validation-for="StartDateBs" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EndDateBs" class="control-label"></label>
+                <input asp-for="EndDateBs" class="form-control" />
+                <span asp-validation-for="EndDateBs" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PublishedDate" class="control-label"></label>
+                <input asp-for="PublishedDate" class="form-control" />
+                <span asp-validation-for="PublishedDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StartTime" class="control-label"></label>
+                <input asp-for="StartTime" class="form-control" />
+                <span asp-validation-for="StartTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EndTime" class="control-label"></label>
+                <input asp-for="EndTime" class="form-control" />
+                <span asp-validation-for="EndTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Remarks" class="control-label"></label>
+                <input asp-for="Remarks" class="form-control" />
+                <span asp-validation-for="Remarks" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="CreatedBy" class="control-label"></label>
+                <input asp-for="CreatedBy" class="form-control" />
+                <span asp-validation-for="CreatedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CreatedDate" class="control-label"></label>
+                <input asp-for="CreatedDate" class="form-control" />
+                <span asp-validation-for="CreatedDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ModifiedBy" class="control-label"></label>
+                <input asp-for="ModifiedBy" class="form-control" />
+                <span asp-validation-for="ModifiedBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ModifiedDate" class="control-label"></label>
+                <input asp-for="ModifiedDate" class="form-control" />
+                <span asp-validation-for="ModifiedDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExamScheduleParentId" class="control-label"></label>
+                <select asp-for="ExamScheduleParentId" class ="form-control" asp-items="ViewBag.ExamScheduleParentId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="NegativeMarks" class="control-label"></label>
+                <input asp-for="NegativeMarks" class="form-control" />
+                <span asp-validation-for="NegativeMarks" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProgramIds" class="control-label"></label>
+                <input asp-for="ProgramIds" class="form-control" />
+                <span asp-validation-for="ProgramIds" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RegularBatchIds" class="control-label"></label>
+                <input asp-for="RegularBatchIds" class="form-control" />
+                <span asp-validation-for="RegularBatchIds" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PartialBatchIds" class="control-label"></label>
+                <input asp-for="PartialBatchIds" class="form-control" />
+                <span asp-validation-for="PartialBatchIds" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExtendedDate" class="control-label"></label>
+                <input asp-for="ExtendedDate" class="form-control" />
+                <span asp-validation-for="ExtendedDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExtendedDateCharge" class="control-label"></label>
+                <input asp-for="ExtendedDateCharge" class="form-control" />
+                <span asp-validation-for="ExtendedDateCharge" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CollegeApprovalDate" class="control-label"></label>
+                <input asp-for="CollegeApprovalDate" class="form-control" />
+                <span asp-validation-for="CollegeApprovalDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="AdmissionCardReleaseDate" class="control-label"></label>
+                <input asp-for="AdmissionCardReleaseDate" class="form-control" />
+                <span asp-validation-for="AdmissionCardReleaseDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ExamScheduleCode" class="control-label"></label>
+                <input asp-for="ExamScheduleCode" class="form-control" />
+                <span asp-validation-for="ExamScheduleCode" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
