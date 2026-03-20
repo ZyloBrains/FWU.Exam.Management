@@ -8,7 +8,7 @@ namespace fwu_examination_management_system.Models
     public class CollegeProfile
     {
         [Key]
-        public string CollegeProfileId { get; set; }
+        public int CollegeProfileId { get; set; }
         public int CollegeId { get; set; }
 
         [Required, MaxLength(1024)]

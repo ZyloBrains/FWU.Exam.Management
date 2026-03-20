@@ -1128,28 +1128,28 @@ namespace fwu_examination_management_system.Data
                 .HasForeignKey(prl => prl.ExamScheduleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<PaymentRequestLog>()
-                .HasOne(prl => prl.College)
-                .WithMany()
-                .HasForeignKey(prl => prl.CollegeId)
-                .OnDelete(DeleteBehavior.Restrict);
+            //builder.Entity<PaymentRequestLog>()
+            //    .HasOne(prl => prl.College)
+            //    .WithMany()
+            //    .HasForeignKey(prl => prl.CollegeId)
+            //    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<PaymentRequestLog>()
-                .HasOne(prl => prl.PaymentResponseLog)
-                .WithOne()
-                .HasForeignKey<PaymentResponseLog>(prl =>prl.PaymentRequestLogId)
-                .OnDelete(DeleteBehavior.Cascade);
+            //builder.Entity<PaymentRequestLog>()
+            //    .HasOne(prl => prl.PaymentResponseLog)
+            //    .WithOne()
+            //    .HasForeignKey<PaymentResponseLog>(prl => prl.PaymentRequestLogId)
+            //    .OnDelete(DeleteBehavior.Cascade);
 
             // PaymentResponseLog
             builder.Entity<PaymentResponseLog>()
                 .Property(prl => prl.PaymentResponseLogId)
                 .UseIdentityByDefaultColumn();
 
-            builder.Entity<PaymentResponseLog>()
-                .HasOne(prl => prl.PaymentRequestLog)
-                .WithOne()
-                .HasForeignKey<PaymentResponseLog>(prl => prl.PaymentRequestLogId)
-                .OnDelete(DeleteBehavior.Cascade);
+            //builder.Entity<PaymentResponseLog>()
+            //    .HasOne(prl => prl.PaymentRequestLog)
+            //    .WithOne()
+            //    .HasForeignKey<PaymentResponseLog>(prl => prl.PaymentRequestLogId)
+            //    .OnDelete(DeleteBehavior.Cascade);
 
             // PaymentType
             builder.Entity<PaymentType>()
@@ -1811,9 +1811,9 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // SubjectGroupDetailMap (composite primary key)
-            builder.Entity<SubjectGroupDetailMap>()
-                .Property(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId })
-                .UseIdentityByDefaultColumn();
+            //builder.Entity<SubjectGroupDetailMap>()
+            //    .Property(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId })
+            //    .UseIdentityByDefaultColumn();
 
             builder.Entity<SubjectGroupDetailMap>()
                 .HasKey(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId });

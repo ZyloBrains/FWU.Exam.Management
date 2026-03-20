@@ -12,8 +12,8 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260317081346_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260320101305_InitialApplicationDbCreate")]
+    partial class InitialApplicationDbCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -217,11 +217,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ActiveExamSchedule", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ActiveExamScheduleId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ActiveExamScheduleId"));
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
@@ -243,7 +243,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
+                    b.HasKey("ActiveExamScheduleId");
 
                     b.HasIndex("ExamScheduleId");
 
@@ -875,8 +875,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.CollegeProfile", b =>
                 {
-                    b.Property<int>("CollegeId")
+                    b.Property<int>("CollegeProfileId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CollegeProfileId"));
 
                     b.Property<int>("AuditReportUserAttachmentId")
                         .HasColumnType("integer");
@@ -897,6 +900,9 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(1024)");
 
                     b.Property<int>("BlankChequeUserAttachmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CollegeId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ContactPersonEmail")
@@ -929,11 +935,14 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("Status")
                         .HasColumnType("integer");
 
-                    b.HasKey("CollegeId");
+                    b.HasKey("CollegeProfileId");
 
                     b.HasIndex("AuditReportUserAttachmentId");
 
                     b.HasIndex("BlankChequeUserAttachmentId");
+
+                    b.HasIndex("CollegeId")
+                        .IsUnique();
 
                     b.ToTable("CollegeProfiles");
                 });
@@ -970,7 +979,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("NumberOfStudents")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
@@ -982,7 +991,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("CollegeId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.ToTable("CollegePrograms");
                 });
@@ -1035,11 +1044,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ConnectIpsPaymentConfiguration", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ConnectIpsPaymentConfigurationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ConnectIpsPaymentConfigurationId"));
 
                     b.Property<string>("AppId")
                         .IsRequired()
@@ -1086,7 +1095,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.HasKey("Id");
+                    b.HasKey("ConnectIpsPaymentConfigurationId");
 
                     b.ToTable("ConnectIpsPaymentConfigurations");
                 });
@@ -1121,11 +1130,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ESewaConfiguration", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ESewaConfigurationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ESewaConfigurationId"));
 
                     b.Property<string>("PostUrl")
                         .IsRequired()
@@ -1155,7 +1164,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.HasKey("Id");
+                    b.HasKey("ESewaConfigurationId");
 
                     b.ToTable("ESewaConfigurations");
                 });
@@ -1327,7 +1336,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ProgramId")
+                    b.Property<int?>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
@@ -1347,18 +1356,18 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("ExamCenterId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.ToTable("ExamCenterDetails");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ExamFormFeeName", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ExamFormFeeNameId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamFormFeeNameId"));
 
                     b.Property<bool?>("IsCollegeFee")
                         .HasColumnType("boolean");
@@ -1368,18 +1377,18 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
-                    b.HasKey("Id");
+                    b.HasKey("ExamFormFeeNameId");
 
                     b.ToTable("ExamFormFeeNames");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ExamFormFeeRate", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ExamFormFeeRateId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamFormFeeRateId"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
@@ -1417,7 +1426,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ThroughDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
+                    b.HasKey("ExamFormFeeRateId");
 
                     b.HasIndex("CollegeTypeId");
 
@@ -1500,7 +1509,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ProgramId")
+                    b.Property<int?>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("RegistrationDate")
@@ -1543,7 +1552,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("ExamScheduleId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.HasIndex("StudentProgramYearPartId");
 
@@ -1552,11 +1561,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ExamRegistrationActionLog", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ExamRegistrationActionLogId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamRegistrationActionLogId"));
 
                     b.Property<string>("Action")
                         .IsRequired()
@@ -1573,7 +1582,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("Id");
+                    b.HasKey("ExamRegistrationActionLogId");
 
                     b.HasIndex("ExamRegistrationId");
 
@@ -1582,10 +1591,16 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ExamRegistrationCenterChange", b =>
                 {
-                    b.Property<int>("ExamRegistrationId")
+                    b.Property<int>("ExamRegistrationCenterChangeId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamRegistrationCenterChangeId"));
+
                     b.Property<int?>("CurrentExamCenterId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ExamRegistrationId")
                         .HasColumnType("integer");
 
                     b.Property<int>("PreferredExamCenterId")
@@ -1594,7 +1609,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime>("RequestedTimestamp")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("ExamRegistrationId");
+                    b.HasKey("ExamRegistrationCenterChangeId");
+
+                    b.HasIndex("ExamRegistrationId")
+                        .IsUnique();
 
                     b.HasIndex("PreferredExamCenterId");
 
@@ -2046,11 +2064,17 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ExamSubjectRegistrationExamSession", b =>
                 {
-                    b.Property<int>("ExamSubjectRegistrationId")
+                    b.Property<int>("ExamSubjectRegistrationExamSessionId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamSubjectRegistrationExamSessionId"));
 
                     b.Property<DateTime>("ExamStartedDateTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExamSubjectRegistrationId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("ExamSubmittedDateTime")
                         .HasColumnType("timestamp with time zone");
@@ -2067,7 +2091,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<decimal?>("ObtainedMarks")
                         .HasColumnType("numeric");
 
-                    b.HasKey("ExamSubjectRegistrationId");
+                    b.HasKey("ExamSubjectRegistrationExamSessionId");
+
+                    b.HasIndex("ExamSubjectRegistrationId")
+                        .IsUnique();
 
                     b.ToTable("ExamSubjectRegistrationExamSessions");
                 });
@@ -2349,11 +2376,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.KhaltiConfiguration", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("KhaltiConfigurationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("KhaltiConfigurationId"));
 
                     b.Property<decimal?>("Amount")
                         .HasColumnType("numeric");
@@ -2391,7 +2418,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
-                    b.HasKey("Id");
+                    b.HasKey("KhaltiConfigurationId");
 
                     b.ToTable("KhaltiConfigurations");
                 });
@@ -2490,11 +2517,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.NepaliDate", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("NepaliDateId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("NepaliDateId"));
 
                     b.Property<DateTime?>("GregorianDate")
                         .HasColumnType("timestamp with time zone");
@@ -2514,7 +2541,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.HasKey("Id");
+                    b.HasKey("NepaliDateId");
 
                     b.ToTable("NepaliDates");
                 });
@@ -2599,11 +2626,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.PasswordResetLog", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PasswordResetLogId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PasswordResetLogId"));
 
                     b.Property<string>("Browser")
                         .IsRequired()
@@ -2630,7 +2657,7 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("PasswordResetLogId");
 
                     b.HasIndex("UserId");
 
@@ -2639,11 +2666,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.PaymentPracticalSubjects", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PaymentPracticalSubjectsId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentPracticalSubjectsId"));
 
                     b.Property<int>("PaymentRequestLogId")
                         .HasColumnType("integer");
@@ -2654,7 +2681,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
 
-                    b.HasKey("Id");
+                    b.HasKey("PaymentPracticalSubjectsId");
 
                     b.HasIndex("PaymentRequestLogId");
 
@@ -2663,11 +2690,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.PaymentRequestLog", b =>
                 {
-                    b.Property<int>("PaymentRequestId")
+                    b.Property<int>("PaymentRequestLogId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentRequestId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentRequestLogId"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
@@ -2708,6 +2735,9 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<int>("PaymentRequestLogStatus")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PaymentTypeId")
                         .HasColumnType("integer");
 
@@ -2722,7 +2752,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.HasKey("PaymentRequestId");
+                    b.HasKey("PaymentRequestLogId");
 
                     b.HasIndex("CollegeId");
 
@@ -2737,8 +2767,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.PaymentResponseLog", b =>
                 {
-                    b.Property<int>("PaymentRequestId")
+                    b.Property<int>("PaymentResponseLogId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PaymentResponseLogId"));
 
                     b.Property<string>("FullResponse")
                         .IsRequired()
@@ -2746,6 +2779,9 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<bool>("IsSuccess")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("PaymentRequestLogId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ResponseMessage")
                         .IsRequired()
@@ -2755,7 +2791,9 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime>("ResponseTimestamp")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("PaymentRequestId");
+                    b.HasKey("PaymentResponseLogId");
+
+                    b.HasIndex("PaymentRequestLogId");
 
                     b.ToTable("PaymentResponseLogs");
                 });
@@ -2919,21 +2957,21 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ProgramSubjectPracticalCharge", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ProgramSubjectPracticalChargeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProgramSubjectPracticalChargeId"));
 
                     b.Property<decimal>("PracticalSubjectCharge")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.HasKey("ProgramSubjectPracticalChargeId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.ToTable("ProgramSubjectPracticalCharges");
                 });
@@ -2946,7 +2984,7 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProgramYearPartId"));
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalMarks")
@@ -2960,7 +2998,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasKey("ProgramYearPartId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.HasIndex("YearPartId");
 
@@ -2969,11 +3007,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.Programs", b =>
                 {
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProgramId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProgramsId"));
 
                     b.Property<int?>("BoardId")
                         .HasColumnType("integer");
@@ -3044,7 +3082,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.HasKey("ProgramId");
+                    b.HasKey("ProgramsId");
 
                     b.HasIndex("BoardId");
 
@@ -3161,11 +3199,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ResultRecord", b =>
                 {
-                    b.Property<int>("ResultId")
+                    b.Property<int>("ResultRecordId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ResultId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ResultRecordId"));
 
                     b.Property<int>("AcademicYearId")
                         .HasColumnType("integer");
@@ -3222,7 +3260,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("RegistrationNumber")
@@ -3286,7 +3324,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
-                    b.HasKey("ResultId");
+                    b.HasKey("ResultRecordId");
 
                     b.HasIndex("AcademicYearId");
 
@@ -3296,7 +3334,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("ExamTypeId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.HasIndex("SubjectDetailId");
 
@@ -3364,7 +3402,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ProgramId")
+                    b.Property<int?>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
@@ -3381,18 +3419,18 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("BatchId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.ToTable("Sections");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.SmtpConfiguration", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("SmtpConfigurationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SmtpConfigurationId"));
 
                     b.Property<bool>("EnableSsl")
                         .HasColumnType("boolean");
@@ -3420,7 +3458,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.HasKey("Id");
+                    b.HasKey("SmtpConfigurationId");
 
                     b.ToTable("SmtpConfigurations");
                 });
@@ -3476,7 +3514,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("RepeatBatchId")
@@ -3497,7 +3535,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("CollegeId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.HasIndex("SectionId");
 
@@ -4116,7 +4154,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
@@ -4133,7 +4171,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("EffectiveAcademicYearId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.ToTable("SubjectBatches");
                 });
@@ -4207,7 +4245,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<decimal?>("PracticalPassMarks")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
@@ -4252,7 +4290,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasKey("SubjectDetailId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.HasIndex("SubjectGroupId");
 
@@ -4292,7 +4330,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
@@ -4315,7 +4353,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasKey("SubjectGroupId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("ProgramsId");
 
                     b.HasIndex("YearPartId");
 
@@ -4346,11 +4384,11 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Models.SubjectTriplicate", b =>
                 {
-                    b.Property<int>("DataId")
+                    b.Property<int>("SubjectTriplicateId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DataId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectTriplicateId"));
 
                     b.Property<string>("Alphabet")
                         .IsRequired()
@@ -4568,7 +4606,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
-                    b.HasKey("DataId");
+                    b.HasKey("SubjectTriplicateId");
 
                     b.ToTable("SubjectTriplicates");
                 });
@@ -4993,7 +5031,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("CollegePrograms")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5048,7 +5086,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany()
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("College");
@@ -5123,7 +5161,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("ExamRegistrations")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("fwu_examination_management_system.Models.StudentProgramYearPart", "StudentProgramYearPart")
@@ -5436,8 +5474,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.HasOne("fwu_examination_management_system.Models.College", "College")
                         .WithMany()
-                        .HasForeignKey("CollegeId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("CollegeId");
 
                     b.HasOne("fwu_examination_management_system.Models.ExamSchedule", "ExamSchedule")
                         .WithMany("PaymentRequestLogs")
@@ -5468,8 +5505,8 @@ namespace fwu_examination_management_system.Migrations
             modelBuilder.Entity("fwu_examination_management_system.Models.PaymentResponseLog", b =>
                 {
                     b.HasOne("fwu_examination_management_system.Models.PaymentRequestLog", "PaymentRequestLog")
-                        .WithOne("PaymentResponseLog")
-                        .HasForeignKey("fwu_examination_management_system.Models.PaymentResponseLog", "PaymentRequestId")
+                        .WithMany("PaymentResponseLog")
+                        .HasForeignKey("PaymentRequestLogId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -5500,7 +5537,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("ProgramSubjectPracticalCharges")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5511,7 +5548,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("ProgramYearParts")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5587,7 +5624,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany()
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5628,14 +5665,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasForeignKey("BatchId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
+                    b.HasOne("fwu_examination_management_system.Models.Programs", "Programs")
                         .WithMany()
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Batch");
 
-                    b.Navigation("Program");
+                    b.Navigation("Programs");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.StudentAdmission", b =>
@@ -5654,7 +5691,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("StudentAdmissions")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5873,7 +5910,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("SubjectBatches")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5886,7 +5923,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("SubjectDetails")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -5920,7 +5957,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.HasOne("fwu_examination_management_system.Models.Programs", "Program")
                         .WithMany("SubjectGroups")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -6198,8 +6235,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.Navigation("PaymentPracticalSubjects");
 
-                    b.Navigation("PaymentResponseLog")
-                        .IsRequired();
+                    b.Navigation("PaymentResponseLog");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.PaymentType", b =>

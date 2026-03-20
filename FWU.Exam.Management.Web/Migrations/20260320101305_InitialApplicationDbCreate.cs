@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fwu_examination_management_system.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialApplicationDbCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -119,7 +119,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "ConnectIpsPaymentConfigurations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ConnectIpsPaymentConfigurationId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     GatewayUrl = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     MerchantId = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
@@ -133,7 +133,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ConnectIpsPaymentConfigurations", x => x.Id);
+                    table.PrimaryKey("PK_ConnectIpsPaymentConfigurations", x => x.ConnectIpsPaymentConfigurationId);
                 });
 
             migrationBuilder.CreateTable(
@@ -159,7 +159,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "ESewaConfigurations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ESewaConfigurationId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PostUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -170,7 +170,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ESewaConfigurations", x => x.Id);
+                    table.PrimaryKey("PK_ESewaConfigurations", x => x.ESewaConfigurationId);
                 });
 
             migrationBuilder.CreateTable(
@@ -209,14 +209,14 @@ namespace fwu_examination_management_system.Migrations
                 name: "ExamFormFeeNames",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ExamFormFeeNameId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
                     IsCollegeFee = table.Column<bool>(type: "boolean", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamFormFeeNames", x => x.Id);
+                    table.PrimaryKey("PK_ExamFormFeeNames", x => x.ExamFormFeeNameId);
                 });
 
             migrationBuilder.CreateTable(
@@ -338,7 +338,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "KhaltiConfigurations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    KhaltiConfigurationId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ReturnUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
                     WebsiteUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
@@ -351,7 +351,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_KhaltiConfigurations", x => x.Id);
+                    table.PrimaryKey("PK_KhaltiConfigurations", x => x.KhaltiConfigurationId);
                 });
 
             migrationBuilder.CreateTable(
@@ -380,7 +380,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "NepaliDates",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    NepaliDateId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     GregorianDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NepaliDateShort = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
@@ -389,7 +389,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_NepaliDates", x => x.Id);
+                    table.PrimaryKey("PK_NepaliDates", x => x.NepaliDateId);
                 });
 
             migrationBuilder.CreateTable(
@@ -549,7 +549,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "SmtpConfigurations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    SmtpConfigurationId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Host = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     From = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
@@ -560,7 +560,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SmtpConfigurations", x => x.Id);
+                    table.PrimaryKey("PK_SmtpConfigurations", x => x.SmtpConfigurationId);
                 });
 
             migrationBuilder.CreateTable(
@@ -586,7 +586,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "SubjectTriplicates",
                 columns: table => new
                 {
-                    DataId = table.Column<int>(type: "integer", nullable: false)
+                    SubjectTriplicateId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Year = table.Column<int>(type: "integer", nullable: false),
                     RegistrationNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
@@ -635,7 +635,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SubjectTriplicates", x => x.DataId);
+                    table.PrimaryKey("PK_SubjectTriplicates", x => x.SubjectTriplicateId);
                 });
 
             migrationBuilder.CreateTable(
@@ -746,7 +746,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "Programs",
                 columns: table => new
                 {
-                    ProgramId = table.Column<int>(type: "integer", nullable: false)
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     LevelId = table.Column<int>(type: "integer", nullable: false),
                     FacultyId = table.Column<int>(type: "integer", nullable: false),
@@ -770,7 +770,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Programs", x => x.ProgramId);
+                    table.PrimaryKey("PK_Programs", x => x.ProgramsId);
                     table.ForeignKey(
                         name: "FK_Programs_Boards_BoardId",
                         column: x => x.BoardId,
@@ -897,19 +897,19 @@ namespace fwu_examination_management_system.Migrations
                 name: "ProgramSubjectPracticalCharges",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ProgramSubjectPracticalChargeId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     PracticalSubjectCharge = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProgramSubjectPracticalCharges", x => x.Id);
+                    table.PrimaryKey("PK_ProgramSubjectPracticalCharges", x => x.ProgramSubjectPracticalChargeId);
                     table.ForeignKey(
-                        name: "FK_ProgramSubjectPracticalCharges_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_ProgramSubjectPracticalCharges_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -920,7 +920,7 @@ namespace fwu_examination_management_system.Migrations
                     SectionId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SectionName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ProgramId = table.Column<int>(type: "integer", nullable: true),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: true),
                     BatchId = table.Column<int>(type: "integer", nullable: true),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
@@ -939,10 +939,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "BatchId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Sections_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_Sections_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -954,7 +954,7 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SubjectBatchName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     EffectiveAcademicYearId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     CreatedBy = table.Column<int>(type: "integer", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -971,10 +971,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "AcademicYearId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_SubjectBatches_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_SubjectBatches_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -1054,7 +1054,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     ProgramYearPartId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     YearPartId = table.Column<int>(type: "integer", nullable: false),
                     TotalMarks = table.Column<int>(type: "integer", nullable: false),
                     TotalPassMarks = table.Column<int>(type: "integer", nullable: false)
@@ -1063,10 +1063,10 @@ namespace fwu_examination_management_system.Migrations
                 {
                     table.PrimaryKey("PK_ProgramYearParts", x => x.ProgramYearPartId);
                     table.ForeignKey(
-                        name: "FK_ProgramYearParts_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_ProgramYearParts_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ProgramYearParts_YearParts_YearPartId",
@@ -1082,7 +1082,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     SubjectGroupId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     SubjectGroupName = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     SubjectGroupShortName = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -1099,10 +1099,10 @@ namespace fwu_examination_management_system.Migrations
                 {
                     table.PrimaryKey("PK_SubjectGroups", x => x.SubjectGroupId);
                     table.ForeignKey(
-                        name: "FK_SubjectGroups_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_SubjectGroups_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_SubjectGroups_YearParts_YearPartId",
@@ -1207,7 +1207,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "ActiveExamSchedules",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ActiveExamScheduleId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -1218,7 +1218,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ActiveExamSchedules", x => x.Id);
+                    table.PrimaryKey("PK_ActiveExamSchedules", x => x.ActiveExamScheduleId);
                     table.ForeignKey(
                         name: "FK_ActiveExamSchedules_ExamSchedules_ExamScheduleId",
                         column: x => x.ExamScheduleId,
@@ -1260,7 +1260,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "ExamFormFeeRates",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ExamFormFeeRateId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
                     ExamFormFeeNameId = table.Column<int>(type: "integer", nullable: false),
@@ -1277,7 +1277,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamFormFeeRates", x => x.Id);
+                    table.PrimaryKey("PK_ExamFormFeeRates", x => x.ExamFormFeeRateId);
                     table.ForeignKey(
                         name: "FK_ExamFormFeeRates_CollegeTypes_CollegeTypeId",
                         column: x => x.CollegeTypeId,
@@ -1288,7 +1288,7 @@ namespace fwu_examination_management_system.Migrations
                         name: "FK_ExamFormFeeRates_ExamFormFeeNames_ExamFormFeeNameId",
                         column: x => x.ExamFormFeeNameId,
                         principalTable: "ExamFormFeeNames",
-                        principalColumn: "Id",
+                        principalColumn: "ExamFormFeeNameId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ExamFormFeeRates_ExamSchedules_ExamScheduleId",
@@ -1344,7 +1344,7 @@ namespace fwu_examination_management_system.Migrations
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SubjectGroupId = table.Column<int>(type: "integer", nullable: true),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     YearPartId = table.Column<int>(type: "integer", nullable: false),
                     SubjectCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     SubjectName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -1378,10 +1378,10 @@ namespace fwu_examination_management_system.Migrations
                 {
                     table.PrimaryKey("PK_SubjectDetails", x => x.SubjectDetailId);
                     table.ForeignKey(
-                        name: "FK_SubjectDetails_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_SubjectDetails_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_SubjectDetails_SubjectGroups_SubjectGroupId",
@@ -1410,7 +1410,7 @@ namespace fwu_examination_management_system.Migrations
                     CollegeProgramId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     AffiliationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NumberOfStudents = table.Column<int>(type: "integer", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
@@ -1430,10 +1430,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "CollegeId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_CollegePrograms_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_CollegePrograms_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -1518,7 +1518,7 @@ namespace fwu_examination_management_system.Migrations
                         name: "FK_ExamRollNumberSetupDetails_Programs_ProgramId",
                         column: x => x.ProgramId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -1588,10 +1588,10 @@ namespace fwu_examination_management_system.Migrations
                 name: "ResultRecords",
                 columns: table => new
                 {
-                    ResultId = table.Column<int>(type: "integer", nullable: false)
+                    ResultRecordId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AcademicYearId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     ExamTypeId = table.Column<int>(type: "integer", nullable: false),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false),
@@ -1620,7 +1620,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ResultRecords", x => x.ResultId);
+                    table.PrimaryKey("PK_ResultRecords", x => x.ResultRecordId);
                     table.ForeignKey(
                         name: "FK_ResultRecords_AcademicYears_AcademicYearId",
                         column: x => x.AcademicYearId,
@@ -1646,10 +1646,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "ExamTypeId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ResultRecords_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_ResultRecords_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ResultRecords_SubjectDetails_SubjectDetailId",
@@ -1692,7 +1692,7 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamCenterId = table.Column<int>(type: "integer", nullable: false),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramId = table.Column<int>(type: "integer", nullable: true),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: true),
                     RollNumberFrom = table.Column<long>(type: "bigint", nullable: false),
                     RollNumberTo = table.Column<long>(type: "bigint", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
@@ -1718,10 +1718,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "ExamCenterId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamCenterDetails_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_ExamCenterDetails_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -1816,6 +1816,8 @@ namespace fwu_examination_management_system.Migrations
                 name: "CollegeProfiles",
                 columns: table => new
                 {
+                    CollegeProfileId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
                     BankName = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     BankBranchName = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
@@ -1833,7 +1835,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CollegeProfiles", x => x.CollegeId);
+                    table.PrimaryKey("PK_CollegeProfiles", x => x.CollegeProfileId);
                     table.ForeignKey(
                         name: "FK_CollegeProfiles_Colleges_CollegeId",
                         column: x => x.CollegeId,
@@ -1846,7 +1848,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "ExamRegistrationActionLogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    ExamRegistrationActionLogId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -1855,13 +1857,15 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamRegistrationActionLogs", x => x.Id);
+                    table.PrimaryKey("PK_ExamRegistrationActionLogs", x => x.ExamRegistrationActionLogId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "ExamRegistrationCenterChanges",
                 columns: table => new
                 {
+                    ExamRegistrationCenterChangeId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     PreferredExamCenterId = table.Column<int>(type: "integer", nullable: false),
                     RequestedTimestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -1869,7 +1873,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamRegistrationCenterChanges", x => x.ExamRegistrationId);
+                    table.PrimaryKey("PK_ExamRegistrationCenterChanges", x => x.ExamRegistrationCenterChangeId);
                     table.ForeignKey(
                         name: "FK_ExamRegistrationCenterChanges_PreferredExamCenters_Preferre~",
                         column: x => x.PreferredExamCenterId,
@@ -1909,7 +1913,7 @@ namespace fwu_examination_management_system.Migrations
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
                     RollNumberIndex = table.Column<int>(type: "integer", nullable: true),
                     IsAppliedByStudent = table.Column<bool>(type: "boolean", nullable: true),
-                    ProgramId = table.Column<int>(type: "integer", nullable: true),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: true),
                     ApplicationVoucherId = table.Column<int>(type: "integer", nullable: true),
                     AdminVerifiedBy = table.Column<int>(type: "integer", nullable: true),
                     AdminVerifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -1948,10 +1952,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "ExamScheduleId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamRegistrations_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_ExamRegistrations_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -2013,6 +2017,8 @@ namespace fwu_examination_management_system.Migrations
                 name: "ExamSubjectRegistrationExamSessions",
                 columns: table => new
                 {
+                    ExamSubjectRegistrationExamSessionId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamSubjectRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     ExamStartedDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsSubmitted = table.Column<bool>(type: "boolean", nullable: false),
@@ -2023,7 +2029,7 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamSubjectRegistrationExamSessions", x => x.ExamSubjectRegistrationId);
+                    table.PrimaryKey("PK_ExamSubjectRegistrationExamSessions", x => x.ExamSubjectRegistrationExamSessionId);
                     table.ForeignKey(
                         name: "FK_ExamSubjectRegistrationExamSessions_ExamSubjectRegistration~",
                         column: x => x.ExamSubjectRegistrationId,
@@ -2078,7 +2084,7 @@ namespace fwu_examination_management_system.Migrations
                 name: "PasswordResetLogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    PasswordResetLogId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     Browser = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
@@ -2089,14 +2095,14 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PasswordResetLogs", x => x.Id);
+                    table.PrimaryKey("PK_PasswordResetLogs", x => x.PasswordResetLogId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "PaymentPracticalSubjects",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    PaymentPracticalSubjectsId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PaymentRequestLogId = table.Column<int>(type: "integer", nullable: false),
                     PracticalSubjectsCount = table.Column<int>(type: "integer", nullable: false),
@@ -2104,15 +2110,16 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PaymentPracticalSubjects", x => x.Id);
+                    table.PrimaryKey("PK_PaymentPracticalSubjects", x => x.PaymentPracticalSubjectsId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "PaymentRequestLogs",
                 columns: table => new
                 {
-                    PaymentRequestId = table.Column<int>(type: "integer", nullable: false)
+                    PaymentRequestLogId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PaymentRequestLogStatus = table.Column<int>(type: "integer", nullable: false),
                     InvoiceNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ForwardedTimestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateOfBirthAd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -2130,13 +2137,12 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PaymentRequestLogs", x => x.PaymentRequestId);
+                    table.PrimaryKey("PK_PaymentRequestLogs", x => x.PaymentRequestLogId);
                     table.ForeignKey(
                         name: "FK_PaymentRequestLogs_Colleges_CollegeId",
                         column: x => x.CollegeId,
                         principalTable: "Colleges",
-                        principalColumn: "CollegeId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "CollegeId");
                     table.ForeignKey(
                         name: "FK_PaymentRequestLogs_ExamSchedules_ExamScheduleId",
                         column: x => x.ExamScheduleId,
@@ -2155,7 +2161,9 @@ namespace fwu_examination_management_system.Migrations
                 name: "PaymentResponseLogs",
                 columns: table => new
                 {
-                    PaymentRequestId = table.Column<int>(type: "integer", nullable: false),
+                    PaymentResponseLogId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PaymentRequestLogId = table.Column<int>(type: "integer", nullable: false),
                     ResponseTimestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsSuccess = table.Column<bool>(type: "boolean", nullable: false),
                     ResponseMessage = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
@@ -2163,12 +2171,12 @@ namespace fwu_examination_management_system.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PaymentResponseLogs", x => x.PaymentRequestId);
+                    table.PrimaryKey("PK_PaymentResponseLogs", x => x.PaymentResponseLogId);
                     table.ForeignKey(
-                        name: "FK_PaymentResponseLogs_PaymentRequestLogs_PaymentRequestId",
-                        column: x => x.PaymentRequestId,
+                        name: "FK_PaymentResponseLogs_PaymentRequestLogs_PaymentRequestLogId",
+                        column: x => x.PaymentRequestLogId,
                         principalTable: "PaymentRequestLogs",
-                        principalColumn: "PaymentRequestId",
+                        principalColumn: "PaymentRequestLogId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -2180,7 +2188,7 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BatchId = table.Column<int>(type: "integer", nullable: false),
                     StudentRegistrationId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramId = table.Column<int>(type: "integer", nullable: false),
+                    ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
                     SectionId = table.Column<int>(type: "integer", nullable: true),
                     AdmissionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -2213,10 +2221,10 @@ namespace fwu_examination_management_system.Migrations
                         principalColumn: "CollegeId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_StudentAdmissions_Programs_ProgramId",
-                        column: x => x.ProgramId,
+                        name: "FK_StudentAdmissions_Programs_ProgramsId",
+                        column: x => x.ProgramsId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_StudentAdmissions_Sections_SectionId",
@@ -2533,7 +2541,7 @@ namespace fwu_examination_management_system.Migrations
                         name: "FK_Users_PasswordResetLogs_PasswordResetLogId",
                         column: x => x.PasswordResetLogId,
                         principalTable: "PasswordResetLogs",
-                        principalColumn: "Id");
+                        principalColumn: "PasswordResetLogId");
                     table.ForeignKey(
                         name: "FK_Users_StudentRegistrations_StudentRegistrationId",
                         column: x => x.StudentRegistrationId,
@@ -2652,7 +2660,7 @@ namespace fwu_examination_management_system.Migrations
                         name: "FK_UserProgramMaps_Programs_ProgramId",
                         column: x => x.ProgramId,
                         principalTable: "Programs",
-                        principalColumn: "ProgramId",
+                        principalColumn: "ProgramsId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_UserProgramMaps_Users_UserId",
@@ -2772,14 +2780,20 @@ namespace fwu_examination_management_system.Migrations
                 column: "BlankChequeUserAttachmentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CollegeProfiles_CollegeId",
+                table: "CollegeProfiles",
+                column: "CollegeId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CollegePrograms_CollegeId",
                 table: "CollegePrograms",
                 column: "CollegeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CollegePrograms_ProgramId",
+                name: "IX_CollegePrograms_ProgramsId",
                 table: "CollegePrograms",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Colleges_AreaId",
@@ -2817,9 +2831,9 @@ namespace fwu_examination_management_system.Migrations
                 column: "ExamCenterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamCenterDetails_ProgramId",
+                name: "IX_ExamCenterDetails_ProgramsId",
                 table: "ExamCenterDetails",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamCenters_CollegeId",
@@ -2857,6 +2871,12 @@ namespace fwu_examination_management_system.Migrations
                 column: "ExamRegistrationId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ExamRegistrationCenterChanges_ExamRegistrationId",
+                table: "ExamRegistrationCenterChanges",
+                column: "ExamRegistrationId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ExamRegistrationCenterChanges_PreferredExamCenterId",
                 table: "ExamRegistrationCenterChanges",
                 column: "PreferredExamCenterId");
@@ -2887,9 +2907,9 @@ namespace fwu_examination_management_system.Migrations
                 column: "ExamScheduleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamRegistrations_ProgramId",
+                name: "IX_ExamRegistrations_ProgramsId",
                 table: "ExamRegistrations",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamRegistrations_StudentProgramYearPartId",
@@ -2982,6 +3002,12 @@ namespace fwu_examination_management_system.Migrations
                 column: "YearPartId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ExamSubjectRegistrationExamSessions_ExamSubjectRegistration~",
+                table: "ExamSubjectRegistrationExamSessions",
+                column: "ExamSubjectRegistrationId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ExamSubjectRegistrationInternals_EntryAcademicYearId",
                 table: "ExamSubjectRegistrationInternals",
                 column: "EntryAcademicYearId");
@@ -3052,6 +3078,11 @@ namespace fwu_examination_management_system.Migrations
                 column: "StudentRegistrationId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PaymentResponseLogs_PaymentRequestLogId",
+                table: "PaymentResponseLogs",
+                column: "PaymentRequestLogId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PreferredExamCenters_CollegeId",
                 table: "PreferredExamCenters",
                 column: "CollegeId");
@@ -3082,14 +3113,14 @@ namespace fwu_examination_management_system.Migrations
                 column: "ProgramPeriodTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProgramSubjectPracticalCharges_ProgramId",
+                name: "IX_ProgramSubjectPracticalCharges_ProgramsId",
                 table: "ProgramSubjectPracticalCharges",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProgramYearParts_ProgramId",
+                name: "IX_ProgramYearParts_ProgramsId",
                 table: "ProgramYearParts",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProgramYearParts_YearPartId",
@@ -3117,9 +3148,9 @@ namespace fwu_examination_management_system.Migrations
                 column: "ExamTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ResultRecords_ProgramId",
+                name: "IX_ResultRecords_ProgramsId",
                 table: "ResultRecords",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ResultRecords_SubjectDetailId",
@@ -3148,9 +3179,9 @@ namespace fwu_examination_management_system.Migrations
                 column: "BatchId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Sections_ProgramId",
+                name: "IX_Sections_ProgramsId",
                 table: "Sections",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentAdmissions_BatchId",
@@ -3163,9 +3194,9 @@ namespace fwu_examination_management_system.Migrations
                 column: "CollegeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StudentAdmissions_ProgramId",
+                name: "IX_StudentAdmissions_ProgramsId",
                 table: "StudentAdmissions",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentAdmissions_SectionId",
@@ -3293,14 +3324,14 @@ namespace fwu_examination_management_system.Migrations
                 column: "EffectiveAcademicYearId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SubjectBatches_ProgramId",
+                name: "IX_SubjectBatches_ProgramsId",
                 table: "SubjectBatches",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SubjectDetails_ProgramId",
+                name: "IX_SubjectDetails_ProgramsId",
                 table: "SubjectDetails",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubjectDetails_SubjectGroupId",
@@ -3323,9 +3354,9 @@ namespace fwu_examination_management_system.Migrations
                 column: "SubjectDetailId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SubjectGroups_ProgramId",
+                name: "IX_SubjectGroups_ProgramsId",
                 table: "SubjectGroups",
-                column: "ProgramId");
+                column: "ProgramsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubjectGroups_YearPartId",
@@ -3475,7 +3506,7 @@ namespace fwu_examination_management_system.Migrations
                 table: "PaymentPracticalSubjects",
                 column: "PaymentRequestLogId",
                 principalTable: "PaymentRequestLogs",
-                principalColumn: "PaymentRequestId",
+                principalColumn: "PaymentRequestLogId",
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
