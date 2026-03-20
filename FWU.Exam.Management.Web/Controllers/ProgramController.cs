@@ -63,7 +63,7 @@ namespace fwu_examination_management_system.Controllers
         [Authorize(Roles = "SystemAdmin,Admin")]
         public async Task<IActionResult> Edit(int id, Programs program)
         {
-            if (id != program.ProgramId) return NotFound();
+            if (id != program.ProgramsId) return NotFound();
             if (ModelState.IsValid)
             {
                 _context.Update(program);
