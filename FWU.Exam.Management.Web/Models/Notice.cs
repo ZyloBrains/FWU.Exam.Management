@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Notice
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int NoticeId { get; set; }
 
         [Required, MaxLength(1024)]

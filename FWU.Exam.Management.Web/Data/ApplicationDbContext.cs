@@ -157,6 +157,10 @@ namespace fwu_examination_management_system.Data
             // Configure relationships using Fluent API
 
             // AcademicYear
+                builder.Entity<AcademicYear>()
+               .Property(c => c.AcademicYearId)
+               .UseIdentityByDefaultColumn(); 
+            
             builder.Entity<AcademicYear>()
                 .HasMany(a => a.Batches)
                 .WithOne(b => b.AcademicYear)
@@ -182,6 +186,11 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ActiveExamSchedule
+            // auto-increment for ActiveExamScheduleId
+            builder.Entity<ActiveExamSchedule>()
+                .Property(a => a.ActiveExamScheduleId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ActiveExamSchedule>()
                 .HasOne(a => a.ExamSchedule)
                 .WithMany(e => e.ActiveExamSchedules)
@@ -189,6 +198,9 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ApplicationVoucher
+            builder.Entity<ApplicationVoucher>()
+                .Property(a => a.ApplicationVoucherId)
+                .UseIdentityByDefaultColumn();
             builder.Entity<ApplicationVoucher>()
                 .HasOne(a => a.ExamSchedule)
                 .WithMany(e => e.ApplicationVouchers)
@@ -202,6 +214,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Area
+            builder.Entity<Area>().Property
+                (a => a.AreaId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<Area>()
                 .HasMany(a => a.Colleges)
                 .WithOne(c => c.Area)
@@ -210,12 +226,20 @@ namespace fwu_examination_management_system.Data
 
             // Bank
             builder.Entity<Bank>()
+                .Property(b => b.BankId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<Bank>()
                 .HasMany(b => b.BankVouchers)
                 .WithOne(bv => bv.Bank)
                 .HasForeignKey(bv => bv.BankId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // BankVoucher
+            builder.Entity<BankVoucher>()
+                .Property(bv => bv.BankVoucherId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<BankVoucher>()
                 .HasOne(bv => bv.AcademicYear)
                 .WithMany()
@@ -254,6 +278,10 @@ namespace fwu_examination_management_system.Data
 
             // Batch
             builder.Entity<Batch>()
+                .Property(b => b.BatchId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<Batch>()
                 .HasOne(b => b.AcademicYear)
                 .WithMany(a => a.Batches)
                 .HasForeignKey(b => b.AcademicYearId)
@@ -273,6 +301,10 @@ namespace fwu_examination_management_system.Data
 
             // BillTitle
             builder.Entity<BillTitle>()
+                .Property(bt => bt.BillTitleId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<BillTitle>()
                 .HasOne(bt => bt.ExamSchedule)
                 .WithMany(es => es.BillTitles)
                 .HasForeignKey(bt => bt.ExamScheduleId)
@@ -286,6 +318,10 @@ namespace fwu_examination_management_system.Data
 
             // Board
             builder.Entity<Board>()
+                .Property(b => b.BoardId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<Board>()
                 .HasMany(b => b.Programs)
                 .WithOne(p => p.Board)
                 .HasForeignKey(p => p.BoardId)
@@ -298,6 +334,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // College
+             builder.Entity<College>()
+                .Property(c => c.CollegeId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<College>()
                 .HasOne(c => c.District)
                 .WithMany(d => d.Colleges)
@@ -378,6 +418,10 @@ namespace fwu_examination_management_system.Data
 
             // CollegeProfile
             builder.Entity<CollegeProfile>()
+                .Property(cp => cp.CollegeProfileId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<CollegeProfile>()
                 .HasOne(cp => cp.BlankChequeUserAttachment)
                 .WithMany()
                 .HasForeignKey(cp => cp.BlankChequeUserAttachmentId)
@@ -391,6 +435,10 @@ namespace fwu_examination_management_system.Data
 
             // CollegeProgram
             builder.Entity<CollegeProgram>()
+                .Property(cp => cp.CollegeProgramId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<CollegeProgram>()
                 .HasOne(cp => cp.College)
                 .WithMany(c => c.CollegePrograms)
                 .HasForeignKey(cp => cp.CollegeId)
@@ -399,10 +447,14 @@ namespace fwu_examination_management_system.Data
             builder.Entity<CollegeProgram>()
                 .HasOne(cp => cp.Program)
                 .WithMany(p => p.CollegePrograms)
-                .HasForeignKey(cp => cp.ProgramId)
+                .HasForeignKey(cp => cp.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // CollegeType
+            builder.Entity<CollegeType>()
+                .Property(ct => ct.CollegeTypeId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<CollegeType>()
                 .HasMany(ct => ct.Colleges)
                 .WithOne(c => c.CollegeType)
@@ -416,6 +468,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // District
+            builder.Entity<District>()
+                .Property(d => d.DistrictId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<District>()
                 .HasOne(d => d.Province)
                 .WithMany(p => p.Districts)
@@ -442,6 +498,10 @@ namespace fwu_examination_management_system.Data
 
             // EntryFormat
             builder.Entity<EntryFormat>()
+                .Property(ef => ef.EntryFormatId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<EntryFormat>()
                 .HasMany(ef => ef.StudentRegistrations)
                 .WithOne(sr => sr.EntryFormat)
                 .HasForeignKey(sr => sr.EntryFormatId)
@@ -449,12 +509,20 @@ namespace fwu_examination_management_system.Data
 
             // Ethnicity
             builder.Entity<Ethnicity>()
+                .Property(e => e.EthnicityId)
+                .UseIdentityByDefaultColumn();  
+
+            builder.Entity<Ethnicity>()
                 .HasMany(e => e.StudentRegistrations)
                 .WithOne(sr => sr.Ethnicity)
                 .HasForeignKey(sr => sr.EthnicityId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamCenter
+            builder.Entity<ExamCenter>()
+                .Property(ec => ec.ExamCenterId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamCenter>()
                 .HasOne(ec => ec.ExamSchedule)
                 .WithMany(es => es.ExamCenters)
@@ -481,6 +549,10 @@ namespace fwu_examination_management_system.Data
 
             // ExamCenterDetail
             builder.Entity<ExamCenterDetail>()
+                .Property(ecd => ecd.ExamCenterDetailId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<ExamCenterDetail>()
                 .HasOne(ecd => ecd.ExamCenter)
                 .WithMany(ec => ec.ExamCenterDetails)
                 .HasForeignKey(ecd => ecd.ExamCenterId)
@@ -495,10 +567,13 @@ namespace fwu_examination_management_system.Data
             builder.Entity<ExamCenterDetail>()
                 .HasOne(ecd => ecd.Program)
                 .WithMany()
-                .HasForeignKey(ecd => ecd.ProgramId)
+                .HasForeignKey(ecd => ecd.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamFormFeeName
+            builder.Entity<ExamFormFeeName>()
+                .Property(efn => efn.ExamFormFeeNameId)
+                .UseIdentityByDefaultColumn();
             builder.Entity<ExamFormFeeName>()
                 .HasMany(efn => efn.ExamFormFeeRates)
                 .WithOne(efr => efr.ExamFormFeeName)
@@ -506,6 +581,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamFormFeeRate
+            builder.Entity<ExamFormFeeRate>()
+                .Property(efr => efr.ExamFormFeeRateId)
+                .UseIdentityByDefaultColumn();  
+
             builder.Entity<ExamFormFeeRate>()
                 .HasOne(efr => efr.ExamSchedule)
                 .WithMany(es => es.ExamFormFeeRates)
@@ -531,6 +610,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamRegistration
+            builder.Entity<ExamRegistration>()
+                .Property(er => er.ExamRegistrationId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamRegistration>()
                 .HasOne(er => er.StudentProgramYearPart)
                 .WithMany(spyp => spyp.ExamRegistrations)
@@ -564,7 +647,7 @@ namespace fwu_examination_management_system.Data
             builder.Entity<ExamRegistration>()
                 .HasOne(er => er.Program)
                 .WithMany(p => p.ExamRegistrations)
-                .HasForeignKey(er => er.ProgramId)
+                .HasForeignKey(er => er.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<ExamRegistration>()
@@ -587,12 +670,19 @@ namespace fwu_examination_management_system.Data
 
             // ExamRegistrationActionLog
             builder.Entity<ExamRegistrationActionLog>()
+                .Property(eral => eral.ExamRegistrationActionLogId)
+                .UseIdentityByDefaultColumn();
+            builder.Entity<ExamRegistrationActionLog>()
                 .HasOne(eral => eral.ExamRegistration)
                 .WithMany(er => er.ExamRegistrationActionLogs)
                 .HasForeignKey(eral => eral.ExamRegistrationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamRegistrationCenterChange
+            builder.Entity<ExamRegistrationCenterChange>()
+                .Property(ercc => ercc.ExamRegistrationCenterChangeId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamRegistrationCenterChange>()
                 .HasOne(ercc => ercc.ExamRegistration)
                 .WithOne()
@@ -607,6 +697,10 @@ namespace fwu_examination_management_system.Data
 
             // ExamRollNumberSetup
             builder.Entity<ExamRollNumberSetup>()
+                .Property(erns => erns.ExamRollNumberSetupId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<ExamRollNumberSetup>()
                 .HasOne(erns => erns.ExamScheduleParent)
                 .WithMany(esp => esp.ExamRollNumberSetups)
                 .HasForeignKey(erns => erns.ExamScheduleParentId)
@@ -619,6 +713,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamRollNumberSetupDetail
+            builder.Entity<ExamRollNumberSetupDetail>()
+                .Property(ernsd => ernsd.ExamRollNumberSetupDetailId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamRollNumberSetupDetail>()
                 .HasOne(ernsd => ernsd.ExamRollNumberSetup)
                 .WithMany(erns => erns.ExamRollNumberSetupDetails)
@@ -650,6 +748,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamSchedule
+            builder.Entity<ExamSchedule>()
+                .Property(es => es.ExamScheduleId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamSchedule>()
                 .HasOne(es => es.AcademicYear)
                 .WithMany(ay => ay.ExamSchedules)
@@ -736,6 +838,10 @@ namespace fwu_examination_management_system.Data
 
             // ExamScheduleBatch
             builder.Entity<ExamScheduleBatch>()
+                .Property(esb => esb.ExamScheduleBatchId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<ExamScheduleBatch>()
                 .HasOne(esb => esb.ExamSchedule)
                 .WithMany(es => es.ExamScheduleBatches)
                 .HasForeignKey(esb => esb.ExamScheduleId)
@@ -754,6 +860,9 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamScheduleDetail
+            builder.Entity<ExamScheduleDetail>()
+                .Property(esd => esd.ExamScheduleDetailId)
+                .UseIdentityByDefaultColumn();
             builder.Entity<ExamScheduleDetail>()
                 .HasOne(esd => esd.ExamSchedule)
                 .WithMany(es => es.ExamScheduleDetails)
@@ -774,6 +883,9 @@ namespace fwu_examination_management_system.Data
 
             // ExamScheduleParent
             builder.Entity<ExamScheduleParent>()
+                .Property(esp => esp.ExamScheduleParentId)
+                .UseIdentityByDefaultColumn();
+            builder.Entity<ExamScheduleParent>()
                 .HasMany(esp => esp.BankVouchers)
                 .WithOne(bv => bv.ExamScheduleParent)
                 .HasForeignKey(bv => bv.ExamScheduleParentId)
@@ -792,6 +904,9 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamSubjectRegistration
+            builder.Entity<ExamSubjectRegistration>()
+                .Property(esr => esr.ExamSubjectRegistrationId)
+                .UseIdentityByDefaultColumn();
             builder.Entity<ExamSubjectRegistration>()
                 .HasOne(esr => esr.ExamRegistration)
                 .WithMany(er => er.ExamSubjectRegistrations)
@@ -818,12 +933,20 @@ namespace fwu_examination_management_system.Data
 
             // ExamSubjectRegistrationExamSession
             builder.Entity<ExamSubjectRegistrationExamSession>()
+                .Property(esres => esres.ExamSubjectRegistrationExamSessionId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<ExamSubjectRegistrationExamSession>()
                 .HasOne(esres => esres.ExamSubjectRegistration)
                 .WithOne(esr => esr.ExamSubjectRegistrationExamSession)
                 .HasForeignKey<ExamSubjectRegistrationExamSession>(esres => esres.ExamSubjectRegistrationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ExamSubjectRegistrationInternal
+            builder.Entity<ExamSubjectRegistrationInternal>()
+                .Property(esri => esri.ExamSubjectRegistrationInternalId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamSubjectRegistrationInternal>()
                 .HasOne(esri => esri.AcademicYear)
                 .WithMany()
@@ -849,6 +972,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ExamType
+            builder.Entity<ExamType>()
+                .Property(et => et.ExamTypeId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ExamType>()
                 .HasMany(et => et.ExamFormFeeRates)
                 .WithOne(efr => efr.ExamType)
@@ -881,6 +1008,10 @@ namespace fwu_examination_management_system.Data
 
             // Faculty
             builder.Entity<Faculty>()
+                .Property(f => f.FacultyId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<Faculty>()
                 .HasMany(f => f.Programs)
                 .WithOne(p => p.Faculty)
                 .HasForeignKey(p => p.FacultyId)
@@ -893,6 +1024,9 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Gender
+            builder.Entity<Gender>().
+                Property(g => g.GenderId).UseIdentityByDefaultColumn();
+
             builder.Entity<Gender>()
                 .HasMany(g => g.StudentRegistrations)
                 .WithOne(sr => sr.Gender)
@@ -901,12 +1035,19 @@ namespace fwu_examination_management_system.Data
 
             // IndexGroup
             builder.Entity<IndexGroup>()
+                .Property(ig => ig.IndexGroupId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<IndexGroup>()
                 .HasMany(ig => ig.StudentRegistrations)
                 .WithOne(sr => sr.IndexGroup)
                 .HasForeignKey(sr => sr.IndexGroupId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Level
+            builder.Entity<Level>()
+                .Property(l => l.LevelId)
+                .UseIdentityByDefaultColumn();
             builder.Entity<Level>()
                 .HasMany(l => l.ExamSchedules)
                 .WithOne(es => es.Level)
@@ -927,6 +1068,10 @@ namespace fwu_examination_management_system.Data
 
             // LocalLevel
             builder.Entity<LocalLevel>()
+                .Property(ll => ll.LocalLevelId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<LocalLevel>()
                 .HasOne(ll => ll.District)
                 .WithMany(d => d.LocalLevels)
                 .HasForeignKey(ll => ll.DistrictId)
@@ -940,6 +1085,10 @@ namespace fwu_examination_management_system.Data
 
             // PasswordResetLog
             builder.Entity<PasswordResetLog>()
+                .Property(prl => prl.PasswordResetLogId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<PasswordResetLog>()
                 .HasOne(prl => prl.User)
                 .WithMany(u => u.PasswordResetLogs)
                 .HasForeignKey(prl => prl.UserId)
@@ -947,12 +1096,20 @@ namespace fwu_examination_management_system.Data
 
             // PaymentPracticalSubjects
             builder.Entity<PaymentPracticalSubjects>()
+                .Property(pps => pps.PaymentPracticalSubjectsId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<PaymentPracticalSubjects>()
                 .HasOne(pps => pps.PaymentRequestLog)
                 .WithMany(prl => prl.PaymentPracticalSubjects)
                 .HasForeignKey(pps => pps.PaymentRequestLogId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // PaymentRequestLog
+            builder.Entity<PaymentRequestLog>()
+                .Property(prl => prl.PaymentRequestLogId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<PaymentRequestLog>()
                 .HasOne(prl => prl.PaymentType)
                 .WithMany(pt => pt.PaymentRequestLogs)
@@ -979,18 +1136,26 @@ namespace fwu_examination_management_system.Data
 
             builder.Entity<PaymentRequestLog>()
                 .HasOne(prl => prl.PaymentResponseLog)
-                .WithOne(prl => prl.PaymentRequestLog)
-                .HasForeignKey<PaymentResponseLog>(prl => prl.PaymentRequestId)
+                .WithOne()
+                .HasForeignKey<PaymentResponseLog>(prl =>prl.PaymentRequestLogId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // PaymentResponseLog
             builder.Entity<PaymentResponseLog>()
+                .Property(prl => prl.PaymentResponseLogId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<PaymentResponseLog>()
                 .HasOne(prl => prl.PaymentRequestLog)
-                .WithOne(prl => prl.PaymentResponseLog)
-                .HasForeignKey<PaymentResponseLog>(prl => prl.PaymentRequestId)
+                .WithOne()
+                .HasForeignKey<PaymentResponseLog>(prl => prl.PaymentRequestLogId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // PaymentType
+            builder.Entity<PaymentType>()
+                .Property(pt => pt.PaymentTypeId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<PaymentType>()
                 .HasMany(pt => pt.PaymentRequestLogs)
                 .WithOne(prl => prl.PaymentType)
@@ -998,6 +1163,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // PreferredExamCenter
+            builder.Entity<PreferredExamCenter>()
+                .Property(pec => pec.PreferredExamCenterId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<PreferredExamCenter>()
                 .HasOne(pec => pec.College)
                 .WithMany()
@@ -1011,6 +1180,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // PreviousLevel
+            builder.Entity<PreviousLevel>()
+                .Property(pl => pl.PreviousLevelId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<PreviousLevel>()
                 .HasOne(pl => pl.Level)
                 .WithMany()
@@ -1030,6 +1203,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Program
+            builder.Entity<Programs>()
+                .Property(p => p.ProgramsId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<Programs>()
                 .HasOne(p => p.Level)
                 .WithMany(l => l.Programs)
@@ -1057,13 +1234,13 @@ namespace fwu_examination_management_system.Data
             builder.Entity<Programs>()
                 .HasMany(p => p.CollegePrograms)
                 .WithOne(cp => cp.Program)
-                .HasForeignKey(cp => cp.ProgramId)
+                .HasForeignKey(cp => cp.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
                 .HasMany(p => p.ExamRegistrations)
                 .WithOne(er => er.Program)
-                .HasForeignKey(er => er.ProgramId)
+                .HasForeignKey(er => er.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
@@ -1075,37 +1252,37 @@ namespace fwu_examination_management_system.Data
             builder.Entity<Programs>()
                 .HasMany(p => p.ProgramSubjectPracticalCharges)
                 .WithOne(pspc => pspc.Program)
-                .HasForeignKey(pspc => pspc.ProgramId)
+                .HasForeignKey(pspc => pspc.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
                 .HasMany(p => p.ProgramYearParts)
                 .WithOne(pyp => pyp.Program)
-                .HasForeignKey(pyp => pyp.ProgramId)
+                .HasForeignKey(pyp => pyp.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
                 .HasMany(p => p.StudentAdmissions)
                 .WithOne(sa => sa.Program)
-                .HasForeignKey(sa => sa.ProgramId)
+                .HasForeignKey(sa => sa.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
                 .HasMany(p => p.SubjectBatches)
                 .WithOne(sb => sb.Program)
-                .HasForeignKey(sb => sb.ProgramId)
+                .HasForeignKey(sb => sb.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
                 .HasMany(p => p.SubjectDetails)
                 .WithOne(sd => sd.Program)
-                .HasForeignKey(sd => sd.ProgramId)
+                .HasForeignKey(sd => sd.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
                 .HasMany(p => p.SubjectGroups)
                 .WithOne(sg => sg.Program)
-                .HasForeignKey(sg => sg.ProgramId)
+                .HasForeignKey(sg => sg.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Programs>()
@@ -1115,6 +1292,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ProgramPeriodType
+            builder.Entity<ProgramPeriodType>()
+                .Property(ppt => ppt.ProgramPeriodTypeId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ProgramPeriodType>()
                 .HasMany(ppt => ppt.Programs)
                 .WithOne(p => p.ProgramPeriodType)
@@ -1129,16 +1310,24 @@ namespace fwu_examination_management_system.Data
 
             // ProgramSubjectPracticalCharge
             builder.Entity<ProgramSubjectPracticalCharge>()
+                .Property(pspc => pspc.ProgramSubjectPracticalChargeId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<ProgramSubjectPracticalCharge>()
                 .HasOne(pspc => pspc.Program)
                 .WithMany(p => p.ProgramSubjectPracticalCharges)
-                .HasForeignKey(pspc => pspc.ProgramId)
+                .HasForeignKey(pspc => pspc.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ProgramYearPart
             builder.Entity<ProgramYearPart>()
+                .Property(pyp => pyp.ProgramYearPartId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<ProgramYearPart>()
                 .HasOne(pyp => pyp.Program)
                 .WithMany(p => p.ProgramYearParts)
-                .HasForeignKey(pyp => pyp.ProgramId)
+                .HasForeignKey(pyp => pyp.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<ProgramYearPart>()
@@ -1149,6 +1338,10 @@ namespace fwu_examination_management_system.Data
 
             // Province
             builder.Entity<Province>()
+                .Property(p => p.ProvinceId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<Province>()
                 .HasMany(p => p.Districts)
                 .WithOne(d => d.Province)
                 .HasForeignKey(d => d.ProvinceId)
@@ -1156,12 +1349,20 @@ namespace fwu_examination_management_system.Data
 
             // QuestionSet
             builder.Entity<QuestionSet>()
+                .Property(qs => qs.QuestionSetId)
+                .UseIdentityByDefaultColumn();  
+
+            builder.Entity<QuestionSet>()
                 .HasMany(qs => qs.Colleges)
                 .WithOne(c => c.QuestionSet)
                 .HasForeignKey(c => c.QuestionSetId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ResultRecord
+            builder.Entity<ResultRecord>()
+                .Property(rr => rr.ResultRecordId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<ResultRecord>()
                 .HasOne(rr => rr.AcademicYear)
                 .WithMany()
@@ -1171,7 +1372,7 @@ namespace fwu_examination_management_system.Data
             builder.Entity<ResultRecord>()
                 .HasOne(rr => rr.Program)
                 .WithMany()
-                .HasForeignKey(rr => rr.ProgramId)
+                .HasForeignKey(rr => rr.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<ResultRecord>()
@@ -1203,6 +1404,10 @@ namespace fwu_examination_management_system.Data
 
             // SchoolType
             builder.Entity<SchoolType>()
+                .Property(st => st.SchoolTypeId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<SchoolType>()
                 .HasOne(st => st.PreviousLevel)
                 .WithMany(pl => pl.SchoolTypes)
                 .HasForeignKey(st => st.PreviousLevelId)
@@ -1210,9 +1415,13 @@ namespace fwu_examination_management_system.Data
 
             // Section
             builder.Entity<Section>()
-                .HasOne(s => s.Program)
+                .Property(s => s.SectionId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<Section>()
+                .HasOne(s => s.Programs)
                 .WithMany()
-                .HasForeignKey(s => s.ProgramId)
+                .HasForeignKey(s => s.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Section>()
@@ -1229,6 +1438,10 @@ namespace fwu_examination_management_system.Data
 
             // StudentAdmission
             builder.Entity<StudentAdmission>()
+                .Property(sa => sa.StudentAdmissionId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<StudentAdmission>()
                 .HasOne(sa => sa.Batch)
                 .WithMany(b => b.StudentAdmissions)
                 .HasForeignKey(sa => sa.BatchId)
@@ -1243,7 +1456,7 @@ namespace fwu_examination_management_system.Data
             builder.Entity<StudentAdmission>()
                 .HasOne(sa => sa.Program)
                 .WithMany(p => p.StudentAdmissions)
-                .HasForeignKey(sa => sa.ProgramId)
+                .HasForeignKey(sa => sa.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<StudentAdmission>()
@@ -1272,6 +1485,10 @@ namespace fwu_examination_management_system.Data
 
             // StudentCategory
             builder.Entity<StudentCategory>()
+                .Property(sc => sc.StudentCategoryId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<StudentCategory>()
                 .HasMany(sc => sc.StudentRegistrations)
                 .WithOne(sr => sr.StudentCategory)
                 .HasForeignKey(sr => sr.StudentCategoryId)
@@ -1279,12 +1496,20 @@ namespace fwu_examination_management_system.Data
 
             // StudentGuardian
             builder.Entity<StudentGuardian>()
+                .Property(sg => sg.StudentGuardianId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<StudentGuardian>()
                 .HasOne(sg => sg.StudentRegistration)
                 .WithMany(sr => sr.StudentGuardians)
                 .HasForeignKey(sg => sg.StudentRegistrationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // StudentProgramYearPart
+            builder.Entity<StudentProgramYearPart>()
+                .Property(spyp => spyp.StudentProgramYearPartId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<StudentProgramYearPart>()
                 .HasOne(spyp => spyp.StudentAdmission)
                 .WithMany(sa => sa.StudentProgramYearParts)
@@ -1317,6 +1542,10 @@ namespace fwu_examination_management_system.Data
 
             // StudentQualification
             builder.Entity<StudentQualification>()
+                .Property(sq => sq.StudentQualificationId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<StudentQualification>()
                 .HasOne(sq => sq.StudentRegistration)
                 .WithMany(sr => sr.StudentQualifications)
                 .HasForeignKey(sq => sq.StudentRegistrationId)
@@ -1335,6 +1564,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // StudentRegistration
+            builder.Entity<StudentRegistration>()
+                .Property(sr => sr.StudentRegistrationId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<StudentRegistration>()
                 .HasOne(sr => sr.AcademicYear)
                 .WithMany(ay => ay.StudentRegistrations)
@@ -1451,6 +1684,10 @@ namespace fwu_examination_management_system.Data
 
             // StudentRegistrationSearch
             builder.Entity<StudentRegistrationSearch>()
+                .Property(srs => srs.StudentRegistrationSearchId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<StudentRegistrationSearch>()
                 .HasOne(srs => srs.User)
                 .WithMany()
                 .HasForeignKey(srs => srs.UserId)
@@ -1464,6 +1701,10 @@ namespace fwu_examination_management_system.Data
 
             // SubjectBatch
             builder.Entity<SubjectBatch>()
+                .Property(sb => sb.SubjectBatchId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<SubjectBatch>()
                 .HasOne(sb => sb.AcademicYear)
                 .WithMany()
                 .HasForeignKey(sb => sb.EffectiveAcademicYearId)
@@ -1472,10 +1713,14 @@ namespace fwu_examination_management_system.Data
             builder.Entity<SubjectBatch>()
                 .HasOne(sb => sb.Program)
                 .WithMany(p => p.SubjectBatches)
-                .HasForeignKey(sb => sb.ProgramId)
+                .HasForeignKey(sb => sb.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // SubjectDetail
+            builder.Entity<SubjectDetail>()
+                .Property(sd => sd.SubjectDetailId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<SubjectDetail>()
                 .HasOne(sd => sd.SubjectGroup)
                 .WithMany(sg => sg.SubjectDetails)
@@ -1485,7 +1730,7 @@ namespace fwu_examination_management_system.Data
             builder.Entity<SubjectDetail>()
                 .HasOne(sd => sd.Program)
                 .WithMany(p => p.SubjectDetails)
-                .HasForeignKey(sd => sd.ProgramId)
+                .HasForeignKey(sd => sd.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<SubjectDetail>()
@@ -1532,9 +1777,13 @@ namespace fwu_examination_management_system.Data
 
             // SubjectGroup
             builder.Entity<SubjectGroup>()
+                .Property(sg => sg.SubjectGroupId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<SubjectGroup>()
                 .HasOne(sg => sg.Program)
                 .WithMany(p => p.SubjectGroups)
-                .HasForeignKey(sg => sg.ProgramId)
+                .HasForeignKey(sg => sg.ProgramsId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<SubjectGroup>()
@@ -1563,6 +1812,10 @@ namespace fwu_examination_management_system.Data
 
             // SubjectGroupDetailMap (composite primary key)
             builder.Entity<SubjectGroupDetailMap>()
+                .Property(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId })
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<SubjectGroupDetailMap>()
                 .HasKey(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId });
 
             builder.Entity<SubjectGroupDetailMap>()
@@ -1579,6 +1832,10 @@ namespace fwu_examination_management_system.Data
 
             // SubjectType
             builder.Entity<SubjectType>()
+                .Property(st => st.SubjectTypeId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<SubjectType>()
                 .HasMany(st => st.SubjectDetails)
                 .WithOne(sd => sd.SubjectType)
                 .HasForeignKey(sd => sd.SubjectTypeId)
@@ -1589,12 +1846,20 @@ namespace fwu_examination_management_system.Data
 
             // UserAttachment
             builder.Entity<UserAttachment>()
+                .Property(ua => ua.UserAttachmentId)
+                .UseIdentityByDefaultColumn();
+
+            builder.Entity<UserAttachment>()
                 .HasOne(ua => ua.UploadedByUser)
                 .WithMany()
                 .HasForeignKey(ua => ua.UploadedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // UserProgramMap
+            builder.Entity<UserProgramMap>()
+                .Property(upm => upm.UserProgramMapId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<UserProgramMap>()
                 .HasOne(upm => upm.User)
                 .WithMany(u => u.UserProgramMaps)
@@ -1608,6 +1873,10 @@ namespace fwu_examination_management_system.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // YearPart
+            builder.Entity<YearPart>()
+                .Property(yp => yp.YearPartId)
+                .UseIdentityByDefaultColumn();
+
             builder.Entity<YearPart>()
                 .HasOne(yp => yp.ProgramPeriodType)
                 .WithMany(ppt => ppt.YearParts)

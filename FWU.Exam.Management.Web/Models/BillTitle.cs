@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class BillTitle
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int BillTitleId { get; set; }
 
         [Required, MaxLength(255)]

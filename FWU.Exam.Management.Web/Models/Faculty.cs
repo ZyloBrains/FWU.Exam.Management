@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Faculty
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int FacultyId { get; set; }
 
         [Required, MaxLength(10)]

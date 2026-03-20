@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class SubjectType
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int SubjectTypeId { get; set; }
 
         [Required, MaxLength(50)]

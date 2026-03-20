@@ -7,8 +7,8 @@ namespace fwu_examination_management_system.Models
 {
     public class PaymentPracticalSubjects
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        [Key]
+        public int PaymentPracticalSubjectsId { get; set; }
 
         public int PaymentRequestLogId { get; set; }
         public int PracticalSubjectsCount { get; set; }

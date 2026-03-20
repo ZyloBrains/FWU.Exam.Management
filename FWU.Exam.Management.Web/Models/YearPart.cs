@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class YearPart
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int YearPartId { get; set; }
 
         public int ProgramPeriodTypeId { get; set; }

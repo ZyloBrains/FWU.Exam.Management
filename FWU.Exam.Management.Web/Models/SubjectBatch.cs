@@ -7,14 +7,14 @@ namespace fwu_examination_management_system.Models
 {
     public class SubjectBatch
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int SubjectBatchId { get; set; }
 
         [Required, MaxLength(255)]
         public string SubjectBatchName { get; set; }
 
         public int EffectiveAcademicYearId { get; set; }
-        public int ProgramId { get; set; }
+        public int ProgramsId { get; set; }
 
         [MaxLength(1024)]
         public string Remarks { get; set; }
@@ -27,7 +27,7 @@ namespace fwu_examination_management_system.Models
         [ForeignKey(nameof(EffectiveAcademicYearId))]
         public virtual AcademicYear AcademicYear { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
     }
 }

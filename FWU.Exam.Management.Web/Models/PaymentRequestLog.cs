@@ -7,8 +7,9 @@ namespace fwu_examination_management_system.Models
 {
     public class PaymentRequestLog
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int PaymentRequestId { get; set; }
+        [Key]
+        public int PaymentRequestLogId { get; set; }
+        public int PaymentRequestLogStatus { get; set; }    
 
         [Required, MaxLength(50)]
         public string InvoiceNumber { get; set; }
@@ -52,7 +53,7 @@ namespace fwu_examination_management_system.Models
         [ForeignKey(nameof(CollegeId))]
         public virtual College College { get; set; }
 
-        public virtual PaymentResponseLog PaymentResponseLog { get; set; }
+        public virtual ICollection<PaymentResponseLog> PaymentResponseLog { get; set; }
         public virtual ICollection<PaymentPracticalSubjects> PaymentPracticalSubjects { get; set; }
     }
 }

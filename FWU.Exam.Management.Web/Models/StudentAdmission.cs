@@ -7,12 +7,12 @@ namespace fwu_examination_management_system.Models
 {
     public class StudentAdmission
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int StudentAdmissionId { get; set; }
 
         public int BatchId { get; set; }
         public int StudentRegistrationId { get; set; }
-        public int ProgramId { get; set; }
+        public int ProgramsId { get; set; }
         public int CollegeId { get; set; }
         public int? SectionId { get; set; }
         public DateTime AdmissionDate { get; set; }
@@ -41,7 +41,7 @@ namespace fwu_examination_management_system.Models
         [ForeignKey(nameof(StudentRegistrationId))]
         public virtual StudentRegistration StudentRegistration { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(CollegeId))]

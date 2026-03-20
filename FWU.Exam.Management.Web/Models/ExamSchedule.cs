@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamSchedule
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ExamScheduleId { get; set; }
 
         public int AcademicYearId { get; set; }

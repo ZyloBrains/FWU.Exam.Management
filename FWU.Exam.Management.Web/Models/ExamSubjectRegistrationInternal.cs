@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamSubjectRegistrationInternal
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ExamSubjectRegistrationInternalId { get; set; }
 
         public int EntryAcademicYearId { get; set; }

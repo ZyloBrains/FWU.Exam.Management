@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class PreviousLevel
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int PreviousLevelId { get; set; }
 
         [Required, MaxLength(100)]

@@ -7,10 +7,10 @@ namespace fwu_examination_management_system.Models
 {
     public class SubjectGroup
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int SubjectGroupId { get; set; }
 
-        public int ProgramId { get; set; }
+        public int ProgramsId { get; set; }
 
         [Required, MaxLength(250)]
         public string SubjectGroupName { get; set; }
@@ -31,7 +31,7 @@ namespace fwu_examination_management_system.Models
         public bool? IsExtraAllowed { get; set; }
         public bool? IsCompulsory { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(YearPartId))]

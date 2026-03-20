@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Ethnicity
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int EthnicityId { get; set; }
 
         [Required, MaxLength(50)]

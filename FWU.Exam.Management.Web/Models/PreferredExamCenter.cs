@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class PreferredExamCenter
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int PreferredExamCenterId { get; set; }
 
         [Required, MaxLength(1024)]

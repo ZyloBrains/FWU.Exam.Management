@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class StudentRegistrationSearch
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int StudentRegistrationSearchId { get; set; }
 
         public string SearchCriteria { get; set; }

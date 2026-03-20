@@ -8,6 +8,7 @@ namespace fwu_examination_management_system.Models
     public class ExamSubjectRegistrationExamSession
     {
         [Key]
+        public string ExamSubjectRegistrationExamSessionId { get; set; }
         public int ExamSubjectRegistrationId { get; set; }
 
         public DateTime ExamStartedDateTime { get; set; }

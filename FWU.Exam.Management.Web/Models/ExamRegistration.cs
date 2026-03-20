@@ -44,7 +44,7 @@ namespace fwu_examination_management_system.Models
         public int ExamScheduleId { get; set; }
         public int? RollNumberIndex { get; set; }
         public bool? IsAppliedByStudent { get; set; }
-        public int? ProgramId { get; set; }
+        public int? ProgramsId { get; set; }
         public int? ApplicationVoucherId { get; set; }
         public int? AdminVerifiedBy { get; set; }
         public DateTime? AdminVerifiedDate { get; set; }
@@ -64,7 +64,7 @@ namespace fwu_examination_management_system.Models
         [ForeignKey(nameof(ExamScheduleId))]
         public virtual ExamSchedule ExamSchedule { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(ApplicationVoucherId))]

@@ -7,13 +7,13 @@ namespace fwu_examination_management_system.Models
 {
     public class ProgramSubjectPracticalCharge
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        [Key]
+        public int ProgramSubjectPracticalChargeId { get; set; }
 
-        public int ProgramId { get; set; }
+        public int ProgramsId { get; set; }
         public decimal PracticalSubjectCharge { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
     }
 }

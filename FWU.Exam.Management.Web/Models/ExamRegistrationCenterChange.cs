@@ -6,8 +6,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace fwu_examination_management_system.Models
 {
     public class ExamRegistrationCenterChange
+
     {
+
         [Key]
+        public int ExamRegistrationCenterChangeId { get; set; }
         public int ExamRegistrationId { get; set; }
 
         public int PreferredExamCenterId { get; set; }

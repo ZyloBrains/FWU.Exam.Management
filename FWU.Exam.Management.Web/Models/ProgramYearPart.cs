@@ -10,12 +10,12 @@ namespace fwu_examination_management_system.Models
         [Key]
         public int ProgramYearPartId { get; set; }
 
-        public int ProgramId { get; set; }
+        public int ProgramsId { get; set; }
         public int YearPartId { get; set; }
         public int TotalMarks { get; set; }
         public int TotalPassMarks { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(YearPartId))]

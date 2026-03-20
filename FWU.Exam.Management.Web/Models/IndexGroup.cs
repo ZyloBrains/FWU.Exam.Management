@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class IndexGroup
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int IndexGroupId { get; set; }
 
         [Required, MaxLength(100)]

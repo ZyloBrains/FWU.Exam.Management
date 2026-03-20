@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class BankVoucher
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int BankVoucherId { get; set; }
 
         public int AcademicYearId { get; set; }

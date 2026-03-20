@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class CollegeType
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int CollegeTypeId { get; set; }
 
         [Required, MaxLength(2)]

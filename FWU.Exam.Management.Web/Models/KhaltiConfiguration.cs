@@ -8,7 +8,7 @@ namespace fwu_examination_management_system.Models
     public class KhaltiConfiguration
     {
         [Key]
-        public int Id { get; set; }
+        public int KhaltiConfigurationId { get; set; }
 
         [MaxLength(400)]
         public string ReturnUrl { get; set; }

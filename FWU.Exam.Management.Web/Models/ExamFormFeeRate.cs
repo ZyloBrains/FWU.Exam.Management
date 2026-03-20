@@ -7,8 +7,8 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamFormFeeRate
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        [Key]
+        public int ExamFormFeeRateId { get; set; }
 
         public int ExamScheduleId { get; set; }
         public int ExamFormFeeNameId { get; set; }

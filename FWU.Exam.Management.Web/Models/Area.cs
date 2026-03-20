@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,7 +6,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Area
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int AreaId { get; set; }
 
         [Required, MaxLength(100)]

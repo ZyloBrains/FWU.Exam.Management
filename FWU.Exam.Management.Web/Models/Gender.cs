@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Gender
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int GenderId { get; set; }
 
         [Required, MaxLength(50)]

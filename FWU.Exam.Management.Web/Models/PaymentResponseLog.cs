@@ -8,7 +8,8 @@ namespace fwu_examination_management_system.Models
     public class PaymentResponseLog
     {
         [Key]
-        public int PaymentRequestId { get; set; }
+        public int PaymentResponseLogId { get; set; }   
+        public int PaymentRequestLogId { get; set; }
 
         public DateTime ResponseTimestamp { get; set; }
         public bool IsSuccess { get; set; }
@@ -19,7 +20,7 @@ namespace fwu_examination_management_system.Models
         [Required]
         public string FullResponse { get; set; }
 
-        [ForeignKey(nameof(PaymentRequestId))]
+        [ForeignKey(nameof(PaymentRequestLogId))]
         public virtual PaymentRequestLog PaymentRequestLog { get; set; }
     }
 }

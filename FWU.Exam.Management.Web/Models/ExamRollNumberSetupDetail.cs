@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamRollNumberSetupDetail
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ExamRollNumberSetupDetailId { get; set; }
 
         public int ExamRollNumberSetupId { get; set; }

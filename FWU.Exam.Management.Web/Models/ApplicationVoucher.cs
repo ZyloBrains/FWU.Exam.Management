@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class ApplicationVoucher
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ApplicationVoucherId { get; set; }
 
         [Required, MaxLength(50)]

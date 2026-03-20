@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class UserAttachment
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int UserAttachmentId { get; set; }
 
         [Required, MaxLength(255)]

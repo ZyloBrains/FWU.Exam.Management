@@ -7,12 +7,12 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamCenterDetail
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ExamCenterDetailId { get; set; }
 
         public int ExamCenterId { get; set; }
         public int CollegeId { get; set; }
-        public int? ProgramId { get; set; }
+        public int? ProgramsId { get; set; }
         public long RollNumberFrom { get; set; }
         public long RollNumberTo { get; set; }
 
@@ -31,7 +31,7 @@ namespace fwu_examination_management_system.Models
         [ForeignKey(nameof(CollegeId))]
         public virtual College College { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
     }
 }

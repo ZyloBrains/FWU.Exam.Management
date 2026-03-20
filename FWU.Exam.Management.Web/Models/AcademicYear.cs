@@ -7,8 +7,8 @@ namespace fwu_examination_management_system.Models
 {
     public class AcademicYear
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int AcademicYearId { get; set; }
+        [Key]
+        public int AcademicYearId { get; set; } // primary key auto-incremented
 
         public int AcademicYearCode { get; set; }
 

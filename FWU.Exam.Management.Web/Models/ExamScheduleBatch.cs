@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamScheduleBatch
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ExamScheduleBatchId { get; set; }
 
         public int ExamScheduleId { get; set; }

@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class StudentRegistration
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int StudentRegistrationId { get; set; }
 
         public int AcademicYearId { get; set; }

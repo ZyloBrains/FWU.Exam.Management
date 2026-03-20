@@ -7,8 +7,8 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamRegistrationActionLog
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        [Key]
+        public int ExamRegistrationActionLogId { get; set; }
 
         public int ExamRegistrationId { get; set; }
         public DateTime Timestamp { get; set; }

@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class QuestionSet
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int QuestionSetId { get; set; }
 
         [Required, MaxLength(255)]

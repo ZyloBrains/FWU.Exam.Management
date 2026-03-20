@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Board
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int BoardId { get; set; }
 
         public int CountryId { get; set; }

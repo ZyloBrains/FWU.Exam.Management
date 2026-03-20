@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Region
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int RegionId { get; set; }
 
         [Required, MaxLength(2)]

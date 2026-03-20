@@ -7,8 +7,8 @@ namespace fwu_examination_management_system.Models
 {
     public class PasswordResetLog
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
+        [Key]
+        public int PasswordResetLogId { get; set; }
 
         public string UserId { get; set; }
 

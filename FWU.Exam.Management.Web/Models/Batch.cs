@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class Batch
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int BatchId { get; set; }
 
         public int AcademicYearId { get; set; }

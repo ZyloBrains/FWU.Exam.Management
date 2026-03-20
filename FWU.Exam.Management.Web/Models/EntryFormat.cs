@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class EntryFormat
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int EntryFormatId { get; set; }
 
         [Required, MaxLength(100)]

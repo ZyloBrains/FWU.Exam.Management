@@ -7,8 +7,8 @@ namespace fwu_examination_management_system.Models
 {
     public class SubjectTriplicate
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int DataId { get; set; }
+        [Key]
+        public int SubjectTriplicateId { get; set; }
 
         public int Year { get; set; }
 

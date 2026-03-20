@@ -7,13 +7,13 @@ namespace fwu_examination_management_system.Models
 {
     public class Section
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int SectionId { get; set; }
 
         [Required, MaxLength(100)]
         public string SectionName { get; set; }
 
-        public int? ProgramId { get; set; }
+        public int? ProgramsId { get; set; }
         public int? BatchId { get; set; }
 
         [MaxLength(255)]
@@ -25,8 +25,8 @@ namespace fwu_examination_management_system.Models
         public int? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
-        public virtual Programs Program { get; set; }
+        [ForeignKey(nameof(ProgramsId))]
+        public virtual Programs Programs { get; set; }
 
         [ForeignKey(nameof(BatchId))]
         public virtual Batch Batch { get; set; }

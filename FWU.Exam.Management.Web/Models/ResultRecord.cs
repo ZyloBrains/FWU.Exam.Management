@@ -7,11 +7,12 @@ namespace fwu_examination_management_system.Models
 {
     public class ResultRecord
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ResultId { get; set; }
+        [Key]
+        public int ResultRecordId { get; set; } 
+        //public int ResultId { get; set; }
 
         public int AcademicYearId { get; set; }
-        public int ProgramId { get; set; }
+        public int ProgramsId { get; set; }
         public int ExamTypeId { get; set; }
         public int CollegeId { get; set; }
         public int SubjectDetailId { get; set; }
@@ -80,7 +81,7 @@ namespace fwu_examination_management_system.Models
         [ForeignKey(nameof(AcademicYearId))]
         public virtual AcademicYear AcademicYear { get; set; }
 
-        [ForeignKey(nameof(ProgramId))]
+        [ForeignKey(nameof(ProgramsId))]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(ExamTypeId))]

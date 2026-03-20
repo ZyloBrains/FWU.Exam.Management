@@ -7,7 +7,7 @@ namespace fwu_examination_management_system.Models
 {
     public class UserProgramMap
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int UserProgramMapId { get; set; }
 
         public string UserId { get; set; }
