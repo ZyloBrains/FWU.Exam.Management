@@ -53,8 +53,8 @@ namespace fwu_examination_management_system.Controllers
                 college.CreatedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 if (college.EstablishedDate.HasValue)
                     college.EstablishedDate = DateTime.SpecifyKind(college.EstablishedDate.Value, DateTimeKind.Utc);
-                if (college.CollapseDate.HasValue)
-                    college.CollapseDate = DateTime.SpecifyKind(college.CollapseDate.Value, DateTimeKind.Utc);
+                if (college.ClosedDate.HasValue)
+                    college.ClosedDate = DateTime.SpecifyKind(college.ClosedDate.Value, DateTimeKind.Utc);
 
                 _context.Colleges.Add(college);
                 await _context.SaveChangesAsync();
@@ -77,7 +77,7 @@ namespace fwu_examination_management_system.Controllers
         [Authorize(Roles = "SystemAdmin,Admin")]
         public async Task<IActionResult> Edit(int id, College college)
         {
-            if (id != college.CollegeID) return NotFound();
+            if (id != college.CollegeId) return NotFound();
             if (ModelState.IsValid)
             {
                 try
@@ -90,8 +90,8 @@ namespace fwu_examination_management_system.Controllers
                     college.ModifiedDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                     if (college.EstablishedDate.HasValue)
                         college.EstablishedDate = DateTime.SpecifyKind(college.EstablishedDate.Value, DateTimeKind.Utc);
-                    if (college.CollapseDate.HasValue)
-                        college.CollapseDate = DateTime.SpecifyKind(college.CollapseDate.Value, DateTimeKind.Utc);
+                    if (college.ClosedDate.HasValue)
+                        college.ClosedDate = DateTime.SpecifyKind(college.ClosedDate.Value, DateTimeKind.Utc);
 
                     _context.Update(college);
                     await _context.SaveChangesAsync();
@@ -99,7 +99,7 @@ namespace fwu_examination_management_system.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CollegeExists(college.CollegeID))
+                    if (!CollegeExists(college.CollegeId))
                     {
                         return NotFound();
                     }
@@ -134,7 +134,7 @@ namespace fwu_examination_management_system.Controllers
 
         private bool CollegeExists(int id)
         {
-            return _context.Colleges.Any(e => e.CollegeID == id);
+            return _context.Colleges.Any(e => e.CollegeId == id);
         }
     }
 }

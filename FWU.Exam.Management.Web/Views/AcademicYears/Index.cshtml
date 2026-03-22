@@ -1,0 +1,95 @@
+﻿@model IEnumerable<fwu_examination_management_system.Models.AcademicYear>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AcademicYearCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AcademicYearCodeNepali)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AcademicYearName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AcademicYearNameNepali)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Remark)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsRunning)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsActive)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModifiedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModifiedDate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.AcademicYearCode)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AcademicYearCodeNepali)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AcademicYearName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AcademicYearNameNepali)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Remark)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsRunning)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModifiedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModifiedDate)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.AcademicYearId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.AcademicYearId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.AcademicYearId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

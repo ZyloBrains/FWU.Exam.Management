@@ -36,20 +36,20 @@
                         <input asp-for="ExamScheduleCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter schedule code" />
                     </div>
                     <div>
-                        <label asp-for="AcademicYearID" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="AcademicYearID" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter academic year ID" />
+                        <label asp-for="AcademicYearId" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="AcademicYearId" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter academic year ID" />
                     </div>
                     <div>
-                        <label asp-for="LevelID" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="LevelID" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter level ID" />
+                        <label asp-for="LevelId" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="LevelId" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter level ID" />
                     </div>
                     <div>
-                        <label asp-for="YearPartID" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="YearPartID" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter year part ID" />
+                        <label asp-for="YearPartId" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="YearPartId" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter year part ID" />
                     </div>
                     <div>
-                        <label asp-for="ExamTypeID" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="ExamTypeID" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter exam type ID" />
+                        <label asp-for="ExamTypeId" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ExamTypeId" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter exam type ID" />
                     </div>
                 </div>
             </div>
@@ -59,20 +59,20 @@
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Schedule Dates</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="StartFromAD" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="StartFromAD" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                        <label asp-for="StartDateAd" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StartDateAd" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
                     </div>
                     <div>
-                        <label asp-for="EndToAD" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="EndToAD" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                        <label asp-for="EndDateAd" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="EndDateAd" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
                     </div>
                     <div>
-                        <label asp-for="StartFromBS" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="StartFromBS" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="e.g. 2081-01-01" />
+                        <label asp-for="StartDateBs" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StartDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="e.g. 2081-01-01" />
                     </div>
                     <div>
-                        <label asp-for="EndToBS" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="EndToBS" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="e.g. 2081-03-30" />
+                        <label asp-for="EndDateBs" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="EndDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="e.g. 2081-03-30" />
                     </div>
                 </div>
             </div>
@@ -102,8 +102,8 @@
             <div>
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Options</h2>
                 <div class="flex items-center gap-3">
-                    <input asp-for="Active" type="checkbox" class="text-orange-600 rounded" />
-                    <label asp-for="Active" class="text-sm font-medium text-gray-700"></label>
+                    <input asp-for="IsActive" type="checkbox" class="text-orange-600 rounded" />
+                    <label asp-for="IsActive" class="text-sm font-medium text-gray-700"></label>
                 </div>
             </div>
 

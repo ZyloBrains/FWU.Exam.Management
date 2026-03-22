@@ -1,6 +1,7 @@
 namespace fwu_examination_management_system.Models;
 public class Organization
 {
+    
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string OfficeCode { get; set; } = string.Empty;

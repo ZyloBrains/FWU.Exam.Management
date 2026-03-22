@@ -1,0 +1,197 @@
+﻿@model IEnumerable<fwu_examination_management_system.Models.ExamSchedule>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ExamScheduleName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StartDateAd)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EndDateAd)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StartDateBs)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EndDateBs)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PublishedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.StartTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EndTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Remarks)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsActive)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModifiedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModifiedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.NegativeMarks)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ProgramIds)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.RegularBatchIds)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PartialBatchIds)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ExtendedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ExtendedDateCharge)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CollegeApprovalDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AdmissionCardReleaseDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ExamScheduleCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AcademicYear)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Level)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.YearPart)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ExamType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ExamScheduleParent)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExamScheduleName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.StartDateAd)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EndDateAd)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.StartDateBs)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EndDateBs)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PublishedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.StartTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EndTime)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Remarks)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModifiedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModifiedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NegativeMarks)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ProgramIds)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RegularBatchIds)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PartialBatchIds)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExtendedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExtendedDateCharge)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CollegeApprovalDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AdmissionCardReleaseDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExamScheduleCode)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AcademicYear.AcademicYearName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Level.LevelName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.YearPart.YearPartName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExamType.ExamTypeName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ExamScheduleParent.ExamScheduleParentName)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.ExamScheduleId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ExamScheduleId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ExamScheduleId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

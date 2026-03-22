@@ -30,35 +30,35 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Academic Year ID</p>
-                <p class="mt-1 text-gray-800">@Model.AcademicYearID</p>
+                <p class="mt-1 text-gray-800">@Model.AcademicYearId</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Level ID</p>
-                <p class="mt-1 text-gray-800">@Model.LevelID</p>
+                <p class="mt-1 text-gray-800">@Model.LevelId</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Year Part ID</p>
-                <p class="mt-1 text-gray-800">@Model.YearPartID</p>
+                <p class="mt-1 text-gray-800">@Model.YearPartId</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Exam Type ID</p>
-                <p class="mt-1 text-gray-800">@Model.ExamTypeID</p>
+                <p class="mt-1 text-gray-800">@Model.ExamTypeId</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Start Date (AD)</p>
-                <p class="mt-1 text-gray-800">@(Model.StartFromAD?.ToString("yyyy-MM-dd") ?? "—")</p>
+                <p class="mt-1 text-gray-800">@(Model.StartDateAd?.ToString("yyyy-MM-dd") ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">End Date (AD)</p>
-                <p class="mt-1 text-gray-800">@(Model.EndToAD?.ToString("yyyy-MM-dd") ?? "—")</p>
+                <p class="mt-1 text-gray-800">@(Model.EndDateAd?.ToString("yyyy-MM-dd") ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Start Date (BS)</p>
-                <p class="mt-1 text-gray-800">@(Model.StartFromBS ?? "—")</p>
+                <p class="mt-1 text-gray-800">@(Model.StartDateBs ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">End Date (BS)</p>
-                <p class="mt-1 text-gray-800">@(Model.EndToBS ?? "—")</p>
+                <p class="mt-1 text-gray-800">@(Model.EndDateBs ?? "—")</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Start Time</p>
@@ -75,7 +75,7 @@
             <div>
                 <p class="text-sm font-medium text-gray-600">Status</p>
                 <p class="mt-1">
-                    @if (Model.Active)
+                    @if (Model.IsActive)
                     {
                         <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
                     }
@@ -91,7 +91,7 @@
         <div class="flex items-center gap-4 pt-6 mt-8 border-t border-gray-200">
             @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
             {
-                <a asp-action="Edit" asp-route-id="@Model.ExamScheduleID"
+                <a asp-action="Edit" asp-route-id="@Model.ExamScheduleId"
                    class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                     <i class="fas fa-edit mr-1"></i> Edit
                 </a>

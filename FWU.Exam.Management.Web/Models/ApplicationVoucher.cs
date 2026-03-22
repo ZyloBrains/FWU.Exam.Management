@@ -1,34 +1,46 @@
-﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    // 3. ApplicationVoucher
-    [Table("ApplicationVoucher")]
     public class ApplicationVoucher
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ApplicationVoucherId { get; set; }
-        [Required]
-        [StringLength(50)]
-        public string VoucherNo { get; set; } = string.Empty;
-        [Required]
-        [StringLength(1024)]
-        public string StudentName { get; set; } = string.Empty;
-        public DateTime? DOBAD { get; set; }
-        [StringLength(50)]
-        public string? DOBBS { get; set; }
+
+        [Required, MaxLength(50)]
+        public string VoucherNumber { get; set; }
+
+        [Required, MaxLength(1024)]
+        public string StudentName { get; set; }
+
+        public DateTime? DateOfBirthAd { get; set; }
+
+        [MaxLength(50)]
+        public string DateOfBirthBs { get; set; }
+
         public decimal Amount { get; set; }
         public DateTime? VoucherDate { get; set; }
         public DateTime? Timestamp { get; set; }
-        [Required]
-        [StringLength(1024)]
-        public string ContactNo { get; set; } = string.Empty;
-        [StringLength(1024)]
-        public string? Branch { get; set; }
+
+        [Required, MaxLength(1024)]
+        public string ContactNumber { get; set; }
+
+        [MaxLength(1024)]
+        public string Branch { get; set; }
+
         public int ExamScheduleId { get; set; }
         public int? StudentRegistrationId { get; set; }
-    }
 
+        [ForeignKey(nameof(ExamScheduleId))]
+        [ValidateNever]
+        public virtual ExamSchedule? ExamSchedule { get; set; }
+
+        [ForeignKey(nameof(StudentRegistrationId))]
+        [ValidateNever]
+        public virtual StudentRegistration StudentRegistration { get; set; }
+    }
 }

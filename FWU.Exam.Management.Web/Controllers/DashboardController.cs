@@ -52,7 +52,7 @@ namespace fwu_examination_management_system.Controllers
                 TotalUsers = await _userManager.Users.CountAsync(),
                 TotalRoles = await _roleManager.Roles.CountAsync(),
                 TotalColleges = await _context.Colleges.CountAsync(),
-                TotalPrograms = await _context.CPrograms.CountAsync(),
+                TotalPrograms = await _context.Programs.CountAsync(),
                 TotalStudents = await _context.StudentRegistrations.CountAsync(),
                 TotalExamSchedules = await _context.ExamSchedules.CountAsync(),
                 TotalExamRegistrations = await _context.ExamRegistrations.CountAsync(),
@@ -62,9 +62,9 @@ namespace fwu_examination_management_system.Controllers
                 TotalBoards = await _context.Boards.CountAsync(),
                 TotalBatches = await _context.Batches.CountAsync(),
                 ActiveColleges = await _context.Colleges.CountAsync(c => c.IsActive),
-                ActivePrograms = await _context.CPrograms.CountAsync(p => p.IsActive),
+                ActivePrograms = await _context.Programs.CountAsync(p => p.IsActive),
                 ActiveStudents = await _context.StudentRegistrations.CountAsync(s => s.IsActive),
-                ActiveExamSchedules = await _context.ExamSchedules.CountAsync(e => e.Active)
+                ActiveExamSchedules = await _context.ExamSchedules.CountAsync(e => e.IsActive)
             };
 
             return vm;

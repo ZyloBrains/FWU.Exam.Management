@@ -18,13 +18,13 @@ namespace fwu_examination_management_system.Controllers
 
         public async Task<IActionResult> Index()
         {
-            return View(await _context.CPrograms.OrderBy(p => p.ProgramName).ToListAsync());
+            return View(await _context.Programs.OrderBy(p => p.ProgramName).ToListAsync());
         }
 
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-            var program = await _context.CPrograms.FindAsync(id);
+            var program = await _context.Programs.FindAsync(id);
             if (program == null) return NotFound();
             return View(program);
         }
@@ -38,11 +38,11 @@ namespace fwu_examination_management_system.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SystemAdmin,Admin")]
-        public async Task<IActionResult> Create(CProgram program)
+        public async Task<IActionResult> Create(Programs program)
         {
             if (ModelState.IsValid)
             {
-                _context.CPrograms.Add(program);
+                _context.Programs.Add(program);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -53,7 +53,7 @@ namespace fwu_examination_management_system.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-            var program = await _context.CPrograms.FindAsync(id);
+            var program = await _context.Programs.FindAsync(id);
             if (program == null) return NotFound();
             return View(program);
         }
@@ -61,9 +61,9 @@ namespace fwu_examination_management_system.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "SystemAdmin,Admin")]
-        public async Task<IActionResult> Edit(int id, CProgram program)
+        public async Task<IActionResult> Edit(int id, Programs program)
         {
-            if (id != program.Id) return NotFound();
+            if (id != program.ProgramsId) return NotFound();
             if (ModelState.IsValid)
             {
                 _context.Update(program);
@@ -77,7 +77,7 @@ namespace fwu_examination_management_system.Controllers
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-            var program = await _context.CPrograms.FindAsync(id);
+            var program = await _context.Programs.FindAsync(id);
             if (program == null) return NotFound();
             return View(program);
         }
@@ -87,10 +87,10 @@ namespace fwu_examination_management_system.Controllers
         [Authorize(Roles = "SystemAdmin,Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var program = await _context.CPrograms.FindAsync(id);
+            var program = await _context.Programs.FindAsync(id);
             if (program != null)
             {
-                _context.CPrograms.Remove(program);
+                _context.Programs.Remove(program);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));

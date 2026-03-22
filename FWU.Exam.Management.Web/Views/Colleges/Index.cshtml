@@ -1,0 +1,203 @@
+﻿@model IEnumerable<fwu_examination_management_system.Models.College>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.CollegeCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CollegeName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CollegeNameNepali)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShortName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EstablishedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ClosedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MunicipalityVdc)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.WardNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.HouseNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Website)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Phone1)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Phone2)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PrincipalName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PrincipalContactNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Fax)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Remarks)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsExamCenterOnly)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsActive)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModifiedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModifiedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AllocatedAmount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DisplayOrder)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.District)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CollegeType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Area)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.QuestionSet)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.CollegeCode)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CollegeName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CollegeNameNepali)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ShortName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EstablishedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ClosedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.MunicipalityVdc)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.WardNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.HouseNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Website)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Phone1)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Phone2)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PrincipalName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PrincipalContactNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Fax)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Remarks)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsExamCenterOnly)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModifiedBy)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModifiedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AllocatedAmount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DisplayOrder)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.District.DistrictName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CollegeType.CollegeTypeCode)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Area.AreaName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.QuestionSet.QuestionSetName)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.CollegeId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.CollegeId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.CollegeId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
