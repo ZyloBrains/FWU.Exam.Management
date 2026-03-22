@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -61,21 +62,29 @@ namespace fwu_examination_management_system.Models
         public string Part { get; set; }
 
         [ForeignKey(nameof(SubjectGroupId))]
+        [ValidateNever]
         public virtual SubjectGroup SubjectGroup { get; set; }
 
         [ForeignKey(nameof(ProgramsId))]
+        [ValidateNever]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(YearPartId))]
+        [ValidateNever]
         public virtual YearPart YearPart { get; set; }
 
         [ForeignKey(nameof(SubjectTypeId))]
+        [ValidateNever]
         public virtual SubjectType SubjectType { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<ExamScheduleDetail> ExamScheduleDetails { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamSubjectRegistration> ExamSubjectRegistrations { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamSubjectRegistrationInternal> ExamSubjectRegistrationInternals { get; set; }
+        [ValidateNever]
         public virtual ICollection<ResultRecord> ResultRecords { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectGroupDetailMap> SubjectGroupDetailMaps { get; set; }
     }
 }

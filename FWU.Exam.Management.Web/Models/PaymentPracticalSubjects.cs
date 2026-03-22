@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -15,6 +16,7 @@ namespace fwu_examination_management_system.Models
         public decimal TotalAmount { get; set; }
 
         [ForeignKey(nameof(PaymentRequestLogId))]
+        [ValidateNever]
         public virtual PaymentRequestLog PaymentRequestLog { get; set; }
     }
 }

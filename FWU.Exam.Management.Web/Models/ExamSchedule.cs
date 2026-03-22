@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -61,28 +62,40 @@ namespace fwu_examination_management_system.Models
         public string ExamScheduleCode { get; set; }
 
         [ForeignKey(nameof(AcademicYearId))]
+        [ValidateNever]
         public virtual AcademicYear AcademicYear { get; set; }
 
         [ForeignKey(nameof(LevelId))]
+        [ValidateNever]
         public virtual Level Level { get; set; }
 
         [ForeignKey(nameof(YearPartId))]
+        [ValidateNever]
         public virtual YearPart YearPart { get; set; }
 
         [ForeignKey(nameof(ExamTypeId))]
+        [ValidateNever]
         public virtual ExamType ExamType { get; set; }
 
         [ForeignKey(nameof(ExamScheduleParentId))]
         public virtual ExamScheduleParent ExamScheduleParent { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<ActiveExamSchedule> ActiveExamSchedules { get; set; }
+        [ValidateNever]
         public virtual ICollection<ApplicationVoucher> ApplicationVouchers { get; set; }
+        [ValidateNever]
         public virtual ICollection<BillTitle> BillTitles { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamCenter> ExamCenters { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamFormFeeRate> ExamFormFeeRates { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamScheduleBatch> ExamScheduleBatches { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamScheduleDetail> ExamScheduleDetails { get; set; }
+        [ValidateNever]
         public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
     }
 }

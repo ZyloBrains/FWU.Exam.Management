@@ -20,7 +20,7 @@ namespace fwu_examination_management_system.Models
         public string DistrictName { get; set; }
 
         [ForeignKey(nameof(ProvinceId))]
-        //[ValidateNever]
+        [ValidateNever]
         public virtual Province? Province { get; set; }
 
         [ValidateNever]

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -17,9 +18,11 @@ namespace fwu_examination_management_system.Models
         public string Remarks { get; set; }
 
         [ForeignKey(nameof(SubjectGroupId))]
+        [ValidateNever]
         public virtual SubjectGroup SubjectGroup { get; set; }
 
         [ForeignKey(nameof(SubjectDetailId))]
+        [ValidateNever]
         public virtual SubjectDetail SubjectDetail { get; set; }
     }
 }

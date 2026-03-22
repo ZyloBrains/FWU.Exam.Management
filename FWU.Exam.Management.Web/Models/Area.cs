@@ -1,4 +1,5 @@
 
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -21,6 +22,7 @@ namespace fwu_examination_management_system.Models
         public int? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
+        [ValidateNever]
         public virtual ICollection<College> Colleges { get; set; }
     }
 }

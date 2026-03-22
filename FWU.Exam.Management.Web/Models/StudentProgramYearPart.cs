@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -21,15 +22,19 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         [ForeignKey(nameof(StudentAdmissionId))]
+        [ValidateNever]
         public virtual StudentAdmission StudentAdmission { get; set; }
 
         [ForeignKey(nameof(AcademicYearId))]
+        [ValidateNever]
         public virtual AcademicYear AcademicYear { get; set; }
 
         [ForeignKey(nameof(YearPartId))]
+        [ValidateNever]
         public virtual YearPart YearPart { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamSubjectRegistrationInternal> ExamSubjectRegistrationInternals { get; set; }
     }
 }

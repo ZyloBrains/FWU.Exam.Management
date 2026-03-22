@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -47,16 +48,19 @@ namespace fwu_examination_management_system.Models
         public bool? IsTheoryRegistered { get; set; }
         public bool? IsPracticalRegistered { get; set; }
         public bool? IsExtra { get; set; }
-
+        
         [ForeignKey(nameof(ExamRegistrationId))]
+        [ValidateNever]
         public virtual ExamRegistration ExamRegistration { get; set; }
 
         [ForeignKey(nameof(SubjectDetailId))]
+        [ValidateNever]
         public virtual SubjectDetail SubjectDetail { get; set; }
 
         [ForeignKey(nameof(ExamTypeId))]
+        [ValidateNever]
         public virtual ExamType ExamType { get; set; }
-
+        [ValidateNever]
         public virtual ExamSubjectRegistrationExamSession ExamSubjectRegistrationExamSession { get; set; }
     }
 }

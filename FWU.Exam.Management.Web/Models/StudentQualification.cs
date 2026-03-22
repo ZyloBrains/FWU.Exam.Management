@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -45,12 +46,15 @@ namespace fwu_examination_management_system.Models
         public string ExamRollNumber { get; set; }
 
         [ForeignKey(nameof(StudentRegistrationId))]
+        [ValidateNever]
         public virtual StudentRegistration StudentRegistration { get; set; }
 
         [ForeignKey(nameof(BoardId))]
+        [ValidateNever]
         public virtual Board Board { get; set; }
 
         [ForeignKey(nameof(PreviousLevelId))]
+        [ValidateNever]
         public virtual PreviousLevel PreviousLevel { get; set; }
     }
 }

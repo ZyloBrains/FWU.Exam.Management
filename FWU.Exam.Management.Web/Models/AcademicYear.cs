@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -32,9 +33,13 @@ namespace fwu_examination_management_system.Models
         public int? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
+        [ValidateNever]
         public virtual ICollection<Batch> Batches { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
     }
 }

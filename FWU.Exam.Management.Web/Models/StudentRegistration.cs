@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -96,49 +95,68 @@ namespace fwu_examination_management_system.Models
         public int? LocalLevelId { get; set; }
 
         [ForeignKey(nameof(AcademicYearId))]
+        [ValidateNever]
         public virtual AcademicYear AcademicYear { get; set; }
 
         [ForeignKey(nameof(LevelId))]
+        [ValidateNever]
         public virtual Level Level { get; set; }
 
         [ForeignKey(nameof(FacultyId))]
+        [ValidateNever]
         public virtual Faculty Faculty { get; set; }
 
         [ForeignKey(nameof(CollegeId))]
+        [ValidateNever]
         public virtual College College { get; set; }
 
         [ForeignKey(nameof(GenderId))]
+        [ValidateNever]
         public virtual Gender Gender { get; set; }
 
         [ForeignKey(nameof(DistrictId))]
+        [ValidateNever]
         public virtual District District { get; set; }
 
         [ForeignKey(nameof(StudentCategoryId))]
+        [ValidateNever]
         public virtual StudentCategory StudentCategory { get; set; }
 
         [ForeignKey(nameof(EthnicityId))]
+        [ValidateNever]
         public virtual Ethnicity Ethnicity { get; set; }
 
         [ForeignKey(nameof(LocalLevelId))]
+        [ValidateNever]
         public virtual LocalLevel LocalLevel { get; set; }
 
         [ForeignKey(nameof(IndexGroupId))]
+        [ValidateNever]
         public virtual IndexGroup IndexGroup { get; set; }
 
         [ForeignKey(nameof(EntryFormatId))]
+        [ValidateNever]
         public virtual EntryFormat EntryFormat { get; set; }
 
         [ForeignKey(nameof(PhotoAttachmentId))]
+        [ValidateNever]
         public virtual UserAttachment PhotoAttachment { get; set; }
 
         [ForeignKey(nameof(StudentRegistrationSearchId))]
+        [ValidateNever]
         public virtual StudentRegistrationSearch StudentRegistrationSearch { get; set; }
 
+        [ValidateNever]
         public virtual ICollection<ApplicationVoucher> ApplicationVouchers { get; set; }
+        [ValidateNever]
         public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentGuardian> StudentGuardians { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentQualification> StudentQualifications { get; set; }
+        [ValidateNever]
         public virtual ICollection<AppUser> Users { get; set; }
     }
 }

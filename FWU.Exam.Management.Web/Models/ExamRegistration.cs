@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -7,7 +8,7 @@ namespace fwu_examination_management_system.Models
 {
     public class ExamRegistration
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
         public int ExamRegistrationId { get; set; }
 
         public int StudentProgramYearPartId { get; set; }
@@ -50,27 +51,35 @@ namespace fwu_examination_management_system.Models
         public DateTime? AdminVerifiedDate { get; set; }
 
         [ForeignKey(nameof(StudentProgramYearPartId))]
+        [ValidateNever]
         public virtual StudentProgramYearPart StudentProgramYearPart { get; set; }
 
         [ForeignKey(nameof(AcademicYearId))]
+        [ValidateNever]
         public virtual AcademicYear AcademicYear { get; set; }
 
         [ForeignKey(nameof(ExamCenterId))]
+        [ValidateNever]
         public virtual ExamCenter ExamCenter { get; set; }
 
         [ForeignKey(nameof(CollegeId))]
+        [ValidateNever]
         public virtual College College { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
+        [ValidateNever]
         public virtual ExamSchedule ExamSchedule { get; set; }
 
         [ForeignKey(nameof(ProgramsId))]
+        [ValidateNever]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(ApplicationVoucherId))]
+        [ValidateNever]
         public virtual ApplicationVoucher ApplicationVoucher { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<ExamSubjectRegistration> ExamSubjectRegistrations { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamRegistrationActionLog> ExamRegistrationActionLogs { get; set; }
     }
 }

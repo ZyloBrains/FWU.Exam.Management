@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -31,12 +32,17 @@ namespace fwu_examination_management_system.Models
         public string Code { get; set; }
 
         [ForeignKey(nameof(ProgramPeriodTypeId))]
+        [ValidateNever]
         public virtual ProgramPeriodType ProgramPeriodType { get; set; }
 
         public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
+        [ValidateNever]
         public virtual ICollection<ProgramYearPart> ProgramYearParts { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentProgramYearPart> StudentProgramYearParts { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectDetail> SubjectDetails { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectGroup> SubjectGroups { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -24,7 +25,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         public int? MaxAllowedSubjects { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<SubjectDetail> SubjectDetails { get; set; }
     }
 }

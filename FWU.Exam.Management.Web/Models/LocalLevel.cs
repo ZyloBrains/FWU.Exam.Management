@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -25,8 +26,9 @@ namespace fwu_examination_management_system.Models
         public bool? IsActive { get; set; }
 
         [ForeignKey(nameof(DistrictId))]
+        [ValidateNever]
         public virtual District District { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
     }
 }

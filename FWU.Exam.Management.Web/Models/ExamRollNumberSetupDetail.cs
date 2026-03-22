@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,18 +27,23 @@ namespace fwu_examination_management_system.Models
         public string Suffix { get; set; }
 
         [ForeignKey(nameof(ExamRollNumberSetupId))]
+        [ValidateNever]
         public virtual ExamRollNumberSetup ExamRollNumberSetup { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
+        [ValidateNever]
         public virtual ExamSchedule ExamSchedule { get; set; }
 
         [ForeignKey(nameof(ProgramId))]
+        [ValidateNever]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(ExamTypeId))]
+        [ValidateNever]
         public virtual ExamType ExamType { get; set; }
 
         [ForeignKey(nameof(CollegeId))]
+        [ValidateNever]
         public virtual College College { get; set; }
     }
 }

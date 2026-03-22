@@ -40,6 +40,7 @@ namespace fwu_examination_management_system.Models
         public virtual ExamSchedule? ExamSchedule { get; set; }
 
         [ForeignKey(nameof(StudentRegistrationId))]
+        [ValidateNever]
         public virtual StudentRegistration StudentRegistration { get; set; }
     }
 }

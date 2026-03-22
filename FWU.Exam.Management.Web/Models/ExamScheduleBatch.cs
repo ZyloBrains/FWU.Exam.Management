@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -15,12 +16,15 @@ namespace fwu_examination_management_system.Models
         public int BatchId { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
+        [ValidateNever]
         public virtual ExamSchedule ExamSchedule { get; set; }
 
         [ForeignKey(nameof(ExamTypeId))]
+        [ValidateNever]
         public virtual ExamType ExamType { get; set; }
 
         [ForeignKey(nameof(BatchId))]
+        [ValidateNever]
         public virtual Batch Batch { get; set; }
     }
 }

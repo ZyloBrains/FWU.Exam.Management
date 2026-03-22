@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,9 +15,11 @@ namespace fwu_examination_management_system.Models
         public string ExamScheduleParentName { get; set; }
 
         public bool IsActive { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<BankVoucher> BankVouchers { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamRollNumberSetup> ExamRollNumberSetups { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
     }
 }

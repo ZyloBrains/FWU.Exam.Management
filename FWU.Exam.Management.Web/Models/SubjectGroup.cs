@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -32,13 +33,17 @@ namespace fwu_examination_management_system.Models
         public bool? IsCompulsory { get; set; }
 
         [ForeignKey(nameof(ProgramsId))]
+        [ValidateNever]
         public virtual Programs Program { get; set; }
 
         [ForeignKey(nameof(YearPartId))]
+        [ValidateNever]
         public virtual YearPart YearPart { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectDetail> SubjectDetails { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectGroupDetailMap> SubjectGroupDetailMaps { get; set; }
     }
 }

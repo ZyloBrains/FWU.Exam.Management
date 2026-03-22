@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,9 +15,11 @@ namespace fwu_examination_management_system.Models
         public int ProgramId { get; set; }
 
         [ForeignKey(nameof(UserId))]
+        [ValidateNever]
         public virtual AppUser User { get; set; }
 
         [ForeignKey(nameof(ProgramId))]
+        [ValidateNever]
         public virtual Programs Program { get; set; }
     }
 }

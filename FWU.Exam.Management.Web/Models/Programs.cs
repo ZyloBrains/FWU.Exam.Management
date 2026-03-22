@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -46,26 +47,39 @@ namespace fwu_examination_management_system.Models
         public string RollNumberPrefix { get; set; }
 
         [ForeignKey(nameof(LevelId))]
+        [ValidateNever]
         public virtual Level Level { get; set; }
 
         [ForeignKey(nameof(FacultyId))]
+        [ValidateNever]
         public virtual Faculty Faculty { get; set; }
 
         [ForeignKey(nameof(BoardId))]
+        [ValidateNever]
         public virtual Board Board { get; set; }
 
         [ForeignKey(nameof(ProgramPeriodTypeId))]
+        [ValidateNever]
         public virtual ProgramPeriodType ProgramPeriodType { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<CollegeProgram> CollegePrograms { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+        [ValidateNever]
         public virtual ICollection<ExamRollNumberSetupDetail> ExamRollNumberSetupDetails { get; set; }
+        [ValidateNever]
         public virtual ICollection<ProgramSubjectPracticalCharge> ProgramSubjectPracticalCharges { get; set; }
+        [ValidateNever]
         public virtual ICollection<ProgramYearPart> ProgramYearParts { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectBatch> SubjectBatches { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectDetail> SubjectDetails { get; set; }
+        [ValidateNever]
         public virtual ICollection<SubjectGroup> SubjectGroups { get; set; }
+        [ValidateNever]
         public virtual ICollection<UserProgramMap> UserProgramMaps { get; set; }
     }
 }

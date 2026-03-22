@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,7 +15,7 @@ namespace fwu_examination_management_system.Models
         public string PaymentTypeName { get; set; }
 
         public bool IsActive { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
     }
 }

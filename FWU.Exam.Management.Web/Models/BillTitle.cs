@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -28,8 +27,10 @@ namespace fwu_examination_management_system.Models
         public int? ExamScheduleId { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
+        [ValidateNever]
         public virtual ExamSchedule ExamSchedule { get; set; }
 
+        [ValidateNever]
         public virtual ICollection<BankVoucher> BankVouchers { get; set; }
     }
 }

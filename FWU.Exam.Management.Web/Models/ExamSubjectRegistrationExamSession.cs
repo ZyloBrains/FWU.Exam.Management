@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -19,6 +20,7 @@ namespace fwu_examination_management_system.Models
         public DateTime LastStatusSyncDateTime { get; set; }
 
         [ForeignKey(nameof(ExamSubjectRegistrationId))]
+        [ValidateNever]
         public virtual ExamSubjectRegistration ExamSubjectRegistration { get; set; }
     }
 }

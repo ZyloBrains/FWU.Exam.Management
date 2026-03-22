@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +10,7 @@ namespace fwu_examination_management_system.Models
     {
         [Key]
         public int BoardId { get; set; }
-
+        [ValidateNever]
         public int CountryId { get; set; }
 
         [Required, MaxLength(50)]
@@ -23,8 +24,9 @@ namespace fwu_examination_management_system.Models
         public DateTime CreatedDate { get; set; }
         public int? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<Programs> Programs { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentQualification> StudentQualifications { get; set; }
     }
 }

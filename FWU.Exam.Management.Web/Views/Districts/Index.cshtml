@@ -1,0 +1,47 @@
+﻿@model IEnumerable<fwu_examination_management_system.Models.District>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.DistrictCode)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DistrictName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Province)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.DistrictCode)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DistrictName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Province.ProvinceName)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.DistrictId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.DistrictId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.DistrictId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

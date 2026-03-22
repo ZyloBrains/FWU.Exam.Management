@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,9 +27,11 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         [ForeignKey(nameof(LevelId))]
+        [ValidateNever]
         public virtual Level Level { get; set; }
-
+        [ValidateNever]
         public virtual ICollection<SchoolType> SchoolTypes { get; set; }
+        [ValidateNever]
         public virtual ICollection<StudentQualification> StudentQualifications { get; set; }
     }
 }

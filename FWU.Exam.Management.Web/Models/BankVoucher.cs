@@ -41,18 +41,23 @@ namespace fwu_examination_management_system.Models
         public virtual AcademicYear? AcademicYear { get; set; }
 
         [ForeignKey(nameof(CollegeId))]
+        [ValidateNever]
         public virtual College? College { get; set; }
 
         [ForeignKey(nameof(BillTitleId))]
+        [ValidateNever]
         public virtual BillTitle? BillTitle { get; set; }
 
         [ForeignKey(nameof(BankId))]
+        [ValidateNever]
         public virtual Bank? Bank { get; set; }
 
         [ForeignKey(nameof(ExamScheduleParentId))]
+        [ValidateNever]
         public virtual ExamScheduleParent ExamScheduleParent { get; set; }
 
         [ForeignKey(nameof(BankVoucherUserAttachmentId))]
+        [ValidateNever]
         public virtual UserAttachment UserAttachment { get; set; }
     }
 }

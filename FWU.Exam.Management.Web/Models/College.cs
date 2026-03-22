@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -76,26 +77,46 @@ namespace fwu_examination_management_system.Models
         public int? QuestionSetId { get; set; }
 
         [ForeignKey(nameof(DistrictId))]
+        [ValidateNever]
         public virtual District District { get; set; }
 
         [ForeignKey(nameof(CollegeTypeId))]
+        [ValidateNever]
         public virtual CollegeType CollegeType { get; set; }
 
         [ForeignKey(nameof(AreaId))]
+        [ValidateNever]
         public virtual Area Area { get; set; }
 
         [ForeignKey(nameof(QuestionSetId))]
+        [ValidateNever]
         public virtual QuestionSet QuestionSet { get; set; }
 
+        [ValidateNever]
         public virtual CollegeProfile CollegeProfile { get; set; }
 
+        [ValidateNever]
         public virtual ICollection<BankVoucher> BankVouchers { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<CollegeProgram> CollegePrograms { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<ExamCenter> ExamCenters { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<ExamCenterDetail> ExamCenterDetails { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+
+        [ValidateNever]
         public virtual ICollection<AppUser> Users { get; set; }
     }
 }

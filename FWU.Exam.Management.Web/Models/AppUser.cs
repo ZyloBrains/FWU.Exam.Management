@@ -35,7 +35,7 @@ public class AppUser: IdentityUser
     [ForeignKey(nameof(PasswordResetLogId))]
     [ValidateNever]
     public virtual PasswordResetLog? PasswordResetLog { get; set; }
-
+    [ValidateNever]
     public virtual ICollection<UserProgramMap> UserProgramMaps { get; set; }
 
     public int? CollegeId { get; set; }
@@ -44,6 +44,7 @@ public class AppUser: IdentityUser
     [ValidateNever]
     public virtual College? College { get; set; }
 
+    [ValidateNever]
     public virtual ICollection<PasswordResetLog> PasswordResetLogs { get; set; } = new List<PasswordResetLog>();
 
 

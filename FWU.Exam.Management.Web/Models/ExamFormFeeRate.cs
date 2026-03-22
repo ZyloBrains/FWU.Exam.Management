@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -25,15 +26,19 @@ namespace fwu_examination_management_system.Models
         public bool IsCollegeFee { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
+        [ValidateNever]
         public virtual ExamSchedule ExamSchedule { get; set; }
 
         [ForeignKey(nameof(ExamFormFeeNameId))]
+        [ValidateNever]
         public virtual ExamFormFeeName ExamFormFeeName { get; set; }
 
         [ForeignKey(nameof(CollegeTypeId))]
+        [ValidateNever]
         public virtual CollegeType CollegeType { get; set; }
 
         [ForeignKey(nameof(ExamTypeId))]
+        [ValidateNever]
         public virtual ExamType ExamType { get; set; }
     }
 }
