@@ -10,22 +10,22 @@ using fwu_examination_management_system.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class RegionsController : Controller
+    public class Regions1Controller : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public RegionsController(ApplicationDbContext context)
+        public Regions1Controller(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Regions
+        // GET: Regions1
         public async Task<IActionResult> Index()
         {
             return View(await _context.Regions.ToListAsync());
         }
 
-        // GET: Regions/Details/5
+        // GET: Regions1/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -43,13 +43,13 @@ namespace fwu_examination_management_system.Controllers
             return View(region);
         }
 
-        // GET: Regions/Create
+        // GET: Regions1/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Regions/Create
+        // POST: Regions1/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
@@ -58,8 +58,6 @@ namespace fwu_examination_management_system.Controllers
         {
             if (ModelState.IsValid)
             {
-                region.CreatedDate = DateTime.UtcNow;
-                region.ModifiedDate = DateTime.UtcNow;
                 _context.Add(region);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -67,7 +65,7 @@ namespace fwu_examination_management_system.Controllers
             return View(region);
         }
 
-        // GET: Regions/Edit/5
+        // GET: Regions1/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -83,7 +81,7 @@ namespace fwu_examination_management_system.Controllers
             return View(region);
         }
 
-        // POST: Regions/Edit/5
+        // POST: Regions1/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
@@ -99,8 +97,6 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    region.CreatedDate = DateTime.UtcNow;
-                    region.ModifiedDate = DateTime.UtcNow;
                     _context.Update(region);
                     await _context.SaveChangesAsync();
                 }
@@ -120,7 +116,7 @@ namespace fwu_examination_management_system.Controllers
             return View(region);
         }
 
-        // GET: Regions/Delete/5
+        // GET: Regions1/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -138,7 +134,7 @@ namespace fwu_examination_management_system.Controllers
             return View(region);
         }
 
-        // POST: Regions/Delete/5
+        // POST: Regions1/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

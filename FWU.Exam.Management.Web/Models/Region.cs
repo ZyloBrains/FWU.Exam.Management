@@ -21,8 +21,10 @@ namespace fwu_examination_management_system.Models
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
+        [ScaffoldColumn(false)]
         public DateTime CreatedDate { get; set; }
         public int? ModifiedBy { get; set; }
+        [ScaffoldColumn(false)]
         public DateTime? ModifiedDate { get; set; }
     }
 }
