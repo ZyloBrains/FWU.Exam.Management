@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models;
@@ -28,15 +29,19 @@ public class AppUser: IdentityUser
 
     // Navigation properties
     [ForeignKey(nameof(StudentRegistrationId))]
+    [ValidateNever]
     public virtual StudentRegistration? StudentRegistration { get; set; }
 
     [ForeignKey(nameof(PasswordResetLogId))]
+    [ValidateNever]
     public virtual PasswordResetLog? PasswordResetLog { get; set; }
 
     public virtual ICollection<UserProgramMap> UserProgramMaps { get; set; }
 
     public int? CollegeId { get; set; }
+
     [ForeignKey(nameof(CollegeId))]
+    [ValidateNever]
     public virtual College? College { get; set; }
 
     public virtual ICollection<PasswordResetLog> PasswordResetLogs { get; set; } = new List<PasswordResetLog>();

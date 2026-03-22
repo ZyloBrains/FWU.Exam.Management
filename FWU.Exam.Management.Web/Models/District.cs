@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -19,10 +20,14 @@ namespace fwu_examination_management_system.Models
         public string DistrictName { get; set; }
 
         [ForeignKey(nameof(ProvinceId))]
-        public virtual Province Province { get; set; }
+        //[ValidateNever]
+        public virtual Province? Province { get; set; }
 
-        public virtual ICollection<College> Colleges { get; set; }
-        public virtual ICollection<LocalLevel> LocalLevels { get; set; }
-        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+        [ValidateNever]
+        public virtual ICollection<College?> Colleges { get; set; }
+        [ValidateNever]
+        public virtual ICollection<LocalLevel?> LocalLevels { get; set; }
+        [ValidateNever]
+        public virtual ICollection<StudentRegistration?> StudentRegistrations { get; set; }
     }
 }

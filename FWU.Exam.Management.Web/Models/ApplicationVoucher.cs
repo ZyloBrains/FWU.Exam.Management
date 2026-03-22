@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -35,7 +36,8 @@ namespace fwu_examination_management_system.Models
         public int? StudentRegistrationId { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
-        public virtual ExamSchedule ExamSchedule { get; set; }
+        [ValidateNever]
+        public virtual ExamSchedule? ExamSchedule { get; set; }
 
         [ForeignKey(nameof(StudentRegistrationId))]
         public virtual StudentRegistration StudentRegistration { get; set; }

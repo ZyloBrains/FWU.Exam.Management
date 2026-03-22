@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -38,16 +37,17 @@ namespace fwu_examination_management_system.Models
         public int ExamScheduleParentId { get; set; }
 
         [ForeignKey(nameof(AcademicYearId))]
-        public virtual AcademicYear AcademicYear { get; set; }
+        [ValidateNever]
+        public virtual AcademicYear? AcademicYear { get; set; }
 
         [ForeignKey(nameof(CollegeId))]
-        public virtual College College { get; set; }
+        public virtual College? College { get; set; }
 
         [ForeignKey(nameof(BillTitleId))]
-        public virtual BillTitle BillTitle { get; set; }
+        public virtual BillTitle? BillTitle { get; set; }
 
         [ForeignKey(nameof(BankId))]
-        public virtual Bank Bank { get; set; }
+        public virtual Bank? Bank { get; set; }
 
         [ForeignKey(nameof(ExamScheduleParentId))]
         public virtual ExamScheduleParent ExamScheduleParent { get; set; }

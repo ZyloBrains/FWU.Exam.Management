@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,6 +21,7 @@ namespace fwu_examination_management_system.Models
         public string Remarks { get; set; }
 
         [ForeignKey(nameof(ExamScheduleId))]
-        public virtual ExamSchedule ExamSchedule { get; set; }
+        [ValidateNever]
+        public virtual ExamSchedule? ExamSchedule { get; set; }
     }
 }
