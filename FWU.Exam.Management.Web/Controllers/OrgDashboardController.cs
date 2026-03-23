@@ -13,6 +13,8 @@ namespace fwu_examination_management_system.Controllers
         UserManager<AppUser> userManager,
         RoleManager<IdentityRole> roleManager) : Controller
     {
+        private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Organization"];
+
         private async Task<Organization?> GetOrgAsync(string officeCode) =>
             await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == officeCode);
 
@@ -86,7 +88,12 @@ namespace fwu_examination_management_system.Controllers
 
                 var result = await userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
+                {
+                    if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
+                        await userManager.AddToRoleAsync(user, "Student");
+
                     return RedirectToAction(nameof(Users), new { officeCode });
+                }
 
                 foreach (var error in result.Errors)
                     ModelState.AddModelError(string.Empty, error.Description);
@@ -184,7 +191,9 @@ namespace fwu_examination_management_system.Controllers
             var user = await userManager.FindByIdAsync(userId);
             if (user == null || user.OrganizationId != org.Id) return NotFound();
 
-            var allRoles = await roleManager.Roles.ToListAsync();
+            var allRoles = await roleManager.Roles
+                .Where(r => r.Name != "Student")
+                .ToListAsync();
             var userRoles = await userManager.GetRolesAsync(user);
 
             ViewBag.Organization = org;
@@ -212,7 +221,15 @@ namespace fwu_examination_management_system.Controllers
             if (user == null || user.OrganizationId != org.Id) return NotFound();
 
             var currentRoles = await userManager.GetRolesAsync(user);
-            var selectedRoles = model.Roles.Where(r => r.IsAssigned).Select(r => r.RoleName).ToList();
+            var selectedRoles = model.Roles
+                .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
+                .Select(r => r.RoleName)
+                .ToList();
+
+            if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
+            {
+                selectedRoles.Add("Student");
+            }
 
             var toAdd = selectedRoles.Except(currentRoles).ToList();
             var toRemove = currentRoles.Except(selectedRoles).ToList();

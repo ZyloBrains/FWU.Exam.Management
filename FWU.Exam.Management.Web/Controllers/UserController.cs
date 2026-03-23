@@ -68,6 +68,20 @@ namespace fwu_examination_management_system.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
+            if (!model.OrganizationId.HasValue)
+            {
+                ModelState.AddModelError(nameof(model.OrganizationId), "Organization is required.");
+            }
+
+            if (model.OrganizationId.HasValue)
+            {
+                var organizationExists = await _context.Organizations.AnyAsync(o => o.Id == model.OrganizationId.Value);
+                if (!organizationExists)
+                {
+                    ModelState.AddModelError(nameof(model.OrganizationId), "Selected organization is invalid.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 var user = new AppUser
@@ -80,7 +94,12 @@ namespace fwu_examination_management_system.Controllers
 
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
+                {
+                    if (await _roleManager.RoleExistsAsync("Student") && !await _userManager.IsInRoleAsync(user, "Student"))
+                        await _userManager.AddToRoleAsync(user, "Student");
+
                     return RedirectToAction(nameof(Index));
+                }
 
                 foreach (var error in result.Errors)
                     ModelState.AddModelError(string.Empty, error.Description);
@@ -179,7 +198,9 @@ namespace fwu_examination_management_system.Controllers
             if (user == null)
                 return NotFound();
 
-            var allRoles = await _roleManager.Roles.ToListAsync();
+            var allRoles = await _roleManager.Roles
+                .Where(r => r.Name != "Student")
+                .ToListAsync();
             var userRoles = await _userManager.GetRolesAsync(user);
 
             var model = new AssignRolesViewModel
@@ -206,7 +227,15 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
 
             var currentRoles = await _userManager.GetRolesAsync(user);
-            var selectedRoles = model.Roles.Where(r => r.IsAssigned).Select(r => r.RoleName).ToList();
+            var selectedRoles = model.Roles
+                .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
+                .Select(r => r.RoleName)
+                .ToList();
+
+            if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
+            {
+                selectedRoles.Add("Student");
+            }
 
             var toAdd = selectedRoles.Except(currentRoles).ToList();
             var toRemove = currentRoles.Except(selectedRoles).ToList();
