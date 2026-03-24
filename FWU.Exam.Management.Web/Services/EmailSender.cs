@@ -58,29 +58,6 @@ namespace fwu_examination_management_system.Services
         // ----- Core email sending logic -----
         private async Task SendEmailCoreAsync(string toEmail, string subject, string htmlMessage)
         {
-            //    try
-            //    {
-            //        using var client = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.SmtpPort);
-            //        client.EnableSsl = true;
-            //        client.Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password);
-
-            //        var mailMessage = new MailMessage
-            //        {
-            //            From = new MailAddress(_emailSettings.FromEmail, _emailSettings.FromName),
-            //            Subject = subject,
-            //            Body = htmlMessage,
-            //            IsBodyHtml = true
-            //        };
-            //        mailMessage.To.Add(toEmail);
-
-            //        await client.SendMailAsync(mailMessage);
-            //        _logger.LogInformation("Email sent to {Email}", toEmail);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        _logger.LogError(ex, "Failed to send email to {Email}", toEmail);
-            //        throw;
-            //    }
             try
             {
                 var message = new MimeMessage();
