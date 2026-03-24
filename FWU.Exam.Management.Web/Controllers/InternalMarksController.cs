@@ -93,7 +93,10 @@ namespace fwu_examination_management_system.Controllers
                         x.StudentProgramYearPart.StudentAdmission.StudentRegistration.LastName
                     }.Where(n => !string.IsNullOrWhiteSpace(n))),
                     ObtainedMarksTheoryInternal = x.ObtainedMarksTheoryInternal,
-                    ObtainedMarksPracticalInternal = x.ObtainedMarksPracticalInternal
+                    ObtainedMarksPracticalInternal = x.ObtainedMarksPracticalInternal,
+                    Remarks = x.Remarks ?? string.Empty,
+                    IsActive = x.IsActive,
+                    CreatedDate = x.CreatedDate
                 })
                 .ToListAsync();
         }

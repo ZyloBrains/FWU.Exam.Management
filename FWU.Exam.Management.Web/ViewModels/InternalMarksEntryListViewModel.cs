@@ -34,5 +34,8 @@ namespace fwu_examination_management_system.ViewModels
         public string StudentName { get; set; } = string.Empty;
         public decimal? ObtainedMarksTheoryInternal { get; set; }
         public decimal? ObtainedMarksPracticalInternal { get; set; }
+        public string Remarks { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public DateTime? CreatedDate { get; set; }
     }
 }

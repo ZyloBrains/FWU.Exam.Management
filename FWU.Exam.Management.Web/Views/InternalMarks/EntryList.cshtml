@@ -4,7 +4,7 @@
     ViewData["Title"] = "Internal Marks";
 }
 
-<div class="space-y-4">
+<div class="space-y-4" x-data="{ activeView: 'ledger' }">
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
         <h1 class="text-2xl font-semibold text-gray-800">Internal Marks</h1>
     </div>
@@ -60,8 +60,18 @@
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex gap-2">
-            <button type="button" class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-semibold">Marks Ledger View</button>
-            <button type="button" class="px-4 py-2 text-gray-400 font-semibold">All Detail View</button>
+            <button type="button"
+                    @@click="activeView = 'ledger'"
+                    :class="activeView === 'ledger' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'"
+                    class="px-4 py-2 rounded-lg font-semibold transition-colors">
+                Marks Ledger View
+            </button>
+            <button type="button"
+                    @@click="activeView = 'detail'"
+                    :class="activeView === 'detail' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'"
+                    class="px-4 py-2 rounded-lg font-semibold transition-colors">
+                All Detail View
+            </button>
         </div>
     </div>
 
@@ -76,7 +86,7 @@
             }
             else
             {
-                <div class="overflow-x-auto">
+                <div x-show="activeView === 'ledger'" class="overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead>
                             <tr class="text-left border-b border-gray-200 text-gray-600">
@@ -104,6 +114,48 @@
                                     <td class="px-3 py-2">@row.SubjectName</td>
                                     <td class="px-3 py-2">@row.ObtainedMarksTheoryInternal</td>
                                     <td class="px-3 py-2">@row.ObtainedMarksPracticalInternal</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div x-show="activeView === 'detail'" class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="text-left border-b border-gray-200 text-gray-600">
+                                <th class="px-3 py-2">Record Id</th>
+                                <th class="px-3 py-2">Student</th>
+                                <th class="px-3 py-2">Academic Year</th>
+                                <th class="px-3 py-2">College</th>
+                                <th class="px-3 py-2">Level</th>
+                                <th class="px-3 py-2">Program</th>
+                                <th class="px-3 py-2">Year Part</th>
+                                <th class="px-3 py-2">Subject</th>
+                                <th class="px-3 py-2">Theory</th>
+                                <th class="px-3 py-2">Practical</th>
+                                <th class="px-3 py-2">Remarks</th>
+                                <th class="px-3 py-2">Status</th>
+                                <th class="px-3 py-2">Created Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.Results)
+                            {
+                                <tr class="border-b border-gray-100 text-gray-700">
+                                    <td class="px-3 py-2">@row.ExamSubjectRegistrationInternalId</td>
+                                    <td class="px-3 py-2">@row.StudentName</td>
+                                    <td class="px-3 py-2">@row.AcademicYearName</td>
+                                    <td class="px-3 py-2">@row.CollegeName</td>
+                                    <td class="px-3 py-2">@row.LevelName</td>
+                                    <td class="px-3 py-2">@row.ProgramName</td>
+                                    <td class="px-3 py-2">@row.YearPartName</td>
+                                    <td class="px-3 py-2">@row.SubjectName</td>
+                                    <td class="px-3 py-2">@row.ObtainedMarksTheoryInternal</td>
+                                    <td class="px-3 py-2">@row.ObtainedMarksPracticalInternal</td>
+                                    <td class="px-3 py-2">@row.Remarks</td>
+                                    <td class="px-3 py-2">@(row.IsActive ? "Active" : "Inactive")</td>
+                                    <td class="px-3 py-2">@(row.CreatedDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                                 </tr>
                             }
                         </tbody>
