@@ -1,0 +1,115 @@
+@model fwu_examination_management_system.ViewModels.InternalMarksEntryListViewModel
+
+@{
+    ViewData["Title"] = "Internal Marks";
+}
+
+<div class="space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h1 class="text-2xl font-semibold text-gray-800">Internal Marks</h1>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex justify-end mb-4">
+            <button type="button"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                <i class="fas fa-plus"></i>
+                <span>Add New</span>
+            </button>
+        </div>
+
+        <form asp-action="EntryList" method="post" class="space-y-5">
+            @Html.AntiForgeryToken()
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label asp-for="AcademicYearId" class="md:col-span-1 text-sm font-semibold text-gray-700 text-right pr-4">Academic Year</label>
+                <select asp-for="AcademicYearId" asp-items="Model.AcademicYears" class="md:col-span-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label asp-for="CollegeId" class="md:col-span-1 text-sm font-semibold text-gray-700 text-right pr-4">School/College</label>
+                <select asp-for="CollegeId" asp-items="Model.Colleges" class="md:col-span-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label asp-for="LevelId" class="md:col-span-1 text-sm font-semibold text-gray-700 text-right pr-4">Level</label>
+                <select asp-for="LevelId" asp-items="Model.Levels" class="md:col-span-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label asp-for="ProgramsId" class="md:col-span-1 text-sm font-semibold text-gray-700 text-right pr-4">Program</label>
+                <select asp-for="ProgramsId" asp-items="Model.Programs" class="md:col-span-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label asp-for="YearPartId" class="md:col-span-1 text-sm font-semibold text-gray-700 text-right pr-4">Year Part</label>
+                <select asp-for="YearPartId" asp-items="Model.YearParts" class="md:col-span-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label asp-for="SubjectDetailId" class="md:col-span-1 text-sm font-semibold text-gray-700 text-right pr-4">Subject</label>
+                <select asp-for="SubjectDetailId" asp-items="Model.Subjects" class="md:col-span-2 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></select>
+            </div>
+
+            <div class="border-t border-dashed border-gray-300 pt-4 flex justify-center gap-3">
+                <button type="submit" class="px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">Search</button>
+                <a asp-action="EntryList" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex gap-2">
+            <button type="button" class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-semibold">Marks Ledger View</button>
+            <button type="button" class="px-4 py-2 text-gray-400 font-semibold">All Detail View</button>
+        </div>
+    </div>
+
+    @if (Model.HasSearched)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            @if (Model.Results.Count == 0)
+            {
+                <div class="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3">
+                    No internal marks records found for selected filters.
+                </div>
+            }
+            else
+            {
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="text-left border-b border-gray-200 text-gray-600">
+                                <th class="px-3 py-2">Student</th>
+                                <th class="px-3 py-2">Academic Year</th>
+                                <th class="px-3 py-2">College</th>
+                                <th class="px-3 py-2">Level</th>
+                                <th class="px-3 py-2">Program</th>
+                                <th class="px-3 py-2">Year Part</th>
+                                <th class="px-3 py-2">Subject</th>
+                                <th class="px-3 py-2">Theory Internal</th>
+                                <th class="px-3 py-2">Practical Internal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.Results)
+                            {
+                                <tr class="border-b border-gray-100 text-gray-700">
+                                    <td class="px-3 py-2">@row.StudentName</td>
+                                    <td class="px-3 py-2">@row.AcademicYearName</td>
+                                    <td class="px-3 py-2">@row.CollegeName</td>
+                                    <td class="px-3 py-2">@row.LevelName</td>
+                                    <td class="px-3 py-2">@row.ProgramName</td>
+                                    <td class="px-3 py-2">@row.YearPartName</td>
+                                    <td class="px-3 py-2">@row.SubjectName</td>
+                                    <td class="px-3 py-2">@row.ObtainedMarksTheoryInternal</td>
+                                    <td class="px-3 py-2">@row.ObtainedMarksPracticalInternal</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
