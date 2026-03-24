@@ -29,7 +29,7 @@ namespace fwu_examination_management_system.Models
         [ValidateNever]
         public virtual AcademicYear AcademicYear { get; set; }
 
-        [ForeignKey(nameof(ProgramsId))
+        [ForeignKey(nameof(ProgramsId))]
         [ValidateNever]
         public virtual Programs Program { get; set; }
     }

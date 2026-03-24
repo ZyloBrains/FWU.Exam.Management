@@ -1,7 +1,9 @@
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Helpers;
 using fwu_examination_management_system.Models;
+using fwu_examination_management_system.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,8 +19,17 @@ builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireCo
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+// For Identity UI (non‑generic IEmailSender)
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+// Register email settings
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+// Register the non‑generic IEmailSender (used by Identity UI pages)
+//builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, EmailSender>();
+// Register IEmailSender<AppUser>
+builder.Services.AddTransient<IEmailSender<AppUser>, EmailSender>();
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
