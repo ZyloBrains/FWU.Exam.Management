@@ -96,6 +96,9 @@ namespace fwu_examination_management_system.Controllers
                     .ThenInclude(x => x.YearPart)
                 .Include(x => x.StudentProgramYearPart)
                     .ThenInclude(x => x.StudentAdmission)
+                        .ThenInclude(x => x.Program)
+                .Include(x => x.StudentProgramYearPart)
+                    .ThenInclude(x => x.StudentAdmission)
                         .ThenInclude(x => x.StudentRegistration)
                 .AsQueryable();
 
@@ -109,7 +112,7 @@ namespace fwu_examination_management_system.Controllers
                 query = query.Where(x => x.ExamScheduleId == filter.ExamScheduleId.Value);
 
             if (filter.ProgramsId.HasValue)
-                query = query.Where(x => x.ProgramsId == filter.ProgramsId.Value);
+                query = query.Where(x => x.StudentProgramYearPart.StudentAdmission.ProgramsId == filter.ProgramsId.Value);
 
             if (filter.YearPartId.HasValue)
                 query = query.Where(x => x.StudentProgramYearPart.YearPartId == filter.YearPartId.Value);
@@ -136,7 +139,9 @@ namespace fwu_examination_management_system.Controllers
                     AcademicYearName = x.AcademicYear.AcademicYearName,
                     CollegeName = x.College.CollegeName,
                     ExamScheduleName = x.ExamSchedule.ExamScheduleName,
-                    ProgramName = x.Program != null ? x.Program.ProgramName : string.Empty,
+                    ProgramName = x.Program != null
+                        ? x.Program.ProgramName
+                        : x.StudentProgramYearPart.StudentAdmission.Program.ProgramName,
                     YearPartName = x.StudentProgramYearPart.YearPart.YearPartName,
                     ExamTypeName = x.ExamSchedule.ExamType.ExamTypeName,
                     IsAppliedByStudent = x.IsAppliedByStudent,
