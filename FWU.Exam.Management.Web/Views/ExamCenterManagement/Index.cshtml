@@ -1,0 +1,78 @@
+@model fwu_examination_management_system.ViewModels.ExamCenterManagementViewModel
+
+@{
+    ViewData["Title"] = "Exam Center Management";
+}
+
+<div class="space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h1 class="text-2xl font-semibold text-gray-800">Exam Center Management</h1>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">
+                @successMessage
+            </div>
+        }
+
+        <div class="flex flex-wrap gap-2 mb-4">
+            <a asp-action="Create" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">Add New</a>
+            <a asp-action="Index" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors">Import Exam Center</a>
+            <a asp-action="DetailsList" class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors">View All Center Detail / Apply All</a>
+        </div>
+
+        <form method="get" asp-action="Index" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="statusFilter" asp-items="Model.StatusOptions" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg"></select>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Exam Schedule</label>
+                <select name="examScheduleId" asp-items="Model.ExamSchedules" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg"></select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Filter</button>
+                <a asp-action="Index" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
+            </div>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-left border-b border-gray-200 text-gray-600">
+                        <th class="px-3 py-2">S.No.</th>
+                        <th class="px-3 py-2">Exam Schedule Name</th>
+                        <th class="px-3 py-2">Exam Center College</th>
+                        <th class="px-3 py-2">Remarks</th>
+                        <th class="px-3 py-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="px-3 py-4 text-gray-500">No exam center data found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        var sno = 1;
+                        foreach (var row in Model.Items)
+                        {
+                            <tr class="border-b border-gray-100 text-gray-700">
+                                <td class="px-3 py-2">@sno</td>
+                                <td class="px-3 py-2">@row.ExamScheduleName</td>
+                                <td class="px-3 py-2">@row.ExamCenterCollege</td>
+                                <td class="px-3 py-2">@row.Remarks</td>
+                                <td class="px-3 py-2">@(row.IsActive ? "Active" : "Inactive")</td>
+                            </tr>
+                            sno++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

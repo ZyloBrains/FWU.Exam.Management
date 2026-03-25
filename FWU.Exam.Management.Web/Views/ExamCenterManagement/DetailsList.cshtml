@@ -1,0 +1,58 @@
+@model fwu_examination_management_system.ViewModels.ExamCenterDetailsListViewModel
+
+@{
+    ViewData["Title"] = "Exam Center Detail List";
+}
+
+<div class="space-y-4">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h1 class="text-2xl font-semibold text-gray-800">Exam Center Detail List</h1>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-left border-b border-gray-200 text-gray-600">
+                        <th class="px-3 py-2">S.No.</th>
+                        <th class="px-3 py-2">Exam Schedule Name</th>
+                        <th class="px-3 py-2">Exam Center College</th>
+                        <th class="px-3 py-2">College</th>
+                        <th class="px-3 py-2">Program</th>
+                        <th class="px-3 py-2">Roll From</th>
+                        <th class="px-3 py-2">Roll To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="px-3 py-4 text-gray-500">No exam center details found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        var sno = 1;
+                        foreach (var row in Model.Items)
+                        {
+                            <tr class="border-b border-gray-100 text-gray-700">
+                                <td class="px-3 py-2">@sno</td>
+                                <td class="px-3 py-2">@row.ExamScheduleName</td>
+                                <td class="px-3 py-2">@row.ExamCenterCollege</td>
+                                <td class="px-3 py-2">@row.College</td>
+                                <td class="px-3 py-2">@row.Program</td>
+                                <td class="px-3 py-2">@row.RollNumberFrom</td>
+                                <td class="px-3 py-2">@row.RollNumberTo</td>
+                            </tr>
+                            sno++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pt-4">
+            <a asp-action="Index" class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Back</a>
+        </div>
+    </div>
+</div>
