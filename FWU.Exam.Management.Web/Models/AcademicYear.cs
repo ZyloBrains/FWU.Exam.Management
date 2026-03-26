@@ -14,7 +14,7 @@ namespace fwu_examination_management_system.Models
         public int AcademicYearCode { get; set; }
 
         [MaxLength(50)]
-        public string AcademicYearCodeNepali { get; set; }
+        public string? AcademicYearCodeNepali { get; set; }
 
         [Required, MaxLength(50)]
         public string AcademicYearName { get; set; }
@@ -23,7 +23,7 @@ namespace fwu_examination_management_system.Models
         public string AcademicYearNameNepali { get; set; }
 
         [MaxLength(50)]
-        public string Remark { get; set; }
+        public string? Remark { get; set; }
 
         public bool IsRunning { get; set; }
         public bool IsActive { get; set; }

@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         public string RegionName { get; set; }
 
         [MaxLength(55)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

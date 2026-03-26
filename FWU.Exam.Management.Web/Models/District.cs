@@ -14,7 +14,7 @@ namespace fwu_examination_management_system.Models
         public int ProvinceId { get; set; }
 
         [MaxLength(50)]
-        public string DistrictCode { get; set; }
+        public string? DistrictCode { get; set; }
 
         [Required, MaxLength(255)]
         public string DistrictName { get; set; }

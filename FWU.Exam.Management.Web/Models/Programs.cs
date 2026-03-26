@@ -30,12 +30,12 @@ namespace fwu_examination_management_system.Models
         public bool HasMultipleIntakes { get; set; }
 
         [MaxLength(50)]
-        public string NumberOfSeats { get; set; }
+        public string? NumberOfSeats { get; set; }
 
         public int? ScholarshipSeats { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
@@ -44,7 +44,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(10)]
-        public string RollNumberPrefix { get; set; }
+        public string? RollNumberPrefix { get; set; }
 
         [ForeignKey(nameof(LevelId))]
         [ValidateNever]

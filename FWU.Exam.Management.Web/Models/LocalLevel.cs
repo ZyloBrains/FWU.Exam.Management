@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         public string LocalLevelName { get; set; }
 
         [MaxLength(50)]
-        public string Remark { get; set; }
+        public string? Remark { get; set; }
 
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
