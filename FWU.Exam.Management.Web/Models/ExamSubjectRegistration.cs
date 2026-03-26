@@ -16,22 +16,22 @@ namespace fwu_examination_management_system.Models
         public int ExamTypeId { get; set; }
 
         [MaxLength(3)]
-        public string ObtainedMarksTheory { get; set; }
+        public string? ObtainedMarksTheory { get; set; }
 
         [MaxLength(3)]
-        public string ObtainedMarksTheoryConfirm { get; set; }
+        public string? ObtainedMarksTheoryConfirm { get; set; }
 
         [MaxLength(3)]
-        public string ObtainedMarksPractical { get; set; }
+        public string? ObtainedMarksPractical { get; set; }
 
         [MaxLength(3)]
-        public string ObtainedMarksPracticalConfirm { get; set; }
+        public string? ObtainedMarksPracticalConfirm { get; set; }
 
         [MaxLength(3)]
-        public string GradeLetter { get; set; }
+        public string? GradeLetter { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public bool? IsLooseEntry { get; set; }

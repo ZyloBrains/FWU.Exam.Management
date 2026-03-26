@@ -17,10 +17,10 @@ namespace fwu_examination_management_system.Models
         public DateTime ExamDate { get; set; }
 
         [MaxLength(10)]
-        public string ExamDateBs { get; set; }
+        public string? ExamDateBs { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

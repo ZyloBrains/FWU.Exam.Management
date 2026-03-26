@@ -15,7 +15,7 @@ namespace fwu_examination_management_system.Models
         public int CollegeId { get; set; }
 
         [MaxLength(255)]
-        public string Remark { get; set; }
+        public string? Remark { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

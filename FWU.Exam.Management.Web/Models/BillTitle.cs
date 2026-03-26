@@ -13,7 +13,7 @@ namespace fwu_examination_management_system.Models
         public string BillTitleName { get; set; }
 
         [MaxLength(1024)]
-        public string Category { get; set; }
+        public string? Category { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedByUserId { get; set; }

@@ -19,10 +19,10 @@ namespace fwu_examination_management_system.Models
         public string CollegeName { get; set; }
 
         [MaxLength(500)]
-        public string CollegeNameNepali { get; set; }
+        public string? CollegeNameNepali { get; set; }
 
         [MaxLength(500)]
-        public string ShortName { get; set; }
+        public string? ShortName { get; set; }
 
         public DateTime? EstablishedDate { get; set; }
         public DateTime? ClosedDate { get; set; }
@@ -30,37 +30,37 @@ namespace fwu_examination_management_system.Models
         public int DistrictId { get; set; }
 
         [MaxLength(255)]
-        public string MunicipalityVdc { get; set; }
+        public string? MunicipalityVdc { get; set; }
 
         [MaxLength(50)]
-        public string WardNumber { get; set; }
+        public string? WardNumber { get; set; }
 
         [MaxLength(50)]
-        public string HouseNumber { get; set; }
+        public string? HouseNumber { get; set; }
 
         [MaxLength(50)]
-        public string Website { get; set; }
+        public string? Website { get; set; }
 
         [MaxLength(50)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [MaxLength(150)]
-        public string Phone1 { get; set; }
+        public string? Phone1 { get; set; }
 
         [MaxLength(15)]
-        public string Phone2 { get; set; }
+        public string? Phone2 { get; set; }
 
         [MaxLength(255)]
-        public string PrincipalName { get; set; }
+        public string? PrincipalName { get; set; }
 
         [MaxLength(50)]
-        public string PrincipalContactNumber { get; set; }
+        public string? PrincipalContactNumber { get; set; }
 
         [MaxLength(15)]
-        public string Fax { get; set; }
+        public string? Fax { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsExamCenterOnly { get; set; }
         public bool IsActive { get; set; }

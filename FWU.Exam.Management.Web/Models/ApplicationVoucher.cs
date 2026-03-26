@@ -20,7 +20,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? DateOfBirthAd { get; set; }
 
         [MaxLength(50)]
-        public string DateOfBirthBs { get; set; }
+        public string? DateOfBirthBs { get; set; }
 
         public decimal Amount { get; set; }
         public DateTime? VoucherDate { get; set; }
@@ -30,7 +30,7 @@ namespace fwu_examination_management_system.Models
         public string ContactNumber { get; set; }
 
         [MaxLength(1024)]
-        public string Branch { get; set; }
+        public string? Branch { get; set; }
 
         public int ExamScheduleId { get; set; }
         public int? StudentRegistrationId { get; set; }

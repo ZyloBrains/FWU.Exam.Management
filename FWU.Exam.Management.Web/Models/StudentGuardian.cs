@@ -17,85 +17,85 @@ namespace fwu_examination_management_system.Models
         public string FatherName { get; set; }
 
         [MaxLength(50)]
-        public string FatherContactNumber { get; set; }
+        public string? FatherContactNumber { get; set; }
 
         [MaxLength(50)]
-        public string FatherPhone { get; set; }
+        public string? FatherPhone { get; set; }
 
         [MaxLength(50)]
-        public string FatherEmail { get; set; }
+        public string? FatherEmail { get; set; }
 
         [MaxLength(50)]
-        public string FatherQualification { get; set; }
+        public string? FatherQualification { get; set; }
 
         [MaxLength(50)]
-        public string FatherProfession { get; set; }
+        public string? FatherProfession { get; set; }
 
         [MaxLength(100)]
-        public string FatherAddress { get; set; }
+        public string? FatherAddress { get; set; }
 
         [MaxLength(50)]
-        public string FatherOrganization { get; set; }
+        public string? FatherOrganization { get; set; }
 
         [MaxLength(50)]
-        public string FatherOrganizationAddress { get; set; }
+        public string? FatherOrganizationAddress { get; set; }
 
         [Required, MaxLength(50)]
         public string MotherName { get; set; }
 
         [MaxLength(50)]
-        public string MotherContactNumber { get; set; }
+        public string? MotherContactNumber { get; set; }
 
         [MaxLength(50)]
-        public string MotherPhone { get; set; }
+        public string? MotherPhone { get; set; }
 
         [MaxLength(50)]
-        public string MotherEmail { get; set; }
+        public string? MotherEmail { get; set; }
 
         [MaxLength(50)]
-        public string MotherQualification { get; set; }
+        public string? MotherQualification { get; set; }
 
         [MaxLength(50)]
-        public string MotherProfession { get; set; }
+        public string? MotherProfession { get; set; }
 
         [MaxLength(100)]
-        public string MotherAddress { get; set; }
+        public string? MotherAddress { get; set; }
 
         [MaxLength(50)]
-        public string MotherOrganization { get; set; }
+        public string? MotherOrganization { get; set; }
 
         [MaxLength(50)]
-        public string MotherOrganizationAddress { get; set; }
+        public string? MotherOrganizationAddress { get; set; }
 
         [Required, MaxLength(50)]
         public string GuardianName { get; set; }
 
         [MaxLength(50)]
-        public string GuardianContactNumber { get; set; }
+        public string? GuardianContactNumber { get; set; }
 
         [MaxLength(50)]
-        public string GuardianPhone { get; set; }
+        public string? GuardianPhone { get; set; }
 
         [MaxLength(50)]
-        public string GuardianEmail { get; set; }
+        public string? GuardianEmail { get; set; }
 
         [MaxLength(50)]
-        public string GuardianQualification { get; set; }
+        public string? GuardianQualification { get; set; }
 
         [MaxLength(50)]
-        public string GuardianProfession { get; set; }
+        public string? GuardianProfession { get; set; }
 
         [MaxLength(100)]
-        public string GuardianAddress { get; set; }
+        public string? GuardianAddress { get; set; }
 
         [MaxLength(50)]
-        public string GuardianOrganization { get; set; }
+        public string? GuardianOrganization { get; set; }
 
         [MaxLength(50)]
-        public string GuardianOrganizationAddress { get; set; }
+        public string? GuardianOrganizationAddress { get; set; }
 
         [MaxLength(50)]
-        public string RelationWithStudent { get; set; }
+        public string? RelationWithStudent { get; set; }
 
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }

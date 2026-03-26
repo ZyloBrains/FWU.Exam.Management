@@ -15,28 +15,28 @@ namespace fwu_examination_management_system.Models
         public int CollegeId { get; set; }
 
         [MaxLength(50)]
-        public string RegistrationNumber { get; set; }
+        public string? RegistrationNumber { get; set; }
 
         [Required, MaxLength(80)]
         public string FirstName { get; set; }
 
         [MaxLength(30)]
-        public string MiddleName { get; set; }
+        public string? MiddleName { get; set; }
 
         [Required, MaxLength(30)]
         public string LastName { get; set; }
 
         [MaxLength(100)]
-        public string NepaliName { get; set; }
+        public string? NepaliName { get; set; }
 
         [MaxLength(15)]
-        public string ContactNumber { get; set; }
+        public string? ContactNumber { get; set; }
 
         [MaxLength(15)]
-        public string Phone { get; set; }
+        public string? Phone { get; set; }
 
         [MaxLength(50)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [Required, MaxLength(10)]
         public string DateOfBirthBs { get; set; }
@@ -47,21 +47,21 @@ namespace fwu_examination_management_system.Models
         public int? IndexGroupId { get; set; }
 
         [MaxLength(5)]
-        public string BloodGroup { get; set; }
+        public string? BloodGroup { get; set; }
 
         [MaxLength(50)]
-        public string Nationality { get; set; }
+        public string? Nationality { get; set; }
 
         [MaxLength(50)]
-        public string Religion { get; set; }
+        public string? Religion { get; set; }
 
         public int DistrictId { get; set; }
 
         [MaxLength(100)]
-        public string MunicipalityVdc { get; set; }
+        public string? MunicipalityVdc { get; set; }
 
         [MaxLength(50)]
-        public string WardNumber { get; set; }
+        public string? WardNumber { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
@@ -77,19 +77,19 @@ namespace fwu_examination_management_system.Models
         public int? EthnicityId { get; set; }
 
         [MaxLength(50)]
-        public string EntranceRollNumber { get; set; }
+        public string? EntranceRollNumber { get; set; }
 
         public int? EntryFormatId { get; set; }
         public bool? IsRegistrationNumberGenerated { get; set; }
 
         [MaxLength(50)]
-        public string RowIndex { get; set; }
+        public string? RowIndex { get; set; }
 
         [MaxLength(50)]
-        public string PreviousAcademicYear { get; set; }
+        public string? PreviousAcademicYear { get; set; }
 
         [MaxLength(50)]
-        public string PreviousSymbolNumber { get; set; }
+        public string? PreviousSymbolNumber { get; set; }
 
         public int? StudentRegistrationSearchId { get; set; }
         public int? LocalLevelId { get; set; }

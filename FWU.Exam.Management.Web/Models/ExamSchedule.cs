@@ -23,17 +23,17 @@ namespace fwu_examination_management_system.Models
         public DateTime? EndDateAd { get; set; }
 
         [MaxLength(10)]
-        public string StartDateBs { get; set; }
+        public string? StartDateBs { get; set; }
 
         [MaxLength(10)]
-        public string EndDateBs { get; set; }
+        public string? EndDateBs { get; set; }
 
         public DateTime? PublishedDate { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
@@ -45,13 +45,13 @@ namespace fwu_examination_management_system.Models
         public int? NegativeMarks { get; set; }
 
         [MaxLength(500)]
-        public string ProgramIds { get; set; }
+        public string? ProgramIds { get; set; }
 
         [MaxLength(500)]
-        public string RegularBatchIds { get; set; }
+        public string? RegularBatchIds { get; set; }
 
         [MaxLength(500)]
-        public string PartialBatchIds { get; set; }
+        public string? PartialBatchIds { get; set; }
 
         public DateTime? ExtendedDate { get; set; }
         public decimal? ExtendedDateCharge { get; set; }
@@ -59,7 +59,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? AdmissionCardReleaseDate { get; set; }
 
         [MaxLength(50)]
-        public string ExamScheduleCode { get; set; }
+        public string? ExamScheduleCode { get; set; }
 
         [ForeignKey(nameof(AcademicYearId))]
         [ValidateNever]
