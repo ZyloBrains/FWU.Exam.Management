@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Models;
@@ -1930,7 +1930,9 @@ namespace fwu_examination_management_system.Data
             // Map Identity table names to the names used in migrations/snapshot
             //builder.Entity<Program>().ToTable("Program");
             builder.Entity<AppUser>().ToTable("Users");
+            builder.Entity<AppUser>().Property(u => u.Id).ValueGeneratedNever();
             builder.Entity<IdentityRole>().ToTable("Roles");
+            builder.Entity<IdentityRole>().Property(r => r.Id).ValueGeneratedNever();
             builder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims");
             builder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims");
             builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
@@ -1939,3 +1941,4 @@ namespace fwu_examination_management_system.Data
         }
     }
 }
+
