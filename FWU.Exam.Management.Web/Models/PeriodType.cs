@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         public bool? IsActive { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public int? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }

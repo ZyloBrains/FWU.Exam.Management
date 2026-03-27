@@ -10,7 +10,7 @@ namespace fwu_examination_management_system.Models
     {
         [Key]
         public int PaymentRequestLogId { get; set; }
-        public int PaymentRequestLogStatus { get; set; }    
+        public int? PaymentRequestLogStatus { get; set; }     //extra field ??
 
         [Required, MaxLength(50)]
         public string InvoiceNumber { get; set; }
@@ -19,10 +19,10 @@ namespace fwu_examination_management_system.Models
         public DateTime? DateOfBirthAd { get; set; }
 
         [MaxLength(20)]
-        public string MobileNumber { get; set; }
+        public string? MobileNumber { get; set; }
 
         [MaxLength(100)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         [Required, MaxLength(255)]
         public string FullName { get; set; }
@@ -37,7 +37,7 @@ namespace fwu_examination_management_system.Models
         public int ExamScheduleId { get; set; }
 
         [MaxLength(50)]
-        public string TransactionId { get; set; }
+        public string? TransactionId { get; set; }
 
         public int? CollegeId { get; set; }
         public int StudentCount { get; set; }

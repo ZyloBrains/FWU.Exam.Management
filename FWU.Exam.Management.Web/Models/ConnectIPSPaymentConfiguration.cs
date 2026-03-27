@@ -35,6 +35,6 @@ namespace fwu_examination_management_system.Models
         public string PasswordForCreditorPfx { get; set; }
 
         [MaxLength(10)]
-        public string TransactionCurrency { get; set; }
+        public string? TransactionCurrency { get; set; }
     }
 }
