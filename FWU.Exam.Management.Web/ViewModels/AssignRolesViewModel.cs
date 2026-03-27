@@ -5,6 +5,7 @@ namespace fwu_examination_management_system.ViewModels
         public string UserId { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
         public List<RoleAssignmentItem> Roles { get; set; } = [];
+        public string? SelectedRole { get; set; }
     }
 
     public class RoleAssignmentItem

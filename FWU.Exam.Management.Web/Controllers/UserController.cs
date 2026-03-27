@@ -198,19 +198,19 @@ namespace fwu_examination_management_system.Controllers
             if (user == null)
                 return NotFound();
 
-            var allRoles = await _roleManager.Roles
-                .Where(r => r.Name != "Student")
-                .ToListAsync();
+            var allRoles = await _roleManager.Roles.ToListAsync();
             var userRoles = await _userManager.GetRolesAsync(user);
+            var currentRole = userRoles.FirstOrDefault();
 
             var model = new AssignRolesViewModel
             {
                 UserId = user.Id,
                 UserEmail = user.Email ?? string.Empty,
+                SelectedRole = currentRole,
                 Roles = allRoles.Select(r => new RoleAssignmentItem
                 {
                     RoleName = r.Name ?? string.Empty,
-                    IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
+                    IsAssigned = string.Equals(r.Name, currentRole, StringComparison.OrdinalIgnoreCase)
                 }).ToList()
             };
 
@@ -226,25 +226,35 @@ namespace fwu_examination_management_system.Controllers
             if (user == null)
                 return NotFound();
 
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            var selectedRoles = model.Roles
-                .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
-                .Select(r => r.RoleName)
-                .ToList();
-
-            if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(model.SelectedRole))
             {
-                selectedRoles.Add("Student");
+                ModelState.AddModelError(nameof(model.SelectedRole), "Please select one role.");
+            }
+            else if (!await _roleManager.RoleExistsAsync(model.SelectedRole))
+            {
+                ModelState.AddModelError(nameof(model.SelectedRole), "Selected role does not exist.");
             }
 
-            var toAdd = selectedRoles.Except(currentRoles).ToList();
-            var toRemove = currentRoles.Except(selectedRoles).ToList();
+            if (!ModelState.IsValid)
+            {
+                var allRoles = await _roleManager.Roles.ToListAsync();
+                var userRoles = await _userManager.GetRolesAsync(user);
+                var currentRole = userRoles.FirstOrDefault();
 
-            if (toAdd.Count > 0)
-                await _userManager.AddToRolesAsync(user, toAdd);
+                model.Roles = allRoles.Select(r => new RoleAssignmentItem
+                {
+                    RoleName = r.Name ?? string.Empty,
+                    IsAssigned = string.Equals(r.Name, model.SelectedRole ?? currentRole, StringComparison.OrdinalIgnoreCase)
+                }).ToList();
 
-            if (toRemove.Count > 0)
-                await _userManager.RemoveFromRolesAsync(user, toRemove);
+                return View(model);
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (currentRoles.Count > 0)
+                await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            await _userManager.AddToRoleAsync(user, model.SelectedRole!);
 
             return RedirectToAction(nameof(Index));
         }

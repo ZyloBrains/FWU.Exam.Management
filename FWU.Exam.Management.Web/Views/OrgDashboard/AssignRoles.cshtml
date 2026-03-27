@@ -27,14 +27,15 @@
             @for (int i = 0; i < Model.Roles.Count; i++)
             {
                 <div class="form-check mb-2">
-                    <input type="hidden" name="Roles[@i].RoleName" value="@Model.Roles[i].RoleName" />
-                    <input type="checkbox" name="Roles[@i].IsAssigned" value="true"
-                           id="role_@i" class="form-check-input"
-                           @(Model.Roles[i].IsAssigned ? "checked" : "") />
-                    <input type="hidden" name="Roles[@i].IsAssigned" value="false" />
+                    <input asp-for="SelectedRole"
+                           type="radio"
+                           value="@Model.Roles[i].RoleName"
+                           id="role_@i" class="form-check-input" />
                     <label class="form-check-label" for="role_@i">@Model.Roles[i].RoleName</label>
                 </div>
             }
+
+            <span asp-validation-for="SelectedRole" class="text-danger"></span>
 
             <div class="mt-3">
                 <input type="submit" value="Save" class="btn btn-primary" />
