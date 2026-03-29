@@ -19,7 +19,10 @@
 
         <div class="flex flex-wrap gap-2 mb-4">
             <a asp-action="Create" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">Add New</a>
-            <a asp-action="Index" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors">Import Exam Center</a>
+            <form asp-action="ImportExamCenter" method="post" class="inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors">Import Exam Center</button>
+            </form>
             <a asp-action="DetailsList" class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors">View All Center Detail / Apply All</a>
         </div>
 

@@ -113,6 +113,75 @@ namespace fwu_examination_management_system.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "SystemAdmin,Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportExamCenter()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var createdBy = int.TryParse(userIdClaim, out var userId) ? userId : 0;
+
+            var missingMappings = await (from reg in _context.ExamRegistrations.AsNoTracking()
+                                         join center in _context.ExamCenters.AsNoTracking()
+                                             on new { reg.ExamScheduleId, reg.CollegeId }
+                                             equals new { center.ExamScheduleId, center.CollegeId } into centerJoin
+                                         from center in centerJoin.DefaultIfEmpty()
+                                         where center == null
+                                         select new { reg.ExamScheduleId, reg.CollegeId })
+                .Distinct()
+                .ToListAsync();
+
+            var nextCode = (await _context.ExamCenters.MaxAsync(x => (int?)x.Code) ?? 0) + 1;
+            foreach (var map in missingMappings)
+            {
+                _context.ExamCenters.Add(new ExamCenter
+                {
+                    ExamScheduleId = map.ExamScheduleId,
+                    CollegeId = map.CollegeId,
+                    Remark = string.Empty,
+                    IsActive = true,
+                    CreatedBy = createdBy,
+                    CreatedDate = DateTime.UtcNow,
+                    Code = nextCode++
+                });
+            }
+
+            if (missingMappings.Count > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            var centerMap = await _context.ExamCenters
+                .AsNoTracking()
+                .Select(x => new { x.ExamScheduleId, x.CollegeId, x.ExamCenterId })
+                .ToListAsync();
+
+            var centerLookup = centerMap.ToDictionary(x => (x.ExamScheduleId, x.CollegeId), x => x.ExamCenterId);
+            var pendingRegistrations = await _context.ExamRegistrations
+                .Where(x => !x.ExamCenterId.HasValue)
+                .ToListAsync();
+
+            var assignedCount = 0;
+            foreach (var registration in pendingRegistrations)
+            {
+                if (!centerLookup.TryGetValue((registration.ExamScheduleId, registration.CollegeId), out var examCenterId))
+                {
+                    continue;
+                }
+
+                registration.ExamCenterId = examCenterId;
+                assignedCount++;
+            }
+
+            if (assignedCount > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["SuccessMessage"] = $"Import complete. New centers: {missingMappings.Count}, registrations updated: {assignedCount}.";
+            return RedirectToAction(nameof(Index));
+        }
+
         private async Task<ExamCenterManagementViewModel> BuildIndexModelAsync(int? examScheduleId, string statusFilter)
         {
             var query = _context.ExamCenters

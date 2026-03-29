@@ -43,13 +43,16 @@ namespace fwu_examination_management_system.Controllers
             switch (command)
             {
                 case "save":
-                    await SaveSetupAsync(model.ExamScheduleParentId.Value);
-                    model.StatusMessage = "Setup generated and saved successfully.";
+                    var (created, detailCount) = await SaveSetupAsync(model.ExamScheduleParentId.Value);
+                    model.StatusMessage = created
+                        ? $"Setup generated and saved successfully. Detail rows: {detailCount}."
+                        : $"Active setup already exists for selected parent exam schedule. Detail rows: {detailCount}.";
                     break;
                 case "roll":
-                    model.StatusMessage = model.Setups.Count > 0
-                        ? "Roll number generation requested from saved setup."
-                        : "No saved setup found for selected parent exam schedule.";
+                    var generatedCount = await GenerateRollNumbersFromSavedSetupAsync(model.ExamScheduleParentId.Value);
+                    model.StatusMessage = generatedCount > 0
+                        ? $"Roll numbers generated successfully. Updated records: {generatedCount}."
+                        : "No pending registrations found or no saved setup detail available for selected parent exam schedule.";
                     break;
                 default:
                     model.StatusMessage = model.Setups.Count > 0
@@ -99,14 +102,21 @@ namespace fwu_examination_management_system.Controllers
             return model;
         }
 
-        private async Task SaveSetupAsync(int examScheduleParentId)
+        private async Task<(bool Created, int DetailCount)> SaveSetupAsync(int examScheduleParentId)
         {
-            var existing = await _context.ExamRollNumberSetups
-                .AnyAsync(x => x.ExamScheduleParentId == examScheduleParentId && x.IsActive);
+            var existingSetup = await _context.ExamRollNumberSetups
+                .AsNoTracking()
+                .Where(x => x.ExamScheduleParentId == examScheduleParentId && x.IsActive)
+                .OrderByDescending(x => x.ExamRollNumberSetupId)
+                .FirstOrDefaultAsync();
 
-            if (existing)
+            if (existingSetup != null)
             {
-                return;
+                var existingDetailCount = await _context.ExamRollNumberSetupDetails
+                    .AsNoTracking()
+                    .CountAsync(x => x.ExamRollNumberSetupId == existingSetup.ExamRollNumberSetupId);
+
+                return (false, existingDetailCount);
             }
 
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -128,6 +138,179 @@ namespace fwu_examination_management_system.Controllers
 
             _context.ExamRollNumberSetups.Add(setup);
             await _context.SaveChangesAsync();
+
+            var groupedRows = await (from reg in _context.ExamRegistrations.AsNoTracking()
+                                     join sp in _context.StudentProgramYearParts.AsNoTracking() on reg.StudentProgramYearPartId equals sp.StudentProgramYearPartId
+                                     join sa in _context.StudentAdmissions.AsNoTracking() on sp.StudentAdmissionId equals sa.StudentAdmissionId
+                                     join sch in _context.ExamSchedules.AsNoTracking() on reg.ExamScheduleId equals sch.ExamScheduleId
+                                     where sch.ExamScheduleParentId == examScheduleParentId
+                                           && (reg.ExamRollNumber == null || reg.ExamRollNumber == string.Empty)
+                                     group new { reg, sa } by new
+                                     {
+                                         reg.ExamScheduleId,
+                                         ProgramId = reg.ProgramsId ?? sa.ProgramsId,
+                                         reg.CollegeId,
+                                         ExamTypeId = reg.TypeId ?? 0
+                                     }
+                into g
+                                     orderby g.Key.ProgramId, g.Key.ExamScheduleId, g.Key.CollegeId, g.Key.ExamTypeId
+                                     select new
+                                     {
+                                         g.Key.ExamScheduleId,
+                                         g.Key.ProgramId,
+                                         g.Key.CollegeId,
+                                         g.Key.ExamTypeId,
+                                         Count = g.Count()
+                                     }).ToListAsync();
+
+            var currentRoll = setup.FirstExamRollNumber;
+            foreach (var row in groupedRows)
+            {
+                var start = currentRoll;
+                var end = start + row.Count - 1;
+
+                _context.ExamRollNumberSetupDetails.Add(new ExamRollNumberSetupDetail
+                {
+                    ExamRollNumberSetupId = setup.ExamRollNumberSetupId,
+                    ExamScheduleId = row.ExamScheduleId,
+                    ProgramId = row.ProgramId,
+                    ExamTypeId = row.ExamTypeId,
+                    CollegeId = row.CollegeId,
+                    StartRollNumber = start,
+                    EndRollNumber = end,
+                    Count = row.Count,
+                    Prefix = setup.Prefix,
+                    Suffix = setup.Suffix
+                });
+
+                currentRoll = end + 1 + Math.Max(setup.MinimumGap, 0);
+            }
+
+            if (groupedRows.Count > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return (true, groupedRows.Count);
+        }
+
+        private async Task<int> GenerateRollNumbersFromSavedSetupAsync(int examScheduleParentId)
+        {
+            var setup = await _context.ExamRollNumberSetups
+                .AsNoTracking()
+                .Where(x => x.ExamScheduleParentId == examScheduleParentId && x.IsActive)
+                .OrderByDescending(x => x.ExamRollNumberSetupId)
+                .FirstOrDefaultAsync();
+
+            if (setup == null)
+            {
+                return 0;
+            }
+
+            var details = await _context.ExamRollNumberSetupDetails
+                .AsNoTracking()
+                .Where(x => x.ExamRollNumberSetupId == setup.ExamRollNumberSetupId)
+                .OrderBy(x => x.ProgramId)
+                .ThenBy(x => x.ExamScheduleId)
+                .ThenBy(x => x.CollegeId)
+                .ThenBy(x => x.ExamTypeId)
+                .ThenBy(x => x.StartRollNumber)
+                .ToListAsync();
+
+            if (details.Count == 0)
+            {
+                return 0;
+            }
+
+            var pending = await (from reg in _context.ExamRegistrations.AsNoTracking()
+                                 join sch in _context.ExamSchedules.AsNoTracking() on reg.ExamScheduleId equals sch.ExamScheduleId
+                                 join sp in _context.StudentProgramYearParts.AsNoTracking() on reg.StudentProgramYearPartId equals sp.StudentProgramYearPartId
+                                 join sa in _context.StudentAdmissions.AsNoTracking() on sp.StudentAdmissionId equals sa.StudentAdmissionId
+                                 join sr in _context.StudentRegistrations.AsNoTracking() on sa.StudentRegistrationId equals sr.StudentRegistrationId
+                                 where sch.ExamScheduleParentId == examScheduleParentId
+                                       && (reg.ExamRollNumber == null || reg.ExamRollNumber == string.Empty)
+                                 select new PendingRollRow
+                                 {
+                                     ExamRegistrationId = reg.ExamRegistrationId,
+                                     ExamScheduleId = reg.ExamScheduleId,
+                                     ProgramId = reg.ProgramsId ?? sa.ProgramsId,
+                                     CollegeId = reg.CollegeId,
+                                     ExamTypeId = reg.TypeId ?? 0,
+                                     RegistrationNo = sr.RegistrationNumber ?? string.Empty,
+                                     FullName = ((sr.FirstName ?? string.Empty) + " " + (sr.MiddleName ?? string.Empty) + " " + (sr.LastName ?? string.Empty)).Trim()
+                                 }).ToListAsync();
+
+            if (pending.Count == 0)
+            {
+                return 0;
+            }
+
+            var pendingIds = pending.Select(x => x.ExamRegistrationId).Distinct().ToList();
+            var registrationEntities = await _context.ExamRegistrations
+                .Where(x => pendingIds.Contains(x.ExamRegistrationId))
+                .ToDictionaryAsync(x => x.ExamRegistrationId);
+
+            var updated = 0;
+            foreach (var detail in details)
+            {
+                var rows = pending
+                    .Where(x => x.ExamScheduleId == detail.ExamScheduleId
+                                && x.ProgramId == detail.ProgramId
+                                && x.CollegeId == detail.CollegeId
+                                && x.ExamTypeId == detail.ExamTypeId)
+                    .OrderBy(x => x.FullName)
+                    .ThenBy(x => x.RegistrationNo)
+                    .ThenBy(x => x.ExamRegistrationId)
+                    .ToList();
+
+                var current = detail.StartRollNumber;
+                foreach (var row in rows)
+                {
+                    if (!registrationEntities.TryGetValue(row.ExamRegistrationId, out var registration))
+                    {
+                        continue;
+                    }
+
+                    var rollNo = BuildRollNumber(setup, detail, current);
+                    registration.ExamRollNumber = rollNo;
+
+                    if (!registration.ExamRollNumberCoding.HasValue && long.TryParse(rollNo, out var coding))
+                    {
+                        registration.ExamRollNumberCoding = coding;
+                    }
+
+                    current++;
+                    updated++;
+                }
+            }
+
+            if (updated > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return updated;
+        }
+
+        private static string BuildRollNumber(ExamRollNumberSetup setup, ExamRollNumberSetupDetail detail, int number)
+        {
+            var prefix = !string.IsNullOrWhiteSpace(detail.Prefix) ? detail.Prefix : setup.Prefix;
+            var suffix = !string.IsNullOrWhiteSpace(detail.Suffix) ? detail.Suffix : setup.Suffix;
+            var minLength = Math.Max(setup.MinimumRollNumberLength, number.ToString().Length);
+            var numericPart = number.ToString().PadLeft(minLength, '0');
+
+            return $"{prefix}{numericPart}{suffix}";
+        }
+
+        private sealed class PendingRollRow
+        {
+            public int ExamRegistrationId { get; init; }
+            public int ExamScheduleId { get; init; }
+            public int ProgramId { get; init; }
+            public int CollegeId { get; init; }
+            public int ExamTypeId { get; init; }
+            public string RegistrationNo { get; init; } = string.Empty;
+            public string FullName { get; init; } = string.Empty;
         }
     }
 }
