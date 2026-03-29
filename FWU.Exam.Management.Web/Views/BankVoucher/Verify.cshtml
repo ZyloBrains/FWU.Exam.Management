@@ -1,27 +1,27 @@
 @model fwu_examination_management_system.ViewModels.VoucherVerificationViewModel
 
 @{
-    ViewData["Title"] = "Verify Voucher";
+    ViewData["Title"] = "Voucher Verification";
 }
 
 <div class="space-y-6">
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h1 class="text-2xl font-semibold text-gray-800">Verify Voucher</h1>
-        <p class="text-sm text-gray-500 mt-1">Verify using Voucher Number</p>
+        <h1 class="text-2xl font-semibold text-gray-800">Voucher Verification</h1>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <form asp-action="Verify" method="post" class="space-y-4">
             @Html.AntiForgeryToken()
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="md:col-span-1">
+                    <label asp-for="VoucherNumber" class="block text-sm font-semibold text-gray-700 mb-1"></label>
+                </div>
                 <div class="md:col-span-2">
-                    <label asp-for="VoucherNumber" class="block text-sm font-medium text-gray-700 mb-1"></label>
-                    <input asp-for="VoucherNumber" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter voucher number" />
+                    <input asp-for="VoucherNumber" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter voucher no" />
                     <span asp-validation-for="VoucherNumber" class="text-sm text-red-600"></span>
                 </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">Verify</button>
-                    <a asp-action="Verify" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">Reset</a>
+                <div>
+                    <button type="submit" class="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">Search Voucher</button>
                 </div>
             </div>
         </form>
@@ -30,7 +30,7 @@
     @if (Model.HasSearched)
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            @if (Model.Results.Count == 0)
+            @if (Model.Result == null)
             {
                 <div class="rounded-lg border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3">
                     No voucher found for <span class="font-semibold">@Model.VoucherNumber</span>.
@@ -38,43 +38,50 @@
             }
             else
             {
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead>
-                            <tr class="text-left border-b border-gray-200 text-gray-600">
-                                <th class="px-3 py-2">Voucher No</th>
-                                <th class="px-3 py-2">Voucher Date</th>
-                                <th class="px-3 py-2">Amount</th>
-                                <th class="px-3 py-2">College</th>
-                                <th class="px-3 py-2">Academic Year</th>
-                                <th class="px-3 py-2">Bank</th>
-                                <th class="px-3 py-2">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model.Results)
-                            {
-                                <tr class="border-b border-gray-100 text-gray-700">
-                                    <td class="px-3 py-2 font-medium">@item.VoucherNumber</td>
-                                    <td class="px-3 py-2">@item.VoucherDate.ToString("yyyy-MM-dd")</td>
-                                    <td class="px-3 py-2">@item.VoucherAmount.ToString("N2")</td>
-                                    <td class="px-3 py-2">@(item.College?.CollegeName ?? "-")</td>
-                                    <td class="px-3 py-2">@(item.AcademicYear?.AcademicYearName ?? "-")</td>
-                                    <td class="px-3 py-2">@(item.Bank?.BankName ?? "-")</td>
-                                    <td class="px-3 py-2">
-                                        @if (item.IsActive)
-                                        {
-                                            <span class="inline-flex px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">Active</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">Inactive</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                <div class="text-center mb-6">
+                    <div class="text-emerald-500 text-6xl leading-none">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 class="text-5xl md:text-6xl font-light text-emerald-500 mt-2">Verified Already</h2>
+                </div>
+
+                <div class="max-w-4xl mx-auto space-y-4 text-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">VoucherNo:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.VoucherNumber</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Amount:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.Amount.ToString("0.##")</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Payment Gateway:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.PaymentGateway</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Requested Time:</div>
+                        <div class="md:col-span-2 text-gray-600">@(Model.Result.RequestedTime?.ToString("yyyy-MM-dd hh:mm:ss tt") ?? "")</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Student Name:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.StudentName</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">College:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.CollegeName</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Roll No:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.RollNo</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Contact No:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.ContactNo</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-y-2">
+                        <div class="font-semibold text-gray-700">Exam:</div>
+                        <div class="md:col-span-2 text-gray-600">@Model.Result.ExamName</div>
+                    </div>
                 </div>
             }
         </div>
