@@ -36,7 +36,7 @@ namespace fwu_examination_management_system.Models
         public int? DisplayOrder { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
@@ -47,19 +47,19 @@ namespace fwu_examination_management_system.Models
         public bool IsCompulsory { get; set; }
 
         [MaxLength(50)]
-        public string ShortName { get; set; }
+        public string? ShortName { get; set; }
 
         [MaxLength(50)]
-        public string ConcurrentSubjectCode { get; set; }
+        public string? ConcurrentSubjectCode { get; set; }
 
         public int SubjectTypeId { get; set; }
         public bool HasTheory { get; set; }
 
         [MaxLength(50)]
-        public string Year { get; set; }
+        public string? Year { get; set; }
 
         [MaxLength(50)]
-        public string Part { get; set; }
+        public string? Part { get; set; }
 
         [ForeignKey(nameof(SubjectGroupId))]
         [ValidateNever]

@@ -14,7 +14,7 @@ namespace fwu_examination_management_system.Models
         [Required, MaxLength(255)]
         public string PaymentTypeName { get; set; }
 
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; }     // IsActive = Status
         [ValidateNever]
         public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
     }

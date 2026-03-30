@@ -21,7 +21,7 @@ namespace fwu_examination_management_system.Models
         public bool IsCompleted { get; set; }
 
         [MaxLength(50)]
-        public string Cgpa { get; set; }
+        public string? Cgpa { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
@@ -30,7 +30,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(50)]
-        public string CollegeRollNumber { get; set; }
+        public string? CollegeRollNumber { get; set; }
 
         public int? RepeatBatchId { get; set; }
         public int? SubjectGroupId { get; set; }

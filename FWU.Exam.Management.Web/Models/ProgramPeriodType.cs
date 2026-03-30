@@ -13,7 +13,6 @@ namespace fwu_examination_management_system.Models
 
         [Required, MaxLength(50)]
         public string ProgramPeriodTypeName { get; set; }
-
         public decimal? NumberOfMonths { get; set; }
         [ValidateNever]
         public virtual ICollection<Programs> Programs { get; set; }

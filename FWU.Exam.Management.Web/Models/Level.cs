@@ -11,7 +11,7 @@ namespace fwu_examination_management_system.Models
         public int LevelId { get; set; }
 
         [MaxLength(2)]
-        public string LevelCode { get; set; }
+        public string? LevelCode { get; set; }
 
         [Required, MaxLength(50)]
         public string LevelName { get; set; }
@@ -19,7 +19,7 @@ namespace fwu_examination_management_system.Models
         public int? LevelDisplayOrder { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool? IsRunning { get; set; }
         public bool IsActive { get; set; }

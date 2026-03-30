@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         [Required, MaxLength(255)]
         public string Action { get; set; }
 
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         [ForeignKey(nameof(ExamRegistrationId))]
         [ValidateNever]

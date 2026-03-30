@@ -25,55 +25,55 @@ namespace fwu_examination_management_system.Models
         public string Part { get; set; }
 
         [MaxLength(50)]
-        public string RegistrationNumber { get; set; }
+        public string? RegistrationNumber { get; set; }
 
         [Required, MaxLength(50)]
         public string SymbolNumber { get; set; }
 
         [MaxLength(1)]
-        public string Alphabet { get; set; }
+        public string? Alphabet { get; set; }
 
         [Required, MaxLength(10)]
         public string DateOfBirthBs { get; set; }
 
         [MaxLength(10)]
-        public string Sex { get; set; }
+        public string? Sex { get; set; }
 
         [MaxLength(5)]
-        public string TheoryObtainedMarks { get; set; }
+        public string? TheoryObtainedMarks { get; set; }
 
         [MaxLength(5)]
-        public string InternalObtainedMarks { get; set; }
+        public string? InternalObtainedMarks { get; set; }
 
         [MaxLength(5)]
-        public string PracticalObtainedMarks { get; set; }
+        public string? PracticalObtainedMarks { get; set; }
 
         [MaxLength(5)]
-        public string TheoryObtainedGrade { get; set; }
+        public string? TheoryObtainedGrade { get; set; }
 
         [MaxLength(5)]
-        public string InternalObtainedGrade { get; set; }
+        public string? InternalObtainedGrade { get; set; }
 
         [MaxLength(5)]
-        public string PracticalObtainedGrade { get; set; }
+        public string? PracticalObtainedGrade { get; set; }
 
         [MaxLength(5)]
-        public string TotalObtainedMarks { get; set; }
+        public string? TotalObtainedMarks { get; set; }
 
         [MaxLength(5)]
-        public string TotalObtainedGrade { get; set; }
+        public string? TotalObtainedGrade { get; set; }
 
         [MaxLength(5)]
-        public string TotalGradePoints { get; set; }
+        public string? TotalGradePoints { get; set; }
 
         [MaxLength(4)]
-        public string Gpa { get; set; }
+        public string? Gpa { get; set; }
 
         [MaxLength(50)]
-        public string Result { get; set; }
+        public string? Result { get; set; }
 
         [MaxLength(255)]
-        public string StudentName { get; set; }
+        public string? StudentName { get; set; }
 
         public int ResultRecordMasterId { get; set; }
         public int? ExamScheduleId { get; set; }

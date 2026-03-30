@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         public int CollegeId { get; set; }
 
         [MaxLength(20)]
-        public string ExamRollNumber { get; set; }
+        public string? ExamRollNumber { get; set; }
 
         public long? ExamRollNumberCoding { get; set; }
         public decimal? FeeEnclosed { get; set; }
@@ -29,10 +29,10 @@ namespace fwu_examination_management_system.Models
         public bool? IsWithheld { get; set; }
 
         [MaxLength(50)]
-        public string Sgpa { get; set; }
+        public string? Sgpa { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

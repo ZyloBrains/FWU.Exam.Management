@@ -18,7 +18,7 @@ namespace fwu_examination_management_system.Models
         public int? LevelDisplayOrder { get; set; }
 
         [MaxLength(1024)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int? CreatedBy { get; set; }

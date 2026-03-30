@@ -21,10 +21,10 @@ namespace fwu_examination_management_system.Models
         public int Count { get; set; }
 
         [MaxLength(50)]
-        public string Prefix { get; set; }
+        public string? Prefix { get; set; }
 
         [MaxLength(50)]
-        public string Suffix { get; set; }
+        public string? Suffix { get; set; }
 
         [ForeignKey(nameof(ExamRollNumberSetupId))]
         [ValidateNever]

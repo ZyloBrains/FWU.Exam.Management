@@ -15,17 +15,17 @@ namespace fwu_examination_management_system.Models
         public int BankId { get; set; }
 
         [MaxLength(100)]
-        public string BankAddress { get; set; }
+        public string? BankAddress { get; set; }
 
         public DateTime VoucherDate { get; set; }
 
         [MaxLength(50)]
-        public string VoucherNumber { get; set; }
+        public string? VoucherNumber { get; set; }
 
         public decimal VoucherAmount { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

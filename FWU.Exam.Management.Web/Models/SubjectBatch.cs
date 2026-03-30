@@ -18,7 +18,7 @@ namespace fwu_examination_management_system.Models
         public int ProgramsId { get; set; }
 
         [MaxLength(1024)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public int CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }

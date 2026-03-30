@@ -19,7 +19,7 @@ namespace fwu_examination_management_system.Models
         public string YearPartName { get; set; }
 
         [MaxLength(50)]
-        public string Remark { get; set; }
+        public string? Remark { get; set; }
 
         public bool IsActive { get; set; }
         public bool IsEditable { get; set; }
@@ -29,7 +29,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(50)]
-        public string Code { get; set; }
+        public string? Code { get; set; }
 
         [ForeignKey(nameof(ProgramPeriodTypeId))]
         [ValidateNever]

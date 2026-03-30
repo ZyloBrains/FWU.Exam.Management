@@ -16,24 +16,24 @@ namespace fwu_examination_management_system.Models
         public int PreviousLevelId { get; set; }
 
         [MaxLength(255)]
-        public string ProgramName { get; set; }
+        public string? ProgramName { get; set; }
 
         [Required, MaxLength(255)]
         public string InstituteName { get; set; }
 
         [MaxLength(50)]
-        public string PassedYear { get; set; }
+        public string? PassedYear { get; set; }
 
         [MaxLength(255)]
-        public string Specialization { get; set; }
+        public string? Specialization { get; set; }
 
         public decimal? Percentage { get; set; }
 
         [MaxLength(50)]
-        public string TotalCredits { get; set; }
+        public string? TotalCredits { get; set; }
 
         [MaxLength(50)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsHigherDegree { get; set; }
         public bool IsActive { get; set; }
@@ -43,7 +43,7 @@ namespace fwu_examination_management_system.Models
         public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(500)]
-        public string ExamRollNumber { get; set; }
+        public string? ExamRollNumber { get; set; }
 
         [ForeignKey(nameof(StudentRegistrationId))]
         [ValidateNever]

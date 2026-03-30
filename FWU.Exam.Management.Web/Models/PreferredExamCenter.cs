@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         public int? CollegeId { get; set; }
 
         [MaxLength(1024)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         [ForeignKey(nameof(CollegeId))]
         [ValidateNever]

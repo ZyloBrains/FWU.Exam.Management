@@ -11,25 +11,25 @@ namespace fwu_examination_management_system.Models
         public int KhaltiConfigurationId { get; set; }
 
         [MaxLength(400)]
-        public string ReturnUrl { get; set; }
+        public string? ReturnUrl { get; set; }
 
         [MaxLength(400)]
-        public string WebsiteUrl { get; set; }
+        public string? WebsiteUrl { get; set; }
 
         public decimal? Amount { get; set; }
 
         [MaxLength(400)]
-        public string ProductName { get; set; }
+        public string? ProductName { get; set; }
 
         [MaxLength(400)]
-        public string AuthorizationKey { get; set; }
+        public string? AuthorizationKey { get; set; }
 
         public int ServiceCharge { get; set; }
 
         [MaxLength(400)]
-        public string PostUrl { get; set; }
+        public string? PostUrl { get; set; }
 
         [MaxLength(400)]
-        public string VerifyUrl { get; set; }
+        public string? VerifyUrl { get; set; }
     }
 }

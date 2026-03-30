@@ -18,10 +18,10 @@ namespace fwu_examination_management_system.Models
         public string FacultyName { get; set; }
 
         [MaxLength(50)]
-        public string ShortName { get; set; }
+        public string? ShortName { get; set; }
 
         [MaxLength(100)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }

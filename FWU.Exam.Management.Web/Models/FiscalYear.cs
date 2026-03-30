@@ -22,7 +22,7 @@ namespace fwu_examination_management_system.Models
         public bool IsRunning { get; set; }
 
         [MaxLength(255)]
-        public string Remarks { get; set; }
+        public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
         public int CreatedBy { get; set; }
