@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace fwu_examination_management_system.Models
 {
 
-    public class College
+    public class College:AuditBase
     {
         [Key]
         public int CollegeId { get; set; }
@@ -64,11 +64,6 @@ namespace fwu_examination_management_system.Models
 
         public bool IsExamCenterOnly { get; set; }
         public bool IsActive { get; set; }
-
-        public int? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         public int? CollegeTypeId { get; set; }
         public decimal? AllocatedAmount { get; set; }

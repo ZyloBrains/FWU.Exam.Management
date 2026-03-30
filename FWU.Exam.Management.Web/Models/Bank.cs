@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class Bank
+    public class Bank:AuditBase
     {
         [Key]
         public int BankId { get; set; }
@@ -19,12 +19,7 @@ namespace fwu_examination_management_system.Models
 
         [MaxLength(255)]
         public string? Remarks { get; set; }
-
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
         [ValidateNever]
         public virtual ICollection<BankVoucher> BankVouchers { get; set; }
     }

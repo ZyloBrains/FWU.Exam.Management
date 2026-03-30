@@ -17,7 +17,7 @@ namespace fwu_examination_management_system.Models
         [Required, MaxLength(1024)]
         public string StudentName { get; set; }
 
-        public DateTime? DateOfBirthAd { get; set; }
+        public DateOnly? DateOfBirthAd { get; set; }
 
         [MaxLength(50)]
         public string? DateOfBirthBs { get; set; }

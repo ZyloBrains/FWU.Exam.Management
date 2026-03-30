@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models;
 public class AppUser: IdentityUser
-{
+{ 
+    [ValidateNever]
+    [ScaffoldColumn(false)]
+    public AuditBase Audit { get; set; } = new AuditBase();
     public  string? ProfilePath { get; set; }
     public int? OrganizationId { get; set; }
     public Organization? Organization { get; set; }
@@ -18,10 +22,7 @@ public class AppUser: IdentityUser
     public string? NtUser { get; set; }
     public string? Remarks { get; set; }
     public bool Active { get; set; }          // consider merging with IsActive
-    public int CreatedBy { get; set; }         // this may refer to another user – keep as int if not a FK
-    public DateTime CreatedDate { get; set; }
-    public int? ModifiedBy { get; set; }
-    public DateTime? ModifiedDate { get; set; }
+
     public int? PasswordResetLogId { get; set; }
     public string? ContactNumber { get; set; } // Identity already has PhoneNumber
     public int? StudentRegistrationId { get; set; }

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class BillTitle
+    public class BillTitle:AuditBase
     {
         [Key]
         public int BillTitleId { get; set; }
@@ -16,11 +16,6 @@ namespace fwu_examination_management_system.Models
         public string? Category { get; set; }
 
         public bool IsActive { get; set; }
-        public int CreatedByUserId { get; set; }
-        public DateTime CreatedDateTime { get; set; }
-        public int? ModifiedByUserId { get; set; }
-        public DateTime? ModifiedDateTime { get; set; }
-
         public decimal? Amount { get; set; }
         public DateTime? ThroughDate { get; set; }
         public DateTime? ApplicableDate { get; set; }

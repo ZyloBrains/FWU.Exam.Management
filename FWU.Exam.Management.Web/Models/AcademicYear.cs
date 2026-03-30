@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class AcademicYear
+    public class AcademicYear:AuditBase
     {
         [Key]
         public int AcademicYearId { get; set; } // primary key auto-incremented
@@ -27,12 +27,6 @@ namespace fwu_examination_management_system.Models
 
         public bool IsRunning { get; set; }
         public bool IsActive { get; set; }
-
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-
         [ValidateNever]
         public virtual ICollection<Batch> Batches { get; set; }
         [ValidateNever]

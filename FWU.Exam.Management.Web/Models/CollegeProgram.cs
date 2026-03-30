@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class CollegeProgram
+    public class CollegeProgram:AuditBase
     {
         [Key]
         public int CollegeProgramId { get; set; }
