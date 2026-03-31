@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class YearPart
+    public class YearPart: AuditBase
     {
         [Key]
         public int YearPartId { get; set; }
@@ -23,10 +23,6 @@ namespace fwu_examination_management_system.Models
 
         public bool IsActive { get; set; }
         public bool IsEditable { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(50)]
         public string? Code { get; set; }

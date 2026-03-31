@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class PeriodType
+    public class PeriodType:AuditBase
     {
         [Key]
         public int PeriodTypeId { get; set; }
@@ -19,9 +19,5 @@ namespace fwu_examination_management_system.Models
         [MaxLength(255)]
         public string? Remarks { get; set; }
 
-        public int? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
     }
 }

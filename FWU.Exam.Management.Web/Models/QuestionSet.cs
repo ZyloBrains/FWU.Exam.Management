@@ -6,22 +6,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class QuestionSet
+    public class QuestionSet:AuditBase
     {
         [Key]
         public int QuestionSetId { get; set; }
-
         [Required, MaxLength(255)]
         public string QuestionSetName { get; set; }
-
         [MaxLength(1024)]
         public string Description { get; set; }
-
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
+
         [ValidateNever]
         public virtual ICollection<College> Colleges { get; set; }
     }

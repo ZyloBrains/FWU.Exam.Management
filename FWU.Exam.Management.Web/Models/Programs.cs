@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class Programs
+    public class Programs:AuditBase
     {
         [Key]
         public int ProgramsId { get; set; }
@@ -38,10 +38,6 @@ namespace fwu_examination_management_system.Models
         public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(10)]
         public string? RollNumberPrefix { get; set; }

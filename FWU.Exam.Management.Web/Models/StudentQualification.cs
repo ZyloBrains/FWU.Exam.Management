@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class StudentQualification
+    public class StudentQualification:AuditBase
     {
         [Key]
         public int StudentQualificationId { get; set; }
@@ -37,10 +37,6 @@ namespace fwu_examination_management_system.Models
 
         public bool IsHigherDegree { get; set; }
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(500)]
         public string? ExamRollNumber { get; set; }

@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class Level
+    public class Level:AuditBase
     {
         [Key]
         public int LevelId { get; set; }
@@ -23,10 +23,7 @@ namespace fwu_examination_management_system.Models
 
         public bool? IsRunning { get; set; }
         public bool IsActive { get; set; }
-        public int? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
+
         [ValidateNever]
         public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
         [ValidateNever]

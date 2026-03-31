@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class ExamRollNumberSetup
+    public class ExamRollNumberSetup:AuditBase
     {
         [Key]
         public int ExamRollNumberSetupId { get; set; }
@@ -24,10 +24,6 @@ namespace fwu_examination_management_system.Models
         public int Round { get; set; }
         public int MinimumGap { get; set; }
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         [ForeignKey(nameof(ExamScheduleParentId))]
         [ValidateNever]

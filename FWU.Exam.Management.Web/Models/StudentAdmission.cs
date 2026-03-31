@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class StudentAdmission
+    public class StudentAdmission:AuditBase
     {
         [Key]
         public int StudentAdmissionId { get; set; }
@@ -22,12 +22,7 @@ namespace fwu_examination_management_system.Models
 
         [MaxLength(50)]
         public string? Cgpa { get; set; }
-
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         [MaxLength(50)]
         public string? CollegeRollNumber { get; set; }

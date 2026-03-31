@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class ExamSchedule
+    public class ExamSchedule:AuditBase
     {
         [Key]
         public int ExamScheduleId { get; set; }
@@ -36,10 +36,6 @@ namespace fwu_examination_management_system.Models
         public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         public int? ExamScheduleParentId { get; set; }
         public int? NegativeMarks { get; set; }

@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class ExamSubjectRegistration
+    public class ExamSubjectRegistration:AuditBase
     {
         [Key]
         public int ExamSubjectRegistrationId { get; set; }
@@ -35,8 +35,7 @@ namespace fwu_examination_management_system.Models
 
         public bool IsActive { get; set; }
         public bool? IsLooseEntry { get; set; }
-        public int? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
+
         public int? CreatedByTab1 { get; set; }
         public DateTime? CreatedDateTab1 { get; set; }
         public int? ModifiedByTab1 { get; set; }

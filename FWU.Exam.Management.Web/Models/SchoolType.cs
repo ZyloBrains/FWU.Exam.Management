@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class SchoolType
+    public class SchoolType:AuditBase
     {
         [Key]
         public int SchoolTypeId { get; set; }
@@ -15,11 +15,6 @@ namespace fwu_examination_management_system.Models
 
         [Required, MaxLength(255)]
         public string SchoolTypeName { get; set; }
-
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         [ForeignKey(nameof(PreviousLevelId))]
         [ValidateNever]

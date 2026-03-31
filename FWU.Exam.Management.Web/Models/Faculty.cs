@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class Faculty
+    public class Faculty:AuditBase
     {
         [Key]
         public int FacultyId { get; set; }
@@ -24,10 +24,7 @@ namespace fwu_examination_management_system.Models
         public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
+
         [ValidateNever]
         public virtual ICollection<Programs> Programs { get; set; }
         [ValidateNever]

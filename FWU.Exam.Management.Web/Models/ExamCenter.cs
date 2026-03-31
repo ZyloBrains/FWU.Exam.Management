@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class ExamCenter
+    public class ExamCenter:AuditBase
     {
         [Key]
         public int ExamCenterId { get; set; }
@@ -18,10 +18,6 @@ namespace fwu_examination_management_system.Models
         public string? Remark { get; set; }
 
         public bool IsActive { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
 
         public int Code { get; set; }
 

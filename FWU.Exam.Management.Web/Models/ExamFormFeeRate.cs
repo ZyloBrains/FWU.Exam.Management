@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class ExamFormFeeRate
+    public class ExamFormFeeRate:AuditBase
     {
         [Key]
         public int ExamFormFeeRateId { get; set; }
@@ -14,11 +14,6 @@ namespace fwu_examination_management_system.Models
         public int ExamScheduleId { get; set; }
         public int ExamFormFeeNameId { get; set; }
         public decimal Amount { get; set; }
-        public int CreatedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-
         public int? CollegeTypeId { get; set; }
         public int? ExamTypeId { get; set; }
         public DateTime? ThroughDate { get; set; }

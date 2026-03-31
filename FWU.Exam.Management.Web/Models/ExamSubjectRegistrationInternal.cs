@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class ExamSubjectRegistrationInternal
+    public class ExamSubjectRegistrationInternal:AuditBase
     {
         [Key]
         public int ExamSubjectRegistrationInternalId { get; set; }
@@ -21,11 +21,7 @@ namespace fwu_examination_management_system.Models
         public string? Remarks { get; set; }
 
         public bool IsActive { get; set; }
-        public int? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-
+     
         public int? ExamScheduleId { get; set; }
 
         [ForeignKey(nameof(EntryAcademicYearId))]
