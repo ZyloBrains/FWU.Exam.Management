@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace fwu_examination_management_system.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialApplicationDbCreate : Migration
+    public partial class InitialMigrations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,16 +19,16 @@ namespace fwu_examination_management_system.Migrations
                     AcademicYearId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AcademicYearCode = table.Column<int>(type: "integer", nullable: false),
-                    AcademicYearCodeNepali = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    AcademicYearCodeNepali = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     AcademicYearName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     AcademicYearNameNepali = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Remark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsRunning = table.Column<bool>(type: "boolean", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -44,10 +44,10 @@ namespace fwu_examination_management_system.Migrations
                     AreaName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -61,13 +61,13 @@ namespace fwu_examination_management_system.Migrations
                     BankId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BankName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    BankCode = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    BankCode = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -84,10 +84,10 @@ namespace fwu_examination_management_system.Migrations
                     BoardName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -102,13 +102,13 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CollegeTypeCode = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     CollegeTypeName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -129,7 +129,7 @@ namespace fwu_examination_management_system.Migrations
                     UsernameForValidationApi = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     PasswordForValidationApi = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     PasswordForCreditorPfx = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    TransactionCurrency = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false)
+                    TransactionCurrency = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -145,10 +145,10 @@ namespace fwu_examination_management_system.Migrations
                     EntryFormatName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -161,12 +161,12 @@ namespace fwu_examination_management_system.Migrations
                 {
                     ESewaConfigurationId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PostUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    SecretKey = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    SuccessUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    PostUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ProductCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    SecretKey = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    SuccessUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     ServiceChargeAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    VerifyUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false)
+                    VerifyUrl = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -181,11 +181,7 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EthnicityName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true)
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -240,12 +236,8 @@ namespace fwu_examination_management_system.Migrations
                     ExamTypeId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamTypeName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Code = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -261,40 +253,17 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     FacultyCode = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     FacultyName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    ShortName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ShortName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Faculties", x => x.FacultyId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "FiscalYears",
-                columns: table => new
-                {
-                    FiscalYearId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    FiscalYearName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    StartDate = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    EndDate = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    IsRunning = table.Column<bool>(type: "boolean", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    FiscalYearCode = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FiscalYears", x => x.FiscalYearId);
                 });
 
             migrationBuilder.CreateTable(
@@ -305,10 +274,10 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     GenderName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -324,10 +293,10 @@ namespace fwu_examination_management_system.Migrations
                     IndexGroupName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -340,14 +309,14 @@ namespace fwu_examination_management_system.Migrations
                 {
                     KhaltiConfigurationId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ReturnUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
-                    WebsiteUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
+                    ReturnUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    WebsiteUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
                     Amount = table.Column<decimal>(type: "numeric", nullable: true),
-                    ProductName = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
-                    AuthorizationKey = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
+                    ProductName = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    AuthorizationKey = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
                     ServiceCharge = table.Column<int>(type: "integer", nullable: false),
-                    PostUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false),
-                    VerifyUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: false)
+                    PostUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
+                    VerifyUrl = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -360,16 +329,16 @@ namespace fwu_examination_management_system.Migrations
                 {
                     LevelId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    LevelCode = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    LevelCode = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
                     LevelName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     LevelDisplayOrder = table.Column<int>(type: "integer", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsRunning = table.Column<bool>(type: "boolean", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -390,26 +359,6 @@ namespace fwu_examination_management_system.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NepaliDates", x => x.NepaliDateId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Notices",
-                columns: table => new
-                {
-                    NoticeId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    NoticeTitle = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    NoticePreview = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    PublishedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    NoticeContent = table.Column<string>(type: "text", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Notices", x => x.NoticeId);
                 });
 
             migrationBuilder.CreateTable(
@@ -442,26 +391,6 @@ namespace fwu_examination_management_system.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PaymentTypes", x => x.PaymentTypeId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PeriodTypes",
-                columns: table => new
-                {
-                    PeriodTypeId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PeriodTypeName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    NumberOfMonths = table.Column<decimal>(type: "numeric", nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PeriodTypes", x => x.PeriodTypeId);
                 });
 
             migrationBuilder.CreateTable(
@@ -501,34 +430,14 @@ namespace fwu_examination_management_system.Migrations
                     QuestionSetName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Description = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_QuestionSets", x => x.QuestionSetId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Regions",
-                columns: table => new
-                {
-                    RegionId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RegionCode = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    RegionName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(55)", maxLength: 55, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Regions", x => x.RegionId);
                 });
 
             migrationBuilder.CreateTable(
@@ -571,11 +480,11 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     StudentCategoryName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -590,48 +499,48 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Year = table.Column<int>(type: "integer", nullable: false),
                     RegistrationNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    School = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    Center = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    Symbol = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    Alphabet = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: false),
-                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    School = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    Center = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    Symbol = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    Alphabet = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     Grade = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Sex = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    DateOfBirth = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Subject1 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory1 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical1 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Subject2 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory2 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical2 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject3 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory3 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical3 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject4 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory4 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical4 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject5 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory5 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical5 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject6 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory6 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical6 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject7 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory7 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical7 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject8 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory8 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical8 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject9 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory9 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical9 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject10 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory10 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical10 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Subject11 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Theory11 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Practical11 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false)
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Sex = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    DateOfBirth = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Subject1 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory1 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical1 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Subject2 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory2 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical2 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject3 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory3 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical3 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject4 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory4 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical4 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject5 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory5 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical5 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject6 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory6 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical6 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject7 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory7 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical7 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject8 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory8 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical8 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject9 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory9 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical9 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject10 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory10 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical10 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Subject11 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Theory11 = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Practical11 = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -645,14 +554,14 @@ namespace fwu_examination_management_system.Migrations
                     SubjectTypeId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SubjectTypeName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     IsDefault = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    MaxAllowedSubjects = table.Column<int>(type: "integer", nullable: true)
+                    MaxAllowedSubjects = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -667,12 +576,12 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AcademicYearId = table.Column<int>(type: "integer", nullable: false),
                     BatchName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -693,16 +602,16 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamScheduleParentId = table.Column<int>(type: "integer", nullable: false),
                     FirstExamRollNumber = table.Column<int>(type: "integer", nullable: false),
-                    Prefix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Suffix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Prefix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Suffix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     MinimumRollNumberLength = table.Column<int>(type: "integer", nullable: false),
                     Round = table.Column<int>(type: "integer", nullable: false),
                     MinimumGap = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -724,12 +633,12 @@ namespace fwu_examination_management_system.Migrations
                     PreviousLevelName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     LevelId = table.Column<int>(type: "integer", nullable: true),
                     LevelDisplayOrder = table.Column<int>(type: "integer", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -758,15 +667,15 @@ namespace fwu_examination_management_system.Migrations
                     Duration = table.Column<int>(type: "integer", nullable: false),
                     GrandTotalMarks = table.Column<int>(type: "integer", nullable: true),
                     HasMultipleIntakes = table.Column<bool>(type: "boolean", nullable: false),
-                    NumberOfSeats = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NumberOfSeats = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ScholarshipSeats = table.Column<int>(type: "integer", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    RollNumberPrefix = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false)
+                    RollNumberPrefix = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -807,14 +716,14 @@ namespace fwu_examination_management_system.Migrations
                     Year = table.Column<int>(type: "integer", nullable: false),
                     Part = table.Column<int>(type: "integer", nullable: false),
                     YearPartName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Remark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     IsEditable = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -834,7 +743,7 @@ namespace fwu_examination_management_system.Migrations
                     DistrictId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ProvinceId = table.Column<int>(type: "integer", nullable: false),
-                    DistrictCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DistrictCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     DistrictName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
                 },
                 constraints: table =>
@@ -877,10 +786,10 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PreviousLevelId = table.Column<int>(type: "integer", nullable: false),
                     SchoolTypeName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -924,10 +833,10 @@ namespace fwu_examination_management_system.Migrations
                     BatchId = table.Column<int>(type: "integer", nullable: true),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -955,11 +864,11 @@ namespace fwu_examination_management_system.Migrations
                     SubjectBatchName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     EffectiveAcademicYearId = table.Column<int>(type: "integer", nullable: false),
                     ProgramsId = table.Column<int>(type: "integer", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -991,27 +900,27 @@ namespace fwu_examination_management_system.Migrations
                     ExamScheduleName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     StartDateAd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     EndDateAd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    StartDateBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    EndDateBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    StartDateBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    EndDateBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     PublishedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     StartTime = table.Column<TimeSpan>(type: "interval", nullable: false),
                     EndTime = table.Column<TimeSpan>(type: "interval", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ExamScheduleParentId = table.Column<int>(type: "integer", nullable: true),
                     NegativeMarks = table.Column<int>(type: "integer", nullable: true),
-                    ProgramIds = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    RegularBatchIds = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    PartialBatchIds = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ProgramIds = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    RegularBatchIds = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    PartialBatchIds = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     ExtendedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ExtendedDateCharge = table.Column<decimal>(type: "numeric", nullable: true),
                     CollegeApprovalDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     AdmissionCardReleaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ExamScheduleCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    ExamScheduleCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1085,15 +994,15 @@ namespace fwu_examination_management_system.Migrations
                     ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     SubjectGroupName = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
                     SubjectGroupShortName = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     YearPartId = table.Column<int>(type: "integer", nullable: false),
                     IsExtraAllowed = table.Column<bool>(type: "boolean", nullable: true),
-                    IsCompulsory = table.Column<bool>(type: "boolean", nullable: true)
+                    IsCompulsory = table.Column<bool>(type: "boolean", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1120,33 +1029,33 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CollegeCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CollegeName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    CollegeNameNepali = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ShortName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    CollegeNameNepali = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ShortName = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     EstablishedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ClosedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     DistrictId = table.Column<int>(type: "integer", nullable: false),
-                    MunicipalityVdc = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    WardNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    HouseNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Website = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Email = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Phone1 = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
-                    Phone2 = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    PrincipalName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    PrincipalContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Fax = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    MunicipalityVdc = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    WardNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    HouseNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Website = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Email = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Phone1 = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
+                    Phone2 = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    PrincipalName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    PrincipalContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Fax = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsExamCenterOnly = table.Column<bool>(type: "boolean", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CollegeTypeId = table.Column<int>(type: "integer", nullable: true),
                     AllocatedAmount = table.Column<decimal>(type: "numeric", nullable: true),
                     AreaId = table.Column<int>(type: "integer", nullable: false),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: true),
-                    QuestionSetId = table.Column<int>(type: "integer", nullable: true)
+                    QuestionSetId = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1185,12 +1094,12 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DistrictId = table.Column<int>(type: "integer", nullable: false),
                     LocalLevelName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Remark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: true)
+                    Remark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1214,7 +1123,7 @@ namespace fwu_examination_management_system.Migrations
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     OpenTime = table.Column<TimeSpan>(type: "interval", nullable: true),
                     EndTime = table.Column<TimeSpan>(type: "interval", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false)
+                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1234,16 +1143,16 @@ namespace fwu_examination_management_system.Migrations
                     BillTitleId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BillTitleName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    Category = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Category = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedByUserId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedByUserId = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Amount = table.Column<decimal>(type: "numeric", nullable: true),
                     ThroughDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ApplicableDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ExamScheduleId = table.Column<int>(type: "integer", nullable: true)
+                    ExamScheduleId = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1265,15 +1174,15 @@ namespace fwu_examination_management_system.Migrations
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
                     ExamFormFeeNameId = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CollegeTypeId = table.Column<int>(type: "integer", nullable: true),
                     ExamTypeId = table.Column<int>(type: "integer", nullable: true),
                     ThroughDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ApplicableDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    IsCollegeFee = table.Column<bool>(type: "boolean", nullable: false)
+                    IsCollegeFee = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1360,19 +1269,19 @@ namespace fwu_examination_management_system.Migrations
                     HasPractical = table.Column<bool>(type: "boolean", nullable: false),
                     HasInternal = table.Column<bool>(type: "boolean", nullable: false),
                     DisplayOrder = table.Column<int>(type: "integer", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsCompulsory = table.Column<bool>(type: "boolean", nullable: false),
-                    ShortName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    ConcurrentSubjectCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ShortName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    ConcurrentSubjectCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     SubjectTypeId = table.Column<int>(type: "integer", nullable: false),
                     HasTheory = table.Column<bool>(type: "boolean", nullable: false),
-                    Year = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Part = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Year = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Part = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1413,12 +1322,12 @@ namespace fwu_examination_management_system.Migrations
                     ProgramsId = table.Column<int>(type: "integer", nullable: false),
                     AffiliationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     NumberOfStudents = table.Column<int>(type: "integer", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1445,13 +1354,13 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
-                    Remark = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remark = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Code = table.Column<int>(type: "integer", nullable: false)
+                    Code = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1484,8 +1393,8 @@ namespace fwu_examination_management_system.Migrations
                     StartRollNumber = table.Column<int>(type: "integer", nullable: false),
                     EndRollNumber = table.Column<int>(type: "integer", nullable: false),
                     Count = table.Column<int>(type: "integer", nullable: false),
-                    Prefix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Suffix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
+                    Prefix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Suffix = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1530,7 +1439,7 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
                     CollegeId = table.Column<int>(type: "integer", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false)
+                    Remarks = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1553,13 +1462,13 @@ namespace fwu_examination_management_system.Migrations
                     ExamTypeId = table.Column<int>(type: "integer", nullable: false),
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false),
                     ExamDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExamDateBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    ExamDateBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1597,23 +1506,23 @@ namespace fwu_examination_management_system.Migrations
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false),
                     Year = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     Part = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    RegistrationNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RegistrationNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     SymbolNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Alphabet = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: false),
+                    Alphabet = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
                     DateOfBirthBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    Sex = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    TheoryObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    InternalObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    PracticalObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    TheoryObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    InternalObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    PracticalObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    TotalObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    TotalObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    TotalGradePoints = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    Gpa = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
-                    Result = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    StudentName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Sex = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    TheoryObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    InternalObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    PracticalObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    TheoryObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    InternalObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    PracticalObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    TotalObtainedMarks = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    TotalObtainedGrade = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    TotalGradePoints = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    Gpa = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
+                    Result = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    StudentName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     ResultRecordMasterId = table.Column<int>(type: "integer", nullable: false),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -1665,7 +1574,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     SubjectGroupId = table.Column<int>(type: "integer", nullable: false),
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1695,12 +1604,8 @@ namespace fwu_examination_management_system.Migrations
                     ProgramsId = table.Column<int>(type: "integer", nullable: true),
                     RollNumberFrom = table.Column<long>(type: "bigint", nullable: false),
                     RollNumberTo = table.Column<long>(type: "bigint", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1733,13 +1638,13 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     VoucherNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     StudentName = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    DateOfBirthAd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    DateOfBirthBs = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    DateOfBirthAd = table.Column<DateOnly>(type: "date", nullable: true),
+                    DateOfBirthBs = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     VoucherDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ContactNumber = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
-                    Branch = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false),
+                    Branch = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: true),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
                     StudentRegistrationId = table.Column<int>(type: "integer", nullable: true)
                 },
@@ -1764,18 +1669,18 @@ namespace fwu_examination_management_system.Migrations
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
                     BillTitleId = table.Column<int>(type: "integer", nullable: false),
                     BankId = table.Column<int>(type: "integer", nullable: false),
-                    BankAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    BankAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     VoucherDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    VoucherNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    VoucherNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     VoucherAmount = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     BankVoucherUserAttachmentId = table.Column<int>(type: "integer", nullable: true),
-                    ExamScheduleParentId = table.Column<int>(type: "integer", nullable: false)
+                    ExamScheduleParentId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1828,10 +1733,10 @@ namespace fwu_examination_management_system.Migrations
                     BlankChequeUserAttachmentId = table.Column<int>(type: "integer", nullable: false),
                     AuditReportUserAttachmentId = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1853,7 +1758,7 @@ namespace fwu_examination_management_system.Migrations
                     ExamRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Action = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1892,7 +1797,7 @@ namespace fwu_examination_management_system.Migrations
                     AcademicYearId = table.Column<int>(type: "integer", nullable: false),
                     ExamCenterId = table.Column<int>(type: "integer", nullable: true),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
-                    ExamRollNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    ExamRollNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     ExamRollNumberCoding = table.Column<long>(type: "bigint", nullable: true),
                     FeeEnclosed = table.Column<decimal>(type: "numeric", nullable: true),
                     AttendancePercentage = table.Column<decimal>(type: "numeric", nullable: true),
@@ -1901,13 +1806,9 @@ namespace fwu_examination_management_system.Migrations
                     VerifiedBy = table.Column<int>(type: "integer", nullable: true),
                     VerifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsWithheld = table.Column<bool>(type: "boolean", nullable: true),
-                    Sgpa = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Sgpa = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsExamRegistered = table.Column<bool>(type: "boolean", nullable: true),
                     TypeId = table.Column<int>(type: "integer", nullable: true),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
@@ -1916,7 +1817,11 @@ namespace fwu_examination_management_system.Migrations
                     ProgramsId = table.Column<int>(type: "integer", nullable: true),
                     ApplicationVoucherId = table.Column<int>(type: "integer", nullable: true),
                     AdminVerifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    AdminVerifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    AdminVerifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1968,16 +1873,14 @@ namespace fwu_examination_management_system.Migrations
                     ExamRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false),
                     ExamTypeId = table.Column<int>(type: "integer", nullable: false),
-                    ObtainedMarksTheory = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    ObtainedMarksTheoryConfirm = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    ObtainedMarksPractical = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    ObtainedMarksPracticalConfirm = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    GradeLetter = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    ObtainedMarksTheory = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    ObtainedMarksTheoryConfirm = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    ObtainedMarksPractical = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    ObtainedMarksPracticalConfirm = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    GradeLetter = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     IsLooseEntry = table.Column<bool>(type: "boolean", nullable: true),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedByTab1 = table.Column<int>(type: "integer", nullable: true),
                     CreatedDateTab1 = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ModifiedByTab1 = table.Column<int>(type: "integer", nullable: true),
@@ -1988,7 +1891,11 @@ namespace fwu_examination_management_system.Migrations
                     ModifiedDateTab2 = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsTheoryRegistered = table.Column<bool>(type: "boolean", nullable: true),
                     IsPracticalRegistered = table.Column<bool>(type: "boolean", nullable: true),
-                    IsExtra = table.Column<bool>(type: "boolean", nullable: true)
+                    IsExtra = table.Column<bool>(type: "boolean", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2049,13 +1956,13 @@ namespace fwu_examination_management_system.Migrations
                     SubjectDetailId = table.Column<int>(type: "integer", nullable: false),
                     ObtainedMarksTheoryInternal = table.Column<decimal>(type: "numeric", nullable: true),
                     ObtainedMarksPracticalInternal = table.Column<decimal>(type: "numeric", nullable: true),
-                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
+                    ExamScheduleId = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ExamScheduleId = table.Column<int>(type: "integer", nullable: true)
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2119,19 +2026,19 @@ namespace fwu_examination_management_system.Migrations
                 {
                     PaymentRequestLogId = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PaymentRequestLogStatus = table.Column<int>(type: "integer", nullable: false),
+                    PaymentRequestLogStatus = table.Column<int>(type: "integer", nullable: true),
                     InvoiceNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ForwardedTimestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateOfBirthAd = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    MobileNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    MobileNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     FullName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     FullRequestContent = table.Column<string>(type: "text", nullable: false),
                     PaymentTypeId = table.Column<int>(type: "integer", nullable: false),
                     StudentRegistrationId = table.Column<int>(type: "integer", nullable: true),
                     ExamScheduleId = table.Column<int>(type: "integer", nullable: false),
-                    TransactionId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TransactionId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     CollegeId = table.Column<int>(type: "integer", nullable: true),
                     StudentCount = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -2194,16 +2101,16 @@ namespace fwu_examination_management_system.Migrations
                     AdmissionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CheckedBy = table.Column<int>(type: "integer", nullable: true),
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
-                    Cgpa = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Cgpa = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CollegeRollNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CollegeRollNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     RepeatBatchId = table.Column<int>(type: "integer", nullable: true),
                     SubjectGroupId = table.Column<int>(type: "integer", nullable: true),
-                    HasFeeExemption = table.Column<bool>(type: "boolean", nullable: false)
+                    HasFeeExemption = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2251,10 +2158,10 @@ namespace fwu_examination_management_system.Migrations
                     YearPartId = table.Column<int>(type: "integer", nullable: false),
                     IsRunning = table.Column<bool>(type: "boolean", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2287,37 +2194,37 @@ namespace fwu_examination_management_system.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     StudentRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     FatherName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherQualification = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherProfession = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    FatherOrganization = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    FatherOrganizationAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    FatherContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    FatherPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    FatherEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    FatherQualification = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    FatherProfession = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    FatherAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    FatherOrganization = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    FatherOrganizationAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     MotherName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherQualification = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherProfession = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    MotherOrganization = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    MotherOrganizationAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    MotherContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    MotherPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    MotherEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    MotherQualification = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    MotherProfession = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    MotherAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    MotherOrganization = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    MotherOrganizationAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     GuardianName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianQualification = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianProfession = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    GuardianOrganization = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    GuardianOrganizationAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    RelationWithStudent = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    GuardianContactNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    GuardianPhone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    GuardianEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    GuardianQualification = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    GuardianProfession = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    GuardianAddress = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    GuardianOrganization = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    GuardianOrganizationAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    RelationWithStudent = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2333,20 +2240,20 @@ namespace fwu_examination_management_system.Migrations
                     StudentRegistrationId = table.Column<int>(type: "integer", nullable: false),
                     BoardId = table.Column<int>(type: "integer", nullable: false),
                     PreviousLevelId = table.Column<int>(type: "integer", nullable: false),
-                    ProgramName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    ProgramName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     InstituteName = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    PassedYear = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Specialization = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    PassedYear = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Specialization = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Percentage = table.Column<decimal>(type: "numeric", nullable: true),
-                    TotalCredits = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Remarks = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TotalCredits = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Remarks = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsHigherDegree = table.Column<bool>(type: "boolean", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ExamRollNumber = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false)
+                    ExamRollNumber = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2375,43 +2282,43 @@ namespace fwu_examination_management_system.Migrations
                     LevelId = table.Column<int>(type: "integer", nullable: false),
                     FacultyId = table.Column<int>(type: "integer", nullable: false),
                     CollegeId = table.Column<int>(type: "integer", nullable: false),
-                    RegistrationNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RegistrationNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     FirstName = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
-                    MiddleName = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    MiddleName = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     LastName = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
-                    NepaliName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ContactNumber = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    Phone = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    Email = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    NepaliName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ContactNumber = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    Phone = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    Email = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     DateOfBirthBs = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     DateOfBirthAd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     GenderId = table.Column<int>(type: "integer", nullable: false),
                     IndexGroupId = table.Column<int>(type: "integer", nullable: true),
-                    BloodGroup = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
-                    Nationality = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Religion = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    BloodGroup = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: true),
+                    Nationality = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Religion = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     DistrictId = table.Column<int>(type: "integer", nullable: false),
-                    MunicipalityVdc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    WardNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    MunicipalityVdc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    WardNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     StudentRegistrationIndex = table.Column<int>(type: "integer", nullable: true),
                     StudentCategoryId = table.Column<int>(type: "integer", nullable: false),
                     VerifiedBy = table.Column<int>(type: "integer", nullable: true),
                     VerifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     PhotoAttachmentId = table.Column<int>(type: "integer", nullable: true),
                     EthnicityId = table.Column<int>(type: "integer", nullable: true),
-                    EntranceRollNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    EntranceRollNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     EntryFormatId = table.Column<int>(type: "integer", nullable: true),
                     IsRegistrationNumberGenerated = table.Column<bool>(type: "boolean", nullable: true),
-                    RowIndex = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PreviousAcademicYear = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PreviousSymbolNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RowIndex = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    PreviousAcademicYear = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    PreviousSymbolNumber = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     StudentRegistrationSearchId = table.Column<int>(type: "integer", nullable: true),
-                    LocalLevelId = table.Column<int>(type: "integer", nullable: true)
+                    LocalLevelId = table.Column<int>(type: "integer", nullable: true),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2499,10 +2406,6 @@ namespace fwu_examination_management_system.Migrations
                     NtUser = table.Column<string>(type: "text", nullable: true),
                     Remarks = table.Column<string>(type: "text", nullable: true),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     PasswordResetLogId = table.Column<int>(type: "integer", nullable: true),
                     ContactNumber = table.Column<string>(type: "text", nullable: true),
                     StudentRegistrationId = table.Column<int>(type: "integer", nullable: true),
@@ -2562,10 +2465,10 @@ namespace fwu_examination_management_system.Migrations
                     SearchResults = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ModifiedBy = table.Column<int>(type: "integer", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "text", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -3622,16 +3525,10 @@ namespace fwu_examination_management_system.Migrations
                 name: "ExamSubjectRegistrationInternals");
 
             migrationBuilder.DropTable(
-                name: "FiscalYears");
-
-            migrationBuilder.DropTable(
                 name: "KhaltiConfigurations");
 
             migrationBuilder.DropTable(
                 name: "NepaliDates");
-
-            migrationBuilder.DropTable(
-                name: "Notices");
 
             migrationBuilder.DropTable(
                 name: "PaymentPracticalSubjects");
@@ -3640,16 +3537,10 @@ namespace fwu_examination_management_system.Migrations
                 name: "PaymentResponseLogs");
 
             migrationBuilder.DropTable(
-                name: "PeriodTypes");
-
-            migrationBuilder.DropTable(
                 name: "ProgramSubjectPracticalCharges");
 
             migrationBuilder.DropTable(
                 name: "ProgramYearParts");
-
-            migrationBuilder.DropTable(
-                name: "Regions");
 
             migrationBuilder.DropTable(
                 name: "ResultRecords");

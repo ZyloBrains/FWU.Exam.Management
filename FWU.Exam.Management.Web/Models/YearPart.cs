@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Models
 {
-    public class YearPart: AuditBase
+    public class YearPart:AuditBase
     {
         [Key]
         public int YearPartId { get; set; }

@@ -54,7 +54,7 @@ namespace fwu_examination_management_system.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("AcademicYearId,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive,CreatedBy,CreatedDate,ModifiedBy,ModifiedDate")] AcademicYear academicYear)
+        public async Task<IActionResult> Create([Bind("AcademicYearId,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
         {
             if (ModelState.IsValid)
             {
@@ -86,7 +86,7 @@ namespace fwu_examination_management_system.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("AcademicYearId,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive,CreatedBy,CreatedDate,ModifiedBy,ModifiedDate")] AcademicYear academicYear)
+        public async Task<IActionResult> Edit(int id, [Bind("AcademicYearId,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
         {
             if (id != academicYear.AcademicYearId)
             {

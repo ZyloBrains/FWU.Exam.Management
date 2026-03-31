@@ -1,17 +1,23 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using fwu_examination_management_system.Helpers;
+using fwu_examination_management_system.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using fwu_examination_management_system.Models;
 
 namespace fwu_examination_management_system.Data
 {
     public class ApplicationDbContext : IdentityDbContext<AppUser>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        private readonly AuditBaseHelper _auditHelper;
+        private readonly ILogger<ApplicationDbContext> _logger;
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,AuditBaseHelper auditBaseHelper,ILogger<ApplicationDbContext> logger)
             : base(options)
         {
+            _auditHelper = auditBaseHelper;
+            _logger = logger;
         }
 
+      
         public DbSet<Organization> Organizations { get; set; }
 
         // DbSets for all entities
@@ -97,57 +103,41 @@ namespace fwu_examination_management_system.Data
         public DbSet<UserProgramMap> UserProgramMaps { get; set; }
         public DbSet<YearPart> YearParts { get; set; }
 
+
+        // ========================== Audit Overrides ==========================
         public override int SaveChanges()
         {
-            NormalizeDateTimesToUtc();
+            SetAuditFields();
             return base.SaveChanges();
         }
 
-        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            NormalizeDateTimesToUtc();
-            return base.SaveChanges(acceptAllChangesOnSuccess);
+            SetAuditFields();
+            return await base.SaveChangesAsync(cancellationToken);
         }
 
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        private void SetAuditFields()
         {
-            NormalizeDateTimesToUtc();
-            return base.SaveChangesAsync(cancellationToken);
-        }
+            var entries = ChangeTracker
+                .Entries()
+                .Where(e => e.Entity is AuditBase &&
+                            (e.State == EntityState.Added || e.State == EntityState.Modified));
 
-        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
-        {
-            NormalizeDateTimesToUtc();
-            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
-
-        private void NormalizeDateTimesToUtc()
-        {
-            foreach (var entry in ChangeTracker.Entries().Where(e => e.State == EntityState.Added || e.State == EntityState.Modified))
+            foreach (var entityEntry in entries)
             {
-                foreach (var property in entry.Properties)
+                var auditBase = (AuditBase)entityEntry.Entity;
+                var currentUser = _auditHelper?.GetCurrentUserName() ?? "System";
+                 _logger.LogInformation("Setting audit fields for entity {EntityType} by user {UserName} with state {EntityState}", entityEntry.Entity.GetType().Name, currentUser, entityEntry.State);
+                if (entityEntry.State == EntityState.Added)
                 {
-                    if (property.Metadata.ClrType == typeof(DateTime) && property.CurrentValue is DateTime dateTime)
-                    {
-                        property.CurrentValue = EnsureUtc(dateTime);
-                    }
-                    else if (property.Metadata.ClrType == typeof(DateTime?) && property.CurrentValue is DateTime nullableDateTime)
-                    {
-                        property.CurrentValue = EnsureUtc(nullableDateTime);
-                    }
+                    auditBase.CreatedBy = currentUser;
+                    auditBase.CreatedDate = DateTime.UtcNow;
                 }
-            }
-        }
 
-        private static DateTime EnsureUtc(DateTime value)
-        {
-            return value.Kind switch
-            {
-                DateTimeKind.Utc => value,
-                DateTimeKind.Local => value.ToUniversalTime(),
-                DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
-                _ => value
-            };
+                auditBase.UpdatedBy = currentUser;
+                auditBase.UpdatedDate = DateTime.UtcNow;
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

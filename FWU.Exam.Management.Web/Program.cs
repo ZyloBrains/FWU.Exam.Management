@@ -17,7 +17,8 @@ builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireCo
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
-
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuditBaseHelper>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

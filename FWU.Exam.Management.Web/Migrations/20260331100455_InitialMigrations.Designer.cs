@@ -12,8 +12,8 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260320101305_InitialApplicationDbCreate")]
-    partial class InitialApplicationDbCreate
+    [Migration("20260331100455_InitialMigrations")]
+    partial class InitialMigrations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -173,7 +173,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("AcademicYearCodeNepali")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -187,10 +186,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
@@ -199,16 +198,15 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsRunning")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remark")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("AcademicYearId");
 
@@ -236,7 +234,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("interval");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
@@ -271,12 +268,6 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<string>("ContactNumber")
                         .HasColumnType("text");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Designation")
                         .HasColumnType("text");
 
@@ -300,12 +291,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("NormalizedEmail")
@@ -391,7 +376,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("Branch")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
@@ -400,11 +384,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.Property<DateTime?>("DateOfBirthAd")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly?>("DateOfBirthAd")
+                        .HasColumnType("date");
 
                     b.Property<string>("DateOfBirthBs")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -452,25 +435,25 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("AreaId");
 
@@ -486,7 +469,6 @@ namespace fwu_examination_management_system.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BankId"));
 
                     b.Property<string>("BankCode")
-                        .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)");
 
@@ -495,25 +477,24 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("BankId");
 
@@ -532,7 +513,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("BankAddress")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -548,10 +528,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("CollegeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ExamScheduleParentId")
@@ -560,16 +540,15 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("VoucherAmount")
                         .HasColumnType("numeric");
@@ -578,7 +557,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("VoucherNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -615,25 +593,24 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("BatchId");
 
@@ -662,14 +639,13 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("Category")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.Property<int>("CreatedByUserId")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDateTime")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("ExamScheduleId")
@@ -678,13 +654,13 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDateTime")
+                    b.Property<DateTime?>("ThroughDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ThroughDate")
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("BillTitleId");
@@ -710,25 +686,25 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("CountryId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("BoardId");
 
@@ -763,15 +739,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("CollegeNameNepali")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
                     b.Property<int?>("CollegeTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -783,7 +758,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -791,12 +765,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Fax")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
                     b.Property<string>("HouseNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -806,34 +778,23 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsExamCenterOnly")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("MunicipalityVdc")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("Phone1")
-                        .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
                     b.Property<string>("Phone2")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
                     b.Property<string>("PrincipalContactNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("PrincipalName")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -841,22 +802,24 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("ShortName")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("WardNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("Website")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -920,20 +883,20 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("CollegeProfileId");
 
@@ -961,20 +924,14 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("CollegeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("NumberOfStudents")
                         .HasColumnType("integer");
@@ -983,9 +940,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("CollegeProgramId");
 
@@ -1014,10 +976,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
@@ -1026,16 +988,15 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool?>("IsDefault")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("CollegeTypeId");
 
@@ -1081,7 +1042,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(1024)");
 
                     b.Property<string>("TransactionCurrency")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -1109,7 +1069,6 @@ namespace fwu_examination_management_system.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DistrictId"));
 
                     b.Property<string>("DistrictCode")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1137,17 +1096,14 @@ namespace fwu_examination_management_system.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ESewaConfigurationId"));
 
                     b.Property<string>("PostUrl")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
                     b.Property<string>("ProductCode")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("SecretKey")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
@@ -1155,12 +1111,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("SuccessUrl")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
                     b.Property<string>("VerifyUrl")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
@@ -1177,10 +1131,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EntryFormatId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("EntryFormatName")
@@ -1191,16 +1145,16 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("EntryFormatId");
 
@@ -1215,12 +1169,6 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("EthnicityId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("EthnicityName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1231,12 +1179,6 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("EthnicityId");
 
@@ -1275,10 +1217,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("CollegeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ExamScheduleId")
@@ -1287,16 +1229,15 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remark")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ExamCenterId");
 
@@ -1318,29 +1259,16 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("CollegeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("ExamCenterId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -1399,10 +1327,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("CollegeTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ExamFormFeeNameId")
@@ -1417,13 +1345,13 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsCollegeFee")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("ThroughDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("ThroughDate")
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ExamFormFeeRateId");
@@ -1465,17 +1393,16 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("CollegeId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("ExamCenterId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ExamRollNumber")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -1503,12 +1430,6 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool?>("IsWithheld")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("ProgramsId")
                         .HasColumnType("integer");
 
@@ -1516,7 +1437,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -1524,7 +1444,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Sgpa")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1533,6 +1452,12 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<int?>("TypeId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("VerifiedBy")
                         .HasColumnType("integer");
@@ -1576,7 +1501,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("Timestamp")
@@ -1627,10 +1551,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamRollNumberSetupId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ExamScheduleParentId")
@@ -1648,14 +1572,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("MinimumRollNumberLength")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Prefix")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1663,9 +1580,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Suffix")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ExamRollNumberSetupId");
 
@@ -1701,7 +1623,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Prefix")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1712,7 +1633,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Suffix")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1748,17 +1668,16 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("CollegeApprovalDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("EndDateAd")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("EndDateBs")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -1766,7 +1685,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("interval");
 
                     b.Property<string>("ExamScheduleCode")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1793,22 +1711,14 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("LevelId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("NegativeMarks")
                         .HasColumnType("integer");
 
                     b.Property<string>("PartialBatchIds")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("ProgramIds")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
@@ -1816,12 +1726,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("RegularBatchIds")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -1829,12 +1737,17 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("StartDateBs")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("interval");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("YearPartId")
                         .HasColumnType("integer");
@@ -1890,17 +1803,16 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamScheduleDetailId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ExamDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ExamDateBs")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -1913,19 +1825,18 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<int>("SubjectDetailId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ExamScheduleDetailId");
 
@@ -1967,8 +1878,8 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamSubjectRegistrationId"));
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<int?>("CreatedByTab1")
                         .HasColumnType("integer");
@@ -1992,7 +1903,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("GradeLetter")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
@@ -2024,32 +1934,33 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ObtainedMarksPractical")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("ObtainedMarksPracticalConfirm")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("ObtainedMarksTheory")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("ObtainedMarksTheoryConfirm")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<int>("SubjectDetailId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ExamSubjectRegistrationId");
 
@@ -2107,8 +2018,8 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ExamSubjectRegistrationInternalId"));
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -2122,12 +2033,6 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<decimal?>("ObtainedMarksPracticalInternal")
                         .HasColumnType("numeric");
 
@@ -2135,7 +2040,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -2144,6 +2048,12 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<int>("SubjectDetailId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ExamSubjectRegistrationInternalId");
 
@@ -2169,12 +2079,6 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("Code")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("ExamTypeName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -2183,14 +2087,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -2207,10 +2104,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FacultyId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FacultyCode")
@@ -2226,81 +2123,23 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("ShortName")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("FacultyId");
 
                     b.ToTable("Faculties");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Models.FiscalYear", b =>
-                {
-                    b.Property<int>("FiscalYearId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("FiscalYearId"));
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EndDate")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("FiscalYearCode")
-                        .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)");
-
-                    b.Property<string>("FiscalYearName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsRunning")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("StartDate")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.HasKey("FiscalYearId");
-
-                    b.ToTable("FiscalYears");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.Gender", b =>
@@ -2311,10 +2150,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("GenderId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("GenderName")
@@ -2325,10 +2164,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("GenderId");
@@ -2344,10 +2183,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IndexGroupId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("IndexGroupName")
@@ -2358,16 +2197,16 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("IndexGroupId");
 
@@ -2386,22 +2225,18 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("AuthorizationKey")
-                        .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
                     b.Property<string>("PostUrl")
-                        .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
                     b.Property<string>("ProductName")
-                        .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
                     b.Property<string>("ReturnUrl")
-                        .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
@@ -2409,12 +2244,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("VerifyUrl")
-                        .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
                     b.Property<string>("WebsiteUrl")
-                        .IsRequired()
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
@@ -2431,8 +2264,8 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LevelId"));
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -2444,7 +2277,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("LevelCode")
-                        .IsRequired()
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)");
 
@@ -2456,16 +2288,15 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("LevelId");
 
@@ -2480,10 +2311,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("LocalLevelId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("DistrictId")
@@ -2497,16 +2328,15 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remark")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("LocalLevelId");
 
@@ -2544,48 +2374,6 @@ namespace fwu_examination_management_system.Migrations
                     b.HasKey("NepaliDateId");
 
                     b.ToTable("NepaliDates");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Models.Notice", b =>
-                {
-                    b.Property<int>("NoticeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("NoticeId"));
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("NoticeContent")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("NoticePreview")
-                        .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<string>("NoticeTitle")
-                        .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)");
-
-                    b.Property<DateTime?>("PublishedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("NoticeId");
-
-                    b.ToTable("Notices");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.Organization", b =>
@@ -2706,7 +2494,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -2731,11 +2518,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MobileNumber")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<int>("PaymentRequestLogStatus")
+                    b.Property<int?>("PaymentRequestLogStatus")
                         .HasColumnType("integer");
 
                     b.Property<int>("PaymentTypeId")
@@ -2748,7 +2534,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("TransactionId")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -2819,47 +2604,6 @@ namespace fwu_examination_management_system.Migrations
                     b.ToTable("PaymentTypes");
                 });
 
-            modelBuilder.Entity("fwu_examination_management_system.Models.PeriodType", b =>
-                {
-                    b.Property<int>("PeriodTypeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PeriodTypeId"));
-
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool?>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal?>("NumberOfMonths")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("PeriodTypeName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.HasKey("PeriodTypeId");
-
-                    b.ToTable("PeriodTypes");
-                });
-
             modelBuilder.Entity("fwu_examination_management_system.Models.PreferredExamCenter", b =>
                 {
                     b.Property<int>("PreferredExamCenterId")
@@ -2877,7 +2621,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(1024)");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
@@ -2896,8 +2639,8 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PreviousLevelId"));
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -2911,21 +2654,20 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("LevelId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("PreviousLevelName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("PreviousLevelId");
 
@@ -3016,10 +2758,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("BoardId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Duration")
@@ -3040,14 +2782,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("LevelId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("NumberOfSeats")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3065,12 +2800,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("RollNumberPrefix")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -3081,6 +2814,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ProgramsId");
 
@@ -3124,10 +2863,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("QuestionSetId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
@@ -3138,63 +2877,20 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("QuestionSetName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("QuestionSetId");
 
                     b.ToTable("QuestionSets");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Models.Region", b =>
-                {
-                    b.Property<int>("RegionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RegionId"));
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("RegionCode")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<string>("RegionName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasMaxLength(55)
-                        .HasColumnType("character varying(55)");
-
-                    b.HasKey("RegionId");
-
-                    b.ToTable("Regions");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Models.ResultRecord", b =>
@@ -3209,7 +2905,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Alphabet")
-                        .IsRequired()
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)");
 
@@ -3231,17 +2926,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Gpa")
-                        .IsRequired()
                         .HasMaxLength(4)
                         .HasColumnType("character varying(4)");
 
                     b.Property<string>("InternalObtainedGrade")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
                     b.Property<string>("InternalObtainedMarks")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
@@ -3251,12 +2943,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(2)");
 
                     b.Property<string>("PracticalObtainedGrade")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
                     b.Property<string>("PracticalObtainedMarks")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
@@ -3264,12 +2954,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("RegistrationNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("Result")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3277,12 +2965,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Sex")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("StudentName")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -3295,27 +2981,22 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("TheoryObtainedGrade")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
                     b.Property<string>("TheoryObtainedMarks")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
                     b.Property<string>("TotalGradePoints")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
                     b.Property<string>("TotalObtainedGrade")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
                     b.Property<string>("TotalObtainedMarks")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
@@ -3349,16 +3030,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SchoolTypeId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("PreviousLevelId")
@@ -3368,6 +3043,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("SchoolTypeId");
 
@@ -3387,20 +3068,14 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("BatchId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("ProgramsId")
                         .HasColumnType("integer");
@@ -3414,6 +3089,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("SectionId");
 
@@ -3478,7 +3159,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Cgpa")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3489,14 +3169,13 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("CollegeRollNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("HasFeeExemption")
@@ -3507,12 +3186,6 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
@@ -3528,6 +3201,12 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<int?>("SubjectGroupId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("StudentAdmissionId");
 
@@ -3554,23 +3233,16 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("StudentCategoryId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -3578,6 +3250,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("StudentCategoryId");
 
@@ -3592,24 +3270,21 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("StudentGuardianId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("FatherAddress")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("FatherContactNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("FatherEmail")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3619,42 +3294,34 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("FatherOrganization")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("FatherOrganizationAddress")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("FatherPhone")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("FatherProfession")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("FatherQualification")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianAddress")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("GuardianContactNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianEmail")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3664,48 +3331,34 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianOrganization")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianOrganizationAddress")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianPhone")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianProfession")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("GuardianQualification")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("MotherAddress")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("MotherContactNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MotherEmail")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3715,37 +3368,37 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MotherOrganization")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MotherOrganizationAddress")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MotherPhone")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MotherProfession")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("MotherQualification")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("RelationWithStudent")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<int>("StudentRegistrationId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("StudentGuardianId");
 
@@ -3765,10 +3418,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("AcademicYearId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
@@ -3777,14 +3430,14 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsRunning")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("StudentAdmissionId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("YearPartId")
                         .HasColumnType("integer");
@@ -3811,14 +3464,13 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("BoardId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ExamRollNumber")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
@@ -3833,14 +3485,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsHigherDegree")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("PassedYear")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3851,17 +3496,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ProgramName")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("Specialization")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -3869,9 +3511,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("TotalCredits")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("StudentQualificationId");
 
@@ -3896,7 +3543,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("BloodGroup")
-                        .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
@@ -3904,14 +3550,13 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ContactNumber")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("DateOfBirthAd")
@@ -3926,12 +3571,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("EntranceRollNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3973,33 +3616,22 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("MiddleName")
-                        .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("MunicipalityVdc")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Nationality")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("NepaliName")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
@@ -4007,27 +3639,22 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("PreviousAcademicYear")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("PreviousSymbolNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("RegistrationNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("Religion")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("RowIndex")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -4040,6 +3667,12 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("StudentRegistrationSearchId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("VerifiedBy")
                         .HasColumnType("integer");
 
@@ -4047,7 +3680,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("WardNumber")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -4090,20 +3722,14 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("StudentRegistrationSearchId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Remarks")
                         .IsRequired()
@@ -4120,6 +3746,12 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<string>("SearchResults")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserId")
                         .HasColumnType("text");
@@ -4139,26 +3771,19 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectBatchId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("EffectiveAcademicYearId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
@@ -4166,6 +3791,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("SubjectBatchId");
 
@@ -4185,14 +3816,13 @@ namespace fwu_examination_management_system.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectDetailId"));
 
                     b.Property<string>("ConcurrentSubjectCode")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("CreditHours")
@@ -4228,14 +3858,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsCompulsory")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Part")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -4249,12 +3872,10 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("ShortName")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -4280,8 +3901,13 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<decimal>("TheoryPassMarks")
                         .HasColumnType("numeric");
 
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Year")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -4309,10 +3935,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectGroupId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
@@ -4324,17 +3950,10 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool?>("IsExtraAllowed")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("ProgramsId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -4347,6 +3966,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("YearPartId")
                         .HasColumnType("integer");
@@ -4371,7 +3996,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnOrder(1);
 
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -4391,17 +4015,14 @@ namespace fwu_examination_management_system.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectTriplicateId"));
 
                     b.Property<string>("Alphabet")
-                        .IsRequired()
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)");
 
                     b.Property<string>("Center")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
                     b.Property<string>("DateOfBirth")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -4409,62 +4030,50 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("Practical1")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Practical10")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical11")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical2")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical3")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical4")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical5")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical6")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical7")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical8")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
                     b.Property<string>("Practical9")
-                        .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
@@ -4474,132 +4083,106 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.Property<string>("School")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
                     b.Property<string>("Sex")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject1")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject10")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject11")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject2")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject3")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject4")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject5")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject6")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject7")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject8")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Subject9")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Symbol")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
                     b.Property<string>("Theory1")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory10")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory11")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory2")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory3")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory4")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory5")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory6")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory7")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory8")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Theory9")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
                     b.Property<string>("Type")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -4619,10 +4202,10 @@ namespace fwu_examination_management_system.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubjectTypeId"));
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
@@ -4634,14 +4217,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("MaxAllowedSubjects")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Remarks")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -4649,6 +4225,12 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("SubjectTypeId");
 
@@ -4733,14 +4315,13 @@ namespace fwu_examination_management_system.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("YearPartId"));
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedDate")
+                    b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
@@ -4749,12 +4330,6 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<bool>("IsEditable")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("ModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("Part")
                         .HasColumnType("integer");
 
@@ -4762,9 +4337,14 @@ namespace fwu_examination_management_system.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Remark")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Year")
                         .HasColumnType("integer");

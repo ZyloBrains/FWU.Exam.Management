@@ -1,10 +1,18 @@
-﻿namespace fwu_examination_management_system.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace fwu_examination_management_system.Models
 {
-    public class AuditBase
+    [NotMapped]
+    public  class AuditBase
     {
+        [ScaffoldColumn(false)]
         public string? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
+        [ScaffoldColumn(false)]
+        public DateTime? CreatedDate { get; set; }=DateTime.UtcNow;
+        [ScaffoldColumn(false)]
         public string? UpdatedBy { get; set; }
-        public DateTime? UpdatedDate { get; set; }
+        [ScaffoldColumn(false)]
+        public DateTime? UpdatedDate { get; set; } = DateTime.UtcNow;
     }
 }

@@ -5,7 +5,7 @@
 namespace fwu_examination_management_system.Migrations
 {
     /// <inheritdoc />
-    public partial class NewChanges : Migration
+    public partial class ChangesOnAuditBase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
