@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -9,8 +10,10 @@ namespace fwu_examination_management_system.Models
     public class AcademicYear:AuditBase
     {
         [Key]
+        [DisplayName("Academic Year ID")]
         public int AcademicYearId { get; set; } // primary key auto-incremented
-
+        [DisplayName("Academic Year Code")]
+        [Required]
         public int AcademicYearCode { get; set; }
 
         [MaxLength(50)]

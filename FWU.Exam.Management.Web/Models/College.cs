@@ -44,7 +44,7 @@ namespace fwu_examination_management_system.Models
         [MaxLength(50)]
         public string? Email { get; set; }
 
-        [MaxLength(150)]
+        [MaxLength(15)]
         public string? Phone1 { get; set; }
 
         [MaxLength(15)]
