@@ -1,0 +1,29 @@
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace fwu_examination_management_system.Data.Models.Colleges;
+
+public class CollegeProgram
+{
+    [Key]
+    public int CollegeProgramId { get; set; }
+
+    public int CollegeId { get; set; }
+    public int ProgramsId { get; set; }
+    public DateTime? AffiliationDate { get; set; }
+    public int NumberOfStudents { get; set; }
+
+    [MaxLength(1024)]
+    public string? Remarks { get; set; }
+
+    public bool IsActive { get; set; }
+
+    [ForeignKey(nameof(CollegeId))]
+    [ValidateNever]
+    public virtual College College { get; set; }
+
+    [ForeignKey(nameof(ProgramsId))]
+    [ValidateNever]
+    public virtual Programs Program { get; set; }
+}

@@ -1,0 +1,47 @@
+using fwu_examination_management_system.Data.Models.Colleges;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace fwu_examination_management_system.Data.Models.Exams;
+
+public class ExamRollNumberSetupDetail
+{
+    [Key]
+    public int ExamRollNumberSetupDetailId { get; set; }
+
+    public int ExamRollNumberSetupId { get; set; }
+    public int ExamScheduleId { get; set; }
+    public int ProgramId { get; set; }
+    public int ExamTypeId { get; set; }
+    public int CollegeId { get; set; }
+    public int StartRollNumber { get; set; }
+    public int EndRollNumber { get; set; }
+    public int Count { get; set; }
+
+    [MaxLength(50)]
+    public string? Prefix { get; set; }
+
+    [MaxLength(50)]
+    public string? Suffix { get; set; }
+
+    [ForeignKey(nameof(ExamRollNumberSetupId))]
+    [ValidateNever]
+    public virtual ExamRollNumberSetup ExamRollNumberSetup { get; set; }
+
+    [ForeignKey(nameof(ExamScheduleId))]
+    [ValidateNever]
+    public virtual ExamSchedule ExamSchedule { get; set; }
+
+    [ForeignKey(nameof(ProgramId))]
+    [ValidateNever]
+    public virtual Programs Program { get; set; }
+
+    [ForeignKey(nameof(ExamTypeId))]
+    [ValidateNever]
+    public virtual ExamType ExamType { get; set; }
+
+    [ForeignKey(nameof(CollegeId))]
+    [ValidateNever]
+    public virtual College College { get; set; }
+}
