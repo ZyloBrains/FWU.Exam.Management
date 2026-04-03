@@ -1,246 +1,245 @@
 using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Models;
+using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Controllers
+namespace fwu_examination_management_system.Controllers;
+
+[Route("org/{officeCode}")]
+public class OrgDashboardController(
+    ApplicationDbContext context,
+    UserManager<AppUser> userManager,
+    RoleManager<IdentityRole> roleManager) : Controller
 {
-    [Route("org/{officeCode}")]
-    public class OrgDashboardController(
-        ApplicationDbContext context,
-        UserManager<AppUser> userManager,
-        RoleManager<IdentityRole> roleManager) : Controller
+    private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Organization"];
+
+    private async Task<Organization?> GetOrgAsync(string officeCode) =>
+        await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == officeCode);
+
+    // GET: /org/{officeCode}
+    [HttpGet("")]
+    public async Task<IActionResult> Index(string officeCode)
     {
-        private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Organization"];
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
 
-        private async Task<Organization?> GetOrgAsync(string officeCode) =>
-            await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == officeCode);
+        ViewBag.Organization = org;
+        ViewBag.UserCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id);
+        return View("~/Views/Home/Index.cshtml");
+    }
 
-        // GET: /org/{officeCode}
-        [HttpGet("")]
-        public async Task<IActionResult> Index(string officeCode)
+    // GET: /org/{officeCode}/users
+    [HttpGet("users")]
+    public async Task<IActionResult> Users(string officeCode)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        ViewBag.Organization = org;
+
+        var users = await userManager.Users
+            .Where(u => u.OrganizationId == org.Id)
+            .ToListAsync();
+
+        var model = new List<UserListItemViewModel>();
+        foreach (var user in users)
         {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            ViewBag.Organization = org;
-            ViewBag.UserCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id);
-            return View("~/Views/Home/Index.cshtml");
-        }
-
-        // GET: /org/{officeCode}/users
-        [HttpGet("users")]
-        public async Task<IActionResult> Users(string officeCode)
-        {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            ViewBag.Organization = org;
-
-            var users = await userManager.Users
-                .Where(u => u.OrganizationId == org.Id)
-                .ToListAsync();
-
-            var model = new List<UserListItemViewModel>();
-            foreach (var user in users)
-            {
-                model.Add(new UserListItemViewModel
-                {
-                    Id = user.Id,
-                    Email = user.Email ?? string.Empty,
-                    OrganizationName = org.Name,
-                    Roles = await userManager.GetRolesAsync(user)
-                });
-            }
-            return View(model);
-        }
-
-        // GET: /org/{officeCode}/users/create
-        [HttpGet("users/create")]
-        public async Task<IActionResult> CreateUser(string officeCode)
-        {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            ViewBag.Organization = org;
-            return View(new CreateUserViewModel());
-        }
-
-        // POST: /org/{officeCode}/users/create
-        [HttpPost("users/create")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateUser(string officeCode, CreateUserViewModel model)
-        {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                var user = new AppUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    OrganizationId = org.Id,
-                    EmailConfirmed = true
-                };
-
-                var result = await userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
-                        await userManager.AddToRoleAsync(user, "Student");
-
-                    return RedirectToAction(nameof(Users), new { officeCode });
-                }
-
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            ViewBag.Organization = org;
-            return View(model);
-        }
-
-        // GET: /org/{officeCode}/users/{userId}/edit
-        [HttpGet("users/{userId}/edit")]
-        public async Task<IActionResult> EditUser(string officeCode, string userId)
-        {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            var user = await userManager.FindByIdAsync(userId);
-            if (user == null || user.OrganizationId != org.Id) return NotFound();
-
-            ViewBag.Organization = org;
-            return View(new EditUserViewModel
+            model.Add(new UserListItemViewModel
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
-                OrganizationId = org.Id
+                OrganizationName = org.Name,
+                Roles = await userManager.GetRolesAsync(user)
             });
         }
+        return View(model);
+    }
 
-        // POST: /org/{officeCode}/users/{userId}/edit
-        [HttpPost("users/{userId}/edit")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditUser(string officeCode, string userId, EditUserViewModel model)
+    // GET: /org/{officeCode}/users/create
+    [HttpGet("users/create")]
+    public async Task<IActionResult> CreateUser(string officeCode)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        ViewBag.Organization = org;
+        return View(new CreateUserViewModel());
+    }
+
+    // POST: /org/{officeCode}/users/create
+    [HttpPost("users/create")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateUser(string officeCode, CreateUserViewModel model)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        if (ModelState.IsValid)
         {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            if (userId != model.Id) return NotFound();
-
-            if (ModelState.IsValid)
+            var user = new AppUser
             {
-                var user = await userManager.FindByIdAsync(userId);
-                if (user == null || user.OrganizationId != org.Id) return NotFound();
+                UserName = model.Email,
+                Email = model.Email,
+                OrganizationId = org.Id,
+                EmailConfirmed = true
+            };
 
-                user.Email = model.Email;
-                user.UserName = model.Email;
+            var result = await userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
+                    await userManager.AddToRoleAsync(user, "Student");
 
-                var result = await userManager.UpdateAsync(user);
-                if (result.Succeeded)
-                    return RedirectToAction(nameof(Users), new { officeCode });
-
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
+                return RedirectToAction(nameof(Users), new { officeCode });
             }
 
-            ViewBag.Organization = org;
-            return View(model);
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        // GET: /org/{officeCode}/users/{userId}/delete
-        [HttpGet("users/{userId}/delete")]
-        public async Task<IActionResult> DeleteUser(string officeCode, string userId)
-        {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
+        ViewBag.Organization = org;
+        return View(model);
+    }
 
+    // GET: /org/{officeCode}/users/{userId}/edit
+    [HttpGet("users/{userId}/edit")]
+    public async Task<IActionResult> EditUser(string officeCode, string userId)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null || user.OrganizationId != org.Id) return NotFound();
+
+        ViewBag.Organization = org;
+        return View(new EditUserViewModel
+        {
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            OrganizationId = org.Id
+        });
+    }
+
+    // POST: /org/{officeCode}/users/{userId}/edit
+    [HttpPost("users/{userId}/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditUser(string officeCode, string userId, EditUserViewModel model)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        if (userId != model.Id) return NotFound();
+
+        if (ModelState.IsValid)
+        {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null || user.OrganizationId != org.Id) return NotFound();
 
-            ViewBag.Organization = org;
-            return View(user);
+            user.Email = model.Email;
+            user.UserName = model.Email;
+
+            var result = await userManager.UpdateAsync(user);
+            if (result.Succeeded)
+                return RedirectToAction(nameof(Users), new { officeCode });
+
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        // POST: /org/{officeCode}/users/{userId}/delete
-        [HttpPost("users/{userId}/delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteUserConfirmed(string officeCode, string userId)
+        ViewBag.Organization = org;
+        return View(model);
+    }
+
+    // GET: /org/{officeCode}/users/{userId}/delete
+    [HttpGet("users/{userId}/delete")]
+    public async Task<IActionResult> DeleteUser(string officeCode, string userId)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null || user.OrganizationId != org.Id) return NotFound();
+
+        ViewBag.Organization = org;
+        return View(user);
+    }
+
+    // POST: /org/{officeCode}/users/{userId}/delete
+    [HttpPost("users/{userId}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteUserConfirmed(string officeCode, string userId)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user != null && user.OrganizationId == org.Id)
+            await userManager.DeleteAsync(user);
+
+        return RedirectToAction(nameof(Users), new { officeCode });
+    }
+
+    // GET: /org/{officeCode}/users/{userId}/roles
+    [HttpGet("users/{userId}/roles")]
+    public async Task<IActionResult> AssignRoles(string officeCode, string userId)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null || user.OrganizationId != org.Id) return NotFound();
+
+        var allRoles = await roleManager.Roles
+            .Where(r => r.Name != "Student")
+            .ToListAsync();
+        var userRoles = await userManager.GetRolesAsync(user);
+
+        ViewBag.Organization = org;
+        return View(new AssignRolesViewModel
         {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            var user = await userManager.FindByIdAsync(userId);
-            if (user != null && user.OrganizationId == org.Id)
-                await userManager.DeleteAsync(user);
-
-            return RedirectToAction(nameof(Users), new { officeCode });
-        }
-
-        // GET: /org/{officeCode}/users/{userId}/roles
-        [HttpGet("users/{userId}/roles")]
-        public async Task<IActionResult> AssignRoles(string officeCode, string userId)
-        {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            var user = await userManager.FindByIdAsync(userId);
-            if (user == null || user.OrganizationId != org.Id) return NotFound();
-
-            var allRoles = await roleManager.Roles
-                .Where(r => r.Name != "Student")
-                .ToListAsync();
-            var userRoles = await userManager.GetRolesAsync(user);
-
-            ViewBag.Organization = org;
-            return View(new AssignRolesViewModel
+            UserId = user.Id,
+            UserEmail = user.Email ?? string.Empty,
+            Roles = allRoles.Select(r => new RoleAssignmentItem
             {
-                UserId = user.Id,
-                UserEmail = user.Email ?? string.Empty,
-                Roles = allRoles.Select(r => new RoleAssignmentItem
-                {
-                    RoleName = r.Name ?? string.Empty,
-                    IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
-                }).ToList()
-            });
-        }
+                RoleName = r.Name ?? string.Empty,
+                IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
+            }).ToList()
+        });
+    }
 
-        // POST: /org/{officeCode}/users/{userId}/roles
-        [HttpPost("users/{userId}/roles")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AssignRoles(string officeCode, string userId, AssignRolesViewModel model)
+    // POST: /org/{officeCode}/users/{userId}/roles
+    [HttpPost("users/{userId}/roles")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignRoles(string officeCode, string userId, AssignRolesViewModel model)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null) return NotFound();
+
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null || user.OrganizationId != org.Id) return NotFound();
+
+        var currentRoles = await userManager.GetRolesAsync(user);
+        var selectedRoles = model.Roles
+            .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
+            .Select(r => r.RoleName)
+            .ToList();
+
+        if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
         {
-            var org = await GetOrgAsync(officeCode);
-            if (org == null) return NotFound();
-
-            var user = await userManager.FindByIdAsync(model.UserId);
-            if (user == null || user.OrganizationId != org.Id) return NotFound();
-
-            var currentRoles = await userManager.GetRolesAsync(user);
-            var selectedRoles = model.Roles
-                .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
-                .Select(r => r.RoleName)
-                .ToList();
-
-            if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
-            {
-                selectedRoles.Add("Student");
-            }
-
-            var toAdd = selectedRoles.Except(currentRoles).ToList();
-            var toRemove = currentRoles.Except(selectedRoles).ToList();
-
-            if (toAdd.Count > 0)
-                await userManager.AddToRolesAsync(user, toAdd);
-
-            if (toRemove.Count > 0)
-                await userManager.RemoveFromRolesAsync(user, toRemove);
-
-            return RedirectToAction(nameof(Users), new { officeCode });
+            selectedRoles.Add("Student");
         }
+
+        var toAdd = selectedRoles.Except(currentRoles).ToList();
+        var toRemove = currentRoles.Except(selectedRoles).ToList();
+
+        if (toAdd.Count > 0)
+            await userManager.AddToRolesAsync(user, toAdd);
+
+        if (toRemove.Count > 0)
+            await userManager.RemoveFromRolesAsync(user, toRemove);
+
+        return RedirectToAction(nameof(Users), new { officeCode });
     }
 }

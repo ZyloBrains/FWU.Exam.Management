@@ -1,7 +1,7 @@
-@model IEnumerable<fwu_examination_management_system.ViewModels.UserListItemViewModel>
+@model IEnumerable<UserListItemViewModel>
 
 @{
-    var org = ViewBag.Organization as fwu_examination_management_system.Models.Organization;
+    var org = ViewBag.Organization as Organization;
     ViewData["Title"] = $"{org!.Name} – Users";
 }
 

@@ -1,7 +1,7 @@
-@model fwu_examination_management_system.ViewModels.CreateUserViewModel
+@model CreateUserViewModel
 
 @{
-    var org = ViewBag.Organization as fwu_examination_management_system.Models.Organization;
+    var org = ViewBag.Organization as Organization;
     ViewData["Title"] = $"Add User — {org!.Name}";
 }
 
