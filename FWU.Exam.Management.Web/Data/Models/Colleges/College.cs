@@ -1,23 +1,18 @@
 using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Payments;
 using fwu_examination_management_system.Data.Models.Students;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Colleges;
-
-
 public class College
 {
-    [Key]
-    public int CollegeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
-    public string CollegeCode { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     [Required, MaxLength(500)]
-    public string CollegeName { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [MaxLength(500)]
     public string? CollegeNameNepali { get; set; }
@@ -27,8 +22,6 @@ public class College
 
     public DateTime? EstablishedDate { get; set; }
     public DateTime? ClosedDate { get; set; }
-
-    public int DistrictId { get; set; }
 
     [MaxLength(255)]
     public string? MunicipalityVdc { get; set; }
@@ -62,56 +55,29 @@ public class College
 
     [MaxLength(255)]
     public string? Remarks { get; set; }
-
     public bool IsExamCenterOnly { get; set; }
     public bool IsActive { get; set; }
+    public decimal? AllocatedAmount { get; set; }
+    public int? DisplayOrder { get; set; }
+
+    public int DistrictId { get; set; }
+    public virtual District? District { get; set; }
 
     public int? CollegeTypeId { get; set; }
-    public decimal? AllocatedAmount { get; set; }
+    public virtual CollegeType? CollegeType { get; set; }
+
     public int AreaId { get; set; }
-    public int? DisplayOrder { get; set; }
-    public int? QuestionSetId { get; set; }
+    public virtual Area? Area { get; set; }
 
-    [ForeignKey(nameof(DistrictId))]
-    [ValidateNever]
-    public virtual District District { get; set; }
+    public int CollegeProfileId { get; set; }
+    public virtual CollegeProfile? CollegeProfile { get; set; }
 
-    [ForeignKey(nameof(CollegeTypeId))]
-    [ValidateNever]
-    public virtual CollegeType CollegeType { get; set; }
-
-    [ForeignKey(nameof(AreaId))]
-    [ValidateNever]
-    public virtual Area Area { get; set; }
-
-    [ForeignKey(nameof(QuestionSetId))]
-    [ValidateNever]
-    public virtual QuestionSet QuestionSet { get; set; }
-
-    [ValidateNever]
-    public virtual CollegeProfile CollegeProfile { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<BankVoucher> BankVouchers { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<CollegeProgram> CollegePrograms { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<ExamCenter> ExamCenters { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<ExamCenterDetail> ExamCenterDetails { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<AppUser> Users { get; set; }
+    public virtual ICollection<BankVoucher>? BankVouchers { get; set; }
+    public virtual ICollection<CollegeProgram>? CollegePrograms { get; set; }
+    public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
+    public virtual ICollection<ExamCenterDetail>? ExamCenterDetails { get; set; }
+    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
+    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+    public virtual ICollection<AppUser>? Users { get; set; }
 }

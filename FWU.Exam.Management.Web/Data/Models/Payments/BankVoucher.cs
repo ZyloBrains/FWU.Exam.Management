@@ -1,3 +1,4 @@
+using fwu_examination_management_system.Data.Auditing;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Exams;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -6,7 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Payments;
 
-public class BankVoucher
+public class BankVoucher: IAuditable
 {
     [Key]
     public int BankVoucherId { get; set; }

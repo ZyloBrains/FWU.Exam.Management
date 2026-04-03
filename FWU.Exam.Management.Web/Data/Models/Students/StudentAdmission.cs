@@ -1,3 +1,4 @@
+using fwu_examination_management_system.Data.Auditing;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Subjects;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
@@ -6,7 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
-public class StudentAdmission
+public class StudentAdmission: IAuditable
 {
     [Key]
     public int StudentAdmissionId { get; set; }

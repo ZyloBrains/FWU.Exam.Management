@@ -1,24 +1,29 @@
 using fwu_examination_management_system.Data;
+using fwu_examination_management_system.Data.Auditing;
+using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Helpers;
-using fwu_examination_management_system.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
+builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
+
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    options.UseSqlServer(connectionString);
+    options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
+});
 
 builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<AuditBaseHelper>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

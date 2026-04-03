@@ -2,15 +2,11 @@
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Students;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models;
-public class AppUser: IdentityUser
+public class AppUser: IdentityUser, IAuditable
 { 
     public  string? ProfilePath { get; set; }
-    public int? OrganizationId { get; set; }
-    public Organization? Organization { get; set; }
 
     // Fields from old User class
     public string? FullName { get; set; }
@@ -18,33 +14,16 @@ public class AppUser: IdentityUser
     public bool IsActive { get; set; }
     public DateTime? ValidFrom { get; set; }
     public DateTime? ValidTo { get; set; }
-    public string? NtUser { get; set; }
     public string? Remarks { get; set; }
-    public bool Active { get; set; }          // consider merging with IsActive
 
-    public int? PasswordResetLogId { get; set; }
-    public string? ContactNumber { get; set; } // Identity already has PhoneNumber
+    public int? OrganizationId { get; set; }
+    public Organization? Organization { get; set; }
+
     public int? StudentRegistrationId { get; set; }
-    public DateTime? LastPasswordChanged { get; set; }
-
-    // Navigation properties
-    [ForeignKey(nameof(StudentRegistrationId))]
-    [ValidateNever]
     public virtual StudentRegistration? StudentRegistration { get; set; }
 
-    [ForeignKey(nameof(PasswordResetLogId))]
-    [ValidateNever]
-    public virtual PasswordResetLog? PasswordResetLog { get; set; }
-    [ValidateNever]
-    public virtual ICollection<UserProgramMap> UserProgramMaps { get; set; }
+    public virtual ICollection<Program>? Programs { get; set; }
 
     public int? CollegeId { get; set; }
-
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
     public virtual College? College { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<PasswordResetLog> PasswordResetLogs { get; set; } = [];
-
 }

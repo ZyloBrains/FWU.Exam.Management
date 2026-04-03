@@ -1,13 +1,11 @@
 using fwu_examination_management_system.Data.Models.Exams;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace fwu_examination_management_system.Data.Models.Colleges;
 
 public class CollegeType
 {
-    [Key]
-    public int CollegeTypeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(2)]
     public string CollegeTypeCode { get; set; }
@@ -21,9 +19,6 @@ public class CollegeType
     public bool? IsDefault { get; set; }
     public bool IsActive { get; set; }
 
-    [ValidateNever]
-    public virtual ICollection<College> Colleges { get; set; }
-
-    [ValidateNever]
-    public virtual ICollection<ExamFormFeeRate> ExamFormFeeRates { get; set; }
+    public virtual ICollection<College>? Colleges { get; set; }
+    public virtual ICollection<ExamFormFeeRate>? ExamFormFeeRates { get; set; }
 }

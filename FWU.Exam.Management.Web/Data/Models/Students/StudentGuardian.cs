@@ -1,10 +1,11 @@
+using fwu_examination_management_system.Data.Auditing;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
-public class StudentGuardian
+public class StudentGuardian: IAuditable
 {
     [Key]
     public int StudentGuardianId { get; set; }

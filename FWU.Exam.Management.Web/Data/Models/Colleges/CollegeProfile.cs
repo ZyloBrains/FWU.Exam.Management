@@ -1,14 +1,10 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Colleges;
-
 public class CollegeProfile
 {
     [Key]
-    public int CollegeProfileId { get; set; }
-    public int CollegeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(1024)]
     public string BankName { get; set; }
@@ -28,20 +24,15 @@ public class CollegeProfile
     [Required, MaxLength(1024)]
     public string ContactPersonEmail { get; set; }
 
-    public int BlankChequeUserAttachmentId { get; set; }
-    public int AuditReportUserAttachmentId { get; set; }
 
     public int? Status { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
+    public int CollegeId { get; set; }
+    public virtual College? College { get; set; }
 
-    [ForeignKey(nameof(BlankChequeUserAttachmentId))]
-    [ValidateNever]
-    public virtual UserAttachment BlankChequeUserAttachment { get; set; }
+    public int BlankChequeUserAttachmentId { get; set; }
+    public virtual UserAttachment? BlankChequeUserAttachment { get; set; }
 
-    [ForeignKey(nameof(AuditReportUserAttachmentId))]
-    [ValidateNever]
-    public virtual UserAttachment AuditReportUserAttachment { get; set; }
+    public int AuditReportUserAttachmentId { get; set; }
+    public virtual UserAttachment? AuditReportUserAttachment { get; set; }
 }
