@@ -23,7 +23,7 @@ public class AppUser: IdentityUser, IAuditable
     public int? StudentRegistrationId { get; set; }
     public virtual StudentRegistration? StudentRegistration { get; set; }
 
-    public virtual ICollection<Program>? Programs { get; set; }
+    public virtual ICollection<Programs>? Programs { get; set; }
 
     public int? CollegeId { get; set; }
     public virtual College? College { get; set; }

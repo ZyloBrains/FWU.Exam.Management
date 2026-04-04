@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models.Students;
 
 public class StudentGuardian: IAuditable
 {
-    [Key]
-    public int StudentGuardianId { get; set; }
+    public int Id { get; set; }
 
     public int StudentRegistrationId { get; set; }
 

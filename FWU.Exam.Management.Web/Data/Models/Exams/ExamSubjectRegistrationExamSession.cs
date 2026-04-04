@@ -1,13 +1,8 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamSubjectRegistrationExamSession
 {
-    [Key]
-    public int ExamSubjectRegistrationExamSessionId { get; set; }
+    public int Id { get; set; }
     public int ExamSubjectRegistrationId { get; set; }
 
     public DateTime ExamStartedDateTime { get; set; }
@@ -17,7 +12,5 @@ public class ExamSubjectRegistrationExamSession
     public bool? IsAutoSubmitted { get; set; }
     public DateTime LastStatusSyncDateTime { get; set; }
 
-    [ForeignKey(nameof(ExamSubjectRegistrationId))]
-    [ValidateNever]
     public virtual ExamSubjectRegistration ExamSubjectRegistration { get; set; }
 }

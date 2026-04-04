@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class LocalLevel
 {
-    [Key]
-    public int LocalLevelId { get; set; }
+    public int Id { get; set; }
 
     public int DistrictId { get; set; }
 
@@ -17,7 +16,6 @@ public class LocalLevel
 
     [MaxLength(50)]
     public string? Remark { get; set; }
-
 
     public bool? IsActive { get; set; }
 

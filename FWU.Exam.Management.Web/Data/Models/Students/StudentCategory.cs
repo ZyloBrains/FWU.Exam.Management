@@ -5,8 +5,7 @@ namespace fwu_examination_management_system.Data.Models.Students;
 
 public class StudentCategory
 {
-    [Key]
-    public int StudentCategoryId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string StudentCategoryName { get; set; }

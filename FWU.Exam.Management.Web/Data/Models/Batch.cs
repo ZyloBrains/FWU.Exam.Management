@@ -8,8 +8,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Batch
 {
-    [Key]
-    public int BatchId { get; set; }
+    public int Id { get; set; }
 
     public int AcademicYearId { get; set; }
 

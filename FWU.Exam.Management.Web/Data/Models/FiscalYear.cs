@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class FiscalYear
 {
-    [Key]
-    public int FiscalYearId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string FiscalYearName { get; set; }

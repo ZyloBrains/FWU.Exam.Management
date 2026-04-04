@@ -6,10 +6,8 @@ namespace fwu_examination_management_system.Data.Models.Subjects;
 
 public class SubjectGroupDetailMap
 {
-    [Key, Column(Order = 0)]
     public int SubjectGroupId { get; set; }
 
-    [Key, Column(Order = 1)]
     public int SubjectDetailId { get; set; }
 
     [MaxLength(255)]

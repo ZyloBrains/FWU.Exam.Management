@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models;
@@ -14,13 +14,11 @@ public class AcademicYearsController : Controller
         _context = context;
     }
 
-    // GET: AcademicYears
     public async Task<IActionResult> Index()
     {
         return View(await _context.AcademicYears.ToListAsync());
     }
 
-    // GET: AcademicYears/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -29,7 +27,7 @@ public class AcademicYearsController : Controller
         }
 
         var academicYear = await _context.AcademicYears
-            .FirstOrDefaultAsync(m => m.AcademicYearId == id);
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (academicYear == null)
         {
             return NotFound();
@@ -38,18 +36,14 @@ public class AcademicYearsController : Controller
         return View(academicYear);
     }
 
-    // GET: AcademicYears/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: AcademicYears/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("AcademicYearId,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
     {
         if (ModelState.IsValid)
         {
@@ -60,7 +54,6 @@ public class AcademicYearsController : Controller
         return View(academicYear);
     }
 
-    // GET: AcademicYears/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -76,14 +69,11 @@ public class AcademicYearsController : Controller
         return View(academicYear);
     }
 
-    // POST: AcademicYears/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("AcademicYearId,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
     {
-        if (id != academicYear.AcademicYearId)
+        if (id != academicYear.Id)
         {
             return NotFound();
         }
@@ -97,7 +87,7 @@ public class AcademicYearsController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!AcademicYearExists(academicYear.AcademicYearId))
+                if (!AcademicYearExists(academicYear.Id))
                 {
                     return NotFound();
                 }
@@ -111,7 +101,6 @@ public class AcademicYearsController : Controller
         return View(academicYear);
     }
 
-    // GET: AcademicYears/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -120,7 +109,7 @@ public class AcademicYearsController : Controller
         }
 
         var academicYear = await _context.AcademicYears
-            .FirstOrDefaultAsync(m => m.AcademicYearId == id);
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (academicYear == null)
         {
             return NotFound();
@@ -129,7 +118,6 @@ public class AcademicYearsController : Controller
         return View(academicYear);
     }
 
-    // POST: AcademicYears/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -146,6 +134,6 @@ public class AcademicYearsController : Controller
 
     private bool AcademicYearExists(int id)
     {
-        return _context.AcademicYears.Any(e => e.AcademicYearId == id);
+        return _context.AcademicYears.Any(e => e.Id == id);
     }
 }

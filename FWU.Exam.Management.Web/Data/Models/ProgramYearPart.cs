@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class ProgramYearPart
 {
-    [Key]
-    public int ProgramYearPartId { get; set; }
+    public int Id { get; set; }
 
     public int ProgramsId { get; set; }
     public int YearPartId { get; set; }

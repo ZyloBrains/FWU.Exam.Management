@@ -5,8 +5,7 @@ namespace fwu_examination_management_system.Data.Models.Subjects;
 
 public class SubjectType
 {
-    [Key]
-    public int SubjectTypeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string SubjectTypeName { get; set; }

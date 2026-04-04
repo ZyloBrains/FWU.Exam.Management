@@ -1,15 +1,12 @@
 using fwu_examination_management_system.Data.Models.Students;
 using fwu_examination_management_system.Data.Models.Subjects;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamSubjectRegistrationInternal
 {
-    [Key]
-    public int ExamSubjectRegistrationInternalId { get; set; }
+    public int Id { get; set; }
 
     public int EntryAcademicYearId { get; set; }
     public int StudentProgramYearPartId { get; set; }
@@ -24,19 +21,8 @@ public class ExamSubjectRegistrationInternal
  
     public int? ExamScheduleId { get; set; }
 
-    [ForeignKey(nameof(EntryAcademicYearId))]
-    [ValidateNever]
     public virtual AcademicYear AcademicYear { get; set; }
-
-    [ForeignKey(nameof(StudentProgramYearPartId))]
-    [ValidateNever]
     public virtual StudentProgramYearPart StudentProgramYearPart { get; set; }
-
-    [ForeignKey(nameof(SubjectDetailId))]
-    [ValidateNever]
     public virtual SubjectDetail SubjectDetail { get; set; }
-
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
     public virtual ExamSchedule ExamSchedule { get; set; }
 }

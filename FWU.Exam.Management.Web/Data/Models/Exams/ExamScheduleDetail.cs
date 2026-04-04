@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamScheduleDetail
 {
-    [Key]
-    public int ExamScheduleDetailId { get; set; }
+    public int Id { get; set; }
 
     public int ExamScheduleId { get; set; }
     public int ExamTypeId { get; set; }

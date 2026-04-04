@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Board
 {
-    [Key]
-    public int BoardId { get; set; }
+    public int Id { get; set; }
     [ValidateNever]
     public int CountryId { get; set; }
 

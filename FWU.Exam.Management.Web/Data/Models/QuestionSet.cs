@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class QuestionSet
 {
-    [Key]
-    public int QuestionSetId { get; set; }
+    public int Id { get; set; }
     [Required, MaxLength(255)]
     public string QuestionSetName { get; set; }
     [MaxLength(1024)]

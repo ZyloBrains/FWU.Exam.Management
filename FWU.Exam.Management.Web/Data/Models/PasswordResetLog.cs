@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class PasswordResetLog
 {
-    [Key]
-    public int PasswordResetLogId { get; set; }
+    public int Id { get; set; }
 
     public string UserId { get; set; }
 

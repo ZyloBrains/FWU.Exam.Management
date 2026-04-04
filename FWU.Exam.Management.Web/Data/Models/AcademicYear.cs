@@ -8,9 +8,8 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class AcademicYear
 {
-    [Key]
     [DisplayName("Academic Year ID")]
-    public int AcademicYearId { get; set; } // primary key auto-incremented
+    public int Id { get; set; }
 
     [DisplayName("Academic Year Code")]
     [Required]

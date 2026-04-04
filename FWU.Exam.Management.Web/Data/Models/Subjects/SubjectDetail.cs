@@ -8,8 +8,7 @@ namespace fwu_examination_management_system.Data.Models.Subjects;
 
 public class SubjectDetail
 {
-    [Key]
-    public int SubjectDetailId { get; set; }
+    public int Id { get; set; }
 
     public int? SubjectGroupId { get; set; }
     public int ProgramsId { get; set; }

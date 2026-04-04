@@ -5,8 +5,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamFormFeeName
 {
-    [Key]
-    public int ExamFormFeeNameId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(400)]
     public string Name { get; set; }

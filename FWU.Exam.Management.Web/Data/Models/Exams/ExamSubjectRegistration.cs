@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamSubjectRegistration
 {
-    [Key]
-    public int ExamSubjectRegistrationId { get; set; }
+    public int Id { get; set; }
 
     public int ExamRegistrationId { get; set; }
     public int SubjectDetailId { get; set; }

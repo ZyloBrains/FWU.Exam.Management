@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class KhaltiConfiguration
 {
-    [Key]
-    public int KhaltiConfigurationId { get; set; }
+    public int Id { get; set; }
 
     [MaxLength(400)]
     public string? ReturnUrl { get; set; }

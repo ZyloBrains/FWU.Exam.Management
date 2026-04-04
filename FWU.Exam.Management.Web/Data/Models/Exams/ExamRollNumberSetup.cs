@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamRollNumberSetup
 {
-    [Key]
-    public int ExamRollNumberSetupId { get; set; }
+    public int Id { get; set; }
 
     public int ExamScheduleParentId { get; set; }
     public int FirstExamRollNumber { get; set; }

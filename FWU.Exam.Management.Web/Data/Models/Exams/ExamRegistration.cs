@@ -8,8 +8,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamRegistration
 {
-    [Key]
-    public int ExamRegistrationId { get; set; }
+    public int Id { get; set; }
 
     public int StudentProgramYearPartId { get; set; }
     public int AcademicYearId { get; set; }

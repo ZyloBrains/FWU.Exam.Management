@@ -5,13 +5,12 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class PaymentType
 {
-    [Key]
-    public int PaymentTypeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(255)]
     public string PaymentTypeName { get; set; }
 
-    public bool IsActive { get; set; }     // IsActive = Status
+    public bool IsActive { get; set; }
     [ValidateNever]
     public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
 }

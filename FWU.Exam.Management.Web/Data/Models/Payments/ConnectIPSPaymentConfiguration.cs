@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class ConnectIpsPaymentConfiguration
 {
-    [Key]
-    public int ConnectIpsPaymentConfigurationId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(1024)]
     public string GatewayUrl { get; set; }

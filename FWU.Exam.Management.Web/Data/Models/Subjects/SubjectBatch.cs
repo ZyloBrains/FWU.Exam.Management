@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Subjects;
 
 public class SubjectBatch
 {
-    [Key]
-    public int SubjectBatchId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(255)]
     public string SubjectBatchName { get; set; }

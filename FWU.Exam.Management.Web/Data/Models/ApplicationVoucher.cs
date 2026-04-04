@@ -1,14 +1,11 @@
 using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Students;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models;
 public class ApplicationVoucher
 {
-    [Key]
-    public int ApplicationVoucherId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string VoucherNumber { get; set; }
@@ -34,11 +31,6 @@ public class ApplicationVoucher
     public int ExamScheduleId { get; set; }
     public int? StudentRegistrationId { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
     public virtual ExamSchedule? ExamSchedule { get; set; }
-
-    [ForeignKey(nameof(StudentRegistrationId))]
-    [ValidateNever]
     public virtual StudentRegistration StudentRegistration { get; set; }
 }

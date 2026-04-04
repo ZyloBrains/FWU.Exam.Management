@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Faculty
 {
-    [Key]
-    public int FacultyId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(10)]
     public string FacultyCode { get; set; }

@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ActiveExamSchedule
 {
-    [Key]
-    public int ActiveExamScheduleId { get; set; }
+    public int Id { get; set; }
 
     public int ExamScheduleId { get; set; }
     public DateTime? StartDate { get; set; }

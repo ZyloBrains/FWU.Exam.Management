@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class PaymentPracticalSubjects
 {
-    [Key]
-    public int PaymentPracticalSubjectsId { get; set; }
+    public int Id { get; set; }
 
     public int PaymentRequestLogId { get; set; }
     public int PracticalSubjectsCount { get; set; }

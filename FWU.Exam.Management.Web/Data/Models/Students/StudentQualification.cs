@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Students;
 
 public class StudentQualification
 {
-    [Key]
-    public int StudentQualificationId { get; set; }
+    public int Id { get; set; }
 
     public int StudentRegistrationId { get; set; }
     public int BoardId { get; set; }

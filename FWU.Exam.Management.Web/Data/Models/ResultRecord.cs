@@ -9,9 +9,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class ResultRecord
 {
-    [Key]
-    public int ResultRecordId { get; set; } 
-    //public int ResultId { get; set; }
+    public int Id { get; set; }
 
     public int AcademicYearId { get; set; }
     public int ProgramsId { get; set; }

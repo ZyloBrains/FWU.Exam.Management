@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class PaymentResponseLog
 {
-    [Key]
-    public int PaymentResponseLogId { get; set; }   
+    public int Id { get; set; }
     public int PaymentRequestLogId { get; set; }
 
     public DateTime ResponseTimestamp { get; set; }

@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class BillTitle
 {
-    [Key]
-    public int BillTitleId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(255)]
     public string BillTitleName { get; set; }

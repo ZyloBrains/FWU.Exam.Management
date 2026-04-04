@@ -5,8 +5,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Province
 {
-    [Key]
-    public int ProvinceId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string ProvinceName { get; set; }

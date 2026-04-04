@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models.Colleges;
 
 public class CollegeProgram
 {
-    [Key]
-    public int CollegeProgramId { get; set; }
+    public int Id { get; set; }
 
     public DateTime? AffiliationDate { get; set; }
     public int NumberOfStudents { get; set; }

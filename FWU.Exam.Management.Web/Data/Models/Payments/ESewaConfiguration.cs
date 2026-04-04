@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class ESewaConfiguration
 {
-    [Key]
-    public int ESewaConfigurationId { get; set; }
+    public int Id { get; set; }
 
     [MaxLength(256)]
     public string? PostUrl { get; set; }

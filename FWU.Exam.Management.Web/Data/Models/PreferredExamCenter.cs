@@ -8,8 +8,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class PreferredExamCenter
 {
-    [Key]
-    public int PreferredExamCenterId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(1024)]
     public string Name { get; set; }

@@ -8,8 +8,7 @@ public class ExamRegistrationCenterChange
 
 {
 
-    [Key]
-    public int ExamRegistrationCenterChangeId { get; set; }
+    public int Id { get; set; }
     public int ExamRegistrationId { get; set; }
 
     public int PreferredExamCenterId { get; set; }

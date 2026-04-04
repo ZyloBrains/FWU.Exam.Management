@@ -10,8 +10,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Programs
 {
-    [Key]
-    public int ProgramsId { get; set; }
+    public int Id { get; set; }
 
     public int LevelId { get; set; }
     public int FacultyId { get; set; }

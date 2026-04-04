@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class UserAttachment
 {
-    [Key]
-    public int UserAttachmentId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(255)]
     public string FileName { get; set; }

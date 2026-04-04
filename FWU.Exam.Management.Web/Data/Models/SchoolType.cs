@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class SchoolType
 {
-    [Key]
-    public int SchoolTypeId { get; set; }
+    public int Id { get; set; }
 
     public int PreviousLevelId { get; set; }
 

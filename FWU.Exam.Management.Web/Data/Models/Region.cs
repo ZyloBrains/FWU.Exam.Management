@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Region
 {
-    [Key]
-    public int RegionId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(2)]
     public string RegionCode { get; set; }
@@ -17,5 +16,4 @@ public class Region
     public string? Remarks { get; set; }
 
     public bool IsActive { get; set; }
- 
 }

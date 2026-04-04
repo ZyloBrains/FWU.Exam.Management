@@ -9,9 +9,8 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class PaymentRequestLog
 {
-    [Key]
-    public int PaymentRequestLogId { get; set; }
-    public int? PaymentRequestLogStatus { get; set; }     //extra field ??
+    public int Id { get; set; }
+    public int? PaymentRequestLogStatus { get; set; }
 
     [Required, MaxLength(50)]
     public string InvoiceNumber { get; set; }

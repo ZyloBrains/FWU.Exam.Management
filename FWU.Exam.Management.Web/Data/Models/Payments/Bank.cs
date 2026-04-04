@@ -5,8 +5,7 @@ namespace fwu_examination_management_system.Data.Models.Payments;
 
 public class Bank
 {
-    [Key]
-    public int BankId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(100)]
     public string BankName { get; set; }

@@ -9,8 +9,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class YearPart
 {
-    [Key]
-    public int YearPartId { get; set; }
+    public int Id { get; set; }
 
     public int ProgramPeriodTypeId { get; set; }
     public int Year { get; set; }

@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Notice
 {
-    [Key]
-    public int NoticeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(1024)]
     public string NoticeTitle { get; set; }
@@ -17,5 +16,4 @@ public class Notice
 
     [Required]
     public string NoticeContent { get; set; }
-
 }

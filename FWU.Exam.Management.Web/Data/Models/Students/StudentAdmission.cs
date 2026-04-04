@@ -9,8 +9,7 @@ namespace fwu_examination_management_system.Data.Models.Students;
 
 public class StudentAdmission: IAuditable
 {
-    [Key]
-    public int StudentAdmissionId { get; set; }
+    public int Id { get; set; }
 
     public int BatchId { get; set; }
     public int StudentRegistrationId { get; set; }

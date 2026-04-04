@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models;
@@ -14,13 +14,11 @@ public class ProvincesController : Controller
         _context = context;
     }
 
-    // GET: Provinces
     public async Task<IActionResult> Index()
     {
         return View(await _context.Provinces.ToListAsync());
     }
 
-    // GET: Provinces/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
@@ -29,7 +27,7 @@ public class ProvincesController : Controller
         }
 
         var province = await _context.Provinces
-            .FirstOrDefaultAsync(m => m.ProvinceId == id);
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (province == null)
         {
             return NotFound();
@@ -38,18 +36,14 @@ public class ProvincesController : Controller
         return View(province);
     }
 
-    // GET: Provinces/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: Provinces/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ProvinceId,ProvinceName,IsActive")] Province province)
+    public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
     {
         if (ModelState.IsValid)
         {
@@ -60,7 +54,6 @@ public class ProvincesController : Controller
         return View(province);
     }
 
-    // GET: Provinces/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -76,14 +69,11 @@ public class ProvincesController : Controller
         return View(province);
     }
 
-    // POST: Provinces/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("ProvinceId,ProvinceName,IsActive")] Province province)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
     {
-        if (id != province.ProvinceId)
+        if (id != province.Id)
         {
             return NotFound();
         }
@@ -97,7 +87,7 @@ public class ProvincesController : Controller
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ProvinceExists(province.ProvinceId))
+                if (!ProvinceExists(province.Id))
                 {
                     return NotFound();
                 }
@@ -111,7 +101,6 @@ public class ProvincesController : Controller
         return View(province);
     }
 
-    // GET: Provinces/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -120,7 +109,7 @@ public class ProvincesController : Controller
         }
 
         var province = await _context.Provinces
-            .FirstOrDefaultAsync(m => m.ProvinceId == id);
+            .FirstOrDefaultAsync(m => m.Id == id);
         if (province == null)
         {
             return NotFound();
@@ -129,7 +118,6 @@ public class ProvincesController : Controller
         return View(province);
     }
 
-    // POST: Provinces/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -146,6 +134,6 @@ public class ProvincesController : Controller
 
     private bool ProvinceExists(int id)
     {
-        return _context.Provinces.Any(e => e.ProvinceId == id);
+        return _context.Provinces.Any(e => e.Id == id);
     }
 }

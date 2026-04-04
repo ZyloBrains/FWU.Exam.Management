@@ -5,8 +5,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class ProgramPeriodType
 {
-    [Key]
-    public int ProgramPeriodTypeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string ProgramPeriodTypeName { get; set; }

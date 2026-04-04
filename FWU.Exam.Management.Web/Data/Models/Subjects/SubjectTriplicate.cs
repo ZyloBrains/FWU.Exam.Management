@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models.Subjects;
 
 public class SubjectTriplicate
 {
-    [Key]
-    public int SubjectTriplicateId { get; set; }  // DataID
+    public int Id { get; set; }
 
     public int Year { get; set; }
 

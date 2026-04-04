@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Students;
 
 public class StudentRegistrationSearch
 {
-    [Key]
-    public int StudentRegistrationSearchId { get; set; }
+    public int Id { get; set; }
 
     public string SearchCriteria { get; set; }
     public DateTime SearchDate { get; set; }

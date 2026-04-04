@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class PreviousLevel
 {
-    [Key]
-    public int PreviousLevelId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(100)]
     public string PreviousLevelName { get; set; }

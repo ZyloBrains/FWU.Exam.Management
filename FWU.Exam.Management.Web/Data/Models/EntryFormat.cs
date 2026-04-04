@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class EntryFormat
 {
-    [Key]
-    public int EntryFormatId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(100)]
     public string EntryFormatName { get; set; }

@@ -7,8 +7,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class Section
 {
-    [Key]
-    public int SectionId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(100)]
     public string SectionName { get; set; }

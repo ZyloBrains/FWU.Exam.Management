@@ -6,8 +6,7 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamRegistrationActionLog
 {
-    [Key]
-    public int ExamRegistrationActionLogId { get; set; }
+    public int Id { get; set; }
 
     public int ExamRegistrationId { get; set; }
     public DateTime Timestamp { get; set; }

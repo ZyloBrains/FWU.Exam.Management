@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class SmtpConfiguration
 {
-    [Key]
-    public int SmtpConfigurationId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(1024)]
     public string Host { get; set; }
