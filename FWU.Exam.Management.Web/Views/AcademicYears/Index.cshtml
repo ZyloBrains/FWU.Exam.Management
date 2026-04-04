@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Models.AcademicYear>
+﻿@model IEnumerable<AcademicYear>
 
 @{
     ViewData["Title"] = "Index";
@@ -33,18 +33,6 @@
             <th>
                 @Html.DisplayNameFor(model => model.IsActive)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ModifiedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ModifiedDate)
-            </th>
             <th></th>
         </tr>
     </thead>
@@ -73,21 +61,9 @@
                 @Html.DisplayFor(modelItem => item.IsActive)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ModifiedBy)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ModifiedDate)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.AcademicYearId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.AcademicYearId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.AcademicYearId">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>
 }

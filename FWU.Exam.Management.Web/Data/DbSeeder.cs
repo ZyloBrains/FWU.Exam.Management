@@ -1,33 +1,32 @@
-using fwu_examination_management_system.Models;
+using fwu_examination_management_system.Data.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace fwu_examination_management_system.Data
+namespace fwu_examination_management_system.Data;
+
+public static class DbSeeder
 {
-    public static class DbSeeder
+    private static readonly string[] Roles = [Role.SystemAdmin, Role.Admin, Role.ReportAdmin, Role.Student];
+
+    public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
     {
-        private static readonly string[] Roles = ["SystemAdmin", "Admin", "ReportAdmin", "Student"];
-
-        public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        foreach (var role in Roles)
         {
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            foreach (var role in Roles)
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                    await roleManager.CreateAsync(new IdentityRole(role));
-            }
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
         }
+    }
 
-        public static async Task SeedSuperAdminAsync(IServiceProvider serviceProvider)
+    public static async Task SeedSuperAdminAsync(IServiceProvider serviceProvider)
+    {
+        var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
+
+        const string email = "admin@gmail.com";
+        var user = await userManager.FindByEmailAsync(email);
+
+        if (user != null && !await userManager.IsInRoleAsync(user, Role.SystemAdmin))
         {
-            var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
-
-            const string email = "admin@gmail.com";
-            var user = await userManager.FindByEmailAsync(email);
-
-            if (user != null && !await userManager.IsInRoleAsync(user, "SystemAdmin"))
-            {
-                await userManager.AddToRoleAsync(user, "SystemAdmin");
-            }
+            await userManager.AddToRoleAsync(user, Role.SystemAdmin);
         }
     }
 }

@@ -1,7 +1,7 @@
-@model fwu_examination_management_system.ViewModels.EditUserViewModel
+@model EditUserViewModel
 
 @{
-    var org = ViewBag.Organization as fwu_examination_management_system.Models.Organization;
+    var org = ViewBag.Organization as Organization;
     ViewData["Title"] = $"Edit User — {org!.Name}";
 }
 

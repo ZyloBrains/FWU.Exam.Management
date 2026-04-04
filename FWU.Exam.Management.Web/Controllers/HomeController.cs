@@ -1,33 +1,31 @@
 using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Models;
+using fwu_examination_management_system.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
-namespace fwu_examination_management_system.Controllers
+namespace fwu_examination_management_system.Controllers;
+
+public class HomeController(UserManager<AppUser> userManager, ApplicationDbContext context) : Controller
 {
-    public class HomeController(UserManager<AppUser> userManager, ApplicationDbContext context) : Controller
+    public async Task<IActionResult> Index()
     {
-        public async Task<IActionResult> Index()
+        if (User.Identity?.IsAuthenticated == true)
         {
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                return RedirectToAction("Index", "Dashboard");
-            }
-
-            return Redirect("/Identity/Account/Login");
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+        return Redirect("/Identity/Account/Login");
+    }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

@@ -1,7 +1,7 @@
-@model fwu_examination_management_system.Models.AppUser
+@model AppUser
 
 @{
-    var org = ViewBag.Organization as fwu_examination_management_system.Models.Organization;
+    var org = ViewBag.Organization as Organization;
     ViewData["Title"] = $"Delete User — {org!.Name}";
 }
 
