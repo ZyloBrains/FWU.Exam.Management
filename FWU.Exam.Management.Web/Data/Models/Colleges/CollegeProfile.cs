@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 namespace fwu_examination_management_system.Data.Models.Colleges;
 public class CollegeProfile
 {
-    [Key]
     public int Id { get; set; }
 
     [Required, MaxLength(1024)]

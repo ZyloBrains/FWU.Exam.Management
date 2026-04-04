@@ -11,12 +11,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace fwu_examination_management_system.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ILogger<ApplicationDbContext> logger) : IdentityDbContext<AppUser>(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ILogger<ApplicationDbContext> logger) 
+    : IdentityDbContext<AppUser>(options)
 {
     private readonly ILogger<ApplicationDbContext> _logger = logger;
 
     public DbSet<Organization> Organizations { get; set; }
-
     public DbSet<AcademicYear> AcademicYears { get; set; }
     public DbSet<ActiveExamSchedule> ActiveExamSchedules { get; set; }
     public DbSet<ApplicationVoucher> ApplicationVouchers { get; set; }

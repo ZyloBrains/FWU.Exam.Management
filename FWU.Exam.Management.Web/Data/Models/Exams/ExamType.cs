@@ -5,11 +5,10 @@ namespace fwu_examination_management_system.Data.Models.Exams;
 
 public class ExamType
 {
-    [Key]
-    public int ExamTypeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
-    public string ExamTypeName { get; set; }
+    public string Name { get; set; }
 
     [MaxLength(255)]
     public string? Remarks { get; set; }

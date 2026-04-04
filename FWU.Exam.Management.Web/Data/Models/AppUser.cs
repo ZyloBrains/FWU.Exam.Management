@@ -1,4 +1,5 @@
-﻿using fwu_examination_management_system.Data.Auditing;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using fwu_examination_management_system.Data.Auditing;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Students;
 using Microsoft.AspNetCore.Identity;

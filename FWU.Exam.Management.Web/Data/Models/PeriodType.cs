@@ -4,8 +4,7 @@ namespace fwu_examination_management_system.Data.Models;
 
 public class PeriodType
 {
-    [Key]
-    public int PeriodTypeId { get; set; }
+    public int Id { get; set; }
 
     [Required, MaxLength(50)]
     public string PeriodTypeName { get; set; }

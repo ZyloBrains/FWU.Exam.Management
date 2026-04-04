@@ -8,10 +8,8 @@ namespace fwu_examination_management_system.Data.Models.Students;
 
 public class StudentRegistration
 {
-    [Key]
-    public int StudentRegistrationId { get; set; }
+    public int Id { get; set; }
 
-    public int AcademicYearId { get; set; }
     public int LevelId { get; set; }
     public int FacultyId { get; set; }
     public int CollegeId { get; set; }
@@ -92,8 +90,7 @@ public class StudentRegistration
     public int? StudentRegistrationSearchId { get; set; }
     public int? LocalLevelId { get; set; }
 
-    [ForeignKey(nameof(AcademicYearId))]
-    [ValidateNever]
+    public int AcademicYearId { get; set; }
     public virtual AcademicYear AcademicYear { get; set; }
 
     [ForeignKey(nameof(LevelId))]
