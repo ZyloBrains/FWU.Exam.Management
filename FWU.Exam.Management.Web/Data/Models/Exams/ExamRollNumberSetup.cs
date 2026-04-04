@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -22,9 +20,6 @@ public class ExamRollNumberSetup
     public int MinimumGap { get; set; }
     public bool IsActive { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleParentId))]
-    [ValidateNever]
-    public virtual ExamScheduleParent ExamScheduleParent { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamRollNumberSetupDetail> ExamRollNumberSetupDetails { get; set; }
+    public virtual ExamScheduleParent? ExamScheduleParent { get; set; }
+    public virtual ICollection<ExamRollNumberSetupDetail>? ExamRollNumberSetupDetails { get; set; }
 }

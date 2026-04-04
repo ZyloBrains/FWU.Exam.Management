@@ -8,7 +8,7 @@ public class StudentCategory
     public int Id { get; set; }
 
     [Required, MaxLength(50)]
-    public string StudentCategoryName { get; set; }
+    public string? StudentCategoryName { get; set; }
 
     public bool IsActive { get; set; }
 
@@ -16,5 +16,5 @@ public class StudentCategory
     public string? Remarks { get; set; }
 
     [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

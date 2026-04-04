@@ -9,10 +9,10 @@ public class Faculty
     public int Id { get; set; }
 
     [Required, MaxLength(10)]
-    public string FacultyCode { get; set; }
+    public string? FacultyCode { get; set; }
 
     [Required, MaxLength(200)]
-    public string FacultyName { get; set; }
+    public string? FacultyName { get; set; }
 
     [MaxLength(50)]
     public string? ShortName { get; set; }
@@ -23,7 +23,7 @@ public class Faculty
     public bool IsActive { get; set; }
 
     [ValidateNever]
-    public virtual ICollection<Programs> Programs { get; set; }
+    public virtual ICollection<Program>? Programs { get; set; }
     [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

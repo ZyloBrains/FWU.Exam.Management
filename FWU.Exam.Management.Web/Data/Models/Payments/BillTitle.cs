@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Models.Exams;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Payments;
 
@@ -10,7 +8,7 @@ public class BillTitle
     public int Id { get; set; }
 
     [Required, MaxLength(255)]
-    public string BillTitleName { get; set; }
+    public string? BillTitleName { get; set; }
 
     [MaxLength(1024)]
     public string? Category { get; set; }
@@ -21,10 +19,7 @@ public class BillTitle
     public DateTime? ApplicableDate { get; set; }
     public int? ExamScheduleId { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 
-    [ValidateNever]
-    public virtual ICollection<BankVoucher> BankVouchers { get; set; }
+    public virtual ICollection<BankVoucher>? BankVouchers { get; set; }
 }

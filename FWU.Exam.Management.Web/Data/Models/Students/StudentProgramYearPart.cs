@@ -1,7 +1,4 @@
 using fwu_examination_management_system.Data.Models.Exams;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
@@ -15,19 +12,11 @@ public class StudentProgramYearPart
     public bool IsRunning { get; set; }
     public bool IsActive { get; set; }
 
-    [ForeignKey(nameof(StudentAdmissionId))]
-    [ValidateNever]
-    public virtual StudentAdmission StudentAdmission { get; set; }
+    public virtual StudentAdmission? StudentAdmission { get; set; }
 
-    [ForeignKey(nameof(AcademicYearId))]
-    [ValidateNever]
-    public virtual AcademicYear AcademicYear { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
 
-    [ForeignKey(nameof(YearPartId))]
-    [ValidateNever]
-    public virtual YearPart YearPart { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamSubjectRegistrationInternal> ExamSubjectRegistrationInternals { get; set; }
+    public virtual YearPart? YearPart { get; set; }
+    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
+    public virtual ICollection<ExamSubjectRegistrationInternal>? ExamSubjectRegistrationInternals { get; set; }
 }

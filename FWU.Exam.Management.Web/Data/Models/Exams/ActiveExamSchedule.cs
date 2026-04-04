@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -17,7 +15,5 @@ public class ActiveExamSchedule
     [MaxLength(1024)]
     public string? Remarks { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
     public virtual ExamSchedule? ExamSchedule { get; set; }
 }

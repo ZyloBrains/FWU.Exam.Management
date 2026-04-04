@@ -21,8 +21,8 @@ public class ExamSubjectRegistrationInternal
  
     public int? ExamScheduleId { get; set; }
 
-    public virtual AcademicYear AcademicYear { get; set; }
-    public virtual StudentProgramYearPart StudentProgramYearPart { get; set; }
-    public virtual SubjectDetail SubjectDetail { get; set; }
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
+    public virtual StudentProgramYearPart? StudentProgramYearPart { get; set; }
+    public virtual SubjectDetail? SubjectDetail { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 }

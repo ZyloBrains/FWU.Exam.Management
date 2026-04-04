@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using fwu_examination_management_system.Data.Auditing;
+﻿using fwu_examination_management_system.Data.Auditing;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Students;
 using Microsoft.AspNetCore.Identity;
@@ -23,7 +22,7 @@ public class AppUser: IdentityUser, IAuditable
     public int? StudentRegistrationId { get; set; }
     public virtual StudentRegistration? StudentRegistration { get; set; }
 
-    public virtual ICollection<Programs>? Programs { get; set; }
+    public virtual ICollection<Program>? Programs { get; set; }
 
     public int? CollegeId { get; set; }
     public virtual College? College { get; set; }

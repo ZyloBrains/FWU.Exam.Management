@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Auditing;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
@@ -12,7 +10,7 @@ public class StudentGuardian: IAuditable
     public int StudentRegistrationId { get; set; }
 
     [Required, MaxLength(50)]
-    public string FatherName { get; set; }
+    public string? FatherName { get; set; }
 
     [MaxLength(50)]
     public string? FatherContactNumber { get; set; }
@@ -39,7 +37,7 @@ public class StudentGuardian: IAuditable
     public string? FatherOrganizationAddress { get; set; }
 
     [Required, MaxLength(50)]
-    public string MotherName { get; set; }
+    public string? MotherName { get; set; }
 
     [MaxLength(50)]
     public string? MotherContactNumber { get; set; }
@@ -66,7 +64,7 @@ public class StudentGuardian: IAuditable
     public string? MotherOrganizationAddress { get; set; }
 
     [Required, MaxLength(50)]
-    public string GuardianName { get; set; }
+    public string? GuardianName { get; set; }
 
     [MaxLength(50)]
     public string? GuardianContactNumber { get; set; }
@@ -95,7 +93,5 @@ public class StudentGuardian: IAuditable
     [MaxLength(50)]
     public string? RelationWithStudent { get; set; }
 
-    [ForeignKey(nameof(StudentRegistrationId))]
-    [ValidateNever]
-    public virtual StudentRegistration StudentRegistration { get; set; }
+    public virtual StudentRegistration? StudentRegistration { get; set; }
 }

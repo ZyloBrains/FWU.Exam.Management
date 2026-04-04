@@ -8,10 +8,10 @@ public class ApplicationVoucher
     public int Id { get; set; }
 
     [Required, MaxLength(50)]
-    public string VoucherNumber { get; set; }
+    public string? VoucherNumber { get; set; }
 
     [Required, MaxLength(1024)]
-    public string StudentName { get; set; }
+    public string? StudentName { get; set; }
 
     public DateOnly? DateOfBirthAd { get; set; }
 
@@ -23,7 +23,7 @@ public class ApplicationVoucher
     public DateTime? Timestamp { get; set; }
 
     [Required, MaxLength(1024)]
-    public string ContactNumber { get; set; }
+    public string? ContactNumber { get; set; }
 
     [MaxLength(1024)]
     public string? Branch { get; set; }
@@ -32,5 +32,5 @@ public class ApplicationVoucher
     public int? StudentRegistrationId { get; set; }
 
     public virtual ExamSchedule? ExamSchedule { get; set; }
-    public virtual StudentRegistration StudentRegistration { get; set; }
+    public virtual StudentRegistration? StudentRegistration { get; set; }
 }

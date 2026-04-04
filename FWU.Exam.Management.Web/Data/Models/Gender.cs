@@ -9,10 +9,10 @@ public class Gender
     public int Id { get; set; }
 
     [Required, MaxLength(50)]
-    public string GenderName { get; set; }
+    public string? GenderName { get; set; }
 
     public bool IsActive { get; set; }
 
     [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

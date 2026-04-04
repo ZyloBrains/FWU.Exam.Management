@@ -7,10 +7,10 @@ public class Region
     public int Id { get; set; }
 
     [Required, MaxLength(2)]
-    public string RegionCode { get; set; }
+    public string? RegionCode { get; set; }
 
     [Required, MaxLength(100)]
-    public string RegionName { get; set; }
+    public string? RegionName { get; set; }
 
     [MaxLength(55)]
     public string? Remarks { get; set; }

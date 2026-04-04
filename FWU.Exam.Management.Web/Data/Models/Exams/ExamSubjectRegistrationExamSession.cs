@@ -12,5 +12,5 @@ public class ExamSubjectRegistrationExamSession
     public bool? IsAutoSubmitted { get; set; }
     public DateTime LastStatusSyncDateTime { get; set; }
 
-    public virtual ExamSubjectRegistration ExamSubjectRegistration { get; set; }
+    public virtual ExamSubjectRegistration? ExamSubjectRegistration { get; set; }
 }

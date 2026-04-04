@@ -9,13 +9,13 @@ public class IndexGroup
     public int Id { get; set; }
 
     [Required, MaxLength(100)]
-    public string IndexGroupName { get; set; }
+    public string? IndexGroupName { get; set; }
 
     [MaxLength(255)]
-    public string Remarks { get; set; }
+    public string? Remarks { get; set; }
 
     public bool IsActive { get; set; }
 
     [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

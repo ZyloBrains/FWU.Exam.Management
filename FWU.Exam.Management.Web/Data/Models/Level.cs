@@ -13,7 +13,7 @@ public class Level
     public string? LevelCode { get; set; }
 
     [Required, MaxLength(50)]
-    public string LevelName { get; set; }
+    public string? LevelName { get; set; }
 
     public int? LevelDisplayOrder { get; set; }
 
@@ -24,9 +24,9 @@ public class Level
     public bool IsActive { get; set; }
 
     [ValidateNever]
-    public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
+    public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
     [ValidateNever]
-    public virtual ICollection<Programs> Programs { get; set; }
+    public virtual ICollection<Program>? Programs { get; set; }
     [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

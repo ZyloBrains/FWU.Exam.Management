@@ -1,9 +1,7 @@
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Subjects;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models;
 
@@ -18,22 +16,22 @@ public class ResultRecord
     public int SubjectDetailId { get; set; }
 
     [Required, MaxLength(3)]
-    public string Year { get; set; }
+    public string? Year { get; set; }
 
     [Required, MaxLength(2)]
-    public string Part { get; set; }
+    public string? Part { get; set; }
 
     [MaxLength(50)]
     public string? RegistrationNumber { get; set; }
 
     [Required, MaxLength(50)]
-    public string SymbolNumber { get; set; }
+    public string? SymbolNumber { get; set; }
 
     [MaxLength(1)]
     public string? Alphabet { get; set; }
 
     [Required, MaxLength(10)]
-    public string DateOfBirthBs { get; set; }
+    public string? DateOfBirthBs { get; set; }
 
     [MaxLength(10)]
     public string? Sex { get; set; }
@@ -78,27 +76,15 @@ public class ResultRecord
     public int? ExamScheduleId { get; set; }
     public DateTime? CreatedDate { get; set; }
 
-    [ForeignKey(nameof(AcademicYearId))]
-    [ValidateNever]
-    public virtual AcademicYear AcademicYear { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
 
-    [ForeignKey(nameof(ProgramsId))]
-    [ValidateNever]
-    public virtual Programs Program { get; set; }
+    public virtual Program? Program { get; set; }
 
-    [ForeignKey(nameof(ExamTypeId))]
-    [ValidateNever]
-    public virtual ExamType ExamType { get; set; }
+    public virtual ExamType? ExamType { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
+    public virtual College? College { get; set; }
 
-    [ForeignKey(nameof(SubjectDetailId))]
-    [ValidateNever]
-    public virtual SubjectDetail SubjectDetail { get; set; }
+    public virtual SubjectDetail? SubjectDetail { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 }

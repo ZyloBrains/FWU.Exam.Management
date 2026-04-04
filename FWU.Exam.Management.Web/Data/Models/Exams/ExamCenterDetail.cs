@@ -18,7 +18,7 @@ public class ExamCenterDetail
 
     public bool IsActive { get; set; }
 
-    public virtual ExamCenter ExamCenter { get; set; }
-    public virtual College College { get; set; }
-    public virtual Programs Program { get; set; }
+    public virtual ExamCenter? ExamCenter { get; set; }
+    public virtual College? College { get; set; }
+    public virtual Program? Program { get; set; }
 }

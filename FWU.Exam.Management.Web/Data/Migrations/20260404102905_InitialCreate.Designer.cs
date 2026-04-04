@@ -12,7 +12,7 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260404095713_InitialCreate")]
+    [Migration("20260404102905_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

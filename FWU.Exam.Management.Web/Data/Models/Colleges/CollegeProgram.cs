@@ -17,5 +17,5 @@ public class CollegeProgram
     public virtual College? College { get; set; }
 
     public int ProgramId { get; set; }
-    public virtual Programs? Program { get; set; }
+    public virtual Program? Program { get; set; }
 }

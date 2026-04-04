@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Models.Subjects;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -22,15 +20,9 @@ public class ExamScheduleDetail
 
     public bool IsActive { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 
-    [ForeignKey(nameof(ExamTypeId))]
-    [ValidateNever]
-    public virtual ExamType ExamType { get; set; }
+    public virtual ExamType? ExamType { get; set; }
 
-    [ForeignKey(nameof(SubjectDetailId))]
-    [ValidateNever]
-    public virtual SubjectDetail SubjectDetail { get; set; }
+    public virtual SubjectDetail? SubjectDetail { get; set; }
 }

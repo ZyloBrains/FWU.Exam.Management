@@ -1,8 +1,6 @@
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Payments;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
@@ -18,13 +16,13 @@ public class StudentRegistration
     public string? RegistrationNumber { get; set; }
 
     [Required, MaxLength(80)]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
     [MaxLength(30)]
     public string? MiddleName { get; set; }
 
     [Required, MaxLength(30)]
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
 
     [MaxLength(100)]
     public string? NepaliName { get; set; }
@@ -39,7 +37,7 @@ public class StudentRegistration
     public string? Email { get; set; }
 
     [Required, MaxLength(10)]
-    public string DateOfBirthBs { get; set; }
+    public string? DateOfBirthBs { get; set; }
 
     public DateTime DateOfBirthAd { get; set; }
 
@@ -91,66 +89,36 @@ public class StudentRegistration
     public int? LocalLevelId { get; set; }
 
     public int AcademicYearId { get; set; }
-    public virtual AcademicYear AcademicYear { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
 
-    [ForeignKey(nameof(LevelId))]
-    [ValidateNever]
-    public virtual Level Level { get; set; }
+    public virtual Level? Level { get; set; }
 
-    [ForeignKey(nameof(FacultyId))]
-    [ValidateNever]
-    public virtual Faculty Faculty { get; set; }
+    public virtual Faculty? Faculty { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
+    public virtual College? College { get; set; }
 
-    [ForeignKey(nameof(GenderId))]
-    [ValidateNever]
-    public virtual Gender Gender { get; set; }
+    public virtual Gender? Gender { get; set; }
 
-    [ForeignKey(nameof(DistrictId))]
-    [ValidateNever]
-    public virtual District District { get; set; }
+    public virtual District? District { get; set; }
 
-    [ForeignKey(nameof(StudentCategoryId))]
-    [ValidateNever]
-    public virtual StudentCategory StudentCategory { get; set; }
+    public virtual StudentCategory? StudentCategory { get; set; }
 
-    [ForeignKey(nameof(EthnicityId))]
-    [ValidateNever]
-    public virtual Ethnicity Ethnicity { get; set; }
+    public virtual Ethnicity? Ethnicity { get; set; }
 
-    [ForeignKey(nameof(LocalLevelId))]
-    [ValidateNever]
-    public virtual LocalLevel LocalLevel { get; set; }
+    public virtual LocalLevel? LocalLevel { get; set; }
 
-    [ForeignKey(nameof(IndexGroupId))]
-    [ValidateNever]
-    public virtual IndexGroup IndexGroup { get; set; }
+    public virtual IndexGroup? IndexGroup { get; set; }
 
-    [ForeignKey(nameof(EntryFormatId))]
-    [ValidateNever]
-    public virtual EntryFormat EntryFormat { get; set; }
+    public virtual EntryFormat? EntryFormat { get; set; }
 
-    [ForeignKey(nameof(PhotoAttachmentId))]
-    [ValidateNever]
-    public virtual UserAttachment PhotoAttachment { get; set; }
+    public virtual UserAttachment? PhotoAttachment { get; set; }
 
-    [ForeignKey(nameof(StudentRegistrationSearchId))]
-    [ValidateNever]
-    public virtual StudentRegistrationSearch StudentRegistrationSearch { get; set; }
+    public virtual StudentRegistrationSearch? StudentRegistrationSearch { get; set; }
 
-    [ValidateNever]
-    public virtual ICollection<ApplicationVoucher> ApplicationVouchers { get; set; }
-    [ValidateNever]
-    public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
-    [ValidateNever]
-    public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
-    [ValidateNever]
-    public virtual ICollection<StudentGuardian> StudentGuardians { get; set; }
-    [ValidateNever]
-    public virtual ICollection<StudentQualification> StudentQualifications { get; set; }
-    [ValidateNever]
-    public virtual ICollection<AppUser> Users { get; set; }
+    public virtual ICollection<ApplicationVoucher>? ApplicationVouchers { get; set; }
+    public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
+    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
+    public virtual ICollection<StudentGuardian>? StudentGuardians { get; set; }
+    public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
+    public virtual ICollection<AppUser>? Users { get; set; }
 }

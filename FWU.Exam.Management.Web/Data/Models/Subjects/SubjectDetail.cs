@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Models.Exams;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Subjects;
 
@@ -15,10 +13,10 @@ public class SubjectDetail
     public int YearPartId { get; set; }
 
     [Required, MaxLength(50)]
-    public string SubjectCode { get; set; }
+    public string? SubjectCode { get; set; }
 
     [Required, MaxLength(100)]
-    public string SubjectName { get; set; }
+    public string? SubjectName { get; set; }
 
     public decimal TheoryFullMarks { get; set; }
     public decimal TheoryPassMarks { get; set; }
@@ -55,29 +53,16 @@ public class SubjectDetail
     [MaxLength(50)]
     public string? Part { get; set; }
 
-    [ForeignKey(nameof(SubjectGroupId))]
-    [ValidateNever]
-    public virtual SubjectGroup SubjectGroup { get; set; }
+    public virtual SubjectGroup? SubjectGroup { get; set; }
 
-    [ForeignKey(nameof(ProgramsId))]
-    [ValidateNever]
-    public virtual Programs Program { get; set; }
+    public virtual Program? Program { get; set; }
 
-    [ForeignKey(nameof(YearPartId))]
-    [ValidateNever]
-    public virtual YearPart YearPart { get; set; }
+    public virtual YearPart? YearPart { get; set; }
 
-    [ForeignKey(nameof(SubjectTypeId))]
-    [ValidateNever]
-    public virtual SubjectType SubjectType { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamScheduleDetail> ExamScheduleDetails { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamSubjectRegistration> ExamSubjectRegistrations { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamSubjectRegistrationInternal> ExamSubjectRegistrationInternals { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ResultRecord> ResultRecords { get; set; }
-    [ValidateNever]
-    public virtual ICollection<SubjectGroupDetailMap> SubjectGroupDetailMaps { get; set; }
+    public virtual SubjectType? SubjectType { get; set; }
+    public virtual ICollection<ExamScheduleDetail>? ExamScheduleDetails { get; set; }
+    public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
+    public virtual ICollection<ExamSubjectRegistrationInternal>? ExamSubjectRegistrationInternals { get; set; }
+    public virtual ICollection<ResultRecord>? ResultRecords { get; set; }
+    public virtual ICollection<SubjectGroupDetailMap>? SubjectGroupDetailMaps { get; set; }
 }

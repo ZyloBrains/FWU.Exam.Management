@@ -6,22 +6,22 @@ public class CollegeProfile
     public int Id { get; set; }
 
     [Required, MaxLength(1024)]
-    public string BankName { get; set; }
+    public string? BankName { get; set; }
 
     [Required, MaxLength(1024)]
-    public string BankBranchName { get; set; }
+    public string? BankBranchName { get; set; }
 
     [Required, MaxLength(1024)]
-    public string BankAccountNumber { get; set; }
+    public string? BankAccountNumber { get; set; }
 
     [Required, MaxLength(1024)]
-    public string ContactPersonName { get; set; }
+    public string? ContactPersonName { get; set; }
 
     [Required, MaxLength(1024)]
-    public string ContactPersonMobileNumber { get; set; }
+    public string? ContactPersonMobileNumber { get; set; }
 
     [Required, MaxLength(1024)]
-    public string ContactPersonEmail { get; set; }
+    public string? ContactPersonEmail { get; set; }
 
 
     public int? Status { get; set; }

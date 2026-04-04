@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Models.Colleges;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -19,15 +17,9 @@ public class ExamCenter
 
     public int Code { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamCenterDetail> ExamCenterDetails { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+    public virtual College? College { get; set; }
+    public virtual ICollection<ExamCenterDetail>? ExamCenterDetails { get; set; }
+    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
 }

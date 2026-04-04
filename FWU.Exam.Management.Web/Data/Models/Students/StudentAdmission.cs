@@ -1,9 +1,7 @@
 using fwu_examination_management_system.Data.Auditing;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Subjects;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
@@ -31,29 +29,16 @@ public class StudentAdmission: IAuditable
     public int? SubjectGroupId { get; set; }
     public bool HasFeeExemption { get; set; }
 
-    [ForeignKey(nameof(BatchId))]
-    [ValidateNever]
-    public virtual Batch Batch { get; set; }
+    public virtual Batch? Batch { get; set; }
 
-    [ForeignKey(nameof(StudentRegistrationId))]
-    [ValidateNever]
-    public virtual StudentRegistration StudentRegistration { get; set; }
+    public virtual StudentRegistration? StudentRegistration { get; set; }
 
-    [ForeignKey(nameof(ProgramsId))]
-    [ValidateNever]
-    public virtual Programs Program { get; set; }
+    public virtual Program? Program { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
+    public virtual College? College { get; set; }
 
-    [ForeignKey(nameof(SectionId))]
-    [ValidateNever]
-    public virtual Section Section { get; set; }
+    public virtual Section? Section { get; set; }
 
-    [ForeignKey(nameof(SubjectGroupId))]
-    [ValidateNever]
-    public virtual SubjectGroup SubjectGroup { get; set; }
-    [ValidateNever]
-    public virtual ICollection<StudentProgramYearPart> StudentProgramYearParts { get; set; }
+    public virtual SubjectGroup? SubjectGroup { get; set; }
+    public virtual ICollection<StudentProgramYearPart>? StudentProgramYearParts { get; set; }
 }

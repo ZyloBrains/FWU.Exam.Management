@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Payments;
 
@@ -13,12 +11,10 @@ public class PaymentResponseLog
     public bool IsSuccess { get; set; }
 
     [Required, MaxLength(1024)]
-    public string ResponseMessage { get; set; }
+    public string? ResponseMessage { get; set; }
 
     [Required]
-    public string FullResponse { get; set; }
+    public string? FullResponse { get; set; }
 
-    [ForeignKey(nameof(PaymentRequestLogId))]
-    [ValidateNever]
-    public virtual PaymentRequestLog PaymentRequestLog { get; set; }
+    public virtual PaymentRequestLog? PaymentRequestLog { get; set; }
 }

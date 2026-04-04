@@ -7,28 +7,28 @@ public class ConnectIpsPaymentConfiguration
     public int Id { get; set; }
 
     [Required, MaxLength(1024)]
-    public string GatewayUrl { get; set; }
+    public string? GatewayUrl { get; set; }
 
     [Required, MaxLength(1024)]
-    public string MerchantId { get; set; }
+    public string? MerchantId { get; set; }
 
     [Required, MaxLength(1024)]
-    public string AppId { get; set; }
+    public string? AppId { get; set; }
 
     [Required, MaxLength(1024)]
-    public string AppName { get; set; }
+    public string? AppName { get; set; }
 
     [Required, MaxLength(1024)]
-    public string ValidationApiUrl { get; set; }
+    public string? ValidationApiUrl { get; set; }
 
     [Required, MaxLength(1024)]
-    public string UsernameForValidationApi { get; set; }
+    public string? UsernameForValidationApi { get; set; }
 
     [Required, MaxLength(1024)]
-    public string PasswordForValidationApi { get; set; }
+    public string? PasswordForValidationApi { get; set; }
 
     [Required, MaxLength(1024)]
-    public string PasswordForCreditorPfx { get; set; }
+    public string? PasswordForCreditorPfx { get; set; }
 
     [MaxLength(10)]
     public string? TransactionCurrency { get; set; }

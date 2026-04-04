@@ -1,8 +1,6 @@
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Students;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -44,35 +42,19 @@ public class ExamRegistration
     public int? AdminVerifiedBy { get; set; }
     public DateTime? AdminVerifiedDate { get; set; }
 
-    [ForeignKey(nameof(StudentProgramYearPartId))]
-    [ValidateNever]
-    public virtual StudentProgramYearPart StudentProgramYearPart { get; set; }
+    public virtual StudentProgramYearPart? StudentProgramYearPart { get; set; }
 
-    [ForeignKey(nameof(AcademicYearId))]
-    [ValidateNever]
-    public virtual AcademicYear AcademicYear { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
 
-    [ForeignKey(nameof(ExamCenterId))]
-    [ValidateNever]
-    public virtual ExamCenter ExamCenter { get; set; }
+    public virtual ExamCenter? ExamCenter { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
+    public virtual College? College { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 
-    [ForeignKey(nameof(ProgramsId))]
-    [ValidateNever]
-    public virtual Programs Program { get; set; }
+    public virtual Program? Program { get; set; }
 
-    [ForeignKey(nameof(ApplicationVoucherId))]
-    [ValidateNever]
-    public virtual ApplicationVoucher ApplicationVoucher { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamSubjectRegistration> ExamSubjectRegistrations { get; set; }
-    [ValidateNever]
-    public virtual ICollection<ExamRegistrationActionLog> ExamRegistrationActionLogs { get; set; }
+    public virtual ApplicationVoucher? ApplicationVoucher { get; set; }
+    public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
+    public virtual ICollection<ExamRegistrationActionLog>? ExamRegistrationActionLogs { get; set; }
 }

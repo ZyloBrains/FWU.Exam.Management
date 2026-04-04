@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Models.Colleges;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -24,23 +22,13 @@ public class ExamRollNumberSetupDetail
     [MaxLength(50)]
     public string? Suffix { get; set; }
 
-    [ForeignKey(nameof(ExamRollNumberSetupId))]
-    [ValidateNever]
-    public virtual ExamRollNumberSetup ExamRollNumberSetup { get; set; }
+    public virtual ExamRollNumberSetup? ExamRollNumberSetup { get; set; }
 
-    [ForeignKey(nameof(ExamScheduleId))]
-    [ValidateNever]
-    public virtual ExamSchedule ExamSchedule { get; set; }
+    public virtual ExamSchedule? ExamSchedule { get; set; }
 
-    [ForeignKey(nameof(ProgramId))]
-    [ValidateNever]
-    public virtual Programs Program { get; set; }
+    public virtual Program? Program { get; set; }
 
-    [ForeignKey(nameof(ExamTypeId))]
-    [ValidateNever]
-    public virtual ExamType ExamType { get; set; }
+    public virtual ExamType? ExamType { get; set; }
 
-    [ForeignKey(nameof(CollegeId))]
-    [ValidateNever]
-    public virtual College College { get; set; }
+    public virtual College? College { get; set; }
 }

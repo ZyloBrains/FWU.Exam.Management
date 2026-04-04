@@ -19,10 +19,10 @@ public class AcademicYear
     public string? AcademicYearCodeNepali { get; set; }
 
     [Required, MaxLength(50)]
-    public string AcademicYearName { get; set; }
+    public string? AcademicYearName { get; set; }
 
     [Required, MaxLength(50)]
-    public string AcademicYearNameNepali { get; set; }
+    public string? AcademicYearNameNepali { get; set; }
 
     [MaxLength(50)]
     public string? Remark { get; set; }
@@ -30,11 +30,11 @@ public class AcademicYear
     public bool IsRunning { get; set; }
     public bool IsActive { get; set; }
     [ValidateNever]
-    public virtual ICollection<Batch> Batches { get; set; }
+    public virtual ICollection<Batch>? Batches { get; set; }
     [ValidateNever]
-    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
+    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     [ValidateNever]
-    public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
+    public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
     [ValidateNever]
-    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

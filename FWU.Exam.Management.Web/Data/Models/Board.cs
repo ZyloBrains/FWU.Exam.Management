@@ -11,14 +11,14 @@ public class Board
     public int CountryId { get; set; }
 
     [Required, MaxLength(50)]
-    public string BoardName { get; set; }
+    public string? BoardName { get; set; }
 
     [MaxLength(255)]
-    public string Remarks { get; set; }
+    public string? Remarks { get; set; }
 
     public bool IsActive { get; set; }
     [ValidateNever]
-    public virtual ICollection<Programs> Programs { get; set; }
+    public virtual ICollection<Program>? Programs { get; set; }
     [ValidateNever]
-    public virtual ICollection<StudentQualification> StudentQualifications { get; set; }
+    public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
 }

@@ -36,6 +36,6 @@ public class BankVoucher: IAuditable
     public virtual College? College { get; set; }
     public virtual BillTitle? BillTitle { get; set; }
     public virtual Bank? Bank { get; set; }
-    public virtual ExamScheduleParent ExamScheduleParent { get; set; }
+    public virtual ExamScheduleParent? ExamScheduleParent { get; set; }
     public virtual UserAttachment? UserAttachment { get; set; }
 }

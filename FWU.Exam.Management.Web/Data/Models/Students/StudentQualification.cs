@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Students;
 
@@ -16,7 +14,7 @@ public class StudentQualification
     public string? ProgramName { get; set; }
 
     [Required, MaxLength(255)]
-    public string InstituteName { get; set; }
+    public string? InstituteName { get; set; }
 
     [MaxLength(50)]
     public string? PassedYear { get; set; }
@@ -38,15 +36,9 @@ public class StudentQualification
     [MaxLength(500)]
     public string? ExamRollNumber { get; set; }
 
-    [ForeignKey(nameof(StudentRegistrationId))]
-    [ValidateNever]
-    public virtual StudentRegistration StudentRegistration { get; set; }
+    public virtual StudentRegistration? StudentRegistration { get; set; }
 
-    [ForeignKey(nameof(BoardId))]
-    [ValidateNever]
-    public virtual Board Board { get; set; }
+    public virtual Board? Board { get; set; }
 
-    [ForeignKey(nameof(PreviousLevelId))]
-    [ValidateNever]
-    public virtual PreviousLevel PreviousLevel { get; set; }
+    public virtual PreviousLevel? PreviousLevel { get; set; }
 }

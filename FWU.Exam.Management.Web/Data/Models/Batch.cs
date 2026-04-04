@@ -13,7 +13,7 @@ public class Batch
     public int AcademicYearId { get; set; }
 
     [Required, MaxLength(50)]
-    public string BatchName { get; set; }
+    public string? BatchName { get; set; }
 
     [MaxLength(50)]
     public string? Remarks { get; set; }
@@ -21,9 +21,9 @@ public class Batch
     public bool IsActive { get; set; }
     [ForeignKey(nameof(AcademicYearId))]
     [ValidateNever]
-    public virtual AcademicYear AcademicYear { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
     [ValidateNever]
-    public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; }
+    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
     [ValidateNever]
-    public virtual ICollection<ExamScheduleBatch> ExamScheduleBatches { get; set; }
+    public virtual ICollection<ExamScheduleBatch>? ExamScheduleBatches { get; set; }
 }

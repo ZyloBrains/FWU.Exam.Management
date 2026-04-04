@@ -9,11 +9,11 @@ public class NepaliDate
     public DateTime? GregorianDate { get; set; }
 
     [MaxLength(10)]
-    public string NepaliDateShort { get; set; }
+    public string? NepaliDateShort { get; set; }
 
     [MaxLength(50)]
-    public string NepaliDateFull { get; set; }
+    public string? NepaliDateFull { get; set; }
 
     [MaxLength(50)]
-    public string NepaliDateString { get; set; }
+    public string? NepaliDateString { get; set; }
 }

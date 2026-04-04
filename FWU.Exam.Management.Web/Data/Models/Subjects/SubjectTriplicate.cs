@@ -9,7 +9,7 @@ public class SubjectTriplicate
     public int Year { get; set; }
 
     [Required, MaxLength(20)]
-    public string RegistrationNumber { get; set; }
+    public string? RegistrationNumber { get; set; }
 
     [MaxLength(15)]
     public string? School { get; set; }

@@ -1,7 +1,5 @@
 using fwu_examination_management_system.Data.Models.Subjects;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
 
@@ -46,17 +44,10 @@ public class ExamSubjectRegistration
     public bool? IsPracticalRegistered { get; set; }
     public bool? IsExtra { get; set; }
     
-    [ForeignKey(nameof(ExamRegistrationId))]
-    [ValidateNever]
-    public virtual ExamRegistration ExamRegistration { get; set; }
+    public virtual ExamRegistration? ExamRegistration { get; set; }
 
-    [ForeignKey(nameof(SubjectDetailId))]
-    [ValidateNever]
-    public virtual SubjectDetail SubjectDetail { get; set; }
+    public virtual SubjectDetail? SubjectDetail { get; set; }
 
-    [ForeignKey(nameof(ExamTypeId))]
-    [ValidateNever]
-    public virtual ExamType ExamType { get; set; }
-    [ValidateNever]
-    public virtual ExamSubjectRegistrationExamSession ExamSubjectRegistrationExamSession { get; set; }
+    public virtual ExamType? ExamType { get; set; }
+    public virtual ExamSubjectRegistrationExamSession? ExamSubjectRegistrationExamSession { get; set; }
 }

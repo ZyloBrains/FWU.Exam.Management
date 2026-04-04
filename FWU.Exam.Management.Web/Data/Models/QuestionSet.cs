@@ -8,11 +8,11 @@ public class QuestionSet
 {
     public int Id { get; set; }
     [Required, MaxLength(255)]
-    public string QuestionSetName { get; set; }
+    public string? QuestionSetName { get; set; }
     [MaxLength(1024)]
-    public string Description { get; set; }
+    public string? Description { get; set; }
     public bool IsActive { get; set; }
 
     [ValidateNever]
-    public virtual ICollection<College> Colleges { get; set; }
+    public virtual ICollection<College>? Colleges { get; set; }
 }

@@ -13,7 +13,7 @@ public class ExamSchedule
     public int ExamTypeId { get; set; }
 
     [Required, MaxLength(50)]
-    public string ExamScheduleName { get; set; }
+    public string? ExamScheduleName { get; set; }
 
     public DateTime? StartDateAd { get; set; }
     public DateTime? EndDateAd { get; set; }
@@ -53,18 +53,18 @@ public class ExamSchedule
     [MaxLength(50)]
     public string? ExamScheduleCode { get; set; }
 
-    public virtual AcademicYear AcademicYear { get; set; }
-    public virtual Level Level { get; set; }
-    public virtual YearPart YearPart { get; set; }
-    public virtual ExamType ExamType { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
+    public virtual Level? Level { get; set; }
+    public virtual YearPart? YearPart { get; set; }
+    public virtual ExamType? ExamType { get; set; }
     public virtual ExamScheduleParent? ExamScheduleParent { get; set; }
-    public virtual ICollection<ActiveExamSchedule> ActiveExamSchedules { get; set; }
-    public virtual ICollection<ApplicationVoucher> ApplicationVouchers { get; set; }
-    public virtual ICollection<BillTitle> BillTitles { get; set; }
-    public virtual ICollection<ExamCenter> ExamCenters { get; set; }
-    public virtual ICollection<ExamFormFeeRate> ExamFormFeeRates { get; set; }
-    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; }
-    public virtual ICollection<ExamScheduleBatch> ExamScheduleBatches { get; set; }
-    public virtual ICollection<ExamScheduleDetail> ExamScheduleDetails { get; set; }
-    public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; }
+    public virtual ICollection<ActiveExamSchedule>? ActiveExamSchedules { get; set; }
+    public virtual ICollection<ApplicationVoucher>? ApplicationVouchers { get; set; }
+    public virtual ICollection<BillTitle>? BillTitles { get; set; }
+    public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
+    public virtual ICollection<ExamFormFeeRate>? ExamFormFeeRates { get; set; }
+    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
+    public virtual ICollection<ExamScheduleBatch>? ExamScheduleBatches { get; set; }
+    public virtual ICollection<ExamScheduleDetail>? ExamScheduleDetails { get; set; }
+    public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
 }
