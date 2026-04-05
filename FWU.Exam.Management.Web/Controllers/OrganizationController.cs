@@ -1,20 +1,28 @@
+using System.Security.Claims;
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace fwu_examination_management_system.Controllers;
 
+[Authorize(Roles = Role.SystemAdmin)]
 public class OrganizationController : Controller
 {
+    private const string MustChangePasswordClaimType = "must_change_password";
+
     private readonly ApplicationDbContext _context;
     private readonly IFileUploadHelper _fileUploadHelper;
+    private readonly UserManager<AppUser> _userManager;
 
-    public OrganizationController(ApplicationDbContext context, IFileUploadHelper fileUploadHelper)
+    public OrganizationController(ApplicationDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager)
     {
         _context = context;
         _fileUploadHelper = fileUploadHelper;
+        _userManager = userManager;
     }
 
     // GET: Organization
@@ -49,10 +57,69 @@ public class OrganizationController : Controller
     {
         if (ModelState.IsValid)
         {
-            organization.LogoPath = await _fileUploadHelper.UploadAsync(logoFile) ?? string.Empty;
-            _context.Add(organization);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            if (string.IsNullOrWhiteSpace(organization.Email))
+            {
+                ModelState.AddModelError(nameof(organization.Email), "Organization email is required to create login.");
+                return View(organization);
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(organization.Email);
+            if (existingUser != null)
+            {
+                ModelState.AddModelError(nameof(organization.Email), "This email is already used by another login account.");
+                return View(organization);
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                organization.LogoPath = await _fileUploadHelper.UploadAsync(logoFile) ?? string.Empty;
+                _context.Add(organization);
+                await _context.SaveChangesAsync();
+
+                var initialPassword = BuildInitialPassword(organization.OfficeCode);
+                var orgUser = new AppUser
+                {
+                    UserName = organization.Email,
+                    Email = organization.Email,
+                    OrganizationId = organization.Id,
+                    EmailConfirmed = true,
+                    IsActive = true
+                };
+
+                var createUserResult = await _userManager.CreateAsync(orgUser, initialPassword);
+                if (!createUserResult.Succeeded)
+                {
+                    foreach (var error in createUserResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+
+                    await transaction.RollbackAsync();
+                    return View(organization);
+                }
+
+                if (!await _userManager.IsInRoleAsync(orgUser, Role.Admin))
+                    await _userManager.AddToRoleAsync(orgUser, Role.Admin);
+
+                if (!await _userManager.IsInRoleAsync(orgUser, Role.Student))
+                    await _userManager.AddToRoleAsync(orgUser, Role.Student);
+
+                await _userManager.AddClaimAsync(orgUser, new Claim(MustChangePasswordClaimType, "true"));
+
+                await transaction.CommitAsync();
+
+                TempData["OrgLoginEmail"] = organization.Email;
+                TempData["OrgLoginPassword"] = initialPassword;
+                TempData["OrgOfficeCode"] = organization.OfficeCode;
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
         return View(organization);
     }
@@ -129,5 +196,19 @@ public class OrganizationController : Controller
     private bool OrganizationExists(int id)
     {
         return _context.Organizations.Any(o => o.Id == id);
+    }
+
+    private static string BuildInitialPassword(string officeCode)
+    {
+        var seed = string.IsNullOrWhiteSpace(officeCode) ? "Org" : officeCode.Trim();
+
+        var lettersOnly = new string(seed.Where(char.IsLetterOrDigit).ToArray());
+        if (string.IsNullOrWhiteSpace(lettersOnly))
+            lettersOnly = "Org";
+
+        var prefix = char.ToUpperInvariant(lettersOnly[0]) + lettersOnly.Substring(1).ToLowerInvariant();
+
+        // Always includes: uppercase + lowercase + number + special char
+        return $"{prefix}@123aA";
     }
 }

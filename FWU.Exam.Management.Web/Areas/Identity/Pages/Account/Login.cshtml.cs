@@ -3,22 +3,29 @@
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
+using fwu_examination_management_system.Data;
+using fwu_examination_management_system.Data.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Areas.Identity.Pages.Account;
 
 public class LoginModel : PageModel
 {
+    private const string MustChangePasswordClaimType = "must_change_password";
+
     private readonly SignInManager<AppUser> _signInManager;
+    private readonly UserManager<AppUser> _userManager;
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<AppUser> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
+        _context = context;
         _logger = logger;
     }
 
@@ -109,6 +116,32 @@ public class LoginModel : PageModel
             if (result.Succeeded)
             {
                 _logger.LogInformation("User logged in.");
+
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+                if (user != null)
+                {
+                    var claims = await _userManager.GetClaimsAsync(user);
+                    var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
+                    if (mustChangePassword)
+                    {
+                        var org = user.OrganizationId != null ? await _context.Organizations.FindAsync(user.OrganizationId.Value) : null;
+                        var postChangeReturnUrl = org != null && !string.IsNullOrWhiteSpace(org.OfficeCode)
+                            ? $"/org/{org.OfficeCode}"
+                            : returnUrl;
+
+                        return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
+                    }
+                }
+
+                if (user?.OrganizationId != null)
+                {
+                    var org = await _context.Organizations.FindAsync(user.OrganizationId.Value);
+                    if (org != null && !string.IsNullOrWhiteSpace(org.OfficeCode))
+                    {
+                        return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
+                    }
+                }
+
                 return LocalRedirect(returnUrl);
             }
             if (result.RequiresTwoFactor)
