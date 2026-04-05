@@ -12,6 +12,8 @@ namespace fwu_examination_management_system.Areas.Identity.Pages.Account.Manage;
 
 public class ChangePasswordModel : PageModel
 {
+    private const string MustChangePasswordClaimType = "must_change_password";
+
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly ILogger<ChangePasswordModel> _logger;
@@ -37,8 +39,17 @@ public class ChangePasswordModel : PageModel
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
     /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string ReturnUrl { get; set; }
+
+    /// <summary>
+    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
     [TempData]
     public string StatusMessage { get; set; }
+
+    public bool PasswordChanged { get; set; }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -75,8 +86,10 @@ public class ChangePasswordModel : PageModel
         public string ConfirmPassword { get; set; }
     }
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(string returnUrl = null)
     {
+        ReturnUrl = returnUrl;
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
@@ -115,10 +128,17 @@ public class ChangePasswordModel : PageModel
             return Page();
         }
 
-        await _signInManager.RefreshSignInAsync(user);
-        _logger.LogInformation("User changed their password successfully.");
-        StatusMessage = "Your password has been changed.";
+        var claims = await _userManager.GetClaimsAsync(user);
+        var mustChangeClaims = claims.Where(c => c.Type == MustChangePasswordClaimType).ToList();
+        foreach (var claim in mustChangeClaims)
+        {
+            await _userManager.RemoveClaimAsync(user, claim);
+        }
 
-        return RedirectToPage();
+        await _signInManager.SignOutAsync();
+        _logger.LogInformation("User changed temporary password and was signed out.");
+        PasswordChanged = true;
+
+        return Page();
     }
 }
