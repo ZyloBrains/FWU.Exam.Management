@@ -834,6 +834,7 @@ namespace fwu_examination_management_system.Migrations
                     AllocatedAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     DisplayOrder = table.Column<int>(type: "int", nullable: true),
                     DistrictId = table.Column<int>(type: "int", nullable: false),
+                    OrganizationId = table.Column<int>(type: "int", nullable: false),
                     CollegeTypeId = table.Column<int>(type: "int", nullable: true),
                     AreaId = table.Column<int>(type: "int", nullable: false),
                     CollegeProfileId = table.Column<int>(type: "int", nullable: false),
@@ -858,6 +859,12 @@ namespace fwu_examination_management_system.Migrations
                         name: "FK_Colleges_Districts_DistrictId",
                         column: x => x.DistrictId,
                         principalTable: "Districts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Colleges_Organizations_OrganizationId",
+                        column: x => x.OrganizationId,
+                        principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(

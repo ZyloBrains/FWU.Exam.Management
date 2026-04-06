@@ -1,3 +1,4 @@
+using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Payments;
 using fwu_examination_management_system.Data.Models.Students;
@@ -60,16 +61,19 @@ public class College
     public decimal? AllocatedAmount { get; set; }
     public int? DisplayOrder { get; set; }
 
-    public int DistrictId { get; set; }
+    public int? DistrictId { get; set; }
     public virtual District? District { get; set; }
 
     public int? CollegeTypeId { get; set; }
     public virtual CollegeType? CollegeType { get; set; }
 
-    public int AreaId { get; set; }
+    public int? OrganizationId { get; set; }
+    public virtual Organization? Organization { get; set; }
+
+    public int? AreaId { get; set; }
     public virtual Area? Area { get; set; }
 
-    public int CollegeProfileId { get; set; }
+    public int? CollegeProfileId { get; set; }
     public virtual CollegeProfile? CollegeProfile { get; set; }
 
     public virtual ICollection<BankVoucher>? BankVouchers { get; set; }

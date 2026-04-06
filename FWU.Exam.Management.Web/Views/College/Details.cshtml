@@ -1,0 +1,33 @@
+@model College
+
+@{
+    ViewData["Title"] = "College Details";
+}
+
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">College Details</h1>
+                <p class="text-sm text-gray-500 mt-1">View complete college information.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="px-4 py-2 bg-amber-100 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-200 transition-colors">Edit</a>
+                <a asp-action="Index" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">Back</a>
+            </div>
+        </div>
+
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Code</dt><dd class="mt-1 text-sm font-medium text-gray-800">@Model.Code</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Name</dt><dd class="mt-1 text-sm font-medium text-gray-800">@Model.Name</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Short Name</dt><dd class="mt-1 text-sm text-gray-700">@Model.ShortName</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Email</dt><dd class="mt-1 text-sm text-gray-700">@Model.Email</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Organization</dt><dd class="mt-1 text-sm text-gray-700">@Model.Organization?.Name</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Phone 1</dt><dd class="mt-1 text-sm text-gray-700">@Model.Phone1</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">College Type</dt><dd class="mt-1 text-sm text-gray-700">@Model.CollegeType?.Name</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Exam Center Only</dt><dd class="mt-1 text-sm text-gray-700">@(Model.IsExamCenterOnly ? "Yes" : "No")</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Active</dt><dd class="mt-1 text-sm text-gray-700">@(Model.IsActive ? "Yes" : "No")</dd></div>
+            <div class="md:col-span-2"><dt class="text-xs uppercase tracking-wide text-gray-500">Remarks</dt><dd class="mt-1 text-sm text-gray-700">@Model.Remarks</dd></div>
+        </dl>
+    </div>
+</div>

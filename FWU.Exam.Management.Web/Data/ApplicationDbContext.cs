@@ -127,6 +127,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasForeignKey<CollegeProfile>(cp => cp.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<College>()
+            .HasOne(c => c.Organization)
+            .WithMany()
+            .HasForeignKey(c => c.OrganizationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<CollegeProfile>()
             .HasOne(cp => cp.BlankChequeUserAttachment)
             .WithMany()

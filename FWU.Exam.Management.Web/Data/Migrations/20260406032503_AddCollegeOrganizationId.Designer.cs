@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using fwu_examination_management_system.Data;
 
@@ -11,9 +12,11 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406032503_AddCollegeOrganizationId")]
+    partial class AddCollegeOrganizationId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -466,7 +469,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("AreaId")
+                    b.Property<int>("AreaId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ClosedDate")
@@ -481,7 +484,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int?>("CollegeProfileId")
+                    b.Property<int>("CollegeProfileId")
                         .HasColumnType("int");
 
                     b.Property<int?>("CollegeTypeId")
@@ -490,7 +493,7 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("DisplayOrder")
                         .HasColumnType("int");
 
-                    b.Property<int?>("DistrictId")
+                    b.Property<int>("DistrictId")
                         .HasColumnType("int");
 
                     b.Property<string>("Email")
@@ -523,7 +526,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<int?>("OrganizationId")
+                    b.Property<int>("OrganizationId")
                         .HasColumnType("int");
 
                     b.Property<string>("Phone1")
@@ -4143,7 +4146,8 @@ namespace fwu_examination_management_system.Migrations
                     b.HasOne("fwu_examination_management_system.Data.Models.Area", "Area")
                         .WithMany("Colleges")
                         .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Colleges.CollegeType", "CollegeType")
                         .WithMany("Colleges")
@@ -4153,12 +4157,14 @@ namespace fwu_examination_management_system.Migrations
                     b.HasOne("fwu_examination_management_system.Data.Models.District", "District")
                         .WithMany("Colleges")
                         .HasForeignKey("DistrictId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Organization", "Organization")
                         .WithMany()
                         .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.QuestionSet", null)
                         .WithMany("Colleges")

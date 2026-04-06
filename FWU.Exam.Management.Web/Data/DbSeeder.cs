@@ -1,11 +1,12 @@
 using fwu_examination_management_system.Data.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace fwu_examination_management_system.Data;
 
 public static class DbSeeder
 {
-    private static readonly string[] Roles = [Role.SystemAdmin, Role.Admin, Role.ReportAdmin, Role.Student];
+    private static readonly string[] Roles = [Role.SystemAdmin, Role.Admin, Role.CollegeAdmin, Role.ReportAdmin, Role.Student];
 
     public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
     {
@@ -29,4 +30,5 @@ public static class DbSeeder
             await userManager.AddToRoleAsync(user, Role.SystemAdmin);
         }
     }
+
 }

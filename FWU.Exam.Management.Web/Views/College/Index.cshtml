@@ -1,0 +1,91 @@
+@model IEnumerable<College>
+
+@{
+    ViewData["Title"] = "Colleges";
+    var totalCount = Model.Count();
+    var collegeLoginEmail = TempData["CollegeLoginEmail"]?.ToString();
+    var collegeLoginPassword = TempData["CollegeLoginPassword"]?.ToString();
+    var collegeName = TempData["CollegeName"]?.ToString();
+}
+
+<div class="space-y-6">
+    @if (!string.IsNullOrWhiteSpace(collegeLoginEmail) && !string.IsNullOrWhiteSpace(collegeLoginPassword))
+    {
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
+            <div class="font-semibold mb-1">College login created</div>
+            @if (!string.IsNullOrWhiteSpace(collegeName))
+            {
+                <div>College: <span class="font-medium">@collegeName</span></div>
+            }
+            <div>Email: <span class="font-medium">@collegeLoginEmail</span></div>
+            <div>Temporary Password: <span class="font-medium">@collegeLoginPassword</span></div>
+        </div>
+    }
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-school text-amber-600"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Colleges</h1>
+                <p class="text-sm text-gray-500 mt-0.5"><span class="font-semibold text-gray-700">@totalCount</span> total records</p>
+            </div>
+        </div>
+
+        <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+            <i class="fas fa-plus text-xs"></i> Create College
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Code</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Organization</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">District</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Area</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">College Type</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Active</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 font-medium text-gray-800">@item.Code</td>
+                            <td class="px-6 py-4 text-gray-700">@item.Name</td>
+                            <td class="px-6 py-4 text-gray-600">@item.Organization?.Name</td>
+                            <td class="px-6 py-4 text-gray-600">@item.District?.DistrictName</td>
+                            <td class="px-6 py-4 text-gray-600">@item.Area?.AreaName</td>
+                            <td class="px-6 py-4 text-gray-600">@item.CollegeType?.Name</td>
+                            <td class="px-6 py-4 text-gray-600">@item.Email</td>
+                            <td class="px-6 py-4">
+                                @if (item.IsActive)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Inactive</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details"><i class="fas fa-eye text-xs"></i></a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit"><i class="fas fa-edit text-xs"></i></a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

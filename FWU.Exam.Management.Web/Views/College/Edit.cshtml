@@ -1,0 +1,97 @@
+@model College
+
+@{
+    ViewData["Title"] = "Edit College";
+}
+
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Edit College</h1>
+                <p class="text-sm text-gray-500 mt-1">Update college details.</p>
+            </div>
+            <a asp-action="Index" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">Back</a>
+        </div>
+
+        <form asp-action="Edit" class="space-y-5">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label asp-for="Code" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="Code" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Name" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="Name" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="ShortName" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="ShortName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Email" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="Email" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Phone1" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <input asp-for="Phone1" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Phone1" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="OrganizationId" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <select asp-for="OrganizationId" asp-items="ViewBag.OrganizationId" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></select>
+                    <span asp-validation-for="OrganizationId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="CollegeTypeId" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                    <select asp-for="CollegeTypeId" asp-items="ViewBag.CollegeTypeId" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></select>
+                    <span asp-validation-for="CollegeTypeId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+            </div>
+
+            <div>
+                <label asp-for="Remarks" class="block text-sm font-semibold text-gray-700 mb-2"></label>
+                <textarea asp-for="Remarks" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input asp-for="IsExamCenterOnly" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <span>@Html.DisplayNameFor(model => model.IsExamCenterOnly)</span>
+                </label>
+
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input asp-for="IsActive" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <span>@Html.DisplayNameFor(model => model.IsActive)</span>
+                </label>
+            </div>
+
+            <div class="pt-4 border-t border-gray-200 flex items-center gap-3">
+                <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    Save Changes
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors">
+                    View Details
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
