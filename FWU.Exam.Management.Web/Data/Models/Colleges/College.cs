@@ -39,6 +39,15 @@ public class College
     [MaxLength(50)]
     public string? Email { get; set; }
 
+    [MaxLength(255)]
+    public string? Address { get; set; }
+
+    [MaxLength(255)]
+    public string? DistrictName { get; set; }
+
+    [MaxLength(50)]
+    public string? CollegeTypeName { get; set; }
+
     [MaxLength(15)]
     public string? Phone1 { get; set; }
 

@@ -14,6 +14,9 @@
         <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
             <div class="text-sm text-red-800"><span class="font-semibold">Code:</span> @Model.Code</div>
             <div class="text-sm text-red-800"><span class="font-semibold">Name:</span> @Model.Name</div>
+            <div class="text-sm text-red-800"><span class="font-semibold">Address:</span> @Model.Address</div>
+            <div class="text-sm text-red-800"><span class="font-semibold">District:</span> @(!string.IsNullOrWhiteSpace(Model.DistrictName) ? Model.DistrictName : Model.District?.DistrictName)</div>
+            <div class="text-sm text-red-800"><span class="font-semibold">College Type:</span> @(!string.IsNullOrWhiteSpace(Model.CollegeTypeName) ? Model.CollegeTypeName : Model.CollegeType?.Name)</div>
             <div class="text-sm text-red-800"><span class="font-semibold">Email:</span> @Model.Email</div>
         </div>
 

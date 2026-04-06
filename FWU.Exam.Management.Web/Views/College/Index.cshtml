@@ -45,9 +45,9 @@
                     <tr>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Code</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Organization</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">District</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Area</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">College Type</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Active</th>
@@ -60,10 +60,10 @@
                         <tr class="hover:bg-gray-50 transition-colors duration-150">
                             <td class="px-6 py-4 font-medium text-gray-800">@item.Code</td>
                             <td class="px-6 py-4 text-gray-700">@item.Name</td>
+                            <td class="px-6 py-4 text-gray-600">@item.Address</td>
                             <td class="px-6 py-4 text-gray-600">@item.Organization?.Name</td>
-                            <td class="px-6 py-4 text-gray-600">@item.District?.DistrictName</td>
-                            <td class="px-6 py-4 text-gray-600">@item.Area?.AreaName</td>
-                            <td class="px-6 py-4 text-gray-600">@item.CollegeType?.Name</td>
+                            <td class="px-6 py-4 text-gray-600">@(!string.IsNullOrWhiteSpace(item.DistrictName) ? item.DistrictName : item.District?.DistrictName)</td>
+                            <td class="px-6 py-4 text-gray-600">@(!string.IsNullOrWhiteSpace(item.CollegeTypeName) ? item.CollegeTypeName : item.CollegeType?.Name)</td>
                             <td class="px-6 py-4 text-gray-600">@item.Email</td>
                             <td class="px-6 py-4">
                                 @if (item.IsActive)

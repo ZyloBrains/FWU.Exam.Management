@@ -59,6 +59,7 @@ public class CollegeController : Controller
 
     public async Task<IActionResult> Create()
     {
+        await PopulateLookupsAsync();
         return View(new College
         {
             IsActive = true,
@@ -67,15 +68,18 @@ public class CollegeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Code,Name,CollegeNameNepali,ShortName,Email,Phone1,IsExamCenterOnly,IsActive,Remarks")] College college)
+    public async Task<IActionResult> Create([Bind("Code,Name,CollegeNameNepali,ShortName,Email,Address,DistrictName,CollegeTypeName,Phone1,OrganizationId,AreaId,IsExamCenterOnly,IsActive,Remarks")] College college)
     {
         if (string.IsNullOrWhiteSpace(college.Email))
         {
             ModelState.AddModelError(nameof(college.Email), "College email is required.");
         }
 
+        await NormalizeCollegeOrganizationAsync(college);
+
         if (!ModelState.IsValid)
         {
+            await PopulateLookupsAsync(areaId: college.AreaId, organizationId: college.OrganizationId);
             return View(college);
         }
 
@@ -91,6 +95,7 @@ public class CollegeController : Controller
             {
                 ModelState.AddModelError(nameof(college.Email), "This email is already used by another login account.");
                 await transaction.RollbackAsync();
+                await PopulateLookupsAsync(areaId: college.AreaId, organizationId: college.OrganizationId);
                 return View(college);
             }
 
@@ -101,6 +106,7 @@ public class CollegeController : Controller
                 UserName = college.Email,
                 Email = college.Email,
                 CollegeId = college.Id,
+                OrganizationId = college.OrganizationId,
                 EmailConfirmed = true,
                 IsActive = true
             };
@@ -114,6 +120,7 @@ public class CollegeController : Controller
                 }
 
                 await transaction.RollbackAsync();
+                await PopulateLookupsAsync(areaId: college.AreaId, organizationId: college.OrganizationId);
                 return View(college);
             }
 
@@ -154,7 +161,7 @@ public class CollegeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,Email,Phone1,CollegeTypeId,OrganizationId,IsExamCenterOnly,IsActive,Remarks")] College college)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,Email,Address,Phone1,OrganizationId,DistrictId,AreaId,CollegeTypeId,CollegeProfileId,IsExamCenterOnly,IsActive,Remarks")] College college)
     {
         if (id != college.Id)
             return NotFound();
@@ -168,9 +175,13 @@ public class CollegeController : Controller
         existingCollege.CollegeNameNepali = college.CollegeNameNepali;
         existingCollege.ShortName = college.ShortName;
         existingCollege.Email = college.Email;
+        existingCollege.Address = college.Address;
         existingCollege.Phone1 = college.Phone1;
-        existingCollege.CollegeTypeId = college.CollegeTypeId;
         existingCollege.OrganizationId = college.OrganizationId;
+        existingCollege.DistrictId = college.DistrictId;
+        existingCollege.AreaId = college.AreaId;
+        existingCollege.CollegeTypeId = college.CollegeTypeId;
+        existingCollege.CollegeProfileId = college.CollegeProfileId;
         existingCollege.IsExamCenterOnly = college.IsExamCenterOnly;
         existingCollege.IsActive = college.IsActive;
         existingCollege.Remarks = college.Remarks;
@@ -221,12 +232,49 @@ public class CollegeController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var college = await _context.Colleges.FindAsync(id);
+        var college = await _context.Colleges
+            .Include(c => c.CollegeProfile)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (college == null)
             return RedirectToAction(nameof(Index));
 
-        _context.Colleges.Remove(college);
-        await _context.SaveChangesAsync();
+        var blockers = new List<string>();
+
+        if (await _context.StudentAdmissions.AnyAsync(x => x.CollegeId == id)) blockers.Add("student admissions");
+        if (await _context.StudentRegistrations.AnyAsync(x => x.CollegeId == id)) blockers.Add("student registrations");
+        if (await _context.ExamRegistrations.AnyAsync(x => x.CollegeId == id)) blockers.Add("exam registrations");
+        if (await _context.CollegePrograms.AnyAsync(x => x.CollegeId == id)) blockers.Add("college programs");
+        if (await _context.ExamCenters.AnyAsync(x => x.CollegeId == id)) blockers.Add("exam centers");
+        if (await _context.ExamCenterDetails.AnyAsync(x => x.CollegeId == id)) blockers.Add("exam center details");
+        if (await _context.BankVouchers.AnyAsync(x => x.CollegeId == id)) blockers.Add("bank vouchers");
+
+        if (blockers.Count > 0)
+        {
+            TempData["Error"] = $"College cannot be deleted because related {string.Join(", ", blockers)} exist.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var linkedUsers = await _context.Users.Where(u => u.CollegeId == id).ToListAsync();
+            foreach (var user in linkedUsers)
+                user.CollegeId = null;
+
+            if (college.CollegeProfile != null)
+                _context.CollegeProfiles.Remove(college.CollegeProfile);
+
+            _context.Colleges.Remove(college);
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return RedirectToAction(nameof(Index));
     }
@@ -244,6 +292,26 @@ public class CollegeController : Controller
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(college.DistrictName))
+        {
+            ModelState.AddModelError(nameof(college.DistrictName), "District is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(college.CollegeTypeName))
+        {
+            ModelState.AddModelError(nameof(college.CollegeTypeName), "College type is required.");
+        }
+        else
+        {
+            var collegeType = college.CollegeTypeName.Trim();
+            if (!collegeType.Equals("Private", StringComparison.OrdinalIgnoreCase) &&
+                !collegeType.Equals("Constituent", StringComparison.OrdinalIgnoreCase) &&
+                !collegeType.Equals("Government", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(college.CollegeTypeName), "College type must be Private, Constituent, or Government.");
+            }
+        }
+
         if (college.OrganizationId <= 0)
         {
             ModelState.AddModelError(nameof(college.OrganizationId), "No organization is available for college creation.");
@@ -253,15 +321,6 @@ public class CollegeController : Controller
             ModelState.AddModelError(nameof(college.OrganizationId), "Selected organization is invalid.");
         }
 
-        if (college.DistrictId <= 0)
-        {
-            ModelState.AddModelError(nameof(college.DistrictId), "No district is available for college creation.");
-        }
-        else if (!await _context.Districts.AnyAsync(d => d.Id == college.DistrictId))
-        {
-            ModelState.AddModelError(nameof(college.DistrictId), "Selected district is invalid.");
-        }
-
         if (college.AreaId <= 0)
         {
             ModelState.AddModelError(nameof(college.AreaId), "No area is available for college creation.");
@@ -269,15 +328,6 @@ public class CollegeController : Controller
         else if (!await _context.Areas.AnyAsync(a => a.Id == college.AreaId))
         {
             ModelState.AddModelError(nameof(college.AreaId), "Selected area is invalid.");
-        }
-
-        if (college.CollegeProfileId <= 0)
-        {
-            ModelState.AddModelError(nameof(college.CollegeProfileId), "No college profile is available for college creation.");
-        }
-        else if (!await _context.CollegeProfiles.AnyAsync(cp => cp.Id == college.CollegeProfileId))
-        {
-            ModelState.AddModelError(nameof(college.CollegeProfileId), "Selected college profile is invalid.");
         }
 
         var existingEmailOwner = await _userManager.FindByEmailAsync(college.Email);
@@ -304,14 +354,8 @@ public class CollegeController : Controller
             }
         }
 
-        if (college.DistrictId <= 0)
-            college.DistrictId = await _context.Districts.OrderBy(d => d.Id).Select(d => d.Id).FirstOrDefaultAsync();
-
         if (college.AreaId <= 0)
             college.AreaId = await _context.Areas.OrderBy(a => a.Id).Select(a => a.Id).FirstOrDefaultAsync();
-
-        if (college.CollegeProfileId <= 0)
-            college.CollegeProfileId = await _context.CollegeProfiles.OrderBy(cp => cp.Id).Select(cp => cp.Id).FirstOrDefaultAsync();
     }
 
     private async Task<int> ResolveDefaultOrganizationIdAsync(AppUser? currentUser)

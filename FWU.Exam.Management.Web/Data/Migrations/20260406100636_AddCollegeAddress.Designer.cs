@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using fwu_examination_management_system.Data;
 
@@ -11,9 +12,11 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406100636_AddCollegeAddress")]
+    partial class AddCollegeAddress
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -466,10 +469,6 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("DistrictName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<decimal?>("AllocatedAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -494,10 +493,6 @@ namespace fwu_examination_management_system.Migrations
 
                     b.Property<int?>("CollegeTypeId")
                         .HasColumnType("int");
-
-                    b.Property<string>("CollegeTypeName")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int?>("DisplayOrder")
                         .HasColumnType("int");

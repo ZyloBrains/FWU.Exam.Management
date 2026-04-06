@@ -5,6 +5,13 @@
 }
 
 <div class="max-w-4xl mx-auto space-y-6">
+    @if (TempData["Error"] is string error && !string.IsNullOrWhiteSpace(error))
+    {
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 text-sm">
+            @error
+        </div>
+    }
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
         <div class="flex items-center justify-between mb-6">
             <div>
@@ -22,9 +29,11 @@
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Name</dt><dd class="mt-1 text-sm font-medium text-gray-800">@Model.Name</dd></div>
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Short Name</dt><dd class="mt-1 text-sm text-gray-700">@Model.ShortName</dd></div>
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Email</dt><dd class="mt-1 text-sm text-gray-700">@Model.Email</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">Address</dt><dd class="mt-1 text-sm text-gray-700">@Model.Address</dd></div>
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Organization</dt><dd class="mt-1 text-sm text-gray-700">@Model.Organization?.Name</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">District</dt><dd class="mt-1 text-sm text-gray-700">@(!string.IsNullOrWhiteSpace(Model.DistrictName) ? Model.DistrictName : Model.District?.DistrictName)</dd></div>
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Phone 1</dt><dd class="mt-1 text-sm text-gray-700">@Model.Phone1</dd></div>
-            <div><dt class="text-xs uppercase tracking-wide text-gray-500">College Type</dt><dd class="mt-1 text-sm text-gray-700">@Model.CollegeType?.Name</dd></div>
+            <div><dt class="text-xs uppercase tracking-wide text-gray-500">College Type</dt><dd class="mt-1 text-sm text-gray-700">@(!string.IsNullOrWhiteSpace(Model.CollegeTypeName) ? Model.CollegeTypeName : Model.CollegeType?.Name)</dd></div>
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Exam Center Only</dt><dd class="mt-1 text-sm text-gray-700">@(Model.IsExamCenterOnly ? "Yes" : "No")</dd></div>
             <div><dt class="text-xs uppercase tracking-wide text-gray-500">Active</dt><dd class="mt-1 text-sm text-gray-700">@(Model.IsActive ? "Yes" : "No")</dd></div>
             <div class="md:col-span-2"><dt class="text-xs uppercase tracking-wide text-gray-500">Remarks</dt><dd class="mt-1 text-sm text-gray-700">@Model.Remarks</dd></div>
