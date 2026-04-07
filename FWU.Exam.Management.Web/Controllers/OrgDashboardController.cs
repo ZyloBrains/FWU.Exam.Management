@@ -1,12 +1,14 @@
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace fwu_examination_management_system.Controllers;
 
+[Authorize]
 [Route("org/{officeCode}")]
 public class OrgDashboardController(
     ApplicationDbContext context,
@@ -18,13 +20,30 @@ public class OrgDashboardController(
     private async Task<Organization?> GetOrgAsync(string officeCode) =>
         await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == officeCode);
 
+    private async Task<(Organization? Org, IActionResult? DeniedResult)> GetAuthorizedOrgAsync(string officeCode)
+    {
+        var org = await GetOrgAsync(officeCode);
+        if (org == null)
+            return (null, NotFound());
+
+        var currentUser = await userManager.GetUserAsync(User);
+        if (currentUser == null)
+            return (null, Challenge());
+
+        if (User.IsInRole(Role.SystemAdmin) || currentUser.OrganizationId == org.Id)
+            return (org, null);
+
+        return (null, Forbid());
+    }
+
     // GET: /org/{officeCode}
     [HttpGet("")]
     public async Task<IActionResult> Index(string officeCode)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
 
+        var org = auth.Org!;
         ViewBag.Organization = org;
         ViewBag.UserCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id);
         return View("~/Views/Home/Index.cshtml");
@@ -34,9 +53,10 @@ public class OrgDashboardController(
     [HttpGet("users")]
     public async Task<IActionResult> Users(string officeCode)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
 
+        var org = auth.Org!;
         ViewBag.Organization = org;
 
         var users = await userManager.Users
@@ -61,10 +81,10 @@ public class OrgDashboardController(
     [HttpGet("users/create")]
     public async Task<IActionResult> CreateUser(string officeCode)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        ViewBag.Organization = org;
+        ViewBag.Organization = auth.Org!;
         return View(new CreateUserViewModel());
     }
 
@@ -73,8 +93,10 @@ public class OrgDashboardController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser(string officeCode, CreateUserViewModel model)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
+
+        var org = auth.Org!;
 
         if (ModelState.IsValid)
         {
@@ -107,9 +129,10 @@ public class OrgDashboardController(
     [HttpGet("users/{userId}/edit")]
     public async Task<IActionResult> EditUser(string officeCode, string userId)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
 
+        var org = auth.Org!;
         var user = await userManager.FindByIdAsync(userId);
         if (user == null || user.OrganizationId != org.Id) return NotFound();
 
@@ -127,8 +150,10 @@ public class OrgDashboardController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUser(string officeCode, string userId, EditUserViewModel model)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
+
+        var org = auth.Org!;
 
         if (userId != model.Id) return NotFound();
 
@@ -156,8 +181,10 @@ public class OrgDashboardController(
     [HttpGet("users/{userId}/delete")]
     public async Task<IActionResult> DeleteUser(string officeCode, string userId)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
+
+        var org = auth.Org!;
 
         var user = await userManager.FindByIdAsync(userId);
         if (user == null || user.OrganizationId != org.Id) return NotFound();
@@ -171,8 +198,10 @@ public class OrgDashboardController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteUserConfirmed(string officeCode, string userId)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
+
+        var org = auth.Org!;
 
         var user = await userManager.FindByIdAsync(userId);
         if (user != null && user.OrganizationId == org.Id)
@@ -185,8 +214,10 @@ public class OrgDashboardController(
     [HttpGet("users/{userId}/roles")]
     public async Task<IActionResult> AssignRoles(string officeCode, string userId)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
+
+        var org = auth.Org!;
 
         var user = await userManager.FindByIdAsync(userId);
         if (user == null || user.OrganizationId != org.Id) return NotFound();
@@ -214,8 +245,10 @@ public class OrgDashboardController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignRoles(string officeCode, string userId, AssignRolesViewModel model)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null) return NotFound();
+        var auth = await GetAuthorizedOrgAsync(officeCode);
+        if (auth.DeniedResult != null) return auth.DeniedResult;
+
+        var org = auth.Org!;
 
         var user = await userManager.FindByIdAsync(model.UserId);
         if (user == null || user.OrganizationId != org.Id) return NotFound();

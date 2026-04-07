@@ -14,10 +14,12 @@ namespace fwu_examination_management_system.Areas.Identity.Pages.Account;
 public class ConfirmEmailModel : PageModel
 {
     private readonly UserManager<AppUser> _userManager;
+    private readonly SignInManager<AppUser> _signInManager;
 
-    public ConfirmEmailModel(UserManager<AppUser> userManager)
+    public ConfirmEmailModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
     }
 
     /// <summary>
@@ -26,7 +28,8 @@ public class ConfirmEmailModel : PageModel
     /// </summary>
     [TempData]
     public string StatusMessage { get; set; }
-    public async Task<IActionResult> OnGetAsync(string userId, string code)
+
+    public async Task<IActionResult> OnGetAsync(string userId, string code, string returnUrl = null)
     {
         if (userId == null || code == null)
         {
@@ -39,9 +42,35 @@ public class ConfirmEmailModel : PageModel
             return NotFound($"Unable to load user with ID '{userId}'.");
         }
 
+        // If already confirmed, just sign in and redirect.
+        if (await _userManager.IsEmailConfirmedAsync(user))
+        {
+            await _signInManager.SignInAsync(user, isPersistent: false);
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+
+            return RedirectToAction("Index", "Dashboard");
+        }
+
         code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
         var result = await _userManager.ConfirmEmailAsync(user, code);
-        StatusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
-        return Page();
+
+        if (!result.Succeeded)
+        {
+            StatusMessage = "Error confirming your email.";
+            return Page();
+        }
+
+        await _signInManager.SignInAsync(user, isPersistent: false);
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return LocalRedirect(returnUrl);
+        }
+
+        return RedirectToAction("Index", "Dashboard");
     }
 }
