@@ -21,6 +21,7 @@
     <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <form asp-action="Edit" asp-route-id="@Model.Id" class="space-y-5">
+            <div asp-validation-summary="All" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
            
 
             <!-- Section: Role Information -->

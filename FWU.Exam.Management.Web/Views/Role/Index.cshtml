@@ -6,6 +6,13 @@
 }
 
 <div class="space-y-6" x-data="{ search: '', get filtered() { return this.search.toLowerCase(); } }">
+    @if (TempData["Error"] is string error && !string.IsNullOrWhiteSpace(error))
+    {
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 text-sm">
+            @error
+        </div>
+    }
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
