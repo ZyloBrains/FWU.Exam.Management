@@ -38,10 +38,10 @@ public class College
     [MaxLength(50)]
     public string? Email { get; set; }
 
-    [MaxLength(15)]
+    [MaxLength(20)]
     public string? Phone1 { get; set; }
 
-    [MaxLength(15)]
+    [MaxLength(20)]
     public string? Phone2 { get; set; }
 
     [MaxLength(255)]
@@ -50,7 +50,7 @@ public class College
     [MaxLength(50)]
     public string? PrincipalContactNumber { get; set; }
 
-    [MaxLength(15)]
+    [MaxLength(20)]
     public string? Fax { get; set; }
 
     [MaxLength(255)]
