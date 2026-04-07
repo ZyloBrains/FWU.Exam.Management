@@ -1,5 +1,10 @@
 ﻿using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models;
+using fwu_examination_management_system.Data.Models.Colleges;
+using fwu_examination_management_system.Data.Models.Exams;
+using fwu_examination_management_system.Data.Models.Payments;
+using fwu_examination_management_system.Data.Models.Students;
+using fwu_examination_management_system.Data.Models.Subjects;
 using fwu_examination_management_system.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -28,7 +33,11 @@ public class DashboardController : Controller
         if (user == null) return Challenge();
 
         var roles = await _userManager.GetRolesAsync(user);
-        var primaryRole = roles.FirstOrDefault() ?? "Student";
+        var primaryRole = roles.Contains("SystemAdmin") ? "SystemAdmin"
+            : roles.Contains("Admin") ? "Admin"
+            : roles.Contains("CollegeAdmin") ? "CollegeAdmin"
+            : roles.Contains("ReportAdmin") ? "ReportAdmin"
+            : "Student";
 
         var vm = await BuildDashboardViewModel(user, primaryRole);
 
@@ -36,6 +45,7 @@ public class DashboardController : Controller
         {
             "SystemAdmin" => View("SystemAdmin", vm),
             "Admin" => View("Admin", vm),
+            "CollegeAdmin" => View("CollegeAdmin", vm),
             "ReportAdmin" => View("ReportAdmin", vm),
             "Student" => View("Student", vm),
             _ => View("Student", vm)
@@ -48,24 +58,53 @@ public class DashboardController : Controller
         {
             CurrentRole = role,
             UserName = user.UserName ?? user.Email ?? "User",
-            TotalOrganizations = await _context.Organizations.CountAsync(),
+            TotalOrganizations = await _context.Set<Organization>().CountAsync(),
             TotalUsers = await _userManager.Users.CountAsync(),
             TotalRoles = await _roleManager.Roles.CountAsync(),
-            TotalColleges = await _context.Colleges.CountAsync(),
-            TotalPrograms = await _context.Programs.CountAsync(),
-            TotalStudents = await _context.StudentRegistrations.CountAsync(),
-            TotalExamSchedules = await _context.ExamSchedules.CountAsync(),
-            TotalExamRegistrations = await _context.ExamRegistrations.CountAsync(),
-            TotalSubjects = await _context.SubjectDetails.CountAsync(),
-            TotalAcademicYears = await _context.AcademicYears.CountAsync(),
-            TotalBanks = await _context.Banks.CountAsync(),
-            TotalBoards = await _context.Boards.CountAsync(),
-            TotalBatches = await _context.Batches.CountAsync(),
-            ActiveColleges = await _context.Colleges.CountAsync(c => c.IsActive),
-            ActivePrograms = await _context.Programs.CountAsync(p => p.IsActive),
-            ActiveStudents = await _context.StudentRegistrations.CountAsync(s => s.IsActive),
-            ActiveExamSchedules = await _context.ExamSchedules.CountAsync(e => e.IsActive)
+            TotalColleges = await _context.Set<College>().CountAsync(),
+            TotalPrograms = await _context.Set<Program>().CountAsync(),
+            TotalStudents = await _context.Set<StudentRegistration>().CountAsync(),
+            TotalExamSchedules = await _context.Set<ExamSchedule>().CountAsync(),
+            TotalExamRegistrations = await _context.Set<ExamRegistration>().CountAsync(),
+            TotalSubjects = await _context.Set<SubjectDetail>().CountAsync(),
+            TotalAcademicYears = await _context.Set<AcademicYear>().CountAsync(),
+            TotalBanks = await _context.Set<Bank>().CountAsync(),
+            TotalBoards = await _context.Set<Board>().CountAsync(),
+            TotalBatches = await _context.Set<Batch>().CountAsync(),
+            ActiveColleges = await _context.Set<College>().CountAsync(c => c.IsActive),
+            ActivePrograms = await _context.Set<Program>().CountAsync(p => p.IsActive),
+            ActiveStudents = await _context.Set<StudentRegistration>().CountAsync(s => s.IsActive),
+            ActiveExamSchedules = await _context.Set<ExamSchedule>().CountAsync(e => e.IsActive)
         };
+
+        if (string.Equals(role, "CollegeAdmin", StringComparison.OrdinalIgnoreCase) && user.CollegeId != null)
+        {
+            var college = await _context.Set<College>()
+                .Include(c => c.Organization)
+                .Include(c => c.District)
+                .Include(c => c.CollegeType)
+                .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
+
+            if (college != null)
+            {
+                vm.CollegeId = college.Id;
+                vm.CollegeName = college.Name;
+                vm.CollegeCode = college.Code;
+                vm.CollegeAddress = college.Address ?? string.Empty;
+                vm.CollegeDistrict = !string.IsNullOrWhiteSpace(college.DistrictName)
+                    ? college.DistrictName
+                    : college.District?.DistrictName ?? string.Empty;
+                vm.CollegeType = !string.IsNullOrWhiteSpace(college.CollegeTypeName)
+                    ? college.CollegeTypeName
+                    : college.CollegeType?.Name ?? string.Empty;
+                vm.CollegeOrganization = college.Organization?.Name ?? string.Empty;
+                vm.CollegeUsersCount = await _userManager.Users.CountAsync(u => u.CollegeId == college.Id);
+                vm.CollegeProgramsCount = await _context.Set<CollegeProgram>().CountAsync(cp => cp.CollegeId == college.Id);
+                vm.CollegeStudentsCount = await _context.Set<StudentRegistration>().CountAsync(sr => sr.CollegeId == college.Id);
+                vm.CollegeExamRegistrationsCount = await _context.Set<ExamRegistration>().CountAsync(er => er.CollegeId == college.Id);
+                vm.CollegeExamCentersCount = await _context.Set<ExamCenter>().CountAsync(ec => ec.CollegeId == college.Id);
+            }
+        }
 
         return vm;
     }

@@ -2,6 +2,19 @@ namespace fwu_examination_management_system.ViewModels;
 
 public class DashboardViewModel
 {
+    public int? CollegeId { get; set; }
+    public string CollegeName { get; set; } = string.Empty;
+    public string CollegeCode { get; set; } = string.Empty;
+    public string CollegeAddress { get; set; } = string.Empty;
+    public string CollegeDistrict { get; set; } = string.Empty;
+    public string CollegeType { get; set; } = string.Empty;
+    public string CollegeOrganization { get; set; } = string.Empty;
+    public int CollegeUsersCount { get; set; }
+    public int CollegeProgramsCount { get; set; }
+    public int CollegeStudentsCount { get; set; }
+    public int CollegeExamRegistrationsCount { get; set; }
+    public int CollegeExamCentersCount { get; set; }
+
     public int TotalOrganizations { get; set; }
     public int TotalUsers { get; set; }
     public int TotalRoles { get; set; }

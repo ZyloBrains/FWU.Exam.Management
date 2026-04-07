@@ -17,14 +17,68 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-semibold text-gray-800">College Information</h3>
+                @if (!string.IsNullOrWhiteSpace(Model.CollegeCode))
+                {
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">@Model.CollegeCode</span>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CollegeName))
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <div class="text-gray-500 text-xs uppercase tracking-wide">College Name</div>
+                        <div class="mt-1 font-medium text-gray-800">@Model.CollegeName</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-500 text-xs uppercase tracking-wide">Organization</div>
+                        <div class="mt-1 font-medium text-gray-800">@Model.CollegeOrganization</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-500 text-xs uppercase tracking-wide">District</div>
+                        <div class="mt-1 font-medium text-gray-800">@Model.CollegeDistrict</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-500 text-xs uppercase tracking-wide">College Type</div>
+                        <div class="mt-1 font-medium text-gray-800">@Model.CollegeType</div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <div class="text-gray-500 text-xs uppercase tracking-wide">Address</div>
+                        <div class="mt-1 font-medium text-gray-800">@Model.CollegeAddress</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-sm text-gray-500">No college information found for this account.</div>
+            }
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+            <div>
+                <p class="text-sm text-gray-500">College Users</p>
+                <p class="text-4xl font-bold text-gray-800 mt-2">@Model.CollegeUsersCount</p>
+                <p class="text-sm text-gray-500 mt-2">Users linked to this college</p>
+            </div>
+            <a asp-controller="OrgDashboard" asp-action="Users" asp-route-officeCode="@Model.CollegeOrganization"
+               class="mt-5 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                <i class="fas fa-users text-xs"></i> Manage Users
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Colleges</p>
-                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalColleges</p>
+                    <p class="text-sm text-gray-500">Programs</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.CollegeProgramsCount</p>
                 </div>
-                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-school text-amber-600"></i></div>
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center"><i class="fas fa-graduation-cap text-indigo-600"></i></div>
             </div>
         </div>
 
@@ -32,7 +86,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500">Students</p>
-                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalStudents</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.CollegeStudentsCount</p>
                 </div>
                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-user-graduate text-blue-600"></i></div>
             </div>
@@ -42,7 +96,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500">Exam Registrations</p>
-                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamRegistrations</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.CollegeExamRegistrationsCount</p>
                 </div>
                 <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center"><i class="fas fa-clipboard-list text-cyan-600"></i></div>
             </div>
@@ -51,10 +105,20 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Programs</p>
-                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalPrograms</p>
+                    <p class="text-sm text-gray-500">Exam Centers</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.CollegeExamCentersCount</p>
                 </div>
-                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center"><i class="fas fa-graduation-cap text-indigo-600"></i></div>
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center"><i class="fas fa-map-marker-alt text-orange-600"></i></div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Roles</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalRoles</p>
+                </div>
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-user-shield text-purple-600"></i></div>
             </div>
         </div>
     </div>

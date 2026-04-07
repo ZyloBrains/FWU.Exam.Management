@@ -120,6 +120,7 @@ public class LoginModel : PageModel
                 var user = await _userManager.FindByEmailAsync(Input.Email);
                 if (user != null)
                 {
+                    var roles = await _userManager.GetRolesAsync(user);
                     var claims = await _userManager.GetClaimsAsync(user);
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
@@ -131,14 +132,20 @@ public class LoginModel : PageModel
 
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
                     }
-                }
 
-                if (user?.OrganizationId != null)
-                {
-                    var org = await _context.Organizations.FindAsync(user.OrganizationId.Value);
-                    if (org != null && !string.IsNullOrWhiteSpace(org.OfficeCode))
+                    if (roles.Contains(Role.CollegeAdmin))
+                        return RedirectToAction("Index", "Dashboard");
+
+                    if (roles.Contains(Role.Student))
+                        return RedirectToAction("Index", "Dashboard");
+
+                    if (roles.Contains("Organization") && user.OrganizationId != null)
                     {
-                        return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
+                        var org = await _context.Organizations.FindAsync(user.OrganizationId.Value);
+                        if (org != null && !string.IsNullOrWhiteSpace(org.OfficeCode))
+                        {
+                            return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
+                        }
                     }
                 }
 

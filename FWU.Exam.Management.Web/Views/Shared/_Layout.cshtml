@@ -150,9 +150,15 @@
         if (appUser != null)
         {
             var roles = await UserManager.GetRolesAsync(appUser);
-            var firstRole = roles.FirstOrDefault();
-            roleLabel = firstRole != null
-                ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(firstRole.Replace("_", " "))
+            var effectiveRole = roles.Contains("SystemAdmin") ? "SystemAdmin"
+                : roles.Contains("Admin") ? "Admin"
+                : roles.Contains("CollegeAdmin") ? "CollegeAdmin"
+                : roles.Contains("ReportAdmin") ? "ReportAdmin"
+                : roles.Contains("Student") ? "Student"
+                : null;
+
+            roleLabel = effectiveRole != null
+                ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(effectiveRole.Replace("_", " "))
                 : "User";
         }
     }

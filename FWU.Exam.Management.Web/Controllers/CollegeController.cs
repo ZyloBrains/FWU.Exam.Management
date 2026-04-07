@@ -124,9 +124,6 @@ public class CollegeController : Controller
                 return View(college);
             }
 
-            if (!await _userManager.IsInRoleAsync(collegeUser, Role.Student))
-                await _userManager.AddToRoleAsync(collegeUser, Role.Student);
-
             if (!await _userManager.IsInRoleAsync(collegeUser, Role.CollegeAdmin))
                 await _userManager.AddToRoleAsync(collegeUser, Role.CollegeAdmin);
 
