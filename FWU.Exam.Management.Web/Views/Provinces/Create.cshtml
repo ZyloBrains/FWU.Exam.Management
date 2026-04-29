@@ -1,38 +1,57 @@
-﻿@model Province
+﻿@model fwu_examination_management_system.Data.Models.Province
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Province";
 }
 
-<h1>Create</h1>
+<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-map-marked-alt text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create Province</h1>
+        </div>
+    </div>
 
-<h4>Province</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ProvinceName" class="control-label"></label>
-                <input asp-for="ProvinceName" class="form-control" />
-                <span asp-validation-for="ProvinceName" class="text-danger"></span>
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div class="grid grid-cols-1 gap-5">
+                <div>
+                    <label asp-for="ProvinceName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="ProvinceName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter province name" />
+                    <span asp-validation-for="ProvinceName" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
-                </label>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

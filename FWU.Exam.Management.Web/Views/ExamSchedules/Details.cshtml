@@ -1,0 +1,213 @@
+﻿@model fwu_examination_management_system.Data.Models.Exams.ExamSchedule
+
+@{
+    ViewData["Title"] = "Exam Schedule Details";
+}
+
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-indigo-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Exam Schedule Details</h1>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <!-- Basic Information -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Exam Schedule Name</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ExamScheduleName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Exam Schedule Code</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ExamScheduleCode)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Details -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Academic Year</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear.AcademicYearName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Level</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Level.LevelName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Year Part</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.YearPart.YearPartName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Exam Type</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamType.Name)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Parent Schedule</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamScheduleParent.ExamScheduleParentName)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Information (AD) -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Date Information (AD)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Start Date (AD)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.StartDateAd)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">End Date (AD)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.EndDateAd)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Information (BS) -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Date Information (BS)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Start Date (BS)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.StartDateBs)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">End Date (BS)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.EndDateBs)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Information -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Time Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Start Time</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.StartTime)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">End Time</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.EndTime)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Dates -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Important Dates</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Published Date</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PublishedDate)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">College Approval Date</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeApprovalDate)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Admission Card Release Date</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AdmissionCardReleaseDate)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Extended Date</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDate)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch & Program Information -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Batch & Program Information</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Program IDs</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ProgramIds)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Regular Batch IDs</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.RegularBatchIds)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Partial Batch IDs</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PartialBatchIds)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marks & Charges -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Marks & Charges</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Negative Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.NegativeMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Extended Date Charge</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDateCharge)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remarks & Status -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Remarks & Status</h2>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Remarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <div class="mt-1">
+                        @if (Model.IsActive)
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i> Active
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-gray-100 text-gray-500 rounded-full">
+                                <i class="fas fa-circle mr-1"></i> Inactive
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 pt-6 mt-8 border-t border-gray-200">
+            <a asp-action="Edit" asp-route-id="@Model?.Id"
+                   class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                <i class="fas fa-edit mr-1"></i> Edit
+            </a>
+            <a asp-action="Index"
+                   class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

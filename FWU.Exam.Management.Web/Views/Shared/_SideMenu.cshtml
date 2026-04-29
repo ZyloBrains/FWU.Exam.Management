@@ -3,6 +3,32 @@
 @inject UserManager<AppUser> UserManager
 
 @{
+    // Helper to detect active route (works for both MVC and Razor Pages)
+    bool IsActive(string controllerName = null, string actionName = null, string areaName = null, string page = null)
+    {
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+        var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
+        var currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+
+        if (!string.IsNullOrEmpty(page))
+        {
+            return string.Equals(currentPage, page, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!string.IsNullOrEmpty(areaName) && !string.Equals(currentArea, areaName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (!string.IsNullOrEmpty(controllerName) && !string.Equals(currentController, controllerName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (!string.IsNullOrEmpty(actionName) && !string.Equals(currentAction, actionName, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return true;
+    }
+
+    // Get user and roles
     var sideMenuUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var sideMenuRoles = sideMenuUser != null ? await UserManager.GetRolesAsync(sideMenuUser) : new List<string>();
     var primaryRole = sideMenuRoles.FirstOrDefault() ?? "";
@@ -16,7 +42,7 @@
     <!-- Dashboard - Everyone -->
     <li>
         <a asp-controller="Dashboard" asp-action="Index"
-               class="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
+               class="flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200 @(IsActive(controllerName: "Dashboard", actionName: "Index") ? "bg-admin-blue-light font-semibold" : "")">
             <i class="fas fa-tachometer-alt w-5 text-center"></i>
             <span>Dashboard</span>
         </a>
@@ -24,8 +50,9 @@
 
     @if (isSystemAdmin)
     {
-        <!-- User Management Section -->
-        <li x-data="{ open: false }">
+        // User Management Section
+        var isUserManagementActive = IsActive(page: "/Account/ForgotPassword") || IsActive(controllerName: "User", actionName: "Create");
+        <li x-data="{ open: @(isUserManagementActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-users w-5 text-center"></i>
@@ -34,18 +61,16 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <!-- Reset Password item -->
                 <li>
                     <a asp-area="Identity" asp-page="/Account/ForgotPassword"
-                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
+                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(page: "/Account/ForgotPassword") ? "bg-admin-blue-light text-white" : "")">
                         <i class="fas fa-key w-4 text-center"></i>
                         <span>Reset Password</span>
                     </a>
                 </li>
-                <!-- Create New User item -->
                 <li>
                     <a asp-controller="User" asp-action="Create"
-                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
+                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "User", actionName: "Create") ? "bg-admin-blue-light text-white" : "")">
                         <i class="fas fa-user-plus w-4 text-center"></i>
                         <span>Create New User</span>
                     </a>
@@ -53,8 +78,16 @@
             </ul>
         </li>
 
-        <!-- Settings Section -->
-        <li x-data="{ open: false }">
+        // Settings Section
+        var isSettingsActive = IsActive(controllerName: "AcademicYears", actionName: "Index") ||
+                               IsActive(controllerName: "Colleges", actionName: "Index") ||
+                               IsActive(controllerName: "CollegePrograms", actionName: "Index") ||
+                               IsActive(controllerName: "SubjectDetails", actionName: "Index") ||
+                               IsActive(controllerName: "Programs", actionName: "Index") ||
+                               IsActive(controllerName: "SmtpConfigurations", actionName: "Index") ||
+                               IsActive(controllerName: "UserProgramMaps", actionName: "Index") ||
+                               IsActive(controllerName: "ExamSchedules", actionName: "Index");
+        <li x-data="{ open: @(isSettingsActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-sliders-h w-5 text-center"></i>
@@ -63,87 +96,24 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="College" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-calendar-alt w-4 text-center"></i>
-                        <span>Academic Year</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-school w-4 text-center"></i>
-                        <span>School/College</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Subject" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-diagram-project w-4 text-center"></i>
-                        <span>School/College Wise Program</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book w-4 text-center"></i>
-                        <span>Subject</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-stream w-4 text-center"></i>
-                        <span>Program/Stream</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-envelope w-4 text-center"></i>
-                        <span>SMTP Configuration</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-user-tag w-4 text-center"></i>
-                        <span>User Program Map</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-calendar-check w-4 text-center"></i>
-                        <span>Exam Schedule Date</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-sitemap w-4 text-center"></i>
-                        <span>Exam Schedule Parent</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-bullhorn w-4 text-center"></i>
-                        <span>Declare Exam</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-user-graduate w-4 text-center"></i>
-                        <span>Students</span>
-                    </a>
-                </li>
+                <li><a asp-controller="AcademicYears" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYears", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar-alt w-4 text-center"></i><span>Academic Year</span></a></li>
+                <li><a asp-controller="Colleges" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Colleges", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-school w-4 text-center"></i><span>School/College</span></a></li>
+                <li><a asp-controller="Programs" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Programs", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-stream w-4 text-center"></i><span>Program/Stream</span></a></li>
+                <li><a asp-controller="CollegePrograms" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "CollegePrograms", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-diagram-project w-4 text-center"></i><span>School/College Wise Program</span></a></li>
+                <li><a asp-controller="SubjectDetails" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "SubjectDetails", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book w-4 text-center"></i><span>Subject</span></a></li>
+               
+                <li><a asp-controller="SmtpConfigurations" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "SmtpConfigurations", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-envelope w-4 text-center"></i><span>SMTP Configuration</span></a></li>
+                <li><a asp-controller="UserProgramMaps" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "UserProgramMaps", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-user-tag w-4 text-center"></i><span>User Program Map</span></a></li>
+                @* <li><a asp-controller="ExamSchedules" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedules", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar-check w-4 text-center"></i><span>Exam Schedule Date</span></a></li>
+                <li><a asp-controller="AcademicYear" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYear", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-sitemap w-4 text-center"></i><span>Exam Schedule Parent</span></a></li> *@
+                <li><a asp-controller="ExamSchedules" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedules", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-bullhorn w-4 text-center"></i><span>Exam Schedule</span></a></li>
+                <li><a asp-controller="AcademicYear" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYear", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-user-graduate w-4 text-center"></i><span>Students</span></a></li>
             </ul>
         </li>
-        <!-- Registration Section -->
-        <li x-data="{ open: false }">
+
+        // Registration Section
+        var isRegistrationActive = IsActive(controllerName: "College", actionName: "Index") || IsActive(controllerName: "Program", actionName: "Index");
+        <li x-data="{ open: @(isRegistrationActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-user-graduate w-5 text-center"></i>
@@ -185,52 +155,18 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="College" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-receipt w-4 text-center"></i>
-                        <span>Voucher Verification</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-clipboard-list w-4 text-center"></i>
-                        <span>Internal Marks Entry/List</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-hashtag w-4 text-center"></i>
-                        <span>Roll No Generation</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-id-card w-4 text-center"></i>
-                        <span>Print Admit Card</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-map-marker-alt w-4 text-center"></i>
-                        <span>Exam Center Management</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-upload w-4 text-center"></i>
-                        <span>Result Upload</span>
-                    </a>
-                </li>
-                </ul>
-                </li>
-        <!-- Report Section -->
-        <li x-data="{ open: false }">
+                <li><a asp-controller="College" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "College", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-receipt w-4 text-center"></i><span>Voucher Verification</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-clipboard-list w-4 text-center"></i><span>Internal Marks Entry/List</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-hashtag w-4 text-center"></i><span>Roll No Generation</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-id-card w-4 text-center"></i><span>Print Admit Card</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-map-marker-alt w-4 text-center"></i><span>Exam Center Management</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-upload w-4 text-center"></i><span>Result Upload</span></a></li>
+            </ul>
+        </li>
+
+        // Report Section
+        var isReportActive = IsActive(controllerName: "ExamSchedule", actionName: "Index");
+        <li x-data="{ open: @(isReportActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-chart-line w-5 text-center"></i>
@@ -239,77 +175,26 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-money-check-alt w-4 text-center"></i>
-                        <span>College Payments</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-chart-bar w-4 text-center"></i>
-                        <span>Subject Count Report</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-copy w-4 text-center"></i>
-                        <span>Exam Subject-Triplicate</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-chart-pie w-4 text-center"></i>
-                        <span>Summary Report</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-table w-4 text-center"></i>
-                        <span>Tabulation Triplicate</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-user-friends w-4 text-center"></i>
-                        <span>Stream/Program Wise Student</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-clipboard-check w-4 text-center"></i>
-                        <span>Attendance Sheet</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-poll w-4 text-center"></i>
-                        <span>Marks Foil</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-file-invoice-dollar w-4 text-center"></i>
-                        <span>Bank Voucher List</span>
-                    </a>
-                </li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-money-check-alt w-4 text-center"></i><span>College Payments</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-chart-bar w-4 text-center"></i><span>Subject Count Report</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-copy w-4 text-center"></i><span>Exam Subject-Triplicate</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-chart-pie w-4 text-center"></i><span>Summary Report</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-table w-4 text-center"></i><span>Tabulation Triplicate</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-user-friends w-4 text-center"></i><span>Stream/Program Wise Student</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-clipboard-check w-4 text-center"></i><span>Attendance Sheet</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-poll w-4 text-center"></i><span>Marks Foil</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-file-invoice-dollar w-4 text-center"></i><span>Bank Voucher List</span></a></li>
             </ul>
         </li>
     }
 
     @if (isAdmin)
     {
-        <!-- Academic Section -->
-        <li x-data="{ open: true }">
+        var isAdminAcademicActive = IsActive(controllerName: "College", actionName: "Index") ||
+                                    IsActive(controllerName: "Program", actionName: "Index") ||
+                                    IsActive(controllerName: "Subject", actionName: "Index") ||
+                                    IsActive(controllerName: "AcademicYear", actionName: "Index");
+        <li x-data="{ open: @(isAdminAcademicActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-graduation-cap w-5 text-center"></i>
@@ -318,39 +203,15 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="College" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-school w-4 text-center"></i>
-                        <span>Colleges</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book-open w-4 text-center"></i>
-                        <span>Programs</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Subject" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book w-4 text-center"></i>
-                        <span>Subjects</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-calendar w-4 text-center"></i>
-                        <span>Academic Years</span>
-                    </a>
-                </li>
+                <li><a asp-controller="College" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "College", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-school w-4 text-center"></i><span>Colleges</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book-open w-4 text-center"></i><span>Programs</span></a></li>
+                <li><a asp-controller="Subject" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Subject", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book w-4 text-center"></i><span>Subjects</span></a></li>
+                <li><a asp-controller="AcademicYear" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYear", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar w-4 text-center"></i><span>Academic Years</span></a></li>
             </ul>
         </li>
 
-        <!-- Examination Section -->
-        <li x-data="{ open: true }">
+        var isAdminExamActive = IsActive(controllerName: "ExamSchedule", actionName: "Index");
+        <li x-data="{ open: @(isAdminExamActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-calendar-alt w-5 text-center"></i>
@@ -359,21 +220,19 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-clock w-4 text-center"></i>
-                        <span>Exam Schedules</span>
-                    </a>
-                </li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-clock w-4 text-center"></i><span>Exam Schedules</span></a></li>
             </ul>
         </li>
     }
 
     @if (isReportAdmin)
     {
-        <!-- Reports Section -->
-        <li x-data="{ open: true }">
+        var isReportAdminActive = IsActive(controllerName: "College", actionName: "Index") ||
+                                  IsActive(controllerName: "Program", actionName: "Index") ||
+                                  IsActive(controllerName: "Subject", actionName: "Index") ||
+                                  IsActive(controllerName: "ExamSchedule", actionName: "Index") ||
+                                  IsActive(controllerName: "AcademicYear", actionName: "Index");
+        <li x-data="{ open: @(isReportAdminActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-chart-bar w-5 text-center"></i>
@@ -382,49 +241,21 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="College" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-school w-4 text-center"></i>
-                        <span>Colleges</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book-open w-4 text-center"></i>
-                        <span>Programs</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Subject" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book w-4 text-center"></i>
-                        <span>Subjects</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-calendar-alt w-4 text-center"></i>
-                        <span>Exam Schedules</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="AcademicYear" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-calendar w-4 text-center"></i>
-                        <span>Academic Years</span>
-                    </a>
-                </li>
+                <li><a asp-controller="College" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "College", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-school w-4 text-center"></i><span>Colleges</span></a></li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book-open w-4 text-center"></i><span>Programs</span></a></li>
+                <li><a asp-controller="Subject" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Subject", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book w-4 text-center"></i><span>Subjects</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar-alt w-4 text-center"></i><span>Exam Schedules</span></a></li>
+                <li><a asp-controller="AcademicYear" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYear", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar w-4 text-center"></i><span>Academic Years</span></a></li>
             </ul>
         </li>
     }
 
     @if (isStudent)
     {
-        <!-- Academic Section -->
-        <li x-data="{ open: true }">
+        var isStudentActive = IsActive(controllerName: "Program", actionName: "Index") ||
+                              IsActive(controllerName: "Subject", actionName: "Index") ||
+                              IsActive(controllerName: "ExamSchedule", actionName: "Index");
+        <li x-data="{ open: @(isStudentActive.ToString().ToLower()) }">
             <button @@click="open = !open"
                 class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
                 <i class="fas fa-graduation-cap w-5 text-center"></i>
@@ -433,27 +264,9 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li>
-                    <a asp-controller="Program" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book-open w-4 text-center"></i>
-                        <span>Programs</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Subject" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-book w-4 text-center"></i>
-                        <span>Subjects</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="ExamSchedule" asp-action="Index"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
-                        <i class="fas fa-calendar-alt w-4 text-center"></i>
-                        <span>Exam Schedules</span>
-                    </a>
-                </li>
+                <li><a asp-controller="Program" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Program", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book-open w-4 text-center"></i><span>Programs</span></a></li>
+                <li><a asp-controller="Subject" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Subject", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-book w-4 text-center"></i><span>Subjects</span></a></li>
+                <li><a asp-controller="ExamSchedule" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedule", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar-alt w-4 text-center"></i><span>Exam Schedules</span></a></li>
             </ul>
         </li>
     }

@@ -97,6 +97,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<UserAttachment>? UserAttachments { get; set; }
     public DbSet<UserProgramMap>? UserProgramMaps { get; set; }
     public DbSet<YearPart>? YearParts { get; set; }
+    public DbSet<Municipality>? Municipalities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
