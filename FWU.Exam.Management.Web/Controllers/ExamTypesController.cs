@@ -7,29 +7,31 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using fwu_examination_management_system.Data.Models.Exams;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class ExamTypesController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public ExamTypesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: ExamTypes with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.ExamTypes.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(e =>
+                    //e.Code.Contains(search) ||
+                    e.Name.Contains(search) ||
+                    (e.Remarks != null && e.Remarks.Contains(search))
                 );
             }
 
@@ -55,26 +57,30 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<ExamType, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "code" => e => e.Code,
+                "name" => e => e.Name,
+                "remarks" => e => e.Remarks,
+                "isactive" => e => e.IsActive,
+                _ => e => e.Name
             };
         }
 
         // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<ExamType> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.ExamTypes.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(e =>
+                    //e.Code.Contains(search) ||
+                    e.Name.Contains(search) ||
+                    (e.Remarks != null && e.Remarks.Contains(search))
                 );
             }
 
@@ -104,28 +110,31 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Code,Name,Remarks,Status");
 
-            foreach (var p in items)
+            foreach (var e in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine(
+                       //$"{EscapeCsv(e.Code)}," +
+                              $"{EscapeCsv(e.Name)}," +
+                              $"{EscapeCsv(e.Remarks)}," +
+                              $"{(e.IsActive ? "Active" : "Inactive")}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"ExamTypes_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +148,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: ExamTypes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +156,37 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var examType = await _context.ExamTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (examType == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(examType);
         }
 
-        // GET: Provinces/Create
+        // GET: ExamTypes/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: ExamTypes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,Name,Remarks,IsActive,Code")] ExamType examType)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(examType);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(examType);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: ExamTypes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +194,20 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var examType = await _context.ExamTypes.FindAsync(id);
+            if (examType == null)
             {
                 return NotFound();
             }
-            return View(province);
+            return View(examType);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: ExamTypes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Remarks,IsActive,Code")] ExamType examType)
         {
-            if (id != province.Id)
+            if (id != examType.Id)
             {
                 return NotFound();
             }
@@ -207,12 +216,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(examType);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!ExamTypeExists(examType.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +232,10 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(examType);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: ExamTypes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +243,34 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var examType = await _context.ExamTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (examType == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(examType);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: ExamTypes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var examType = await _context.ExamTypes.FindAsync(id);
+            if (examType != null)
             {
-                _context.Provinces.Remove(province);
+                _context.ExamTypes.Remove(examType);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool ExamTypeExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.ExamTypes.Any(e => e.Id == id);
         }
     }
 }

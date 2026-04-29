@@ -11,25 +11,31 @@ using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class UserProgramMapsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public UserProgramMapsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: UserProgramMaps1 with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "User", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.UserProgramMaps
+                .Include(u => u.Program)
+                .Include(u => u.User)
+                .AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(u =>
+                    u.User.UserName.Contains(search) ||
+                    u.User.Email.Contains(search) ||
+                    u.Program.ProgramCode.Contains(search) ||
+                    u.Program.ProgramName.Contains(search)
                 );
             }
 
@@ -55,26 +61,34 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<UserProgramMap, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "user" => u => u.User.UserName,
+                "email" => u => u.User.Email,
+                "program" => u => u.Program.ProgramCode,
+                "programname" => u => u.Program.ProgramName,
+                _ => u => u.User.UserName
             };
         }
 
-        // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        // Helper to get filtered items for export (with pagination)
+        private async Task<(List<UserProgramMap> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.UserProgramMaps
+                .Include(u => u.Program)
+                .Include(u => u.User)
+                .AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(u =>
+                    u.User.UserName.Contains(search) ||
+                    u.User.Email.Contains(search) ||
+                    u.Program.ProgramCode.Contains(search) ||
+                    u.Program.ProgramName.Contains(search)
                 );
             }
 
@@ -104,28 +118,30 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "User", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Username,Email,Program Code,Program Name");
 
-            foreach (var p in items)
+            foreach (var u in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine($"{EscapeCsv(u.User?.UserName)}," +
+                              $"{EscapeCsv(u.User?.Email)}," +
+                              $"{EscapeCsv(u.Program?.ProgramCode)}," +
+                              $"{EscapeCsv(u.Program?.ProgramName)}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"UserProgramMaps_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "User", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +155,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: UserProgramMaps1/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +163,43 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var userProgramMap = await _context.UserProgramMaps
+                .Include(u => u.Program)
+                .Include(u => u.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (userProgramMap == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(userProgramMap);
         }
 
-        // GET: Provinces/Create
+        // GET: UserProgramMaps1/Create
         public IActionResult Create()
         {
+            ViewData["ProgramId"] = new SelectList(_context.Programs, "Id", "ProgramCode", "ProgramName");
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "UserName", "Email");
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: UserProgramMaps1/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,UserId,ProgramId")] UserProgramMap userProgramMap)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(userProgramMap);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            ViewData["ProgramId"] = new SelectList(_context.Programs, "Id", "ProgramCode", userProgramMap.ProgramId);
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "UserName", userProgramMap.UserId);
+            return View(userProgramMap);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: UserProgramMaps1/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +207,22 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var userProgramMap = await _context.UserProgramMaps.FindAsync(id);
+            if (userProgramMap == null)
             {
                 return NotFound();
             }
-            return View(province);
+            ViewData["ProgramId"] = new SelectList(_context.Programs, "Id", "ProgramCode", userProgramMap.ProgramId);
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "UserName", userProgramMap.UserId);
+            return View(userProgramMap);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: UserProgramMaps1/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,UserId,ProgramId")] UserProgramMap userProgramMap)
         {
-            if (id != province.Id)
+            if (id != userProgramMap.Id)
             {
                 return NotFound();
             }
@@ -207,12 +231,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(userProgramMap);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!UserProgramMapExists(userProgramMap.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +247,12 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            ViewData["ProgramId"] = new SelectList(_context.Programs, "Id", "ProgramCode", userProgramMap.ProgramId);
+            ViewData["UserId"] = new SelectList(_context.Users, "Id", "UserName", userProgramMap.UserId);
+            return View(userProgramMap);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: UserProgramMaps1/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +260,36 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var userProgramMap = await _context.UserProgramMaps
+                .Include(u => u.Program)
+                .Include(u => u.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (userProgramMap == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(userProgramMap);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: UserProgramMaps1/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var userProgramMap = await _context.UserProgramMaps.FindAsync(id);
+            if (userProgramMap != null)
             {
-                _context.Provinces.Remove(province);
+                _context.UserProgramMaps.Remove(userProgramMap);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool UserProgramMapExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.UserProgramMaps.Any(e => e.Id == id);
         }
     }
 }

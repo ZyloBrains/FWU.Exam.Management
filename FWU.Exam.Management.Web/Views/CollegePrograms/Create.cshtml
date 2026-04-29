@@ -1,0 +1,104 @@
+﻿@model fwu_examination_management_system.Data.Models.Colleges.CollegeProgram
+
+@{
+    ViewData["Title"] = "Create College Program";
+}
+
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-graduation-cap text-purple-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create College Program</h1>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <!-- Section: Program Details -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Program Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="CollegeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="CollegeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" asp-items="ViewBag.CollegeId">
+                            <option value="">-- Select College --</option>
+                        </select>
+                        <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" asp-items="ViewBag.ProgramId">
+                            <option value="">-- Select Program --</option>
+                        </select>
+                        <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Affiliation Information -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Affiliation Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="AffiliationDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="AffiliationDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" />
+                        <span asp-validation-for="AffiliationDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="NumberOfStudents" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="NumberOfStudents" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Number of students" />
+                        <span asp-validation-for="NumberOfStudents" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Additional Information -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
+                <div class="grid grid-cols-1 gap-5">
+                    <div>
+                        <label asp-for="Remarks" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <textarea asp-for="Remarks" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Any remarks about the program affiliation"></textarea>
+                        <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Options -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
+                <div class="flex flex-wrap gap-6">
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

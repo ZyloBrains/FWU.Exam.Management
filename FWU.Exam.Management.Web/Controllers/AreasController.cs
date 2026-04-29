@@ -11,25 +11,26 @@ using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class AreasController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public AreasController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: Areas with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "AreaName", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.Areas.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(a =>
+                    a.AreaName.Contains(search) ||
+                    (a.Remarks != null && a.Remarks.Contains(search))
                 );
             }
 
@@ -55,26 +56,28 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<Area, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "areaname" => a => a.AreaName,
+                "remarks" => a => a.Remarks,
+                "isactive" => a => a.IsActive,
+                _ => a => a.AreaName
             };
         }
 
         // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<Area> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.Areas.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(a =>
+                    a.AreaName.Contains(search) ||
+                    (a.Remarks != null && a.Remarks.Contains(search))
                 );
             }
 
@@ -104,28 +107,29 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "AreaName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Area Name,Remarks,Status");
 
-            foreach (var p in items)
+            foreach (var a in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine($"{EscapeCsv(a.AreaName)}," +
+                              $"{EscapeCsv(a.Remarks)}," +
+                              $"{(a.IsActive ? "Active" : "Inactive")}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"Areas_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "AreaName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +143,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: Areas/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +151,37 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var area = await _context.Areas
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (area == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(area);
         }
 
-        // GET: Provinces/Create
+        // GET: Areas/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: Areas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,AreaName,Remarks,IsActive")] Area area)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(area);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(area);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: Areas/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +189,20 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var area = await _context.Areas.FindAsync(id);
+            if (area == null)
             {
                 return NotFound();
             }
-            return View(province);
+            return View(area);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: Areas/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AreaName,Remarks,IsActive")] Area area)
         {
-            if (id != province.Id)
+            if (id != area.Id)
             {
                 return NotFound();
             }
@@ -207,12 +211,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(area);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!AreaExists(area.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +227,10 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(area);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: Areas/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +238,34 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var area = await _context.Areas
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (area == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(area);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: Areas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var area = await _context.Areas.FindAsync(id);
+            if (area != null)
             {
-                _context.Provinces.Remove(province);
+                _context.Areas.Remove(area);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool AreaExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.Areas.Any(e => e.Id == id);
         }
     }
 }

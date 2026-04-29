@@ -11,25 +11,30 @@ using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class YearPartsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public YearPartsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: YearParts with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Year", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.YearParts
+                .Include(y => y.ProgramPeriodType)
+                .AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(y =>
+                    y.YearPartName.Contains(search) ||
+                    y.Code.Contains(search) ||
+                    (y.Remark != null && y.Remark.Contains(search)) ||
+                    (y.ProgramPeriodType != null && y.ProgramPeriodType.ProgramPeriodTypeName.Contains(search))
                 );
             }
 
@@ -55,26 +60,36 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<YearPart, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "code" => y => y.Code,
+                "yearpartname" => y => y.YearPartName,
+                "year" => y => y.Year,
+                "part" => y => y.Part,
+                "programperiodtypename" => y => y.ProgramPeriodType.ProgramPeriodTypeName,
+                "isactive" => y => y.IsActive,
+                "iseditable" => y => y.IsEditable,
+                _ => y => y.Year
             };
         }
 
         // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<YearPart> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.YearParts
+                .Include(y => y.ProgramPeriodType)
+                .AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(y =>
+                    y.YearPartName.Contains(search) ||
+                    y.Code.Contains(search) ||
+                    (y.Remark != null && y.Remark.Contains(search)) ||
+                    (y.ProgramPeriodType != null && y.ProgramPeriodType.ProgramPeriodTypeName.Contains(search))
                 );
             }
 
@@ -104,28 +119,34 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Year", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Code,Year Part Name,Period Type,Year,Part,Remark,Is Editable,Status");
 
-            foreach (var p in items)
+            foreach (var y in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine($"{EscapeCsv(y.Code)}," +
+                              $"{EscapeCsv(y.YearPartName)}," +
+                              $"{EscapeCsv(y.ProgramPeriodType?.ProgramPeriodTypeName ?? "")}," +
+                              $"{y.Year}," +
+                              $"{y.Part}," +
+                              $"{EscapeCsv(y.Remark)}," +
+                              $"{(y.IsEditable ? "Yes" : "No")}," +
+                              $"{(y.IsActive ? "Active" : "Inactive")}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"YearParts_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Year", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +160,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: YearParts/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +168,40 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var yearPart = await _context.YearParts
+                .Include(y => y.ProgramPeriodType)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (yearPart == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(yearPart);
         }
 
-        // GET: Provinces/Create
-        public IActionResult Create()
+        // GET: YearParts/Create
+        public async Task<IActionResult> Create()
         {
+            ViewData["ProgramPeriodTypeId"] = new SelectList(await _context.ProgramPeriodTypes.ToListAsync(), "Id", "ProgramPeriodTypeName");
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: YearParts/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,ProgramPeriodTypeId,Year,Part,YearPartName,Remark,IsActive,IsEditable,Code")] YearPart yearPart)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(yearPart);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            ViewData["ProgramPeriodTypeId"] = new SelectList(await _context.ProgramPeriodTypes.ToListAsync(), "Id", "ProgramPeriodTypeName", yearPart.ProgramPeriodTypeId);
+            return View(yearPart);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: YearParts/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +209,21 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var yearPart = await _context.YearParts.FindAsync(id);
+            if (yearPart == null)
             {
                 return NotFound();
             }
-            return View(province);
+            ViewData["ProgramPeriodTypeId"] = new SelectList(await _context.ProgramPeriodTypes.ToListAsync(), "Id", "ProgramPeriodTypeName", yearPart.ProgramPeriodTypeId);
+            return View(yearPart);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: YearParts/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ProgramPeriodTypeId,Year,Part,YearPartName,Remark,IsActive,IsEditable,Code")] YearPart yearPart)
         {
-            if (id != province.Id)
+            if (id != yearPart.Id)
             {
                 return NotFound();
             }
@@ -207,12 +232,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(yearPart);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!YearPartExists(yearPart.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +248,11 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            ViewData["ProgramPeriodTypeId"] = new SelectList(await _context.ProgramPeriodTypes.ToListAsync(), "Id", "ProgramPeriodTypeName", yearPart.ProgramPeriodTypeId);
+            return View(yearPart);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: YearParts/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +260,35 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var yearPart = await _context.YearParts
+                .Include(y => y.ProgramPeriodType)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (yearPart == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(yearPart);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: YearParts/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var yearPart = await _context.YearParts.FindAsync(id);
+            if (yearPart != null)
             {
-                _context.Provinces.Remove(province);
+                _context.YearParts.Remove(yearPart);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool YearPartExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.YearParts.Any(e => e.Id == id);
         }
     }
 }

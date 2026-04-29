@@ -1,0 +1,184 @@
+﻿@model fwu_examination_management_system.Data.Models.Subjects.SubjectDetail
+
+@{
+    ViewData["Title"] = "Subject Details";
+}
+
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-book text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Subject Details</h1>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <!-- Basic Information Section -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Subject Code</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.SubjectCode)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Subject Name</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.SubjectName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Short Name</p>
+                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.ShortName) ? "—" : Model.ShortName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Concurrent Subject Code</p>
+                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.ConcurrentSubjectCode) ? "—" : Model.ConcurrentSubjectCode)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <div class="mt-1">
+                        @if (Model.IsActive)
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
+                        }
+                        else
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Inactive</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classification Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Classification</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Program</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Program.ProgramCode) - @Html.DisplayFor(model => model.Program.ProgramName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Subject Group</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.SubjectGroup.SubjectGroupName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Subject Type</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.SubjectType.SubjectTypeName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Year/Part</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.YearPart.YearPartName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Year</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Year)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Part</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Part)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marks Distribution Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Marks Distribution</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Theory Full Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.TheoryFullMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Theory Pass Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.TheoryPassMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Practical Full Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PracticalFullMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Practical Pass Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PracticalPassMarks)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Internal Marks Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Internal Marks</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Internal Theory Full Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.InternalTheoryFullMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Internal Theory Pass Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.InternalTheoryPassMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Internal Practical Full Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.InternalPracticalFullMarks)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Internal Practical Pass Marks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.InternalPracticalPassMarks)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Credit Hours</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.CreditHours)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Display Order</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.DisplayOrder)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Has Theory</p>
+                    <p class="mt-1 text-gray-800">@(Model.HasTheory ? "Yes" : "No")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Has Practical</p>
+                    <p class="mt-1 text-gray-800">@(Model.HasPractical ? "Yes" : "No")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Has Internal</p>
+                    <p class="mt-1 text-gray-800">@(Model.HasInternal ? "Yes" : "No")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Is Compulsory</p>
+                    <p class="mt-1 text-gray-800">@(Model.IsCompulsory ? "Yes" : "No")</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+            @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </a>
+            }
+            <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>

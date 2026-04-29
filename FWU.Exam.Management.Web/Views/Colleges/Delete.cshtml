@@ -1,0 +1,203 @@
+﻿@model fwu_examination_management_system.Data.Models.Colleges.College
+
+@{
+    ViewData["Title"] = "Delete College";
+}
+
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-university text-red-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Delete College</h1>
+        </div>
+    </div>
+
+    <!-- Delete Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-red-200 p-8">
+        <!-- Warning Alert -->
+        <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-3 text-lg"></i>
+                <p class="text-sm font-semibold text-red-700">
+                    Are you sure you want to delete this college? This action cannot be undone.
+                </p>
+            </div>
+        </div>
+
+        <!-- Details Section - Two Column Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 mb-8">
+            <!-- College Code -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Code</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Code)</p>
+            </div>
+            <!-- College Name -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Name</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Name)</p>
+            </div>
+            <!-- College Name Nepali -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Name (Nepali)</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.CollegeNameNepali)</p>
+            </div>
+            <!-- Short Name -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Short Name</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ShortName)</p>
+            </div>
+            <!-- Establishment Date -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Established Date</p>
+                <p class="text-gray-800 font-medium">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+            </div>
+            <!-- Closed Date -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Closed Date</p>
+                <p class="text-gray-800 font-medium">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+            </div>
+            <!-- Municipality / VDC -->
+          
+            <!-- Ward Number -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Ward Number</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.WardNumber)</p>
+            </div>
+            <!-- House Number -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">House Number</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.HouseNumber)</p>
+            </div>
+            <!-- Website -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Website</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Website)</p>
+            </div>
+            <!-- Email -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Email)</p>
+            </div>
+            <!-- Phone 1 -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Phone</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Phone1)</p>
+            </div>
+            <!-- Phone 2 -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Secondary Phone</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Phone2)</p>
+            </div>
+            <!-- Principal Name -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Principal Name</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.PrincipalName)</p>
+            </div>
+            <!-- Principal Contact Number -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Principal Contact</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.PrincipalContactNumber)</p>
+            </div>
+            <!-- Fax -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Fax</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Fax)</p>
+            </div>
+            <!-- Remarks -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Remarks)</p>
+            </div>
+            <!-- Is Exam Center Only (Boolean) -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Center Only</p>
+                <div class="flex items-center gap-1">
+                    @if (Model.IsExamCenterOnly)
+                    {
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        <span class="text-gray-800 font-medium">Yes</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-times-circle text-gray-400"></i>
+                        <span class="text-gray-800 font-medium">No</span>
+                    }
+                </div>
+            </div>
+            <!-- Is Active (Boolean) -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Active Status</p>
+                <div class="flex items-center gap-1">
+                    @if (Model.IsActive)
+                    {
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        <span class="text-gray-800 font-medium">Active</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-times-circle text-gray-400"></i>
+                        <span class="text-gray-800 font-medium">Inactive</span>
+                    }
+                </div>
+            </div>
+            <!-- Allocated Amount -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Allocated Amount</p>
+                <p class="text-gray-800 font-medium">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "—")</p>
+            </div>
+            <!-- Display Order -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Display Order</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.DisplayOrder)</p>
+            </div>
+            <!-- District -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">District</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.District.DistrictName)</p>
+            </div>
+            <!-- College Type -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Type</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.CollegeType.Code)</p>
+            </div>
+            <!-- Area -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Area</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Area.AreaName)</p>
+            </div>
+            <!-- College Profile ID -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Profile ID</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.CollegeProfileId)</p>
+            </div>
+        </div>
+
+        <!-- Delete Form -->
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="flex items-center gap-4 pt-6 border-t border-gray-200">
+                <button type="submit"
+                        onclick="return confirm('Are you sure you want to delete this college? This action cannot be undone.');"
+                        class="px-6 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition shadow-md focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <i class="fas fa-trash mr-2"></i> Delete
+                </button>
+                <a asp-action="Index" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

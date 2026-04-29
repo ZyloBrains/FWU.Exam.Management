@@ -11,25 +11,28 @@ using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class SmtpConfigurationsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public SmtpConfigurationsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: SmtpConfigurations1 with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Host", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.SmtpConfigurations.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(s =>
+                    s.Host.Contains(search) ||
+                    s.From.Contains(search) ||
+                    s.UserName.Contains(search) ||
+                    s.Port.ToString().Contains(search)
                 );
             }
 
@@ -55,26 +58,32 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<SmtpConfiguration, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "host" => s => s.Host,
+                "from" => s => s.From,
+                "port" => s => s.Port,
+                "username" => s => s.UserName,
+                "enablessl" => s => s.EnableSsl,
+                _ => s => s.Host
             };
         }
 
-        // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        // Helper to get filtered items for export (with pagination)
+        private async Task<(List<SmtpConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.SmtpConfigurations.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(s =>
+                    s.Host.Contains(search) ||
+                    s.From.Contains(search) ||
+                    s.UserName.Contains(search) ||
+                    s.Port.ToString().Contains(search)
                 );
             }
 
@@ -104,28 +113,34 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Host", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Host,From Email,Port,Username,Enable SSL");
 
-            foreach (var p in items)
+            foreach (var s in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                // Mask password for security
+                var maskedPassword = string.IsNullOrEmpty(s.Password) ? "" : new string('*', s.Password.Length);
+
+                sb.AppendLine($"{EscapeCsv(s.Host)}," +
+                              $"{EscapeCsv(s.From)}," +
+                              $"{s.Port}," +
+                              $"{EscapeCsv(s.UserName)}," +
+                              $"{(s.EnableSsl ? "Yes" : "No")}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"SMTPConfigurations_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Host", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +154,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: SmtpConfigurations1/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +162,37 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var smtpConfiguration = await _context.SmtpConfigurations
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (smtpConfiguration == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(smtpConfiguration);
         }
 
-        // GET: Provinces/Create
+        // GET: SmtpConfigurations1/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: SmtpConfigurations1/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,Host,From,Port,UserName,Password,EnableSsl")] SmtpConfiguration smtpConfiguration)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(smtpConfiguration);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(smtpConfiguration);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: SmtpConfigurations1/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +200,20 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var smtpConfiguration = await _context.SmtpConfigurations.FindAsync(id);
+            if (smtpConfiguration == null)
             {
                 return NotFound();
             }
-            return View(province);
+            return View(smtpConfiguration);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: SmtpConfigurations1/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Host,From,Port,UserName,Password,EnableSsl")] SmtpConfiguration smtpConfiguration)
         {
-            if (id != province.Id)
+            if (id != smtpConfiguration.Id)
             {
                 return NotFound();
             }
@@ -207,12 +222,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(smtpConfiguration);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!SmtpConfigurationExists(smtpConfiguration.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +238,10 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(smtpConfiguration);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: SmtpConfigurations1/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +249,34 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var smtpConfiguration = await _context.SmtpConfigurations
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (smtpConfiguration == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(smtpConfiguration);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: SmtpConfigurations1/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var smtpConfiguration = await _context.SmtpConfigurations.FindAsync(id);
+            if (smtpConfiguration != null)
             {
-                _context.Provinces.Remove(province);
+                _context.SmtpConfigurations.Remove(smtpConfiguration);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool SmtpConfigurationExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.SmtpConfigurations.Any(e => e.Id == id);
         }
     }
 }

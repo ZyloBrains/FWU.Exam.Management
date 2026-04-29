@@ -11,25 +11,26 @@ using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class ProgramPeriodTypesController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public ProgramPeriodTypesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: ProgramPeriodTypes with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramPeriodTypeName", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.ProgramPeriodTypes.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                    p.ProgramPeriodTypeName.Contains(search) ||
+                    p.NumberOfMonths.ToString().Contains(search)
                 );
             }
 
@@ -55,26 +56,27 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<ProgramPeriodType, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "programperiodtypename" => p => p.ProgramPeriodTypeName,
+                "numberofmonths" => p => p.NumberOfMonths,
+                _ => p => p.ProgramPeriodTypeName
             };
         }
 
         // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<ProgramPeriodType> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.ProgramPeriodTypes.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                    p.ProgramPeriodTypeName.Contains(search) ||
+                    p.NumberOfMonths.ToString().Contains(search)
                 );
             }
 
@@ -104,28 +106,28 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramPeriodTypeName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Program Period Type Name,Number of Months");
 
             foreach (var p in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine($"{EscapeCsv(p.ProgramPeriodTypeName)}," +
+                              $"{p.NumberOfMonths}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"ProgramPeriodTypes_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramPeriodTypeName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +141,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: ProgramPeriodTypes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +149,37 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var programPeriodType = await _context.ProgramPeriodTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (programPeriodType == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(programPeriodType);
         }
 
-        // GET: Provinces/Create
+        // GET: ProgramPeriodTypes/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: ProgramPeriodTypes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,ProgramPeriodTypeName,NumberOfMonths")] ProgramPeriodType programPeriodType)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(programPeriodType);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(programPeriodType);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: ProgramPeriodTypes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +187,20 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var programPeriodType = await _context.ProgramPeriodTypes.FindAsync(id);
+            if (programPeriodType == null)
             {
                 return NotFound();
             }
-            return View(province);
+            return View(programPeriodType);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: ProgramPeriodTypes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ProgramPeriodTypeName,NumberOfMonths")] ProgramPeriodType programPeriodType)
         {
-            if (id != province.Id)
+            if (id != programPeriodType.Id)
             {
                 return NotFound();
             }
@@ -207,12 +209,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(programPeriodType);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!ProgramPeriodTypeExists(programPeriodType.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +225,10 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(programPeriodType);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: ProgramPeriodTypes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +236,34 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var programPeriodType = await _context.ProgramPeriodTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (programPeriodType == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(programPeriodType);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: ProgramPeriodTypes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var programPeriodType = await _context.ProgramPeriodTypes.FindAsync(id);
+            if (programPeriodType != null)
             {
-                _context.Provinces.Remove(province);
+                _context.ProgramPeriodTypes.Remove(programPeriodType);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool ProgramPeriodTypeExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.ProgramPeriodTypes.Any(e => e.Id == id);
         }
     }
 }

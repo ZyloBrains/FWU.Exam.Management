@@ -1,13 +1,13 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Province>
+﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Area>
 
 @{
-    ViewData["Title"] = "Provinces";
+    ViewData["Title"] = "Areas";
     var totalCount = ViewBag.TotalCount ?? Model.Count();
     var currentPage = ViewBag.CurrentPage ?? 1;
     var totalPages = ViewBag.TotalPages ?? 1;
     var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
-    var currentSort = ViewBag.Sort as string ?? "ProvinceName";
+    var currentSort = ViewBag.Sort as string ?? "AreaName";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
 }
 
@@ -16,10 +16,10 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-map-marked-alt text-blue-600"></i>
+                <i class="fas fa-map-marker-alt text-blue-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Provinces</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Areas</h1>
                 <p class="text-sm text-gray-500 mt-0.5">
                     <span class="font-semibold text-gray-700">@totalCount</span> total records
                 </p>
@@ -71,7 +71,7 @@
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by province name..."
+                       placeholder="Search by area name or remarks..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <input type="hidden" name="sort" value="@currentSort" />
@@ -95,9 +95,13 @@
     <!-- Sorting Controls -->
     <div class="flex flex-wrap items-center gap-2 text-sm">
         <span class="text-gray-500">Sort by:</span>
-        <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="provincename" asp-route-sortDir="@(currentSort == "provincename" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort == "provincename" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600") hover:bg-blue-50">
-            Province Name @(currentSort == "provincename" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+        <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="areaname" asp-route-sortDir="@(currentSort == "areaname" && currentSortDir == "asc" ? "desc" : "asc")"
+               class="px-3 py-1.5 rounded-full @(currentSort == "areaname" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600") hover:bg-blue-50">
+            Area Name @(currentSort == "areaname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+        </a>
+        <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="remarks" asp-route-sortDir="@(currentSort == "remarks" && currentSortDir == "asc" ? "desc" : "asc")"
+               class="px-3 py-1.5 rounded-full @(currentSort == "remarks" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600") hover:bg-blue-50">
+            Remarks @(currentSort == "remarks" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="isactive" asp-route-sortDir="@(currentSort == "isactive" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "isactive" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600") hover:bg-blue-50">
@@ -110,7 +114,8 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Province Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Area Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Remarks</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
@@ -119,7 +124,8 @@
                 @foreach (var item in Model)
                 {
                     <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 py-3 font-medium text-gray-800">@item.ProvinceName</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">@item.AreaName</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.Remarks ?? "-")</td>
                         <td class="px-4 py-3">
                             @if (item.IsActive)
                             {
@@ -153,8 +159,8 @@
         @if (!Model.Any())
         {
             <div class="text-center py-12 text-gray-500">
-                <i class="fas fa-map-marked-alt text-4xl mb-3 opacity-50"></i>
-                <p>No provinces found.</p>
+                <i class="fas fa-map-marker-alt text-4xl mb-3 opacity-50"></i>
+                <p>No areas found.</p>
             </div>
         }
     </div>
@@ -167,10 +173,10 @@
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-map-marked-alt text-blue-600 text-sm"></i>
+                            <i class="fas fa-map-marker-alt text-blue-600 text-sm"></i>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-800 text-sm">@item.ProvinceName</h3>
+                            <h3 class="font-semibold text-gray-800 text-sm">@item.AreaName</h3>
                         </div>
                     </div>
                     <div>
@@ -183,6 +189,10 @@
                             <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">Inactive</span>
                         }
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
+                    <div class="text-gray-500">Remarks</div>
+                    <div class="text-gray-800">@(item.Remarks ?? "-")</div>
                 </div>
                 <div class="flex items-center gap-2 pt-4 border-t border-gray-100 mt-2">
                     <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
@@ -203,8 +213,8 @@
         @if (!Model.Any())
         {
             <div class="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
-                <i class="fas fa-map-marked-alt text-4xl mb-3 opacity-50"></i>
-                <p>No provinces found.</p>
+                <i class="fas fa-map-marker-alt text-4xl mb-3 opacity-50"></i>
+                <p>No areas found.</p>
             </div>
         }
     </div>

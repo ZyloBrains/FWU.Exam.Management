@@ -1,0 +1,47 @@
+﻿@model fwu_examination_management_system.Data.Models.Municipality
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Municipality</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="DistrictId" class="control-label"></label>
+                <select asp-for="DistrictId" class ="form-control" asp-items="ViewBag.DistrictId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="MunicipalityName" class="control-label"></label>
+                <input asp-for="MunicipalityName" class="form-control" />
+                <span asp-validation-for="MunicipalityName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MunicipalityType" class="control-label"></label>
+                <select asp-for="MunicipalityType" class="form-control" asp-items="ViewBag.MunicipalityType"></select>
+                <span asp-validation-for="MunicipalityType" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
+                </label>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

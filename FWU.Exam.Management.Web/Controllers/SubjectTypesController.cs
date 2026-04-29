@@ -7,29 +7,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using fwu_examination_management_system.Data.Models.Subjects;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class SubjectTypesController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public SubjectTypesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: SubjectTypes with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "SubjectTypeName", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.SubjectTypes.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(s =>
+                    s.SubjectTypeName.Contains(search) ||
+                    (s.Remarks != null && s.Remarks.Contains(search))
                 );
             }
 
@@ -55,26 +56,30 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<SubjectType, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "subjecttypename" => s => s.SubjectTypeName,
+                "remarks" => s => s.Remarks,
+                "maxallowedsubjects" => s => s.MaxAllowedSubjects,
+                "isdefault" => s => s.IsDefault,
+                "isactive" => s => s.IsActive,
+                _ => s => s.SubjectTypeName
             };
         }
 
         // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<SubjectType> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.SubjectTypes.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(s =>
+                    s.SubjectTypeName.Contains(search) ||
+                    (s.Remarks != null && s.Remarks.Contains(search))
                 );
             }
 
@@ -104,28 +109,31 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectTypeName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Subject Type Name,Remarks,Max Allowed Subjects,Is Default,Status");
 
-            foreach (var p in items)
+            foreach (var s in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine($"{EscapeCsv(s.SubjectTypeName)}," +
+                              $"{EscapeCsv(s.Remarks)}," +
+                              $"{s.MaxAllowedSubjects}," +
+                              $"{(s.IsDefault ? "Yes" : "No")}," +
+                              $"{(s.IsActive ? "Active" : "Inactive")}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"SubjectTypes_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectTypeName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +147,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: SubjectTypes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +155,48 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var subjectType = await _context.SubjectTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (subjectType == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(subjectType);
         }
 
-        // GET: Provinces/Create
+        // GET: SubjectTypes/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: SubjectTypes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,SubjectTypeName,Remarks,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                // If this is set as default, remove default from other records
+                if (subjectType.IsDefault)
+                {
+                    var existingDefault = await _context.SubjectTypes.FirstOrDefaultAsync(s => s.IsDefault);
+                    if (existingDefault != null)
+                    {
+                        existingDefault.IsDefault = false;
+                        _context.Update(existingDefault);
+                    }
+                }
+
+                _context.Add(subjectType);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(subjectType);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: SubjectTypes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +204,20 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var subjectType = await _context.SubjectTypes.FindAsync(id);
+            if (subjectType == null)
             {
                 return NotFound();
             }
-            return View(province);
+            return View(subjectType);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: SubjectTypes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectTypeName,Remarks,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
         {
-            if (id != province.Id)
+            if (id != subjectType.Id)
             {
                 return NotFound();
             }
@@ -207,12 +226,24 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    // If this is set as default, remove default from other records
+                    if (subjectType.IsDefault)
+                    {
+                        var existingDefault = await _context.SubjectTypes
+                            .FirstOrDefaultAsync(s => s.IsDefault && s.Id != subjectType.Id);
+                        if (existingDefault != null)
+                        {
+                            existingDefault.IsDefault = false;
+                            _context.Update(existingDefault);
+                        }
+                    }
+
+                    _context.Update(subjectType);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!SubjectTypeExists(subjectType.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +254,10 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            return View(subjectType);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: SubjectTypes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +265,34 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var subjectType = await _context.SubjectTypes
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (subjectType == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(subjectType);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: SubjectTypes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var subjectType = await _context.SubjectTypes.FindAsync(id);
+            if (subjectType != null)
             {
-                _context.Provinces.Remove(province);
+                _context.SubjectTypes.Remove(subjectType);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool SubjectTypeExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.SubjectTypes.Any(e => e.Id == id);
         }
     }
 }

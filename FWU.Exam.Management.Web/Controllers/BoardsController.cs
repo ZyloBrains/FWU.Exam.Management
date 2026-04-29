@@ -11,25 +11,30 @@ using fwu_examination_management_system.Data.Models;
 
 namespace fwu_examination_management_system.Controllers
 {
-    public class ProvincesController : Controller
+    public class BoardsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public BoardsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Provinces with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
+        // GET: Boards with pagination, search, and sorting
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BoardName", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.Boards
+                .Include(b => b)
+                .AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(b =>
+                    b.BoardName.Contains(search) ||
+                    (b.Remarks != null && b.Remarks.Contains(search))
+                    //(b.Country != null && b.Country.CountryName.Contains(search)
+                    //)
                 );
             }
 
@@ -55,26 +60,32 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static System.Linq.Expressions.Expression<Func<Board, object>> GetSortProperty(string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "boardname" => b => b.BoardName,
+                //"countryname" => b => b.Country.CountryName,
+                "remarks" => b => b.Remarks,
+                "isactive" => b => b.IsActive,
+                _ => b => b.BoardName
             };
         }
 
         // Helper to get filtered items for export
-        private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<Board> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.Boards
+                .Include(b => b)
+                .AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
+                query = query.Where(b =>
+                    b.BoardName.Contains(search) ||
+                    (b.Remarks != null && b.Remarks.Contains(search))
+                    //(b.Country != null && b.Country.CountryName.Contains(search))
                 );
             }
 
@@ -104,28 +115,30 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "BoardName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Province Name,Status");
+            sb.AppendLine("Board Name,Country,Remarks,Status");
 
-            foreach (var p in items)
+            foreach (var b in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
-                              $"{(p.IsActive ? "Active" : "Inactive")}");
+                sb.AppendLine($"{EscapeCsv(b.BoardName)}," +
+                              //$"{EscapeCsv(b.Country?.CountryName ?? "")}," +
+                              $"{EscapeCsv(b.Remarks)}," +
+                              $"{(b.IsActive ? "Active" : "Inactive")}");
             }
 
-            var fileName = $"Provinces_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            var fileName = $"Boards_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
             return File(csvBytes, "text/csv", fileName);
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "BoardName", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +152,7 @@ namespace fwu_examination_management_system.Controllers
             return View("PrintPdf", items);
         }
 
-        // GET: Provinces/Details/5
+        // GET: Boards/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -147,37 +160,40 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var board = await _context.Boards
+                //.Include(b => b.Country)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (board == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(board);
         }
 
-        // GET: Provinces/Create
-        public IActionResult Create()
+        // GET: Boards/Create
+        public async Task<IActionResult> Create()
         {
+            //ViewBag.CountryList = new SelectList(await _context.Countrises.Where(c => c.IsActive).ToListAsync(), "Id", "CountryName");
             return View();
         }
 
-        // POST: Provinces/Create
+        // POST: Boards/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Create([Bind("Id,CountryId,BoardName,Remarks,IsActive")] Board board)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(province);
+                _context.Add(board);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            //ViewBag.CountryList = new SelectList(await _context.Countries.Where(c => c.IsActive).ToListAsync(), "Id", "CountryName", board.CountryId);
+            return View(board);
         }
 
-        // GET: Provinces/Edit/5
+        // GET: Boards/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -185,20 +201,21 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces.FindAsync(id);
-            if (province == null)
+            var board = await _context.Boards.FindAsync(id);
+            if (board == null)
             {
                 return NotFound();
             }
-            return View(province);
+            //ViewBag.CountryList = new SelectList(await _context.Countries.Where(c => c.IsActive).ToListAsync(), "Id", "CountryName", board.CountryId);
+            return View(board);
         }
 
-        // POST: Provinces/Edit/5
+        // POST: Boards/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,IsActive")] Province province)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,CountryId,BoardName,Remarks,IsActive")] Board board)
         {
-            if (id != province.Id)
+            if (id != board.Id)
             {
                 return NotFound();
             }
@@ -207,12 +224,12 @@ namespace fwu_examination_management_system.Controllers
             {
                 try
                 {
-                    _context.Update(province);
+                    _context.Update(board);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProvinceExists(province.Id))
+                    if (!BoardExists(board.Id))
                     {
                         return NotFound();
                     }
@@ -223,10 +240,11 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(province);
+            //ViewBag.CountryList = new SelectList(await _context.Countries.Where(c => c.IsActive).ToListAsync(), "Id", "CountryName", board.CountryId);
+            return View(board);
         }
 
-        // GET: Provinces/Delete/5
+        // GET: Boards/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -234,34 +252,35 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
 
-            var province = await _context.Provinces
+            var board = await _context.Boards
+                .Include(b => b)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (province == null)
+            if (board == null)
             {
                 return NotFound();
             }
 
-            return View(province);
+            return View(board);
         }
 
-        // POST: Provinces/Delete/5
+        // POST: Boards/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var province = await _context.Provinces.FindAsync(id);
-            if (province != null)
+            var board = await _context.Boards.FindAsync(id);
+            if (board != null)
             {
-                _context.Provinces.Remove(province);
+                _context.Boards.Remove(board);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProvinceExists(int id)
+        private bool BoardExists(int id)
         {
-            return _context.Provinces.Any(e => e.Id == id);
+            return _context.Boards.Any(e => e.Id == id);
         }
     }
 }

@@ -1,0 +1,67 @@
+﻿@model fwu_examination_management_system.Data.Models.ProgramPeriodType
+
+@{
+    ViewData["Title"] = "Program Period Type Details";
+}
+
+<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Program Period Type Details</h1>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <div class="grid grid-cols-1 gap-6">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Program Period Type Name</p>
+                <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ProgramPeriodTypeName)</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Number of Months</p>
+                <p class="mt-1 text-gray-800">
+                    <i class="fas fa-clock text-gray-400 mr-1"></i>
+                    @Html.DisplayFor(model => model.NumberOfMonths) months
+                </p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <p class="text-sm font-medium text-gray-600">Duration Information</p>
+                <p class="mt-1 text-gray-800 text-sm">
+                    This period type lasts for <span class="font-semibold text-orange-600">@Model.NumberOfMonths months</span>.
+                    @{
+                        var years = Model.NumberOfMonths / 12;
+                        var remainingMonths = Model.NumberOfMonths % 12;
+                        if (years > 0)
+                        {
+                            <text>Approximately </text>
+                            if (years > 0) { <text>@years year@(years > 1 ? "s" : "")</text> }
+                            if (remainingMonths > 0) { <text> and @remainingMonths month@(remainingMonths > 1 ? "s" : "")</text> }
+                            <text>.</text>
+                        }
+                    }
+                </p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+            @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </a>
+            }
+            <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>

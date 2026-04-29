@@ -1,0 +1,91 @@
+﻿@model fwu_examination_management_system.Data.Models.YearPart
+
+@{
+    ViewData["Title"] = "Create Year Part";
+}
+
+<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-lime-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-week text-lime-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create Year Part</h1>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label asp-for="Code" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500" placeholder="e.g., Y1P1, Y2P2" />
+                    <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="YearPartName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="YearPartName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500" placeholder="e.g., First Year First Part" />
+                    <span asp-validation-for="YearPartName" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ProgramPeriodTypeId" class="text-sm font-medium text-gray-700 block mb-1">Period Type</label>
+                    <select asp-for="ProgramPeriodTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500" asp-items="ViewBag.ProgramPeriodTypeId">
+                        <option value="">-- Select Period Type --</option>
+                    </select>
+                    <span asp-validation-for="ProgramPeriodTypeId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Year" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Year" type="number" min="1" max="10" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500" placeholder="e.g., 1, 2, 3" />
+                    <span asp-validation-for="Year" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Part" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Part" type="number" min="1" max="12" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500" placeholder="e.g., 1, 2" />
+                    <span asp-validation-for="Part" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div class="md:col-span-2">
+                    <label asp-for="Remark" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <textarea asp-for="Remark" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-500 focus:border-lime-500" placeholder="Enter remarks (optional)"></textarea>
+                    <span asp-validation-for="Remark" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsEditable" type="checkbox" class="w-4 h-4 text-lime-600 rounded focus:ring-lime-500" />
+                        <label asp-for="IsEditable" class="text-sm font-medium text-gray-700">Editable</label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">If checked, this year part can be edited in programs</p>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-lime-600 rounded focus:ring-lime-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-lime-600 text-white text-sm font-semibold rounded-lg hover:bg-lime-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
