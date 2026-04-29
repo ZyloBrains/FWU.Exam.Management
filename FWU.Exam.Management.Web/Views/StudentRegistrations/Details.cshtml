@@ -1,0 +1,278 @@
+@using fwu_examination_management_system.Data.Models.Students
+@model StudentRegistration
+
+@{
+    ViewData["Title"] = "Student Registration Details";
+}
+
+<h1>Student Registration Details</h1>
+
+<div>
+    <h4>@Model?.FirstName @Model?.LastName</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.RegistrationNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.RegistrationNumber)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.FirstName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.FirstName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.MiddleName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.MiddleName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.LastName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.LastName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.NepaliName)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.NepaliName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.ContactNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.ContactNumber)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Phone)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Phone)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Email)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Email)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateOfBirthBs)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateOfBirthBs)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.DateOfBirthAd)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DateOfBirthAd)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.BloodGroup)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.BloodGroup)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Nationality)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Nationality)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Religion)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Religion)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.MunicipalityVdc)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.MunicipalityVdc)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.WardNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.WardNumber)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.IsActive)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IsActive)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.StudentRegistrationIndex)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.StudentRegistrationIndex)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.VerifiedBy)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.VerifiedBy)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.VerifiedDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.VerifiedDate)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntranceRollNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntranceRollNumber)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.IsRegistrationNumberGenerated)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IsRegistrationNumberGenerated)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.RowIndex)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.RowIndex)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.PreviousAcademicYear)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.PreviousAcademicYear)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.PreviousSymbolNumber)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.PreviousSymbolNumber)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.AcademicYear)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.AcademicYear.AcademicYearName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Level)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Level.LevelName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Faculty)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Faculty.FacultyName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.College)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.College.Name)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Gender)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Gender.GenderName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.District)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.District.DistrictName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.StudentCategory)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.StudentCategory.StudentCategoryName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Ethnicity)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Ethnicity.EthnicityName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.LocalLevel)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.LocalLevel.LocalLevelName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.IndexGroup)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IndexGroup.IndexGroupName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.EntryFormat)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.EntryFormat.EntryFormatName)
+        </dd>
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.PhotoAttachment)
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model?.PhotoAttachment != null)
+            {
+                <span>@Model.PhotoAttachment.FileName</span>
+            }
+            else
+            {
+                <span>-</span>
+            }
+        </dd>
+    </dl>
+</div>
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

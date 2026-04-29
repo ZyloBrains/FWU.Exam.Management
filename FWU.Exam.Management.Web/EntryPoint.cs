@@ -4,11 +4,15 @@ using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 
 public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
+        // Set EPPlus license context
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
