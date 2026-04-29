@@ -113,10 +113,10 @@ namespace fwu_examination_management_system.Controllers
         // Helper method to handle default CollegeType
         private async Task HandleDefaultCollegeType(CollegeType collegeType)
         {
-            if (collegeType.IsDefault)
+            if (collegeType.IsDefault==true)
             {
                 var existingDefault = await _context.CollegeTypes
-                    .FirstOrDefaultAsync(c => c.IsDefault && c.Id != collegeType.Id);
+                    .FirstOrDefaultAsync(c => c.IsDefault==true && c.Id != collegeType.Id);
                 if (existingDefault != null)
                 {
                     existingDefault.IsDefault = false;
@@ -140,7 +140,7 @@ namespace fwu_examination_management_system.Controllers
                 sb.AppendLine($"{EscapeCsv(c.Code)}," +
                               $"{EscapeCsv(c.Name)}," +
                               $"{EscapeCsv(c.Remarks ?? "N/A")}," +
-                              $"{(c.IsDefault ? "Yes" : "No")}," +
+                              $"{(c.IsDefault==true ? "Yes" : "No")}," +
                               $"{(c.IsActive ? "Active" : "Inactive")}");
             }
 
