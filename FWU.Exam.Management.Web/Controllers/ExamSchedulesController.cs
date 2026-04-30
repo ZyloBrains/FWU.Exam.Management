@@ -19,37 +19,36 @@ namespace fwu_examination_management_system.Controllers
         // GET: ExamSchedules with pagination, search, and sorting
         public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.ExamSchedules
-                .Include(e => e.AcademicYear)
-                .Include(e => e.ExamScheduleParent)
-                .Include(e => e.ExamType)
-                .Include(e => e.Level)
-                .Include(e => e.YearPart)
-                .AsNoTracking();
-
-            // Apply search filter
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(s =>
-                    s.ExamScheduleName.Contains(search) ||
-                    s.ExamScheduleCode.Contains(search) ||
-                    s.Remarks.Contains(search) ||
-                    s.AcademicYear.AcademicYearName.Contains(search) ||
-                    s.Level.LevelName.Contains(search) ||
-                    s.YearPart.YearPartName.Contains(search) ||
-                    s.ExamType.Name.Contains(search)
-                );
-            }
-
-            // Apply sorting
-            query = sortDir.ToLower() == "desc"
-                ? query.OrderByDescending(GetSortProperty(sort))
-                : query.OrderBy(GetSortProperty(sort));
+            var query = BuildQuery(search, sort, sortDir);
 
             var totalCount = await query.CountAsync();
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .Select(e => new ExamSchedule
+                {
+                    Id = e.Id,
+                    AcademicYearId = e.AcademicYearId,
+                    LevelId = e.LevelId,
+                    ExamTypeId = e.ExamTypeId,
+                    ExamScheduleName = e.ExamScheduleName,
+                    StartDateBs = e.StartDateBs,
+                    EndDateBs = e.EndDateBs,
+                    PublishedDate = e.PublishedDate,
+                    StartTime = e.StartTime,
+                    EndTime = e.EndTime,
+                    Remarks = e.Remarks,
+                    IsActive = e.IsActive,
+                    ExamScheduleParentId = e.ExamScheduleParentId,
+                    ExtendedDate = e.ExtendedDate,
+                    ExtendedDateCharge = e.ExtendedDateCharge,
+                    CollegeApprovalDate = e.CollegeApprovalDate,
+                    AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
+                    ExamScheduleCode = e.ExamScheduleCode,
+                    AcademicYear = e.AcademicYear,
+                    Level = e.Level,
+                    ExamType = e.ExamType
+                })
                 .ToListAsync();
 
             ViewBag.TotalCount = totalCount;
@@ -63,45 +62,71 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<ExamSchedule, object>> GetSortProperty(string sort)
+        private IQueryable<ExamSchedule> BuildQuery(string search, string sort, string sortDir)
         {
+            var query = _context.ExamSchedules.AsNoTracking();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(s =>
+                    (s.ExamScheduleName != null && s.ExamScheduleName.Contains(search)) ||
+                    (s.ExamScheduleCode != null && s.ExamScheduleCode.Contains(search)) ||
+                    (s.Remarks != null && s.Remarks.Contains(search)) ||
+                    (s.AcademicYear != null && s.AcademicYear.AcademicYearName != null && s.AcademicYear.AcademicYearName.Contains(search)) ||
+                    (s.Level != null && s.Level.LevelName != null && s.Level.LevelName.Contains(search)) ||
+                    (s.ExamType != null && s.ExamType.Name != null && s.ExamType.Name.Contains(search))
+                );
+            }
+
+            var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
             return sort.ToLower() switch
             {
-                "name" => e => e.ExamScheduleName,
-                "code" => e => e.ExamScheduleCode,
-                "startdate" => e => e.StartDateAd,
-                "enddate" => e => e.EndDateAd,
-                "academicyear" => e => e.AcademicYear.AcademicYearName,
-                "level" => e => e.Level.LevelName,
-                "examtype" => e => e.ExamType.Name,
-                _ => e => e.Id
+                "name" => descending ? query.OrderByDescending(e => e.ExamScheduleName) : query.OrderBy(e => e.ExamScheduleName),
+                "code" => descending ? query.OrderByDescending(e => e.ExamScheduleCode) : query.OrderBy(e => e.ExamScheduleCode),
+                "academicyear" => descending
+                    ? query.OrderByDescending(e => e.AcademicYear != null ? e.AcademicYear.AcademicYearName : string.Empty)
+                    : query.OrderBy(e => e.AcademicYear != null ? e.AcademicYear.AcademicYearName : string.Empty),
+                "level" => descending
+                    ? query.OrderByDescending(e => e.Level != null ? e.Level.LevelName : string.Empty)
+                    : query.OrderBy(e => e.Level != null ? e.Level.LevelName : string.Empty),
+                "examtype" => descending
+                    ? query.OrderByDescending(e => e.ExamType != null ? e.ExamType.Name : string.Empty)
+                    : query.OrderBy(e => e.ExamType != null ? e.ExamType.Name : string.Empty),
+                _ => descending ? query.OrderByDescending(e => e.Id) : query.OrderBy(e => e.Id)
             };
         }
 
         // Helper to get filtered items for export
         private async Task<List<ExamSchedule>> GetFilteredItems(string search)
         {
-            var query = _context.ExamSchedules
-                .Include(e => e.AcademicYear)
-                .Include(e => e.ExamScheduleParent)
-                .Include(e => e.ExamType)
-                .Include(e => e.Level)
-                .Include(e => e.YearPart)
-                .AsNoTracking();
+            var query = BuildQuery(search, "Id", "asc");
 
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(s =>
-                    s.ExamScheduleName.Contains(search) ||
-                    s.ExamScheduleCode.Contains(search) ||
-                    s.Remarks.Contains(search) ||
-                    s.AcademicYear.AcademicYearName.Contains(search) ||
-                    s.Level.LevelName.Contains(search) ||
-                    s.YearPart.YearPartName.Contains(search) ||
-                    s.ExamType.Name.Contains(search)
-                );
-            }
-            return await query.OrderBy(e => e.Id).ToListAsync();
+            return await query
+                .Select(e => new ExamSchedule
+                {
+                    Id = e.Id,
+                    AcademicYearId = e.AcademicYearId,
+                    LevelId = e.LevelId,
+                    ExamTypeId = e.ExamTypeId,
+                    ExamScheduleName = e.ExamScheduleName,
+                    StartDateBs = e.StartDateBs,
+                    EndDateBs = e.EndDateBs,
+                    PublishedDate = e.PublishedDate,
+                    StartTime = e.StartTime,
+                    EndTime = e.EndTime,
+                    Remarks = e.Remarks,
+                    IsActive = e.IsActive,
+                    ExamScheduleParentId = e.ExamScheduleParentId,
+                    ExtendedDate = e.ExtendedDate,
+                    ExtendedDateCharge = e.ExtendedDateCharge,
+                    CollegeApprovalDate = e.CollegeApprovalDate,
+                    AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
+                    ExamScheduleCode = e.ExamScheduleCode,
+                    AcademicYear = e.AcademicYear,
+                    Level = e.Level,
+                    ExamType = e.ExamType
+                })
+                .ToListAsync();
         }
 
         // Export to CSV (all filtered items)
@@ -110,35 +135,27 @@ namespace fwu_examination_management_system.Controllers
             var items = await GetFilteredItems(search);
 
             var sb = new StringBuilder();
-            sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Year Part,Exam Type,Parent Schedule,Start Date (AD),End Date (AD),Start Date (BS),End Date (BS),Published Date,Start Time,End Time,Is Active,Negative Marks,Program IDs,Regular Batch IDs,Partial Batch IDs,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
+            sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
 
             foreach (var item in items)
             {
                 sb.AppendLine($"{EscapeCsv(item.Id.ToString())}," +
-                              $"{EscapeCsv(item.ExamScheduleName)}," +
-                              $"{EscapeCsv(item.ExamScheduleCode)}," +
-                              $"{EscapeCsv(item.AcademicYear?.AcademicYearName)}," +
-                              $"{EscapeCsv(item.Level?.LevelName)}," +
-                              $"{EscapeCsv(item.YearPart?.YearPartName)}," +
-                              $"{EscapeCsv(item.ExamType?.Name)}," +
-                              $"{EscapeCsv(item.ExamScheduleParent?.ExamScheduleParentName)}," +
-                              $"{EscapeCsv(item.StartDateAd?.ToString("yyyy-MM-dd"))}," +
-                              $"{EscapeCsv(item.EndDateAd?.ToString("yyyy-MM-dd"))}," +
-                              $"{EscapeCsv(item.StartDateBs)}," +
-                              $"{EscapeCsv(item.EndDateBs)}," +
-                              $"{EscapeCsv(item.PublishedDate?.ToString("yyyy-MM-dd"))}," +
+                              $"{EscapeCsv(item.ExamScheduleName ?? string.Empty)}," +
+                              $"{EscapeCsv(item.ExamScheduleCode ?? string.Empty)}," +
+                              $"{EscapeCsv(item.AcademicYear?.AcademicYearName ?? string.Empty)}," +
+                              $"{EscapeCsv(item.Level?.LevelName ?? string.Empty)}," +
+                              $"{EscapeCsv(item.ExamType?.Name ?? string.Empty)}," +
+                              $"{EscapeCsv(item.StartDateBs ?? string.Empty)}," +
+                              $"{EscapeCsv(item.EndDateBs ?? string.Empty)}," +
+                              $"{EscapeCsv(item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
                               $"{EscapeCsv(item.StartTime.ToString())}," +
                               $"{EscapeCsv(item.EndTime.ToString())}," +
                               $"{(item.IsActive ? "Yes" : "No")}," +
-                              $"{item.NegativeMarks}," +
-                              $"{EscapeCsv(item.ProgramIds)}," +
-                              $"{EscapeCsv(item.RegularBatchIds)}," +
-                              $"{EscapeCsv(item.PartialBatchIds)}," +
-                              $"{EscapeCsv(item.ExtendedDate?.ToString("yyyy-MM-dd"))}," +
+                              $"{EscapeCsv(item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
                               $"{item.ExtendedDateCharge}," +
-                              $"{EscapeCsv(item.CollegeApprovalDate?.ToString("yyyy-MM-dd"))}," +
-                              $"{EscapeCsv(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd"))}," +
-                              $"{EscapeCsv(item.Remarks)}");
+                              $"{EscapeCsv(item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
+                              $"{EscapeCsv(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
+                              $"{EscapeCsv(item.Remarks ?? string.Empty)}");
             }
 
             var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -166,12 +183,33 @@ namespace fwu_examination_management_system.Controllers
             if (id == null) return NotFound();
 
             var examSchedule = await _context.ExamSchedules
-                .Include(e => e.AcademicYear)
-                .Include(e => e.ExamScheduleParent)
-                .Include(e => e.ExamType)
-                .Include(e => e.Level)
-                .Include(e => e.YearPart)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .AsNoTracking()
+                .Where(e => e.Id == id)
+                .Select(e => new ExamSchedule
+                {
+                    Id = e.Id,
+                    AcademicYearId = e.AcademicYearId,
+                    LevelId = e.LevelId,
+                    ExamTypeId = e.ExamTypeId,
+                    ExamScheduleName = e.ExamScheduleName,
+                    StartDateBs = e.StartDateBs,
+                    EndDateBs = e.EndDateBs,
+                    PublishedDate = e.PublishedDate,
+                    StartTime = e.StartTime,
+                    EndTime = e.EndTime,
+                    Remarks = e.Remarks,
+                    IsActive = e.IsActive,
+                    ExamScheduleParentId = e.ExamScheduleParentId,
+                    ExtendedDate = e.ExtendedDate,
+                    ExtendedDateCharge = e.ExtendedDateCharge,
+                    CollegeApprovalDate = e.CollegeApprovalDate,
+                    AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
+                    ExamScheduleCode = e.ExamScheduleCode,
+                    AcademicYear = e.AcademicYear,
+                    Level = e.Level,
+                    ExamType = e.ExamType
+                })
+                .FirstOrDefaultAsync();
 
             if (examSchedule == null) return NotFound();
 
@@ -188,7 +226,7 @@ namespace fwu_examination_management_system.Controllers
         // POST: ExamSchedules/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,AcademicYearId,LevelId,YearPartId,ExamTypeId,ExamScheduleName,StartDateAd,EndDateAd,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExamScheduleParentId,NegativeMarks,ProgramIds,RegularBatchIds,PartialBatchIds,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+        public async Task<IActionResult> Create([Bind("Id,AcademicYearId,LevelId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExamScheduleParentId,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
         {
             if (ModelState.IsValid)
             {
@@ -215,7 +253,7 @@ namespace fwu_examination_management_system.Controllers
         // POST: ExamSchedules/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,LevelId,YearPartId,ExamTypeId,ExamScheduleName,StartDateAd,EndDateAd,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExamScheduleParentId,NegativeMarks,ProgramIds,RegularBatchIds,PartialBatchIds,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,LevelId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExamScheduleParentId,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
         {
             if (id != examSchedule.Id) return NotFound();
 
@@ -243,12 +281,33 @@ namespace fwu_examination_management_system.Controllers
             if (id == null) return NotFound();
 
             var examSchedule = await _context.ExamSchedules
-                .Include(e => e.AcademicYear)
-                .Include(e => e.ExamScheduleParent)
-                .Include(e => e.ExamType)
-                .Include(e => e.Level)
-                .Include(e => e.YearPart)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .AsNoTracking()
+                .Where(e => e.Id == id)
+                .Select(e => new ExamSchedule
+                {
+                    Id = e.Id,
+                    AcademicYearId = e.AcademicYearId,
+                    LevelId = e.LevelId,
+                    ExamTypeId = e.ExamTypeId,
+                    ExamScheduleName = e.ExamScheduleName,
+                    StartDateBs = e.StartDateBs,
+                    EndDateBs = e.EndDateBs,
+                    PublishedDate = e.PublishedDate,
+                    StartTime = e.StartTime,
+                    EndTime = e.EndTime,
+                    Remarks = e.Remarks,
+                    IsActive = e.IsActive,
+                    ExamScheduleParentId = e.ExamScheduleParentId,
+                    ExtendedDate = e.ExtendedDate,
+                    ExtendedDateCharge = e.ExtendedDateCharge,
+                    CollegeApprovalDate = e.CollegeApprovalDate,
+                    AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
+                    ExamScheduleCode = e.ExamScheduleCode,
+                    AcademicYear = e.AcademicYear,
+                    Level = e.Level,
+                    ExamType = e.ExamType
+                })
+                .FirstOrDefaultAsync();
 
             if (examSchedule == null) return NotFound();
 
@@ -271,10 +330,8 @@ namespace fwu_examination_management_system.Controllers
         private void PopulateDropdowns(ExamSchedule examSchedule = null)
         {
             ViewData["AcademicYearId"] = new SelectList(_context.AcademicYears, "Id", "AcademicYearName", examSchedule?.AcademicYearId);
-            ViewData["ExamScheduleParentId"] = new SelectList(_context.ExamScheduleParents, "Id", "ExamScheduleParentName", examSchedule?.ExamScheduleParentId);
             ViewData["ExamTypeId"] = new SelectList(_context.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
             ViewData["LevelId"] = new SelectList(_context.Levels, "Id", "LevelName", examSchedule?.LevelId);
-            ViewData["YearPartId"] = new SelectList(_context.YearParts, "Id", "YearPartName", examSchedule?.YearPartId);
         }
     }
 }

@@ -13,7 +13,7 @@ public class Batch
     public int AcademicYearId { get; set; }
 
     [Required, MaxLength(50)]
-    public string? BatchName { get; set; }
+    public string? BatchName { get; set; } 
 
     [MaxLength(50)]
     public string? Remarks { get; set; }

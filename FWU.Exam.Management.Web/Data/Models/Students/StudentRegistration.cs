@@ -11,6 +11,7 @@ public class StudentRegistration
     public int LevelId { get; set; }
     public int FacultyId { get; set; }
     public int CollegeId { get; set; }
+    public int? SemesterId { get; set; }
 
     [MaxLength(50)]
     public string? RegistrationNumber { get; set; }
@@ -90,6 +91,7 @@ public class StudentRegistration
 
     public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
+    public virtual Semester? Semester { get; set; }
 
     public virtual Level? Level { get; set; }
 

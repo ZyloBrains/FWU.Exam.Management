@@ -60,38 +60,15 @@
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Level.LevelName)</p>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Year Part</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.YearPart.YearPartName)</p>
-                    </div>
-                    <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Type</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExamType.Name)</p>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Parent Schedule</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExamScheduleParent.ExamScheduleParentName)</p>
-                    </div>
                 </div>
             </div>
 
-            <!-- Date Information (AD) -->
+            <!-- Date & Time -->
             <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Date Information (AD)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date (AD)</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.StartDateAd)</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">End Date (AD)</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.EndDateAd)</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Date Information (BS) -->
-            <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Date Information (BS)</h2>
+                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Date & Time</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date (BS)</p>
@@ -101,13 +78,6 @@
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">End Date (BS)</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.EndDateBs)</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Time Information -->
-            <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Time Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.StartTime)</p>
@@ -119,9 +89,9 @@
                 </div>
             </div>
 
-            <!-- Important Dates -->
+            <!-- Other Details -->
             <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Important Dates</h2>
+                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Other Details</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Published Date</p>
@@ -139,69 +109,25 @@
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Extended Date</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExtendedDate)</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Batch & Program Information -->
-            <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Batch & Program Information</h2>
-                <div class="grid grid-cols-1 gap-x-8 gap-y-4">
                     <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Program IDs</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ProgramIds)</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Regular Batch IDs</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.RegularBatchIds)</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Partial Batch IDs</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.PartialBatchIds)</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Marks & Charges -->
-            <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Marks & Charges</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Negative Marks</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.NegativeMarks)</p>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Schedule Parent ID</p>
+                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExamScheduleParentId)</p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Extended Date Charge</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExtendedDateCharge)</p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Remarks & Status -->
-            <div>
-                <h2 class="text-md font-semibold text-gray-700 mb-3 border-b pb-1">Remarks & Status</h2>
-                <div class="grid grid-cols-1 gap-x-8 gap-y-4">
-                    <div>
+                    <div class="md:col-span-2">
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Remarks)</p>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</p>
-                        <p class="text-gray-800 font-medium">
-                            @if (Model.IsActive)
-                            {
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-                                    <i class="fas fa-check-circle text-xs"></i> Active
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                                    <i class="fas fa-circle text-xs"></i> Inactive
-                                </span>
-                            }
-                        </p>
-                    </div>
                 </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</p>
+                <p class="text-gray-800 font-medium mt-1">@((Model.IsActive) ? "Active" : "Inactive")</p>
             </div>
         </div>
 

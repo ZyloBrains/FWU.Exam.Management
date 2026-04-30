@@ -23,20 +23,16 @@ namespace fwu_examination_management_system.Controllers
         // GET: Provinces with pagination, search, and sorting
         public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.Provinces.AsNoTracking().AsQueryable();
 
-            // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
-                );
+                query = query.Where(p => p.ProvinceName != null && p.ProvinceName.Contains(search));
             }
 
-            // Apply sorting
             query = sortDir.ToLower() == "desc"
-                ? query.OrderByDescending(GetSortProperty(sort))
-                : query.OrderBy(GetSortProperty(sort));
+                ? ApplySortDescending(query, sort)
+                : ApplySortAscending(query, sort);
 
             var totalCount = await query.CountAsync();
             var items = await query
@@ -55,37 +51,40 @@ namespace fwu_examination_management_system.Controllers
             return View(items);
         }
 
-        private static System.Linq.Expressions.Expression<Func<Province, object>> GetSortProperty(string sort)
+        private static IQueryable<Province> ApplySortAscending(IQueryable<Province> query, string sort)
         {
             return sort.ToLower() switch
             {
-                "provincename" => p => p.ProvinceName,
-                "isactive" => p => p.IsActive,
-                _ => p => p.ProvinceName
+                "isactive" => query.OrderBy(p => p.IsActive),
+                _ => query.OrderBy(p => p.ProvinceName)
+            };
+        }
+
+        private static IQueryable<Province> ApplySortDescending(IQueryable<Province> query, string sort)
+        {
+            return sort.ToLower() switch
+            {
+                "isactive" => query.OrderByDescending(p => p.IsActive),
+                _ => query.OrderByDescending(p => p.ProvinceName)
             };
         }
 
         // Helper to get filtered items for export
         private async Task<(List<Province> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.Provinces.AsNoTracking();
+            var query = _context.Provinces.AsNoTracking().AsQueryable();
 
-            // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p =>
-                    p.ProvinceName.Contains(search)
-                );
+                query = query.Where(p => p.ProvinceName != null && p.ProvinceName.Contains(search));
             }
 
             var totalCount = await query.CountAsync();
 
-            // Apply sorting
             query = sortDir.ToLower() == "desc"
-                ? query.OrderByDescending(GetSortProperty(sort))
-                : query.OrderBy(GetSortProperty(sort));
+                ? ApplySortDescending(query, sort)
+                : ApplySortAscending(query, sort);
 
-            // Apply pagination
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -109,13 +108,11 @@ namespace fwu_examination_management_system.Controllers
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
-
-            // CSV header
             sb.AppendLine("Province Name,Status");
 
             foreach (var p in items)
             {
-                sb.AppendLine($"{EscapeCsv(p.ProvinceName)}," +
+                sb.AppendLine($"{EscapeCsv(p.ProvinceName ?? string.Empty)}," +
                               $"{(p.IsActive ? "Active" : "Inactive")}");
             }
 

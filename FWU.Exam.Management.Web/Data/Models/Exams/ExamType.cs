@@ -15,9 +15,4 @@ public class ExamType
     public bool IsActive { get; set; }
 
     public int Code { get; set; }
-    public virtual ICollection<ExamFormFeeRate>? ExamFormFeeRates { get; set; }
-    public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
-    public virtual ICollection<ExamScheduleBatch>? ExamScheduleBatches { get; set; }
-    public virtual ICollection<ExamScheduleDetail>? ExamScheduleDetails { get; set; }
-    public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
 }

@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
+using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Data.Models.Students;
+using fwu_examination_management_system.Data.Models.Colleges;
 using OfficeOpenXml;
 
 namespace fwu_examination_management_system.Controllers;
@@ -68,7 +70,7 @@ public class StudentRegistrationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,DistrictId,MunicipalityVdc,WardNumber,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,LocalLevelId,AcademicYearId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Create([Bind("LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,DistrictId,MunicipalityVdc,WardNumber,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,LocalLevelId,AcademicYearId,SemesterId")] StudentRegistration studentRegistration)
     {
         if (ModelState.IsValid)
         {
@@ -99,7 +101,7 @@ public class StudentRegistrationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,DistrictId,MunicipalityVdc,WardNumber,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,LocalLevelId,AcademicYearId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,DistrictId,MunicipalityVdc,WardNumber,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,LocalLevelId,AcademicYearId,SemesterId")] StudentRegistration studentRegistration)
     {
         if (id != studentRegistration.Id)
         {
@@ -177,17 +179,18 @@ public class StudentRegistrationsController : Controller
 
     private void PopulateSelectLists(StudentRegistration? studentRegistration = null)
     {
-        ViewData["AcademicYearId"] = new SelectList(_context.AcademicYears, "Id", "AcademicYearName", studentRegistration?.AcademicYearId);
-        ViewData["LevelId"] = new SelectList(_context.Levels, "Id", "LevelName", studentRegistration?.LevelId);
-        ViewData["FacultyId"] = new SelectList(_context.Faculties, "Id", "FacultyName", studentRegistration?.FacultyId);
-        ViewData["CollegeId"] = new SelectList(_context.Colleges, "Id", "Name", studentRegistration?.CollegeId);
-        ViewData["GenderId"] = new SelectList(_context.Genders, "Id", "GenderName", studentRegistration?.GenderId);
-        ViewData["DistrictId"] = new SelectList(_context.Districts, "Id", "DistrictName", studentRegistration?.DistrictId);
-        ViewData["StudentCategoryId"] = new SelectList(_context.StudentCategories, "Id", "StudentCategoryName", studentRegistration?.StudentCategoryId);
-        ViewData["EthnicityId"] = new SelectList(_context.Ethnicities, "Id", "EthnicityName", studentRegistration?.EthnicityId);
-        ViewData["LocalLevelId"] = new SelectList(_context.LocalLevels, "Id", "LocalLevelName", studentRegistration?.LocalLevelId);
-        ViewData["IndexGroupId"] = new SelectList(_context.IndexGroups, "Id", "IndexGroupName", studentRegistration?.IndexGroupId);
-        ViewData["EntryFormatId"] = new SelectList(_context.EntryFormats, "Id", "EntryFormatName", studentRegistration?.EntryFormatId);
+        ViewData["AcademicYearId"] = new SelectList(_context.AcademicYears.Where(ay => ay.AcademicYearName != null).ToList(), "Id", "AcademicYearName", studentRegistration?.AcademicYearId);
+        ViewData["SemesterId"] = new SelectList(_context.Semesters.Where(s => s.SemesterName != null).ToList(), "Id", "SemesterName", studentRegistration?.SemesterId);
+        ViewData["LevelId"] = new SelectList(_context.Levels.Where(l => l.LevelName != null).ToList(), "Id", "LevelName", studentRegistration?.LevelId);
+        ViewData["FacultyId"] = new SelectList(_context.Faculties.Where(f => f.FacultyName != null).ToList(), "Id", "FacultyName", studentRegistration?.FacultyId);
+        ViewData["CollegeId"] = new SelectList(_context.Colleges.Where(c => c.Name != null).ToList(), "Id", "Name", studentRegistration?.CollegeId);
+        ViewData["GenderId"] = new SelectList(_context.Genders.Where(g => g.GenderName != null).ToList(), "Id", "GenderName", studentRegistration?.GenderId);
+        ViewData["DistrictId"] = new SelectList(_context.Districts.Where(d => d.DistrictName != null).ToList(), "Id", "DistrictName", studentRegistration?.DistrictId);
+        ViewData["StudentCategoryId"] = new SelectList(_context.StudentCategories.Where(sc => sc.StudentCategoryName != null).ToList(), "Id", "StudentCategoryName", studentRegistration?.StudentCategoryId);
+        ViewData["EthnicityId"] = new SelectList(_context.Ethnicities.Where(e => e.EthnicityName != null).ToList(), "Id", "EthnicityName", studentRegistration?.EthnicityId);
+        ViewData["LocalLevelId"] = new SelectList(_context.LocalLevels.Where(ll => ll.LocalLevelName != null).ToList(), "Id", "LocalLevelName", studentRegistration?.LocalLevelId);
+        ViewData["IndexGroupId"] = new SelectList(_context.IndexGroups.Where(ig => ig.IndexGroupName != null).ToList(), "Id", "IndexGroupName", studentRegistration?.IndexGroupId);
+        ViewData["EntryFormatId"] = new SelectList(_context.EntryFormats.Where(ef => ef.EntryFormatName != null).ToList(), "Id", "EntryFormatName", studentRegistration?.EntryFormatId);
     }
 
     [HttpGet]
