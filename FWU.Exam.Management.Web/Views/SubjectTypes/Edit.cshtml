@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Subjects.SubjectType
+@model fwu_examination_management_system.Data.Models.Subjects.SubjectType
 
 @{
     ViewData["Title"] = "Edit Subject Type";
@@ -26,9 +26,9 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="md:col-span-2">
-                    <label asp-for="SubjectTypeName" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                    <input asp-for="SubjectTypeName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="e.g., Theory, Practical, Elective, Core" />
-                    <span asp-validation-for="SubjectTypeName" class="text-xs text-red-500 mt-1 block"></span>
+                    <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="e.g., Theory, Practical, Elective, Core" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="MaxAllowedSubjects" class="text-sm font-medium text-gray-700 block mb-1"></label>
@@ -36,10 +36,10 @@
                     <span asp-validation-for="MaxAllowedSubjects" class="text-xs text-red-500 mt-1 block"></span>
                     <p class="text-xs text-gray-500 mt-1">Maximum number of subjects allowed for this type</p>
                 </div>
-                <div class="md:col-span-2">
-                    <label asp-for="Remarks" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                    <textarea asp-for="Remarks" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Enter remarks (optional)"></textarea>
-                    <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
+                <div>
+                    <label asp-for="Code" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="e.g., CORE, ELEC" />
+                    <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">

@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Subjects.SubjectType
+@model fwu_examination_management_system.Data.Models.Subjects.SubjectType
 
 @{
     ViewData["Title"] = "Subject Type Details";
@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="md:col-span-2">
                 <p class="text-sm font-medium text-gray-600">Subject Type Name</p>
-                <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.SubjectTypeName)</p>
+                <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Name)</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Max Allowed Subjects</p>
@@ -37,7 +37,7 @@
                 <div class="mt-1">
                     @if (Model.IsDefault)
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">✓ Default</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">? Default</span>
                     }
                     else
                     {
@@ -50,17 +50,17 @@
                 <div class="mt-1">
                     @if (Model.IsActive)
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">✓ Active</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">? Active</span>
                     }
                     else
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">✗ Inactive</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">? Inactive</span>
                     }
                 </div>
             </div>
             <div class="md:col-span-2">
-                <p class="text-sm font-medium text-gray-600">Remarks</p>
-                <p class="mt-1 text-gray-800">@(Model.Remarks ?? "-")</p>
+                <p class="text-sm font-medium text-gray-600">Code</p>
+                <p class="mt-1 text-gray-800">@(Model.Code ?? "-")</p>
             </div>
         </div>
 

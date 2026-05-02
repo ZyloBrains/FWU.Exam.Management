@@ -10,6 +10,7 @@ public class Semester
     public int Id { get; set; }
 
     public int Number { get; set; }
+    public int Year { get; set; }
 
     [Required, MaxLength(50)]
     public string? Name { get; set; }
@@ -27,4 +28,6 @@ public class Semester
 
     public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
     public virtual ICollection<SemesterEnrollment>? SemesterEnrollments { get; set; }
+    public virtual ICollection<SemesterSubject>? SemesterSubjects { get; set; }
+    public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }
 }

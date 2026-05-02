@@ -40,8 +40,8 @@ namespace fwu_examination_management_system.Controllers
                     s.Remarks.Contains(search) ||
                     (s.Program != null && s.Program.ProgramCode.Contains(search)) ||
                     (s.Program != null && s.Program.ProgramName.Contains(search)) ||
-                    (s.SubjectGroup != null && s.SubjectGroup.SubjectGroupName.Contains(search)) ||
-                    (s.SubjectType != null && s.SubjectType.SubjectTypeName.Contains(search)) ||
+                    (s.SubjectGroup != null && s.SubjectGroup.Name.Contains(search)) ||
+                    (s.SubjectType != null && s.SubjectType.Name.Contains(search)) ||
                     (s.YearPart != null && s.YearPart.YearPartName.Contains(search))
                 );
             }
@@ -76,8 +76,8 @@ namespace fwu_examination_management_system.Controllers
                 "subjectname" => s => s.SubjectName,
                 "shortname" => s => s.ShortName,
                 "program" => s => s.Program.ProgramCode,
-                "subjectgroup" => s => s.SubjectGroup.SubjectGroupName,
-                "subjecttype" => s => s.SubjectType.SubjectTypeName,
+                "subjectgroup" => s => s.SubjectGroup.Name,
+                "subjecttype" => s => s.SubjectType.Name,
                 "yearpart" => s => s.YearPart.YearPartName,
                 "theoryfullmarks" => s => s.TheoryFullMarks,
                 "practicalfullmarks" => s => s.PracticalFullMarks,
@@ -110,8 +110,8 @@ namespace fwu_examination_management_system.Controllers
                     s.Remarks.Contains(search) ||
                     (s.Program != null && s.Program.ProgramCode.Contains(search)) ||
                     (s.Program != null && s.Program.ProgramName.Contains(search)) ||
-                    (s.SubjectGroup != null && s.SubjectGroup.SubjectGroupName.Contains(search)) ||
-                    (s.SubjectType != null && s.SubjectType.SubjectTypeName.Contains(search)) ||
+                    (s.SubjectGroup != null && s.SubjectGroup.Name.Contains(search)) ||
+                    (s.SubjectType != null && s.SubjectType.Name.Contains(search)) ||
                     (s.YearPart != null && s.YearPart.YearPartName.Contains(search))
                 );
             }
@@ -157,8 +157,8 @@ namespace fwu_examination_management_system.Controllers
                               $"{EscapeCsv(s.SubjectName)}," +
                               $"{EscapeCsv(s.ShortName)}," +
                               $"{EscapeCsv(s.Program?.ProgramCode)}," +
-                              $"{EscapeCsv(s.SubjectGroup?.SubjectGroupName)}," +
-                              $"{EscapeCsv(s.SubjectType?.SubjectTypeName)}," +
+                              $"{EscapeCsv(s.SubjectGroup?.Name)}," +
+                              $"{EscapeCsv(s.SubjectType?.Name)}," +
                               $"{EscapeCsv(s.YearPart?.YearPartName)}," +
                               $"{s.Year}," +
                               $"{s.Part}," +

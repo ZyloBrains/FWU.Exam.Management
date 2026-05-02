@@ -74,6 +74,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<Section>? Sections { get; set; }
     public DbSet<Semester>? Semesters { get; set; }
     public DbSet<SemesterEnrollment>? SemesterEnrollments { get; set; }
+    public DbSet<SemesterSubject>? SemesterSubjects { get; set; }
     public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
     public DbSet<StudentAdmission>? StudentAdmissions { get; set; }
     public DbSet<StudentCategory>? StudentCategories { get; set; }
@@ -83,12 +84,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<StudentQualification>? StudentQualifications { get; set; }
     public DbSet<StudentRegistration>? StudentRegistrations { get; set; }
     public DbSet<StudentRegistrationSearch>? StudentRegistrationSearches { get; set; }
-    public DbSet<SubjectBatch>? SubjectBatches { get; set; }
+    public DbSet<SubjectCatalog>? SubjectCatalogs { get; set; }
     public DbSet<SubjectDetail>? SubjectDetails { get; set; }
     public DbSet<SubjectGroup>? SubjectGroups { get; set; }
     public DbSet<SubjectGroupDetailMap>? SubjectGroupDetailMaps { get; set; }
+    public DbSet<SubjectOffering>? SubjectOfferings { get; set; }
     public DbSet<SubjectTriplicate>? SubjectTriplicates { get; set; }
     public DbSet<SubjectType>? SubjectTypes { get; set; }
+    public DbSet<CurriculumVersion>? CurriculumVersions { get; set; }
     public DbSet<UserAttachment>? UserAttachments { get; set; }
     public DbSet<UserProgramMap>? UserProgramMaps { get; set; }
     public DbSet<YearPart>? YearParts { get; set; }
@@ -139,6 +142,81 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<Program>().ToTable("Programs");
 
         builder.Entity<SubjectGroupDetailMap>().HasKey(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId });
+
+        builder.Entity<SubjectCatalog>()
+            .HasIndex(sc => sc.SubjectCode)
+            .IsUnique();
+
+        builder.Entity<SubjectCatalog>()
+            .HasOne(sc => sc.SubjectType)
+            .WithMany(st => st.SubjectCatalogs)
+            .HasForeignKey(sc => sc.SubjectTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>()
+            .HasOne(so => so.SubjectCatalog)
+            .WithMany(sc => sc.SubjectOfferings)
+            .HasForeignKey(so => so.SubjectCatalogId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>()
+            .HasOne(so => so.Program)
+            .WithMany()
+            .HasForeignKey(so => so.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>()
+            .HasOne(so => so.Semester)
+            .WithMany(s => s.SubjectOfferings)
+            .HasForeignKey(so => so.SemesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>()
+            .HasOne(so => so.SubjectGroup)
+            .WithMany(sg => sg.SubjectOfferings)
+            .HasForeignKey(so => so.SubjectGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>()
+            .HasOne(so => so.AcademicYear)
+            .WithMany()
+            .HasForeignKey(so => so.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>().Property(x => x.TheoryFullMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.TheoryPassMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.PracticalFullMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.PracticalPassMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.InternalTheoryFullMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.InternalTheoryPassMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.InternalPracticalFullMarks).HasPrecision(5, 2);
+        builder.Entity<SubjectOffering>().Property(x => x.InternalPracticalPassMarks).HasPrecision(5, 2);
+
+        builder.Entity<CurriculumVersion>()
+            .HasOne(cv => cv.Program)
+            .WithMany()
+            .HasForeignKey(cv => cv.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<CurriculumVersion>()
+            .HasOne(cv => cv.EffectiveAcademicYear)
+            .WithMany()
+            .HasForeignKey(cv => cv.EffectiveAcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterSubject>().HasKey(ss => new { ss.SemesterId, ss.SubjectDetailId });
+
+        builder.Entity<SemesterSubject>()
+            .HasOne(ss => ss.Semester)
+            .WithMany(s => s.SemesterSubjects)
+            .HasForeignKey(ss => ss.SemesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterSubject>()
+            .HasOne(ss => ss.SubjectDetail)
+            .WithMany()
+            .HasForeignKey(ss => ss.SubjectDetailId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Batch>()
             .HasOne(b => b.AcademicYear)
@@ -447,29 +525,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sq => sq.PreviousLevelId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<SubjectGroup>()
-            .HasOne(sg => sg.Program)
-            .WithMany(p => p.SubjectGroups)
-            .HasForeignKey(sg => sg.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectGroup>()
-            .HasOne(sg => sg.YearPart)
-            .WithMany(yp => yp.SubjectGroups)
-            .HasForeignKey(sg => sg.YearPartId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectBatch>()
-            .HasOne(sb => sb.AcademicYear)
-            .WithMany()
-            .HasForeignKey(sb => sb.EffectiveAcademicYearId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectBatch>()
-            .HasOne(sb => sb.Program)
-            .WithMany(p => p.SubjectBatches)
-            .HasForeignKey(sb => sb.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // LEGACY: SubjectGroup no longer has Program/YearPart - simplified to pure grouping
+        // Old configuration removed:
+        // builder.Entity<SubjectGroup>()
+        //     .HasOne(sg => sg.Program)
+        //     .WithMany(p => p.SubjectGroups)
+        //     .HasForeignKey(sg => sg.ProgramsId)
+        //     .OnDelete(DeleteBehavior.Restrict);
+        //
+        // builder.Entity<SubjectGroup>()
+        //     .HasOne(sg => sg.YearPart)
+        //     .WithMany(yp => yp.SubjectGroups)
+        //     .HasForeignKey(sg => sg.YearPartId)
+        //     .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SubjectGroupDetailMap>()
             .HasOne(sgdm => sgdm.SubjectGroup)

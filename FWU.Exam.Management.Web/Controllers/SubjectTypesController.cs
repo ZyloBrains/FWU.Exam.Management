@@ -21,20 +21,18 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // GET: SubjectTypes with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "SubjectTypeName", string sortDir = "asc", int pageSize = 10)
+        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
         {
             var query = _context.SubjectTypes.AsNoTracking();
 
-            // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(s =>
-                    s.SubjectTypeName.Contains(search) ||
-                    (s.Remarks != null && s.Remarks.Contains(search))
+                    s.Name.Contains(search) ||
+                    (s.Code != null && s.Code.Contains(search))
                 );
             }
 
-            // Apply sorting
             query = sortDir.ToLower() == "desc"
                 ? query.OrderByDescending(GetSortProperty(sort))
                 : query.OrderBy(GetSortProperty(sort));
@@ -60,12 +58,12 @@ namespace fwu_examination_management_system.Controllers
         {
             return sort.ToLower() switch
             {
-                "subjecttypename" => s => s.SubjectTypeName,
-                "remarks" => s => s.Remarks,
+                "name" => s => s.Name,
+                "code" => s => s.Code,
                 "maxallowedsubjects" => s => s.MaxAllowedSubjects,
                 "isdefault" => s => s.IsDefault,
                 "isactive" => s => s.IsActive,
-                _ => s => s.SubjectTypeName
+                _ => s => s.Name
             };
         }
 
@@ -74,23 +72,20 @@ namespace fwu_examination_management_system.Controllers
         {
             var query = _context.SubjectTypes.AsNoTracking();
 
-            // Apply search filter
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(s =>
-                    s.SubjectTypeName.Contains(search) ||
-                    (s.Remarks != null && s.Remarks.Contains(search))
+                    s.Name.Contains(search) ||
+                    (s.Code != null && s.Code.Contains(search))
                 );
             }
 
             var totalCount = await query.CountAsync();
 
-            // Apply sorting
             query = sortDir.ToLower() == "desc"
                 ? query.OrderByDescending(GetSortProperty(sort))
                 : query.OrderBy(GetSortProperty(sort));
 
-            // Apply pagination
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -109,19 +104,18 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectTypeName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
             var sb = new StringBuilder();
 
-            // CSV header
-            sb.AppendLine("Subject Type Name,Remarks,Max Allowed Subjects,Is Default,Status");
+            sb.AppendLine("Code,Name,Max Allowed Subjects,Is Default,Status");
 
             foreach (var s in items)
             {
-                sb.AppendLine($"{EscapeCsv(s.SubjectTypeName)}," +
-                              $"{EscapeCsv(s.Remarks)}," +
+                sb.AppendLine($"{EscapeCsv(s.Code)}," +
+                              $"{EscapeCsv(s.Name)}," +
                               $"{s.MaxAllowedSubjects}," +
                               $"{(s.IsDefault ? "Yes" : "No")}," +
                               $"{(s.IsActive ? "Active" : "Inactive")}");
@@ -133,7 +127,7 @@ namespace fwu_examination_management_system.Controllers
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectTypeName", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -174,7 +168,7 @@ namespace fwu_examination_management_system.Controllers
         // POST: SubjectTypes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SubjectTypeName,Remarks,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
+        public async Task<IActionResult> Create([Bind("Id,Code,Name,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
         {
             if (ModelState.IsValid)
             {
@@ -215,7 +209,7 @@ namespace fwu_examination_management_system.Controllers
         // POST: SubjectTypes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectTypeName,Remarks,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
         {
             if (id != subjectType.Id)
             {

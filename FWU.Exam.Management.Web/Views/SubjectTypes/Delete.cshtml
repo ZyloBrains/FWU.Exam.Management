@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Subjects.SubjectType
+@model fwu_examination_management_system.Data.Models.Subjects.SubjectType
 
 @{
     ViewData["Title"] = "Delete Subject Type";
@@ -34,7 +34,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 mb-8">
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Type Name</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.SubjectTypeName)</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Name)</p>
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Max Allowed Subjects</p>
@@ -71,8 +71,8 @@
                 </div>
             </div>
             <div class="md:col-span-2">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
-                <p class="text-gray-800 font-medium">@(Model.Remarks ?? "-")</p>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Code</p>
+                <p class="text-gray-800 font-medium">@(Model.Code ?? "-")</p>
             </div>
         </div>
 
