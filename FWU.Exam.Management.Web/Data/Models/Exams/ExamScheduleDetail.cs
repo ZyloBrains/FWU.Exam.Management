@@ -9,7 +9,6 @@ public class ExamScheduleDetail
 
     public int ExamScheduleId { get; set; }
     public int ExamTypeId { get; set; }
-    public int SubjectDetailId { get; set; }
     public DateTime ExamDate { get; set; }
 
     [MaxLength(10)]
@@ -23,6 +22,4 @@ public class ExamScheduleDetail
     public virtual ExamSchedule? ExamSchedule { get; set; }
 
     public virtual ExamType? ExamType { get; set; }
-
-    public virtual SubjectDetail? SubjectDetail { get; set; }
 }

@@ -56,7 +56,7 @@ public class DashboardController : Controller
             TotalStudents = await _context.StudentRegistrations.CountAsync(),
             TotalExamSchedules = await _context.ExamSchedules.CountAsync(),
             TotalExamRegistrations = await _context.ExamRegistrations.CountAsync(),
-            TotalSubjects = await _context.SubjectDetails.CountAsync(),
+            TotalSubjects = await _context.SubjectCatalogs.CountAsync(),
             TotalAcademicYears = await _context.AcademicYears.CountAsync(),
             TotalBanks = await _context.Banks.CountAsync(),
             TotalBoards = await _context.Boards.CountAsync(),

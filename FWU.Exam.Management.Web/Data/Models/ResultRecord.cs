@@ -13,7 +13,6 @@ public class ResultRecord
     public int ProgramsId { get; set; }
     public int ExamTypeId { get; set; }
     public int CollegeId { get; set; }
-    public int SubjectDetailId { get; set; }
 
     [Required, MaxLength(3)]
     public string? Year { get; set; }
@@ -83,8 +82,6 @@ public class ResultRecord
     public virtual ExamType? ExamType { get; set; }
 
     public virtual College? College { get; set; }
-
-    public virtual SubjectDetail? SubjectDetail { get; set; }
 
     public virtual ExamSchedule? ExamSchedule { get; set; }
 }

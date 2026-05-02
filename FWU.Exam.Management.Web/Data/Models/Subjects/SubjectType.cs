@@ -17,5 +17,4 @@ public class SubjectType
     public bool IsActive { get; set; }
 
     public virtual ICollection<SubjectCatalog>? SubjectCatalogs { get; set; }
-    public virtual ICollection<SubjectDetail>? SubjectDetails { get; set; }
 }

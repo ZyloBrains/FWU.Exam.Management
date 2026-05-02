@@ -27,7 +27,6 @@ namespace fwu_examination_management_system.Controllers
                 .Include(p => p.Board)
                 .Include(p => p.Faculty)
                 .Include(p => p.Level)
-                .Include(p => p.ProgramPeriodType)
                 .AsNoTracking();
 
             // Apply search filter
@@ -40,8 +39,7 @@ namespace fwu_examination_management_system.Controllers
                     p.Remarks.Contains(search) ||
                     (p.Level != null && p.Level.LevelName.Contains(search)) ||
                     (p.Faculty != null && p.Faculty.FacultyCode.Contains(search)) ||
-                    (p.Board != null && p.Board.BoardName.Contains(search)) ||
-                    (p.ProgramPeriodType != null && p.ProgramPeriodType.ProgramPeriodTypeName.Contains(search))
+                    (p.Board != null && p.Board.BoardName.Contains(search))
                 );
             }
 
@@ -92,7 +90,6 @@ namespace fwu_examination_management_system.Controllers
                 .Include(p => p.Board)
                 .Include(p => p.Faculty)
                 .Include(p => p.Level)
-                .Include(p => p.ProgramPeriodType)
                 .AsNoTracking();
 
             // Apply search filter
@@ -105,8 +102,7 @@ namespace fwu_examination_management_system.Controllers
                     p.Remarks.Contains(search) ||
                     (p.Level != null && p.Level.LevelName.Contains(search)) ||
                     (p.Faculty != null && p.Faculty.FacultyCode.Contains(search)) ||
-                    (p.Board != null && p.Board.BoardName.Contains(search)) ||
-                    (p.ProgramPeriodType != null && p.ProgramPeriodType.ProgramPeriodTypeName.Contains(search))
+                    (p.Board != null && p.Board.BoardName.Contains(search))
                 );
             }
 
@@ -148,13 +144,12 @@ namespace fwu_examination_management_system.Controllers
             foreach (var p in items)
             {
                 sb.AppendLine($"{EscapeCsv(p.ProgramCode)}," +
-                              $"{EscapeCsv(p.ProgramName)}," +
-                              $"{EscapeCsv(p.ShortName)}," +
-                              $"{EscapeCsv(p.Level?.LevelName)}," +
-                              $"{EscapeCsv(p.Faculty?.FacultyCode)}," +
-                              $"{EscapeCsv(p.Board?.BoardName)}," +
-                              $"{EscapeCsv(p.ProgramPeriodType?.ProgramPeriodTypeName)}," +
-                              $"{p.Duration}," +
+                               $"{EscapeCsv(p.ProgramName)}," +
+                               $"{EscapeCsv(p.ShortName)}," +
+                               $"{EscapeCsv(p.Level?.LevelName)}," +
+                               $"{EscapeCsv(p.Faculty?.FacultyCode)}," +
+                               $"{EscapeCsv(p.Board?.BoardName)}," +
+                               $"{p.Duration}," +
                               $"{p.GrandTotalMarks}," +
                               $"{(p.HasMultipleIntakes ? "Yes" : "No")}," +
                               $"{p.NumberOfSeats}," +
@@ -196,7 +191,6 @@ namespace fwu_examination_management_system.Controllers
                 .Include(p => p.Board)
                 .Include(p => p.Faculty)
                 .Include(p => p.Level)
-                .Include(p => p.ProgramPeriodType)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (program == null)
             {
@@ -212,14 +206,13 @@ namespace fwu_examination_management_system.Controllers
             ViewData["BoardId"] = new SelectList(_context.Boards, "Id", "BoardName");
             ViewData["FacultyId"] = new SelectList(_context.Faculties, "Id", "FacultyCode");
             ViewData["LevelId"] = new SelectList(_context.Levels, "Id", "LevelName");
-            ViewData["ProgramPeriodTypeId"] = new SelectList(_context.ProgramPeriodTypes, "Id", "ProgramPeriodTypeName");
             return View();
         }
 
         // POST: Programs1/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,LevelId,FacultyId,BoardId,ProgramPeriodTypeId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
+        public async Task<IActionResult> Create([Bind("Id,LevelId,FacultyId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
         {
             if (ModelState.IsValid)
             {
@@ -230,7 +223,6 @@ namespace fwu_examination_management_system.Controllers
             ViewData["BoardId"] = new SelectList(_context.Boards, "Id", "BoardName", program.BoardId);
             ViewData["FacultyId"] = new SelectList(_context.Faculties, "Id", "FacultyCode", program.FacultyId);
             ViewData["LevelId"] = new SelectList(_context.Levels, "Id", "LevelName", program.LevelId);
-            ViewData["ProgramPeriodTypeId"] = new SelectList(_context.ProgramPeriodTypes, "Id", "ProgramPeriodTypeName", program.ProgramPeriodTypeId);
             return View(program);
         }
 
@@ -250,14 +242,13 @@ namespace fwu_examination_management_system.Controllers
             ViewData["BoardId"] = new SelectList(_context.Boards, "Id", "BoardName", program.BoardId);
             ViewData["FacultyId"] = new SelectList(_context.Faculties, "Id", "FacultyCode", program.FacultyId);
             ViewData["LevelId"] = new SelectList(_context.Levels, "Id", "LevelName", program.LevelId);
-            ViewData["ProgramPeriodTypeId"] = new SelectList(_context.ProgramPeriodTypes, "Id", "ProgramPeriodTypeName", program.ProgramPeriodTypeId);
             return View(program);
         }
 
         // POST: Programs1/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,BoardId,ProgramPeriodTypeId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
         {
             if (id != program.Id)
             {
@@ -287,7 +278,6 @@ namespace fwu_examination_management_system.Controllers
             ViewData["BoardId"] = new SelectList(_context.Boards, "Id", "BoardName", program.BoardId);
             ViewData["FacultyId"] = new SelectList(_context.Faculties, "Id", "FacultyCode", program.FacultyId);
             ViewData["LevelId"] = new SelectList(_context.Levels, "Id", "LevelName", program.LevelId);
-            ViewData["ProgramPeriodTypeId"] = new SelectList(_context.ProgramPeriodTypes, "Id", "ProgramPeriodTypeName", program.ProgramPeriodTypeId);
             return View(program);
         }
 
@@ -303,7 +293,6 @@ namespace fwu_examination_management_system.Controllers
                 .Include(p => p.Board)
                 .Include(p => p.Faculty)
                 .Include(p => p.Level)
-                .Include(p => p.ProgramPeriodType)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (program == null)
             {

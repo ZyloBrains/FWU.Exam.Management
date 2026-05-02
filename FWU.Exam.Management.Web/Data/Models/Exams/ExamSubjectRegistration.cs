@@ -8,7 +8,6 @@ public class ExamSubjectRegistration
     public int Id { get; set; }
 
     public int ExamRegistrationId { get; set; }
-    public int SubjectDetailId { get; set; }
     public int ExamTypeId { get; set; }
 
     [MaxLength(3)]
@@ -45,8 +44,6 @@ public class ExamSubjectRegistration
     public bool? IsExtra { get; set; }
     
     public virtual ExamRegistration? ExamRegistration { get; set; }
-
-    public virtual SubjectDetail? SubjectDetail { get; set; }
 
     public virtual ExamType? ExamType { get; set; }
     public virtual ExamSubjectRegistrationExamSession? ExamSubjectRegistrationExamSession { get; set; }

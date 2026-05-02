@@ -64,7 +64,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<PreferredExamCenter>? PreferredExamCenters { get; set; }
     public DbSet<PreviousLevel>? PreviousLevels { get; set; }
     public DbSet<Program>? Programs { get; set; }
-    public DbSet<ProgramPeriodType>? ProgramPeriodTypes { get; set; }
     public DbSet<ProgramSubjectPracticalCharge>? ProgramSubjectPracticalCharges { get; set; }
     public DbSet<ProgramYearPart>? ProgramYearParts { get; set; }
     public DbSet<QuestionSet>? QuestionSets { get; set; }
@@ -85,7 +84,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<StudentRegistration>? StudentRegistrations { get; set; }
     public DbSet<StudentRegistrationSearch>? StudentRegistrationSearches { get; set; }
     public DbSet<SubjectCatalog>? SubjectCatalogs { get; set; }
-    public DbSet<SubjectDetail>? SubjectDetails { get; set; }
     public DbSet<SubjectOffering>? SubjectOfferings { get; set; }
     public DbSet<SubjectTriplicate>? SubjectTriplicates { get; set; }
     public DbSet<SubjectType>? SubjectTypes { get; set; }
@@ -193,18 +191,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(cv => cv.EffectiveAcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<SemesterSubject>().HasKey(ss => new { ss.SemesterId, ss.SubjectDetailId });
+        builder.Entity<SemesterSubject>().HasKey(ss => new { ss.SemesterId });
 
         builder.Entity<SemesterSubject>()
             .HasOne(ss => ss.Semester)
             .WithMany(s => s.SemesterSubjects)
             .HasForeignKey(ss => ss.SemesterId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SemesterSubject>()
-            .HasOne(ss => ss.SubjectDetail)
-            .WithMany()
-            .HasForeignKey(ss => ss.SubjectDetailId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Batch>()
@@ -299,12 +291,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSubjectRegistration>()
-            .HasOne(esr => esr.SubjectDetail)
-            .WithMany(sd => sd.ExamSubjectRegistrations)
-            .HasForeignKey(esr => esr.SubjectDetailId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamSubjectRegistration>()
             .HasOne(esr => esr.ExamRegistration)
             .WithMany(er => er.ExamSubjectRegistrations)
             .HasForeignKey(esr => esr.ExamRegistrationId)
@@ -323,12 +309,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSubjectRegistrationInternal>()
-            .HasOne(esri => esri.SubjectDetail)
-            .WithMany(sd => sd.ExamSubjectRegistrationInternals)
-            .HasForeignKey(esri => esri.SubjectDetailId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamSubjectRegistrationInternal>()
             .HasOne(esri => esri.AcademicYear)
             .WithMany()
             .HasForeignKey(esri => esri.EntryAcademicYearId)
@@ -340,18 +320,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(esri => esri.StudentProgramYearPartId)
             .OnDelete(DeleteBehavior.Restrict);
                 
-        builder.Entity<SubjectDetail>()
-            .HasOne(sd => sd.Program)
-            .WithMany(p => p.SubjectDetails)
-            .HasForeignKey(sd => sd.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectDetail>()
-            .HasOne(sd => sd.SubjectType)
-            .WithMany(st => st.SubjectDetails)
-            .HasForeignKey(sd => sd.SubjectTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<ExamCenterDetail>()
             .HasOne(ecd => ecd.ExamCenter)
             .WithMany(ec => ec.ExamCenterDetails)
@@ -560,12 +528,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(rr => rr.College)
             .WithMany()
             .HasForeignKey(rr => rr.CollegeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ResultRecord>()
-            .HasOne(rr => rr.SubjectDetail)
-            .WithMany(sd => sd.ResultRecords)
-            .HasForeignKey(rr => rr.SubjectDetailId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ResultRecord>()
@@ -794,16 +756,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<PaymentPracticalSubjects>(e => e.Property(x => x.TotalAmount).HasPrecision(18, 2));
         builder.Entity<PaymentRequestLog>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
         builder.Entity<PeriodType>(e => e.Property(x => x.NumberOfMonths).HasPrecision(5, 2));
-        builder.Entity<ProgramPeriodType>(e => e.Property(x => x.NumberOfMonths).HasPrecision(5, 2));
         builder.Entity<ProgramSubjectPracticalCharge>(e => e.Property(x => x.PracticalSubjectCharge).HasPrecision(18, 2));
         builder.Entity<StudentQualification>(e => e.Property(x => x.Percentage).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.InternalPracticalFullMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.InternalPracticalPassMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.InternalTheoryFullMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.InternalTheoryPassMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.PracticalFullMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.PracticalPassMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.TheoryFullMarks).HasPrecision(5, 2));
-        builder.Entity<SubjectDetail>(e => e.Property(x => x.TheoryPassMarks).HasPrecision(5, 2));
     }
 }
