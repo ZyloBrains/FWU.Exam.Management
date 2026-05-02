@@ -11,7 +11,7 @@ namespace fwu_examination_management_system.Controllers;
 [Authorize]
 [Route("org/{officeCode}")]
 public class OrgDashboardController(
-    ApplicationDbContext context,
+    AppDbContext context,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller
 {

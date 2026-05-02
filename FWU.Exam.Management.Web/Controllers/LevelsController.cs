@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class LevelsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public LevelsController(ApplicationDbContext context)
+        public LevelsController(AppDbContext context)
         {
             _context = context;
         }

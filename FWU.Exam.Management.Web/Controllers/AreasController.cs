@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class AreasController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public AreasController(ApplicationDbContext context)
+        public AreasController(AppDbContext context)
         {
             _context = context;
         }

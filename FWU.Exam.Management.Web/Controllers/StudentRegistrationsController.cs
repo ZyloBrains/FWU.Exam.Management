@@ -2,18 +2,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Data.Models.Students;
-using fwu_examination_management_system.Data.Models.Colleges;
 using OfficeOpenXml;
 
 namespace fwu_examination_management_system.Controllers;
 
 public class StudentRegistrationsController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
 
-    public StudentRegistrationsController(ApplicationDbContext context)
+    public StudentRegistrationsController(AppDbContext context)
     {
         _context = context;
     }
@@ -179,8 +177,7 @@ public class StudentRegistrationsController : Controller
 
     private void PopulateSelectLists(StudentRegistration? studentRegistration = null)
     {
-        ViewData["AcademicYearId"] = new SelectList(_context.AcademicYears.Where(ay => ay.AcademicYearName != null).ToList(), "Id", "AcademicYearName", studentRegistration?.AcademicYearId);
-        ViewData["SemesterId"] = new SelectList(_context.Semesters.Where(s => s.SemesterName != null).ToList(), "Id", "SemesterName", studentRegistration?.SemesterId);
+        ViewData["AcademicYearId"] = new SelectList(_context.AcademicYears.Where(ay => ay.AcademicYearName != null).ToList(), "Id", "AcademicYearName", studentRegistration?.AcademicYearId);        
         ViewData["LevelId"] = new SelectList(_context.Levels.Where(l => l.LevelName != null).ToList(), "Id", "LevelName", studentRegistration?.LevelId);
         ViewData["FacultyId"] = new SelectList(_context.Faculties.Where(f => f.FacultyName != null).ToList(), "Id", "FacultyName", studentRegistration?.FacultyId);
         ViewData["CollegeId"] = new SelectList(_context.Colleges.Where(c => c.Name != null).ToList(), "Id", "Name", studentRegistration?.CollegeId);

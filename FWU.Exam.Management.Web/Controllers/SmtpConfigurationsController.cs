@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class SmtpConfigurationsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public SmtpConfigurationsController(ApplicationDbContext context)
+        public SmtpConfigurationsController(AppDbContext context)
         {
             _context = context;
         }

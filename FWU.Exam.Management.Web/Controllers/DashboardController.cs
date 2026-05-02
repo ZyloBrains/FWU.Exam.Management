@@ -11,11 +11,11 @@ namespace fwu_examination_management_system.Controllers;
 [Authorize]
 public class DashboardController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
     private readonly UserManager<AppUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
 
-    public DashboardController(ApplicationDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+    public DashboardController(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
     {
         _context = context;
         _userManager = userManager;

@@ -14,11 +14,11 @@ public class OrganizationController : Controller
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
     private readonly IFileUploadHelper _fileUploadHelper;
     private readonly UserManager<AppUser> _userManager;
 
-    public OrganizationController(ApplicationDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager)
+    public OrganizationController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager)
     {
         _context = context;
         _fileUploadHelper = fileUploadHelper;

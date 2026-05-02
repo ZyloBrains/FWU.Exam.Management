@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class CollegeProgramsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public CollegeProgramsController(ApplicationDbContext context)
+        public CollegeProgramsController(AppDbContext context)
         {
             _context = context;
         }

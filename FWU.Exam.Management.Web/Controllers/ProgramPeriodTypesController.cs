@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class ProgramPeriodTypesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public ProgramPeriodTypesController(ApplicationDbContext context)
+        public ProgramPeriodTypesController(AppDbContext context)
         {
             _context = context;
         }

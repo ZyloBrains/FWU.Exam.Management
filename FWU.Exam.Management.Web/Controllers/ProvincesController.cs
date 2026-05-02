@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class ProvincesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public ProvincesController(ApplicationDbContext context)
+        public ProvincesController(AppDbContext context)
         {
             _context = context;
         }

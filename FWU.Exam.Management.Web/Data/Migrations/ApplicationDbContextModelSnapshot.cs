@@ -10,7 +10,7 @@ using fwu_examination_management_system.Data;
 
 namespace fwu_examination_management_system.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(AppDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -368,7 +368,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("StudentRegistrationId");
 
-                    b.ToTable("ApplicationVouchers");
+                    b.ToTable("ApplicationVoucher");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Area", b =>
@@ -778,40 +778,6 @@ namespace fwu_examination_management_system.Migrations
                     b.ToTable("Ethnicities");
                 });
 
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ActiveExamSchedule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan?>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("ExamScheduleId")
-                        .HasColumnType("int");
-
-                    b.Property<TimeSpan?>("OpenTime")
-                        .HasColumnType("time");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(1024)
-                        .HasColumnType("nvarchar(1024)");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamScheduleId");
-
-                    b.ToTable("ActiveExamSchedules");
-                });
-
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamAttendanceStatus", b =>
                 {
                     b.Property<int>("Id")
@@ -1043,6 +1009,9 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int?>("RollNumberIndex")
                         .HasColumnType("int");
 
+                    b.Property<int?>("SemesterEnrollmentId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Sgpa")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -1072,6 +1041,8 @@ namespace fwu_examination_management_system.Migrations
                     b.HasIndex("ExamScheduleId");
 
                     b.HasIndex("ProgramsId");
+
+                    b.HasIndex("SemesterEnrollmentId");
 
                     b.HasIndex("StudentProgramYearPartId");
 
@@ -1249,14 +1220,11 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<DateTime?>("CollegeApprovalDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("EndDateAd")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("EndDateBs")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
-                    b.Property<TimeSpan>("EndTime")
+                    b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time");
 
                     b.Property<string>("ExamScheduleCode")
@@ -1287,39 +1255,24 @@ namespace fwu_examination_management_system.Migrations
                     b.Property<int>("LevelId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("NegativeMarks")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PartialBatchIds")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("ProgramIds")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<DateTime?>("PublishedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("RegularBatchIds")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Remarks")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<DateTime?>("StartDateAd")
-                        .HasColumnType("datetime2");
+                    b.Property<int?>("SemesterId")
+                        .HasColumnType("int");
 
                     b.Property<string>("StartDateBs")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
-                    b.Property<TimeSpan>("StartTime")
+                    b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
-                    b.Property<int>("YearPartId")
+                    b.Property<int?>("YearPartId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -1331,6 +1284,8 @@ namespace fwu_examination_management_system.Migrations
                     b.HasIndex("ExamTypeId");
 
                     b.HasIndex("LevelId");
+
+                    b.HasIndex("SemesterId");
 
                     b.HasIndex("YearPartId");
 
@@ -1362,7 +1317,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("ExamTypeId");
 
-                    b.ToTable("ExamScheduleBatches");
+                    b.ToTable("ExamScheduleBatch");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamScheduleDetail", b =>
@@ -1404,7 +1359,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("SubjectDetailId");
 
-                    b.ToTable("ExamScheduleDetails");
+                    b.ToTable("ExamScheduleDetail");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamScheduleParent", b =>
@@ -1425,7 +1380,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExamScheduleParents");
+                    b.ToTable("ExamScheduleParent");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamSubjectRegistration", b =>
@@ -1586,6 +1541,9 @@ namespace fwu_examination_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int?>("SemesterEnrollmentId")
+                        .HasColumnType("int");
+
                     b.Property<int>("StudentProgramYearPartId")
                         .HasColumnType("int");
 
@@ -1597,6 +1555,8 @@ namespace fwu_examination_management_system.Migrations
                     b.HasIndex("EntryAcademicYearId");
 
                     b.HasIndex("ExamScheduleId");
+
+                    b.HasIndex("SemesterEnrollmentId");
 
                     b.HasIndex("StudentProgramYearPartId");
 
@@ -2082,7 +2042,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("ExamScheduleParentId");
 
-                    b.ToTable("BankVouchers");
+                    b.ToTable("BankVoucher");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Payments.BillTitle", b =>
@@ -2122,7 +2082,7 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasIndex("ExamScheduleId");
 
-                    b.ToTable("BillTitles");
+                    b.ToTable("BillTitle");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Payments.ConnectIpsPaymentConfiguration", b =>
@@ -4058,6 +4018,76 @@ namespace fwu_examination_management_system.Migrations
                     b.ToTable("YearParts");
                 });
 
+            modelBuilder.Entity("fwu_examination_management_system.Data.Semesters.Semester", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcademicYearId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Remark")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcademicYearId");
+
+                    b.ToTable("Semesters");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Semesters.SemesterEnrollment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EnrollmentStatus")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SemesterId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentAdmissionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SemesterId");
+
+                    b.HasIndex("StudentAdmissionId");
+
+                    b.ToTable("SemesterEnrollment");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -4136,7 +4166,7 @@ namespace fwu_examination_management_system.Migrations
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.ApplicationVoucher", b =>
                 {
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("ApplicationVouchers")
+                        .WithMany()
                         .HasForeignKey("ExamScheduleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -4249,17 +4279,6 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("Province");
                 });
 
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ActiveExamSchedule", b =>
-                {
-                    b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("ActiveExamSchedules")
-                        .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ExamSchedule");
-                });
-
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamCenter", b =>
                 {
                     b.HasOne("fwu_examination_management_system.Data.Models.Colleges.College", "College")
@@ -4309,8 +4328,7 @@ namespace fwu_examination_management_system.Migrations
                 {
                     b.HasOne("fwu_examination_management_system.Data.Models.Colleges.CollegeType", "CollegeType")
                         .WithMany("ExamFormFeeRates")
-                        .HasForeignKey("CollegeTypeId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("CollegeTypeId");
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamFormFeeName", "ExamFormFeeName")
                         .WithMany("ExamFormFeeRates")
@@ -4319,13 +4337,13 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("ExamFormFeeRates")
+                        .WithMany()
                         .HasForeignKey("ExamScheduleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamType", "ExamType")
-                        .WithMany("ExamFormFeeRates")
+                        .WithMany()
                         .HasForeignKey("ExamTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -4372,6 +4390,10 @@ namespace fwu_examination_management_system.Migrations
                         .WithMany("ExamRegistrations")
                         .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("fwu_examination_management_system.Data.Semesters.SemesterEnrollment", null)
+                        .WithMany("ExamRegistrations")
+                        .HasForeignKey("SemesterEnrollmentId");
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Students.StudentProgramYearPart", "StudentProgramYearPart")
                         .WithMany("ExamRegistrations")
@@ -4429,7 +4451,7 @@ namespace fwu_examination_management_system.Migrations
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamScheduleParent", "ExamScheduleParent")
                         .WithMany("ExamRollNumberSetups")
                         .HasForeignKey("ExamScheduleParentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ExamScheduleParent");
@@ -4486,13 +4508,12 @@ namespace fwu_examination_management_system.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamScheduleParent", "ExamScheduleParent")
+                    b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamScheduleParent", null)
                         .WithMany("ExamSchedules")
-                        .HasForeignKey("ExamScheduleParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ExamScheduleParentId");
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamType", "ExamType")
-                        .WithMany("ExamSchedules")
+                        .WithMany()
                         .HasForeignKey("ExamTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -4503,21 +4524,19 @@ namespace fwu_examination_management_system.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.YearPart", "YearPart")
+                    b.HasOne("fwu_examination_management_system.Data.Semesters.Semester", null)
                         .WithMany("ExamSchedules")
-                        .HasForeignKey("YearPartId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("SemesterId");
+
+                    b.HasOne("fwu_examination_management_system.Data.Models.YearPart", null)
+                        .WithMany("ExamSchedules")
+                        .HasForeignKey("YearPartId");
 
                     b.Navigation("AcademicYear");
-
-                    b.Navigation("ExamScheduleParent");
 
                     b.Navigation("ExamType");
 
                     b.Navigation("Level");
-
-                    b.Navigation("YearPart");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamScheduleBatch", b =>
@@ -4525,19 +4544,19 @@ namespace fwu_examination_management_system.Migrations
                     b.HasOne("fwu_examination_management_system.Data.Models.Batch", "Batch")
                         .WithMany("ExamScheduleBatches")
                         .HasForeignKey("BatchId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("ExamScheduleBatches")
+                        .WithMany()
                         .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamType", "ExamType")
-                        .WithMany("ExamScheduleBatches")
+                        .WithMany()
                         .HasForeignKey("ExamTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Batch");
@@ -4550,21 +4569,21 @@ namespace fwu_examination_management_system.Migrations
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamScheduleDetail", b =>
                 {
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("ExamScheduleDetails")
+                        .WithMany()
                         .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamType", "ExamType")
-                        .WithMany("ExamScheduleDetails")
+                        .WithMany()
                         .HasForeignKey("ExamTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Subjects.SubjectDetail", "SubjectDetail")
                         .WithMany("ExamScheduleDetails")
                         .HasForeignKey("SubjectDetailId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ExamSchedule");
@@ -4583,7 +4602,7 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamType", "ExamType")
-                        .WithMany("ExamSubjectRegistrations")
+                        .WithMany()
                         .HasForeignKey("ExamTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -4622,8 +4641,11 @@ namespace fwu_examination_management_system.Migrations
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
                         .WithMany()
-                        .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ExamScheduleId");
+
+                    b.HasOne("fwu_examination_management_system.Data.Semesters.SemesterEnrollment", null)
+                        .WithMany("ExamSubjectRegistrationInternals")
+                        .HasForeignKey("SemesterEnrollmentId");
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Students.StudentProgramYearPart", "StudentProgramYearPart")
                         .WithMany("ExamSubjectRegistrationInternals")
@@ -4731,7 +4753,7 @@ namespace fwu_examination_management_system.Migrations
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Payments.BillTitle", b =>
                 {
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("BillTitles")
+                        .WithMany()
                         .HasForeignKey("ExamScheduleId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -4757,9 +4779,9 @@ namespace fwu_examination_management_system.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany("PaymentRequestLogs")
+                        .WithMany()
                         .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("fwu_examination_management_system.Data.Models.Payments.PaymentType", "PaymentType")
@@ -5308,6 +5330,36 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("ProgramPeriodType");
                 });
 
+            modelBuilder.Entity("fwu_examination_management_system.Data.Semesters.Semester", b =>
+                {
+                    b.HasOne("fwu_examination_management_system.Data.Models.AcademicYear", "AcademicYear")
+                        .WithMany()
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AcademicYear");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Semesters.SemesterEnrollment", b =>
+                {
+                    b.HasOne("fwu_examination_management_system.Data.Semesters.Semester", "Semester")
+                        .WithMany("SemesterEnrollments")
+                        .HasForeignKey("SemesterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("fwu_examination_management_system.Data.Models.Students.StudentAdmission", "StudentAdmission")
+                        .WithMany()
+                        .HasForeignKey("StudentAdmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Semester");
+
+                    b.Navigation("StudentAdmission");
+                });
+
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.AcademicYear", b =>
                 {
                     b.Navigation("Batches");
@@ -5416,23 +5468,9 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamSchedule", b =>
                 {
-                    b.Navigation("ActiveExamSchedules");
-
-                    b.Navigation("ApplicationVouchers");
-
-                    b.Navigation("BillTitles");
-
                     b.Navigation("ExamCenters");
 
-                    b.Navigation("ExamFormFeeRates");
-
                     b.Navigation("ExamRegistrations");
-
-                    b.Navigation("ExamScheduleBatches");
-
-                    b.Navigation("ExamScheduleDetails");
-
-                    b.Navigation("PaymentRequestLogs");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamScheduleParent", b =>
@@ -5447,19 +5485,6 @@ namespace fwu_examination_management_system.Migrations
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamSubjectRegistration", b =>
                 {
                     b.Navigation("ExamSubjectRegistrationExamSession");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamType", b =>
-                {
-                    b.Navigation("ExamFormFeeRates");
-
-                    b.Navigation("ExamScheduleBatches");
-
-                    b.Navigation("ExamScheduleDetails");
-
-                    b.Navigation("ExamSchedules");
-
-                    b.Navigation("ExamSubjectRegistrations");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Faculty", b =>
@@ -5647,6 +5672,20 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("SubjectDetails");
 
                     b.Navigation("SubjectGroups");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Semesters.Semester", b =>
+                {
+                    b.Navigation("ExamSchedules");
+
+                    b.Navigation("SemesterEnrollments");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Semesters.SemesterEnrollment", b =>
+                {
+                    b.Navigation("ExamRegistrations");
+
+                    b.Navigation("ExamSubjectRegistrationInternals");
                 });
 #pragma warning restore 612, 618
         }

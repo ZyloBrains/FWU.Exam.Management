@@ -18,10 +18,10 @@ public class LoginModel : PageModel
 
     private readonly SignInManager<AppUser> _signInManager;
     private readonly UserManager<AppUser> _userManager;
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, ILogger<LoginModel> logger)
+    public LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, AppDbContext context, ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
         _userManager = userManager;

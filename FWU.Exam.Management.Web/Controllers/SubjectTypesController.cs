@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class SubjectTypesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public SubjectTypesController(ApplicationDbContext context)
+        public SubjectTypesController(AppDbContext context)
         {
             _context = context;
         }

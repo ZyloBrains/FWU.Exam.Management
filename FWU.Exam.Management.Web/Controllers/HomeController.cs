@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace fwu_examination_management_system.Controllers;
 
-public class HomeController(UserManager<AppUser> userManager, ApplicationDbContext context) : Controller
+public class HomeController(UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()
     {

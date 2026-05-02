@@ -11,7 +11,7 @@ using fwu_examination_management_system.Data;
 
 namespace fwu_examination_management_system.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(AppDbContext))]
     [Migration("20260429061401_AddStudentRegister")]
     partial class AddStudentRegister
     {

@@ -7,9 +7,9 @@ namespace fwu_examination_management_system.Controllers;
 
 public class AcademicYearsController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
 
-    public AcademicYearsController(ApplicationDbContext context)
+    public AcademicYearsController(AppDbContext context)
     {
         _context = context;
     }

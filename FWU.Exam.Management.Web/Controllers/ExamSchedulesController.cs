@@ -9,9 +9,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class ExamSchedulesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public ExamSchedulesController(ApplicationDbContext context)
+        public ExamSchedulesController(AppDbContext context)
         {
             _context = context;
         }

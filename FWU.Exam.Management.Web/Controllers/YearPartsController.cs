@@ -13,9 +13,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class YearPartsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public YearPartsController(ApplicationDbContext context)
+        public YearPartsController(AppDbContext context)
         {
             _context = context;
         }

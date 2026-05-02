@@ -11,7 +11,7 @@ public partial class EntryPoint
     private static async Task Main(string[] args)
     {
         // Set EPPlus license context
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        //ExcelPackage.License = new EPPlusLicense();
 
         var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +20,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
 
-        builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+        builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             options.UseSqlServer(connectionString);
@@ -29,7 +29,7 @@ public partial class EntryPoint
 
         builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>();
         builder.Services.AddControllersWithViews();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
         var app = builder.Build();

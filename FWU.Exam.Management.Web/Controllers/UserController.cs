@@ -12,9 +12,9 @@ public class UserController : Controller
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
-    private readonly ApplicationDbContext _context;
+    private readonly AppDbContext _context;
 
-    public UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
+    public UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context)
     {
         _userManager = userManager;
         _roleManager = roleManager;

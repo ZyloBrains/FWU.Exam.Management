@@ -5,27 +5,23 @@ using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Payments;
 using fwu_examination_management_system.Data.Models.Students;
 using fwu_examination_management_system.Data.Models.Subjects;
+using fwu_examination_management_system.Data.Semesters;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
 namespace fwu_examination_management_system.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ILogger<ApplicationDbContext> logger) 
+public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbContext> logger) 
     : IdentityDbContext<AppUser>(options)
 {
-    private readonly ILogger<ApplicationDbContext> _logger = logger;
+    private readonly ILogger<AppDbContext> _logger = logger;
 
     public DbSet<Organization>? Organizations { get; set; }
     public DbSet<AcademicYear>? AcademicYears { get; set; }
-    public DbSet<ActiveExamSchedule>? ActiveExamSchedules { get; set; }
-    public DbSet<ApplicationVoucher>? ApplicationVouchers { get; set; }
-    public DbSet<Area>? Areas { get; set; }
-    public DbSet<Bank>? Banks { get; set; }
-    public DbSet<BankVoucher>? BankVouchers { get; set; }
-    public DbSet<Batch>? Batches { get; set; }
-    public DbSet<BillTitle>? BillTitles { get; set; }
-    public DbSet<Board>? Boards { get; set; }
+    public DbSet<Area> Areas { get; set; }
+    public DbSet<Bank> Banks { get; set; }
+    public DbSet<Batch> Batches { get; set; }
+    public DbSet<Board> Boards { get; set; }
     public DbSet<College>? Colleges { get; set; }
     public DbSet<CollegeProfile>? CollegeProfiles { get; set; }
     public DbSet<CollegeProgram>? CollegePrograms { get; set; }
@@ -46,8 +42,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ExamRollNumberSetup>? ExamRollNumberSetups { get; set; }
     public DbSet<ExamRollNumberSetupDetail>? ExamRollNumberSetupDetails { get; set; }
     public DbSet<ExamSchedule>? ExamSchedules { get; set; }
-    public DbSet<ExamScheduleBatch>? ExamScheduleBatches { get; set; }
-    public DbSet<ExamScheduleDetail>? ExamScheduleDetails { get; set; }
     public DbSet<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
     public DbSet<ExamSubjectRegistrationExamSession>? ExamSubjectRegistrationExamSessions { get; set; }
     public DbSet<ExamSubjectRegistrationInternal>? ExamSubjectRegistrationInternals { get; set; }
@@ -73,19 +67,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ProgramPeriodType>? ProgramPeriodTypes { get; set; }
     public DbSet<ProgramSubjectPracticalCharge>? ProgramSubjectPracticalCharges { get; set; }
     public DbSet<ProgramYearPart>? ProgramYearParts { get; set; }
-    public DbSet<ProgramSemester>? ProgramSemesters { get; set; }
     public DbSet<QuestionSet>? QuestionSets { get; set; }
     public DbSet<Region>? Regions { get; set; }
     public DbSet<ResultRecord>? ResultRecords { get; set; }
     public DbSet<SchoolType>? SchoolTypes { get; set; }
     public DbSet<Section>? Sections { get; set; }
     public DbSet<Semester>? Semesters { get; set; }
+    public DbSet<SemesterEnrollment>? SemesterEnrollments { get; set; }
     public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
     public DbSet<StudentAdmission>? StudentAdmissions { get; set; }
     public DbSet<StudentCategory>? StudentCategories { get; set; }
     public DbSet<StudentGuardian>? StudentGuardians { get; set; }
     public DbSet<StudentProgramYearPart>? StudentProgramYearParts { get; set; }
-    public DbSet<StudentProgramSemester>? StudentProgramSemesters { get; set; }
+    public DbSet<SemesterEnrollment>? StudentProgramSemesters { get; set; }
     public DbSet<StudentQualification>? StudentQualifications { get; set; }
     public DbSet<StudentRegistration>? StudentRegistrations { get; set; }
     public DbSet<StudentRegistrationSearch>? StudentRegistrationSearches { get; set; }
@@ -152,24 +146,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasForeignKey(b => b.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<ExamScheduleBatch>()
-            .HasOne(esb => esb.ExamSchedule)
-            .WithMany()
-            .HasForeignKey(esb => esb.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleBatch>()
-            .HasOne(esb => esb.Batch)
-            .WithMany()
-            .HasForeignKey(esb => esb.BatchId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleBatch>()
-            .HasOne(esb => esb.ExamType)
-            .WithMany()
-            .HasForeignKey(esb => esb.ExamTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
+        
         builder.Entity<ExamSchedule>()
             .HasOne(es => es.AcademicYear)
             .WithMany(ay => ay.ExamSchedules)
@@ -186,12 +163,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasOne(es => es.ExamType)
             .WithMany()
             .HasForeignKey(es => es.ExamTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ActiveExamSchedule>()
-            .HasOne(aes => aes.ExamSchedule)
-            .WithMany()
-            .HasForeignKey(aes => aes.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamCenter>()
@@ -260,24 +231,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasForeignKey(er => er.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<ExamScheduleDetail>()
-            .HasOne(esd => esd.SubjectDetail)
-            .WithMany(sd => sd.ExamScheduleDetails)
-            .HasForeignKey(esd => esd.SubjectDetailId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleDetail>()
-            .HasOne(esd => esd.ExamSchedule)
-            .WithMany()
-            .HasForeignKey(esd => esd.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleDetail>()
-            .HasOne(esd => esd.ExamType)
-            .WithMany()
-            .HasForeignKey(esd => esd.ExamTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<ExamSubjectRegistration>()
             .HasOne(esr => esr.SubjectDetail)
             .WithMany(sd => sd.ExamSubjectRegistrations)
@@ -319,13 +272,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(spyp => spyp.ExamSubjectRegistrationInternals)
             .HasForeignKey(esri => esri.StudentProgramYearPartId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamSubjectRegistrationInternal>()
-            .HasOne(esri => esri.ExamSchedule)
-            .WithMany()
-            .HasForeignKey(esri => esri.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
-
+                
         builder.Entity<SubjectDetail>()
             .HasOne(sd => sd.SubjectGroup)
             .WithMany(sg => sg.SubjectDetails)
@@ -721,13 +668,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany()
             .HasForeignKey(effr => effr.ExamTypeId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamRollNumberSetup>()
-            .HasOne(ers => ers.ExamScheduleParent)
-            .WithMany(esp => esp.ExamRollNumberSetups)
-            .HasForeignKey(ers => ers.ExamScheduleParentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
+                
         builder.Entity<PasswordResetLog>()
             .HasOne(prl => prl.User)
             .WithMany()

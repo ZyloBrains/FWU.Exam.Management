@@ -12,9 +12,9 @@ namespace fwu_examination_management_system.Controllers
 {
     public class MunicipalitiesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public MunicipalitiesController(ApplicationDbContext context)
+        public MunicipalitiesController(AppDbContext context)
         {
             _context = context;
         }

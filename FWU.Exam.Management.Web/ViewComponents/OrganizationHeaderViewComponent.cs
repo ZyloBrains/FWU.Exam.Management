@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace fwu_examination_management_system.ViewComponents;
 
-public class OrganizationHeaderViewComponent(ApplicationDbContext context, UserManager<AppUser> userManager) : ViewComponent
+public class OrganizationHeaderViewComponent(AppDbContext context, UserManager<AppUser> userManager) : ViewComponent
 {
     public async Task<IViewComponentResult> InvokeAsync()
     {
