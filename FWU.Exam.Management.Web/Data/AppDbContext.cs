@@ -73,7 +73,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<Section>? Sections { get; set; }
     public DbSet<Semester>? Semesters { get; set; }
     public DbSet<SemesterEnrollment>? SemesterEnrollments { get; set; }
-    public DbSet<SemesterSubject>? SemesterSubjects { get; set; }
     public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
     public DbSet<StudentAdmission>? StudentAdmissions { get; set; }
     public DbSet<StudentCategory>? StudentCategories { get; set; }
@@ -163,22 +162,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany(s => s.SubjectOfferings)
             .HasForeignKey(so => so.SemesterId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectOffering>()
-            .HasOne(so => so.AcademicYear)
-            .WithMany()
-            .HasForeignKey(so => so.AcademicYearId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectOffering>().Property(x => x.TheoryFullMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.TheoryPassMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.PracticalFullMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.PracticalPassMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.InternalTheoryFullMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.InternalTheoryPassMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.InternalPracticalFullMarks).HasPrecision(5, 2);
-        builder.Entity<SubjectOffering>().Property(x => x.InternalPracticalPassMarks).HasPrecision(5, 2);
-
+                
         builder.Entity<CurriculumVersion>()
             .HasOne(cv => cv.Program)
             .WithMany()
@@ -189,14 +173,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(cv => cv.EffectiveAcademicYear)
             .WithMany()
             .HasForeignKey(cv => cv.EffectiveAcademicYearId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SemesterSubject>().HasKey(ss => new { ss.SemesterId });
-
-        builder.Entity<SemesterSubject>()
-            .HasOne(ss => ss.Semester)
-            .WithMany(s => s.SemesterSubjects)
-            .HasForeignKey(ss => ss.SemesterId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Batch>()

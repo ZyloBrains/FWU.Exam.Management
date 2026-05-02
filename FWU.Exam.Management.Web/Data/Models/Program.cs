@@ -48,9 +48,5 @@ public class Program
 
     public virtual ICollection<CollegeProgram>? CollegePrograms { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-    public virtual ICollection<ExamRollNumberSetupDetail>? ExamRollNumberSetupDetails { get; set; }
-    public virtual ICollection<ProgramSubjectPracticalCharge>? ProgramSubjectPracticalCharges { get; set; }
-    public virtual ICollection<ProgramYearPart>? ProgramYearParts { get; set; }
     public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
-    public virtual ICollection<UserProgramMap>? UserProgramMaps { get; set; }
 }

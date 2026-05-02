@@ -1,4 +1,6 @@
+using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Data.Models.Exams;
+using fwu_examination_management_system.Data.Models.Semesters;
 using fwu_examination_management_system.Data.Models.Subjects;
 using System.ComponentModel.DataAnnotations;
 
@@ -27,6 +29,5 @@ public class Semester
 
     public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
     public virtual ICollection<SemesterEnrollment>? SemesterEnrollments { get; set; }
-    public virtual ICollection<SemesterSubject>? SemesterSubjects { get; set; }
     public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }
 }
