@@ -26,7 +26,6 @@ public class StudentAdmission: IAuditable
     public string? CollegeRollNumber { get; set; }
 
     public int? RepeatBatchId { get; set; }
-    public int? SubjectGroupId { get; set; }
     public bool HasFeeExemption { get; set; }
 
     public virtual Batch? Batch { get; set; }
@@ -39,6 +38,5 @@ public class StudentAdmission: IAuditable
 
     public virtual Section? Section { get; set; }
 
-    public virtual SubjectGroup? SubjectGroup { get; set; }
     public virtual ICollection<StudentProgramYearPart>? StudentProgramYearParts { get; set; }
 }

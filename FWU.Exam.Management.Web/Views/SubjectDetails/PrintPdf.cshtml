@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Subjects.SubjectDetail>
+@model IEnumerable<fwu_examination_management_system.Data.Models.Subjects.SubjectDetail>
 
 @{
     Layout = null;
@@ -113,7 +113,7 @@
 </head>
 <body>
     <div class="report-header">
-        <h1>📖 @title</h1>
+        <h1>?? @title</h1>
         <div class="report-date">Generated on: @generatedDate</div>
         <div class="report-info">
             Page @currentPage of @(Math.Ceiling((double)totalCount / pageSize)) | 
@@ -171,23 +171,23 @@
                 <tr>
                     <td>@item.SubjectCode</td>
                     <td>@item.SubjectName</td>
-                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "—" : item.ShortName)</td>
+                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "�" : item.ShortName)</td>
                     <td>@item.Program?.ProgramCode</td>
-                    <td>@item.SubjectGroup?.Name</td>
                     <td>@item.SubjectType?.Name</td>
-                    <td>@item.YearPart?.YearPartName</td>
+                    <td>@item.SubjectType?.Name</td>
+                    <td>@(item.Year ?? "") / @(item.Part ?? "")</td>
                     <td style="text-align: right;">@item.TheoryFullMarks</td>
                     <td style="text-align: right;">@item.PracticalFullMarks</td>
                     <td style="text-align: right;">@item.CreditHours</td>
-                    <td style="text-align: center;">@(item.IsCompulsory ? "✓" : "")</td>
+                    <td style="text-align: center;">@(item.IsCompulsory ? "?" : "")</td>
                     <td>
                         @if (item.IsActive)
                         {
-                            <span class="active-badge">● Active</span>
+                            <span class="active-badge">? Active</span>
                         }
                         else
                         {
-                            <span class="inactive-badge">○ Inactive</span>
+                            <span class="inactive-badge">? Inactive</span>
                         }
                     </td>
                 </tr>
@@ -204,7 +204,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>� @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>

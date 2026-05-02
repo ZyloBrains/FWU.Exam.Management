@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Subjects.SubjectDetail>
+@model IEnumerable<fwu_examination_management_system.Data.Models.Subjects.SubjectDetail>
 
 @{
     ViewData["Title"] = "Subject Details";
@@ -97,27 +97,27 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="subjectcode" asp-route-sortDir="@(currentSort == "subjectcode" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "subjectcode" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
-            Subject Code @(currentSort == "subjectcode" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Subject Code @(currentSort == "subjectcode" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="subjectname" asp-route-sortDir="@(currentSort == "subjectname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "subjectname" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
-            Subject Name @(currentSort == "subjectname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Subject Name @(currentSort == "subjectname" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="program" asp-route-sortDir="@(currentSort == "program" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "program" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
-            Program @(currentSort == "program" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Program @(currentSort == "program" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
-        <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="subjectgroup" asp-route-sortDir="@(currentSort == "subjectgroup" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort == "subjectgroup" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
-            Group @(currentSort == "subjectgroup" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+        <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="SubjectType" asp-route-sortDir="@(currentSort == "SubjectType" && currentSortDir == "asc" ? "desc" : "asc")"
+               class="px-3 py-1.5 rounded-full @(currentSort == "SubjectType" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
+            Group @(currentSort == "SubjectType" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="credithours" asp-route-sortDir="@(currentSort == "credithours" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "credithours" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
-            Credit Hours @(currentSort == "credithours" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Credit Hours @(currentSort == "credithours" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="isactive" asp-route-sortDir="@(currentSort == "isactive" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "isactive" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600") hover:bg-red-50">
-            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 
@@ -153,9 +153,9 @@
                             }
                         </td>
                         <td class="px-4 py-3 text-gray-600">@item.Program?.ProgramCode</td>
-                        <td class="px-4 py-3 text-gray-600">@item.SubjectGroup?.Name</td>
                         <td class="px-4 py-3 text-gray-600">@item.SubjectType?.Name</td>
-                        <td class="px-4 py-3 text-gray-600">@item.YearPart?.YearPartName</td>
+                        <td class="px-4 py-3 text-gray-600">@item.SubjectType?.Name</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.Year ?? "") / @(item.Part ?? "")</td>
                         <td class="px-4 py-3 text-right text-gray-600">@item.TheoryFullMarks</td>
                         <td class="px-4 py-3 text-right text-gray-600">@item.PracticalFullMarks</td>
                         <td class="px-4 py-3 text-right font-medium text-gray-800">@item.CreditHours</td>
@@ -236,15 +236,15 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                     <div class="text-gray-500">Short Name</div>
-                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.ShortName) ? "—" : item.ShortName)</div>
+                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.ShortName) ? "�" : item.ShortName)</div>
                     <div class="text-gray-500">Program</div>
                     <div class="text-gray-800">@item.Program?.ProgramCode</div>
                     <div class="text-gray-500">Subject Group</div>
-                    <div class="text-gray-800">@item.SubjectGroup?.Name</div>
+                    <div class="text-gray-800">@item.SubjectType?.Name</div>
                     <div class="text-gray-500">Subject Type</div>
                     <div class="text-gray-800">@item.SubjectType?.Name</div>
                     <div class="text-gray-500">Year/Part</div>
-                    <div class="text-gray-800">@item.YearPart?.YearPartName</div>
+                    <div class="text-gray-800">@(item.Year ?? "") / @(item.Part ?? "")</div>
                     <div class="text-gray-500">Year</div>
                     <div class="text-gray-800">@item.Year</div>
                     <div class="text-gray-500">Part</div>

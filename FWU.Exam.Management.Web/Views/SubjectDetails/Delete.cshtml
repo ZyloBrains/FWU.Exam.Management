@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Subjects.SubjectDetail
+@model fwu_examination_management_system.Data.Models.Subjects.SubjectDetail
 
 @{
     ViewData["Title"] = "Delete Subject";
@@ -45,7 +45,7 @@
             <!-- Short Name -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Short Name</p>
-                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.ShortName) ? "—" : Model.ShortName)</p>
+                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.ShortName) ? "�" : Model.ShortName)</p>
             </div>
             <!-- Program -->
             <div>
@@ -55,7 +55,7 @@
             <!-- Subject Group -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Group</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.SubjectGroup.Name)</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.SubjectType.Name)</p>
             </div>
             <!-- Subject Type -->
             <div>
@@ -65,7 +65,7 @@
             <!-- Year/Part -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Year/Part</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.YearPart.YearPartName)</p>
+                <p class="text-gray-800 font-medium">@Model.Year / @Model.Part</p>
             </div>
             <!-- Year -->
             <div>
@@ -175,7 +175,7 @@
             <!-- Remarks -->
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
-                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
+                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "�" : Model.Remarks)</p>
             </div>
         </div>
 

@@ -1,5 +1,5 @@
 using fwu_examination_management_system.Data.Models.Exams;
-using fwu_examination_management_system.Data.Semesters;
+using fwu_examination_management_system.Data.Models.Semesters;
 using System.ComponentModel.DataAnnotations;
 
 namespace fwu_examination_management_system.Data.Models.Subjects;
@@ -11,7 +11,6 @@ public class SubjectOffering
     public int SubjectCatalogId { get; set; }
     public int ProgramId { get; set; }
     public int SemesterId { get; set; }
-    public int? SubjectGroupId { get; set; }
     public int AcademicYearId { get; set; }
 
     public bool IsCompulsory { get; set; }
@@ -33,7 +32,6 @@ public class SubjectOffering
     public virtual SubjectCatalog? SubjectCatalog { get; set; }
     public virtual Program? Program { get; set; }
     public virtual Semester? Semester { get; set; }
-    public virtual SubjectGroup? SubjectGroup { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
 
     public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }

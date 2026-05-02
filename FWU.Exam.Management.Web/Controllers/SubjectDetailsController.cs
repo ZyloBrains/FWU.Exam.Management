@@ -24,10 +24,8 @@ namespace fwu_examination_management_system.Controllers
         public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "SubjectCode", string sortDir = "asc", int pageSize = 10)
         {
             var query = _context.SubjectDetails
-                .Include(s => s.Program)
-                .Include(s => s.SubjectGroup)
+.Include(s => s.Program)
                 .Include(s => s.SubjectType)
-                .Include(s => s.YearPart)
                 .AsNoTracking();
 
             // Apply search filter
@@ -40,9 +38,7 @@ namespace fwu_examination_management_system.Controllers
                     s.Remarks.Contains(search) ||
                     (s.Program != null && s.Program.ProgramCode.Contains(search)) ||
                     (s.Program != null && s.Program.ProgramName.Contains(search)) ||
-                    (s.SubjectGroup != null && s.SubjectGroup.Name.Contains(search)) ||
-                    (s.SubjectType != null && s.SubjectType.Name.Contains(search)) ||
-                    (s.YearPart != null && s.YearPart.YearPartName.Contains(search))
+                    (s.SubjectType != null && s.SubjectType.Name.Contains(search))
                 );
             }
 
@@ -76,9 +72,7 @@ namespace fwu_examination_management_system.Controllers
                 "subjectname" => s => s.SubjectName,
                 "shortname" => s => s.ShortName,
                 "program" => s => s.Program.ProgramCode,
-                "subjectgroup" => s => s.SubjectGroup.Name,
                 "subjecttype" => s => s.SubjectType.Name,
-                "yearpart" => s => s.YearPart.YearPartName,
                 "theoryfullmarks" => s => s.TheoryFullMarks,
                 "practicalfullmarks" => s => s.PracticalFullMarks,
                 "credithours" => s => s.CreditHours,
@@ -94,10 +88,8 @@ namespace fwu_examination_management_system.Controllers
         private async Task<(List<SubjectDetail> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
             var query = _context.SubjectDetails
-                .Include(s => s.Program)
-                .Include(s => s.SubjectGroup)
+.Include(s => s.Program)
                 .Include(s => s.SubjectType)
-                .Include(s => s.YearPart)
                 .AsNoTracking();
 
             // Apply search filter
@@ -110,9 +102,7 @@ namespace fwu_examination_management_system.Controllers
                     s.Remarks.Contains(search) ||
                     (s.Program != null && s.Program.ProgramCode.Contains(search)) ||
                     (s.Program != null && s.Program.ProgramName.Contains(search)) ||
-                    (s.SubjectGroup != null && s.SubjectGroup.Name.Contains(search)) ||
-                    (s.SubjectType != null && s.SubjectType.Name.Contains(search)) ||
-                    (s.YearPart != null && s.YearPart.YearPartName.Contains(search))
+                    (s.SubjectType != null && s.SubjectType.Name.Contains(search))
                 );
             }
 
@@ -149,7 +139,7 @@ namespace fwu_examination_management_system.Controllers
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Subject Code,Subject Name,Short Name,Program,Subject Group,Subject Type,Year Part,Year,Part,Theory Full Marks,Theory Pass Marks,Practical Full Marks,Practical Pass Marks,Internal Theory Full Marks,Internal Theory Pass Marks,Internal Practical Full Marks,Internal Practical Pass Marks,Credit Hours,Has Theory,Has Practical,Has Internal,Is Compulsory,Display Order,Remarks,Status");
+            sb.AppendLine("Subject Code,Subject Name,Short Name,Program,Subject Type,Year Part,Year,Part,Theory Full Marks,Theory Pass Marks,Practical Full Marks,Practical Pass Marks,Internal Theory Full Marks,Internal Theory Pass Marks,Internal Practical Full Marks,Internal Practical Pass Marks,Credit Hours,Has Theory,Has Practical,Has Internal,Is Compulsory,Display Order,Remarks,Status");
 
             foreach (var s in items)
             {
@@ -157,9 +147,8 @@ namespace fwu_examination_management_system.Controllers
                               $"{EscapeCsv(s.SubjectName)}," +
                               $"{EscapeCsv(s.ShortName)}," +
                               $"{EscapeCsv(s.Program?.ProgramCode)}," +
-                              $"{EscapeCsv(s.SubjectGroup?.Name)}," +
-                              $"{EscapeCsv(s.SubjectType?.Name)}," +
-                              $"{EscapeCsv(s.YearPart?.YearPartName)}," +
+                               $"{EscapeCsv(s.SubjectType?.Name)}," +
+                               $"{s.Year} / {s.Part}," +
                               $"{s.Year}," +
                               $"{s.Part}," +
                               $"{s.TheoryFullMarks}," +
@@ -209,10 +198,8 @@ namespace fwu_examination_management_system.Controllers
             }
 
             var subjectDetail = await _context.SubjectDetails
-                .Include(s => s.Program)
-                .Include(s => s.SubjectGroup)
+.Include(s => s.Program)
                 .Include(s => s.SubjectType)
-                .Include(s => s.YearPart)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (subjectDetail == null)
             {
@@ -226,16 +213,14 @@ namespace fwu_examination_management_system.Controllers
         public IActionResult Create()
         {
             ViewData["ProgramsId"] = new SelectList(_context.Programs, "Id", "ProgramCode", "ProgramName");
-            ViewData["SubjectGroupId"] = new SelectList(_context.SubjectGroups, "Id", "SubjectGroupName");
-            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "SubjectTypeName");
-            ViewData["YearPartId"] = new SelectList(_context.YearParts, "Id", "YearPartName");
+            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "Name");
             return View();
         }
 
         // POST: SubjectDetails1/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SubjectGroupId,ProgramsId,YearPartId,SubjectCode,SubjectName,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks,CreditHours,HasPractical,HasInternal,DisplayOrder,Remarks,IsActive,IsCompulsory,ShortName,ConcurrentSubjectCode,SubjectTypeId,HasTheory,Year,Part")] SubjectDetail subjectDetail)
+        public async Task<IActionResult> Create([Bind("Id,ProgramsId,SubjectCode,SubjectName,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks,CreditHours,HasPractical,HasInternal,DisplayOrder,Remarks,IsActive,IsCompulsory,ShortName,ConcurrentSubjectCode,SubjectTypeId,HasTheory,Year,Part")] SubjectDetail subjectDetail)
         {
             if (ModelState.IsValid)
             {
@@ -244,9 +229,7 @@ namespace fwu_examination_management_system.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["ProgramsId"] = new SelectList(_context.Programs, "Id", "ProgramCode", subjectDetail.ProgramsId);
-            ViewData["SubjectGroupId"] = new SelectList(_context.SubjectGroups, "Id", "SubjectGroupName", subjectDetail.SubjectGroupId);
-            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "SubjectTypeName", subjectDetail.SubjectTypeId);
-            ViewData["YearPartId"] = new SelectList(_context.YearParts, "Id", "YearPartName", subjectDetail.YearPartId);
+            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "Name", subjectDetail.SubjectTypeId);
             return View(subjectDetail);
         }
 
@@ -264,16 +247,14 @@ namespace fwu_examination_management_system.Controllers
                 return NotFound();
             }
             ViewData["ProgramsId"] = new SelectList(_context.Programs, "Id", "ProgramCode", subjectDetail.ProgramsId);
-            ViewData["SubjectGroupId"] = new SelectList(_context.SubjectGroups, "Id", "SubjectGroupName", subjectDetail.SubjectGroupId);
-            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "SubjectTypeName", subjectDetail.SubjectTypeId);
-            ViewData["YearPartId"] = new SelectList(_context.YearParts, "Id", "YearPartName", subjectDetail.YearPartId);
+            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "Name", subjectDetail.SubjectTypeId);
             return View(subjectDetail);
         }
 
         // POST: SubjectDetails1/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectGroupId,ProgramsId,YearPartId,SubjectCode,SubjectName,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks,CreditHours,HasPractical,HasInternal,DisplayOrder,Remarks,IsActive,IsCompulsory,ShortName,ConcurrentSubjectCode,SubjectTypeId,HasTheory,Year,Part")] SubjectDetail subjectDetail)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ProgramsId,SubjectCode,SubjectName,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks,CreditHours,HasPractical,HasInternal,DisplayOrder,Remarks,IsActive,IsCompulsory,ShortName,ConcurrentSubjectCode,SubjectTypeId,HasTheory,Year,Part")] SubjectDetail subjectDetail)
         {
             if (id != subjectDetail.Id)
             {
@@ -301,9 +282,7 @@ namespace fwu_examination_management_system.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["ProgramsId"] = new SelectList(_context.Programs, "Id", "ProgramCode", subjectDetail.ProgramsId);
-            ViewData["SubjectGroupId"] = new SelectList(_context.SubjectGroups, "Id", "SubjectGroupName", subjectDetail.SubjectGroupId);
-            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "SubjectTypeName", subjectDetail.SubjectTypeId);
-            ViewData["YearPartId"] = new SelectList(_context.YearParts, "Id", "YearPartName", subjectDetail.YearPartId);
+            ViewData["SubjectTypeId"] = new SelectList(_context.SubjectTypes, "Id", "Name", subjectDetail.SubjectTypeId);
             return View(subjectDetail);
         }
 
@@ -316,10 +295,8 @@ namespace fwu_examination_management_system.Controllers
             }
 
             var subjectDetail = await _context.SubjectDetails
-                .Include(s => s.Program)
-                .Include(s => s.SubjectGroup)
+.Include(s => s.Program)
                 .Include(s => s.SubjectType)
-                .Include(s => s.YearPart)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (subjectDetail == null)
             {

@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Subjects.SubjectDetail
+@model fwu_examination_management_system.Data.Models.Subjects.SubjectDetail
 
 @{
     ViewData["Title"] = "Create Subject";
@@ -62,11 +62,11 @@
                         <span asp-validation-for="ProgramsId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="SubjectGroupId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="SubjectGroupId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" asp-items="ViewBag.SubjectGroupId">
+                        <label asp-for="SubjectTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="SubjectTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" asp-items="ViewBag.SubjectTypeId">
                             <option value="">-- Select Subject Group --</option>
                         </select>
-                        <span asp-validation-for="SubjectGroupId" class="text-xs text-red-500 mt-1 block"></span>
+                        <span asp-validation-for="SubjectTypeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="SubjectTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
@@ -75,13 +75,7 @@
                         </select>
                         <span asp-validation-for="SubjectTypeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
-                    <div>
-                        <label asp-for="YearPartId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="YearPartId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" asp-items="ViewBag.YearPartId">
-                            <option value="">-- Select Year/Part --</option>
-                        </select>
-                        <span asp-validation-for="YearPartId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
+                   
                     <div>
                         <label asp-for="Year" class="text-sm font-medium text-gray-700 block mb-1"></label>
                         <input asp-for="Year" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="Year" />

@@ -3,9 +3,9 @@ using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Payments;
+using fwu_examination_management_system.Data.Models.Semesters;
 using fwu_examination_management_system.Data.Models.Students;
 using fwu_examination_management_system.Data.Models.Subjects;
-using fwu_examination_management_system.Data.Semesters;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -86,15 +86,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<StudentRegistrationSearch>? StudentRegistrationSearches { get; set; }
     public DbSet<SubjectCatalog>? SubjectCatalogs { get; set; }
     public DbSet<SubjectDetail>? SubjectDetails { get; set; }
-    public DbSet<SubjectGroup>? SubjectGroups { get; set; }
-    public DbSet<SubjectGroupDetailMap>? SubjectGroupDetailMaps { get; set; }
     public DbSet<SubjectOffering>? SubjectOfferings { get; set; }
     public DbSet<SubjectTriplicate>? SubjectTriplicates { get; set; }
     public DbSet<SubjectType>? SubjectTypes { get; set; }
     public DbSet<CurriculumVersion>? CurriculumVersions { get; set; }
     public DbSet<UserAttachment>? UserAttachments { get; set; }
     public DbSet<UserProgramMap>? UserProgramMaps { get; set; }
-    public DbSet<YearPart>? YearParts { get; set; }
     public DbSet<Municipality>? Municipalities { get; set; }
     public DbSet<Province>? Provinces { get; set; }
 
@@ -141,8 +138,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         builder.Entity<Program>().ToTable("Programs");
 
-        builder.Entity<SubjectGroupDetailMap>().HasKey(sgdm => new { sgdm.SubjectGroupId, sgdm.SubjectDetailId });
-
         builder.Entity<SubjectCatalog>()
             .HasIndex(sc => sc.SubjectCode)
             .IsUnique();
@@ -169,12 +164,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(so => so.Semester)
             .WithMany(s => s.SubjectOfferings)
             .HasForeignKey(so => so.SemesterId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectOffering>()
-            .HasOne(so => so.SubjectGroup)
-            .WithMany(sg => sg.SubjectOfferings)
-            .HasForeignKey(so => so.SubjectGroupId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SubjectOffering>()
@@ -352,21 +341,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
                 
         builder.Entity<SubjectDetail>()
-            .HasOne(sd => sd.SubjectGroup)
-            .WithMany(sg => sg.SubjectDetails)
-            .HasForeignKey(sd => sd.SubjectGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectDetail>()
             .HasOne(sd => sd.Program)
             .WithMany(p => p.SubjectDetails)
             .HasForeignKey(sd => sd.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectDetail>()
-            .HasOne(sd => sd.YearPart)
-            .WithMany(yp => yp.SubjectDetails)
-            .HasForeignKey(sd => sd.YearPartId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SubjectDetail>()
@@ -525,42 +502,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sq => sq.PreviousLevelId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // LEGACY: SubjectGroup no longer has Program/YearPart - simplified to pure grouping
-        // Old configuration removed:
-        // builder.Entity<SubjectGroup>()
-        //     .HasOne(sg => sg.Program)
-        //     .WithMany(p => p.SubjectGroups)
-        //     .HasForeignKey(sg => sg.ProgramsId)
-        //     .OnDelete(DeleteBehavior.Restrict);
-        //
-        // builder.Entity<SubjectGroup>()
-        //     .HasOne(sg => sg.YearPart)
-        //     .WithMany(yp => yp.SubjectGroups)
-        //     .HasForeignKey(sg => sg.YearPartId)
-        //     .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectGroupDetailMap>()
-            .HasOne(sgdm => sgdm.SubjectGroup)
-            .WithMany(sg => sg.SubjectGroupDetailMaps)
-            .HasForeignKey(sgdm => sgdm.SubjectGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<SubjectGroupDetailMap>()
-            .HasOne(sgdm => sgdm.SubjectDetail)
-            .WithMany(sd => sd.SubjectGroupDetailMaps)
-            .HasForeignKey(sgdm => sgdm.SubjectDetailId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<ProgramYearPart>()
             .HasOne(pyp => pyp.Program)
             .WithMany(p => p.ProgramYearParts)
             .HasForeignKey(pyp => pyp.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ProgramYearPart>()
-            .HasOne(pyp => pyp.YearPart)
-            .WithMany(yp => yp.ProgramYearParts)
-            .HasForeignKey(pyp => pyp.YearPartId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ProgramSubjectPracticalCharge>()
@@ -803,12 +748,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(ll => ll.DistrictId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<YearPart>()
-            .HasOne(yp => yp.ProgramPeriodType)
-            .WithMany(ppt => ppt.YearParts)
-            .HasForeignKey(yp => yp.ProgramPeriodTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<PreviousLevel>()
             .HasOne(pl => pl.Level)
             .WithMany()
@@ -833,22 +772,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sa => sa.SectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<StudentAdmission>()
-            .HasOne(sa => sa.SubjectGroup)
-            .WithMany(sg => sg.StudentAdmissions)
-            .HasForeignKey(sa => sa.SubjectGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<StudentProgramYearPart>()
             .HasOne(spyp => spyp.AcademicYear)
             .WithMany()
             .HasForeignKey(spyp => spyp.AcademicYearId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentProgramYearPart>()
-            .HasOne(spyp => spyp.YearPart)
-            .WithMany(yp => yp.StudentProgramYearParts)
-            .HasForeignKey(spyp => spyp.YearPartId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ApplicationVoucher>(e => e.Property(x => x.Amount).HasPrecision(18, 2));

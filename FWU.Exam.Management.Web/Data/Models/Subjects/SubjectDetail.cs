@@ -8,9 +8,7 @@ public class SubjectDetail
 {
     public int Id { get; set; }
 
-    public int? SubjectGroupId { get; set; }
     public int ProgramsId { get; set; }
-    public int YearPartId { get; set; }
 
     [Required, MaxLength(50)]
     public string? SubjectCode { get; set; }
@@ -53,16 +51,10 @@ public class SubjectDetail
     [MaxLength(50)]
     public string? Part { get; set; }
 
-    public virtual SubjectGroup? SubjectGroup { get; set; }
-
     public virtual Program? Program { get; set; }
-
-    public virtual YearPart? YearPart { get; set; }
-
     public virtual SubjectType? SubjectType { get; set; }
     public virtual ICollection<ExamScheduleDetail>? ExamScheduleDetails { get; set; }
     public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
     public virtual ICollection<ExamSubjectRegistrationInternal>? ExamSubjectRegistrationInternals { get; set; }
     public virtual ICollection<ResultRecord>? ResultRecords { get; set; }
-    public virtual ICollection<SubjectGroupDetailMap>? SubjectGroupDetailMaps { get; set; }
 }

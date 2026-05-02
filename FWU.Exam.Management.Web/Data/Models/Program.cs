@@ -55,6 +55,5 @@ public class Program
     public virtual ICollection<ProgramYearPart>? ProgramYearParts { get; set; }
     public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
     public virtual ICollection<SubjectDetail>? SubjectDetails { get; set; }
-    public virtual ICollection<SubjectGroup>? SubjectGroups { get; set; }
     public virtual ICollection<UserProgramMap>? UserProgramMaps { get; set; }
 }

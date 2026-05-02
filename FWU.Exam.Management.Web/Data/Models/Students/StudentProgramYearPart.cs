@@ -8,7 +8,6 @@ public class StudentProgramYearPart
 
     public int StudentAdmissionId { get; set; }
     public int AcademicYearId { get; set; }
-    public int YearPartId { get; set; }
     public bool IsRunning { get; set; }
     public bool IsActive { get; set; }
 
@@ -16,7 +15,6 @@ public class StudentProgramYearPart
 
     public virtual AcademicYear? AcademicYear { get; set; }
 
-    public virtual YearPart? YearPart { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     public virtual ICollection<ExamSubjectRegistrationInternal>? ExamSubjectRegistrationInternals { get; set; }
 }

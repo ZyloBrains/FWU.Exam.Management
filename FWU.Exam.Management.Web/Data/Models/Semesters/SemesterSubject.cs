@@ -1,6 +1,6 @@
 using fwu_examination_management_system.Data.Models.Subjects;
 
-namespace fwu_examination_management_system.Data.Semesters;
+namespace fwu_examination_management_system.Data.Models.Semesters;
 
 public class SemesterSubject
 {

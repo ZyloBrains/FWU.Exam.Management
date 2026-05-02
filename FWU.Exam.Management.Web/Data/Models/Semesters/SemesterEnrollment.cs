@@ -2,7 +2,7 @@ using fwu_examination_management_system.Data.Enums;
 using fwu_examination_management_system.Data.Models.Exams;
 using fwu_examination_management_system.Data.Models.Students;
 
-namespace fwu_examination_management_system.Data.Semesters;
+namespace fwu_examination_management_system.Data.Models.Semesters;
 
 public class SemesterEnrollment
 {
