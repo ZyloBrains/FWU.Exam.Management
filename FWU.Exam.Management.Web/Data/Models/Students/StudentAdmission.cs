@@ -37,6 +37,4 @@ public class StudentAdmission: IAuditable
     public virtual College? College { get; set; }
 
     public virtual Section? Section { get; set; }
-
-    public virtual ICollection<StudentProgramYearPart>? StudentProgramYearParts { get; set; }
 }

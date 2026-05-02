@@ -65,7 +65,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<PreviousLevel>? PreviousLevels { get; set; }
     public DbSet<Program>? Programs { get; set; }
     public DbSet<ProgramSubjectPracticalCharge>? ProgramSubjectPracticalCharges { get; set; }
-    public DbSet<ProgramYearPart>? ProgramYearParts { get; set; }
     public DbSet<QuestionSet>? QuestionSets { get; set; }
     public DbSet<Region>? Regions { get; set; }
     public DbSet<ResultRecord>? ResultRecords { get; set; }
@@ -77,7 +76,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<StudentAdmission>? StudentAdmissions { get; set; }
     public DbSet<StudentCategory>? StudentCategories { get; set; }
     public DbSet<StudentGuardian>? StudentGuardians { get; set; }
-    public DbSet<StudentProgramYearPart>? StudentProgramYearParts { get; set; }
     public DbSet<SemesterEnrollment>? StudentProgramSemesters { get; set; }
     public DbSet<StudentQualification>? StudentQualifications { get; set; }
     public DbSet<StudentRegistration>? StudentRegistrations { get; set; }
@@ -224,12 +222,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sa => sa.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<StudentProgramYearPart>()
-            .HasOne(spyp => spyp.StudentAdmission)
-            .WithMany(sa => sa.StudentProgramYearParts)
-            .HasForeignKey(spyp => spyp.StudentAdmissionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<ExamRegistration>()
             .HasOne(er => er.ExamCenter)
             .WithMany(ec => ec.ExamRegistrations)
@@ -246,12 +238,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(er => er.ExamSchedule)
             .WithMany(es => es.ExamRegistrations)
             .HasForeignKey(er => er.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamRegistration>()
-            .HasOne(er => er.StudentProgramYearPart)
-            .WithMany(spyp => spyp.ExamRegistrations)
-            .HasForeignKey(er => er.StudentProgramYearPartId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamRegistration>()
@@ -288,12 +274,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(esri => esri.AcademicYear)
             .WithMany()
             .HasForeignKey(esri => esri.EntryAcademicYearId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamSubjectRegistrationInternal>()
-            .HasOne(esri => esri.StudentProgramYearPart)
-            .WithMany(spyp => spyp.ExamSubjectRegistrationInternals)
-            .HasForeignKey(esri => esri.StudentProgramYearPartId)
             .OnDelete(DeleteBehavior.Restrict);
                 
         builder.Entity<ExamCenterDetail>()
@@ -446,15 +426,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sq => sq.PreviousLevelId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<ProgramYearPart>()
-            .HasOne(pyp => pyp.Program)
-            .WithMany(p => p.ProgramYearParts)
-            .HasForeignKey(pyp => pyp.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<ProgramSubjectPracticalCharge>()
             .HasOne(pspc => pspc.Program)
-            .WithMany(p => p.ProgramSubjectPracticalCharges)
+            .WithMany()
             .HasForeignKey(pspc => pspc.ProgramsId)
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -478,7 +452,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         builder.Entity<UserProgramMap>()
             .HasOne(upm => upm.Program)
-            .WithMany(p => p.UserProgramMaps)
+            .WithMany()
             .HasForeignKey(upm => upm.ProgramId)
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -708,12 +682,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(sa => sa.Section)
             .WithMany(s => s.StudentAdmissions)
             .HasForeignKey(sa => sa.SectionId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentProgramYearPart>()
-            .HasOne(spyp => spyp.AcademicYear)
-            .WithMany()
-            .HasForeignKey(spyp => spyp.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ApplicationVoucher>(e => e.Property(x => x.Amount).HasPrecision(18, 2));

@@ -1,5 +1,4 @@
 using fwu_examination_management_system.Data.Models.Colleges;
-using fwu_examination_management_system.Data.Models.Students;
 using System.ComponentModel.DataAnnotations;
 
 namespace fwu_examination_management_system.Data.Models.Exams;
@@ -8,7 +7,6 @@ public class ExamRegistration
 {
     public int Id { get; set; }
 
-    public int StudentProgramYearPartId { get; set; }
     public int AcademicYearId { get; set; }
     public int? ExamCenterId { get; set; }
     public int CollegeId { get; set; }
@@ -42,8 +40,6 @@ public class ExamRegistration
     public int? AdminVerifiedBy { get; set; }
     public DateTime? AdminVerifiedDate { get; set; }
 
-    public virtual StudentProgramYearPart? StudentProgramYearPart { get; set; }
-
     public virtual AcademicYear? AcademicYear { get; set; }
 
     public virtual ExamCenter? ExamCenter { get; set; }
@@ -55,6 +51,7 @@ public class ExamRegistration
     public virtual Program? Program { get; set; }
 
     public virtual ApplicationVoucher? ApplicationVoucher { get; set; }
+
     public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
     public virtual ICollection<ExamRegistrationActionLog>? ExamRegistrationActionLogs { get; set; }
 }
