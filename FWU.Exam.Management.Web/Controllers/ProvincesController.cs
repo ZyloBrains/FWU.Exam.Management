@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using fwu_examination_management_system.Data.Models.Location;
 
 namespace fwu_examination_management_system.Controllers
 {

@@ -195,23 +195,32 @@
                             </div>
 
                             <div>
-                                <label asp-for="DistrictId" class="block text-sm text-gray-600 mb-1">District *</label>
-                                <select asp-for="DistrictId" id="DistrictId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="ViewBag.DistrictId"></select>
+                                <label class="block text-sm text-gray-600 mb-1">District *</label>
+                                <select id="DistrictId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <option>Select District</option>
+                                </select>
                             </div>
 
                             <div>
-                                <label asp-for="LocalLevelId" class="block text-sm text-gray-600 mb-1">Local Level *</label>
-                                <select asp-for="LocalLevelId" id="LocalLevelId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="ViewBag.LocalLevelId"></select>
+                                <label class="block text-sm text-gray-600 mb-1">Local Level *</label>
+                                <select id="LocalLevelId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <option>Select Local Level</option>
+                                </select>
                             </div>
 
                             <div>
-                                <label asp-for="MunicipalityVdc" class="block text-sm text-gray-600 mb-1">Municipality / VDC</label>
-                                <input asp-for="MunicipalityVdc" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <label class="block text-sm text-gray-600 mb-1">Ward Number</label>
+                                <input id="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
 
                             <div>
-                                <label asp-for="WardNumber" class="block text-sm text-gray-600 mb-1">Ward Number</label>
-                                <input asp-for="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <label class="block text-sm text-gray-600 mb-1">Tole/Street</label>
+                                <input id="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">House Number</label>
+                                <input id="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
 
                             <div>

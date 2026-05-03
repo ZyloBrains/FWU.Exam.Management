@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models.Students;
+using fwu_examination_management_system.Data.Models.Location;
+using fwu_examination_management_system.Data.Enums;
 using OfficeOpenXml;
+using fwu_examination_management_system.Data.Enums;
 
 namespace fwu_examination_management_system.Controllers;
 
@@ -68,8 +71,31 @@ public class StudentRegistrationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,DistrictId,MunicipalityVdc,WardNumber,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,LocalLevelId,AcademicYearId,SemesterId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Create(
+        [Bind("LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,AcademicYearId,SemesterId")] StudentRegistration studentRegistration)
     {
+        // Create Permanent Address
+        var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
+        var permanentWardNumber = Request.Form["WardNumber"].ToString();
+        var permanentToleStreet = Request.Form["ToleStreet"].ToString();
+        var permanentHouseNumber = Request.Form["HouseNumber"].ToString();
+
+        if (!string.IsNullOrEmpty(permanentLocalLevelId))
+        {
+            var permanentAddress = new Address
+            {
+                LocalLevelId = int.Parse(permanentLocalLevelId),
+                WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber),
+                ToleStreet = permanentToleStreet,
+                HouseNumber = permanentHouseNumber,
+                AddressType = AddressType.Permanent,
+                IsActive = true
+            };
+            _context.Addresses.Add(permanentAddress);
+            await _context.SaveChangesAsync();
+            studentRegistration.PermanentAddressId = permanentAddress.Id;
+        }
+
         if (ModelState.IsValid)
         {
             _context.Add(studentRegistration);
@@ -99,11 +125,45 @@ public class StudentRegistrationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,DistrictId,MunicipalityVdc,WardNumber,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,LocalLevelId,AcademicYearId,SemesterId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,CollegeId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBs,DateOfBirthAd,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,AcademicYearId,SemesterId,PermanentAddressId")] StudentRegistration studentRegistration)
     {
         if (id != studentRegistration.Id)
         {
             return NotFound();
+        }
+
+        // Update Permanent Address if provided
+        var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
+        var permanentWardNumber = Request.Form["WardNumber"].ToString();
+        var permanentToleStreet = Request.Form["ToleStreet"].ToString();
+        var permanentHouseNumber = Request.Form["HouseNumber"].ToString();
+
+        if (!string.IsNullOrEmpty(permanentLocalLevelId))
+        {
+            var address = await _context.Addresses.FindAsync(studentRegistration.PermanentAddressId);
+            if (address == null)
+            {
+                address = new Address
+                {
+                    LocalLevelId = int.Parse(permanentLocalLevelId),
+                    WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber),
+                    ToleStreet = permanentToleStreet,
+                    HouseNumber = permanentHouseNumber,
+                    AddressType = AddressType.Permanent,
+                    IsActive = true
+                };
+                _context.Addresses.Add(address);
+                await _context.SaveChangesAsync();
+                studentRegistration.PermanentAddressId = address.Id;
+            }
+            else
+            {
+                address.LocalLevelId = int.Parse(permanentLocalLevelId);
+                address.WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber);
+                address.ToleStreet = permanentToleStreet;
+                address.HouseNumber = permanentHouseNumber;
+                _context.Update(address);
+            }
         }
 
         if (ModelState.IsValid)
@@ -182,7 +242,6 @@ public class StudentRegistrationsController : Controller
         ViewData["FacultyId"] = new SelectList(_context.Faculties.Where(f => f.FacultyName != null).ToList(), "Id", "FacultyName", studentRegistration?.FacultyId);
         ViewData["CollegeId"] = new SelectList(_context.Colleges.Where(c => c.Name != null).ToList(), "Id", "Name", studentRegistration?.CollegeId);
         ViewData["GenderId"] = new SelectList(_context.Genders.Where(g => g.GenderName != null).ToList(), "Id", "GenderName", studentRegistration?.GenderId);
-        ViewData["DistrictId"] = new SelectList(_context.Districts.Where(d => d.DistrictName != null).ToList(), "Id", "DistrictName", studentRegistration?.DistrictId);
         ViewData["StudentCategoryId"] = new SelectList(_context.StudentCategories.Where(sc => sc.StudentCategoryName != null).ToList(), "Id", "StudentCategoryName", studentRegistration?.StudentCategoryId);
         ViewData["EthnicityId"] = new SelectList(_context.Ethnicities.Where(e => e.EthnicityName != null).ToList(), "Id", "EthnicityName", studentRegistration?.EthnicityId);
         ViewData["LocalLevelId"] = new SelectList(_context.LocalLevels.Where(ll => ll.LocalLevelName != null).ToList(), "Id", "LocalLevelName", studentRegistration?.LocalLevelId);
@@ -292,7 +351,6 @@ public class StudentRegistrationsController : Controller
                                 FacultyId = int.TryParse(worksheet.Cells[row, 11].Value?.ToString(), out var facId) ? facId : 0,
                                 GenderId = int.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var genderId) ? genderId : 0,
                                 StudentCategoryId = int.TryParse(worksheet.Cells[row, 13].Value?.ToString(), out var catId) ? catId : 0,
-                                DistrictId = int.TryParse(worksheet.Cells[row, 14].Value?.ToString(), out var distId) ? distId : 0,
                                 IsActive = true
                             };
 

@@ -2,6 +2,7 @@ using fwu_examination_management_system.Data.Auditing;
 using fwu_examination_management_system.Data.Models;
 using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Exams;
+using fwu_examination_management_system.Data.Models.Location;
 using fwu_examination_management_system.Data.Models.Payments;
 using fwu_examination_management_system.Data.Models.Semesters;
 using fwu_examination_management_system.Data.Models.Students;
@@ -18,7 +19,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
     public DbSet<Organization>? Organizations { get; set; }
     public DbSet<AcademicYear>? AcademicYears { get; set; }
-    public DbSet<Area> Areas { get; set; }
+    public DbSet<Address> Addresses { get; set; }
     public DbSet<Bank> Banks { get; set; }
     public DbSet<Batch> Batches { get; set; }
     public DbSet<Board> Boards { get; set; }
@@ -66,7 +67,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<Program>? Programs { get; set; }
     public DbSet<ProgramSubjectPracticalCharge>? ProgramSubjectPracticalCharges { get; set; }
     public DbSet<QuestionSet>? QuestionSets { get; set; }
-    public DbSet<Region>? Regions { get; set; }
     public DbSet<ResultRecord>? ResultRecords { get; set; }
     public DbSet<SchoolType>? SchoolTypes { get; set; }
     public DbSet<Section>? Sections { get; set; }
@@ -87,7 +87,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<CurriculumVersion>? CurriculumVersions { get; set; }
     public DbSet<UserAttachment>? UserAttachments { get; set; }
     public DbSet<UserProgramMap>? UserProgramMaps { get; set; }
-    public DbSet<Municipality>? Municipalities { get; set; }
     public DbSet<Province>? Provinces { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -367,12 +366,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.District)
-            .WithMany(d => d.StudentRegistrations)
-            .HasForeignKey(sr => sr.DistrictId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.StudentCategory)
             .WithMany(sc => sc.StudentRegistrations)
             .HasForeignKey(sr => sr.StudentCategoryId)
@@ -382,12 +375,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(sr => sr.Ethnicity)
             .WithMany(e => e.StudentRegistrations)
             .HasForeignKey(sr => sr.EthnicityId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.LocalLevel)
-            .WithMany(ll => ll.StudentRegistrations)
-            .HasForeignKey(sr => sr.LocalLevelId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
@@ -631,18 +618,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<College>()
-            .HasOne(c => c.District)
-            .WithMany(d => d.Colleges)
-            .HasForeignKey(c => c.DistrictId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<College>()
-            .HasOne(c => c.Area)
-            .WithMany(a => a.Colleges)
-            .HasForeignKey(c => c.AreaId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<College>()
             .HasOne(c => c.CollegeType)
             .WithMany(ct => ct.Colleges)
             .HasForeignKey(c => c.CollegeTypeId)
@@ -658,6 +633,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(ll => ll.District)
             .WithMany(d => d.LocalLevels)
             .HasForeignKey(ll => ll.DistrictId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Address>()
+            .HasOne(a => a.LocalLevel)
+            .WithMany(ll => ll.Addresses)
+            .HasForeignKey(a => a.LocalLevelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.PermanentAddress)
+            .WithMany()
+            .HasForeignKey(sr => sr.PermanentAddressId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.TemporaryAddress)
+            .WithMany()
+            .HasForeignKey(sr => sr.TemporaryAddressId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<College>()
+            .HasOne(c => c.Address)
+            .WithMany()
+            .HasForeignKey(c => c.AddressId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<PreviousLevel>()

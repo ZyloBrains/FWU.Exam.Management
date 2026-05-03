@@ -180,10 +180,10 @@
                     <td>@item.Name</td>
                     <td>@(string.IsNullOrEmpty(item.CollegeNameNepali) ? "—" : item.CollegeNameNepali)</td>
                     <td>@(string.IsNullOrEmpty(item.ShortName) ? "—" : item.ShortName)</td>
-                    <td>@(item.District?.DistrictName ?? "—")</td>
-        
-                    <td>@(string.IsNullOrEmpty(item.WardNumber) ? "—" : item.WardNumber)</td>
-                    <td>@(string.IsNullOrEmpty(item.HouseNumber) ? "—" : item.HouseNumber)</td>
+                    <td>@(item.Address?.LocalLevel?.District?.DistrictName ?? "—")</td>
+                    <td>@(item.Address?.LocalLevel?.LocalLevelName ?? "—")</td>
+                    <td>@(item.Address?.WardNumber?.ToString() ?? "—")</td>
+                    <td>@(item.Address?.HouseNumber ?? "—")</td>
                     <td>@(string.IsNullOrEmpty(item.Phone1) ? "—" : item.Phone1)</td>
                     <td>@(string.IsNullOrEmpty(item.Phone2) ? "—" : item.Phone2)</td>
                     <td>@(string.IsNullOrEmpty(item.Email) ? "—" : item.Email)</td>
@@ -192,7 +192,7 @@
                     <td>@(string.IsNullOrEmpty(item.PrincipalContactNumber) ? "—" : item.PrincipalContactNumber)</td>
                     <td>@(string.IsNullOrEmpty(item.Fax) ? "—" : item.Fax)</td>
                     <td>@(item.CollegeType?.Code ?? "—")</td>
-                    <td>@(item.Area?.AreaName ?? "—")</td>
+                    <td>@(item.Address?.ToleStreet ?? "—")</td>
                     <td>@(item.EstablishedDate?.ToString("yyyy-MM-dd") ?? "—")</td>
                     <td>@(item.ClosedDate?.ToString("yyyy-MM-dd") ?? "—")</td>
                     <td style="text-align: right;">@(item.AllocatedAmount.HasValue ? item.AllocatedAmount.Value.ToString("N2") : "—")</td>

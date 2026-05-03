@@ -146,7 +146,7 @@
                                 <div class="text-xs text-gray-500">@item.ShortName</div>
                             }
                         </td>
-                        <td class="px-4 py-3 text-gray-600">@item.District?.DistrictName</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.Address?.LocalLevel?.District?.DistrictName ?? "-")</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded">@item.CollegeType?.Code</span>
                         </td>
@@ -222,7 +222,7 @@
                     <div class="text-gray-500">Short Name</div>
                     <div class="text-gray-800">@item.ShortName</div>
                     <div class="text-gray-500">District</div>
-                    <div class="text-gray-800">@item.District?.DistrictName</div>
+                    <div class="text-gray-800">@(item.Address?.LocalLevel?.District?.DistrictName ?? "-")</div>
                     <div class="text-gray-500">College Type</div>
                     <div class="text-gray-800">@item.CollegeType?.Code</div>
                     <div class="text-gray-500">Phone</div>
@@ -231,8 +231,8 @@
                     <div class="text-gray-800 truncate">@item.Email</div>
                     <div class="text-gray-500">Principal</div>
                     <div class="text-gray-800">@item.PrincipalName</div>
-                    <div class="text-gray-500">Area</div>
-                    <div class="text-gray-800">@item.Area?.AreaName</div>
+                    <div class="text-gray-500">Tole/Street</div>
+                    <div class="text-gray-800">@(item.Address?.ToleStreet ?? "-")</div>
                     @if (!string.IsNullOrEmpty(item.Remarks))
                     {
                         <div class="text-gray-500">Remarks</div>

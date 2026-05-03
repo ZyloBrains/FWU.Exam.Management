@@ -2,7 +2,7 @@ using fwu_examination_management_system.Data.Models.Colleges;
 using fwu_examination_management_system.Data.Models.Students;
 using System.ComponentModel.DataAnnotations;
 
-namespace fwu_examination_management_system.Data.Models;
+namespace fwu_examination_management_system.Data.Models.Location;
 
 public class District
 {

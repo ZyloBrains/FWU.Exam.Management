@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using fwu_examination_management_system.Data;
 
@@ -11,9 +12,11 @@ using fwu_examination_management_system.Data;
 namespace fwu_examination_management_system.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260502183112_RedesignAddressTables")]
+    partial class RedesignAddressTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -197,6 +200,45 @@ namespace fwu_examination_management_system.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AcademicYears");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Address", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AddressType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FullAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("HouseNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LocalLevelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ToleStreet")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("WardNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocalLevelId");
+
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.AppUser", b =>
@@ -663,6 +705,33 @@ namespace fwu_examination_management_system.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CollegeTypes");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.District", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DistrictCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("DistrictName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("ProvinceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProvinceId");
+
+                    b.ToTable("Districts");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.EntryFormat", b =>
@@ -1619,73 +1688,7 @@ namespace fwu_examination_management_system.Migrations
                     b.ToTable("Levels");
                 });
 
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.Address", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AddressType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FullAddress")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("HouseNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("LocalLevelId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ToleStreet")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int?>("WardNumber")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LocalLevelId");
-
-                    b.ToTable("Addresses");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.District", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("DistrictCode")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("DistrictName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("ProvinceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProvinceId");
-
-                    b.ToTable("Districts");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.LocalLevel", b =>
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.LocalLevel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1712,31 +1715,6 @@ namespace fwu_examination_management_system.Migrations
                     b.HasIndex("DistrictId");
 
                     b.ToTable("LocalLevels");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.Province", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ProvinceCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<string>("ProvinceName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Provinces");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.NepaliDate", b =>
@@ -2491,6 +2469,31 @@ namespace fwu_examination_management_system.Migrations
                     b.HasIndex("ProgramsId");
 
                     b.ToTable("ProgramSubjectPracticalCharges");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Province", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProvinceCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("ProvinceName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Provinces");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.QuestionSet", b =>
@@ -3848,6 +3851,17 @@ namespace fwu_examination_management_system.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Address", b =>
+                {
+                    b.HasOne("fwu_examination_management_system.Data.Models.LocalLevel", "LocalLevel")
+                        .WithMany("Addresses")
+                        .HasForeignKey("LocalLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LocalLevel");
+                });
+
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.AppUser", b =>
                 {
                     b.HasOne("fwu_examination_management_system.Data.Models.Colleges.College", "College")
@@ -3903,7 +3917,7 @@ namespace fwu_examination_management_system.Migrations
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Colleges.College", b =>
                 {
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.Address", "Address")
+                    b.HasOne("fwu_examination_management_system.Data.Models.Address", "Address")
                         .WithMany()
                         .HasForeignKey("AddressId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -3913,7 +3927,7 @@ namespace fwu_examination_management_system.Migrations
                         .HasForeignKey("CollegeTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.District", null)
+                    b.HasOne("fwu_examination_management_system.Data.Models.District", null)
                         .WithMany("Colleges")
                         .HasForeignKey("DistrictId");
 
@@ -3970,6 +3984,17 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("College");
 
                     b.Navigation("Program");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.District", b =>
+                {
+                    b.HasOne("fwu_examination_management_system.Data.Models.Province", "Province")
+                        .WithMany("Districts")
+                        .HasForeignKey("ProvinceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Province");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Exams.ExamCenter", b =>
@@ -4298,31 +4323,9 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("ExamSchedule");
                 });
 
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.Address", b =>
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.LocalLevel", b =>
                 {
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.LocalLevel", "LocalLevel")
-                        .WithMany("Addresses")
-                        .HasForeignKey("LocalLevelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("LocalLevel");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.District", b =>
-                {
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.Province", "Province")
-                        .WithMany("Districts")
-                        .HasForeignKey("ProvinceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Province");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.LocalLevel", b =>
-                {
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.District", "District")
+                    b.HasOne("fwu_examination_management_system.Data.Models.District", "District")
                         .WithMany("LocalLevels")
                         .HasForeignKey("DistrictId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -4707,7 +4710,7 @@ namespace fwu_examination_management_system.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.District", "District")
+                    b.HasOne("fwu_examination_management_system.Data.Models.District", "District")
                         .WithMany("StudentRegistrations")
                         .HasForeignKey("DistrictId");
 
@@ -4744,11 +4747,11 @@ namespace fwu_examination_management_system.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.LocalLevel", "LocalLevel")
+                    b.HasOne("fwu_examination_management_system.Data.Models.LocalLevel", "LocalLevel")
                         .WithMany("StudentRegistrations")
                         .HasForeignKey("LocalLevelId");
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.Address", "PermanentAddress")
+                    b.HasOne("fwu_examination_management_system.Data.Models.Address", "PermanentAddress")
                         .WithMany()
                         .HasForeignKey("PermanentAddressId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -4768,7 +4771,7 @@ namespace fwu_examination_management_system.Migrations
                         .WithMany("StudentRegistrations")
                         .HasForeignKey("StudentRegistrationSearchId");
 
-                    b.HasOne("fwu_examination_management_system.Data.Models.Location.Address", "TemporaryAddress")
+                    b.HasOne("fwu_examination_management_system.Data.Models.Address", "TemporaryAddress")
                         .WithMany()
                         .HasForeignKey("TemporaryAddressId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -4956,6 +4959,15 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("ExamFormFeeRates");
                 });
 
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.District", b =>
+                {
+                    b.Navigation("Colleges");
+
+                    b.Navigation("LocalLevels");
+
+                    b.Navigation("StudentRegistrations");
+                });
+
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.EntryFormat", b =>
                 {
                     b.Navigation("StudentRegistrations");
@@ -5037,25 +5049,11 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("StudentRegistrations");
                 });
 
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.District", b =>
-                {
-                    b.Navigation("Colleges");
-
-                    b.Navigation("LocalLevels");
-
-                    b.Navigation("StudentRegistrations");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.LocalLevel", b =>
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.LocalLevel", b =>
                 {
                     b.Navigation("Addresses");
 
                     b.Navigation("StudentRegistrations");
-                });
-
-            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Location.Province", b =>
-                {
-                    b.Navigation("Districts");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.Payments.Bank", b =>
@@ -5099,6 +5097,11 @@ namespace fwu_examination_management_system.Migrations
                     b.Navigation("ExamRegistrations");
 
                     b.Navigation("StudentAdmissions");
+                });
+
+            modelBuilder.Entity("fwu_examination_management_system.Data.Models.Province", b =>
+                {
+                    b.Navigation("Districts");
                 });
 
             modelBuilder.Entity("fwu_examination_management_system.Data.Models.QuestionSet", b =>

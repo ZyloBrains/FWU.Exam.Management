@@ -1,6 +1,6 @@
 using fwu_examination_management_system.Data.Models.Colleges;
+using fwu_examination_management_system.Data.Models.Location;
 using fwu_examination_management_system.Data.Models.Payments;
-using fwu_examination_management_system.Data.Models.Semesters;
 using System.ComponentModel.DataAnnotations;
 
 namespace fwu_examination_management_system.Data.Models.Students;
@@ -54,13 +54,9 @@ public class StudentRegistration
     [MaxLength(50)]
     public string? Religion { get; set; }
 
-    public int DistrictId { get; set; }
+    public int? PermanentAddressId { get; set; }
 
-    [MaxLength(100)]
-    public string? MunicipalityVdc { get; set; }
-
-    [MaxLength(50)]
-    public string? WardNumber { get; set; }
+    public int? TemporaryAddressId { get; set; }
 
     public bool IsActive { get; set; }
 
@@ -100,6 +96,8 @@ public class StudentRegistration
     public virtual Ethnicity? Ethnicity { get; set; }
     public virtual LocalLevel? LocalLevel { get; set; }
     public virtual IndexGroup? IndexGroup { get; set; }
+    public virtual Address? PermanentAddress { get; set; }
+    public virtual Address? TemporaryAddress { get; set; }
     public virtual EntryFormat? EntryFormat { get; set; }
     public virtual UserAttachment? PhotoAttachment { get; set; }
     public virtual StudentRegistrationSearch? StudentRegistrationSearch { get; set; }

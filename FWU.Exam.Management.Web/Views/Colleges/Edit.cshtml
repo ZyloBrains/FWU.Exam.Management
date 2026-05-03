@@ -66,22 +66,34 @@
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Address</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="DistrictId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.DistrictId">
+                        <label class="text-sm font-medium text-gray-700">Province *</label>
+                        <select id="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">-- Select Province --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">District *</label>
+                        <select id="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select District --</option>
                         </select>
-                        <span asp-validation-for="DistrictId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                 
-                    <div>
-                        <label asp-for="WardNumber" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="WardNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ward number" />
-                        <span asp-validation-for="WardNumber" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="HouseNumber" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="HouseNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="House number" />
-                        <span asp-validation-for="HouseNumber" class="text-xs text-red-500 mt-1 block"></span>
+                        <label class="text-sm font-medium text-gray-700">Local Level *</label>
+                        <select id="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">-- Select Local Level --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Ward Number</label>
+                        <input id="WardNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ward number" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Tole/Street</label>
+                        <input id="ToleStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Tole or street name" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">House Number</label>
+                        <input id="HouseNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="House number" />
                     </div>
                 </div>
             </div>
@@ -160,13 +172,6 @@
                             <option value="">-- Select College Type --</option>
                         </select>
                         <span asp-validation-for="CollegeTypeId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="AreaId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="AreaId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.AreaId">
-                            <option value="">-- Select Area --</option>
-                        </select>
-                        <span asp-validation-for="AreaId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="CollegeProfileId" class="text-sm font-medium text-gray-700 block mb-1"></label>

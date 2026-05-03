@@ -68,22 +68,26 @@
         <div class="mb-6 pt-2">
             <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Address & Location</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-           
+            
+                <div>
+                    <p class="text-sm font-medium text-gray-600">District</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.DistrictName ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Local Level</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.LocalLevelName ?? "-")</p>
+                </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Ward Number</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.WardNumber)</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.WardNumber?.ToString() ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Tole/Street</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.ToleStreet ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">House Number</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.HouseNumber)</p>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-600">District</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.District.DistrictName)</p>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Area</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Area.AreaName)</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.HouseNumber ?? "-")</p>
                 </div>
             </div>
         </div>

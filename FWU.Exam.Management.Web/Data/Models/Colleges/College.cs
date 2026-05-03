@@ -1,4 +1,5 @@
 using fwu_examination_management_system.Data.Models.Exams;
+using fwu_examination_management_system.Data.Models.Location;
 using fwu_examination_management_system.Data.Models.Payments;
 using fwu_examination_management_system.Data.Models.Students;
 using System.ComponentModel.DataAnnotations;
@@ -22,15 +23,6 @@ public class College
 
     public DateTime? EstablishedDate { get; set; }
     public DateTime? ClosedDate { get; set; }
-
-    [MaxLength(255)]
-    public string? MunicipalityVdc { get; set; }
-
-    [MaxLength(50)]
-    public string? WardNumber { get; set; }
-
-    [MaxLength(50)]
-    public string? HouseNumber { get; set; }
 
     [MaxLength(50)]
     public string? Website { get; set; }
@@ -60,14 +52,11 @@ public class College
     public decimal? AllocatedAmount { get; set; }
     public int? DisplayOrder { get; set; }
 
-    public int DistrictId { get; set; }
-    public virtual District? District { get; set; }
+    public int? AddressId { get; set; }
+    public virtual Address? Address { get; set; }
 
     public int? CollegeTypeId { get; set; }
     public virtual CollegeType? CollegeType { get; set; }
-
-    public int AreaId { get; set; }
-    public virtual Area? Area { get; set; }
 
     public int CollegeProfileId { get; set; }
     public virtual CollegeProfile? CollegeProfile { get; set; }

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using fwu_examination_management_system.Data;
 using fwu_examination_management_system.Data.Models.Colleges;
+using fwu_examination_management_system.Data.Models.Location;
+using fwu_examination_management_system.Data.Enums;
 
 namespace fwu_examination_management_system.Controllers
 {
@@ -24,9 +26,10 @@ namespace fwu_examination_management_system.Controllers
         public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
         {
             var query = _context.Colleges
-                .Include(c => c.Area)
                 .Include(c => c.CollegeType)
-                .Include(c => c.District)
+                .Include(c => c.Address)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
                 .AsNoTracking();
 
             // Apply search filter
@@ -42,8 +45,7 @@ namespace fwu_examination_management_system.Controllers
                     c.Phone2.Contains(search) ||
                     c.PrincipalName.Contains(search) ||
                     c.Remarks.Contains(search) ||
-                    (c.District != null && c.District.DistrictName.Contains(search)) ||
-                    (c.Area != null && c.Area.AreaName.Contains(search)) ||
+                    (c.Address != null && c.Address.LocalLevel != null && c.Address.LocalLevel.District != null && c.Address.LocalLevel.District.DistrictName.Contains(search)) ||
                     (c.CollegeType != null && c.CollegeType.Code.Contains(search))
                 );
             }
@@ -77,7 +79,7 @@ namespace fwu_examination_management_system.Controllers
                 "code" => c => c.Code,
                 "name" => c => c.Name,
                 "shortname" => c => c.ShortName,
-                "district" => c => c.District.DistrictName,
+                "district" => c => c.Address.LocalLevel.District.DistrictName,
                 "collegetype" => c => c.CollegeType.Code,
                 "displayorder" => c => c.DisplayOrder,
                 "isactive" => c => c.IsActive,
@@ -89,9 +91,10 @@ namespace fwu_examination_management_system.Controllers
         private async Task<List<College>> GetFilteredItems(string search, string sort = "DisplayOrder", string sortDir = "asc")
         {
             var query = _context.Colleges
-                .Include(c => c.Area)
                 .Include(c => c.CollegeType)
-                .Include(c => c.District)
+                .Include(c => c.Address)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
                 .AsNoTracking();
 
             if (!string.IsNullOrEmpty(search))
@@ -106,8 +109,7 @@ namespace fwu_examination_management_system.Controllers
                     c.Phone2.Contains(search) ||
                     c.PrincipalName.Contains(search) ||
                     c.Remarks.Contains(search) ||
-                    (c.District != null && c.District.DistrictName.Contains(search)) ||
-                    (c.Area != null && c.Area.AreaName.Contains(search)) ||
+                    (c.Address != null && c.Address.LocalLevel != null && c.Address.LocalLevel.District != null && c.Address.LocalLevel.District.DistrictName.Contains(search)) ||
                     (c.CollegeType != null && c.CollegeType.Code.Contains(search))
                 );
             }
@@ -145,10 +147,10 @@ namespace fwu_examination_management_system.Controllers
                               $"{EscapeCsv(c.Name)}," +
                               $"{EscapeCsv(c.CollegeNameNepali)}," +
                               $"{EscapeCsv(c.ShortName)}," +
-                              $"{EscapeCsv(c.District?.DistrictName)}," +
-                              //$"{EscapeCsv(c.MunicipalityVdc)}," +
-                              $"{c.WardNumber}," +
-                              $"{EscapeCsv(c.HouseNumber)}," +
+                              $"{EscapeCsv(c.Address?.LocalLevel?.District?.DistrictName)}," +
+                              $"{EscapeCsv(c.Address?.LocalLevel?.LocalLevelName)}," +
+                              $"{c.Address?.WardNumber}," +
+                              $"{EscapeCsv(c.Address?.HouseNumber)}," +
                               $"{EscapeCsv(c.Website)}," +
                               $"{EscapeCsv(c.Email)}," +
                               $"{EscapeCsv(c.Phone1)}," +
@@ -161,7 +163,7 @@ namespace fwu_examination_management_system.Controllers
                               $"{(c.IsActive ? "Active" : "Inactive")}," +
                               $"{EscapeCsv(c.CollegeType?.Code)}," +
                               $"{c.AllocatedAmount}," +
-                              $"{EscapeCsv(c.Area?.AreaName)}," +
+                              $"{EscapeCsv(c.Address?.ToleStreet)}," +
                               $"{c.DisplayOrder}," +
                               $"{c.EstablishedDate?.ToString("yyyy-MM-dd")}," +
                               $"{c.ClosedDate?.ToString("yyyy-MM-dd")}");
@@ -187,9 +189,10 @@ namespace fwu_examination_management_system.Controllers
             }
 
             var college = await _context.Colleges
-                .Include(c => c.Area)
                 .Include(c => c.CollegeType)
-                .Include(c => c.District)
+                .Include(c => c.Address)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (college == null)
             {
@@ -202,26 +205,46 @@ namespace fwu_examination_management_system.Controllers
         // GET: Colleges/Create
         public IActionResult Create()
         {
-            ViewData["AreaId"] = new SelectList(_context.Areas, "Id", "AreaName");
             ViewData["CollegeTypeId"] = new SelectList(_context.CollegeTypes, "Id", "Code");
-            ViewData["DistrictId"] = new SelectList(_context.Districts, "Id", "DistrictName");
             return View();
         }
 
         // POST: Colleges/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,MunicipalityVdc,WardNumber,HouseNumber,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,DistrictId,CollegeTypeId,AreaId,CollegeProfileId")] College college)
+        public async Task<IActionResult> Create([Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,CollegeProfileId")] College college)
         {
+            // Create Address from form data
+            var provinceId = Request.Form["ProvinceId"].ToString();
+            var districtId = Request.Form["DistrictId"].ToString();
+            var localLevelId = Request.Form["LocalLevelId"].ToString();
+            var wardNumber = Request.Form["WardNumber"].ToString();
+            var toleStreet = Request.Form["ToleStreet"].ToString();
+            var houseNumber = Request.Form["HouseNumber"].ToString();
+
+            if (!string.IsNullOrEmpty(localLevelId))
+            {
+                var address = new Address
+                {
+                    LocalLevelId = int.Parse(localLevelId),
+                    WardNumber = string.IsNullOrEmpty(wardNumber) ? null : int.Parse(wardNumber),
+                    ToleStreet = toleStreet,
+                    HouseNumber = houseNumber,
+                    AddressType = AddressType.Current,
+                    IsActive = true
+                };
+                _context.Addresses.Add(address);
+                await _context.SaveChangesAsync();
+                college.AddressId = address.Id;
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(college);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AreaId"] = new SelectList(_context.Areas, "Id", "AreaName", college.AreaId);
             ViewData["CollegeTypeId"] = new SelectList(_context.CollegeTypes, "Id", "Code", college.CollegeTypeId);
-            ViewData["DistrictId"] = new SelectList(_context.Districts, "Id", "DistrictName", college.DistrictId);
             return View(college);
         }
 
@@ -238,20 +261,52 @@ namespace fwu_examination_management_system.Controllers
             {
                 return NotFound();
             }
-            ViewData["AreaId"] = new SelectList(_context.Areas, "Id", "AreaName", college.AreaId);
             ViewData["CollegeTypeId"] = new SelectList(_context.CollegeTypes, "Id", "Code", college.CollegeTypeId);
-            ViewData["DistrictId"] = new SelectList(_context.Districts, "Id", "DistrictName", college.DistrictId);
             return View(college);
         }
 
         // POST: Colleges/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,MunicipalityVdc,WardNumber,HouseNumber,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,DistrictId,CollegeTypeId,AreaId,CollegeProfileId")] College college)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,CollegeProfileId,AddressId")] College college)
         {
             if (id != college.Id)
             {
                 return NotFound();
+            }
+
+            // Update Address from form data
+            var localLevelId = Request.Form["LocalLevelId"].ToString();
+            var wardNumber = Request.Form["WardNumber"].ToString();
+            var toleStreet = Request.Form["ToleStreet"].ToString();
+            var houseNumber = Request.Form["HouseNumber"].ToString();
+
+            if (!string.IsNullOrEmpty(localLevelId))
+            {
+                var address = await _context.Addresses.FindAsync(college.AddressId);
+                if (address == null)
+                {
+                    address = new Address
+                    {
+                        LocalLevelId = int.Parse(localLevelId),
+                        WardNumber = string.IsNullOrEmpty(wardNumber) ? null : int.Parse(wardNumber),
+                        ToleStreet = toleStreet,
+                        HouseNumber = houseNumber,
+                        AddressType = AddressType.Current,
+                        IsActive = true
+                    };
+                    _context.Addresses.Add(address);
+                    await _context.SaveChangesAsync();
+                    college.AddressId = address.Id;
+                }
+                else
+                {
+                    address.LocalLevelId = int.Parse(localLevelId);
+                    address.WardNumber = string.IsNullOrEmpty(wardNumber) ? null : int.Parse(wardNumber);
+                    address.ToleStreet = toleStreet;
+                    address.HouseNumber = houseNumber;
+                    _context.Update(address);
+                }
             }
 
             if (ModelState.IsValid)
@@ -274,9 +329,7 @@ namespace fwu_examination_management_system.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AreaId"] = new SelectList(_context.Areas, "Id", "AreaName", college.AreaId);
             ViewData["CollegeTypeId"] = new SelectList(_context.CollegeTypes, "Id", "Code", college.CollegeTypeId);
-            ViewData["DistrictId"] = new SelectList(_context.Districts, "Id", "DistrictName", college.DistrictId);
             return View(college);
         }
 
@@ -289,9 +342,10 @@ namespace fwu_examination_management_system.Controllers
             }
 
             var college = await _context.Colleges
-                .Include(c => c.Area)
                 .Include(c => c.CollegeType)
-                .Include(c => c.District)
+                .Include(c => c.Address)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (college == null)
             {
