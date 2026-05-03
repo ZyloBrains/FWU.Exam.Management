@@ -16,6 +16,8 @@ public class District
     [Required, MaxLength(255)]
     public string? DistrictName { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
     public virtual Province? Province { get; set; }
 
     public virtual ICollection<College?>? Colleges { get; set; }

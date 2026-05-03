@@ -6,7 +6,6 @@ using fwu_examination_management_system.Data.Models.Students;
 using fwu_examination_management_system.Data.Models.Location;
 using fwu_examination_management_system.Data.Enums;
 using OfficeOpenXml;
-using fwu_examination_management_system.Data.Enums;
 
 namespace fwu_examination_management_system.Controllers;
 
@@ -454,8 +453,30 @@ public class StudentRegistrationsController : Controller
             worksheet.Cells.AutoFitColumns();
 
             var fileBytes = package.GetAsByteArray();
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"StudentRegistrations_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
         }
+    }
+
+    // JSON endpoint: Get Districts by ProvinceId
+    [HttpGet]
+    public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
+    {
+        var districts = await _context.Districts
+            .Where(d => d.ProvinceId == provinceId && d.IsActive)
+            .Select(d => new { id = d.Id, name = d.DistrictName })
+            .ToListAsync();
+        return Json(districts);
+    }
+
+    // JSON endpoint: Get LocalLevels by DistrictId
+    [HttpGet]
+    public async Task<JsonResult> GetLocalLevelsByDistrict(int districtId)
+    {
+        var localLevels = await _context.LocalLevels
+            .Where(l => l.DistrictId == districtId && l.IsActive)
+            .Select(l => new { id = l.Id, name = l.LocalLevelName })
+            .ToListAsync();
+        return Json(localLevels);
     }
 }

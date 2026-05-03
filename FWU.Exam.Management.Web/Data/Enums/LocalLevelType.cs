@@ -1,8 +1,8 @@
 namespace fwu_examination_management_system.Data.Enums;
 public enum LocalLevelType
 {
-    गाउँपालिका = 1,
-    नगरपालिका = 2,
-    उपमहानगरपालिका = 3,    
-    महानगरपालिका = 4       
+    RuralMunicipality = 1,  // गाउँपालिका
+    Municipality = 2,       // नगरपालिका
+    SubMetropolitan = 3,    // उपमहानगरपालिका
+    Metropolitan = 4        // महानगरपालिका
 }
