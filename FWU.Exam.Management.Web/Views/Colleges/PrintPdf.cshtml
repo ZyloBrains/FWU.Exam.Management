@@ -1,9 +1,9 @@
-Ôªø@*
+@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
 }
-@model IEnumerable<fwu_examination_management_system.Data.Models.Colleges.College>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Colleges.College>
 
 @{
     Layout = null; // No layout for PDF export
@@ -120,7 +120,7 @@
 </head>
 <body>
     <div class="report-header">
-        <h1>üèõÔ∏è @title</h1>
+        <h1>??? @title</h1>
         <div class="report-date">Generated on: @generatedDate</div>
     </div>
 
@@ -178,46 +178,46 @@
                 <tr>
                     <td>@item.Code</td>
                     <td>@item.Name</td>
-                    <td>@(string.IsNullOrEmpty(item.CollegeNameNepali) ? "‚Äî" : item.CollegeNameNepali)</td>
-                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "‚Äî" : item.ShortName)</td>
-                    <td>@(item.Address?.LocalLevel?.District?.DistrictName ?? "‚Äî")</td>
-                    <td>@(item.Address?.LocalLevel?.LocalLevelName ?? "‚Äî")</td>
-                    <td>@(item.Address?.WardNumber?.ToString() ?? "‚Äî")</td>
-                    <td>@(item.Address?.HouseNumber ?? "‚Äî")</td>
-                    <td>@(string.IsNullOrEmpty(item.Phone1) ? "‚Äî" : item.Phone1)</td>
-                    <td>@(string.IsNullOrEmpty(item.Phone2) ? "‚Äî" : item.Phone2)</td>
-                    <td>@(string.IsNullOrEmpty(item.Email) ? "‚Äî" : item.Email)</td>
-                    <td>@(string.IsNullOrEmpty(item.Website) ? "‚Äî" : item.Website)</td>
-                    <td>@(string.IsNullOrEmpty(item.PrincipalName) ? "‚Äî" : item.PrincipalName)</td>
-                    <td>@(string.IsNullOrEmpty(item.PrincipalContactNumber) ? "‚Äî" : item.PrincipalContactNumber)</td>
-                    <td>@(string.IsNullOrEmpty(item.Fax) ? "‚Äî" : item.Fax)</td>
-                    <td>@(item.CollegeType?.Code ?? "‚Äî")</td>
-                    <td>@(item.Address?.ToleStreet ?? "‚Äî")</td>
-                    <td>@(item.EstablishedDate?.ToString("yyyy-MM-dd") ?? "‚Äî")</td>
-                    <td>@(item.ClosedDate?.ToString("yyyy-MM-dd") ?? "‚Äî")</td>
-                    <td style="text-align: right;">@(item.AllocatedAmount.HasValue ? item.AllocatedAmount.Value.ToString("N2") : "‚Äî")</td>
+                    <td>@(string.IsNullOrEmpty(item.CollegeNameNepali) ? "ó" : item.CollegeNameNepali)</td>
+                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "ó" : item.ShortName)</td>
+                    <td>@(item.Address?.LocalLevel?.District?.DistrictName ?? "ó")</td>
+                    <td>@(item.Address?.LocalLevel?.LocalLevelName ?? "ó")</td>
+                    <td>@(item.Address?.WardNumber?.ToString() ?? "ó")</td>
+                    <td>@(item.Address?.HouseNumber ?? "ó")</td>
+                    <td>@(string.IsNullOrEmpty(item.Phone1) ? "ó" : item.Phone1)</td>
+                    <td>@(string.IsNullOrEmpty(item.Phone2) ? "ó" : item.Phone2)</td>
+                    <td>@(string.IsNullOrEmpty(item.Email) ? "ó" : item.Email)</td>
+                    <td>@(string.IsNullOrEmpty(item.Website) ? "ó" : item.Website)</td>
+                    <td>@(string.IsNullOrEmpty(item.PrincipalName) ? "ó" : item.PrincipalName)</td>
+                    <td>@(string.IsNullOrEmpty(item.PrincipalContactNumber) ? "ó" : item.PrincipalContactNumber)</td>
+                    <td>@(string.IsNullOrEmpty(item.Fax) ? "ó" : item.Fax)</td>
+                    <td>@(item.CollegeType?.Code ?? "ó")</td>
+                    <td>@(item.Address?.ToleStreet ?? "ó")</td>
+                    <td>@(item.EstablishedDate?.ToString("yyyy-MM-dd") ?? "ó")</td>
+                    <td>@(item.ClosedDate?.ToString("yyyy-MM-dd") ?? "ó")</td>
+                    <td style="text-align: right;">@(item.AllocatedAmount.HasValue ? item.AllocatedAmount.Value.ToString("N2") : "ó")</td>
                     <td style="text-align: center;">@item.DisplayOrder</td>
                     <td>
                         @if (item.IsExamCenterOnly)
                         {
-                            <span class="exam-center-badge">‚úì Yes</span>
+                            <span class="exam-center-badge">? Yes</span>
                         }
                         else
                         {
-                            <span>‚Äî</span>
+                            <span>ó</span>
                         }
                     </td>
                     <td>
                         @if (item.IsActive)
                         {
-                            <span class="active-badge">‚óè Active</span>
+                            <span class="active-badge">? Active</span>
                         }
                         else
                         {
-                            <span class="inactive-badge">‚óã Inactive</span>
+                            <span class="inactive-badge">? Inactive</span>
                         }
                     </td>
-                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "‚Äî" : item.Remarks)</td>
+                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "ó" : item.Remarks)</td>
                 </tr>
             }
         </tbody>
@@ -232,7 +232,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>¬© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>© @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>

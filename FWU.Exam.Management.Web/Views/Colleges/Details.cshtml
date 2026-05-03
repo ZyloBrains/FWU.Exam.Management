@@ -1,4 +1,4 @@
-ï»¿@model fwu_examination_management_system.Data.Models.Colleges.College
+@model FWU.Exam.Management.Domain.Entities.Colleges.College
 
 @{
     ViewData["Title"] = "College Details";
@@ -140,11 +140,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Established Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "â€”")</p>
+                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Closed Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "â€”")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">College Type</p>
@@ -156,7 +156,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Allocated Amount</p>
-                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "â€”")</p>
+                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "—")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Remarks</p>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Colleges.CollegeProgram>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Colleges.CollegeProgram>
 
 @{
     ViewData["Title"] = "College Programs";
@@ -98,31 +98,31 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="collegecode" asp-route-sortDir="@(currentSort == "collegecode" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "collegecode" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            College Code @(currentSort == "collegecode" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            College Code @(currentSort == "collegecode" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="collegename" asp-route-sortDir="@(currentSort == "collegename" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "collegename" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            College Name @(currentSort == "collegename" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            College Name @(currentSort == "collegename" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="programcode" asp-route-sortDir="@(currentSort == "programcode" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "programcode" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            Program Code @(currentSort == "programcode" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Program Code @(currentSort == "programcode" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="programname" asp-route-sortDir="@(currentSort == "programname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "programname" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            Program Name @(currentSort == "programname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Program Name @(currentSort == "programname" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="affiliationdate" asp-route-sortDir="@(currentSort == "affiliationdate" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "affiliationdate" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            Affiliation Date @(currentSort == "affiliationdate" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Affiliation Date @(currentSort == "affiliationdate" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="numberofstudents" asp-route-sortDir="@(currentSort == "numberofstudents" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "numberofstudents" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            Students @(currentSort == "numberofstudents" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Students @(currentSort == "numberofstudents" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="isactive" asp-route-sortDir="@(currentSort == "isactive" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "isactive" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600") hover:bg-purple-50">
-            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 
@@ -152,9 +152,9 @@
                             <div class="font-medium text-gray-800">@item.Program?.ProgramName</div>
                             <div class="text-xs text-gray-500">Code: @item.Program?.ProgramCode</div>
                         </td>
-                        <td class="px-4 py-3 text-gray-600">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "�")</td>
                         <td class="px-4 py-3 text-right font-medium text-gray-800">@item.NumberOfStudents.ToString("N0")</td>
-                        <td class="px-4 py-3 text-gray-600 truncate max-w-[200px]">@(string.IsNullOrEmpty(item.Remarks) ? "—" : item.Remarks)</td>
+                        <td class="px-4 py-3 text-gray-600 truncate max-w-[200px]">@(string.IsNullOrEmpty(item.Remarks) ? "�" : item.Remarks)</td>
                         <td class="px-4 py-3">
                             @if (item.IsActive)
                             {
@@ -226,7 +226,7 @@
                     <div class="text-gray-500">Program Code</div>
                     <div class="text-gray-800">@item.Program?.ProgramCode</div>
                     <div class="text-gray-500">Affiliation Date</div>
-                    <div class="text-gray-800">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</div>
+                    <div class="text-gray-800">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "�")</div>
                     <div class="text-gray-500">Number of Students</div>
                     <div class="text-gray-800 font-semibold">@item.NumberOfStudents.ToString("N0")</div>
                     @if (!string.IsNullOrEmpty(item.Remarks))

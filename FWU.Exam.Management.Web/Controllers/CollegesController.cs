@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models.Colleges;
-using fwu_examination_management_system.Data.Models.Location;
-using fwu_examination_management_system.Data.Enums;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Enums;
 
-namespace fwu_examination_management_system.Controllers
+namespace FWU.Exam.Management.Web.Controllers
 {
     public class CollegesController : Controller
     {

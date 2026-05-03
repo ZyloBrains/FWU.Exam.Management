@@ -1,5 +1,5 @@
-﻿@using fwu_examination_management_system.Data.Models.Location
-@model IEnumerable<fwu_examination_management_system.Data.Models.Location.District>
+@using FWU.Exam.Management.Domain.Entities.Location
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Location.District>
 
 @{
     ViewData["Title"] = "Districts";
@@ -98,15 +98,15 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="districtcode" asp-route-sortDir="@(currentSort == "districtcode" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "districtcode" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            District Code @(currentSort == "districtcode" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            District Code @(currentSort == "districtcode" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="districtname" asp-route-sortDir="@(currentSort == "districtname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "districtname" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            District Name @(currentSort == "districtname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            District Name @(currentSort == "districtname" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="provincename" asp-route-sortDir="@(currentSort == "provincename" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "provincename" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            Province @(currentSort == "provincename" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Province @(currentSort == "provincename" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 

@@ -1,11 +1,11 @@
-﻿using System.Text;
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models.Exams;
+using System.Text;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Controllers
+namespace FWU.Exam.Management.Web.Controllers
 {
     public class ExamSchedulesController : Controller
     {

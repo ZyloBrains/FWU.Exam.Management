@@ -1,4 +1,5 @@
-using fwu_examination_management_system.Data.Auditing;
+using FWU.Exam.Management.Infrastructure;
+using Microsoft.AspNetCore.Http;
 
 public class HttpContextAuditUserProvider : IAuditUserProvider
 {

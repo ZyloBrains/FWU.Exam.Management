@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 public class AcademicYearsController : Controller
 {

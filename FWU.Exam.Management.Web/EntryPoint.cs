@@ -1,7 +1,6 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Auditing;
-using fwu_examination_management_system.Data.Models;
-using fwu_examination_management_system.Helpers;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Web.Data;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
@@ -10,9 +9,6 @@ public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
-        // Set EPPlus license context
-        //ExcelPackage.License = new EPPlusLicense();
-
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
@@ -42,7 +38,6 @@ public partial class EntryPoint
         else
         {
             app.UseExceptionHandler("/Home/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
 
@@ -63,8 +58,8 @@ public partial class EntryPoint
 
         using (var scope = app.Services.CreateScope())
         {
-            await DbSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await DbSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
+            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
         }
 

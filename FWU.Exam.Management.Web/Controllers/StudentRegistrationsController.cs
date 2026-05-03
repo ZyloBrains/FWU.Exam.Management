@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models.Students;
-using fwu_examination_management_system.Data.Models.Location;
-using fwu_examination_management_system.Data.Enums;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Enums;
 using OfficeOpenXml;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 public class StudentRegistrationsController : Controller
 {
@@ -52,7 +52,6 @@ public class StudentRegistrationsController : Controller
             .Include(s => s.LocalLevel)
             .Include(s => s.IndexGroup)
             .Include(s => s.EntryFormat)
-            .Include(s => s.PhotoAttachment)
             .FirstOrDefaultAsync(m => m.Id == id);
         if (studentRegistration == null)
         {

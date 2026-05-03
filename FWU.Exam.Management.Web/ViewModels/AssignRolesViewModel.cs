@@ -1,4 +1,4 @@
-namespace fwu_examination_management_system.ViewModels;
+namespace FWU.Exam.Management.Web.ViewModels;
 
 public class AssignRolesViewModel
 {

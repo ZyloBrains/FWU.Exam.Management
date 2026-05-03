@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Program
+@model FWU.Exam.Management.Domain.Entities.Program
 
 @{
     ViewData["Title"] = "Delete Program";
@@ -122,7 +122,7 @@
             <!-- Remarks -->
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
-                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
+                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "�" : Model.Remarks)</p>
             </div>
         </div>
 

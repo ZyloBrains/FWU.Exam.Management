@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 public class RoleController : Controller
 {

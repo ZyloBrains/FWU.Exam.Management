@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Program
+@model FWU.Exam.Management.Domain.Entities.Program
 
 @{
     ViewData["Title"] = "Program Details";
@@ -115,7 +115,7 @@
             <div class="grid grid-cols-1 gap-6">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Remarks</p>
-                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
+                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "�" : Model.Remarks)</p>
                 </div>
             </div>
         </div>

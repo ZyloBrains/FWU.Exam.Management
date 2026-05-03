@@ -1,10 +1,10 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 public class HomeController(UserManager<AppUser> userManager, AppDbContext context) : Controller
 {

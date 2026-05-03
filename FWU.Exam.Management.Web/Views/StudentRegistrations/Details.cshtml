@@ -1,4 +1,4 @@
-@using fwu_examination_management_system.Data.Models.Students
+@using FWU.Exam.Management.Domain.Entities.Students
 @model StudentRegistration
 
 @{
@@ -271,12 +271,12 @@
         </dd>
 
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.PhotoAttachment)
+            Photo Attachment ID
         </dt>
         <dd class="col-sm-10">
-            @if (Model?.PhotoAttachment != null)
+            @if (Model?.PhotoAttachmentId != null)
             {
-                <span>@Model.PhotoAttachment.FileName</span>
+                <span>@Model.PhotoAttachmentId</span>
             }
             else
             {

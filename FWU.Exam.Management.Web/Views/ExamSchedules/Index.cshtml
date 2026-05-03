@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Exams.ExamSchedule>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule>
 
 @{
     ViewData["Title"] = "Exam Schedules";
@@ -83,7 +83,7 @@
                         <td class="px-4 py-3 text-gray-600">@item.ExamType?.Name</td>
                         <td class="px-4 py-3 text-gray-600 text-xs">
                             <div>@(item.StartDateBs ?? "-")</div>
-                            <div>→ @(item.EndDateBs ?? "-")</div>
+                            <div>? @(item.EndDateBs ?? "-")</div>
                         </td>
                         <td class="px-4 py-3">
                             @if (item.IsActive)

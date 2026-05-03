@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-fwu_examination_management_system-47a25181-ae66-4f3f-b57a-87d759e229c0</UserSecretsId>
-    <RootNamespace>fwu_examination_management_system</RootNamespace>
+    <RootNamespace>FWU.Exam.Management.Web</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +25,13 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FWU.Exam.Management.Application\FWU.Exam.Management.Application.csproj" />
+    <ProjectReference Include="..\FWU.Exam.Management.Infrastructure\FWU.Exam.Management.Infrastructure.csproj" />
+    <ProjectReference Include="..\FWU.Exam.Management.Domain\FWU.Exam.Management.Domain.csproj" />
+    <ProjectReference Include="..\FWU.Exam.Management.Api\FWU.Exam.Management.Api.csproj" />
   </ItemGroup>
 
 </Project>

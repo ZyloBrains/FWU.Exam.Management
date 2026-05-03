@@ -1,12 +1,12 @@
-﻿using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
-using fwu_examination_management_system.ViewModels;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
 public class DashboardController : Controller

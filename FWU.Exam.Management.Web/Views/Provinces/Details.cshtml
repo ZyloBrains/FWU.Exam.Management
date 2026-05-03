@@ -1,5 +1,5 @@
-﻿@using fwu_examination_management_system.Data.Models.Location
-@model fwu_examination_management_system.Data.Models.Location.Province
+@using FWU.Exam.Management.Domain.Entities.Location
+@model FWU.Exam.Management.Domain.Entities.Location.Province
 
 @{
     ViewData["Title"] = "Province Details";
@@ -31,11 +31,11 @@
                 <div class="mt-1">
                     @if (Model.IsActive)
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">✓ Active</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">? Active</span>
                     }
                     else
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">✗ Inactive</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">? Inactive</span>
                     }
                 </div>
             </div>
