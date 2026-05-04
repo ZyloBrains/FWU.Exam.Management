@@ -1,14 +1,11 @@
-using FWU.Exam.Management.Domain.Entities.Payments;
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
 public class ExamSchedule
 {
     public int Id { get; set; }
-    public int AcademicYearId { get; set; }
-    public int LevelId { get; set; }
-    public int ExamTypeId { get; set; }
 
     [Required, MaxLength(50)]
     public string? ExamScheduleName { get; set; }
@@ -28,7 +25,6 @@ public class ExamSchedule
 
     public bool IsActive { get; set; }
 
-    public int? ExamScheduleParentId { get; set; }
     public DateTime? ExtendedDate { get; set; }
     public decimal? ExtendedDateCharge { get; set; }
     public DateTime? CollegeApprovalDate { get; set; }
@@ -37,9 +33,18 @@ public class ExamSchedule
     [MaxLength(50)]
     public string? ExamScheduleCode { get; set; }
 
+    public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
-    public virtual Level? Level { get; set; }
+
+    public int ProgramId { get; set; }
+    public virtual Program? Program { get; set; }
+
+    public int SemesterId { get; set; }
+    public virtual Semester? Semester { get; set; }
+
+    public int ExamTypeId { get; set; }
     public virtual ExamType? ExamType { get; set; }
+
     public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
 }

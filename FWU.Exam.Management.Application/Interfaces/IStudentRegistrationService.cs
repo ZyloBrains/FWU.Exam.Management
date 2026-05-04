@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 
 namespace FWU.Exam.Management.Application.Interfaces;
@@ -17,4 +18,5 @@ public interface IStudentRegistrationService
     Task<object> GetSelectListDataAsync(StudentRegistration? studentRegistration = null);
     Task<List<object>> GetDistrictsByProvinceAsync(int provinceId);
     Task<List<object>> GetLocalLevelsByDistrictAsync(int districtId);
+    Task<List<Province>> GetProvincesAsync();
 }

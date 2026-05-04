@@ -29,7 +29,7 @@ public class ExamScheduleService : IExamScheduleService
             {
                 Id = e.Id,
                 AcademicYearId = e.AcademicYearId,
-                LevelId = e.LevelId,
+                ProgramId = e.ProgramId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
@@ -39,14 +39,13 @@ public class ExamScheduleService : IExamScheduleService
                 EndTime = e.EndTime,
                 Remarks = e.Remarks,
                 IsActive = e.IsActive,
-                ExamScheduleParentId = e.ExamScheduleParentId,
                 ExtendedDate = e.ExtendedDate,
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
-                Level = e.Level,
+                Program = e.Program,
                 ExamType = e.ExamType
             })
             .ToListAsync();
@@ -62,7 +61,7 @@ public class ExamScheduleService : IExamScheduleService
             {
                 Id = e.Id,
                 AcademicYearId = e.AcademicYearId,
-                LevelId = e.LevelId,
+                ProgramId = e.ProgramId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
@@ -72,14 +71,13 @@ public class ExamScheduleService : IExamScheduleService
                 EndTime = e.EndTime,
                 Remarks = e.Remarks,
                 IsActive = e.IsActive,
-                ExamScheduleParentId = e.ExamScheduleParentId,
                 ExtendedDate = e.ExtendedDate,
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
-                Level = e.Level,
+                Program = e.Program,
                 ExamType = e.ExamType
             })
             .ToListAsync();
@@ -94,7 +92,7 @@ public class ExamScheduleService : IExamScheduleService
             {
                 Id = e.Id,
                 AcademicYearId = e.AcademicYearId,
-                LevelId = e.LevelId,
+                ProgramId = e.ProgramId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
@@ -104,14 +102,13 @@ public class ExamScheduleService : IExamScheduleService
                 EndTime = e.EndTime,
                 Remarks = e.Remarks,
                 IsActive = e.IsActive,
-                ExamScheduleParentId = e.ExamScheduleParentId,
                 ExtendedDate = e.ExtendedDate,
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
-                Level = e.Level,
+                Program = e.Program,
                 ExamType = e.ExamType
             })
             .FirstOrDefaultAsync();
@@ -169,7 +166,7 @@ public class ExamScheduleService : IExamScheduleService
                 (s.ExamScheduleCode != null && s.ExamScheduleCode.Contains(search)) ||
                 (s.Remarks != null && s.Remarks.Contains(search)) ||
                 (s.AcademicYear != null && s.AcademicYear.AcademicYearName != null && s.AcademicYear.AcademicYearName.Contains(search)) ||
-                (s.Level != null && s.Level.LevelName != null && s.Level.LevelName.Contains(search)) ||
+                (s.Program != null && s.Program.ProgramName != null && s.Program.ProgramName.Contains(search)) ||
                 (s.ExamType != null && s.ExamType.Name != null && s.ExamType.Name.Contains(search)));
         }
 
@@ -182,8 +179,8 @@ public class ExamScheduleService : IExamScheduleService
                 ? query.OrderByDescending(e => e.AcademicYear != null ? e.AcademicYear.AcademicYearName : string.Empty)
                 : query.OrderBy(e => e.AcademicYear != null ? e.AcademicYear.AcademicYearName : string.Empty),
             "level" => descending
-                ? query.OrderByDescending(e => e.Level != null ? e.Level.LevelName : string.Empty)
-                : query.OrderBy(e => e.Level != null ? e.Level.LevelName : string.Empty),
+                ? query.OrderByDescending(e => e.Program != null ? e.Program.ProgramName : string.Empty)
+                : query.OrderBy(e => e.Program != null ? e.Program.ProgramName : string.Empty),
             "examtype" => descending
                 ? query.OrderByDescending(e => e.ExamType != null ? e.ExamType.Name : string.Empty)
                 : query.OrderBy(e => e.ExamType != null ? e.ExamType.Name : string.Empty),

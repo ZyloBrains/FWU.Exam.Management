@@ -128,9 +128,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.TemporaryAddress)
+            .HasOne(sr => sr.CurrentAddress)
             .WithMany()
-            .HasForeignKey(sr => sr.TemporaryAddressId)
+            .HasForeignKey(sr => sr.CurrentAddressId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Batch>()
@@ -146,12 +146,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSchedule>()
-            .HasOne(es => es.Level)
-            .WithMany(l => l.ExamSchedules)
-            .HasForeignKey(es => es.LevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamSchedule>()
             .HasOne(es => es.ExamType)
             .WithMany()
             .HasForeignKey(es => es.ExamTypeId)
@@ -162,13 +156,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany(es => es.ExamCenters)
             .HasForeignKey(ec => ec.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentAdmission>()
-            .HasOne(sa => sa.Batch)
-            .WithMany(b => b.StudentAdmissions)
-            .HasForeignKey(sa => sa.BatchId)
-            .OnDelete(DeleteBehavior.Restrict);
-
+        
         builder.Entity<StudentAdmission>()
             .HasOne(sa => sa.Program)
             .WithMany(p => p.StudentAdmissions)
@@ -265,18 +253,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sr => sr.EthnicityId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.IndexGroup)
-            .WithMany(ig => ig.StudentRegistrations)
-            .HasForeignKey(sr => sr.IndexGroupId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.EntryFormat)
-            .WithMany(ef => ef.StudentRegistrations)
-            .HasForeignKey(sr => sr.EntryFormatId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<StudentGuardian>()
             .HasOne(sg => sg.StudentRegistration)
             .WithMany(sr => sr.StudentGuardians)
@@ -371,18 +347,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(st => st.PreviousLevel)
             .WithMany(pl => pl.SchoolTypes)
             .HasForeignKey(st => st.PreviousLevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentAdmission>()
-            .HasOne(sa => sa.StudentRegistration)
-            .WithMany(sr => sr.StudentAdmissions)
-            .HasForeignKey(sa => sa.StudentRegistrationId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentAdmission>()
-            .HasOne(sa => sa.Section)
-            .WithMany(s => s.StudentAdmissions)
-            .HasForeignKey(sa => sa.SectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Program>().ToTable("Programs");

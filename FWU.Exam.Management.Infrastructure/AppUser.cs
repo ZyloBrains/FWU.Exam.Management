@@ -8,8 +8,6 @@ namespace FWU.Exam.Management.Infrastructure;
 public class AppUser: IdentityUser, IAuditable
 { 
     public string? ProfilePath { get; set; }
-
-    // Fields from old User class
     public string? FullName { get; set; }
     public string? Designation { get; set; }
     public bool IsActive { get; set; }
@@ -19,12 +17,4 @@ public class AppUser: IdentityUser, IAuditable
 
     public int? OrganizationId { get; set; }
     public Organization? Organization { get; set; }
-
-    public int? StudentRegistrationId { get; set; }
-    public virtual StudentRegistration? StudentRegistration { get; set; }
-
-    public virtual ICollection<Program>? Programs { get; set; }
-
-    public int? CollegeId { get; set; }
-    public virtual College? College { get; set; }
 }

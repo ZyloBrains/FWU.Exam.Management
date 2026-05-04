@@ -5,6 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Location;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
+using System.Threading.Tasks;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -279,8 +280,11 @@ public class StudentRegistrationsController : Controller
         return Json(localLevels);
     }
 
-    private void PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
+    private async Task PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
     {
+        var provinces = await _studentRegistrationService.GetProvincesAsync();
+        ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
+        
         // This will be implemented based on the selectLists object
         // For now, using ViewData as in the original
     }

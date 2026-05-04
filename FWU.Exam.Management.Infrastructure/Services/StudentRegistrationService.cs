@@ -28,7 +28,6 @@ public class StudentRegistrationService : IStudentRegistrationService
             .Include(s => s.Faculty)
             .Include(s => s.College)
             .Include(s => s.Gender)
-            .Include(s => s.District)
             .Include(s => s.StudentCategory)
             .OrderByDescending(s => s.Id)
             .AsNoTracking()
@@ -43,12 +42,8 @@ public class StudentRegistrationService : IStudentRegistrationService
             .Include(s => s.Faculty)
             .Include(s => s.College)
             .Include(s => s.Gender)
-            .Include(s => s.District)
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
-            .Include(s => s.LocalLevel)
-            .Include(s => s.IndexGroup)
-            .Include(s => s.EntryFormat)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -226,4 +221,11 @@ public class StudentRegistrationService : IStudentRegistrationService
             .ToListAsync();
         return localLevels.Cast<object>().ToList();
     }
+
+    public async Task<List<Province>> GetProvincesAsync()
+    {
+        var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
+        return provinces;
+    }
+
 }
