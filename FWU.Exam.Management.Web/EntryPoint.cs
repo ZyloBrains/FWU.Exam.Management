@@ -1,4 +1,6 @@
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Services;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Identity;
@@ -27,6 +29,22 @@ public partial class EntryPoint
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
         builder.Services.AddControllersWithViews();
+        builder.Services.AddScoped<IBoardService, BoardService>();
+        builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
+        builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
+        builder.Services.AddScoped<ICollegeService, CollegeService>();
+        builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+        builder.Services.AddScoped<IDashboardService, DashboardService>();
+        builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
+        builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
+        builder.Services.AddScoped<IProgramService, ProgramService>();
+        builder.Services.AddScoped<ILevelService, LevelService>();
+        builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
+        builder.Services.AddScoped<IFacultyService, FacultyService>();
+        builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
+        builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
+        builder.Services.AddScoped<IDistrictService, DistrictService>();
+        builder.Services.AddScoped<IProvinceService, ProvinceService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
         var app = builder.Build();
 

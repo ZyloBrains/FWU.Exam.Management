@@ -1,25 +1,22 @@
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
 public class DashboardController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly IDashboardService _dashboardService;
     private readonly UserManager<AppUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public DashboardController(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+    public DashboardController(IDashboardService dashboardService, UserManager<AppUser> userManager)
     {
-        _context = context;
+        _dashboardService = dashboardService;
         _userManager = userManager;
-        _roleManager = roleManager;
     }
 
     public async Task<IActionResult> Index()
@@ -30,7 +27,30 @@ public class DashboardController : Controller
         var roles = await _userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? "Student";
 
-        var vm = await BuildDashboardViewModel(user, primaryRole);
+        var stats = await _dashboardService.GetDashboardStatsAsync();
+
+        var vm = new DashboardViewModel
+        {
+            CurrentRole = primaryRole,
+            UserName = user.UserName ?? user.Email ?? "User",
+            TotalOrganizations = stats.TotalOrganizations,
+            TotalUsers = stats.TotalUsers,
+            TotalRoles = stats.TotalRoles,
+            TotalColleges = stats.TotalColleges,
+            TotalPrograms = stats.TotalPrograms,
+            TotalStudents = stats.TotalStudents,
+            TotalExamSchedules = stats.TotalExamSchedules,
+            TotalExamRegistrations = stats.TotalExamRegistrations,
+            TotalSubjects = stats.TotalSubjects,
+            TotalAcademicYears = stats.TotalAcademicYears,
+            TotalBanks = stats.TotalBanks,
+            TotalBoards = stats.TotalBoards,
+            TotalBatches = stats.TotalBatches,
+            ActiveColleges = stats.ActiveColleges,
+            ActivePrograms = stats.ActivePrograms,
+            ActiveStudents = stats.ActiveStudents,
+            ActiveExamSchedules = stats.ActiveExamSchedules
+        };
 
         return primaryRole switch
         {
@@ -40,33 +60,5 @@ public class DashboardController : Controller
             "Student" => View("Student", vm),
             _ => View("Student", vm)
         };
-    }
-
-    private async Task<DashboardViewModel> BuildDashboardViewModel(AppUser user, string role)
-    {
-        var vm = new DashboardViewModel
-        {
-            CurrentRole = role,
-            UserName = user.UserName ?? user.Email ?? "User",
-            TotalOrganizations = await _context.Organizations.CountAsync(),
-            TotalUsers = await _userManager.Users.CountAsync(),
-            TotalRoles = await _roleManager.Roles.CountAsync(),
-            TotalColleges = await _context.Colleges.CountAsync(),
-            TotalPrograms = await _context.Programs.CountAsync(),
-            TotalStudents = await _context.StudentRegistrations.CountAsync(),
-            TotalExamSchedules = await _context.ExamSchedules.CountAsync(),
-            TotalExamRegistrations = await _context.ExamRegistrations.CountAsync(),
-            TotalSubjects = await _context.SubjectCatalogs.CountAsync(),
-            TotalAcademicYears = await _context.AcademicYears.CountAsync(),
-            TotalBanks = await _context.Banks.CountAsync(),
-            TotalBoards = await _context.Boards.CountAsync(),
-            TotalBatches = await _context.Batches.CountAsync(),
-            ActiveColleges = await _context.Colleges.CountAsync(c => c.IsActive),
-            ActivePrograms = await _context.Programs.CountAsync(p => p.IsActive),
-            ActiveStudents = await _context.StudentRegistrations.CountAsync(s => s.IsActive),
-            ActiveExamSchedules = await _context.ExamSchedules.CountAsync(e => e.IsActive)
-        };
-
-        return vm;
     }
 }

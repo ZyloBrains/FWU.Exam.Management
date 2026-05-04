@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FWU.Exam.Management.Domain.Entities;
 
 namespace FWU.Exam.Management.Application.Interfaces;

@@ -1,11 +1,11 @@
 using System.Security.Claims;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -14,13 +14,13 @@ public class OrganizationController : Controller
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
-    private readonly AppDbContext _context;
+    private readonly IOrganizationService _organizationService;
     private readonly IFileUploadHelper _fileUploadHelper;
     private readonly UserManager<AppUser> _userManager;
     
-    public OrganizationController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager)
+    public OrganizationController(IOrganizationService organizationService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager)
     {
-        _context = context;
+        _organizationService = organizationService;
         _fileUploadHelper = fileUploadHelper;
         _userManager = userManager;
     }

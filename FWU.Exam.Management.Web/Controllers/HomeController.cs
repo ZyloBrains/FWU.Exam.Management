@@ -1,14 +1,12 @@
-using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-public class HomeController(UserManager<AppUser> userManager, AppDbContext context) : Controller
+public class HomeController : Controller
 {
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
         if (User.Identity?.IsAuthenticated == true)
         {

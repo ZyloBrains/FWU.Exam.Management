@@ -21,7 +21,6 @@ public class UserController : Controller
         _context = context;
     }
 
-    // GET: User
     public async Task<IActionResult> Index()
     {
         var users = await _userManager.Users.Include(u => u.Organization).ToListAsync();
@@ -39,48 +38,32 @@ public class UserController : Controller
         return View(model);
     }
 
-    // GET: User/Details/id
     public async Task<IActionResult> Details(string id)
     {
-        if (id == null)
-            return NotFound();
+        if (id == null) return NotFound();
 
         var user = await _userManager.Users
             .Include(u => u.Organization)
             .FirstOrDefaultAsync(u => u.Id == id);
 
-        if (user == null)
-            return NotFound();
+        if (user == null) return NotFound();
 
         ViewBag.Roles = await _userManager.GetRolesAsync(user);
         return View(user);
     }
 
-    // GET: User/Create
     public async Task<IActionResult> Create()
     {
         ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name");
         return View();
     }
 
-    // POST: User/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
         if (!model.OrganizationId.HasValue)
-        {
             ModelState.AddModelError(nameof(model.OrganizationId), "Organization is required.");
-        }
-
-        if (model.OrganizationId.HasValue)
-        {
-            var organizationExists = await _context.Organizations.AnyAsync(o => o.Id == model.OrganizationId.Value);
-            if (!organizationExists)
-            {
-                ModelState.AddModelError(nameof(model.OrganizationId), "Selected organization is invalid.");
-            }
-        }
 
         if (ModelState.IsValid)
         {
@@ -97,7 +80,6 @@ public class UserController : Controller
             {
                 if (await _roleManager.RoleExistsAsync("Student") && !await _userManager.IsInRoleAsync(user, "Student"))
                     await _userManager.AddToRoleAsync(user, "Student");
-
                 return RedirectToAction(nameof(Index));
             }
 
@@ -105,19 +87,16 @@ public class UserController : Controller
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Organizations = new SelectList(await _context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
         return View(model);
     }
 
-    // GET: User/Edit/id
     public async Task<IActionResult> Edit(string id)
     {
-        if (id == null)
-            return NotFound();
+        if (id == null) return NotFound();
 
         var user = await _userManager.FindByIdAsync(id);
-        if (user == null)
-            return NotFound();
+        if (user == null) return NotFound();
 
         var model = new EditUserViewModel
         {
@@ -126,23 +105,20 @@ public class UserController : Controller
             OrganizationId = user.OrganizationId
         };
 
-        ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Organizations = new SelectList(await _context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
         return View(model);
     }
 
-    // POST: User/Edit/id
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string id, EditUserViewModel model)
     {
-        if (id != model.Id)
-            return NotFound();
+        if (id != model.Id) return NotFound();
 
         if (ModelState.IsValid)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
+            if (user == null) return NotFound();
 
             user.Email = model.Email;
             user.UserName = model.Email;
@@ -156,27 +132,23 @@ public class UserController : Controller
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Organizations = new SelectList(await _context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
         return View(model);
     }
 
-    // GET: User/Delete/id
     public async Task<IActionResult> Delete(string id)
     {
-        if (id == null)
-            return NotFound();
+        if (id == null) return NotFound();
 
         var user = await _userManager.Users
             .Include(u => u.Organization)
             .FirstOrDefaultAsync(u => u.Id == id);
 
-        if (user == null)
-            return NotFound();
+        if (user == null) return NotFound();
 
         return View(user);
     }
 
-    // POST: User/Delete/id
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
@@ -188,15 +160,12 @@ public class UserController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: User/AssignRoles/id
     public async Task<IActionResult> AssignRoles(string id)
     {
-        if (id == null)
-            return NotFound();
+        if (id == null) return NotFound();
 
         var user = await _userManager.FindByIdAsync(id);
-        if (user == null)
-            return NotFound();
+        if (user == null) return NotFound();
 
         var allRoles = await _roleManager.Roles
             .Where(r => r.Name != "Student")
@@ -217,14 +186,12 @@ public class UserController : Controller
         return View(model);
     }
 
-    // POST: User/AssignRoles
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignRoles(AssignRolesViewModel model)
     {
         var user = await _userManager.FindByIdAsync(model.UserId);
-        if (user == null)
-            return NotFound();
+        if (user == null) return NotFound();
 
         var currentRoles = await _userManager.GetRolesAsync(user);
         var selectedRoles = model.Roles
@@ -233,9 +200,7 @@ public class UserController : Controller
             .ToList();
 
         if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
-        {
             selectedRoles.Add("Student");
-        }
 
         var toAdd = selectedRoles.Except(currentRoles).ToList();
         var toRemove = currentRoles.Except(selectedRoles).ToList();
