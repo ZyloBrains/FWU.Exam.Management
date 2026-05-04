@@ -2,11 +2,11 @@ using System.Text;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
+[Area("Exams")]
 public class ExamTypesController : Controller
 {
     private readonly IExamTypeService _examTypeService;

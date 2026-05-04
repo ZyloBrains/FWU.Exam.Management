@@ -25,14 +25,14 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <a asp-action="Create" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-plus text-xs"></i> Create New
             </a>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <form method="get" asp-action="Index" class="flex flex-col sm:flex-row gap-3">
+        <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" name="search" value="@currentSearch"
@@ -48,7 +48,7 @@
                 </button>
                 @if (!string.IsNullOrEmpty(currentSearch))
                 {
-                    <a asp-action="Index" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                    <a asp-action="Index" asp-area="Exams" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                        class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-times text-xs"></i> Clear
                     </a>
@@ -97,13 +97,13 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                <a asp-action="Edit" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                     <i class="fas fa-edit text-xs"></i>
                                 </a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                <a asp-action="Delete" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                     <i class="fas fa-trash text-xs"></i>
                                 </a>
                             </div>

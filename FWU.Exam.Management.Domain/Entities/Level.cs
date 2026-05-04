@@ -22,7 +22,7 @@ public class Level
     public bool? IsRunning { get; set; }
     public bool IsActive { get; set; }
 
-        public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
-        public virtual ICollection<Program>? Programs { get; set; }
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+    public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
+    public virtual ICollection<Program>? Programs { get; set; }
+    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

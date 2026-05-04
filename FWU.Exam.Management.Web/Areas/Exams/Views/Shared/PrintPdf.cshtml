@@ -1,0 +1,103 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Exams.ExamType>
+
+@{
+    Layout = null;
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentSearch = ViewBag.Search as string ?? "";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Exam Types Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+        h1 {
+            color: #e11d48;
+            border-bottom: 2px solid #e11d48;
+            padding-bottom: 10px;
+        }
+        .report-info {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+        }
+        .status-active {
+            color: green;
+            font-weight: bold;
+        }
+        .status-inactive {
+            color: red;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Exam Types Report</h1>
+    <div class="report-info">
+        <p>Generated on: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</p>
+        <p>Page: @currentPage | Page Size: @pageSize | Total Records: @totalCount</p>
+        @if (!string.IsNullOrEmpty(currentSearch))
+        {
+            <p>Search Filter: @currentSearch</p>
+        }
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Remarks</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Code</td>
+                    <td>@item.Name</td>
+                    <td>@item.Remarks</td>
+                    <td class="@(item.IsActive ? "status-active" : "status-inactive")">@(item.IsActive ? "Active" : "Inactive")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.Any())
+    {
+        <p style="text-align: center; color: #999;">No records found.</p>
+    }
+
+    <div class="footer">
+        <p>This is a system-generated report.</p>
+    </div>
+</body>
+</html>

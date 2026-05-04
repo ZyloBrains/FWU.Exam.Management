@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
+[Area("Exams")]
 public class ExamSchedulesController : Controller
 {
     private readonly IExamScheduleService _examScheduleService;
@@ -165,7 +166,6 @@ public class ExamSchedulesController : Controller
 
     private void PopulateDropdowns(object selectLists, ExamSchedule? examSchedule = null)
     {
-        // The selectLists object contains AcademicYears, ExamTypes, Levels
         ViewData["AcademicYearId"] = new SelectList(((dynamic)selectLists).AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
         ViewData["ExamTypeId"] = new SelectList(((dynamic)selectLists).ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["LevelId"] = new SelectList(((dynamic)selectLists).Levels, "Id", "Name", examSchedule?.LevelId);

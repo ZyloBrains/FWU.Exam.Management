@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
+[Area("Location")]
 public class DistrictsController : Controller
 {
     private readonly IDistrictService _districtService;

@@ -1,7 +1,8 @@
-@model FWU.Exam.Management.Domain.Entities.Exams.ExamType
+@using FWU.Exam.Management.Domain.Entities.Location
+@model FWU.Exam.Management.Domain.Entities.Location.District
 
 @{
-    ViewData["Title"] = "Exam Type Details";
+    ViewData["Title"] = "District Details";
 }
 
 <div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
@@ -12,9 +13,9 @@
         </a>
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-file-alt text-blue-600"></i>
+                <i class="fas fa-map-marked-alt text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Exam Type Details</h1>
+            <h1 class="text-2xl font-bold text-gray-800">District Details</h1>
         </div>
     </div>
 
@@ -22,29 +23,16 @@
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <p class="text-sm font-medium text-gray-600">Code</p>
-                <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Code)</p>
+                <p class="text-sm font-medium text-gray-600">District Code</p>
+                <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.DistrictCode)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Name</p>
-                <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Name)</p>
+                <p class="text-sm font-medium text-gray-600">District Name</p>
+                <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.DistrictName)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Status</p>
-                <div class="mt-1">
-                    @if (Model.IsActive)
-                    {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">? Active</span>
-                    }
-                    else
-                    {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">? Inactive</span>
-                    }
-                </div>
-            </div>
-            <div class="md:col-span-2">
-                <p class="text-sm font-medium text-gray-600">Remarks</p>
-                <p class="mt-1 text-gray-800">@(Model.Remarks ?? "-")</p>
+                <p class="text-sm font-medium text-gray-600">Province</p>
+                <p class="mt-1 text-gray-800">@(Model.Province?.ProvinceName ?? "-")</p>
             </div>
         </div>
 
