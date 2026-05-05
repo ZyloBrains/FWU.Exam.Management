@@ -580,33 +580,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(gd => gd.GradingSchemeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<GradingScheme>()
-            .HasData(
-                new GradingScheme { Id = 1, Name = "CBCS Standard (4.0)", Description = "Choice Based Credit System - Standard 4.0 scale", ProgramId = 1, IsActive = true },
-                new GradingScheme { Id = 2, Name = "TU Semester System", Description = "Tribhuvan University semester grading", IsActive = true }
-            );
-
-        builder.Entity<GradeDefinition>()
-            .HasData(
-                new GradeDefinition { Id = 1, GradingSchemeId = 1, GradeLetter = "A+", MinPercentage = 90, MaxPercentage = 100, GradePoint = 4.0m, Remark = "Outstanding", IsPass = true, DisplayOrder = 1 },
-                new GradeDefinition { Id = 2, GradingSchemeId = 1, GradeLetter = "A", MinPercentage = 80, MaxPercentage = 89.99m, GradePoint = 3.7m, Remark = "Excellent", IsPass = true, DisplayOrder = 2 },
-                new GradeDefinition { Id = 3, GradingSchemeId = 1, GradeLetter = "B+", MinPercentage = 70, MaxPercentage = 79.99m, GradePoint = 3.3m, Remark = "Very Good", IsPass = true, DisplayOrder = 3 },
-                new GradeDefinition { Id = 4, GradingSchemeId = 1, GradeLetter = "B", MinPercentage = 60, MaxPercentage = 69.99m, GradePoint = 3.0m, Remark = "Good", IsPass = true, DisplayOrder = 4 },
-                new GradeDefinition { Id = 5, GradingSchemeId = 1, GradeLetter = "C+", MinPercentage = 50, MaxPercentage = 59.99m, GradePoint = 2.7m, Remark = "Above Average", IsPass = true, DisplayOrder = 5 },
-                new GradeDefinition { Id = 6, GradingSchemeId = 1, GradeLetter = "C", MinPercentage = 45, MaxPercentage = 49.99m, GradePoint = 2.3m, Remark = "Average", IsPass = true, DisplayOrder = 6 },
-                new GradeDefinition { Id = 7, GradingSchemeId = 1, GradeLetter = "D", MinPercentage = 40, MaxPercentage = 44.99m, GradePoint = 2.0m, Remark = "Pass", IsPass = true, DisplayOrder = 7 },
-                new GradeDefinition { Id = 8, GradingSchemeId = 1, GradeLetter = "F", MinPercentage = 0, MaxPercentage = 39.99m, GradePoint = 0.0m, Remark = "Fail", IsPass = false, DisplayOrder = 8 },
-
-                new GradeDefinition { Id = 9, GradingSchemeId = 2, GradeLetter = "A+", MinPercentage = 90, MaxPercentage = 100, GradePoint = 4.0m, Remark = "Outstanding", IsPass = true, DisplayOrder = 1 },
-                new GradeDefinition { Id = 10, GradingSchemeId = 2, GradeLetter = "A", MinPercentage = 80, MaxPercentage = 89.99m, GradePoint = 3.7m, Remark = "Excellent", IsPass = true, DisplayOrder = 2 },
-                new GradeDefinition { Id = 11, GradingSchemeId = 2, GradeLetter = "B+", MinPercentage = 70, MaxPercentage = 79.99m, GradePoint = 3.3m, Remark = "Very Good", IsPass = true, DisplayOrder = 3 },
-                new GradeDefinition { Id = 12, GradingSchemeId = 2, GradeLetter = "B", MinPercentage = 60, MaxPercentage = 69.99m, GradePoint = 3.0m, Remark = "Good", IsPass = true, DisplayOrder = 4 },
-                new GradeDefinition { Id = 13, GradingSchemeId = 2, GradeLetter = "C+", MinPercentage = 50, MaxPercentage = 59.99m, GradePoint = 2.7m, Remark = "Above Average", IsPass = true, DisplayOrder = 5 },
-                new GradeDefinition { Id = 14, GradingSchemeId = 2, GradeLetter = "C", MinPercentage = 45, MaxPercentage = 49.99m, GradePoint = 2.3m, Remark = "Average", IsPass = true, DisplayOrder = 6 },
-                new GradeDefinition { Id = 15, GradingSchemeId = 2, GradeLetter = "D", MinPercentage = 40, MaxPercentage = 44.99m, GradePoint = 2.0m, Remark = "Pass", IsPass = true, DisplayOrder = 7 },
-                new GradeDefinition { Id = 16, GradingSchemeId = 2, GradeLetter = "F", MinPercentage = 0, MaxPercentage = 39.99m, GradePoint = 0.0m, Remark = "Fail", IsPass = false, DisplayOrder = 8 }
-            );
-
         builder.Entity<ApplicationVoucher>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
         builder.Entity<College>(e => e.Property(x => x.AllocatedAmount).HasPrecision(18, 2));
         builder.Entity<ExamFormFeeRate>(e => e.Property(x => x.Amount).HasPrecision(18, 2));

@@ -86,6 +86,7 @@ public partial class EntryPoint
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 
         app.Run();
