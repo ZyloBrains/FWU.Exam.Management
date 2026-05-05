@@ -1,10 +1,12 @@
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -98,6 +100,7 @@ public class CollegesController : Controller
     public async Task<IActionResult> Create()
     {
         var collegeTypes = await _collegeService.GetCollegeTypesAsync();
+        this.PopulateSelectLists();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code");
         return View();
     }
@@ -183,5 +186,29 @@ public class CollegesController : Controller
     {
         await _collegeService.DeleteCollegeAsync(id);
         return RedirectToAction(nameof(Index));
+    }
+
+
+    [HttpGet]
+    public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
+    {
+        var districts = await _collegeService.GetDistrictsByProvinceAsync(provinceId);
+        return Json(districts);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetLocalLevelsByDistrict(int districtId)
+    {
+        var localLevels = await _collegeService.GetLocalLevelsByDistrictAsync(districtId);
+        return Json(localLevels);
+    }
+
+    private async Task PopulateSelectLists()
+    {
+        var provinces = await _collegeService.GetProvincesAsync();
+        ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
+
+        // This will be implemented based on the selectLists object
+        // For now, using ViewData as in the original
     }
 }

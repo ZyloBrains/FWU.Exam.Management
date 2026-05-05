@@ -1,0 +1,58 @@
+
+@model IEnumerable<AcademicYear>
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Academic Years</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        @@media print { body { margin: 0; } .no-print { display: none; } }
+        .no-print { margin-bottom: 15px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print();">Print / Save as PDF</button>
+    </div>
+    <h2>Academic Years</h2>
+    <p>Generated on: @DateTime.Now.ToString("dd MMM yyyy HH:mm")</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th>
+                @* <th>Code (Nepali)</th> *@
+                <th>Name</th>
+                @* <th>Name (Nepali)</th> *@
+                @* <th>Remark</th> *@
+                <th>Running</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.AcademicYearCode</td>
+                    @* <td>@item.AcademicYearCodeNepali</td> *@
+                    <td>@item.AcademicYearName</td>
+                    @* <td>@item.AcademicYearNameNepali</td> *@
+                    @* <td>@(item.Remark ?? "—")</td> *@
+                    <td>@(item.IsRunning ? "Yes" : "No")</td>
+                    <td>@(item.IsActive ? "Active" : "Inactive")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <script>
+        // Optional: Auto‑open print dialog on load
+        window.onload = function() { window.print(); };
+    </script>
+</body>
+</html>

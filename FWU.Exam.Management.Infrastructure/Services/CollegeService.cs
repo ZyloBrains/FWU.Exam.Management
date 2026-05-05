@@ -179,4 +179,28 @@ public class CollegeService : ICollegeService
             _ => c => c.DisplayOrder
         };
     }
+
+    public async Task<List<object>> GetDistrictsByProvinceAsync(int provinceId)
+    {
+        var districts = await _context.Districts
+            .Where(d => d.ProvinceId == provinceId && d.IsActive)
+            .Select(d => new { id = d.Id, name = d.DistrictName })
+            .ToListAsync();
+        return districts.Cast<object>().ToList();
+    }
+
+    public async Task<List<object>> GetLocalLevelsByDistrictAsync(int districtId)
+    {
+        var localLevels = await _context.LocalLevels
+            .Where(l => l.DistrictId == districtId && l.IsActive)
+            .Select(l => new { id = l.Id, name = l.LocalLevelName })
+            .ToListAsync();
+        return localLevels.Cast<object>().ToList();
+    }
+
+    public async Task<List<Province>> GetProvincesAsync()
+    {
+        var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
+        return provinces;
+    }
 }
