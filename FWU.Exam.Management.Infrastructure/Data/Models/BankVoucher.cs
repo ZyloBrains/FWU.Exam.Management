@@ -5,7 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using System.ComponentModel.DataAnnotations;
 
-namespace FWU.Exam.Management.Infrastructure;
+namespace FWU.Exam.Management.Infrastructure.Data.Models;
 
 public class BankVoucher: IAuditable
 {

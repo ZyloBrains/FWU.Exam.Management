@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace FWU.Exam.Management.Infrastructure;
+namespace FWU.Exam.Management.Infrastructure.Interceptor;
 
 public class AuditableSaveChangesInterceptor : SaveChangesInterceptor
 {

@@ -3,7 +3,7 @@
 #nullable disable
 
 using System.Text;
-using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;

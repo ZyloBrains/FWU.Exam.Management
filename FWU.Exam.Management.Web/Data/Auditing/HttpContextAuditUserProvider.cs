@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Interceptor;
 using Microsoft.AspNetCore.Http;
 
 public class HttpContextAuditUserProvider : IAuditUserProvider

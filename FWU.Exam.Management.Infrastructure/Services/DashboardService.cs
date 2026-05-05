@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

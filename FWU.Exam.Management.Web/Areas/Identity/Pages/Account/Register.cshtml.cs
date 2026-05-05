@@ -5,7 +5,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
-using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authentication;
@@ -14,6 +13,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 

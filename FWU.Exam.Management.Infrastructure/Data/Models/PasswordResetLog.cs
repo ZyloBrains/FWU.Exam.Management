@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Domain.Entities;
 
-namespace FWU.Exam.Management.Infrastructure;
+namespace FWU.Exam.Management.Infrastructure.Data.Models;
 
 public class PasswordResetLog
 {

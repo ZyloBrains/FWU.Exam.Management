@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 
-namespace FWU.Exam.Management.Infrastructure;
+namespace FWU.Exam.Management.Infrastructure.Data.Models;
 public class CollegeProfile
 {
     public int Id { get; set; }

@@ -3,6 +3,7 @@ using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.ViewComponents;
 

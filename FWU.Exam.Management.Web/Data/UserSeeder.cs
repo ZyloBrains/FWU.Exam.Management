@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace FWU.Exam.Management.Web.Data;

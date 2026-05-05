@@ -1,11 +1,11 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
