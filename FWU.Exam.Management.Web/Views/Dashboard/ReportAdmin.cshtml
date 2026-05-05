@@ -82,7 +82,7 @@
             <p class="text-sm text-gray-500 mt-1">Access reports and view data</p>
         </div>
         <div class="divide-y divide-gray-100">
-            <a asp-controller="College" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+            <a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                 <div class="flex items-center gap-3"><div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-school text-amber-600 text-sm"></i></div><span class="text-sm font-medium text-gray-700">College Directory</span></div>
                 <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalColleges</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
             </a>

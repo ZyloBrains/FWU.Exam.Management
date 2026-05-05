@@ -6,8 +6,9 @@ using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
+[Area("Colleges")]
 public class CollegesController : Controller
 {
     private readonly ICollegeService _collegeService;

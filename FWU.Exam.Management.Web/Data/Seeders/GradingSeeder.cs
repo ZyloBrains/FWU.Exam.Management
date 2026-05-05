@@ -2,7 +2,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
-namespace FWU.Exam.Management.Web.Data;
+namespace FWU.Exam.Management.Web.Data.Seeders;
 
 public static class GradingSeeder
 {

@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
+[Area("Colleges")]
 public class CollegeTypesController : Controller
 {
     private readonly ICollegeTypeService _collegeTypeService;

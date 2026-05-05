@@ -1,7 +1,7 @@
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Web.Data;
+using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
