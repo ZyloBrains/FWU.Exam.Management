@@ -1,4 +1,4 @@
-@using fwu_examination_management_system.Data.Models.Students
+@using FWU.Exam.Management.Domain.Entities.Students
 @model StudentRegistration
 
 @{
@@ -68,17 +68,17 @@
         </dd>
 
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DateOfBirthBs)
+            @Html.DisplayNameFor(model => model.DateOfBirthBS)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.DateOfBirthBs)
+            @Html.DisplayFor(model => model.DateOfBirthBS)
         </dd>
 
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DateOfBirthAd)
+            @Html.DisplayNameFor(model => model.DateOfBirthAD)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.DateOfBirthAd)
+            @Html.DisplayFor(model => model.DateOfBirthAD)
         </dd>
 
         <dt class="col-sm-2">
@@ -100,13 +100,6 @@
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Religion)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.LocalLevel)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.LocalLevel.LocalLevelName)
         </dd>
 
         <dt class="col-sm-2">
@@ -138,13 +131,6 @@
         </dd>
 
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.StudentRegistrationIndex)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.StudentRegistrationIndex)
-        </dd>
-
-        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.VerifiedBy)
         </dt>
         <dd class="col-sm-10">
@@ -170,27 +156,6 @@
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.IsRegistrationNumberGenerated)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.RowIndex)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.RowIndex)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.PreviousAcademicYear)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.PreviousAcademicYear)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.PreviousSymbolNumber)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.PreviousSymbolNumber)
         </dd>
 
         <dt class="col-sm-2">
@@ -229,13 +194,6 @@
         </dd>
 
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.District)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.District.DistrictName)
-        </dd>
-
-        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.StudentCategory)
         </dt>
         <dd class="col-sm-10">
@@ -249,40 +207,6 @@
             @Html.DisplayFor(model => model.Ethnicity.EthnicityName)
         </dd>
 
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.LocalLevel)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.LocalLevel.LocalLevelName)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.IndexGroup)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.IndexGroup.IndexGroupName)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EntryFormat)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EntryFormat.EntryFormatName)
-        </dd>
-
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.PhotoAttachment)
-        </dt>
-        <dd class="col-sm-10">
-            @if (Model?.PhotoAttachment != null)
-            {
-                <span>@Model.PhotoAttachment.FileName</span>
-            }
-            else
-            {
-                <span>-</span>
-            }
-        </dd>
     </dl>
 </div>
 

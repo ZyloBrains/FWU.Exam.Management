@@ -1,24 +1,25 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
-using fwu_examination_management_system.ViewModels;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
 [Route("org/{officeCode}")]
 public class OrgDashboardController(
-    AppDbContext context,
+    IOrganizationService organizationService,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller
 {
     private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Organization"];
 
     private async Task<Organization?> GetOrgAsync(string officeCode) =>
-        await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == officeCode);
+        await organizationService.GetOrganizationByOfficeCodeAsync(officeCode);
 
     private async Task<(Organization? Org, IActionResult? DeniedResult)> GetAuthorizedOrgAsync(string officeCode)
     {

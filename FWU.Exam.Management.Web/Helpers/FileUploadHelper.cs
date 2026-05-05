@@ -1,4 +1,4 @@
-namespace fwu_examination_management_system.Helpers;
+namespace FWU.Exam.Management.Web.Helpers;
 
 public interface IFileUploadHelper
 {

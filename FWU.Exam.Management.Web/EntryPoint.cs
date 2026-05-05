@@ -1,18 +1,18 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Auditing;
-using fwu_examination_management_system.Data.Models;
-using fwu_examination_management_system.Helpers;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Services;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Web.Data;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
+using FWU.Exam.Management.Infrastructure.Interceptor;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 
 public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
-        // Set EPPlus license context
-        //ExcelPackage.License = new EPPlusLicense();
-
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
@@ -31,6 +31,22 @@ public partial class EntryPoint
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
         builder.Services.AddControllersWithViews();
+        builder.Services.AddScoped<IBoardService, BoardService>();
+        builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
+        builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
+        builder.Services.AddScoped<ICollegeService, CollegeService>();
+        builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+        builder.Services.AddScoped<IDashboardService, DashboardService>();
+        builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
+        builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
+        builder.Services.AddScoped<IProgramService, ProgramService>();
+        builder.Services.AddScoped<ILevelService, LevelService>();
+        builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
+        builder.Services.AddScoped<IFacultyService, FacultyService>();
+        builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
+        builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
+        builder.Services.AddScoped<IDistrictService, DistrictService>();
+        builder.Services.AddScoped<IProvinceService, ProvinceService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
         var app = builder.Build();
 
@@ -42,7 +58,6 @@ public partial class EntryPoint
         else
         {
             app.UseExceptionHandler("/Home/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
 
@@ -54,6 +69,11 @@ public partial class EntryPoint
         app.MapStaticAssets();
 
         app.MapControllerRoute(
+            name: "areas",
+            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        app.MapControllerRoute(
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets();
@@ -63,9 +83,10 @@ public partial class EntryPoint
 
         using (var scope = app.Services.CreateScope())
         {
-            await DbSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await DbSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
+            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 
         app.Run();

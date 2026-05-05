@@ -1,4 +1,4 @@
-ï»¿@model fwu_examination_management_system.Data.Models.Colleges.CollegeProgram
+@model FWU.Exam.Management.Domain.Entities.Colleges.CollegeProgram
 
 @{
     ViewData["Title"] = "College Program Details";
@@ -43,7 +43,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Affiliation Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "â€”")</p>
+                    <p class="mt-1 text-gray-800">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Number of Students</p>
@@ -58,7 +58,7 @@
             <div class="grid grid-cols-1 gap-6">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Remarks</p>
-                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "â€”" : Model.Remarks)</p>
+                    <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
                 </div>
             </div>
         </div>

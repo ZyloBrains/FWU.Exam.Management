@@ -1,4 +1,4 @@
-﻿@{
+@{
     var org = ViewBag.Organization as Organization;
     ViewData["Title"] = org?.Name ?? "Home";
 }
@@ -27,7 +27,7 @@
             else
             {
                 <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                    <span class="text-4xl">🏛</span>
+                    <span class="text-4xl">??</span>
                 </div>
             }
             <h4 class="text-lg font-bold text-gray-800 mb-1">@org.Name</h4>

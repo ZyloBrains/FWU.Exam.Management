@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Colleges.CollegeType
+@model FWU.Exam.Management.Domain.Entities.Colleges.CollegeType
 
 @{
     ViewData["Title"] = "College Type Details";
@@ -34,7 +34,7 @@
                 <div class="mt-1">
                     @if (Model.IsDefault==true)
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">✓ Default</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">? Default</span>
                     }
                     else
                     {
@@ -47,11 +47,11 @@
                 <div class="mt-1">
                     @if (Model.IsActive)
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">✓ Active</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">? Active</span>
                     }
                     else
                     {
-                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">✗ Inactive</span>
+                        <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">? Inactive</span>
                     }
                 </div>
             </div>

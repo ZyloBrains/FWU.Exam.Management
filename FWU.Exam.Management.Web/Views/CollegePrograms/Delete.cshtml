@@ -1,4 +1,4 @@
-ï»¿@model fwu_examination_management_system.Data.Models.Colleges.CollegeProgram
+@model FWU.Exam.Management.Domain.Entities.Colleges.CollegeProgram
 
 @{
     ViewData["Title"] = "Delete College Program";
@@ -47,7 +47,7 @@
             <!-- Affiliation Date -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Affiliation Date</p>
-                <p class="text-gray-800 font-medium">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "â€”")</p>
+                <p class="text-gray-800 font-medium">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</p>
             </div>
             <!-- Number of Students -->
             <div>
@@ -57,7 +57,7 @@
             <!-- Remarks -->
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
-                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "â€”" : Model.Remarks)</p>
+                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
             </div>
             <!-- Status -->
             <div>

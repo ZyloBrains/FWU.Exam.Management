@@ -1,4 +1,4 @@
-﻿@model fwu_examination_management_system.Data.Models.Colleges.College
+@model FWU.Exam.Management.Domain.Entities.Colleges.College
 
 @{
     ViewData["Title"] = "Delete College";
@@ -55,12 +55,12 @@
             <!-- Establishment Date -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Established Date</p>
-                <p class="text-gray-800 font-medium">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                <p class="text-gray-800 font-medium">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "�")</p>
             </div>
             <!-- Closed Date -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Closed Date</p>
-                <p class="text-gray-800 font-medium">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                <p class="text-gray-800 font-medium">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "�")</p>
             </div>
             <!-- Address Information -->
             <div>
@@ -158,7 +158,7 @@
             <!-- Allocated Amount -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Allocated Amount</p>
-                <p class="text-gray-800 font-medium">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "—")</p>
+                <p class="text-gray-800 font-medium">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "�")</p>
             </div>
             <!-- Display Order -->
             <div>
@@ -185,10 +185,10 @@
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Tole/Street</p>
                 <p class="text-gray-800 font-medium">@(Model.Address?.ToleStreet ?? "-")</p>
             </div>
-            <!-- College Profile ID -->
+            <!-- College Profile -->
             <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Profile ID</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.CollegeProfileId)</p>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College Profile</p>
+                <p class="text-gray-800 font-medium">@(Model.CollegeProfile?.BankName ?? "N/A")</p>
             </div>
         </div>
 

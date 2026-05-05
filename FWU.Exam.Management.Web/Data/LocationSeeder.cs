@@ -1,8 +1,9 @@
-﻿using fwu_examination_management_system.Data.Enums;
-using fwu_examination_management_system.Data.Models.Location;
+﻿using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Data;
+namespace FWU.Exam.Management.Web.Data;
 
 public static class LocationSeeder
 {

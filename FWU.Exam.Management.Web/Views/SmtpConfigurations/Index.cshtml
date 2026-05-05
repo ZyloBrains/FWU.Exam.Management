@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.SmtpConfiguration>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.SmtpConfiguration>
 
 @{
     ViewData["Title"] = "SMTP Configurations";
@@ -97,23 +97,23 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="host" asp-route-sortDir="@(currentSort == "host" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "host" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600") hover:bg-green-50">
-            Host @(currentSort == "host" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Host @(currentSort == "host" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="from" asp-route-sortDir="@(currentSort == "from" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "from" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600") hover:bg-green-50">
-            From Email @(currentSort == "from" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            From Email @(currentSort == "from" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="port" asp-route-sortDir="@(currentSort == "port" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "port" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600") hover:bg-green-50">
-            Port @(currentSort == "port" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Port @(currentSort == "port" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="username" asp-route-sortDir="@(currentSort == "username" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "username" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600") hover:bg-green-50">
-            Username @(currentSort == "username" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Username @(currentSort == "username" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="enablessl" asp-route-sortDir="@(currentSort == "enablessl" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "enablessl" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600") hover:bg-green-50">
-            SSL @(currentSort == "enablessl" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            SSL @(currentSort == "enablessl" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 
@@ -209,7 +209,7 @@
                     <div class="text-gray-500">Username</div>
                     <div class="text-gray-800">@item.UserName</div>
                     <div class="text-gray-500">Password</div>
-                    <div class="text-gray-800">••••••••</div>
+                    <div class="text-gray-800">��������</div>
                 </div>
                 <div class="flex items-center gap-2 pt-4 border-t border-gray-100 mt-2">
                     <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">

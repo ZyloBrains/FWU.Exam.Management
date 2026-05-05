@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Colleges.CollegeType>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Colleges.CollegeType>
 
 @{
     ViewData["Title"] = "College Types";
@@ -97,23 +97,23 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="code" asp-route-sortDir="@(currentSort == "code" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "code" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Code @(currentSort == "code" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Code @(currentSort == "code" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="name" asp-route-sortDir="@(currentSort == "name" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "name" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Name @(currentSort == "name" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Name @(currentSort == "name" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="remarks" asp-route-sortDir="@(currentSort == "remarks" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "remarks" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Remarks @(currentSort == "remarks" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Remarks @(currentSort == "remarks" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="isdefault" asp-route-sortDir="@(currentSort == "isdefault" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "isdefault" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Default @(currentSort == "isdefault" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Default @(currentSort == "isdefault" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="isactive" asp-route-sortDir="@(currentSort == "isactive" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "isactive" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 

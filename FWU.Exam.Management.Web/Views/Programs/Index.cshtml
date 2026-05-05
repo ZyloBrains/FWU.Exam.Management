@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.Program>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Program>
 
 @{
     ViewData["Title"] = "Programs";
@@ -97,35 +97,35 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="programcode" asp-route-sortDir="@(currentSort == "programcode" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "programcode" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Program Code @(currentSort == "programcode" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Program Code @(currentSort == "programcode" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="programname" asp-route-sortDir="@(currentSort == "programname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "programname" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Program Name @(currentSort == "programname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Program Name @(currentSort == "programname" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="level" asp-route-sortDir="@(currentSort == "level" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "level" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Level @(currentSort == "level" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Level @(currentSort == "level" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="faculty" asp-route-sortDir="@(currentSort == "faculty" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "faculty" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Faculty @(currentSort == "faculty" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Faculty @(currentSort == "faculty" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="duration" asp-route-sortDir="@(currentSort == "duration" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "duration" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Duration @(currentSort == "duration" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Duration @(currentSort == "duration" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="numberofseats" asp-route-sortDir="@(currentSort == "numberofseats" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "numberofseats" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Seats @(currentSort == "numberofseats" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Seats @(currentSort == "numberofseats" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="board" asp-route-sortDir="@(currentSort == "board" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "board" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Board @(currentSort == "board" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Board @(currentSort == "board" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="isactive" asp-route-sortDir="@(currentSort == "isactive" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "isactive" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Status @(currentSort == "isactive" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 
@@ -237,9 +237,9 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                     <div class="text-gray-500">Short Name</div>
-                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.ShortName) ? "—" : item.ShortName)</div>
+                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.ShortName) ? "�" : item.ShortName)</div>
                     <div class="text-gray-500">Roll Prefix</div>
-                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "—" : item.RollNumberPrefix)</div>
+                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "�" : item.RollNumberPrefix)</div>
                     <div class="text-gray-500">Level</div>
                     <div class="text-gray-800">@item.Level?.LevelName</div>
                     <div class="text-gray-500">Faculty</div>

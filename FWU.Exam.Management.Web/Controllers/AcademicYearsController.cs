@@ -1,22 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities;
 
-namespace fwu_examination_management_system.Controllers;
+namespace FWU.Exam.Management.Web.Controllers;
 
 public class AcademicYearsController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly IAcademicYearService _academicYearService;
 
-    public AcademicYearsController(AppDbContext context)
+    public AcademicYearsController(IAcademicYearService academicYearService)
     {
-        _context = context;
+        _academicYearService = academicYearService;
     }
 
     public async Task<IActionResult> Index()
     {
-        return View(await _context.AcademicYears.ToListAsync());
+        var academicYears = await _academicYearService.GetAllAcademicYearsAsync();
+        return View(academicYears);
     }
 
     public async Task<IActionResult> Details(int? id)
@@ -26,8 +27,7 @@ public class AcademicYearsController : Controller
             return NotFound();
         }
 
-        var academicYear = await _context.AcademicYears
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var academicYear = await _academicYearService.GetAcademicYearByIdAsync(id.Value);
         if (academicYear == null)
         {
             return NotFound();
@@ -47,8 +47,7 @@ public class AcademicYearsController : Controller
     {
         if (ModelState.IsValid)
         {
-            _context.Add(academicYear);
-            await _context.SaveChangesAsync();
+            await _academicYearService.CreateAcademicYearAsync(academicYear);
             return RedirectToAction(nameof(Index));
         }
         return View(academicYear);
@@ -61,7 +60,7 @@ public class AcademicYearsController : Controller
             return NotFound();
         }
 
-        var academicYear = await _context.AcademicYears.FindAsync(id);
+        var academicYear = await _academicYearService.GetAcademicYearByIdAsync(id.Value);
         if (academicYear == null)
         {
             return NotFound();
@@ -82,12 +81,11 @@ public class AcademicYearsController : Controller
         {
             try
             {
-                _context.Update(academicYear);
-                await _context.SaveChangesAsync();
+                await _academicYearService.UpdateAcademicYearAsync(academicYear);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!AcademicYearExists(academicYear.Id))
+                if (!await _academicYearService.AcademicYearExistsAsync(academicYear.Id))
                 {
                     return NotFound();
                 }
@@ -108,8 +106,7 @@ public class AcademicYearsController : Controller
             return NotFound();
         }
 
-        var academicYear = await _context.AcademicYears
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var academicYear = await _academicYearService.GetAcademicYearByIdAsync(id.Value);
         if (academicYear == null)
         {
             return NotFound();
@@ -122,18 +119,7 @@ public class AcademicYearsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var academicYear = await _context.AcademicYears.FindAsync(id);
-        if (academicYear != null)
-        {
-            _context.AcademicYears.Remove(academicYear);
-        }
-
-        await _context.SaveChangesAsync();
+        await _academicYearService.DeleteAcademicYearAsync(id);
         return RedirectToAction(nameof(Index));
-    }
-
-    private bool AcademicYearExists(int id)
-    {
-        return _context.AcademicYears.Any(e => e.Id == id);
     }
 }

@@ -1,10 +1,11 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Data.Models;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 
-namespace fwu_examination_management_system.ViewComponents;
+namespace FWU.Exam.Management.Web.ViewComponents;
 
 public class OrganizationHeaderViewComponent(AppDbContext context, UserManager<AppUser> userManager) : ViewComponent
 {

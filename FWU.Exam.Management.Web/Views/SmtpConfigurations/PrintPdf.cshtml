@@ -1,4 +1,4 @@
-﻿@model IEnumerable<fwu_examination_management_system.Data.Models.SmtpConfiguration>
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.SmtpConfiguration>
 
 @{
     Layout = null;
@@ -113,7 +113,7 @@
 </head>
 <body>
     <div class="report-header">
-        <h1>📧 @title</h1>
+        <h1>?? @title</h1>
         <div class="report-date">Generated on: @generatedDate</div>
         <div class="report-info">
             Page @currentPage of @(Math.Ceiling((double)totalCount / pageSize)) | 
@@ -161,11 +161,11 @@
                     <td>
                         @if (item.EnableSsl)
                         {
-                            <span class="ssl-enabled">✓ Enabled</span>
+                            <span class="ssl-enabled">? Enabled</span>
                         }
                         else
                         {
-                            <span class="ssl-disabled">✗ Disabled</span>
+                            <span class="ssl-disabled">? Disabled</span>
                         }
                     </td>
                 </tr>
@@ -182,7 +182,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>� @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>
