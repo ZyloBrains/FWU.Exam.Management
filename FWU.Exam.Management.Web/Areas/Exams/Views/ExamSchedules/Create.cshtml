@@ -52,11 +52,11 @@
                         <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="LevelId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="LevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.LevelId">
+                        <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.LevelId">
                             <option value="">-- Select Level --</option>
                         </select>
-                        <span asp-validation-for="LevelId" class="text-xs text-red-500 mt-1 block"></span>
+                        <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="ExamTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
@@ -64,12 +64,7 @@
                             <option value="">-- Select Exam Type --</option>
                         </select>
                         <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="ExamScheduleParentId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="ExamScheduleParentId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                        <span asp-validation-for="ExamScheduleParentId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
+                    </div>                    
                 </div>
             </div>
 

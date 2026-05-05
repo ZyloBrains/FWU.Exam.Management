@@ -1,16 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
-using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-
 public class StudentRegistrationService : IStudentRegistrationService
 {
     private readonly AppDbContext _context;
@@ -186,9 +180,7 @@ public class StudentRegistrationService : IStudentRegistrationService
         var studentCategories = await _context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
         var ethnicities = await _context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();
         var localLevels = await _context.LocalLevels.Where(ll => ll.LocalLevelName != null).AsNoTracking().ToListAsync();
-        var indexGroups = await _context.IndexGroups.Where(ig => ig.IndexGroupName != null).AsNoTracking().ToListAsync();
-        var entryFormats = await _context.EntryFormats.Where(ef => ef.EntryFormatName != null).AsNoTracking().ToListAsync();
-
+    
         return new
         {
             AcademicYears = academicYears.Select(ay => new { ay.Id, Name = ay.AcademicYearName }).ToList(),
@@ -199,8 +191,6 @@ public class StudentRegistrationService : IStudentRegistrationService
             StudentCategories = studentCategories.Select(sc => new { sc.Id, Name = sc.StudentCategoryName }).ToList(),
             Ethnicities = ethnicities.Select(e => new { e.Id, Name = e.EthnicityName }).ToList(),
             LocalLevels = localLevels.Select(ll => new { ll.Id, Name = ll.LocalLevelName }).ToList(),
-            IndexGroups = indexGroups.Select(ig => new { ig.Id, Name = ig.IndexGroupName }).ToList(),
-            EntryFormats = entryFormats.Select(ef => new { ef.Id, Name = ef.EntryFormatName }).ToList()
         };
     }
 
@@ -227,5 +217,4 @@ public class StudentRegistrationService : IStudentRegistrationService
         var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
         return provinces;
     }
-
 }

@@ -53,7 +53,6 @@ public class ExamSchedulesController : Controller
                           $"{EscapeCsv(item.ExamScheduleName ?? string.Empty)}," +
                           $"{EscapeCsv(item.ExamScheduleCode ?? string.Empty)}," +
                           $"{EscapeCsv(item.AcademicYear?.AcademicYearName ?? string.Empty)}," +
-                          $"{EscapeCsv(item.Level?.LevelName ?? string.Empty)}," +
                           $"{EscapeCsv(item.ExamType?.Name ?? string.Empty)}," +
                           $"{EscapeCsv(item.StartDateBs ?? string.Empty)}," +
                           $"{EscapeCsv(item.EndDateBs ?? string.Empty)}," +
@@ -168,6 +167,6 @@ public class ExamSchedulesController : Controller
     {
         ViewData["AcademicYearId"] = new SelectList(((dynamic)selectLists).AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
         ViewData["ExamTypeId"] = new SelectList(((dynamic)selectLists).ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
-        ViewData["LevelId"] = new SelectList(((dynamic)selectLists).Levels, "Id", "Name", examSchedule?.LevelId);
+        ViewData["ProgramId"] = new SelectList(((dynamic)selectLists).Programs, "Id", "Name", examSchedule?.ProgramId);
     }
 }

@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
-using FWU.Exam.Management.Domain.Entities.Location;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
-using System.Threading.Tasks;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -172,10 +170,9 @@ public class StudentRegistrationsController : Controller
                                 MiddleName = worksheet.Cells[row, 3].Value?.ToString(),
                                 Email = worksheet.Cells[row, 4].Value?.ToString(),
                                 ContactNumber = worksheet.Cells[row, 5].Value?.ToString(),
-                                DateOfBirthBs = worksheet.Cells[row, 6].Value?.ToString() ?? "",
+                                DateOfBirthBS = worksheet.Cells[row, 6].Value?.ToString() ?? "",
                                 RegistrationNumber = worksheet.Cells[row, 7].Value?.ToString(),
                                 AcademicYearId = int.TryParse(worksheet.Cells[row, 8].Value?.ToString(), out var ayId) ? ayId : 0,
-                                LevelId = int.TryParse(worksheet.Cells[row, 9].Value?.ToString(), out var lvlId) ? lvlId : 0,
                                 CollegeId = int.TryParse(worksheet.Cells[row, 10].Value?.ToString(), out var collId) ? collId : 0,
                                 FacultyId = int.TryParse(worksheet.Cells[row, 11].Value?.ToString(), out var facId) ? facId : 0,
                                 GenderId = int.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var genderId) ? genderId : 0,
@@ -248,7 +245,7 @@ public class StudentRegistrationsController : Controller
                 worksheet.Cells[row, 4].Value = reg.LastName;
                 worksheet.Cells[row, 5].Value = reg.Email;
                 worksheet.Cells[row, 6].Value = reg.ContactNumber;
-                worksheet.Cells[row, 7].Value = reg.DateOfBirthBs;
+                worksheet.Cells[row, 7].Value = reg.DateOfBirthBS;
                 worksheet.Cells[row, 8].Value = reg.AcademicYear?.AcademicYearName;
                 worksheet.Cells[row, 9].Value = reg.Level?.LevelName;
                 worksheet.Cells[row, 10].Value = reg.College?.Name;
