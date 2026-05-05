@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using System.ComponentModel.DataAnnotations;
 
-namespace FWU.Exam.Management.Infrastructure.Data.Models;
+namespace FWU.Exam.Management.Domain.Entities.Colleges;
+
 public class CollegeProfile
 {
     public int Id { get; set; }
@@ -24,7 +24,6 @@ public class CollegeProfile
 
     [Required, MaxLength(1024)]
     public string? ContactPersonEmail { get; set; }
-
 
     public int? Status { get; set; }
 

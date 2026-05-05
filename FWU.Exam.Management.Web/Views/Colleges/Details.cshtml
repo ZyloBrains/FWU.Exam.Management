@@ -140,23 +140,23 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Established Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Closed Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">College Type</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeType.Code)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">College Profile ID</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeProfileId)</p>
+                    <p class="text-sm font-medium text-gray-600">College Profile</p>
+                    <p class="mt-1 text-gray-800">@(Model.CollegeProfile?.BankName ?? "N/A")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Allocated Amount</p>
-                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "—")</p>
+                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "ï¿½")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Remarks</p>

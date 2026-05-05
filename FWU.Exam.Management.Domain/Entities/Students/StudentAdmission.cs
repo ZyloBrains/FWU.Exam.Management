@@ -22,6 +22,8 @@ public class StudentAdmission : IAuditable
 
     public bool HasFeeExemption { get; set; }
 
+    public string? AppUserId { get; set; }
+
     public virtual Program? Program { get; set; }
 
     public virtual College? College { get; set; }

@@ -7,6 +7,7 @@ namespace FWU.Exam.Management.Domain.Entities;
 
 public class ResultRecord
 {
+    [Key]
     public int Id { get; set; }
 
     public int AcademicYearId { get; set; }
@@ -76,12 +77,8 @@ public class ResultRecord
     public DateTime? CreatedDate { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }
-
     public virtual Program? Program { get; set; }
-
     public virtual ExamType? ExamType { get; set; }
-
     public virtual College? College { get; set; }
-
     public virtual ExamSchedule? ExamSchedule { get; set; }
 }

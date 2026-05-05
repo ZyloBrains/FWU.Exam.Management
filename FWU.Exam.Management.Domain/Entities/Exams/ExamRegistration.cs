@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
@@ -18,10 +19,9 @@ public class ExamRegistration
     public decimal? FeeEnclosed { get; set; }
     public decimal? AttendancePercentage { get; set; }
     public DateTime? RegistrationDate { get; set; }
-    public bool? IsVerifiedByCollege { get; set; }
-    public int? VerifiedBy { get; set; }
+    public RegistrationStatus Status { get; set; }
+    public string? VerifiedByUsername { get; set; }
     public DateTime? VerifiedDate { get; set; }
-    public bool? IsWithheld { get; set; }
 
     [MaxLength(50)]
     public string? Sgpa { get; set; }
@@ -30,14 +30,12 @@ public class ExamRegistration
     public string? Remarks { get; set; }
 
     public bool IsActive { get; set; }
-    public bool? IsExamRegistered { get; set; }
-    public int? TypeId { get; set; }
     public int ExamScheduleId { get; set; }
     public int? RollNumberIndex { get; set; }
     public bool? IsAppliedByStudent { get; set; }
     public int? ProgramsId { get; set; }
     public int? ApplicationVoucherId { get; set; }
-    public int? AdminVerifiedBy { get; set; }
+    public string? AdminVerifiedByUsername { get; set; }
     public DateTime? AdminVerifiedDate { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }

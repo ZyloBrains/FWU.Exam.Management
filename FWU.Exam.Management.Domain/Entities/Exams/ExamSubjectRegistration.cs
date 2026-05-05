@@ -1,14 +1,16 @@
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
-public class ExamSubjectRegistration
+public class ExamSubjectRegistration : IAuditable
 {
     public int Id { get; set; }
 
     public int ExamRegistrationId { get; set; }
     public int ExamTypeId { get; set; }
+    public int SubjectOfferingId { get; set; }
 
     [MaxLength(3)]
     public string? ObtainedMarksTheory { get; set; }
@@ -30,15 +32,6 @@ public class ExamSubjectRegistration
 
     public bool IsActive { get; set; }
     public bool? IsLooseEntry { get; set; }
-
-    public int? CreatedByTab1 { get; set; }
-    public DateTime? CreatedDateTab1 { get; set; }
-    public int? ModifiedByTab1 { get; set; }
-    public DateTime? ModifiedDateTab1 { get; set; }
-    public int? CreatedByTab2 { get; set; }
-    public DateTime? CreatedDateTab2 { get; set; }
-    public int? ModifiedByTab2 { get; set; }
-    public DateTime? ModifiedDateTab2 { get; set; }
     public bool? IsTheoryRegistered { get; set; }
     public bool? IsPracticalRegistered { get; set; }
     public bool? IsExtra { get; set; }
@@ -46,5 +39,6 @@ public class ExamSubjectRegistration
     public virtual ExamRegistration? ExamRegistration { get; set; }
 
     public virtual ExamType? ExamType { get; set; }
+    public virtual SubjectOffering? SubjectOffering { get; set; }
     public virtual ExamSubjectRegistrationExamSession? ExamSubjectRegistrationExamSession { get; set; }
 }
