@@ -212,9 +212,9 @@ public class StudentRegistrationService : IStudentRegistrationService
         return localLevels.Cast<object>().ToList();
     }
 
-    public async Task<List<Province>> GetProvincesAsync()
+    public List<Province> GetProvinces()
     {
-        var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
+        var provinces =  _context.Provinces.AsNoTracking().ToList();
         return provinces;
     }
 }

@@ -277,9 +277,10 @@ public class StudentRegistrationsController : Controller
         return Json(localLevels);
     }
 
-    private async Task PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
+    private void PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces = await _studentRegistrationService.GetProvincesAsync();
+        var provinces =  _studentRegistrationService.GetProvinces
+            ();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
         
         // This will be implemented based on the selectLists object

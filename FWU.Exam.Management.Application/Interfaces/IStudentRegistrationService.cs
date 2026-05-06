@@ -18,5 +18,5 @@ public interface IStudentRegistrationService
     Task<object> GetSelectListDataAsync(StudentRegistration? studentRegistration = null);
     Task<List<object>> GetDistrictsByProvinceAsync(int provinceId);
     Task<List<object>> GetLocalLevelsByDistrictAsync(int districtId);
-    Task<List<Province>> GetProvincesAsync();
+    List<Province> GetProvinces();
 }
