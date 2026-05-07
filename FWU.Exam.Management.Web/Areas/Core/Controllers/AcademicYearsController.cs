@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
+[Area("Core")]
 public class AcademicYearsController : Controller
 {
     private readonly IAcademicYearService _academicYearService;

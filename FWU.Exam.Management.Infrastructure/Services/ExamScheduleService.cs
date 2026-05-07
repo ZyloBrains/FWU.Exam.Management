@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Infrastructure;
@@ -141,17 +139,17 @@ public class ExamScheduleService : IExamScheduleService
         return await _context.ExamSchedules.AnyAsync(e => e.Id == id);
     }
 
-    public object GetSelectListData(ExamSchedule? examSchedule = null)
+    public ExamScheduleSelectListsDto GetSelectListData(ExamSchedule? examSchedule = null)
     {
         var academicYears = _context.AcademicYears.AsNoTracking().ToList();
         var examTypes = _context.ExamTypes.AsNoTracking().ToList();
-        var levels = _context.Levels.AsNoTracking().ToList();
+        var programs = _context.Programs.AsNoTracking().ToList();
 
-        return new
+        return new ExamScheduleSelectListsDto
         {
-            AcademicYears = academicYears.Select(ay => new { ay.Id, Name = ay.AcademicYearName }).ToList(),
-            ExamTypes = examTypes.Select(et => new { et.Id, et.Name }).ToList(),
-            Levels = levels.Select(l => new { l.Id, Name = l.LevelName }).ToList()
+            AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
+            ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
+            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList()
         };
     }
 

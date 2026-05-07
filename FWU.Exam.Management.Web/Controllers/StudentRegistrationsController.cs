@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
 using Microsoft.EntityFrameworkCore;
@@ -277,12 +278,9 @@ public class StudentRegistrationsController : Controller
         return Json(localLevels);
     }
 
-    private async Task PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
+    private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces = await _studentRegistrationService.GetProvincesAsync();
+        var provinces = _studentRegistrationService.GetProvinces();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
-        
-        // This will be implemented based on the selectLists object
-        // For now, using ViewData as in the original
     }
 }

@@ -1,7 +1,7 @@
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace FWU.Exam.Management.Web.Data;
+namespace FWU.Exam.Management.Web.Data.Seeders;
 
 public static class UserSeeder
 {

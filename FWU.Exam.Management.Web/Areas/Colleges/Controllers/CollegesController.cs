@@ -8,8 +8,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
+[Area("Colleges")]
 public class CollegesController : Controller
 {
     private readonly ICollegeService _collegeService;

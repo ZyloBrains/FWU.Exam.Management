@@ -1,17 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 
-namespace FWU.Exam.Management.Web.Controllers
-{
-    public class SmtpConfigurationsController : Controller
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
+
+[Area("Core")]
+public class SmtpConfigurationsController : Controller
     {
         private readonly AppDbContext _context;
 
@@ -279,4 +276,3 @@ namespace FWU.Exam.Management.Web.Controllers
             return _context.SmtpConfigurations.Any(e => e.Id == id);
         }
     }
-}
