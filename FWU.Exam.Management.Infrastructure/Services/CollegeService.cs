@@ -1,6 +1,5 @@
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Location;
@@ -180,22 +179,20 @@ public class CollegeService : ICollegeService
         };
     }
 
-    public async Task<List<object>> GetDistrictsByProvinceAsync(int provinceId)
+    public async Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId)
     {
-        var districts = await _context.Districts
+        return await _context.Districts
             .Where(d => d.ProvinceId == provinceId && d.IsActive)
-            .Select(d => new { id = d.Id, name = d.DistrictName })
+            .Select(d => new SelectOption { Id = d.Id, Name = d.DistrictName })
             .ToListAsync();
-        return districts.Cast<object>().ToList();
     }
 
-    public async Task<List<object>> GetLocalLevelsByDistrictAsync(int districtId)
+    public async Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId)
     {
-        var localLevels = await _context.LocalLevels
+        return await _context.LocalLevels
             .Where(l => l.DistrictId == districtId && l.IsActive)
-            .Select(l => new { id = l.Id, name = l.LocalLevelName })
+            .Select(l => new SelectOption { Id = l.Id, Name = l.LocalLevelName })
             .ToListAsync();
-        return localLevels.Cast<object>().ToList();
     }
 
     public async Task<List<Province>> GetProvincesAsync()

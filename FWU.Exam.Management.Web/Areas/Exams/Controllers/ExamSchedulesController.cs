@@ -1,4 +1,5 @@
 using System.Text;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using Microsoft.AspNetCore.Mvc;
@@ -163,10 +164,10 @@ public class ExamSchedulesController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private void PopulateDropdowns(object selectLists, ExamSchedule? examSchedule = null)
+    private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)
     {
-        ViewData["AcademicYearId"] = new SelectList(((dynamic)selectLists).AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
-        ViewData["ExamTypeId"] = new SelectList(((dynamic)selectLists).ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
-        ViewData["ProgramId"] = new SelectList(((dynamic)selectLists).Programs, "Id", "Name", examSchedule?.ProgramId);
+        ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
+        ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
+        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
     }
 }

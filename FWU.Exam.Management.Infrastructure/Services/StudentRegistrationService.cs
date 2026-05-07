@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -113,7 +114,7 @@ public class StudentRegistrationService : IStudentRegistrationService
         return await _context.StudentRegistrations.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<object> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize)
+    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize)
     {
         var query = _context.StudentRegistrations
             .Include(s => s.AcademicYear)
@@ -142,22 +143,22 @@ public class StudentRegistrationService : IStudentRegistrationService
             .OrderByDescending(s => s.Id)
             .Skip(skip)
             .Take(pageSize)
-            .Select(s => new
+            .Select(s => new StudentRegistrationListDto
             {
-                id = s.Id,
-                registrationNumber = s.RegistrationNumber ?? "-",
-                fullName = $"{s.FirstName} {s.LastName}".Trim(),
-                academicYear = s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "-",
-                level = s.Level != null ? s.Level.LevelName : "-",
-                college = s.College != null ? s.College.Name : "-",
-                category = s.StudentCategory != null ? s.StudentCategory.StudentCategoryName : "-",
-                contactNumber = s.ContactNumber ?? "-",
-                email = s.Email ?? "-",
-                status = s.IsActive ? "Active" : "Inactive"
+                Id = s.Id,
+                RegistrationNumber = s.RegistrationNumber ?? "-",
+                FullName = (s.FirstName + " " + s.LastName).Trim(),
+                AcademicYear = s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "-",
+                Level = s.Level != null ? s.Level.LevelName : "-",
+                College = s.College != null ? s.College.Name : "-",
+                Category = s.StudentCategory != null ? s.StudentCategory.StudentCategoryName : "-",
+                ContactNumber = s.ContactNumber ?? "-",
+                Email = s.Email ?? "-",
+                Status = s.IsActive ? "Active" : "Inactive"
             })
             .ToListAsync();
 
-        return (data.Cast<object>().ToList(), totalCount);
+        return (data, totalCount);
     }
 
     public async Task UpdateStatusAsync(int id, bool isActive)
@@ -170,7 +171,7 @@ public class StudentRegistrationService : IStudentRegistrationService
         }
     }
 
-    public async Task<object> GetSelectListDataAsync(StudentRegistration? studentRegistration = null)
+    public async Task<StudentRegistrationSelectListsDto> GetSelectListDataAsync(StudentRegistration? studentRegistration = null)
     {
         var academicYears = await _context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await _context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
@@ -180,36 +181,34 @@ public class StudentRegistrationService : IStudentRegistrationService
         var studentCategories = await _context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
         var ethnicities = await _context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();
         var localLevels = await _context.LocalLevels.Where(ll => ll.LocalLevelName != null).AsNoTracking().ToListAsync();
-    
-        return new
+
+        return new StudentRegistrationSelectListsDto
         {
-            AcademicYears = academicYears.Select(ay => new { ay.Id, Name = ay.AcademicYearName }).ToList(),
-            Levels = levels.Select(l => new { l.Id, Name = l.LevelName }).ToList(),
-            Faculties = faculties.Select(f => new { f.Id, Name = f.FacultyName }).ToList(),
-            Colleges = colleges.Select(c => new { c.Id, Name = c.Name }).ToList(),
-            Genders = genders.Select(g => new { g.Id, Name = g.GenderName }).ToList(),
-            StudentCategories = studentCategories.Select(sc => new { sc.Id, Name = sc.StudentCategoryName }).ToList(),
-            Ethnicities = ethnicities.Select(e => new { e.Id, Name = e.EthnicityName }).ToList(),
-            LocalLevels = localLevels.Select(ll => new { ll.Id, Name = ll.LocalLevelName }).ToList(),
+            AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
+            Levels = levels.Select(l => new SelectOption { Id = l.Id, Name = l.LevelName }).ToList(),
+            Faculties = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.FacultyName }).ToList(),
+            Colleges = colleges.Select(c => new SelectOption { Id = c.Id, Name = c.Name }).ToList(),
+            Genders = genders.Select(g => new SelectOption { Id = g.Id, Name = g.GenderName }).ToList(),
+            StudentCategories = studentCategories.Select(sc => new SelectOption { Id = sc.Id, Name = sc.StudentCategoryName }).ToList(),
+            Ethnicities = ethnicities.Select(e => new SelectOption { Id = e.Id, Name = e.EthnicityName }).ToList(),
+            LocalLevels = localLevels.Select(ll => new SelectOption { Id = ll.Id, Name = ll.LocalLevelName }).ToList(),
         };
     }
 
-    public async Task<List<object>> GetDistrictsByProvinceAsync(int provinceId)
+    public async Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId)
     {
-        var districts = await _context.Districts
+        return await _context.Districts
             .Where(d => d.ProvinceId == provinceId && d.IsActive)
-            .Select(d => new { id = d.Id, name = d.DistrictName })
+            .Select(d => new SelectOption { Id = d.Id, Name = d.DistrictName })
             .ToListAsync();
-        return districts.Cast<object>().ToList();
     }
 
-    public async Task<List<object>> GetLocalLevelsByDistrictAsync(int districtId)
+    public async Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId)
     {
-        var localLevels = await _context.LocalLevels
+        return await _context.LocalLevels
             .Where(l => l.DistrictId == districtId && l.IsActive)
-            .Select(l => new { id = l.Id, name = l.LocalLevelName })
+            .Select(l => new SelectOption { Id = l.Id, Name = l.LocalLevelName })
             .ToListAsync();
-        return localLevels.Cast<object>().ToList();
     }
 
     public List<Province> GetProvinces()
