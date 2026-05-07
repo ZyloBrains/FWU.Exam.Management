@@ -1,7 +1,8 @@
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Location;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FWU.Exam.Management.Domain.Entities.Colleges;
-using FWU.Exam.Management.Domain.Entities;
 
 namespace FWU.Exam.Management.Application.Interfaces;
 
@@ -15,4 +16,7 @@ public interface ICollegeService
     Task DeleteCollegeAsync(int id);
     Task<bool> CollegeExistsAsync(int id);
     Task<List<CollegeType>> GetCollegeTypesAsync();
+    Task<List<object>> GetDistrictsByProvinceAsync(int provinceId);
+    Task<List<object>> GetLocalLevelsByDistrictAsync(int districtId);
+    Task<List<Province>> GetProvincesAsync();
 }

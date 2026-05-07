@@ -16,11 +16,26 @@ public class AcademicYearService : IAcademicYearService
         _context = context;
     }
 
-    public async Task<List<AcademicYear>> GetAllAcademicYearsAsync()
+    public async Task<(List<AcademicYear> Items, int TotalCount)> GetAllAcademicYearsAsync(int page, int pageSize, string? search)
     {
-        return await _context.AcademicYears
-            .AsNoTracking()
-            .ToListAsync();
+        //< (List<Board> Items, int TotalCount) >
+        //return await _context.AcademicYears
+        //    .AsNoTracking()
+        //    .ToListAsync();
+        var query = _context.AcademicYears.AsNoTracking();
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(a => a.AcademicYearName.Contains(search) ||
+                                     a.AcademicYearCode.ToString().Contains(search) ||
+                                     a.AcademicYearNameNepali.Contains(search) ||
+                                     a.AcademicYearCodeNepali.Contains(search) ||
+                                     a.Remark.Contains(search));
+        }
+        var totalCount = await query.CountAsync();
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+
+        return (items, totalCount);
     }
 
     public async Task<AcademicYear?> GetAcademicYearByIdAsync(int id)

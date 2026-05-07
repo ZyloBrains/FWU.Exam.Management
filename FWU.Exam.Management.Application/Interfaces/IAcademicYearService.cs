@@ -6,7 +6,9 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IAcademicYearService
 {
-    Task<List<AcademicYear>> GetAllAcademicYearsAsync();
+    //(List<Board> Items, int TotalCount)
+    Task<(List<AcademicYear> Items, int TotalCount)> GetAllAcademicYearsAsync(int page, int pageSize, string? search);
+    //Task<(List<Board> Items, int TotalCount)> GetBoardsAsync( string sort, string sortDir);
     Task<AcademicYear?> GetAcademicYearByIdAsync(int id);
     Task CreateAcademicYearAsync(AcademicYear academicYear);
     Task UpdateAcademicYearAsync(AcademicYear academicYear);

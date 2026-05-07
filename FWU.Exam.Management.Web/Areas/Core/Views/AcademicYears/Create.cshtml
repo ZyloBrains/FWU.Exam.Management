@@ -1,63 +1,88 @@
 @model AcademicYear
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Academic Year";
 }
 
-<h1>Create</h1>
+<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar text-pink-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create Academic Year</h1>
+        </div>
+    </div>
 
-<h4>AcademicYear</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="AcademicYearCode" class="control-label"></label>
-                <input asp-for="AcademicYearCode" class="form-control" />
-                <span asp-validation-for="AcademicYearCode" class="text-danger"></span>
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <!-- Section: Basic Information -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="AcademicYearCode" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="AcademicYearCode" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Enter code" />
+                        <span asp-validation-for="AcademicYearCode" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="AcademicYearCodeNepali" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="AcademicYearCodeNepali" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Enter code in Nepali" />
+                        <span asp-validation-for="AcademicYearCodeNepali" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="AcademicYearName" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="AcademicYearName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Enter academic year name" />
+                        <span asp-validation-for="AcademicYearName" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="AcademicYearNameNepali" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="AcademicYearNameNepali" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Enter name in Nepali" />
+                        <span asp-validation-for="AcademicYearNameNepali" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Remark" class="text-sm font-medium text-gray-700"></label>
+                        <input asp-for="Remark" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Enter remark" />
+                        <span asp-validation-for="Remark" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="AcademicYearCodeNepali" class="control-label"></label>
-                <input asp-for="AcademicYearCodeNepali" class="form-control" />
-                <span asp-validation-for="AcademicYearCodeNepali" class="text-danger"></span>
+
+            <!-- Section: Options -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Options</h2>
+                <div class="flex flex-wrap gap-6">
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsRunning" type="checkbox" class="text-pink-600 rounded" />
+                        <label asp-for="IsRunning" class="text-sm font-medium text-gray-700">Running</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsActive" type="checkbox" class="text-pink-600 rounded" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="AcademicYearName" class="control-label"></label>
-                <input asp-for="AcademicYearName" class="form-control" />
-                <span asp-validation-for="AcademicYearName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="AcademicYearNameNepali" class="control-label"></label>
-                <input asp-for="AcademicYearNameNepali" class="form-control" />
-                <span asp-validation-for="AcademicYearNameNepali" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Remark" class="control-label"></label>
-                <input asp-for="Remark" class="form-control" />
-                <span asp-validation-for="Remark" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsRunning" /> @Html.DisplayNameFor(model => model.IsRunning)
-                </label>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
-                </label>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Save
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }
