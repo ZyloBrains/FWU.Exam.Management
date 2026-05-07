@@ -86,7 +86,7 @@
                 <div class="flex items-center gap-3"><div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-school text-amber-600 text-sm"></i></div><span class="text-sm font-medium text-gray-700">College Directory</span></div>
                 <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalColleges</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
             </a>
-            <a asp-controller="Program" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+            <a asp-area="Core" asp-controller="Programs" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                 <div class="flex items-center gap-3"><div class="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center"><i class="fas fa-graduation-cap text-indigo-600 text-sm"></i></div><span class="text-sm font-medium text-gray-700">Program List</span></div>
                 <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalPrograms</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
             </a>

@@ -3,8 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
+[Area("Core")]
 public class AcademicYearsController : Controller
 {
     private readonly IAcademicYearService _academicYearService;

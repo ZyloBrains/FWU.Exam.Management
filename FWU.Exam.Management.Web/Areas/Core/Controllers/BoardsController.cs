@@ -5,8 +5,9 @@ using FWU.Exam.Management.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
+[Area("Core")]
 public class BoardsController : Controller
 {
     private readonly IBoardService _boardService;
