@@ -1,7 +1,7 @@
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Web.Data;
+using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +48,10 @@ public partial class EntryPoint
         builder.Services.AddScoped<IDistrictService, DistrictService>();
         builder.Services.AddScoped<IProvinceService, ProvinceService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+        builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
+        builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
+        builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
+        builder.Services.AddScoped<IStudentCategoryService, StudentCategoryService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

@@ -1,0 +1,101 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>
+
+@{
+    Layout = null;
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentSearch = ViewBag.Search as string ?? "";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Subject Offerings Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+        h1 {
+            color: #4f46e5;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 10px;
+        }
+        .report-info {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>Subject Offerings Report</h1>
+    <div class="report-info">
+        <p>Generated on: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</p>
+        <p>Page: @currentPage | Page Size: @pageSize | Total Records: @totalCount</p>
+        @if (!string.IsNullOrEmpty(currentSearch))
+        {
+            <p>Search Filter: @currentSearch</p>
+        }
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Code</th>
+                <th>Program</th>
+                <th>Semester</th>
+                <th>Type</th>
+                <th>Theory</th>
+                <th>Practical</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@(item.SubjectCatalog?.SubjectName ?? "-")</td>
+                    <td>@(item.SubjectCatalog?.SubjectCode ?? "-")</td>
+                    <td>@(item.Program?.ProgramName ?? "-")</td>
+                    <td>@(item.Semester?.Name ?? "-")</td>
+                    <td>@(item.IsCompulsory ? "Compulsory" : "Elective")</td>
+                    <td>@(item.HasTheory ? $"{item.TheoryFullMarks}/{item.TheoryPassMarks}" : "-")</td>
+                    <td>@(item.HasPractical ? $"{item.PracticalFullMarks}/{item.PracticalPassMarks}" : "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.Any())
+    {
+        <p style="text-align: center; color: #999;">No records found.</p>
+    }
+
+    <div class="footer">
+        <p>This is a system-generated report.</p>
+    </div>
+</body>
+</html>

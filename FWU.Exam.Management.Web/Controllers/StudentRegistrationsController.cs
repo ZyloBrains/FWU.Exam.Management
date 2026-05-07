@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
 using Microsoft.EntityFrameworkCore;
@@ -277,12 +278,16 @@ public class StudentRegistrationsController : Controller
         return Json(localLevels);
     }
 
-    private async Task PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
+    private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces = await _studentRegistrationService.GetProvincesAsync();
+        var provinces = _studentRegistrationService.GetProvinces();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
-        
-        // This will be implemented based on the selectLists object
-        // For now, using ViewData as in the original
+        ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);
+        ViewBag.LevelId = new SelectList(selectLists.Levels, "Id", "Name", studentRegistration?.LevelId);
+        ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name", studentRegistration?.CollegeId);
+        ViewBag.FacultyId = new SelectList(selectLists.Faculties, "Id", "Name", studentRegistration?.FacultyId);
+        ViewBag.GenderId = new SelectList(selectLists.Genders, "Id", "Name", studentRegistration?.GenderId);
+        ViewBag.StudentCategoryId = new SelectList(selectLists.StudentCategories, "Id", "Name", studentRegistration?.StudentCategoryId);
+        ViewBag.EthnicityId = new SelectList(selectLists.Ethnicities, "Id", "Name", studentRegistration?.EthnicityId);
     }
 }

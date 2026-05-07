@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Domain.Entities.Exams;
 
 namespace FWU.Exam.Management.Application.Interfaces;
@@ -13,5 +14,5 @@ public interface IExamScheduleService
     Task UpdateExamScheduleAsync(ExamSchedule examSchedule);
     Task DeleteExamScheduleAsync(int id);
     Task<bool> ExamScheduleExistsAsync(int id);
-    object GetSelectListData(ExamSchedule? examSchedule = null);
+    ExamScheduleSelectListsDto GetSelectListData(ExamSchedule? examSchedule = null);
 }
