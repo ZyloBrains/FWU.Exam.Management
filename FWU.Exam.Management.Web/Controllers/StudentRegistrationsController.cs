@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
 using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
+using ClosedXML.Excel;
+
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -148,10 +149,12 @@ public class StudentRegistrationsController : Controller
             using (var stream = new MemoryStream())
             {
                 await file.CopyToAsync(stream);
-                using (var package = new ExcelPackage(stream))
+                stream.Position = 0;
+
+                using (var workbook = new XLWorkbook(stream))
                 {
-                    var worksheet = package.Workbook.Worksheets[0];
-                    var rowCount = worksheet.Dimension?.Rows ?? 0;
+                    var worksheet = workbook.Worksheet(1);
+                    var rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
 
                     if (rowCount < 2)
                         return BadRequest("Excel file is empty");
@@ -165,18 +168,18 @@ public class StudentRegistrationsController : Controller
                         {
                             var registration = new StudentRegistration
                             {
-                                FirstName = worksheet.Cells[row, 1].Value?.ToString() ?? "",
-                                LastName = worksheet.Cells[row, 2].Value?.ToString() ?? "",
-                                MiddleName = worksheet.Cells[row, 3].Value?.ToString(),
-                                Email = worksheet.Cells[row, 4].Value?.ToString(),
-                                ContactNumber = worksheet.Cells[row, 5].Value?.ToString(),
-                                DateOfBirthBS = worksheet.Cells[row, 6].Value?.ToString() ?? "",
-                                RegistrationNumber = worksheet.Cells[row, 7].Value?.ToString(),
-                                AcademicYearId = int.TryParse(worksheet.Cells[row, 8].Value?.ToString(), out var ayId) ? ayId : 0,
-                                CollegeId = int.TryParse(worksheet.Cells[row, 10].Value?.ToString(), out var collId) ? collId : 0,
-                                FacultyId = int.TryParse(worksheet.Cells[row, 11].Value?.ToString(), out var facId) ? facId : 0,
-                                GenderId = int.TryParse(worksheet.Cells[row, 12].Value?.ToString(), out var genderId) ? genderId : 0,
-                                StudentCategoryId = int.TryParse(worksheet.Cells[row, 13].Value?.ToString(), out var catId) ? catId : 0,
+                                FirstName = worksheet.Cell(row, 1).GetString(),
+                                LastName = worksheet.Cell(row, 2).GetString(),
+                                MiddleName = worksheet.Cell(row, 3).GetString(),
+                                Email = worksheet.Cell(row, 4).GetString(),
+                                ContactNumber = worksheet.Cell(row, 5).GetString(),
+                                DateOfBirthBS = worksheet.Cell(row, 6).GetString(),
+                                RegistrationNumber = worksheet.Cell(row, 7).GetString(),
+                                AcademicYearId = int.TryParse(worksheet.Cell(row, 8).GetString(), out var ayId) ? ayId : 0,
+                                CollegeId = int.TryParse(worksheet.Cell(row, 10).GetString(), out var collId) ? collId : 0,
+                                FacultyId = int.TryParse(worksheet.Cell(row, 11).GetString(), out var facId) ? facId : 0,
+                                GenderId = int.TryParse(worksheet.Cell(row, 12).GetString(), out var genderId) ? genderId : 0,
+                                StudentCategoryId = int.TryParse(worksheet.Cell(row, 13).GetString(), out var catId) ? catId : 0,
                                 IsActive = true
                             };
 
@@ -211,55 +214,59 @@ public class StudentRegistrationsController : Controller
     {
         var data = await _studentRegistrationService.GetAllStudentRegistrationsAsync();
 
-        using (var package = new ExcelPackage())
+        using (var workbook = new XLWorkbook())
         {
-            var worksheet = package.Workbook.Worksheets.Add("Student Registrations");
+            var worksheet = workbook.Worksheets.Add("Student Registrations");
 
-            worksheet.Cells[1, 1].Value = "Registration No";
-            worksheet.Cells[1, 2].Value = "First Name";
-            worksheet.Cells[1, 3].Value = "Middle Name";
-            worksheet.Cells[1, 4].Value = "Last Name";
-            worksheet.Cells[1, 5].Value = "Email";
-            worksheet.Cells[1, 6].Value = "Contact Number";
-            worksheet.Cells[1, 7].Value = "Date of Birth (BS)";
-            worksheet.Cells[1, 8].Value = "Academic Year";
-            worksheet.Cells[1, 9].Value = "Level";
-            worksheet.Cells[1, 10].Value = "College";
-            worksheet.Cells[1, 11].Value = "Faculty";
-            worksheet.Cells[1, 12].Value = "Category";
-            worksheet.Cells[1, 13].Value = "Active";
+            worksheet.Cell(1, 1).Value = "Registration No";
+            worksheet.Cell(1, 2).Value = "First Name";
+            worksheet.Cell(1, 3).Value = "Middle Name";
+            worksheet.Cell(1, 4).Value = "Last Name";
+            worksheet.Cell(1, 5).Value = "Email";
+            worksheet.Cell(1, 6).Value = "Contact Number";
+            worksheet.Cell(1, 7).Value = "Date of Birth (BS)";
+            worksheet.Cell(1, 8).Value = "Academic Year";
+            worksheet.Cell(1, 9).Value = "Level";
+            worksheet.Cell(1, 10).Value = "College";
+            worksheet.Cell(1, 11).Value = "Faculty";
+            worksheet.Cell(1, 12).Value = "Category";
+            worksheet.Cell(1, 13).Value = "Active";
 
             for (int col = 1; col <= 13; col++)
             {
-                worksheet.Cells[1, col].Style.Font.Bold = true;
-                worksheet.Cells[1, col].Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                worksheet.Cells[1, col].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                var cell = worksheet.Cell(1, col);
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.LightGray;
             }
 
             int row = 2;
             foreach (var reg in data)
             {
-                worksheet.Cells[row, 1].Value = reg.RegistrationNumber;
-                worksheet.Cells[row, 2].Value = reg.FirstName;
-                worksheet.Cells[row, 3].Value = reg.MiddleName;
-                worksheet.Cells[row, 4].Value = reg.LastName;
-                worksheet.Cells[row, 5].Value = reg.Email;
-                worksheet.Cells[row, 6].Value = reg.ContactNumber;
-                worksheet.Cells[row, 7].Value = reg.DateOfBirthBS;
-                worksheet.Cells[row, 8].Value = reg.AcademicYear?.AcademicYearName;
-                worksheet.Cells[row, 9].Value = reg.Level?.LevelName;
-                worksheet.Cells[row, 10].Value = reg.College?.Name;
-                worksheet.Cells[row, 11].Value = reg.Faculty?.FacultyName;
-                worksheet.Cells[row, 12].Value = reg.StudentCategory?.StudentCategoryName;
-                worksheet.Cells[row, 13].Value = reg.IsActive ? "Yes" : "No";
+                worksheet.Cell(row, 1).Value = reg.RegistrationNumber;
+                worksheet.Cell(row, 2).Value = reg.FirstName;
+                worksheet.Cell(row, 3).Value = reg.MiddleName;
+                worksheet.Cell(row, 4).Value = reg.LastName;
+                worksheet.Cell(row, 5).Value = reg.Email;
+                worksheet.Cell(row, 6).Value = reg.ContactNumber;
+                worksheet.Cell(row, 7).Value = reg.DateOfBirthBS;
+                worksheet.Cell(row, 8).Value = reg.AcademicYear?.AcademicYearName;
+                worksheet.Cell(row, 9).Value = reg.Level?.LevelName;
+                worksheet.Cell(row, 10).Value = reg.College?.Name;
+                worksheet.Cell(row, 11).Value = reg.Faculty?.FacultyName;
+                worksheet.Cell(row, 12).Value = reg.StudentCategory?.StudentCategoryName;
+                worksheet.Cell(row, 13).Value = reg.IsActive ? "Yes" : "No";
                 row++;
             }
 
-            worksheet.Cells.AutoFitColumns();
+            worksheet.Columns().AdjustToContents();
 
-            var fileBytes = package.GetAsByteArray();
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"StudentRegistrations_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+            using (var stream = new MemoryStream())
+            {
+                workbook.SaveAs(stream);
+                var fileBytes = stream.ToArray();
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"StudentRegistrations_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+            }
         }
     }
 
@@ -285,5 +292,6 @@ public class StudentRegistrationsController : Controller
         
         // This will be implemented based on the selectLists object
         // For now, using ViewData as in the original
+        
     }
 }
