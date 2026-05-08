@@ -127,7 +127,7 @@
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
                 <li>
-                    <a asp-controller="StudentRegistrations" asp-action="Index"
+                    <a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index"
                            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
                         <i class="fas fa-user-plus w-4 text-center"></i>
                         <span>Student Registration</span>

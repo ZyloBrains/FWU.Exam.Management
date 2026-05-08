@@ -6,8 +6,9 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
+[Area("Students")]
 public class StudentRegistrationsController : Controller
 {
     private readonly IStudentRegistrationService _studentRegistrationService;
