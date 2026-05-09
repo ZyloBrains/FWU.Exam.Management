@@ -286,12 +286,13 @@ public class StudentRegistrationsController : Controller
 
     private void PopulateSelectLists(object selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces =  _studentRegistrationService.GetProvinces
-            ();
+        var provinces = _studentRegistrationService.GetProvinces();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
         
         // This will be implemented based on the selectLists object
         // For now, using ViewData as in the original
-        
+  
+
+  
     }
 }
