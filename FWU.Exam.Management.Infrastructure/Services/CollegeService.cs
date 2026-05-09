@@ -1,6 +1,5 @@
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Location;
@@ -178,5 +177,27 @@ public class CollegeService : ICollegeService
             "isactive" => c => c.IsActive,
             _ => c => c.DisplayOrder
         };
+    }
+
+    public async Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId)
+    {
+        return await _context.Districts
+            .Where(d => d.ProvinceId == provinceId && d.IsActive)
+            .Select(d => new SelectOption { Id = d.Id, Name = d.DistrictName })
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId)
+    {
+        return await _context.LocalLevels
+            .Where(l => l.DistrictId == districtId && l.IsActive)
+            .Select(l => new SelectOption { Id = l.Id, Name = l.LocalLevelName })
+            .ToListAsync();
+    }
+
+    public async Task<List<Province>> GetProvincesAsync()
+    {
+        var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
+        return provinces;
     }
 }

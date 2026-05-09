@@ -7,8 +7,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
+[Area("Core")]
 [Authorize(Roles = Role.SystemAdmin)]
 public class OrganizationController : Controller
 {

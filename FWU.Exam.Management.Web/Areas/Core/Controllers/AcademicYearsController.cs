@@ -1,10 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Text;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
+[Area("Core")]
 public class AcademicYearsController : Controller
 {
     private readonly IAcademicYearService _academicYearService;
@@ -14,12 +16,74 @@ public class AcademicYearsController : Controller
         _academicYearService = academicYearService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string search = null, int pageSize = 10)
     {
-        var academicYears = await _academicYearService.GetAllAcademicYearsAsync();
-        return View(academicYears);
+        // The service currently returns a List<AcademicYear>. Do not attempt to deconstruct it.
+        var (Items, TotalCount) = await _academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
+
+        // If you need the total count across all pages, update the service to return it.
+        //var totalCount = items?.Count ?? 0;
+
+        ViewBag.TotalCount = TotalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)TotalCount / pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        //ViewBag.Sort = sort;
+        //ViewBag.SortDir = sortDir;
+
+        return View(Items);
     }
 
+
+    // Helper to escape CSV fields
+    private string EscapeCsv(string field)
+    {
+        if (string.IsNullOrEmpty(field)) return "";
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        return field;
+    }
+
+    // Export to PDF (browser print)
+    // Export to CSV – only the current page
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null)
+    {
+        var (Items, TotalCount) = await _academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
+
+    
+        var sb = new StringBuilder();
+        sb.AppendLine("Code,Code (Nepali),Name,Name (Nepali),Remark,Running,Active");
+        foreach (var item in Items)
+        {
+            sb.AppendLine($"{item.AcademicYearCode}," +
+                          $"{EscapeCsv(item.AcademicYearCodeNepali)}," +
+                          $"{EscapeCsv(item.AcademicYearName)}," +
+                          $"{EscapeCsv(item.AcademicYearNameNepali)}," +
+                          $"{EscapeCsv(item.Remark)}," +
+                          $"{(item.IsRunning ? "Yes" : "No")}," +
+                          $"{(item.IsActive ? "Active" : "Inactive")}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", "AcademicYears.csv");
+    }
+
+    // Export to PDF – only the current page (using browser print)
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null)
+    {
+        var (Items, TotalCount) = await _academicYearService.GetAllAcademicYearsAsync(page,pageSize,search);
+
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalCount = TotalCount;
+        ViewBag.Search = search;
+        //ViewBag.Sort = sort;
+        //ViewBag.SortDir = sortDir;
+        return View("PrintPdf", Items);
+    }
+    // GET: AcademicYears/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
