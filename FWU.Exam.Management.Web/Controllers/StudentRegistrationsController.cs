@@ -143,7 +143,10 @@ public class StudentRegistrationsController : Controller
     public async Task<IActionResult> ImportExcel(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded");
+        {
+            TempData["ErrorMessage"] = "No file uploaded";
+            return RedirectToAction(nameof(Index));
+        }
 
         try
         {
@@ -158,7 +161,10 @@ public class StudentRegistrationsController : Controller
                     var rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
 
                     if (rowCount < 2)
-                        return BadRequest("Excel file is empty");
+                    {
+                        TempData["ErrorMessage"] = "Excel file is empty";
+                        return RedirectToAction(nameof(Index));
+                    }
 
                     int successCount = 0;
                     var errors = new List<string>();
@@ -177,6 +183,7 @@ public class StudentRegistrationsController : Controller
                                 DateOfBirthBS = worksheet.Cell(row, 6).GetString(),
                                 RegistrationNumber = worksheet.Cell(row, 7).GetString(),
                                 AcademicYearId = int.TryParse(worksheet.Cell(row, 8).GetString(), out var ayId) ? ayId : 0,
+                                LevelId = int.TryParse(worksheet.Cell(row, 9).GetString(), out var levelId) ? levelId : 0,
                                 CollegeId = int.TryParse(worksheet.Cell(row, 10).GetString(), out var collId) ? collId : 0,
                                 FacultyId = int.TryParse(worksheet.Cell(row, 11).GetString(), out var facId) ? facId : 0,
                                 GenderId = int.TryParse(worksheet.Cell(row, 12).GetString(), out var genderId) ? genderId : 0,
@@ -200,13 +207,24 @@ public class StudentRegistrationsController : Controller
                         }
                     }
 
-                    return Ok(new { message = $"Imported {successCount} records successfully", errors });
+                    if (successCount > 0)
+                    {
+                        TempData["SuccessMessage"] = $"Imported {successCount} records successfully";
+                    }
+
+                    if (errors.Count > 0)
+                    {
+                        TempData["ErrorMessage"] = string.Join(Environment.NewLine, errors);
+                    }
+
+                    return RedirectToAction(nameof(Index));
                 }
             }
         }
         catch (Exception ex)
         {
-            return BadRequest($"Error processing file: {ex.Message}");
+            TempData["ErrorMessage"] = $"Error processing file: {ex.Message}";
+            return RedirectToAction(nameof(Index));
         }
     }
 
@@ -219,21 +237,22 @@ public class StudentRegistrationsController : Controller
         {
             var worksheet = workbook.Worksheets.Add("Student Registrations");
 
-            worksheet.Cell(1, 1).Value = "Registration No";
-            worksheet.Cell(1, 2).Value = "First Name";
-            worksheet.Cell(1, 3).Value = "Middle Name";
-            worksheet.Cell(1, 4).Value = "Last Name";
-            worksheet.Cell(1, 5).Value = "Email";
-            worksheet.Cell(1, 6).Value = "Contact Number";
-            worksheet.Cell(1, 7).Value = "Date of Birth (BS)";
-            worksheet.Cell(1, 8).Value = "Academic Year";
-            worksheet.Cell(1, 9).Value = "Level";
-            worksheet.Cell(1, 10).Value = "College";
-            worksheet.Cell(1, 11).Value = "Faculty";
-            worksheet.Cell(1, 12).Value = "Category";
-            worksheet.Cell(1, 13).Value = "Active";
+            worksheet.Cell(1, 1).Value = "FirstName";
+            worksheet.Cell(1, 2).Value = "LastName";
+            worksheet.Cell(1, 3).Value = "MiddleName";
+            worksheet.Cell(1, 4).Value = "Email";
+            worksheet.Cell(1, 5).Value = "ContactNumber";
+            worksheet.Cell(1, 6).Value = "DateOfBirthBS";
+            worksheet.Cell(1, 7).Value = "RegistrationNumber";
+            worksheet.Cell(1, 8).Value = "AcademicYearId";
+            worksheet.Cell(1, 9).Value = "LevelId";
+            worksheet.Cell(1, 10).Value = "CollegeId";
+            worksheet.Cell(1, 11).Value = "FacultyId";
+            worksheet.Cell(1, 12).Value = "GenderId";
+            worksheet.Cell(1, 13).Value = "StudentCategoryId";
+            worksheet.Cell(1, 14).Value = "Active";
 
-            for (int col = 1; col <= 13; col++)
+            for (int col = 1; col <= 14; col++)
             {
                 var cell = worksheet.Cell(1, col);
                 cell.Style.Font.Bold = true;
@@ -243,19 +262,20 @@ public class StudentRegistrationsController : Controller
             int row = 2;
             foreach (var reg in data)
             {
-                worksheet.Cell(row, 1).Value = reg.RegistrationNumber;
-                worksheet.Cell(row, 2).Value = reg.FirstName;
+                worksheet.Cell(row, 1).Value = reg.FirstName;
+                worksheet.Cell(row, 2).Value = reg.LastName;
                 worksheet.Cell(row, 3).Value = reg.MiddleName;
-                worksheet.Cell(row, 4).Value = reg.LastName;
-                worksheet.Cell(row, 5).Value = reg.Email;
-                worksheet.Cell(row, 6).Value = reg.ContactNumber;
-                worksheet.Cell(row, 7).Value = reg.DateOfBirthBS;
-                worksheet.Cell(row, 8).Value = reg.AcademicYear?.AcademicYearName;
-                worksheet.Cell(row, 9).Value = reg.Level?.LevelName;
-                worksheet.Cell(row, 10).Value = reg.College?.Name;
-                worksheet.Cell(row, 11).Value = reg.Faculty?.FacultyName;
-                worksheet.Cell(row, 12).Value = reg.StudentCategory?.StudentCategoryName;
-                worksheet.Cell(row, 13).Value = reg.IsActive ? "Yes" : "No";
+                worksheet.Cell(row, 4).Value = reg.Email;
+                worksheet.Cell(row, 5).Value = reg.ContactNumber;
+                worksheet.Cell(row, 6).Value = reg.DateOfBirthBS;
+                worksheet.Cell(row, 7).Value = reg.RegistrationNumber;
+                worksheet.Cell(row, 8).Value = reg.AcademicYearId;
+                worksheet.Cell(row, 9).Value = reg.LevelId;
+                worksheet.Cell(row, 10).Value = reg.CollegeId;
+                worksheet.Cell(row, 11).Value = reg.FacultyId;
+                worksheet.Cell(row, 12).Value = reg.GenderId;
+                worksheet.Cell(row, 13).Value = reg.StudentCategoryId;
+                worksheet.Cell(row, 14).Value = reg.IsActive ? "Yes" : "No";
                 row++;
             }
 
