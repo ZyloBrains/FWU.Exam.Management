@@ -60,6 +60,20 @@ public class StudentRegistration
     public int? EthnicityId { get; set; }
 
     [MaxLength(50)]
+    public string? CitizenshipNo { get; set; }
+
+    [MaxLength(100)]
+    public string? CitizenshipDistrict { get; set; }
+
+    public DateTime? CitizenshipIssueDate { get; set; }
+
+    [MaxLength(255)]
+    public string? BirthPlace { get; set; }
+
+    [MaxLength(50)]
+    public string? NationalId { get; set; }
+
+    [MaxLength(50)]
     public string? EntranceRollNumber { get; set; }
     public bool? IsRegistrationNumberGenerated { get; set; }
 

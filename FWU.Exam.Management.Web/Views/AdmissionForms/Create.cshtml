@@ -1,0 +1,284 @@
+@model FWU.Exam.Management.Web.ViewModels.AdmissionFormViewModel
+
+@{
+    ViewData["Title"] = "Admission Form";
+}
+
+<div class="min-h-screen bg-gray-100 py-8">
+    <div class="max-w-5xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h1 class="text-xl font-semibold text-gray-800">Admission Form</h1>
+            </div>
+
+            <div class="px-6 py-6">
+                <form asp-action="Create" method="post" enctype="multipart/form-data" class="space-y-6">
+                    <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
+
+                    <!-- Select Programmes -->
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-700 mb-3">Select Programmes</h2>
+                        <div class="border-t border-gray-100 mb-4"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="ProgrammeId" class="block text-sm font-medium text-gray-700 mb-1">Programs *</label>
+                                <select asp-for="ProgrammeId" asp-items="ViewBag.Programs" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">--Select--</option>
+                                </select>
+                                <span asp-validation-for="ProgrammeId" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="CollegeId" class="block text-sm font-medium text-gray-700 mb-1">College / Campus *</label>
+                                <select asp-for="CollegeId" asp-items="ViewBag.Colleges" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">--Select--</option>
+                                </select>
+                                <span asp-validation-for="CollegeId" class="text-red-500 text-xs"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personal Details -->
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-700 mb-3">Personal Details</h2>
+                        <div class="border-t border-gray-100 mb-4"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label asp-for="Name" class="block text-sm font-medium text-gray-700 mb-1">Name (In BLOCK LETTER) *</label>
+                                <input asp-for="Name" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="Name" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="DobBS" class="block text-sm font-medium text-gray-700 mb-1">Birth Date BS. *</label>
+                                <input asp-for="DobBS" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" placeholder="YYYY-MM-DD" />
+                                <span asp-validation-for="DobBS" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="DobAD" class="block text-sm font-medium text-gray-700 mb-1">Birth Date AD. *</label>
+                                <input asp-for="DobAD" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="DobAD" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="Gender" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                                <select asp-for="Gender" asp-items="ViewBag.Genders" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">--Select--</option>
+                                </select>
+                                <span asp-validation-for="Gender" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="CitizenshipNo" class="block text-sm font-medium text-gray-700 mb-1">Citizenship No *</label>
+                                <input asp-for="CitizenshipNo" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="CitizenshipNo" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="NationalId" class="block text-sm font-medium text-gray-700 mb-1">National ID</label>
+                                <input asp-for="NationalId" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="CitizenshipDistrict" class="block text-sm font-medium text-gray-700 mb-1">District</label>
+                                <input asp-for="CitizenshipDistrict" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="CitizenshipIssueDate" class="block text-sm font-medium text-gray-700 mb-1">Date of Issue</label>
+                                <input asp-for="CitizenshipIssueDate" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="BloodGroup" class="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
+                                <select asp-for="BloodGroup" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">--Select--</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label asp-for="BirthPlace" class="block text-sm font-medium text-gray-700 mb-1">Birth Place</label>
+                                <input asp-for="BirthPlace" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="Photo" class="block text-sm font-medium text-gray-700 mb-1">Upload Latest Passport Size Photo *</label>
+                                <input asp-for="Photo" type="file" accept=".jpg,.jpeg,.png,.gif" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <span class="text-gray-400 text-xs">Image file format: .jpg, .jpeg, .png or .gif</span>
+                                <span asp-validation-for="Photo" class="text-red-500 text-xs"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permanent Address -->
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-700 mb-3">Permanent Address</h2>
+                        <div class="border-t border-gray-100 mb-4"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label asp-for="PermMunicipality" class="block text-sm font-medium text-gray-700 mb-1">Municipality *</label>
+                                <input asp-for="PermMunicipality" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="PermMunicipality" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PermWard" class="block text-sm font-medium text-gray-700 mb-1">Ward No. *</label>
+                                <input asp-for="PermWard" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="PermWard" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PermDistrict" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
+                                <input asp-for="PermDistrict" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="PermDistrict" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PermProvince" class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
+                                <input asp-for="PermProvince" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="PermProvince" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PermCountry" class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                                <input asp-for="PermCountry" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" value="Nepal" />
+                                <span asp-validation-for="PermCountry" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="PermPostalCode" class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                                <input asp-for="PermPostalCode" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="PhoneLandline" class="block text-sm font-medium text-gray-700 mb-1">Phone Land-Line</label>
+                                <input asp-for="PhoneLandline" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="Mobile" class="block text-sm font-medium text-gray-700 mb-1">Mobile No. *</label>
+                                <input asp-for="Mobile" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="Mobile" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="Email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                <input asp-for="Email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="Email" class="text-red-500 text-xs"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guardian Information -->
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-700 mb-3">Guardian Information</h2>
+                        <div class="border-t border-gray-100 mb-4"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label asp-for="FatherName" class="block text-sm font-medium text-gray-700 mb-1">Father Name *</label>
+                                <input asp-for="FatherName" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="FatherName" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="FatherPhone" class="block text-sm font-medium text-gray-700 mb-1">Father Phone *</label>
+                                <input asp-for="FatherPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="FatherPhone" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="FatherProfession" class="block text-sm font-medium text-gray-700 mb-1">Father Profession</label>
+                                <input asp-for="FatherProfession" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="MotherName" class="block text-sm font-medium text-gray-700 mb-1">Mother Name</label>
+                                <input asp-for="MotherName" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="MotherPhone" class="block text-sm font-medium text-gray-700 mb-1">Mother Phone</label>
+                                <input asp-for="MotherPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="GuardianEmail" class="block text-sm font-medium text-gray-700 mb-1">Guardian Email</label>
+                                <input asp-for="GuardianEmail" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Academic Qualification -->
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-700 mb-3">Academic Qualification</h2>
+                        <div class="border-t border-gray-100 mb-4"></div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg" id="qualificationTable">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Examination</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Institution/Board/University</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Symbol No.</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Percent/CGPA</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Division</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @for (int i = 0; i < 4; i++)
+                                    {
+                                        <tr>
+                                            <td class="px-4 py-2">
+                                                <input asp-for="AcademicQualifications[i].Level" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" placeholder="e.g. SLC/SEE" />
+                                                <span asp-validation-for="AcademicQualifications[i].Level" class="text-red-500 text-xs"></span>
+                                            </td>
+                                            <td class="px-4 py-2">
+                                                <input asp-for="AcademicQualifications[i].BoardUniversity" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                                <span asp-validation-for="AcademicQualifications[i].BoardUniversity" class="text-red-500 text-xs"></span>
+                                            </td>
+                                            <td class="px-4 py-2">
+                                                <input asp-for="AcademicQualifications[i].SymbolNo" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                                <span asp-validation-for="AcademicQualifications[i].SymbolNo" class="text-red-500 text-xs"></span>
+                                            </td>
+                                            <td class="px-4 py-2">
+                                                <input asp-for="AcademicQualifications[i].Year" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                                <span asp-validation-for="AcademicQualifications[i].Year" class="text-red-500 text-xs"></span>
+                                            </td>
+                                            <td class="px-4 py-2">
+                                                <input asp-for="AcademicQualifications[i].PercentCGPA" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                                <span asp-validation-for="AcademicQualifications[i].PercentCGPA" class="text-red-500 text-xs"></span>
+                                            </td>
+                                            <td class="px-4 py-2">
+                                                <input asp-for="AcademicQualifications[i].Division" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Documents and Payment -->
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-700 mb-3">Documents and Payment</h2>
+                        <div class="border-t border-gray-100 mb-4"></div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 text-sm text-amber-800">
+                            <strong>Documents:</strong> Applicant should make single copy of self-attested documents like Transcript, Character Certificate, Transfer Certificate (Bachelors and Masters) and Citizenship.
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="DocumentsFile" class="block text-sm font-medium text-gray-700 mb-1">Upload Documents *</label>
+                                <input asp-for="DocumentsFile" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <span class="text-gray-400 text-xs">Formats: .pdf, .jpg/.jpeg, .doc/docx</span>
+                                <span asp-validation-for="DocumentsFile" class="text-red-500 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="BankVoucherFile" class="block text-sm font-medium text-gray-700 mb-1">Upload Bank Voucher *</label>
+                                <input asp-for="BankVoucherFile" type="file" accept=".pdf,.jpg,.jpeg,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <span class="text-gray-400 text-xs">Bank Voucher file name should be Student Name With Symbol No. Format: .pdf, .jpg/.jpeg, .doc/docx</span>
+                                <span asp-validation-for="BankVoucherFile" class="text-red-500 text-xs"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex items-center justify-end pt-4 border-t border-gray-200">
+                        <a asp-action="Index" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 mr-3">Cancel</a>
+                        <button type="submit" class="px-6 py-2 text-sm font-medium text-white bg-teal-600 border border-transparent rounded-md shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                            Submit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
