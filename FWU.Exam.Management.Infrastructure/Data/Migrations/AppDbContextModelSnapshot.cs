@@ -59,7 +59,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AcademicYears");
+                    b.ToTable("AcademicYears", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.ApplicationVoucher", b =>
@@ -118,7 +118,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentRegistrationId");
 
-                    b.ToTable("ApplicationVoucher");
+                    b.ToTable("ApplicationVoucher", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Batch", b =>
@@ -148,7 +148,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("AcademicYearId");
 
-                    b.ToTable("Batches");
+                    b.ToTable("Batches", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Board", b =>
@@ -176,7 +176,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Boards");
+                    b.ToTable("Boards", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Colleges.College", b =>
@@ -281,7 +281,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("QuestionSetId");
 
-                    b.ToTable("Colleges");
+                    b.ToTable("Colleges", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Colleges.CollegeProfile", b =>
@@ -343,7 +343,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.HasIndex("CollegeId")
                         .IsUnique();
 
-                    b.ToTable("CollegeProfiles");
+                    b.ToTable("CollegeProfiles", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Colleges.CollegeProgram", b =>
@@ -379,7 +379,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramId");
 
-                    b.ToTable("CollegePrograms");
+                    b.ToTable("CollegePrograms", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Colleges.CollegeType", b =>
@@ -412,7 +412,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CollegeTypes");
+                    b.ToTable("CollegeTypes", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntryFormat", b =>
@@ -437,7 +437,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EntryFormats");
+                    b.ToTable("EntryFormats", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Ethnicity", b =>
@@ -461,7 +461,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Ethnicities");
+                    b.ToTable("Ethnicities", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamAttendanceStatus", b =>
@@ -479,7 +479,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExamAttendanceStatuses");
+                    b.ToTable("ExamAttendanceStatuses", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenter", b =>
@@ -512,7 +512,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamScheduleId");
 
-                    b.ToTable("ExamCenters");
+                    b.ToTable("ExamCenters", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenterDetail", b =>
@@ -553,7 +553,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramsId");
 
-                    b.ToTable("ExamCenterDetail");
+                    b.ToTable("ExamCenterDetail", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamFormFeeName", b =>
@@ -574,7 +574,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExamFormFeeNames");
+                    b.ToTable("ExamFormFeeNames", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamFormFeeRate", b =>
@@ -620,7 +620,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamTypeId");
 
-                    b.ToTable("ExamFormFeeRates");
+                    b.ToTable("ExamFormFeeRates", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamRegistration", b =>
@@ -718,7 +718,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("SemesterEnrollmentId");
 
-                    b.ToTable("ExamRegistrations");
+                    b.ToTable("ExamRegistrations", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamRegistrationActionLog", b =>
@@ -747,7 +747,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamRegistrationId");
 
-                    b.ToTable("ExamRegistrationActionLog");
+                    b.ToTable("ExamRegistrationActionLog", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamRegistrationCenterChange", b =>
@@ -776,7 +776,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("PreferredExamCenterId");
 
-                    b.ToTable("ExamRegistrationCenterChange");
+                    b.ToTable("ExamRegistrationCenterChange", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamRollNumberSetup", b =>
@@ -817,7 +817,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamScheduleParentId");
 
-                    b.ToTable("ExamRollNumberSetup");
+                    b.ToTable("ExamRollNumberSetup", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamRollNumberSetupDetail", b =>
@@ -872,7 +872,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramId");
 
-                    b.ToTable("ExamRollNumberSetupDetail");
+                    b.ToTable("ExamRollNumberSetupDetail", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", b =>
@@ -961,7 +961,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("SemesterId");
 
-                    b.ToTable("ExamSchedules");
+                    b.ToTable("ExamSchedules", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamScheduleBatch", b =>
@@ -989,7 +989,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamTypeId");
 
-                    b.ToTable("ExamScheduleBatch");
+                    b.ToTable("ExamScheduleBatch", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamScheduleParent", b =>
@@ -1010,7 +1010,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExamScheduleParent");
+                    b.ToTable("ExamScheduleParent", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectRegistration", b =>
@@ -1089,7 +1089,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("SubjectOfferingId");
 
-                    b.ToTable("ExamSubjectRegistrations");
+                    b.ToTable("ExamSubjectRegistrations", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectRegistrationExamSession", b =>
@@ -1127,7 +1127,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.HasIndex("ExamSubjectRegistrationId")
                         .IsUnique();
 
-                    b.ToTable("ExamSubjectRegistrationExamSession");
+                    b.ToTable("ExamSubjectRegistrationExamSession", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectRegistrationInternal", b =>
@@ -1170,7 +1170,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("SemesterEnrollmentId");
 
-                    b.ToTable("ExamSubjectRegistrationInternal");
+                    b.ToTable("ExamSubjectRegistrationInternal", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamType", b =>
@@ -1198,7 +1198,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExamTypes");
+                    b.ToTable("ExamTypes", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Faculty", b =>
@@ -1232,7 +1232,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties");
+                    b.ToTable("Faculties", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.FiscalYear", b =>
@@ -1274,7 +1274,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FiscalYears");
+                    b.ToTable("FiscalYears", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Gender", b =>
@@ -1295,7 +1295,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Genders");
+                    b.ToTable("Genders", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradeDefinition", b =>
@@ -1337,7 +1337,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("GradingSchemeId");
 
-                    b.ToTable("GradeDefinitions");
+                    b.ToTable("GradeDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradingScheme", b =>
@@ -1384,7 +1384,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramId");
 
-                    b.ToTable("GradingSchemes");
+                    b.ToTable("GradingSchemes", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.IndexGroup", b =>
@@ -1409,7 +1409,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("IndexGroups");
+                    b.ToTable("IndexGroups", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Level", b =>
@@ -1444,7 +1444,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Levels");
+                    b.ToTable("Levels", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Location.Address", b =>
@@ -1483,7 +1483,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("LocalLevelId");
 
-                    b.ToTable("Addresses");
+                    b.ToTable("Addresses", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Location.District", b =>
@@ -1513,7 +1513,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.ToTable("Districts");
+                    b.ToTable("Districts", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Location.LocalLevel", b =>
@@ -1542,7 +1542,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("DistrictId");
 
-                    b.ToTable("LocalLevels");
+                    b.ToTable("LocalLevels", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Location.Province", b =>
@@ -1567,7 +1567,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Provinces");
+                    b.ToTable("Provinces", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.NepaliDate", b =>
@@ -1595,7 +1595,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NepaliDates");
+                    b.ToTable("NepaliDates", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Notice", b =>
@@ -1625,7 +1625,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notices");
+                    b.ToTable("Notices", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Organization", b =>
@@ -1661,7 +1661,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Organizations");
+                    b.ToTable("Organizations", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.Bank", b =>
@@ -1690,7 +1690,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Banks");
+                    b.ToTable("Banks", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.BillTitle", b =>
@@ -1730,7 +1730,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamScheduleId");
 
-                    b.ToTable("BillTitle");
+                    b.ToTable("BillTitle", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.ESewaConfiguration", b =>
@@ -1767,7 +1767,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ESewaConfiguration");
+                    b.ToTable("ESewaConfiguration", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.KhaltiConfiguration", b =>
@@ -1811,7 +1811,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KhaltiConfiguration");
+                    b.ToTable("KhaltiConfiguration", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.PaymentPracticalSubjects", b =>
@@ -1836,7 +1836,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("PaymentRequestLogId");
 
-                    b.ToTable("PaymentPracticalSubjects");
+                    b.ToTable("PaymentPracticalSubjects", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.PaymentRequestLog", b =>
@@ -1911,7 +1911,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentRegistrationId");
 
-                    b.ToTable("PaymentRequestLog");
+                    b.ToTable("PaymentRequestLog", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.PaymentResponseLog", b =>
@@ -1944,7 +1944,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("PaymentRequestLogId");
 
-                    b.ToTable("PaymentResponseLog");
+                    b.ToTable("PaymentResponseLog", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.PaymentType", b =>
@@ -1965,7 +1965,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PaymentType");
+                    b.ToTable("PaymentType", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.PeriodType", b =>
@@ -1994,7 +1994,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PeriodTypes");
+                    b.ToTable("PeriodTypes", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.PreferredExamCenter", b =>
@@ -2021,7 +2021,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("CollegeId");
 
-                    b.ToTable("PreferredExamCenters");
+                    b.ToTable("PreferredExamCenters", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.PreviousLevel", b =>
@@ -2054,7 +2054,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.ToTable("PreviousLevels");
+                    b.ToTable("PreviousLevels", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Program", b =>
@@ -2146,7 +2146,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramsId");
 
-                    b.ToTable("ProgramSubjectPracticalCharge");
+                    b.ToTable("ProgramSubjectPracticalCharge", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.QuestionSet", b =>
@@ -2171,7 +2171,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("QuestionSets");
+                    b.ToTable("QuestionSets", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.ResultRecord", b =>
@@ -2317,7 +2317,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("PreviousLevelId");
 
-                    b.ToTable("SchoolTypes");
+                    b.ToTable("SchoolTypes", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Section", b =>
@@ -2352,7 +2352,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramsId");
 
-                    b.ToTable("Sections");
+                    b.ToTable("Sections", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.Semester", b =>
@@ -2396,7 +2396,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("AcademicYearId");
 
-                    b.ToTable("Semesters");
+                    b.ToTable("Semesters", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment", b =>
@@ -2458,7 +2458,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentAdmissionId");
 
-                    b.ToTable("SemesterEnrollments");
+                    b.ToTable("SemesterEnrollments", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.SmtpConfiguration", b =>
@@ -2497,7 +2497,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SmtpConfigurations");
+                    b.ToTable("SmtpConfigurations", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentAdmission", b =>
@@ -2571,7 +2571,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentRegistrationId");
 
-                    b.ToTable("StudentAdmissions");
+                    b.ToTable("StudentAdmissions", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentCategory", b =>
@@ -2596,7 +2596,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("StudentCategories");
+                    b.ToTable("StudentCategories", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentGuardian", b =>
@@ -2741,7 +2741,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentRegistrationId");
 
-                    b.ToTable("StudentGuardians");
+                    b.ToTable("StudentGuardians", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentQualification", b =>
@@ -2812,7 +2812,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentRegistrationId");
 
-                    b.ToTable("StudentQualifications");
+                    b.ToTable("StudentQualifications", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentRegistration", b =>
@@ -2979,7 +2979,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentCategoryId");
 
-                    b.ToTable("StudentRegistrations");
+                    b.ToTable("StudentRegistrations", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion", b =>
@@ -3014,7 +3014,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ProgramId");
 
-                    b.ToTable("CurriculumVersions");
+                    b.ToTable("CurriculumVersions", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectCatalog", b =>
@@ -3059,7 +3059,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("SubjectTypeId");
 
-                    b.ToTable("SubjectCatalogs");
+                    b.ToTable("SubjectCatalogs", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", b =>
@@ -3126,7 +3126,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("SubjectCatalogId");
 
-                    b.ToTable("SubjectOfferings");
+                    b.ToTable("SubjectOfferings", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectType", b =>
@@ -3158,7 +3158,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SubjectTypes");
+                    b.ToTable("SubjectTypes", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.UserAttachment", b =>
@@ -3198,7 +3198,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserAttachments");
+                    b.ToTable("UserAttachments", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Infrastructure.Data.Models.AppUser", b =>
@@ -3365,7 +3365,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExamScheduleParentId");
 
-                    b.ToTable("BankVoucher");
+                    b.ToTable("BankVoucher", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

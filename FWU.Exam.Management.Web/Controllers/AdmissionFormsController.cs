@@ -196,6 +196,28 @@ public class AdmissionFormsController : Controller
         ViewBag.Colleges = new SelectList(colleges, "Id", "Name");
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetDistrictsByProvince(int provinceId)
+    {
+        var districts = await _context.Districts
+            .Where(d => d.ProvinceId == provinceId && d.IsActive)
+            .AsNoTracking()
+            .Select(d => new { id = d.Id, name = d.DistrictName })
+            .ToListAsync();
+        return Json(districts);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetLocalLevelsByDistrict(int districtId)
+    {
+        var localLevels = await _context.LocalLevels
+            .Where(ll => ll.DistrictId == districtId && ll.IsActive)
+            .AsNoTracking()
+            .Select(ll => new { id = ll.Id, name = ll.LocalLevelName })
+            .ToListAsync();
+        return Json(localLevels);
+    }
+
     private static (string first, string? middle, string last) SplitName(string fullName)
     {
         var parts = fullName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
