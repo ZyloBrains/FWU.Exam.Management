@@ -48,6 +48,10 @@ public partial class EntryPoint
         builder.Services.AddScoped<IDistrictService, DistrictService>();
         builder.Services.AddScoped<IProvinceService, ProvinceService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+        builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
+        builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
+        builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
+        builder.Services.AddScoped<IStudentCategoryService, StudentCategoryService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

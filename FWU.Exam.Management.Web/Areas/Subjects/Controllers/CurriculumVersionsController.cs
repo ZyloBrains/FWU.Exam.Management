@@ -1,0 +1,166 @@
+using System.Text;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities.Subjects;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+
+namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
+
+[Area("Subjects")]
+public class CurriculumVersionsController : Controller
+{
+    private readonly ICurriculumVersionService _curriculumVersionService;
+
+    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService)
+    {
+        _curriculumVersionService = curriculumVersionService;
+    }
+
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    {
+        var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View(items);
+    }
+
+    private string EscapeCsv(string field)
+    {
+        if (string.IsNullOrEmpty(field)) return "";
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        return field;
+    }
+
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Name,Program,Effective Year,Status");
+
+        foreach (var c in items)
+        {
+            sb.AppendLine($"{EscapeCsv(c.Name)}," +
+                           $"{EscapeCsv(c.Program?.ProgramName ?? "-")}," +
+                           $"{EscapeCsv(c.EffectiveAcademicYear?.AcademicYearName ?? "-")}," +
+                           $"{(c.IsActive ? "Active" : "Inactive")}");
+        }
+
+        var fileName = $"CurriculumVersions_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", fileName);
+    }
+
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View("PrintPdf", items);
+    }
+
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (curriculumVersion == null) return NotFound();
+
+        return View(curriculumVersion);
+    }
+
+    public async Task<IActionResult> Create()
+    {
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName");
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("Id,Name,ProgramId,EffectiveAcademicYearId,Description,IsActive")] CurriculumVersion curriculumVersion)
+    {
+        if (ModelState.IsValid)
+        {
+            await _curriculumVersionService.CreateCurriculumVersionAsync(curriculumVersion);
+            return RedirectToAction(nameof(Index));
+        }
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync(curriculumVersion.ProgramId, curriculumVersion.EffectiveAcademicYearId);
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", curriculumVersion.ProgramId);
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName", curriculumVersion.EffectiveAcademicYearId);
+        return View(curriculumVersion);
+    }
+
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (curriculumVersion == null) return NotFound();
+
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync(curriculumVersion.ProgramId, curriculumVersion.EffectiveAcademicYearId);
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", curriculumVersion.ProgramId);
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName", curriculumVersion.EffectiveAcademicYearId);
+        return View(curriculumVersion);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Name,ProgramId,EffectiveAcademicYearId,Description,IsActive")] CurriculumVersion curriculumVersion)
+    {
+        if (id != curriculumVersion.Id) return NotFound();
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                await _curriculumVersionService.UpdateCurriculumVersionAsync(curriculumVersion);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _curriculumVersionService.CurriculumVersionExistsAsync(curriculumVersion.Id))
+                    return NotFound();
+                throw;
+            }
+            return RedirectToAction(nameof(Index));
+        }
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync(curriculumVersion.ProgramId, curriculumVersion.EffectiveAcademicYearId);
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", curriculumVersion.ProgramId);
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName", curriculumVersion.EffectiveAcademicYearId);
+        return View(curriculumVersion);
+    }
+
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (curriculumVersion == null) return NotFound();
+
+        return View(curriculumVersion);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
+        return RedirectToAction(nameof(Index));
+    }
+}
