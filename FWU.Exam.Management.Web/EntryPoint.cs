@@ -47,6 +47,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
         builder.Services.AddScoped<IDistrictService, DistrictService>();
         builder.Services.AddScoped<IProvinceService, ProvinceService>();
+        builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
         var app = builder.Build();
 

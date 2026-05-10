@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.EntranceExams;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
@@ -31,7 +32,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<District>? Districts { get; set; }
     public DbSet<EntryFormat>? EntryFormats { get; set; }
     public DbSet<Ethnicity>? Ethnicities { get; set; }
-    public DbSet<ExamAttendanceStatus>? ExamAttendanceStatuses { get; set; }
     public DbSet<ExamCenter>? ExamCenters { get; set; }
     public DbSet<ExamFormFeeName>? ExamFormFeeNames { get; set; }
     public DbSet<ExamFormFeeRate>? ExamFormFeeRates { get; set; }
@@ -73,6 +73,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<UserAttachment>? UserAttachments { get; set; }
     public DbSet<GradingScheme>? GradingSchemes { get; set; }
     public DbSet<GradeDefinition>? GradeDefinitions { get; set; }
+    public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -598,5 +599,43 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<PeriodType>(e => e.Property(x => x.NumberOfMonths).HasPrecision(5, 2));
         builder.Entity<ProgramSubjectPracticalCharge>(e => e.Property(x => x.PracticalSubjectCharge).HasPrecision(18, 2));
         builder.Entity<StudentQualification>(e => e.Property(x => x.Percentage).HasPrecision(5, 2));
+
+        builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA).HasPrecision(5, 2));
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.AcademicYear)
+            .WithMany()
+            .HasForeignKey(a => a.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.College)
+            .WithMany()
+            .HasForeignKey(a => a.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.Program)
+            .WithMany()
+            .HasForeignKey(a => a.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.Gender)
+            .WithMany()
+            .HasForeignKey(a => a.GenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.PermanentAddress)
+            .WithMany()
+            .HasForeignKey(a => a.PermanentAddressId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.PreviousLevel)
+            .WithMany()
+            .HasForeignKey(a => a.PreviousLevelId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
