@@ -28,7 +28,7 @@ public class StudentRegistration
     [MaxLength(100)]
     public string? NepaliName { get; set; }
 
-    [MaxLength(15)]
+    [MaxLength(20)]
     public string? ContactNumber { get; set; }
 
     [MaxLength(15)]
