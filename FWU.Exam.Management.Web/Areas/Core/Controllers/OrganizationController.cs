@@ -11,20 +11,9 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [Authorize(Roles = Role.SystemAdmin)]
-public class OrganizationController : Controller
+public class OrganizationController(IOrganizationService organizationService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
 {
     private const string MustChangePasswordClaimType = "must_change_password";
-
-    private readonly IOrganizationService _organizationService;
-    private readonly IFileUploadHelper _fileUploadHelper;
-    private readonly UserManager<AppUser> _userManager;
-    
-    public OrganizationController(IOrganizationService organizationService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager)
-    {
-        _organizationService = organizationService;
-        _fileUploadHelper = fileUploadHelper;
-        _userManager = userManager;
-    }
 
     // Rest of controller methods will be preserved
 }

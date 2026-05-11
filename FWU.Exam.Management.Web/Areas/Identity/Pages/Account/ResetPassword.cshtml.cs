@@ -12,14 +12,8 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class ResetPasswordModel : PageModel
+public class ResetPasswordModel(UserManager<AppUser> userManager) : PageModel
 {
-    private readonly UserManager<AppUser> _userManager;
-
-    public ResetPasswordModel(UserManager<AppUser> userManager)
-    {
-        _userManager = userManager;
-    }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -92,14 +86,14 @@ public class ResetPasswordModel : PageModel
             return Page();
         }
 
-        var user = await _userManager.FindByEmailAsync(Input.Email);
+        var user = await userManager.FindByEmailAsync(Input.Email);
         if (user == null)
         {
             // Don't reveal that the user does not exist
             return RedirectToPage("./ResetPasswordConfirmation");
         }
 
-        var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
+        var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
         if (result.Succeeded)
         {
             return RedirectToPage("./ResetPasswordConfirmation");

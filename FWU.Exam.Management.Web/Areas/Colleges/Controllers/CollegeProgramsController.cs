@@ -9,18 +9,11 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-public class CollegeProgramsController : Controller
+public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
 {
-    private readonly ICollegeProgramService _collegeProgramService;
-
-    public CollegeProgramsController(ICollegeProgramService collegeProgramService)
-    {
-        _collegeProgramService = collegeProgramService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -43,7 +36,7 @@ public class CollegeProgramsController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        var (items, totalCount) = await _collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("College Code,College Name,Program Code,Program Name,Affiliation Date,Number of Students,Remarks,Status");
@@ -67,7 +60,7 @@ public class CollegeProgramsController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        var (items, totalCount) = await _collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -86,7 +79,7 @@ public class CollegeProgramsController : Controller
             return NotFound();
         }
 
-        var collegeProgram = await _collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
+        var collegeProgram = await collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
         if (collegeProgram == null)
         {
             return NotFound();
@@ -97,7 +90,7 @@ public class CollegeProgramsController : Controller
 
     public async Task<IActionResult> Create()
     {
-        var (colleges, programs) = await _collegeProgramService.GetSelectListsAsync();
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name");
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
         return View();
@@ -109,10 +102,10 @@ public class CollegeProgramsController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _collegeProgramService.CreateCollegeProgramAsync(collegeProgram);
+            await collegeProgramService.CreateCollegeProgramAsync(collegeProgram);
             return RedirectToAction(nameof(Index));
         }
-        var (colleges, programs) = await _collegeProgramService.GetSelectListsAsync();
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeProgram.CollegeId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", collegeProgram.ProgramId);
         return View(collegeProgram);
@@ -125,12 +118,12 @@ public class CollegeProgramsController : Controller
             return NotFound();
         }
 
-        var collegeProgram = await _collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
+        var collegeProgram = await collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
         if (collegeProgram == null)
         {
             return NotFound();
         }
-        var (colleges, programs) = await _collegeProgramService.GetSelectListsAsync();
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeProgram.CollegeId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", collegeProgram.ProgramId);
         return View(collegeProgram);
@@ -149,11 +142,11 @@ public class CollegeProgramsController : Controller
         {
             try
             {
-                await _collegeProgramService.UpdateCollegeProgramAsync(collegeProgram);
+                await collegeProgramService.UpdateCollegeProgramAsync(collegeProgram);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _collegeProgramService.CollegeProgramExistsAsync(collegeProgram.Id))
+                if (!await collegeProgramService.CollegeProgramExistsAsync(collegeProgram.Id))
                 {
                     return NotFound();
                 }
@@ -164,7 +157,7 @@ public class CollegeProgramsController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-        var (colleges, programs) = await _collegeProgramService.GetSelectListsAsync();
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeProgram.CollegeId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", collegeProgram.ProgramId);
         return View(collegeProgram);
@@ -177,7 +170,7 @@ public class CollegeProgramsController : Controller
             return NotFound();
         }
 
-        var collegeProgram = await _collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
+        var collegeProgram = await collegeProgramService.GetCollegeProgramByIdAsync(id.Value);
         if (collegeProgram == null)
         {
             return NotFound();
@@ -190,7 +183,7 @@ public class CollegeProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _collegeProgramService.DeleteCollegeProgramAsync(id);
+        await collegeProgramService.DeleteCollegeProgramAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

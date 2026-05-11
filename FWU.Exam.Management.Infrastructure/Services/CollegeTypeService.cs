@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeTypeService : ICollegeTypeService
+public class CollegeTypeService(AppDbContext context) : ICollegeTypeService
 {
-    private readonly AppDbContext _context;
-
-    public CollegeTypeService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<CollegeType> Items, int TotalCount)> GetCollegeTypesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.CollegeTypes.AsNoTracking();
+        var query = context.CollegeTypes.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -44,7 +37,7 @@ public class CollegeTypeService : ICollegeTypeService
 
     public async Task<List<CollegeType>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.CollegeTypes.AsNoTracking();
+        var query = context.CollegeTypes.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -63,56 +56,56 @@ public class CollegeTypeService : ICollegeTypeService
 
     public async Task<CollegeType?> GetCollegeTypeByIdAsync(int id)
     {
-        return await _context.CollegeTypes.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.CollegeTypes.FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task CreateCollegeTypeAsync(CollegeType collegeType)
     {
         if (collegeType.IsDefault == true)
         {
-            var existingDefault = await _context.CollegeTypes
+            var existingDefault = await context.CollegeTypes
                 .FirstOrDefaultAsync(c => c.IsDefault == true && c.Id != collegeType.Id);
             if (existingDefault != null)
             {
                 existingDefault.IsDefault = false;
-                _context.Update(existingDefault);
+                context.Update(existingDefault);
             }
         }
 
-        _context.CollegeTypes.Add(collegeType);
-        await _context.SaveChangesAsync();
+        context.CollegeTypes.Add(collegeType);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateCollegeTypeAsync(CollegeType collegeType)
     {
         if (collegeType.IsDefault == true)
         {
-            var existingDefault = await _context.CollegeTypes
+            var existingDefault = await context.CollegeTypes
                 .FirstOrDefaultAsync(c => c.IsDefault == true && c.Id != collegeType.Id);
             if (existingDefault != null)
             {
                 existingDefault.IsDefault = false;
-                _context.Update(existingDefault);
+                context.Update(existingDefault);
             }
         }
 
-        _context.CollegeTypes.Update(collegeType);
-        await _context.SaveChangesAsync();
+        context.CollegeTypes.Update(collegeType);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteCollegeTypeAsync(int id)
     {
-        var collegeType = await _context.CollegeTypes.FindAsync(id);
+        var collegeType = await context.CollegeTypes.FindAsync(id);
         if (collegeType != null)
         {
-            _context.CollegeTypes.Remove(collegeType);
-            await _context.SaveChangesAsync();
+            context.CollegeTypes.Remove(collegeType);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> CollegeTypeExistsAsync(int id)
     {
-        return await _context.CollegeTypes.AnyAsync(e => e.Id == id);
+        return await context.CollegeTypes.AnyAsync(e => e.Id == id);
     }
 
     private static Expression<Func<CollegeType, object>> GetSortProperty(string sort)

@@ -8,26 +8,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
-public class DashboardController : Controller
+public class DashboardController(IDashboardService dashboardService, UserManager<AppUser> userManager) : Controller
 {
-    private readonly IDashboardService _dashboardService;
-    private readonly UserManager<AppUser> _userManager;
-
-    public DashboardController(IDashboardService dashboardService, UserManager<AppUser> userManager)
-    {
-        _dashboardService = dashboardService;
-        _userManager = userManager;
-    }
-
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
+        var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? "Student";
 
-        var stats = await _dashboardService.GetDashboardStatsAsync();
+        var stats = await dashboardService.GetDashboardStatsAsync();
 
         var vm = new DashboardViewModel
         {

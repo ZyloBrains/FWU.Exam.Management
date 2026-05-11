@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ExamTypeService : IExamTypeService
+public class ExamTypeService(AppDbContext context) : IExamTypeService
 {
-    private readonly AppDbContext _context;
-
-    public ExamTypeService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<ExamType> Items, int TotalCount)> GetExamTypesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.ExamTypes.AsNoTracking();
+        var query = context.ExamTypes.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -43,7 +36,7 @@ public class ExamTypeService : IExamTypeService
 
     public async Task<List<ExamType>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.ExamTypes.AsNoTracking();
+        var query = context.ExamTypes.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -61,34 +54,34 @@ public class ExamTypeService : IExamTypeService
 
     public async Task<ExamType?> GetExamTypeByIdAsync(int id)
     {
-        return await _context.ExamTypes.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.ExamTypes.FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task CreateExamTypeAsync(ExamType examType)
     {
-        _context.ExamTypes.Add(examType);
-        await _context.SaveChangesAsync();
+        context.ExamTypes.Add(examType);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateExamTypeAsync(ExamType examType)
     {
-        _context.ExamTypes.Update(examType);
-        await _context.SaveChangesAsync();
+        context.ExamTypes.Update(examType);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteExamTypeAsync(int id)
     {
-        var examType = await _context.ExamTypes.FindAsync(id);
+        var examType = await context.ExamTypes.FindAsync(id);
         if (examType != null)
         {
-            _context.ExamTypes.Remove(examType);
-            await _context.SaveChangesAsync();
+            context.ExamTypes.Remove(examType);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> ExamTypeExistsAsync(int id)
     {
-        return await _context.ExamTypes.AnyAsync(e => e.Id == id);
+        return await context.ExamTypes.AnyAsync(e => e.Id == id);
     }
 
     private static Expression<Func<ExamType, object>> GetSortProperty(string sort)

@@ -19,5 +19,5 @@ public class CollegeType
     public bool IsActive { get; set; }
 
     public virtual ICollection<College>? Colleges { get; set; }
-    public virtual ICollection<ExamFormFeeRate>? ExamFormFeeRates { get; set; }
+    public virtual ICollection<ExamFee>? ExamFees { get; set; }
 }

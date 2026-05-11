@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class LevelService : ILevelService
+public class LevelService(AppDbContext context) : ILevelService
 {
-    private readonly AppDbContext _context;
-
-    public LevelService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<Level> Items, int TotalCount)> GetLevelsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Levels.AsNoTracking();
+        var query = context.Levels.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -44,7 +37,7 @@ public class LevelService : ILevelService
 
     public async Task<List<Level>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Levels.AsNoTracking();
+        var query = context.Levels.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -63,34 +56,34 @@ public class LevelService : ILevelService
 
     public async Task<Level?> GetLevelByIdAsync(int id)
     {
-        return await _context.Levels.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.Levels.FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task CreateLevelAsync(Level level)
     {
-        _context.Levels.Add(level);
-        await _context.SaveChangesAsync();
+        context.Levels.Add(level);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateLevelAsync(Level level)
     {
-        _context.Levels.Update(level);
-        await _context.SaveChangesAsync();
+        context.Levels.Update(level);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteLevelAsync(int id)
     {
-        var level = await _context.Levels.FindAsync(id);
+        var level = await context.Levels.FindAsync(id);
         if (level != null)
         {
-            _context.Levels.Remove(level);
-            await _context.SaveChangesAsync();
+            context.Levels.Remove(level);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> LevelExistsAsync(int id)
     {
-        return await _context.Levels.AnyAsync(e => e.Id == id);
+        return await context.Levels.AnyAsync(e => e.Id == id);
     }
 
     private static Expression<Func<Level, object>> GetSortProperty(string sort)

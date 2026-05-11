@@ -11,16 +11,8 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class ConfirmEmailModel : PageModel
+public class ConfirmEmailModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : PageModel
 {
-    private readonly UserManager<AppUser> _userManager;
-    private readonly SignInManager<AppUser> _signInManager;
-
-    public ConfirmEmailModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
-    {
-        _userManager = userManager;
-        _signInManager = signInManager;
-    }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -36,16 +28,16 @@ public class ConfirmEmailModel : PageModel
             return RedirectToPage("/Index");
         }
 
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
             return NotFound($"Unable to load user with ID '{userId}'.");
         }
 
         // If already confirmed, just sign in and redirect.
-        if (await _userManager.IsEmailConfirmedAsync(user))
+        if (await userManager.IsEmailConfirmedAsync(user))
         {
-            await _signInManager.SignInAsync(user, isPersistent: false);
+            await signInManager.SignInAsync(user, isPersistent: false);
 
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
@@ -56,7 +48,7 @@ public class ConfirmEmailModel : PageModel
         }
 
         code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
-        var result = await _userManager.ConfirmEmailAsync(user, code);
+        var result = await userManager.ConfirmEmailAsync(user, code);
 
         if (!result.Succeeded)
         {
@@ -64,7 +56,7 @@ public class ConfirmEmailModel : PageModel
             return Page();
         }
 
-        await _signInManager.SignInAsync(user, isPersistent: false);
+        await signInManager.SignInAsync(user, isPersistent: false);
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
         {
