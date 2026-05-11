@@ -44,7 +44,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<IndexGroup>? IndexGroups { get; set; }
     public DbSet<Level>? Levels { get; set; }
     public DbSet<LocalLevel>? LocalLevels { get; set; }
-    public DbSet<Ward>? Wards { get; set; }
     public DbSet<NepaliDate>? NepaliDates { get; set; }
     public DbSet<Notice>? Notices { get; set; }
     public DbSet<PeriodType>? PeriodTypes { get; set; }

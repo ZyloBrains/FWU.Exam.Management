@@ -33,9 +33,6 @@ public class StudentQualification
     public bool IsHigherDegree { get; set; }
     public bool IsActive { get; set; }
 
-    [MaxLength(50)]
-    public string? Division { get; set; }
-
     [MaxLength(500)]
     public string? ExamRollNumber { get; set; }
 

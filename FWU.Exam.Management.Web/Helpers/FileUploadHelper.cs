@@ -2,33 +2,21 @@ namespace FWU.Exam.Management.Web.Helpers;
 
 public interface IFileUploadHelper
 {
-    Task<string?> UploadImageAsync(IFormFile? file, string subfolder = "images");
-    Task<string?> UploadDocumentAsync(IFormFile? file, string subfolder = "documents");
+    Task<string?> UploadAsync(IFormFile? file, string subfolder = "images");
 }
 
 public class FileUploadHelper(IWebHostEnvironment environment) : IFileUploadHelper
 {
-    private static readonly HashSet<string> ImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
-    private static readonly HashSet<string> DocumentExtensions = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
+    private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
 
-    public async Task<string?> UploadImageAsync(IFormFile? file, string subfolder = "images")
-    {
-        return await UploadAsync(file, subfolder, ImageExtensions);
-    }
-
-    public async Task<string?> UploadDocumentAsync(IFormFile? file, string subfolder = "documents")
-    {
-        return await UploadAsync(file, subfolder, DocumentExtensions);
-    }
-
-    private async Task<string?> UploadAsync(IFormFile? file, string subfolder, HashSet<string> allowedExtensions)
+    public async Task<string?> UploadAsync(IFormFile? file, string subfolder = "images")
     {
         if (file == null || file.Length == 0)
             return null;
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
-            throw new InvalidOperationException($"File type '{extension}' is not allowed. Allowed types: {string.Join(", ", allowedExtensions)}");
+        if (!AllowedExtensions.Contains(extension))
+            throw new InvalidOperationException($"File type '{extension}' is not allowed. Allowed types: {string.Join(", ", AllowedExtensions)}");
 
         var uploadPath = Path.Combine(environment.WebRootPath, subfolder);
 

@@ -28,7 +28,7 @@ public class StudentRegistration
     [MaxLength(100)]
     public string? NepaliName { get; set; }
 
-    [MaxLength(20)]
+    [MaxLength(15)]
     public string? ContactNumber { get; set; }
 
     [MaxLength(15)]
@@ -58,20 +58,6 @@ public class StudentRegistration
     public int? VerifiedBy { get; set; }
     public DateTime? VerifiedDate { get; set; }
     public int? EthnicityId { get; set; }
-
-    [MaxLength(50)]
-    public string? CitizenshipNo { get; set; }
-
-    [MaxLength(100)]
-    public string? CitizenshipDistrict { get; set; }
-
-    public DateTime? CitizenshipIssueDate { get; set; }
-
-    [MaxLength(255)]
-    public string? BirthPlace { get; set; }
-
-    [MaxLength(50)]
-    public string? NationalId { get; set; }
 
     [MaxLength(50)]
     public string? EntranceRollNumber { get; set; }
