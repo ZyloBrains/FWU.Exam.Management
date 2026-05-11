@@ -53,6 +53,10 @@ public partial class EntryPoint
         builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
         builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
         builder.Services.AddScoped<IStudentCategoryService, StudentCategoryService>();
+        builder.Services.AddScoped<ISemesterService, SemesterService>();
+        builder.Services.AddScoped<IBankService, BankService>();
+        builder.Services.AddScoped<IPaymentTypeService, PaymentTypeService>();
+        builder.Services.AddScoped<IBillTitleService, BillTitleService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

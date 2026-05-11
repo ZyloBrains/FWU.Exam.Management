@@ -23,6 +23,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<AcademicYear>? AcademicYears { get; set; }
     public DbSet<Address>? Addresses { get; set; }
     public DbSet<Bank>? Banks { get; set; }
+    public DbSet<BillTitle>? BillTitles { get; set; }
+    public DbSet<PaymentType>? PaymentTypes { get; set; }
     public DbSet<Batch>? Batches { get; set; }
     public DbSet<Board>? Boards { get; set; }
     public DbSet<College>? Colleges { get; set; }

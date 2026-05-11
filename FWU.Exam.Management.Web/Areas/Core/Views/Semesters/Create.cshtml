@@ -1,0 +1,88 @@
+@model FWU.Exam.Management.Domain.Entities.Semesters.Semester
+
+@{
+    ViewData["Title"] = "Create Semester";
+}
+
+<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" asp-area="Core" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-indigo-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create Semester</h1>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" asp-area="Core" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label asp-for="Code" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., SEM-2024-01" />
+                    <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter semester name" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Number" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Number" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 1, 2, 3" />
+                    <span asp-validation-for="Number" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Year" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="Year" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2024" />
+                    <span asp-validation-for="Year" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="StartDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="EndDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1">Academic Year</label>
+                    <select id="AcademicYearId" name="AcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <option value="">-- Select Academic Year --</option>
+                    </select>
+                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div class="md:col-span-2">
+                    <label asp-for="Remark" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <textarea asp-for="Remark" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter remark (optional)"></textarea>
+                    <span asp-validation-for="Remark" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" asp-area="Core" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

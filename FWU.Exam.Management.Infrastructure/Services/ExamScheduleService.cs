@@ -137,12 +137,14 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
         var examTypes = context.ExamTypes.AsNoTracking().ToList();
         var programs = context.Programs.AsNoTracking().ToList();
+        var semesters = context.Semesters.AsNoTracking().ToList();
 
         return new ExamScheduleSelectListsDto
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
-            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList()
+            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
+            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name }).ToList()
         };
     }
 
