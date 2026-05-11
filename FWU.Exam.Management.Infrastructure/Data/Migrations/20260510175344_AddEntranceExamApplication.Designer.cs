@@ -418,7 +418,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.ToTable("CollegeTypes");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntranceExams.EntranceExamApplication", b =>
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.EntranceExamApplication", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -3708,7 +3708,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Navigation("Program");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntranceExams.EntranceExamApplication", b =>
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.EntranceExamApplication", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
                         .WithMany()

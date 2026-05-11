@@ -4,7 +4,7 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
-namespace FWU.Exam.Management.Domain.Entities.EntranceExams;
+namespace FWU.Exam.Management.Domain.Entities.Exams;
 
 public class EntranceExamApplication : IAuditable
 {

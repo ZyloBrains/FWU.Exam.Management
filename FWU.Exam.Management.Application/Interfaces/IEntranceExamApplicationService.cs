@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.DTOs;
-using FWU.Exam.Management.Domain.Entities.EntranceExams;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Enums;
 

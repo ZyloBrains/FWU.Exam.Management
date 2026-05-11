@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
@@ -45,6 +45,12 @@ public class ExamSchedule
     public int ExamTypeId { get; set; }
     public virtual ExamType? ExamType { get; set; }
 
+    public int? LevelId { get; set; }
+    public virtual Level? Level { get; set; }
+
+    public string? BatchesJson { get; set; }
+
     public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
+    public virtual ICollection<ExamSubjectResult>? ExamSubjectResults { get; set; }
 }
