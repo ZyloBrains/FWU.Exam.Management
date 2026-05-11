@@ -13,22 +13,9 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class LoginModel : PageModel
+public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, AppDbContext context, ILogger<LoginModel> logger) : PageModel
 {
     private const string MustChangePasswordClaimType = "must_change_password";
-
-    private readonly SignInManager<AppUser> _signInManager;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly AppDbContext _context;
-    private readonly ILogger<LoginModel> _logger;
-
-    public LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, AppDbContext context, ILogger<LoginModel> logger)
-    {
-        _signInManager = signInManager;
-        _userManager = userManager;
-        _context = context;
-        _logger = logger;
-    }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -98,7 +85,7 @@ public class LoginModel : PageModel
         // Clear the existing external cookie to ensure a clean login process
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-        ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+        ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
         ReturnUrl = returnUrl;
     }
@@ -107,25 +94,25 @@ public class LoginModel : PageModel
     {
         returnUrl ??= Url.Content("~/");
 
-        ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+        ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
         if (ModelState.IsValid)
         {
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-            var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+            var result = await signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                _logger.LogInformation("User logged in.");
+                logger.LogInformation("User logged in.");
 
-                var user = await _userManager.FindByEmailAsync(Input.Email);
+                var user = await userManager.FindByEmailAsync(Input.Email);
                 if (user != null)
                 {
-                    var claims = await _userManager.GetClaimsAsync(user);
+                    var claims = await userManager.GetClaimsAsync(user);
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
                     {
-                        var org = user.OrganizationId != null ? await _context.Organizations.FindAsync(user.OrganizationId.Value) : null;
+                        var org = user.OrganizationId != null ? await context.Organizations.FindAsync(user.OrganizationId.Value) : null;
                         var postChangeReturnUrl = org != null && !string.IsNullOrWhiteSpace(org.OfficeCode)
                             ? $"/org/{org.OfficeCode}"
                             : returnUrl;
@@ -136,7 +123,7 @@ public class LoginModel : PageModel
 
                 if (user?.OrganizationId != null)
                 {
-                    var org = await _context.Organizations.FindAsync(user.OrganizationId.Value);
+                    var org = await context.Organizations.FindAsync(user.OrganizationId.Value);
                     if (org != null && !string.IsNullOrWhiteSpace(org.OfficeCode))
                     {
                         return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
@@ -151,7 +138,7 @@ public class LoginModel : PageModel
             }
             if (result.IsLockedOut)
             {
-                _logger.LogWarning("User account locked out.");
+                logger.LogWarning("User account locked out.");
                 return RedirectToPage("./Lockout");
             }
             else

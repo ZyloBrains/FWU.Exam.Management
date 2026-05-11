@@ -8,19 +8,13 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class BoardsController : Controller
+public class BoardsController(IBoardService boardService) : Controller
 {
-    private readonly IBoardService _boardService;
-
-    public BoardsController(IBoardService boardService)
-    {
-        _boardService = boardService;
-    }
 
     // GET: Boards with pagination, search, and sorting
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BoardName", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -45,7 +39,7 @@ public class BoardsController : Controller
     // Export to CSV (Current Page with pagination)
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "BoardName", string sortDir = "asc")
     {
-        var (items, totalCount) = await _boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
 
@@ -68,7 +62,7 @@ public class BoardsController : Controller
     // Export to PDF (Current Page with pagination)
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "BoardName", string sortDir = "asc")
     {
-        var (items, totalCount) = await _boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -88,7 +82,7 @@ public class BoardsController : Controller
             return NotFound();
         }
 
-        var board = await _boardService.GetBoardByIdAsync(id.Value);
+        var board = await boardService.GetBoardByIdAsync(id.Value);
         if (board == null)
         {
             return NotFound();
@@ -110,7 +104,7 @@ public class BoardsController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _boardService.CreateBoardAsync(board);
+            await boardService.CreateBoardAsync(board);
             return RedirectToAction(nameof(Index));
         }
         return View(board);
@@ -124,7 +118,7 @@ public class BoardsController : Controller
             return NotFound();
         }
 
-        var board = await _boardService.GetBoardByIdAsync(id.Value);
+        var board = await boardService.GetBoardByIdAsync(id.Value);
         if (board == null)
         {
             return NotFound();
@@ -146,11 +140,11 @@ public class BoardsController : Controller
         {
             try
             {
-                await _boardService.UpdateBoardAsync(board);
+                await boardService.UpdateBoardAsync(board);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _boardService.BoardExistsAsync(board.Id))
+                if (!await boardService.BoardExistsAsync(board.Id))
                 {
                     return NotFound();
                 }
@@ -172,7 +166,7 @@ public class BoardsController : Controller
             return NotFound();
         }
 
-        var board = await _boardService.GetBoardByIdAsync(id.Value);
+        var board = await boardService.GetBoardByIdAsync(id.Value);
         if (board == null)
         {
             return NotFound();
@@ -186,7 +180,7 @@ public class BoardsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _boardService.DeleteBoardAsync(id);
+        await boardService.DeleteBoardAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

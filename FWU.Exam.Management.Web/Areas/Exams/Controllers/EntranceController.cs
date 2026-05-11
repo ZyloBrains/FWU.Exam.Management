@@ -10,21 +10,15 @@ using ClosedXML.Excel;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController : Controller
+public class EntranceController(IEntranceExamApplicationService service) : Controller
 {
-    private readonly IEntranceExamApplicationService _service;
-
-    public EntranceController(IEntranceExamApplicationService service)
-    {
-        _service = service;
-    }
 
     // --- Public actions (no auth required) ---
 
     [AllowAnonymous]
     public async Task<IActionResult> Apply()
     {
-        var selectLists = await _service.GetSelectListsAsync();
+        var selectLists = await service.GetSelectListsAsync();
         PopulateSelectLists(selectLists);
         return View();
     }
@@ -41,11 +35,11 @@ public class EntranceController : Controller
 
         if (ModelState.IsValid)
         {
-            var id = await _service.SubmitApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
+            var id = await service.SubmitApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
             return RedirectToAction(nameof(Confirmation), new { id });
         }
 
-        var selectLists = await _service.GetSelectListsAsync();
+        var selectLists = await service.GetSelectListsAsync();
         PopulateSelectLists(selectLists);
         return View(application);
     }
@@ -53,7 +47,7 @@ public class EntranceController : Controller
     [AllowAnonymous]
     public async Task<IActionResult> Confirmation(int id)
     {
-        var application = await _service.GetApplicationByIdAsync(id);
+        var application = await service.GetApplicationByIdAsync(id);
         if (application == null) return NotFound();
         return View(application);
     }
@@ -62,7 +56,7 @@ public class EntranceController : Controller
     [AllowAnonymous]
     public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
     {
-        var districts = await _service.GetDistrictsByProvinceAsync(provinceId);
+        var districts = await service.GetDistrictsByProvinceAsync(provinceId);
         return Json(districts);
     }
 
@@ -70,7 +64,7 @@ public class EntranceController : Controller
     [AllowAnonymous]
     public async Task<JsonResult> GetLocalLevelsByDistrict(int districtId)
     {
-        var localLevels = await _service.GetLocalLevelsByDistrictAsync(districtId);
+        var localLevels = await service.GetLocalLevelsByDistrictAsync(districtId);
         return Json(localLevels);
     }
 
@@ -83,7 +77,7 @@ public class EntranceController : Controller
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
             statusFilter = parsedStatus;
 
-        var (items, totalCount) = await _service.GetPagedApplicationsAsync(search, statusFilter, programId, academicYearId, page, pageSize);
+        var (items, totalCount) = await service.GetPagedApplicationsAsync(search, statusFilter, programId, academicYearId, page, pageSize);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -94,7 +88,7 @@ public class EntranceController : Controller
         ViewBag.ProgramId = programId;
         ViewBag.AcademicYearId = academicYearId;
 
-        var selectLists = await _service.GetSelectListsAsync();
+        var selectLists = await service.GetSelectListsAsync();
         ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "Name", programId);
         ViewBag.AcademicYearIdList = new SelectList(selectLists.AcademicYears, "Id", "Name", academicYearId);
 
@@ -106,7 +100,7 @@ public class EntranceController : Controller
     {
         if (id == null) return NotFound();
 
-        var application = await _service.GetApplicationByIdAsync(id.Value);
+        var application = await service.GetApplicationByIdAsync(id.Value);
         if (application == null) return NotFound();
 
         return View(application);
@@ -117,7 +111,7 @@ public class EntranceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(int id)
     {
-        await _service.ReviewApplicationAsync(id, ApplicationStatus.Approved, null);
+        await service.ReviewApplicationAsync(id, ApplicationStatus.Approved, null);
         TempData["SuccessMessage"] = "Application approved successfully.";
         return RedirectToAction(nameof(Index));
     }
@@ -127,7 +121,7 @@ public class EntranceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(int id, string remarks)
     {
-        await _service.ReviewApplicationAsync(id, ApplicationStatus.Rejected, remarks);
+        await service.ReviewApplicationAsync(id, ApplicationStatus.Rejected, remarks);
         TempData["SuccessMessage"] = "Application rejected.";
         return RedirectToAction(nameof(Index));
     }
@@ -137,7 +131,7 @@ public class EntranceController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
-        await _service.ReviewApplicationAsync(id, ApplicationStatus.UnderReview, null);
+        await service.ReviewApplicationAsync(id, ApplicationStatus.UnderReview, null);
         TempData["SuccessMessage"] = "Application marked as under review.";
         return RedirectToAction(nameof(Index));
     }
@@ -150,7 +144,7 @@ public class EntranceController : Controller
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
             statusFilter = parsedStatus;
 
-        var data = await _service.GetAllApplicationsAsync(search, statusFilter, programId, academicYearId);
+        var data = await service.GetAllApplicationsAsync(search, statusFilter, programId, academicYearId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Entrance Applications");
@@ -196,7 +190,7 @@ public class EntranceController : Controller
 
     private void PopulateSelectLists(EntranceExamApplicationSelectListsDto selectLists)
     {
-        var provinces = _service.GetProvinces();
+        var provinces = service.GetProvinces();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name");
         ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name");

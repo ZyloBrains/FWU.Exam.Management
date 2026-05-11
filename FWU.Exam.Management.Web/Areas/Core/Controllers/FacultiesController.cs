@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class FacultiesController : Controller
+public class FacultiesController(IFacultyService facultyService) : Controller
 {
-    private readonly IFacultyService _facultyService;
-
-    public FacultiesController(IFacultyService facultyService)
-    {
-        _facultyService = facultyService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "FacultyName", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _facultyService.GetFacultiesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await facultyService.GetFacultiesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -42,7 +35,7 @@ public class FacultiesController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "FacultyName", string sortDir = "asc")
     {
-        var items = await _facultyService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await facultyService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("Faculty Code,Faculty Name,Short Name,Remarks,Status");
@@ -63,7 +56,7 @@ public class FacultiesController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "FacultyName", string sortDir = "asc")
     {
-        var (items, totalCount) = await _facultyService.GetFacultiesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await facultyService.GetFacultiesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -79,7 +72,7 @@ public class FacultiesController : Controller
     {
         if (id == null) return NotFound();
 
-        var faculty = await _facultyService.GetFacultyByIdAsync(id.Value);
+        var faculty = await facultyService.GetFacultyByIdAsync(id.Value);
         if (faculty == null) return NotFound();
 
         return View(faculty);
@@ -96,7 +89,7 @@ public class FacultiesController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _facultyService.CreateFacultyAsync(faculty);
+            await facultyService.CreateFacultyAsync(faculty);
             return RedirectToAction(nameof(Index));
         }
         return View(faculty);
@@ -106,7 +99,7 @@ public class FacultiesController : Controller
     {
         if (id == null) return NotFound();
 
-        var faculty = await _facultyService.GetFacultyByIdAsync(id.Value);
+        var faculty = await facultyService.GetFacultyByIdAsync(id.Value);
         if (faculty == null) return NotFound();
 
         return View(faculty);
@@ -122,11 +115,11 @@ public class FacultiesController : Controller
         {
             try
             {
-                await _facultyService.UpdateFacultyAsync(faculty);
+                await facultyService.UpdateFacultyAsync(faculty);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _facultyService.FacultyExistsAsync(faculty.Id))
+                if (!await facultyService.FacultyExistsAsync(faculty.Id))
                     return NotFound();
                 throw;
             }
@@ -139,7 +132,7 @@ public class FacultiesController : Controller
     {
         if (id == null) return NotFound();
 
-        var faculty = await _facultyService.GetFacultyByIdAsync(id.Value);
+        var faculty = await facultyService.GetFacultyByIdAsync(id.Value);
         if (faculty == null) return NotFound();
 
         return View(faculty);
@@ -149,7 +142,7 @@ public class FacultiesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _facultyService.DeleteFacultyAsync(id);
+        await facultyService.DeleteFacultyAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

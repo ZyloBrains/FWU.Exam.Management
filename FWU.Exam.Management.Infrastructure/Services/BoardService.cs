@@ -5,18 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class BoardService : IBoardService
+public class BoardService(AppDbContext context) : IBoardService
 {
-    private readonly AppDbContext _context;
-
-    public BoardService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<Board> Items, int TotalCount)> GetBoardsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Boards.AsNoTracking();
+        var query = context.Boards.AsNoTracking();
 
         // Apply search filter
         if (!string.IsNullOrEmpty(search))
@@ -43,36 +36,36 @@ public class BoardService : IBoardService
 
     public async Task<Board?> GetBoardByIdAsync(int id)
     {
-        return await _context.Boards
+        return await context.Boards
             .AsNoTracking()
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 
     public async Task CreateBoardAsync(Board board)
     {
-        _context.Boards.Add(board);
-        await _context.SaveChangesAsync();
+        context.Boards.Add(board);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateBoardAsync(Board board)
     {
-        _context.Boards.Update(board);
-        await _context.SaveChangesAsync();
+        context.Boards.Update(board);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteBoardAsync(int id)
     {
-        var board = await _context.Boards.FindAsync(id);
+        var board = await context.Boards.FindAsync(id);
         if (board != null)
         {
-            _context.Boards.Remove(board);
-            await _context.SaveChangesAsync();
+            context.Boards.Remove(board);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> BoardExistsAsync(int id)
     {
-        return await _context.Boards.AnyAsync(e => e.Id == id);
+        return await context.Boards.AnyAsync(e => e.Id == id);
     }
 
     private static System.Linq.Expressions.Expression<Func<Board, object>> GetSortProperty(string sort)

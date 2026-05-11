@@ -8,19 +8,13 @@ using FWU.Exam.Management.Domain.Entities;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class SmtpConfigurationsController : Controller
+public class SmtpConfigurationsController(AppDbContext context) : Controller
     {
-        private readonly AppDbContext _context;
 
-        public SmtpConfigurationsController(AppDbContext context)
+    // GET: SmtpConfigurations1 with pagination, search, and sorting
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Host", string sortDir = "asc", int pageSize = 10)
         {
-            _context = context;
-        }
-
-        // GET: SmtpConfigurations1 with pagination, search, and sorting
-        public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Host", string sortDir = "asc", int pageSize = 10)
-        {
-            var query = _context.SmtpConfigurations.AsNoTracking();
+            var query = context.SmtpConfigurations.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
@@ -71,7 +65,7 @@ public class SmtpConfigurationsController : Controller
         // Helper to get filtered items for export (with pagination)
         private async Task<(List<SmtpConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
         {
-            var query = _context.SmtpConfigurations.AsNoTracking();
+            var query = context.SmtpConfigurations.AsNoTracking();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
@@ -159,7 +153,7 @@ public class SmtpConfigurationsController : Controller
                 return NotFound();
             }
 
-            var smtpConfiguration = await _context.SmtpConfigurations
+            var smtpConfiguration = await context.SmtpConfigurations
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (smtpConfiguration == null)
             {
@@ -182,8 +176,8 @@ public class SmtpConfigurationsController : Controller
         {
             if (ModelState.IsValid)
             {
-                _context.Add(smtpConfiguration);
-                await _context.SaveChangesAsync();
+                context.Add(smtpConfiguration);
+                await context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(smtpConfiguration);
@@ -197,7 +191,7 @@ public class SmtpConfigurationsController : Controller
                 return NotFound();
             }
 
-            var smtpConfiguration = await _context.SmtpConfigurations.FindAsync(id);
+            var smtpConfiguration = await context.SmtpConfigurations.FindAsync(id);
             if (smtpConfiguration == null)
             {
                 return NotFound();
@@ -219,8 +213,8 @@ public class SmtpConfigurationsController : Controller
             {
                 try
                 {
-                    _context.Update(smtpConfiguration);
-                    await _context.SaveChangesAsync();
+                    context.Update(smtpConfiguration);
+                    await context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -246,7 +240,7 @@ public class SmtpConfigurationsController : Controller
                 return NotFound();
             }
 
-            var smtpConfiguration = await _context.SmtpConfigurations
+            var smtpConfiguration = await context.SmtpConfigurations
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (smtpConfiguration == null)
             {
@@ -261,18 +255,18 @@ public class SmtpConfigurationsController : Controller
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var smtpConfiguration = await _context.SmtpConfigurations.FindAsync(id);
+            var smtpConfiguration = await context.SmtpConfigurations.FindAsync(id);
             if (smtpConfiguration != null)
             {
-                _context.SmtpConfigurations.Remove(smtpConfiguration);
+                context.SmtpConfigurations.Remove(smtpConfiguration);
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool SmtpConfigurationExists(int id)
         {
-            return _context.SmtpConfigurations.Any(e => e.Id == id);
+            return context.SmtpConfigurations.Any(e => e.Id == id);
         }
     }

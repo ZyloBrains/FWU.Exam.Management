@@ -1,15 +1,10 @@
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using Microsoft.AspNetCore.Http;
 
-public class HttpContextAuditUserProvider : IAuditUserProvider
+public class HttpContextAuditUserProvider(IHttpContextAccessor httpContextAccessor) : IAuditUserProvider
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    public HttpContextAuditUserProvider(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
     public string? GetCurrentUserName()
     {
-        return _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+        return httpContextAccessor.HttpContext?.User?.Identity?.Name;
     }
 }

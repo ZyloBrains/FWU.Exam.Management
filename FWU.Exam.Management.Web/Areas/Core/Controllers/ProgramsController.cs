@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class ProgramsController : Controller
+public class ProgramsController(IProgramService programService) : Controller
 {
-    private readonly IProgramService _programService;
-
-    public ProgramsController(IProgramService programService)
-    {
-        _programService = programService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -42,7 +35,7 @@ public class ProgramsController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
-        var items = await _programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("Program Code,Program Name,Short Name,Level,Faculty,Board,Program Period Type,Duration,Grand Total Marks,Has Multiple Intakes,Number of Seats,Scholarship Seats,Roll Number Prefix,Remarks,Status");
@@ -72,7 +65,7 @@ public class ProgramsController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
-        var (items, totalCount) = await _programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -88,7 +81,7 @@ public class ProgramsController : Controller
     {
         if (id == null) return NotFound();
 
-        var program = await _programService.GetProgramByIdAsync(id.Value);
+        var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
         return View(program);
@@ -96,7 +89,7 @@ public class ProgramsController : Controller
 
     public async Task<IActionResult> Create()
     {
-        var (boards, faculties, levels) = await _programService.GetSelectListsAsync();
+        var (boards, faculties, levels) = await programService.GetSelectListsAsync();
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName");
         ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode");
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName");
@@ -109,11 +102,11 @@ public class ProgramsController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _programService.CreateProgramAsync(program);
+            await programService.CreateProgramAsync(program);
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, faculties, levels) = await _programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
+        var (boards, faculties, levels) = await programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
         ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode", program.FacultyId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
@@ -124,10 +117,10 @@ public class ProgramsController : Controller
     {
         if (id == null) return NotFound();
 
-        var program = await _programService.GetProgramByIdAsync(id.Value);
+        var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
-        var (boards, faculties, levels) = await _programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
+        var (boards, faculties, levels) = await programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
         ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode", program.FacultyId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
@@ -144,18 +137,18 @@ public class ProgramsController : Controller
         {
             try
             {
-                await _programService.UpdateProgramAsync(program);
+                await programService.UpdateProgramAsync(program);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _programService.ProgramExistsAsync(program.Id))
+                if (!await programService.ProgramExistsAsync(program.Id))
                     return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, faculties, levels) = await _programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
+        var (boards, faculties, levels) = await programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
         ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode", program.FacultyId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
@@ -166,7 +159,7 @@ public class ProgramsController : Controller
     {
         if (id == null) return NotFound();
 
-        var program = await _programService.GetProgramByIdAsync(id.Value);
+        var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
         return View(program);
@@ -176,7 +169,7 @@ public class ProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _programService.DeleteProgramAsync(id);
+        await programService.DeleteProgramAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

@@ -7,18 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-public class SubjectTypesController : Controller
+public class SubjectTypesController(ISubjectTypeService subjectTypeService) : Controller
 {
-    private readonly ISubjectTypeService _subjectTypeService;
-
-    public SubjectTypesController(ISubjectTypeService subjectTypeService)
-    {
-        _subjectTypeService = subjectTypeService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _subjectTypeService.GetSubjectTypesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await subjectTypeService.GetSubjectTypesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -41,7 +34,7 @@ public class SubjectTypesController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var items = await _subjectTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await subjectTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("Code,Name,Max Allowed Subjects,Is Default,Status");
@@ -62,7 +55,7 @@ public class SubjectTypesController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var (items, totalCount) = await _subjectTypeService.GetSubjectTypesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await subjectTypeService.GetSubjectTypesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -78,7 +71,7 @@ public class SubjectTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var subjectType = await _subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
+        var subjectType = await subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
         if (subjectType == null) return NotFound();
 
         return View(subjectType);
@@ -95,7 +88,7 @@ public class SubjectTypesController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _subjectTypeService.CreateSubjectTypeAsync(subjectType);
+            await subjectTypeService.CreateSubjectTypeAsync(subjectType);
             return RedirectToAction(nameof(Index));
         }
         return View(subjectType);
@@ -105,7 +98,7 @@ public class SubjectTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var subjectType = await _subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
+        var subjectType = await subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
         if (subjectType == null) return NotFound();
 
         return View(subjectType);
@@ -121,11 +114,11 @@ public class SubjectTypesController : Controller
         {
             try
             {
-                await _subjectTypeService.UpdateSubjectTypeAsync(subjectType);
+                await subjectTypeService.UpdateSubjectTypeAsync(subjectType);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _subjectTypeService.SubjectTypeExistsAsync(subjectType.Id))
+                if (!await subjectTypeService.SubjectTypeExistsAsync(subjectType.Id))
                     return NotFound();
                 throw;
             }
@@ -138,7 +131,7 @@ public class SubjectTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var subjectType = await _subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
+        var subjectType = await subjectTypeService.GetSubjectTypeByIdAsync(id.Value);
         if (subjectType == null) return NotFound();
 
         return View(subjectType);
@@ -148,7 +141,7 @@ public class SubjectTypesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _subjectTypeService.DeleteSubjectTypeAsync(id);
+        await subjectTypeService.DeleteSubjectTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

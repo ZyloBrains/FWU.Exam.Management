@@ -7,15 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class EntranceExamApplicationService : IEntranceExamApplicationService
+public class EntranceExamApplicationService(AppDbContext context) : IEntranceExamApplicationService
 {
-    private readonly AppDbContext _context;
-
-    public EntranceExamApplicationService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<int> SubmitApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
     {
         if (!string.IsNullOrEmpty(permanentLocalLevelId))
@@ -29,22 +22,22 @@ public class EntranceExamApplicationService : IEntranceExamApplicationService
                 AddressType = AddressType.Permanent,
                 IsActive = true
             };
-            _context.Addresses.Add(permanentAddress);
-            await _context.SaveChangesAsync();
+            context.Addresses.Add(permanentAddress);
+            await context.SaveChangesAsync();
             application.PermanentAddressId = permanentAddress.Id;
         }
 
         application.Status = ApplicationStatus.Submitted;
         application.CreatedAt = DateTime.UtcNow;
 
-        _context.EntranceExamApplications.Add(application);
-        await _context.SaveChangesAsync();
+        context.EntranceExamApplications.Add(application);
+        await context.SaveChangesAsync();
         return application.Id;
     }
 
     public async Task<EntranceExamApplication?> GetApplicationByIdAsync(int id)
     {
-        return await _context.EntranceExamApplications
+        return await context.EntranceExamApplications
             .Include(a => a.AcademicYear)
             .Include(a => a.College)
             .Include(a => a.Program)
@@ -60,7 +53,7 @@ public class EntranceExamApplicationService : IEntranceExamApplicationService
 
     public async Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize)
     {
-        var query = _context.EntranceExamApplications
+        var query = context.EntranceExamApplications
             .Include(a => a.AcademicYear)
             .Include(a => a.College)
             .Include(a => a.Program)
@@ -111,39 +104,39 @@ public class EntranceExamApplicationService : IEntranceExamApplicationService
 
     public async Task ReviewApplicationAsync(int id, ApplicationStatus status, string? remarks)
     {
-        var application = await _context.EntranceExamApplications.FindAsync(id);
+        var application = await context.EntranceExamApplications.FindAsync(id);
         if (application != null)
         {
             application.Status = status;
             application.ReviewDate = DateTime.UtcNow;
             application.ReviewRemarks = remarks;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task DeleteApplicationAsync(int id)
     {
-        var application = await _context.EntranceExamApplications.FindAsync(id);
+        var application = await context.EntranceExamApplications.FindAsync(id);
         if (application != null)
         {
-            _context.EntranceExamApplications.Remove(application);
-            await _context.SaveChangesAsync();
+            context.EntranceExamApplications.Remove(application);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> ApplicationExistsAsync(int id)
     {
-        return await _context.EntranceExamApplications.AnyAsync(a => a.Id == id);
+        return await context.EntranceExamApplications.AnyAsync(a => a.Id == id);
     }
 
     public async Task<EntranceExamApplicationSelectListsDto> GetSelectListsAsync()
     {
-        var academicYears = await _context.AcademicYears.Where(ay => ay.AcademicYearName != null && ay.IsActive).AsNoTracking().ToListAsync();
-        var colleges = await _context.Colleges.Where(c => c.Name != null && c.IsActive).AsNoTracking().ToListAsync();
-        var programs = await _context.Programs.Where(p => p.ProgramName != null && p.IsActive).AsNoTracking().ToListAsync();
-        var genders = await _context.Genders.Where(g => g.GenderName != null && g.IsActive).AsNoTracking().ToListAsync();
-        var previousLevels = await _context.PreviousLevels.Where(pl => pl.PreviousLevelName != null && pl.IsActive).AsNoTracking().ToListAsync();
-        var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
+        var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null && ay.IsActive).AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.Where(c => c.Name != null && c.IsActive).AsNoTracking().ToListAsync();
+        var programs = await context.Programs.Where(p => p.ProgramName != null && p.IsActive).AsNoTracking().ToListAsync();
+        var genders = await context.Genders.Where(g => g.GenderName != null && g.IsActive).AsNoTracking().ToListAsync();
+        var previousLevels = await context.PreviousLevels.Where(pl => pl.PreviousLevelName != null && pl.IsActive).AsNoTracking().ToListAsync();
+        var provinces = await context.Provinces.AsNoTracking().ToListAsync();
 
         return new EntranceExamApplicationSelectListsDto
         {
@@ -158,7 +151,7 @@ public class EntranceExamApplicationService : IEntranceExamApplicationService
 
     public async Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId)
     {
-        return await _context.Districts
+        return await context.Districts
             .Where(d => d.ProvinceId == provinceId && d.IsActive)
             .Select(d => new SelectOption { Id = d.Id, Name = d.DistrictName })
             .ToListAsync();
@@ -166,7 +159,7 @@ public class EntranceExamApplicationService : IEntranceExamApplicationService
 
     public async Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId)
     {
-        return await _context.LocalLevels
+        return await context.LocalLevels
             .Where(l => l.DistrictId == districtId && l.IsActive)
             .Select(l => new SelectOption { Id = l.Id, Name = l.LocalLevelName })
             .ToListAsync();
@@ -174,12 +167,12 @@ public class EntranceExamApplicationService : IEntranceExamApplicationService
 
     public List<Province> GetProvinces()
     {
-        return _context.Provinces.AsNoTracking().ToList();
+        return context.Provinces.AsNoTracking().ToList();
     }
 
     public async Task<List<EntranceExamApplication>> GetAllApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId)
     {
-        var query = _context.EntranceExamApplications
+        var query = context.EntranceExamApplications
             .Include(a => a.AcademicYear)
             .Include(a => a.College)
             .Include(a => a.Program)
