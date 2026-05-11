@@ -140,6 +140,25 @@
             </ul>
         </li>
 
+        // Payments Section
+        var isPaymentsActive = IsActive(controllerName: "Banks", actionName: "Index", areaName: "Payments") ||
+                                IsActive(controllerName: "PaymentTypes", actionName: "Index", areaName: "Payments") ||
+                                IsActive(controllerName: "BillTitles", actionName: "Index", areaName: "Payments");
+        <li x-data="{ open: @(isPaymentsActive.ToString().ToLower()) }">
+            <button @@click="open = !open"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
+                <i class="fas fa-money-bill-wave w-5 text-center"></i>
+                <span class="flex-1 text-left">Payments</span>
+                <i class="fas transition-transform duration-200" :class="open ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            </button>
+            <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
+                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                <li><a asp-area="Payments" asp-controller="Banks" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Banks", actionName: "Index", areaName: "Payments") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-university w-4 text-center"></i><span>Banks</span></a></li>
+                <li><a asp-area="Payments" asp-controller="PaymentTypes" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "PaymentTypes", actionName: "Index", areaName: "Payments") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-credit-card w-4 text-center"></i><span>Payment Types</span></a></li>
+                <li><a asp-area="Payments" asp-controller="BillTitles" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "BillTitles", actionName: "Index", areaName: "Payments") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-file-invoice-dollar w-4 text-center"></i><span>Bill Titles</span></a></li>
+            </ul>
+        </li>
+
         // Registration Section
         var isRegistrationActive = IsActive(controllerName: "College", actionName: "Index") || IsActive(controllerName: "Program", actionName: "Index", areaName: "Core");
         <li x-data="{ open: @(isRegistrationActive.ToString().ToLower()) }">
@@ -258,6 +277,24 @@
                 <li><a asp-area="Exams" asp-controller="Entrance" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Entrance", actionName: "Index", areaName: "Exams") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-file-alt w-4 text-center"></i><span>Entrance Applications</span></a></li>
                 <li><a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamSchedules", actionName: "Index", areaName: "Exams") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-clock w-4 text-center"></i><span>Exam Schedules</span></a></li>
                 <li><a asp-area="Exams" asp-controller="ExamTypes" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "ExamTypes", actionName: "Index", areaName: "Exams") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-list-alt w-4 text-center"></i><span>Exam Types</span></a></li>
+            </ul>
+        </li>
+
+        var isAdminPaymentsActive = IsActive(controllerName: "Banks", actionName: "Index", areaName: "Payments") ||
+                                    IsActive(controllerName: "PaymentTypes", actionName: "Index", areaName: "Payments") ||
+                                    IsActive(controllerName: "BillTitles", actionName: "Index", areaName: "Payments");
+        <li x-data="{ open: @(isAdminPaymentsActive.ToString().ToLower()) }">
+            <button @@click="open = !open"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-admin-blue-light transition-colors duration-200">
+                <i class="fas fa-money-bill-wave w-5 text-center"></i>
+                <span class="flex-1 text-left">Payments</span>
+                <i class="fas transition-transform duration-200" :class="open ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            </button>
+            <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
+                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                <li><a asp-area="Payments" asp-controller="Banks" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Banks", actionName: "Index", areaName: "Payments") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-university w-4 text-center"></i><span>Banks</span></a></li>
+                <li><a asp-area="Payments" asp-controller="PaymentTypes" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "PaymentTypes", actionName: "Index", areaName: "Payments") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-credit-card w-4 text-center"></i><span>Payment Types</span></a></li>
+                <li><a asp-area="Payments" asp-controller="BillTitles" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "BillTitles", actionName: "Index", areaName: "Payments") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-file-invoice-dollar w-4 text-center"></i><span>Bill Titles</span></a></li>
             </ul>
         </li>
     }
