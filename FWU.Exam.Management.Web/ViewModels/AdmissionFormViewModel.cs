@@ -54,7 +54,6 @@ public class AdmissionFormViewModel
     public string? BirthPlace { get; set; }
 
     [Display(Name = "Upload Latest Passport Size Photo")]
-    [Required(ErrorMessage = "Please upload a photo.")]
     public IFormFile? Photo { get; set; }
 
     [Required(ErrorMessage = "Municipality is required.")]
@@ -131,11 +130,9 @@ public class AdmissionFormViewModel
     [Required]
     public List<AcademicQualificationViewModel> AcademicQualifications { get; set; } = [];
 
-    [Required(ErrorMessage = "Please upload self-attested documents.")]
     [Display(Name = "Documents (Transcript, Character, etc.)")]
     public IFormFile? DocumentsFile { get; set; }
 
-    [Required(ErrorMessage = "Please upload bank voucher.")]
     [Display(Name = "Upload Bank Voucher")]
     public IFormFile? BankVoucherFile { get; set; }
 }
