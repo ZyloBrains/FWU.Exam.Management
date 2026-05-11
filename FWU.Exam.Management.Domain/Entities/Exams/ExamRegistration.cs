@@ -50,6 +50,5 @@ public class ExamRegistration
 
     public virtual ApplicationVoucher? ApplicationVoucher { get; set; }
 
-    public virtual ICollection<ExamSubjectRegistration>? ExamSubjectRegistrations { get; set; }
-    public virtual ICollection<ExamRegistrationActionLog>? ExamRegistrationActionLogs { get; set; }
+    public virtual ICollection<ExamSubjectResult>? ExamSubjectResults { get; set; }
 }

@@ -7,18 +7,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class ExamTypesController : Controller
+public class ExamTypesController(IExamTypeService examTypeService) : Controller
 {
-    private readonly IExamTypeService _examTypeService;
-
-    public ExamTypesController(IExamTypeService examTypeService)
-    {
-        _examTypeService = examTypeService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _examTypeService.GetExamTypesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await examTypeService.GetExamTypesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -41,7 +34,7 @@ public class ExamTypesController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var items = await _examTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await examTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("Code,Name,Remarks,Status");
@@ -61,7 +54,7 @@ public class ExamTypesController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var (items, totalCount) = await _examTypeService.GetExamTypesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await examTypeService.GetExamTypesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -77,7 +70,7 @@ public class ExamTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var examType = await _examTypeService.GetExamTypeByIdAsync(id.Value);
+        var examType = await examTypeService.GetExamTypeByIdAsync(id.Value);
         if (examType == null) return NotFound();
 
         return View(examType);
@@ -94,7 +87,7 @@ public class ExamTypesController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _examTypeService.CreateExamTypeAsync(examType);
+            await examTypeService.CreateExamTypeAsync(examType);
             return RedirectToAction(nameof(Index));
         }
         return View(examType);
@@ -104,7 +97,7 @@ public class ExamTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var examType = await _examTypeService.GetExamTypeByIdAsync(id.Value);
+        var examType = await examTypeService.GetExamTypeByIdAsync(id.Value);
         if (examType == null) return NotFound();
 
         return View(examType);
@@ -120,11 +113,11 @@ public class ExamTypesController : Controller
         {
             try
             {
-                await _examTypeService.UpdateExamTypeAsync(examType);
+                await examTypeService.UpdateExamTypeAsync(examType);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _examTypeService.ExamTypeExistsAsync(examType.Id))
+                if (!await examTypeService.ExamTypeExistsAsync(examType.Id))
                     return NotFound();
                 throw;
             }
@@ -137,7 +130,7 @@ public class ExamTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var examType = await _examTypeService.GetExamTypeByIdAsync(id.Value);
+        var examType = await examTypeService.GetExamTypeByIdAsync(id.Value);
         if (examType == null) return NotFound();
 
         return View(examType);
@@ -147,7 +140,7 @@ public class ExamTypesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _examTypeService.DeleteExamTypeAsync(id);
+        await examTypeService.DeleteExamTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

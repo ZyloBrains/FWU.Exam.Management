@@ -1,0 +1,112 @@
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+
+namespace FWU.Exam.Management.Web.Data.Seeders;
+
+public static class ReferenceDataSeeder
+{
+    public static async Task SeedReferenceDataAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.Genders.AnyAsync())
+            return;
+
+        // Genders
+        var genders = new[]
+        {
+            new Gender { GenderName = "Male", IsActive = true },
+            new Gender { GenderName = "Female", IsActive = true },
+            new Gender { GenderName = "Other", IsActive = true },
+        };
+        await context.Genders.AddRangeAsync(genders);
+
+        // Previous Levels
+        var previousLevels = new[]
+        {
+            new PreviousLevel { PreviousLevelName = "SEE (Grade 10)", IsActive = true },
+            new PreviousLevel { PreviousLevelName = "+2 / 10+2", IsActive = true },
+            new PreviousLevel { PreviousLevelName = "Bachelor", IsActive = true },
+            new PreviousLevel { PreviousLevelName = "Master", IsActive = true },
+        };
+        await context.PreviousLevels.AddRangeAsync(previousLevels);
+
+        // Levels
+        var levels = new[]
+        {
+            new Level { LevelCode = "BL", LevelName = "Bachelor", IsActive = true },
+            new Level { LevelCode = "MA", LevelName = "Master", IsActive = true },
+        };
+        await context.Levels.AddRangeAsync(levels);
+        await context.SaveChangesAsync();
+
+        // Faculties
+        var faculties = new[]
+        {
+            new Faculty { FacultyCode = "MGMT", FacultyName = "Management", ShortName = "MGT", IsActive = true },
+            new Faculty { FacultyCode = "SCI", FacultyName = "Science", ShortName = "SCI", IsActive = true },
+            new Faculty { FacultyCode = "EDU", FacultyName = "Education", ShortName = "EDU", IsActive = true },
+            new Faculty { FacultyCode = "HUM", FacultyName = "Humanities", ShortName = "HUM", IsActive = true },
+        };
+        await context.Faculties.AddRangeAsync(faculties);
+        await context.SaveChangesAsync();
+
+        // Programs
+        var programs = new[]
+        {
+            new Program
+            {
+                ProgramCode = "BBA",
+                ProgramName = "Bachelor of Business Administration",
+                ShortName = "BBA",
+                LevelId = levels[0].Id,
+                FacultyId = faculties[0].Id,
+                Duration = 4,
+                IsActive = true,
+            },
+            new Program
+            {
+                ProgramCode = "BBS",
+                ProgramName = "Bachelor of Business Studies",
+                ShortName = "BBS",
+                LevelId = levels[0].Id,
+                FacultyId = faculties[0].Id,
+                Duration = 4,
+                IsActive = true,
+            },
+            new Program
+            {
+                ProgramCode = "BCA",
+                ProgramName = "Bachelor of Computer Application",
+                ShortName = "BCA",
+                LevelId = levels[0].Id,
+                FacultyId = faculties[1].Id,
+                Duration = 4,
+                IsActive = true,
+            },
+        };
+        await context.Programs.AddRangeAsync(programs);
+        await context.SaveChangesAsync();
+
+        // Colleges
+        var colleges = new[]
+        {
+            new College
+            {
+                Code = "COC",
+                Name = "College of Commerce",
+                IsActive = true,
+            },
+            new College
+            {
+                Code = "SOM",
+                Name = "School of Management",
+                IsActive = true,
+            },
+        };
+        await context.Colleges.AddRangeAsync(colleges);
+        await context.SaveChangesAsync();
+    }
+}

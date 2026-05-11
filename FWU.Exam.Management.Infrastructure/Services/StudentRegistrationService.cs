@@ -6,18 +6,11 @@ using FWU.Exam.Management.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context) : IStudentRegistrationService
 {
-    private readonly AppDbContext _context;
-
-    public StudentRegistrationService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync()
     {
-        return await _context.StudentRegistrations
+        return await context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Faculty)
@@ -31,7 +24,7 @@ public class StudentRegistrationService : IStudentRegistrationService
 
     public async Task<StudentRegistration?> GetStudentRegistrationByIdAsync(int id)
     {
-        return await _context.StudentRegistrations
+        return await context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Faculty)
@@ -55,13 +48,13 @@ public class StudentRegistrationService : IStudentRegistrationService
                 AddressType = AddressType.Permanent,
                 IsActive = true
             };
-            _context.Addresses.Add(permanentAddress);
-            await _context.SaveChangesAsync();
+            context.Addresses.Add(permanentAddress);
+            await context.SaveChangesAsync();
             studentRegistration.PermanentAddressId = permanentAddress.Id;
         }
 
-        _context.StudentRegistrations.Add(studentRegistration);
-        await _context.SaveChangesAsync();
+        context.StudentRegistrations.Add(studentRegistration);
+        await context.SaveChangesAsync();
         return studentRegistration.Id;
     }
 
@@ -69,7 +62,7 @@ public class StudentRegistrationService : IStudentRegistrationService
     {
         if (!string.IsNullOrEmpty(permanentLocalLevelId))
         {
-            var address = await _context.Addresses.FindAsync(studentRegistration.PermanentAddressId);
+            var address = await context.Addresses.FindAsync(studentRegistration.PermanentAddressId);
             if (address == null)
             {
                 address = new Address
@@ -81,8 +74,8 @@ public class StudentRegistrationService : IStudentRegistrationService
                     AddressType = AddressType.Permanent,
                     IsActive = true
                 };
-                _context.Addresses.Add(address);
-                await _context.SaveChangesAsync();
+                context.Addresses.Add(address);
+                await context.SaveChangesAsync();
                 studentRegistration.PermanentAddressId = address.Id;
             }
             else
@@ -91,32 +84,32 @@ public class StudentRegistrationService : IStudentRegistrationService
                 address.WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber);
                 address.ToleStreet = permanentToleStreet;
                 address.HouseNumber = permanentHouseNumber;
-                _context.Addresses.Update(address);
+                context.Addresses.Update(address);
             }
         }
 
-        _context.StudentRegistrations.Update(studentRegistration);
-        await _context.SaveChangesAsync();
+        context.StudentRegistrations.Update(studentRegistration);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteStudentRegistrationAsync(int id)
     {
-        var studentRegistration = await _context.StudentRegistrations.FindAsync(id);
+        var studentRegistration = await context.StudentRegistrations.FindAsync(id);
         if (studentRegistration != null)
         {
-            _context.StudentRegistrations.Remove(studentRegistration);
-            await _context.SaveChangesAsync();
+            context.StudentRegistrations.Remove(studentRegistration);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> StudentRegistrationExistsAsync(int id)
     {
-        return await _context.StudentRegistrations.AnyAsync(e => e.Id == id);
+        return await context.StudentRegistrations.AnyAsync(e => e.Id == id);
     }
 
     public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize)
     {
-        var query = _context.StudentRegistrations
+        var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Faculty)
@@ -163,24 +156,24 @@ public class StudentRegistrationService : IStudentRegistrationService
 
     public async Task UpdateStatusAsync(int id, bool isActive)
     {
-        var registration = await _context.StudentRegistrations.FindAsync(id);
+        var registration = await context.StudentRegistrations.FindAsync(id);
         if (registration != null)
         {
             registration.IsActive = isActive;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<StudentRegistrationSelectListsDto> GetSelectListDataAsync(StudentRegistration? studentRegistration = null)
     {
-        var academicYears = await _context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
-        var levels = await _context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var faculties = await _context.Faculties.Where(f => f.FacultyName != null).AsNoTracking().ToListAsync();
-        var colleges = await _context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
-        var genders = await _context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
-        var studentCategories = await _context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
-        var ethnicities = await _context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();
-        var localLevels = await _context.LocalLevels.Where(ll => ll.LocalLevelName != null).AsNoTracking().ToListAsync();
+        var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
+        var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
+        var faculties = await context.Faculties.Where(f => f.FacultyName != null).AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
+        var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
+        var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
+        var ethnicities = await context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();
+        var localLevels = await context.LocalLevels.Where(ll => ll.LocalLevelName != null).AsNoTracking().ToListAsync();
 
         return new StudentRegistrationSelectListsDto
         {
@@ -197,7 +190,7 @@ public class StudentRegistrationService : IStudentRegistrationService
 
     public async Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId)
     {
-        return await _context.Districts
+        return await context.Districts
             .Where(d => d.ProvinceId == provinceId && d.IsActive)
             .Select(d => new SelectOption { Id = d.Id, Name = d.DistrictName })
             .ToListAsync();
@@ -205,7 +198,7 @@ public class StudentRegistrationService : IStudentRegistrationService
 
     public async Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId)
     {
-        return await _context.LocalLevels
+        return await context.LocalLevels
             .Where(l => l.DistrictId == districtId && l.IsActive)
             .Select(l => new SelectOption { Id = l.Id, Name = l.LocalLevelName })
             .ToListAsync();
@@ -213,7 +206,7 @@ public class StudentRegistrationService : IStudentRegistrationService
 
     public List<Province> GetProvinces()
     {
-        var provinces =  _context.Provinces.AsNoTracking().ToList();
+        var provinces =  context.Provinces.AsNoTracking().ToList();
         return provinces;
     }
 }

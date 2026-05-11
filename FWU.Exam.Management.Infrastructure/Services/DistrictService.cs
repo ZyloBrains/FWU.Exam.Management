@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class DistrictService : IDistrictService
+public class DistrictService(AppDbContext context) : IDistrictService
 {
-    private readonly AppDbContext _context;
-
-    public DistrictService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<District> Items, int TotalCount)> GetDistrictsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Districts
+        var query = context.Districts
             .Include(d => d.Province)
             .AsNoTracking();
 
@@ -46,7 +39,7 @@ public class DistrictService : IDistrictService
 
     public async Task<List<District>> GetFilteredDistrictsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Districts
+        var query = context.Districts
             .Include(d => d.Province)
             .AsNoTracking();
 
@@ -67,41 +60,41 @@ public class DistrictService : IDistrictService
 
     public async Task<District?> GetDistrictByIdAsync(int id)
     {
-        return await _context.Districts
+        return await context.Districts
             .Include(d => d.Province)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task CreateDistrictAsync(District district)
     {
-        _context.Districts.Add(district);
-        await _context.SaveChangesAsync();
+        context.Districts.Add(district);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateDistrictAsync(District district)
     {
-        _context.Districts.Update(district);
-        await _context.SaveChangesAsync();
+        context.Districts.Update(district);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteDistrictAsync(int id)
     {
-        var district = await _context.Districts.FindAsync(id);
+        var district = await context.Districts.FindAsync(id);
         if (district != null)
         {
-            _context.Districts.Remove(district);
-            await _context.SaveChangesAsync();
+            context.Districts.Remove(district);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> DistrictExistsAsync(int id)
     {
-        return await _context.Districts.AnyAsync(e => e.Id == id);
+        return await context.Districts.AnyAsync(e => e.Id == id);
     }
 
     public async Task<List<Province>> GetActiveProvincesAsync()
     {
-        return await _context.Provinces
+        return await context.Provinces
             .Where(p => p.IsActive)
             .AsNoTracking()
             .ToListAsync();

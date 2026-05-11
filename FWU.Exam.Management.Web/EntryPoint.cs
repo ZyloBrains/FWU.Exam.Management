@@ -47,6 +47,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
         builder.Services.AddScoped<IDistrictService, DistrictService>();
         builder.Services.AddScoped<IProvinceService, ProvinceService>();
+        builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
         builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
         builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
@@ -88,8 +89,9 @@ public partial class EntryPoint
         using (var scope = app.Services.CreateScope())
         {
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 

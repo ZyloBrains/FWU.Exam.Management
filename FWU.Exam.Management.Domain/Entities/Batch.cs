@@ -1,4 +1,3 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -21,5 +20,4 @@ public class Batch
     [ForeignKey(nameof(AcademicYearId))]
         public virtual AcademicYear? AcademicYear { get; set; }
         public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
-        public virtual ICollection<ExamScheduleBatch>? ExamScheduleBatches { get; set; }
 }

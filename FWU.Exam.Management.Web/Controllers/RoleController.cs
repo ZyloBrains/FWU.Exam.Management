@@ -4,19 +4,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-public class RoleController : Controller
+public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 {
-    private readonly RoleManager<IdentityRole> _roleManager;
-
-    public RoleController(RoleManager<IdentityRole> roleManager)
-    {
-        _roleManager = roleManager;
-    }
 
     // GET: Role
     public async Task<IActionResult> Index()
     {
-        return View(await _roleManager.Roles.ToListAsync());
+        return View(await roleManager.Roles.ToListAsync());
     }
 
     // GET: Role/Create
@@ -36,7 +30,7 @@ public class RoleController : Controller
             return View();
         }
 
-        var result = await _roleManager.CreateAsync(new IdentityRole(roleName.Trim()));
+        var result = await roleManager.CreateAsync(new IdentityRole(roleName.Trim()));
         if (result.Succeeded)
             return RedirectToAction(nameof(Index));
 
@@ -52,7 +46,7 @@ public class RoleController : Controller
         if (id == null)
             return NotFound();
 
-        var role = await _roleManager.FindByIdAsync(id);
+        var role = await roleManager.FindByIdAsync(id);
         if (role == null)
             return NotFound();
 
@@ -64,7 +58,7 @@ public class RoleController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string id, string roleName)
     {
-        var role = await _roleManager.FindByIdAsync(id);
+        var role = await roleManager.FindByIdAsync(id);
         if (role == null)
             return NotFound();
 
@@ -75,7 +69,7 @@ public class RoleController : Controller
         }
 
         role.Name = roleName.Trim();
-        var result = await _roleManager.UpdateAsync(role);
+        var result = await roleManager.UpdateAsync(role);
         if (result.Succeeded)
             return RedirectToAction(nameof(Index));
 
@@ -91,7 +85,7 @@ public class RoleController : Controller
         if (id == null)
             return NotFound();
 
-        var role = await _roleManager.FindByIdAsync(id);
+        var role = await roleManager.FindByIdAsync(id);
         if (role == null)
             return NotFound();
 
@@ -103,9 +97,9 @@ public class RoleController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
     {
-        var role = await _roleManager.FindByIdAsync(id);
+        var role = await roleManager.FindByIdAsync(id);
         if (role != null)
-            await _roleManager.DeleteAsync(role);
+            await roleManager.DeleteAsync(role);
 
         return RedirectToAction(nameof(Index));
     }

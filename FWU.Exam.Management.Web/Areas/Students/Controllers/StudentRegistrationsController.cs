@@ -6,20 +6,14 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 
-namespace FWU.Exam.Management.Web.Controllers;
+namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
-public class StudentRegistrationsController : Controller
+[Area("Students")]
+public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService) : Controller
 {
-    private readonly IStudentRegistrationService _studentRegistrationService;
-
-    public StudentRegistrationsController(IStudentRegistrationService studentRegistrationService)
-    {
-        _studentRegistrationService = studentRegistrationService;
-    }
-
     public async Task<IActionResult> Index()
     {
-        var studentRegistrations = await _studentRegistrationService.GetAllStudentRegistrationsAsync();
+        var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync();
         return View(studentRegistrations);
     }
 
@@ -27,7 +21,7 @@ public class StudentRegistrationsController : Controller
     {
         if (id == null) return NotFound();
 
-        var studentRegistration = await _studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
+        var studentRegistration = await studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
         if (studentRegistration == null) return NotFound();
 
         return View(studentRegistration);
@@ -35,7 +29,7 @@ public class StudentRegistrationsController : Controller
 
     public async Task<IActionResult> Create()
     {
-        var selectLists = await _studentRegistrationService.GetSelectListDataAsync();
+        var selectLists = await studentRegistrationService.GetSelectListDataAsync();
         PopulateSelectLists(selectLists, null);
         return View();
     }
@@ -51,12 +45,12 @@ public class StudentRegistrationsController : Controller
 
         if (ModelState.IsValid)
         {
-            await _studentRegistrationService.CreateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
+            await studentRegistrationService.CreateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
             TempData["SuccessMessage"] = "Student registration created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
-        var selectLists = await _studentRegistrationService.GetSelectListDataAsync();
+        var selectLists = await studentRegistrationService.GetSelectListDataAsync();
         PopulateSelectLists(selectLists, studentRegistration);
         return View(studentRegistration);
     }
@@ -65,10 +59,10 @@ public class StudentRegistrationsController : Controller
     {
         if (id == null) return NotFound();
 
-        var studentRegistration = await _studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
+        var studentRegistration = await studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
         if (studentRegistration == null) return NotFound();
 
-        var selectLists = await _studentRegistrationService.GetSelectListDataAsync(studentRegistration);
+        var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         PopulateSelectLists(selectLists, studentRegistration);
         return View(studentRegistration);
     }
@@ -88,19 +82,19 @@ public class StudentRegistrationsController : Controller
         {
             try
             {
-                await _studentRegistrationService.UpdateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
+                await studentRegistrationService.UpdateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
                 TempData["SuccessMessage"] = "Student registration updated successfully!";
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _studentRegistrationService.StudentRegistrationExistsAsync(studentRegistration.Id))
+                if (!await studentRegistrationService.StudentRegistrationExistsAsync(studentRegistration.Id))
                     return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
 
-        var selectLists = await _studentRegistrationService.GetSelectListDataAsync(studentRegistration);
+        var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         PopulateSelectLists(selectLists, studentRegistration);
         return View(studentRegistration);
     }
@@ -109,7 +103,7 @@ public class StudentRegistrationsController : Controller
     {
         if (id == null) return NotFound();
 
-        var studentRegistration = await _studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
+        var studentRegistration = await studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
         if (studentRegistration == null) return NotFound();
 
         return View(studentRegistration);
@@ -119,7 +113,7 @@ public class StudentRegistrationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _studentRegistrationService.DeleteStudentRegistrationAsync(id);
+        await studentRegistrationService.DeleteStudentRegistrationAsync(id);
         TempData["SuccessMessage"] = "Student registration deleted successfully!";
         return RedirectToAction(nameof(Index));
     }
@@ -127,14 +121,14 @@ public class StudentRegistrationsController : Controller
     [HttpGet]
     public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10)
     {
-        var (data, totalCount) = await _studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize);
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize);
         return Json(new { data, totalCount });
     }
 
     [HttpPost]
     public async Task<IActionResult> UpdateStatus(int id, string status)
     {
-        await _studentRegistrationService.UpdateStatusAsync(id, status == "Approved");
+        await studentRegistrationService.UpdateStatusAsync(id, status == "Approved");
         return Ok();
     }
 
@@ -188,7 +182,7 @@ public class StudentRegistrationsController : Controller
                                 continue;
                             }
 
-                            await _studentRegistrationService.CreateStudentRegistrationAsync(registration, null, null, null, null);
+                            await studentRegistrationService.CreateStudentRegistrationAsync(registration, null, null, null, null);
                             successCount++;
                         }
                         catch (Exception ex)
@@ -210,7 +204,7 @@ public class StudentRegistrationsController : Controller
     [HttpGet]
     public async Task<IActionResult> ExportExcel(string searchTerm = "")
     {
-        var data = await _studentRegistrationService.GetAllStudentRegistrationsAsync();
+        var data = await studentRegistrationService.GetAllStudentRegistrationsAsync();
 
         using (var package = new ExcelPackage())
         {
@@ -267,20 +261,20 @@ public class StudentRegistrationsController : Controller
     [HttpGet]
     public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
     {
-        var districts = await _studentRegistrationService.GetDistrictsByProvinceAsync(provinceId);
+        var districts = await studentRegistrationService.GetDistrictsByProvinceAsync(provinceId);
         return Json(districts);
     }
 
     [HttpGet]
     public async Task<JsonResult> GetLocalLevelsByDistrict(int districtId)
     {
-        var localLevels = await _studentRegistrationService.GetLocalLevelsByDistrictAsync(districtId);
+        var localLevels = await studentRegistrationService.GetLocalLevelsByDistrictAsync(districtId);
         return Json(localLevels);
     }
 
     private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces = _studentRegistrationService.GetProvinces();
+        var provinces = studentRegistrationService.GetProvinces();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);
         ViewBag.LevelId = new SelectList(selectLists.Levels, "Id", "Name", studentRegistration?.LevelId);

@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ProvinceService : IProvinceService
+public class ProvinceService(AppDbContext context) : IProvinceService
 {
-    private readonly AppDbContext _context;
-
-    public ProvinceService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<Province> Items, int TotalCount)> GetProvincesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Provinces.AsNoTracking();
+        var query = context.Provinces.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -42,7 +35,7 @@ public class ProvinceService : IProvinceService
 
     public async Task<List<Province>> GetFilteredProvincesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Provinces.AsNoTracking();
+        var query = context.Provinces.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -59,33 +52,33 @@ public class ProvinceService : IProvinceService
 
     public async Task<Province?> GetProvinceByIdAsync(int id)
     {
-        return await _context.Provinces.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.Provinces.FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task CreateProvinceAsync(Province province)
     {
-        _context.Provinces.Add(province);
-        await _context.SaveChangesAsync();
+        context.Provinces.Add(province);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateProvinceAsync(Province province)
     {
-        _context.Provinces.Update(province);
-        await _context.SaveChangesAsync();
+        context.Provinces.Update(province);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteProvinceAsync(int id)
     {
-        var province = await _context.Provinces.FindAsync(id);
+        var province = await context.Provinces.FindAsync(id);
         if (province != null)
         {
-            _context.Provinces.Remove(province);
-            await _context.SaveChangesAsync();
+            context.Provinces.Remove(province);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> ProvinceExistsAsync(int id)
     {
-        return await _context.Provinces.AnyAsync(e => e.Id == id);
+        return await context.Provinces.AnyAsync(e => e.Id == id);
     }
 }

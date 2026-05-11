@@ -10,21 +10,12 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class LogoutModel : PageModel
+public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutModel> logger) : PageModel
 {
-    private readonly SignInManager<AppUser> _signInManager;
-    private readonly ILogger<LogoutModel> _logger;
-
-    public LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutModel> logger)
-    {
-        _signInManager = signInManager;
-        _logger = logger;
-    }
-
     public async Task<IActionResult> OnPost(string returnUrl = null)
     {
-        await _signInManager.SignOutAsync();
-        _logger.LogInformation("User logged out.");
+        await signInManager.SignOutAsync();
+        logger.LogInformation("User logged out.");
         if (returnUrl != null)
         {
             return LocalRedirect(returnUrl);
