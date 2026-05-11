@@ -6,40 +6,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class DashboardService : IDashboardService
+public class DashboardService(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager) : IDashboardService
 {
-    private readonly AppDbContext _context;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-
-    public DashboardService(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
-    {
-        _context = context;
-        _userManager = userManager;
-        _roleManager = roleManager;
-    }
-
     public async Task<DashboardStats> GetDashboardStatsAsync()
     {
         return new DashboardStats
         {
-            TotalOrganizations = await _context.Organizations.CountAsync(),
-            TotalUsers = await _userManager.Users.CountAsync(),
-            TotalRoles = await _roleManager.Roles.CountAsync(),
-            TotalColleges = await _context.Colleges.CountAsync(),
-            TotalPrograms = await _context.Programs.CountAsync(),
-            TotalStudents = await _context.StudentRegistrations.CountAsync(),
-            TotalExamSchedules = await _context.ExamSchedules.CountAsync(),
-            TotalExamRegistrations = await _context.ExamRegistrations.CountAsync(),
-            TotalSubjects = await _context.SubjectCatalogs.CountAsync(),
-            TotalAcademicYears = await _context.AcademicYears.CountAsync(),
-            TotalBanks = await _context.Banks.CountAsync(),
-            TotalBoards = await _context.Boards.CountAsync(),
-            TotalBatches = await _context.Batches.CountAsync(),
-            ActiveColleges = await _context.Colleges.CountAsync(c => c.IsActive),
-            ActivePrograms = await _context.Programs.CountAsync(p => p.IsActive),
-            ActiveStudents = await _context.StudentRegistrations.CountAsync(s => s.IsActive),
-            ActiveExamSchedules = await _context.ExamSchedules.CountAsync(e => e.IsActive)
+            TotalOrganizations = await context.Organizations.CountAsync(),
+            TotalUsers = await userManager.Users.CountAsync(),
+            TotalRoles = await roleManager.Roles.CountAsync(),
+            TotalColleges = await context.Colleges.CountAsync(),
+            TotalPrograms = await context.Programs.CountAsync(),
+            TotalStudents = await context.StudentRegistrations.CountAsync(),
+            TotalExamSchedules = await context.ExamSchedules.CountAsync(),
+            TotalExamRegistrations = await context.ExamRegistrations.CountAsync(),
+            TotalSubjects = await context.SubjectCatalogs.CountAsync(),
+            TotalAcademicYears = await context.AcademicYears.CountAsync(),
+            TotalBanks = await context.Banks.CountAsync(),
+            TotalBoards = await context.Boards.CountAsync(),
+            TotalBatches = await context.Batches.CountAsync(),
+            ActiveColleges = await context.Colleges.CountAsync(c => c.IsActive),
+            ActivePrograms = await context.Programs.CountAsync(p => p.IsActive),
+            ActiveStudents = await context.StudentRegistrations.CountAsync(s => s.IsActive),
+            ActiveExamSchedules = await context.ExamSchedules.CountAsync(e => e.IsActive)
         };
     }
 }

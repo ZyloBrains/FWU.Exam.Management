@@ -214,7 +214,7 @@
 
                 $("#LocalLevelId").html('<option>Loading...</option>');
 
-                $.get("/StudentRegistrations/GetLocalLevelsByDistrict", { districtId: districtId }, function (data) {
+                $.get("/Students/StudentRegistrations/GetLocalLevelsByDistrict", { districtId: districtId }, function (data) {
                     let localLevelDropdown = $("#LocalLevelId");
                     localLevelDropdown.empty();
                     localLevelDropdown.append('<option value="">Select Local Level</option>');

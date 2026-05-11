@@ -9,15 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeProgramService : ICollegeProgramService
+public class CollegeProgramService(AppDbContext context) : ICollegeProgramService
 {
-    private readonly AppDbContext _context;
-
-    public CollegeProgramService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search);
@@ -43,7 +36,7 @@ public class CollegeProgramService : ICollegeProgramService
 
     public async Task<CollegeProgram?> GetCollegeProgramByIdAsync(int id)
     {
-        return await _context.CollegePrograms
+        return await context.CollegePrograms
             .Include(cp => cp.College)
             .Include(cp => cp.Program)
             .AsNoTracking()
@@ -52,42 +45,42 @@ public class CollegeProgramService : ICollegeProgramService
 
     public async Task CreateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
-        _context.CollegePrograms.Add(collegeProgram);
-        await _context.SaveChangesAsync();
+        context.CollegePrograms.Add(collegeProgram);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
-        _context.CollegePrograms.Update(collegeProgram);
-        await _context.SaveChangesAsync();
+        context.CollegePrograms.Update(collegeProgram);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteCollegeProgramAsync(int id)
     {
-        var collegeProgram = await _context.CollegePrograms.FindAsync(id);
+        var collegeProgram = await context.CollegePrograms.FindAsync(id);
         if (collegeProgram != null)
         {
-            _context.CollegePrograms.Remove(collegeProgram);
-            await _context.SaveChangesAsync();
+            context.CollegePrograms.Remove(collegeProgram);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> CollegeProgramExistsAsync(int id)
     {
-        return await _context.CollegePrograms.AnyAsync(cp => cp.Id == id);
+        return await context.CollegePrograms.AnyAsync(cp => cp.Id == id);
     }
 
     public async Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync()
     {
-        var colleges = await _context.Colleges.AsNoTracking().ToListAsync();
-        var programs = await _context.Programs.AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.AsNoTracking().ToListAsync();
+        var programs = await context.Programs.AsNoTracking().ToListAsync();
 
         return (colleges, programs);
     }
 
     private IQueryable<CollegeProgram> BuildQuery(string? search)
     {
-        var query = _context.CollegePrograms
+        var query = context.CollegePrograms
             .Include(cp => cp.College)
             .Include(cp => cp.Program)
             .AsNoTracking();

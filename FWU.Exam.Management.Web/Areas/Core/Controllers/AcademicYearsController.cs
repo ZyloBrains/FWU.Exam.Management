@@ -7,19 +7,12 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class AcademicYearsController : Controller
+public class AcademicYearsController(IAcademicYearService academicYearService) : Controller
 {
-    private readonly IAcademicYearService _academicYearService;
-
-    public AcademicYearsController(IAcademicYearService academicYearService)
-    {
-        _academicYearService = academicYearService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, int pageSize = 10)
     {
         // The service currently returns a List<AcademicYear>. Do not attempt to deconstruct it.
-        var (Items, TotalCount) = await _academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
+        var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
 
         // If you need the total count across all pages, update the service to return it.
         //var totalCount = items?.Count ?? 0;
@@ -49,7 +42,7 @@ public class AcademicYearsController : Controller
     // Export to CSV – only the current page
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null)
     {
-        var (Items, TotalCount) = await _academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
+        var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
 
     
         var sb = new StringBuilder();
@@ -72,7 +65,7 @@ public class AcademicYearsController : Controller
     // Export to PDF – only the current page (using browser print)
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null)
     {
-        var (Items, TotalCount) = await _academicYearService.GetAllAcademicYearsAsync(page,pageSize,search);
+        var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page,pageSize,search);
 
 
         ViewBag.CurrentPage = page;
@@ -91,7 +84,7 @@ public class AcademicYearsController : Controller
             return NotFound();
         }
 
-        var academicYear = await _academicYearService.GetAcademicYearByIdAsync(id.Value);
+        var academicYear = await academicYearService.GetAcademicYearByIdAsync(id.Value);
         if (academicYear == null)
         {
             return NotFound();
@@ -111,7 +104,7 @@ public class AcademicYearsController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _academicYearService.CreateAcademicYearAsync(academicYear);
+            await academicYearService.CreateAcademicYearAsync(academicYear);
             return RedirectToAction(nameof(Index));
         }
         return View(academicYear);
@@ -124,7 +117,7 @@ public class AcademicYearsController : Controller
             return NotFound();
         }
 
-        var academicYear = await _academicYearService.GetAcademicYearByIdAsync(id.Value);
+        var academicYear = await academicYearService.GetAcademicYearByIdAsync(id.Value);
         if (academicYear == null)
         {
             return NotFound();
@@ -145,11 +138,11 @@ public class AcademicYearsController : Controller
         {
             try
             {
-                await _academicYearService.UpdateAcademicYearAsync(academicYear);
+                await academicYearService.UpdateAcademicYearAsync(academicYear);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _academicYearService.AcademicYearExistsAsync(academicYear.Id))
+                if (!await academicYearService.AcademicYearExistsAsync(academicYear.Id))
                 {
                     return NotFound();
                 }
@@ -170,7 +163,7 @@ public class AcademicYearsController : Controller
             return NotFound();
         }
 
-        var academicYear = await _academicYearService.GetAcademicYearByIdAsync(id.Value);
+        var academicYear = await academicYearService.GetAcademicYearByIdAsync(id.Value);
         if (academicYear == null)
         {
             return NotFound();
@@ -183,7 +176,7 @@ public class AcademicYearsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _academicYearService.DeleteAcademicYearAsync(id);
+        await academicYearService.DeleteAcademicYearAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

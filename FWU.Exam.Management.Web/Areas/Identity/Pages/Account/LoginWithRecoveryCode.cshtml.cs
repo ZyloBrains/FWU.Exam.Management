@@ -9,21 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class LoginWithRecoveryCodeModel : PageModel
+public class LoginWithRecoveryCodeModel(
+    SignInManager<AppUser> signInManager,
+    UserManager<AppUser> userManager,
+    ILogger<LoginWithRecoveryCodeModel> logger) : PageModel
 {
-    private readonly SignInManager<AppUser> _signInManager;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly ILogger<LoginWithRecoveryCodeModel> _logger;
-
-    public LoginWithRecoveryCodeModel(
-        SignInManager<AppUser> signInManager,
-        UserManager<AppUser> userManager,
-        ILogger<LoginWithRecoveryCodeModel> logger)
-    {
-        _signInManager = signInManager;
-        _userManager = userManager;
-        _logger = logger;
-    }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -58,7 +48,7 @@ public class LoginWithRecoveryCodeModel : PageModel
     public async Task<IActionResult> OnGetAsync(string returnUrl = null)
     {
         // Ensure the user has gone through the username & password screen first
-        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        var user = await signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user == null)
         {
             throw new InvalidOperationException($"Unable to load two-factor authentication user.");
@@ -76,7 +66,7 @@ public class LoginWithRecoveryCodeModel : PageModel
             return Page();
         }
 
-        var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+        var user = await signInManager.GetTwoFactorAuthenticationUserAsync();
         if (user == null)
         {
             throw new InvalidOperationException($"Unable to load two-factor authentication user.");
@@ -84,23 +74,23 @@ public class LoginWithRecoveryCodeModel : PageModel
 
         var recoveryCode = Input.RecoveryCode.Replace(" ", string.Empty);
 
-        var result = await _signInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
+        var result = await signInManager.TwoFactorRecoveryCodeSignInAsync(recoveryCode);
 
-        var userId = await _userManager.GetUserIdAsync(user);
+        var userId = await userManager.GetUserIdAsync(user);
 
         if (result.Succeeded)
         {
-            _logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
+            logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
             return LocalRedirect(returnUrl ?? Url.Content("~/"));
         }
         if (result.IsLockedOut)
         {
-            _logger.LogWarning("User account locked out.");
+            logger.LogWarning("User account locked out.");
             return RedirectToPage("./Lockout");
         }
         else
         {
-            _logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", user.Id);
+            logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", user.Id);
             ModelState.AddModelError(string.Empty, "Invalid recovery code entered.");
             return Page();
         }
