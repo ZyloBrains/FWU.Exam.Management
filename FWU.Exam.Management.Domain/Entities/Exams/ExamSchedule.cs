@@ -52,9 +52,8 @@ public class ExamSchedule
     public int? LevelId { get; set; }
     public virtual Level? Level { get; set; }
 
-    public string? BatchesJson { get; set; }
-
     public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     public virtual ICollection<ExamSubjectResult>? ExamSubjectResults { get; set; }
+    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
 }
