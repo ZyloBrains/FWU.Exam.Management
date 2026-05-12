@@ -15,10 +15,9 @@ public class ExamCenter
 
     public int Code { get; set; }
 
-    public string? CollegeAssignmentsJson { get; set; }
-
     public virtual ExamSchedule? ExamSchedule { get; set; }
 
     public virtual College? College { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
+    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
 }

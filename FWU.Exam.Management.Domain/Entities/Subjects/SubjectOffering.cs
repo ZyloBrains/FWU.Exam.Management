@@ -31,4 +31,5 @@ public class SubjectOffering
     public virtual SubjectCatalog? SubjectCatalog { get; set; }
     public virtual Program? Program { get; set; }
     public virtual Semester? Semester { get; set; }
+    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
 }
