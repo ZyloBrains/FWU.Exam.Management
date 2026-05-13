@@ -195,4 +195,78 @@ public class EntranceExamApplicationService(AppDbContext context) : IEntranceExa
 
         return await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
     }
+
+    public async Task<List<EntranceSchedule>> GetAllSchedulesAsync()
+    {
+        return await context.EntranceSchedules!
+            .AsNoTracking()
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Program)
+            .Include(s => s.College)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<EntranceSchedule?> GetScheduleByIdAsync(int id)
+    {
+        return await context.EntranceSchedules!
+            .AsNoTracking()
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Program)
+            .Include(s => s.College)
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
+
+    public async Task<int> CreateScheduleAsync(EntranceSchedule schedule)
+    {
+        schedule.CreatedAt = DateTime.UtcNow;
+        context.EntranceSchedules!.Add(schedule);
+        await context.SaveChangesAsync();
+        return schedule.Id;
+    }
+
+    public async Task ToggleScheduleActiveAsync(int id)
+    {
+        var schedule = await context.EntranceSchedules!.FindAsync(id);
+        if (schedule != null)
+        {
+            schedule.IsActive = !schedule.IsActive;
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task DeleteScheduleAsync(int id)
+    {
+        var schedule = await context.EntranceSchedules!.FindAsync(id);
+        if (schedule != null)
+        {
+            context.EntranceSchedules.Remove(schedule);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<bool> IsFormOpenForProgramAsync(int programId, int collegeId, int academicYearId)
+    {
+        var now = DateTime.UtcNow;
+        return await context.EntranceSchedules!
+            .AnyAsync(s => s.ProgramId == programId
+                        && s.CollegeId == collegeId
+                        && s.AcademicYearId == academicYearId
+                        && s.IsActive
+                        && s.FormOpenDate <= now
+                        && s.FormCloseDate >= now);
+    }
+
+    public async Task<List<EntranceSchedule>> GetActiveSchedulesAsync()
+    {
+        var now = DateTime.UtcNow;
+        return await context.EntranceSchedules!
+            .AsNoTracking()
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Program)
+            .Include(s => s.College)
+            .Where(s => s.IsActive && s.FormOpenDate <= now && s.FormCloseDate >= now)
+            .OrderBy(s => s.FormCloseDate)
+            .ToListAsync();
+    }
 }

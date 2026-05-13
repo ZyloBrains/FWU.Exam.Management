@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,23 @@ namespace FWU.Exam.Management.Web.Data.Seeders;
 
 public static class ReferenceDataSeeder
 {
+    public static async Task SeedPaymentTypesAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.Set<PaymentType>().AnyAsync())
+            return;
+
+        var paymentTypes = new[]
+        {
+            new PaymentType { PaymentTypeName = "eSewa", IsActive = true },
+            new PaymentType { PaymentTypeName = "Khalti", IsActive = true },
+            new PaymentType { PaymentTypeName = "ConnectIPS", IsActive = true },
+        };
+        await context.Set<PaymentType>().AddRangeAsync(paymentTypes);
+        await context.SaveChangesAsync();
+    }
+
     public static async Task SeedReferenceDataAsync(IServiceProvider serviceProvider)
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();

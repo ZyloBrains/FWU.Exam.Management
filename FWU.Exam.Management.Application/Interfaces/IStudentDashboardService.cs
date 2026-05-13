@@ -1,0 +1,24 @@
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Entities.Subjects;
+
+namespace FWU.Exam.Management.Application.Interfaces;
+
+public interface IStudentDashboardService
+{
+    Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
+    Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student);
+    Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
+    Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
+    Task<decimal> GetPracticalChargeForProgramAsync(int programId);
+    Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId);
+    Task<List<PaymentType>> GetActivePaymentTypesAsync();
+    Task<List<ResultRecord>> GetResultRecordsAsync(string registrationNumber);
+    Task<List<ExamSubjectResult>> GetExamSubjectResultsAsync(int examRegistrationId);
+    Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId);
+    Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber);
+    Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds);
+    Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId);
+}

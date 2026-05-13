@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Payment Successful";
+}
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-md w-full text-center">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-check-circle text-3xl text-green-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Payment Successful!</h2>
+        <p class="text-sm text-gray-500 mb-6">Your payment has been processed successfully.</p>
+
+        @if (TempData["TransactionCode"] is string txnCode)
+        {
+            <div class="bg-green-50 rounded-lg p-4 mb-6 text-left">
+                <p class="text-xs text-green-600 font-medium">Transaction Code</p>
+                <p class="text-sm font-bold text-green-800">@txnCode</p>
+            </div>
+        }
+
+        @if (TempData["TransactionUuid"] is string txnUuid)
+        {
+            <div class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <p class="text-xs text-gray-600 font-medium">Transaction UUID</p>
+                <p class="text-sm font-bold text-gray-800">@txnUuid</p>
+            </div>
+        }
+
+        <a asp-action="ExamForms"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+            <i class="fas fa-arrow-left"></i> Back to Exam Forms
+        </a>
+    </div>
+</div>
