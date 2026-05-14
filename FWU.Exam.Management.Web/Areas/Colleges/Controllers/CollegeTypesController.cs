@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-public class CollegeTypesController : Controller
+public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Controller
 {
-    private readonly ICollegeTypeService _collegeTypeService;
-
-    public CollegeTypesController(ICollegeTypeService collegeTypeService)
-    {
-        _collegeTypeService = collegeTypeService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _collegeTypeService.GetCollegeTypesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeTypeService.GetCollegeTypesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -42,7 +35,7 @@ public class CollegeTypesController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var items = await _collegeTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await collegeTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("Code,Name,Remarks,Is Default,Status");
@@ -63,7 +56,7 @@ public class CollegeTypesController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var (items, totalCount) = await _collegeTypeService.GetCollegeTypesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeTypeService.GetCollegeTypesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -79,7 +72,7 @@ public class CollegeTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var collegeType = await _collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
+        var collegeType = await collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
         if (collegeType == null) return NotFound();
 
         return View(collegeType);
@@ -96,7 +89,7 @@ public class CollegeTypesController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _collegeTypeService.CreateCollegeTypeAsync(collegeType);
+            await collegeTypeService.CreateCollegeTypeAsync(collegeType);
             return RedirectToAction(nameof(Index));
         }
         return View(collegeType);
@@ -106,7 +99,7 @@ public class CollegeTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var collegeType = await _collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
+        var collegeType = await collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
         if (collegeType == null) return NotFound();
 
         return View(collegeType);
@@ -122,11 +115,11 @@ public class CollegeTypesController : Controller
         {
             try
             {
-                await _collegeTypeService.UpdateCollegeTypeAsync(collegeType);
+                await collegeTypeService.UpdateCollegeTypeAsync(collegeType);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _collegeTypeService.CollegeTypeExistsAsync(collegeType.Id))
+                if (!await collegeTypeService.CollegeTypeExistsAsync(collegeType.Id))
                     return NotFound();
                 throw;
             }
@@ -139,7 +132,7 @@ public class CollegeTypesController : Controller
     {
         if (id == null) return NotFound();
 
-        var collegeType = await _collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
+        var collegeType = await collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
         if (collegeType == null) return NotFound();
 
         return View(collegeType);
@@ -149,7 +142,7 @@ public class CollegeTypesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _collegeTypeService.DeleteCollegeTypeAsync(id);
+        await collegeTypeService.DeleteCollegeTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

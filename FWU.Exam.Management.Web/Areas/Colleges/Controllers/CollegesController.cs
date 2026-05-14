@@ -11,18 +11,11 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-public class CollegesController : Controller
+public class CollegesController(ICollegeService collegeService) : Controller
 {
-    private readonly ICollegeService _collegeService;
-
-    public CollegesController(ICollegeService collegeService)
-    {
-        _collegeService = collegeService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -45,7 +38,7 @@ public class CollegesController : Controller
 
     public async Task<IActionResult> ExportToCsv(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        var items = await _collegeService.GetFilteredItemsAsync(search, sort, sortDir);
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("College Code,College Name,College Name (Nepali),Short Name,District,Municipality/VDC,Ward No.,House No.,Website,Email,Phone 1,Phone 2,Principal Name,Principal Contact,Fax,Remarks,Is Exam Center Only,Is Active,College Type,Allocated Amount,Area,Display Order,Established Date,Closed Date");
@@ -84,7 +77,7 @@ public class CollegesController : Controller
 
     public async Task<IActionResult> ExportToPdf(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        var items = await _collegeService.GetFilteredItemsAsync(search, sort, sortDir);
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
         return View("PrintPdf", items);
     }
 
@@ -92,7 +85,7 @@ public class CollegesController : Controller
     {
         if (id == null) return NotFound();
 
-        var college = await _collegeService.GetCollegeByIdAsync(id.Value);
+        var college = await collegeService.GetCollegeByIdAsync(id.Value);
         if (college == null) return NotFound();
 
         return View(college);
@@ -100,7 +93,7 @@ public class CollegesController : Controller
 
     public async Task<IActionResult> Create()
     {
-        var collegeTypes = await _collegeService.GetCollegeTypesAsync();
+        var collegeTypes = await collegeService.GetCollegeTypesAsync();
         this.PopulateSelectLists();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code");
         return View();
@@ -117,11 +110,11 @@ public class CollegesController : Controller
 
         if (ModelState.IsValid)
         {
-            await _collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
+            await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
             return RedirectToAction(nameof(Index));
         }
 
-        var collegeTypes = await _collegeService.GetCollegeTypesAsync();
+        var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
         return View(college);
     }
@@ -130,10 +123,10 @@ public class CollegesController : Controller
     {
         if (id == null) return NotFound();
 
-        var college = await _collegeService.GetCollegeByIdAsync(id.Value);
+        var college = await collegeService.GetCollegeByIdAsync(id.Value);
         if (college == null) return NotFound();
 
-        var collegeTypes = await _collegeService.GetCollegeTypesAsync();
+        var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
         return View(college);
     }
@@ -153,11 +146,11 @@ public class CollegesController : Controller
         {
             try
             {
-                await _collegeService.UpdateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
+                await collegeService.UpdateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _collegeService.CollegeExistsAsync(college.Id))
+                if (!await collegeService.CollegeExistsAsync(college.Id))
                 {
                     return NotFound();
                 }
@@ -166,7 +159,7 @@ public class CollegesController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var collegeTypes = await _collegeService.GetCollegeTypesAsync();
+        var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
         return View(college);
     }
@@ -175,7 +168,7 @@ public class CollegesController : Controller
     {
         if (id == null) return NotFound();
 
-        var college = await _collegeService.GetCollegeByIdAsync(id.Value);
+        var college = await collegeService.GetCollegeByIdAsync(id.Value);
         if (college == null) return NotFound();
 
         return View(college);
@@ -185,7 +178,7 @@ public class CollegesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _collegeService.DeleteCollegeAsync(id);
+        await collegeService.DeleteCollegeAsync(id);
         return RedirectToAction(nameof(Index));
     }
 
@@ -193,20 +186,20 @@ public class CollegesController : Controller
     [HttpGet]
     public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
     {
-        var districts = await _collegeService.GetDistrictsByProvinceAsync(provinceId);
+        var districts = await collegeService.GetDistrictsByProvinceAsync(provinceId);
         return Json(districts);
     }
 
     [HttpGet]
     public async Task<JsonResult> GetLocalLevelsByDistrict(int districtId)
     {
-        var localLevels = await _collegeService.GetLocalLevelsByDistrictAsync(districtId);
+        var localLevels = await collegeService.GetLocalLevelsByDistrictAsync(districtId);
         return Json(localLevels);
     }
 
     private async Task PopulateSelectLists()
     {
-        var provinces = await _collegeService.GetProvincesAsync();
+        var provinces = await collegeService.GetProvincesAsync();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
 
         // This will be implemented based on the selectLists object

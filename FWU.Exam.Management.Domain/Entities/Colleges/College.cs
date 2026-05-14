@@ -63,7 +63,6 @@ public class College
 
     public virtual ICollection<CollegeProgram>? CollegePrograms { get; set; }
     public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
-    public virtual ICollection<ExamCenterDetail>? ExamCenterDetails { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
     public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }

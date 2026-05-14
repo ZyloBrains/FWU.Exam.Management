@@ -1,0 +1,306 @@
+@{
+    ViewData["Title"] = "Student Registrations";
+}
+
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <!-- Page Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8 pb-5 border-b border-gray-200">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-3xl font-bold leading-tight text-gray-900 tracking-tight">Student Registrations</h1>
+            <p class="mt-2 text-sm text-gray-500">Manage student directories, search records, and bulk import new data.</p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
+            <a asp-action="Create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                New Registration
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="mb-6 rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start shadow-sm">
+            <svg class="h-5 w-5 text-emerald-400 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-sm font-medium text-emerald-800">@successMessage</div>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
+            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+        </div>
+    }
+
+    <!-- Toolbar -->
+    <div class="mb-6 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <!-- Left: Search and Filter -->
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative w-full sm:w-80">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
+                </div>
+                <input id="searchBox" type="search" placeholder="Search students, reg. no..." class="block w-full rounded-lg border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6 transition-all" />
+            </div>
+
+            <div class="flex items-center w-full sm:w-auto">
+                <label for="pageSize" class="sr-only">Page size</label>
+                <select id="pageSize" class="block w-full sm:w-auto rounded-lg border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-teal-600 sm:text-sm sm:leading-6 cursor-pointer bg-white transition-all">
+                    <option value="10">10 entries</option>
+                    <option value="25">25 entries</option>
+                    <option value="50">50 entries</option>
+                </select>
+            </div>
+
+            <div class="flex items-center w-full sm:w-auto">
+                <button type="button" id="btnExportExcel" class="inline-flex items-center justify-center px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Export All
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Import -->
+        <form asp-action="ImportExcel" method="post" enctype="multipart/form-data" class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200 border-dashed w-full xl:w-auto justify-between">
+            <input type="file" name="file" accept=".xlsx,.xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-white file:text-gray-700 file:ring-1 file:ring-gray-300 hover:file:bg-gray-50 hover:file:text-teal-700 transition cursor-pointer" required />
+            <button type="submit" class="inline-flex items-center justify-center px-4 py-1.5 bg-gray-800 text-white rounded-md text-sm font-medium hover:bg-gray-900 transition flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                Import
+            </button>
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col relative z-0">
+
+      
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Registration No</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Student Name</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Academic Year</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Level & College</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Category</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Contact Info</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Status</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="registrationsBody" class="divide-y divide-gray-100 bg-white">
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-teal-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span class="text-sm text-gray-500 font-medium">Loading registrations...</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="flex items-center justify-between border-t border-gray-200 bg-gray-50/50 px-6 py-4">
+            <div class="text-sm text-gray-500 font-medium" id="summaryText">
+                Showing 0 of 0
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="prevPage" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" /></svg>
+                </button>
+                <span class="text-sm font-semibold text-gray-700 min-w-[3rem] text-center" id="pageInfo">1 / 1</span>
+                <button id="nextPage" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    <span class="sr-only">Next</span>
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const searchBox = document.getElementById('searchBox');
+            const pageSizeSelect = document.getElementById('pageSize');
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+            const summaryText = document.getElementById('summaryText');
+            const tbody = document.getElementById('registrationsBody');
+
+            let page = 1;
+            let pageSize = parseInt(pageSizeSelect.value, 10);
+            let searchTimeout = null;
+            let totalRecords = 0;
+
+            const loadData = async () => {
+                const query = encodeURIComponent(searchBox.value.trim());
+
+                try {
+                    const response = await fetch(`/Students/StudentRegistrations/GetPagedData?searchTerm=${query}&page=${page}&pageSize=${pageSize}`);
+                    const result = await response.json();
+
+                    totalRecords = result.totalCount;
+                    renderTable(result.data);
+                    updatePagination();
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-sm text-red-500 font-medium">Failed to load data. Please refresh the page and try again.</td></tr>';
+                }
+            };
+
+            const renderTable = (items) => {
+                if (items.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center">
+                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-4">
+                            <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                        </div>
+                        <h3 class="text-sm font-medium text-gray-900">No records found</h3>
+                        <p class="mt-1 text-sm text-gray-500">We couldn't find anything matching your search criteria.</p>
+                    </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = items.map(item => `
+                    <tr class="hover:bg-gray-50 transition-colors group">
+                        <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
+                            ${item.registrationNumber || '-'}
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-teal-100 text-sm font-bold text-teal-700">
+                                    ${(item.fullName || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div class="font-medium text-gray-900">${item.fullName || '-'}</div>
+                            </div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <span class="inline-flex items-center rounded-md bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-700/10">
+                                ${item.academicYear || '-'}
+                            </span>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="font-medium text-gray-900">${item.level || '-'}</div>
+                            <div class="text-xs text-gray-500 mt-1 max-w-[180px] truncate" title="${item.college || ''}">${item.college || '-'}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                                ${item.category || '-'}
+                            </span>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <div class="text-gray-900">${item.contactNumber || '-'}</div>
+                            <div class="text-gray-500 text-xs mt-1">${item.email || '-'}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                                item.status === 'Approved' ? 'bg-green-50 text-green-700 ring-green-600/20' :
+                                item.status === 'Rejected' ? 'bg-red-50 text-red-700 ring-red-600/20' :
+                                'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
+                            }">
+                                ${item.status || 'Pending'}
+                            </span>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2 text-gray-400">
+                                ${item.status === 'Pending' || !item.status ? `
+                                <button onclick="window.updateRegStatus(${item.id}, 'Approved')" class="rounded hover:bg-green-50 hover:text-green-600 p-1.5 transition-colors cursor-pointer" title="Approve">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                </button>
+                                <button onclick="window.updateRegStatus(${item.id}, 'Rejected')" class="rounded hover:bg-rose-50 hover:text-rose-600 p-1.5 transition-colors cursor-pointer" title="Reject">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                                ` : ''}
+                                <a href="/Students/StudentRegistrations/Details/${item.id}" class="rounded hover:bg-sky-50 hover:text-sky-600 p-1.5 transition-colors" title="Details">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                </a>
+                                <a href="/Students/StudentRegistrations/Edit/${item.id}" class="rounded hover:bg-indigo-50 hover:text-indigo-600 p-1.5 transition-colors" title="Edit">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                </a>
+                                <a href="/Students/StudentRegistrations/Delete/${item.id}" class="rounded hover:bg-red-50 hover:text-red-600 p-1.5 transition-colors" title="Delete">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            const updatePagination = () => {
+                const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+
+                const start = (page - 1) * pageSize + 1;
+                const end = Math.min(page * pageSize, totalRecords);
+
+                pageInfo.textContent = `${page} / ${totalPages}`;
+                summaryText.innerHTML = `Showing <span class="font-semibold text-gray-900">${totalRecords === 0 ? 0 : start}</span> to <span class="font-semibold text-gray-900">${end}</span> of <span class="font-semibold text-gray-900">${totalRecords}</span> entries`;
+
+                prevBtn.disabled = page <= 1;
+                nextBtn.disabled = page >= totalPages;
+            };
+
+            // Debounced modern search
+            searchBox.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    page = 1;
+                    loadData();
+                }, 400); // 400ms delay to prevent server spam
+            });
+
+            pageSizeSelect.addEventListener('change', function () {
+                pageSize = parseInt(this.value, 10);
+                page = 1;
+                loadData();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (page > 1) {
+                    page--;
+                    loadData();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(totalRecords / pageSize);
+                if (page < totalPages) {
+                    page++;
+                    loadData();
+                }
+            });
+
+            document.getElementById('btnExportExcel').addEventListener('click', () => {
+                const query = encodeURIComponent(searchBox.value.trim());
+                window.location.href = `/Students/StudentRegistrations/ExportExcel?searchTerm=${query}`;
+            });
+
+            // Make it available globally for inline onclick handlers
+            window.updateRegStatus = async (id, status) => {
+                if (!confirm(`Are you sure you want to mark this registration as ${status}?`)) return;
+
+                try {
+                    const response = await fetch(`/Students/StudentRegistrations/UpdateStatus?id=${id}&status=${status}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                    });
+
+                    if (response.ok) {
+                        loadData(); // Refresh current page
+                    } else {
+                        alert('Failed to update status. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Status update failed:', error);
+                    alert('An error occurred. Please configure the server properly.');
+                }
+            };
+
+            // Initial load
+            loadData();
+        })();
+    </script>
+}

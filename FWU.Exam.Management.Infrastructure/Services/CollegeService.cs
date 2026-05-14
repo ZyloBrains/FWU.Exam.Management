@@ -9,15 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeService : ICollegeService
+public class CollegeService(AppDbContext context) : ICollegeService
 {
-    private readonly AppDbContext _context;
-
-    public CollegeService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search);
@@ -49,7 +42,7 @@ public class CollegeService : ICollegeService
 
     public async Task<College?> GetCollegeByIdAsync(int id)
     {
-        return await _context.Colleges
+        return await context.Colleges
             .Include(c => c.CollegeType)
             .Include(c => c.Address)
             .ThenInclude(a => a.LocalLevel)
@@ -71,13 +64,13 @@ public class CollegeService : ICollegeService
                 AddressType = AddressType.Current,
                 IsActive = true
             };
-            _context.Addresses.Add(address);
-            await _context.SaveChangesAsync();
+            context.Addresses.Add(address);
+            await context.SaveChangesAsync();
             college.AddressId = address.Id;
         }
 
-        _context.Colleges.Add(college);
-        await _context.SaveChangesAsync();
+        context.Colleges.Add(college);
+        await context.SaveChangesAsync();
         return college.Id;
     }
 
@@ -85,7 +78,7 @@ public class CollegeService : ICollegeService
     {
         if (!string.IsNullOrEmpty(localLevelId))
         {
-            var address = await _context.Addresses.FindAsync(college.AddressId);
+            var address = await context.Addresses.FindAsync(college.AddressId);
             if (address == null)
             {
                 address = new Address
@@ -97,8 +90,8 @@ public class CollegeService : ICollegeService
                     AddressType = AddressType.Current,
                     IsActive = true
                 };
-                _context.Addresses.Add(address);
-                await _context.SaveChangesAsync();
+                context.Addresses.Add(address);
+                await context.SaveChangesAsync();
                 college.AddressId = address.Id;
             }
             else
@@ -107,38 +100,38 @@ public class CollegeService : ICollegeService
                 address.WardNumber = string.IsNullOrEmpty(wardNumber) ? null : int.Parse(wardNumber);
                 address.ToleStreet = toleStreet;
                 address.HouseNumber = houseNumber;
-                _context.Addresses.Update(address);
+                context.Addresses.Update(address);
             }
         }
 
-        _context.Colleges.Update(college);
-        await _context.SaveChangesAsync();
+        context.Colleges.Update(college);
+        await context.SaveChangesAsync();
         return college.Id;
     }
 
     public async Task DeleteCollegeAsync(int id)
     {
-        var college = await _context.Colleges.FindAsync(id);
+        var college = await context.Colleges.FindAsync(id);
         if (college != null)
         {
-            _context.Colleges.Remove(college);
-            await _context.SaveChangesAsync();
+            context.Colleges.Remove(college);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> CollegeExistsAsync(int id)
     {
-        return await _context.Colleges.AnyAsync(c => c.Id == id);
+        return await context.Colleges.AnyAsync(c => c.Id == id);
     }
 
     public async Task<List<CollegeType>> GetCollegeTypesAsync()
     {
-        return await _context.CollegeTypes.AsNoTracking().ToListAsync();
+        return await context.CollegeTypes.AsNoTracking().ToListAsync();
     }
 
     private IQueryable<College> BuildQuery(string? search)
     {
-        var query = _context.Colleges
+        var query = context.Colleges
             .Include(c => c.CollegeType)
             .Include(c => c.Address)
             .ThenInclude(a => a.LocalLevel)
@@ -181,7 +174,7 @@ public class CollegeService : ICollegeService
 
     public async Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId)
     {
-        return await _context.Districts
+        return await context.Districts
             .Where(d => d.ProvinceId == provinceId && d.IsActive)
             .Select(d => new SelectOption { Id = d.Id, Name = d.DistrictName })
             .ToListAsync();
@@ -189,7 +182,7 @@ public class CollegeService : ICollegeService
 
     public async Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId)
     {
-        return await _context.LocalLevels
+        return await context.LocalLevels
             .Where(l => l.DistrictId == districtId && l.IsActive)
             .Select(l => new SelectOption { Id = l.Id, Name = l.LocalLevelName })
             .ToListAsync();
@@ -197,7 +190,7 @@ public class CollegeService : ICollegeService
 
     public async Task<List<Province>> GetProvincesAsync()
     {
-        var provinces = await _context.Provinces.AsNoTracking().ToListAsync();
+        var provinces = await context.Provinces.AsNoTracking().ToListAsync();
         return provinces;
     }
 }

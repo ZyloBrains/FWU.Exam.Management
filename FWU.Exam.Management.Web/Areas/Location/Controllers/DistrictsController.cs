@@ -8,19 +8,13 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
-public class DistrictsController : Controller
+public class DistrictsController(IDistrictService districtService) : Controller
 {
-    private readonly IDistrictService _districtService;
-
-    public DistrictsController(IDistrictService districtService)
-    {
-        _districtService = districtService;
-    }
 
     // GET: Districts with pagination, search, and sorting
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DistrictName", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _districtService.GetDistrictsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await districtService.GetDistrictsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -45,7 +39,7 @@ public class DistrictsController : Controller
     // Export to CSV (Current Page with pagination)
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "DistrictName", string sortDir = "asc")
     {
-        var items = await _districtService.GetFilteredDistrictsAsync(page, pageSize, search, sort, sortDir);
+        var items = await districtService.GetFilteredDistrictsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
 
@@ -67,7 +61,7 @@ public class DistrictsController : Controller
     // Export to PDF (Current Page with pagination)
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "DistrictName", string sortDir = "asc")
     {
-        var (items, totalCount) = await _districtService.GetDistrictsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await districtService.GetDistrictsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -82,7 +76,7 @@ public class DistrictsController : Controller
     // GET: Districts/Create
     public async Task<IActionResult> Create()
     {
-        var provinces = await _districtService.GetActiveProvincesAsync();
+        var provinces = await districtService.GetActiveProvincesAsync();
         ViewData["ProvinceId"] = new SelectList(provinces, "Id", "ProvinceName");
         return View();
     }
@@ -94,11 +88,11 @@ public class DistrictsController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _districtService.CreateDistrictAsync(district);
+            await districtService.CreateDistrictAsync(district);
             return RedirectToAction(nameof(Index));
         }
 
-        var provinces = await _districtService.GetActiveProvincesAsync();
+        var provinces = await districtService.GetActiveProvincesAsync();
         ViewData["ProvinceId"] = new SelectList(provinces, "Id", "ProvinceName", district.ProvinceId);
         return View(district);
     }
@@ -111,13 +105,13 @@ public class DistrictsController : Controller
             return NotFound();
         }
 
-        var district = await _districtService.GetDistrictByIdAsync(id.Value);
+        var district = await districtService.GetDistrictByIdAsync(id.Value);
         if (district == null)
         {
             return NotFound();
         }
 
-        var provinces = await _districtService.GetActiveProvincesAsync();
+        var provinces = await districtService.GetActiveProvincesAsync();
         ViewData["ProvinceId"] = new SelectList(provinces, "Id", "ProvinceName", district.ProvinceId);
         return View(district);
     }
@@ -136,11 +130,11 @@ public class DistrictsController : Controller
         {
             try
             {
-                await _districtService.UpdateDistrictAsync(district);
+                await districtService.UpdateDistrictAsync(district);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _districtService.DistrictExistsAsync(district.Id))
+                if (!await districtService.DistrictExistsAsync(district.Id))
                 {
                     return NotFound();
                 }
@@ -152,7 +146,7 @@ public class DistrictsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var provinces = await _districtService.GetActiveProvincesAsync();
+        var provinces = await districtService.GetActiveProvincesAsync();
         ViewData["ProvinceId"] = new SelectList(provinces, "Id", "ProvinceName", district.ProvinceId);
         return View(district);
     }
@@ -165,7 +159,7 @@ public class DistrictsController : Controller
             return NotFound();
         }
 
-        var district = await _districtService.GetDistrictByIdAsync(id.Value);
+        var district = await districtService.GetDistrictByIdAsync(id.Value);
         if (district == null)
         {
             return NotFound();
@@ -179,7 +173,7 @@ public class DistrictsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _districtService.DeleteDistrictAsync(id);
+        await districtService.DeleteDistrictAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

@@ -8,19 +8,13 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
-public class ProvincesController : Controller
+public class ProvincesController(IProvinceService provinceService) : Controller
 {
-    private readonly IProvinceService _provinceService;
-
-    public ProvincesController(IProvinceService provinceService)
-    {
-        _provinceService = provinceService;
-    }
 
     // GET: Provinces with pagination, search, and sorting
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProvinceName", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _provinceService.GetProvincesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await provinceService.GetProvincesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -45,7 +39,7 @@ public class ProvincesController : Controller
     // Export to CSV (Current Page with pagination)
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
     {
-        var items = await _provinceService.GetFilteredProvincesAsync(page, pageSize, search, sort, sortDir);
+        var items = await provinceService.GetFilteredProvincesAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
 
@@ -66,7 +60,7 @@ public class ProvincesController : Controller
     // Export to PDF (Current Page with pagination)
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProvinceName", string sortDir = "asc")
     {
-        var (items, totalCount) = await _provinceService.GetProvincesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await provinceService.GetProvincesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -86,7 +80,7 @@ public class ProvincesController : Controller
             return NotFound();
         }
 
-        var province = await _provinceService.GetProvinceByIdAsync(id.Value);
+        var province = await provinceService.GetProvinceByIdAsync(id.Value);
         if (province == null)
         {
             return NotFound();
@@ -108,7 +102,7 @@ public class ProvincesController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _provinceService.CreateProvinceAsync(province);
+            await provinceService.CreateProvinceAsync(province);
             return RedirectToAction(nameof(Index));
         }
         return View(province);
@@ -122,7 +116,7 @@ public class ProvincesController : Controller
             return NotFound();
         }
 
-        var province = await _provinceService.GetProvinceByIdAsync(id.Value);
+        var province = await provinceService.GetProvinceByIdAsync(id.Value);
         if (province == null)
         {
             return NotFound();
@@ -144,11 +138,11 @@ public class ProvincesController : Controller
         {
             try
             {
-                await _provinceService.UpdateProvinceAsync(province);
+                await provinceService.UpdateProvinceAsync(province);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _provinceService.ProvinceExistsAsync(province.Id))
+                if (!await provinceService.ProvinceExistsAsync(province.Id))
                 {
                     return NotFound();
                 }
@@ -170,7 +164,7 @@ public class ProvincesController : Controller
             return NotFound();
         }
 
-        var province = await _provinceService.GetProvinceByIdAsync(id.Value);
+        var province = await provinceService.GetProvinceByIdAsync(id.Value);
         if (province == null)
         {
             return NotFound();
@@ -184,7 +178,7 @@ public class ProvincesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _provinceService.DeleteProvinceAsync(id);
+        await provinceService.DeleteProvinceAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

@@ -6,15 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ExamScheduleService : IExamScheduleService
+public class ExamScheduleService(AppDbContext context) : IExamScheduleService
 {
-    private readonly AppDbContext _context;
-
-    public ExamScheduleService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search, sort, sortDir);
@@ -83,7 +76,7 @@ public class ExamScheduleService : IExamScheduleService
 
     public async Task<ExamSchedule?> GetExamScheduleByIdAsync(int id)
     {
-        return await _context.ExamSchedules
+        return await context.ExamSchedules
             .AsNoTracking()
             .Where(e => e.Id == id)
             .Select(e => new ExamSchedule
@@ -114,48 +107,50 @@ public class ExamScheduleService : IExamScheduleService
 
     public async Task CreateExamScheduleAsync(ExamSchedule examSchedule)
     {
-        _context.ExamSchedules.Add(examSchedule);
-        await _context.SaveChangesAsync();
+        context.ExamSchedules.Add(examSchedule);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateExamScheduleAsync(ExamSchedule examSchedule)
     {
-        _context.ExamSchedules.Update(examSchedule);
-        await _context.SaveChangesAsync();
+        context.ExamSchedules.Update(examSchedule);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteExamScheduleAsync(int id)
     {
-        var examSchedule = await _context.ExamSchedules.FindAsync(id);
+        var examSchedule = await context.ExamSchedules.FindAsync(id);
         if (examSchedule != null)
         {
-            _context.ExamSchedules.Remove(examSchedule);
-            await _context.SaveChangesAsync();
+            context.ExamSchedules.Remove(examSchedule);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> ExamScheduleExistsAsync(int id)
     {
-        return await _context.ExamSchedules.AnyAsync(e => e.Id == id);
+        return await context.ExamSchedules.AnyAsync(e => e.Id == id);
     }
 
     public ExamScheduleSelectListsDto GetSelectListData(ExamSchedule? examSchedule = null)
     {
-        var academicYears = _context.AcademicYears.AsNoTracking().ToList();
-        var examTypes = _context.ExamTypes.AsNoTracking().ToList();
-        var programs = _context.Programs.AsNoTracking().ToList();
+        var academicYears = context.AcademicYears.AsNoTracking().ToList();
+        var examTypes = context.ExamTypes.AsNoTracking().ToList();
+        var programs = context.Programs.AsNoTracking().ToList();
+        var semesters = context.Semesters.AsNoTracking().ToList();
 
         return new ExamScheduleSelectListsDto
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
-            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList()
+            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
+            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name }).ToList()
         };
     }
 
     private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir)
     {
-        var query = _context.ExamSchedules.AsNoTracking();
+        var query = context.ExamSchedules.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {

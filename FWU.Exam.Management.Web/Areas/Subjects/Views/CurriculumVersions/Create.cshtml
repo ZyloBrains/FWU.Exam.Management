@@ -1,0 +1,73 @@
+@model FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion
+
+@{
+    ViewData["Title"] = "Create Curriculum Version";
+}
+
+<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-code-branch text-orange-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create Curriculum Version</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="md:col-span-2">
+                    <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1">Version Name</label>
+                    <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="e.g., 2024-25 Revised, New Syllabus v3" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1">Program</label>
+                    <select asp-for="ProgramId" asp-items="ViewBag.ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        <option value="">-- Select Program --</option>
+                    </select>
+                    <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="EffectiveAcademicYearId" class="text-sm font-medium text-gray-700 block mb-1">Effective Academic Year</label>
+                    <select asp-for="EffectiveAcademicYearId" asp-items="ViewBag.EffectiveAcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        <option value="">-- Select Academic Year --</option>
+                    </select>
+                    <span asp-validation-for="EffectiveAcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div class="md:col-span-2">
+                    <label asp-for="Description" class="text-sm font-medium text-gray-700 block mb-1">Description</label>
+                    <textarea asp-for="Description" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter description (optional)"></textarea>
+                    <span asp-validation-for="Description" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsActive" type="checkbox" checked="checked" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

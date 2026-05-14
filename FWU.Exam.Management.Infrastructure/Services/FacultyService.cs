@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class FacultyService : IFacultyService
+public class FacultyService(AppDbContext context) : IFacultyService
 {
-    private readonly AppDbContext _context;
-
-    public FacultyService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<Faculty> Items, int TotalCount)> GetFacultiesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Faculties.AsNoTracking();
+        var query = context.Faculties.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -45,7 +38,7 @@ public class FacultyService : IFacultyService
 
     public async Task<List<Faculty>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Faculties.AsNoTracking();
+        var query = context.Faculties.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -65,34 +58,34 @@ public class FacultyService : IFacultyService
 
     public async Task<Faculty?> GetFacultyByIdAsync(int id)
     {
-        return await _context.Faculties.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.Faculties.FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task CreateFacultyAsync(Faculty faculty)
     {
-        _context.Faculties.Add(faculty);
-        await _context.SaveChangesAsync();
+        context.Faculties.Add(faculty);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateFacultyAsync(Faculty faculty)
     {
-        _context.Faculties.Update(faculty);
-        await _context.SaveChangesAsync();
+        context.Faculties.Update(faculty);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteFacultyAsync(int id)
     {
-        var faculty = await _context.Faculties.FindAsync(id);
+        var faculty = await context.Faculties.FindAsync(id);
         if (faculty != null)
         {
-            _context.Faculties.Remove(faculty);
-            await _context.SaveChangesAsync();
+            context.Faculties.Remove(faculty);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> FacultyExistsAsync(int id)
     {
-        return await _context.Faculties.AnyAsync(e => e.Id == id);
+        return await context.Faculties.AnyAsync(e => e.Id == id);
     }
 
     private static Expression<Func<Faculty, object>> GetSortProperty(string sort)

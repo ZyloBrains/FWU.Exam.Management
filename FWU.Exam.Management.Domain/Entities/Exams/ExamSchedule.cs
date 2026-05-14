@@ -1,5 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
@@ -33,18 +34,26 @@ public class ExamSchedule
     [MaxLength(50)]
     public string? ExamScheduleCode { get; set; }
 
+    [Display(Name = "Academic Year")]
     public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
 
+    [Display(Name = "Program")]
     public int ProgramId { get; set; }
     public virtual Program? Program { get; set; }
 
+    [Display(Name = "Semester")]
     public int SemesterId { get; set; }
     public virtual Semester? Semester { get; set; }
 
     public int ExamTypeId { get; set; }
     public virtual ExamType? ExamType { get; set; }
 
+    public int? LevelId { get; set; }
+    public virtual Level? Level { get; set; }
+
     public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
+    public virtual ICollection<ExamSubjectResult>? ExamSubjectResults { get; set; }
+    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
 }

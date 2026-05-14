@@ -8,18 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ProgramService : IProgramService
+public class ProgramService(AppDbContext context) : IProgramService
 {
-    private readonly AppDbContext _context;
-
-    public ProgramService(AppDbContext context)
-    {
-        _context = context;
-    }
-
     public async Task<(List<Program> Items, int TotalCount)> GetProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Programs
+        var query = context.Programs
             .Include(p => p.Board)
             .Include(p => p.Faculty)
             .Include(p => p.Level)
@@ -52,7 +45,7 @@ public class ProgramService : IProgramService
 
     public async Task<List<Program>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = _context.Programs
+        var query = context.Programs
             .Include(p => p.Board)
             .Include(p => p.Faculty)
             .Include(p => p.Level)
@@ -79,7 +72,7 @@ public class ProgramService : IProgramService
 
     public async Task<Program?> GetProgramByIdAsync(int id)
     {
-        return await _context.Programs
+        return await context.Programs
             .Include(p => p.Board)
             .Include(p => p.Faculty)
             .Include(p => p.Level)
@@ -88,36 +81,36 @@ public class ProgramService : IProgramService
 
     public async Task CreateProgramAsync(Program program)
     {
-        _context.Programs.Add(program);
-        await _context.SaveChangesAsync();
+        context.Programs.Add(program);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateProgramAsync(Program program)
     {
-        _context.Programs.Update(program);
-        await _context.SaveChangesAsync();
+        context.Programs.Update(program);
+        await context.SaveChangesAsync();
     }
 
     public async Task DeleteProgramAsync(int id)
     {
-        var program = await _context.Programs.FindAsync(id);
+        var program = await context.Programs.FindAsync(id);
         if (program != null)
         {
-            _context.Programs.Remove(program);
-            await _context.SaveChangesAsync();
+            context.Programs.Remove(program);
+            await context.SaveChangesAsync();
         }
     }
 
     public async Task<bool> ProgramExistsAsync(int id)
     {
-        return await _context.Programs.AnyAsync(e => e.Id == id);
+        return await context.Programs.AnyAsync(e => e.Id == id);
     }
 
     public async Task<(List<Board> Boards, List<Faculty> Faculties, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? facultyId = null, int? levelId = null)
     {
-        var boards = await _context.Boards.AsNoTracking().ToListAsync();
-        var faculties = await _context.Faculties.AsNoTracking().ToListAsync();
-        var levels = await _context.Levels.AsNoTracking().ToListAsync();
+        var boards = await context.Boards.AsNoTracking().ToListAsync();
+        var faculties = await context.Faculties.AsNoTracking().ToListAsync();
+        var levels = await context.Levels.AsNoTracking().ToListAsync();
 
         return (boards, faculties, levels);
     }

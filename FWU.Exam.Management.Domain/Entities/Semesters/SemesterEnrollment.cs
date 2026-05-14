@@ -27,5 +27,4 @@ public class SemesterEnrollment
     public virtual StudentAdmission? StudentAdmission { get; set; }
     public virtual Semester? Semester { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-    public virtual ICollection<ExamSubjectRegistrationInternal>? ExamSubjectRegistrationInternals { get; set; }
 }

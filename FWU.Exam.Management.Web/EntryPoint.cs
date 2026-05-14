@@ -46,7 +46,16 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
         builder.Services.AddScoped<IDistrictService, DistrictService>();
         builder.Services.AddScoped<IProvinceService, ProvinceService>();
+        builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+        builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
+        builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
+        builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
+        builder.Services.AddScoped<IStudentCategoryService, StudentCategoryService>();
+        builder.Services.AddScoped<ISemesterService, SemesterService>();
+        builder.Services.AddScoped<IBankService, BankService>();
+        builder.Services.AddScoped<IPaymentTypeService, PaymentTypeService>();
+        builder.Services.AddScoped<IBillTitleService, BillTitleService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -83,8 +92,9 @@ public partial class EntryPoint
         using (var scope = app.Services.CreateScope())
         {
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);            
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 

@@ -9,18 +9,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class ExamSchedulesController : Controller
+public class ExamSchedulesController(IExamScheduleService examScheduleService) : Controller
 {
-    private readonly IExamScheduleService _examScheduleService;
-
-    public ExamSchedulesController(IExamScheduleService examScheduleService)
-    {
-        _examScheduleService = examScheduleService;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -43,7 +36,7 @@ public class ExamSchedulesController : Controller
 
     public async Task<IActionResult> ExportToCsv(string search = null)
     {
-        var items = await _examScheduleService.GetFilteredItemsAsync(search);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
@@ -74,7 +67,7 @@ public class ExamSchedulesController : Controller
 
     public async Task<IActionResult> ExportToPdf(string search = null)
     {
-        var items = await _examScheduleService.GetFilteredItemsAsync(search);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 
@@ -82,7 +75,7 @@ public class ExamSchedulesController : Controller
     {
         if (id == null) return NotFound();
 
-        var examSchedule = await _examScheduleService.GetExamScheduleByIdAsync(id.Value);
+        var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
         return View(examSchedule);
@@ -90,21 +83,21 @@ public class ExamSchedulesController : Controller
 
     public IActionResult Create()
     {
-        var selectLists = _examScheduleService.GetSelectListData();
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists);
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,LevelId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExamScheduleParentId,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (ModelState.IsValid)
         {
-            await _examScheduleService.CreateExamScheduleAsync(examSchedule);
+            await examScheduleService.CreateExamScheduleAsync(examSchedule);
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = _examScheduleService.GetSelectListData();
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -113,17 +106,17 @@ public class ExamSchedulesController : Controller
     {
         if (id == null) return NotFound();
 
-        var examSchedule = await _examScheduleService.GetExamScheduleByIdAsync(id.Value);
+        var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var selectLists = _examScheduleService.GetSelectListData();
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,LevelId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExamScheduleParentId,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
 
@@ -131,17 +124,17 @@ public class ExamSchedulesController : Controller
         {
             try
             {
-                await _examScheduleService.UpdateExamScheduleAsync(examSchedule);
+                await examScheduleService.UpdateExamScheduleAsync(examSchedule);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _examScheduleService.ExamScheduleExistsAsync(examSchedule.Id))
+                if (!await examScheduleService.ExamScheduleExistsAsync(examSchedule.Id))
                     return NotFound();
                 throw;
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = _examScheduleService.GetSelectListData();
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -150,7 +143,7 @@ public class ExamSchedulesController : Controller
     {
         if (id == null) return NotFound();
 
-        var examSchedule = await _examScheduleService.GetExamScheduleByIdAsync(id.Value);
+        var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
         return View(examSchedule);
@@ -160,7 +153,7 @@ public class ExamSchedulesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _examScheduleService.DeleteExamScheduleAsync(id);
+        await examScheduleService.DeleteExamScheduleAsync(id);
         return RedirectToAction(nameof(Index));
     }
 
@@ -169,5 +162,6 @@ public class ExamSchedulesController : Controller
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
         ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
+        ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
     }
 }
