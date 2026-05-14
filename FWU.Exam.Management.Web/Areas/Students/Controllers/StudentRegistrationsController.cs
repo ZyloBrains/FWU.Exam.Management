@@ -142,6 +142,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             return RedirectToAction(nameof(Index));
         }
 
+        var fileExtension = Path.GetExtension(file.FileName);
+        if (!string.Equals(fileExtension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["ErrorMessage"] = "Only .xlsx files are supported.";
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
             using (var stream = new MemoryStream())
