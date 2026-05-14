@@ -145,7 +145,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         var fileExtension = Path.GetExtension(file.FileName);
         if (!string.Equals(fileExtension, ".xlsx", StringComparison.OrdinalIgnoreCase))
         {
-            TempData["ErrorMessage"] = "Only .xlsx files are supported.";
+            TempData["ErrorMessage"] = "Please upload an Excel file in .xlsx format.";
             return RedirectToAction(nameof(Index));
         }
 
