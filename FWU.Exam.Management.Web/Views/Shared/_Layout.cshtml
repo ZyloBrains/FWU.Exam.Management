@@ -10,11 +10,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@(ViewData["Title"] ?? "Admin Dashboard") - FWU Examination System</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Core Dependencies -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
@@ -32,40 +34,19 @@
         }
     </script>
     <style>
-        /* Enhanced responsive utilities */
-        @@media (max-width: 768px) {
-            .mobile-card-view {
-                display: block !important;
-            }
+        /* AlpineJS Cloak */
+        [x-cloak] { display: none !important; }
 
-            .mobile-hide-table {
-                display: none !important;
-            }
-
-            .text-responsive {
-                font-size: 0.875rem;
-            }
-        }
-
-        /* Custom sidebar animations and styles */
+        /* Custom sidebar animations and styles applied to _SideMenu items */
         #sidebar {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
 
         @@media (min-width: 1024px) {
-            #sidebar.sidebar-collapsed {
-                width: 5rem !important;
-            }
-
-            #sidebar.sidebar-collapsed .sidebar-brand-full {
-                display: none !important;
-            }
-
-            #sidebar.sidebar-collapsed .sidebar-brand-collapsed {
-                display: flex !important;
-            }
-
+            #sidebar.sidebar-collapsed .sidebar-brand-full { display: none !important; }
+            #sidebar.sidebar-collapsed .sidebar-brand-collapsed { display: flex !important; }
+            
             #sidebar.sidebar-collapsed nav li > p,
             #sidebar.sidebar-collapsed nav a span,
             #sidebar.sidebar-collapsed nav button span {
@@ -78,60 +59,23 @@
                 padding-left: 0.75rem !important;
                 padding-right: 0.75rem !important;
             }
+            
+            #sidebar.sidebar-collapsed nav i.fa-chevron-down {
+                display: none !important;
+            }
         }
 
         /* Sidebar scrollbar styling */
-        #sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
+        #sidebar::-webkit-scrollbar { width: 4px; }
+        #sidebar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        #sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        #sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
 
-        #sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        #sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-
-            #sidebar::-webkit-scrollbar-thumb:hover {
-                background: rgba(255, 255, 255, 0.5);
-            }
-
-        /* Mobile-first table improvements */
-        @@media (max-width: 640px) {
-            .table-responsive {
-                font-size: 0.75rem;
-            }
-
-                .table-responsive th,
-                .table-responsive td {
-                    padding: 0.5rem 0.25rem;
-                }
-        }
-            
-        /* Smooth overlay fade */
-        #sidebar-overlay {
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        /* Mobile menu item responsive text */
-        @@media (max-width: 640px) {
-            #sidebar nav li a span,
-            #sidebar nav li a button span {
-                font-size: 0.875rem;
-            }
-
-            #sidebar nav li a,
-            #sidebar nav li button {
-                padding: 0.5rem 0.75rem !important;
-            }
-        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body class="bg-gray-50 font-poppins">
+<body class="bg-gray-50 text-gray-800 font-poppins antialiased">
     @{
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
@@ -156,30 +100,59 @@
                 : "User";
         }
     }
-    <div class="flex h-screen overflow-hidden">
+
+    <!-- Root App Container with Alpine State -->
+    <div x-data="{ 
+            mobileSidebarOpen: false, 
+            desktopCollapsed: localStorage.getItem('sidebar-collapsed') === 'true' 
+         }" 
+         x-init="$watch('desktopCollapsed', val => localStorage.setItem('sidebar-collapsed', val))"
+         class="flex h-screen overflow-hidden">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div x-show="mobileSidebarOpen" 
+             x-transition.opacity.duration.300ms
+             x-on:click="mobileSidebarOpen = false"
+             class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden" x-cloak>
+        </div>
+
         <!-- Sidebar -->
         <aside id="sidebar"
-               class="bg-admin-blue text-white w-72 h-screen overflow-y-auto transform transition-all duration-300 ease-in-out lg:translate-x-0 -translate-x-full fixed lg:static z-30 lg:w-72 md:w-72 sm:w-72">
-            <div class="p-4 lg:p-6 border-b border-admin-blue-light flex items-center space-x-3 lg:space-x-4 sticky top-0 bg-admin-blue z-10">
-                <!-- Desktop: show org logo when available -->
-                <img src="@Url.Content(sidebarLogoPath)" alt="Organization Logo" class="sidebar-brand-full hidden lg:block h-20 w-80 object-contain">
+               class="bg-admin-blue text-white h-screen flex flex-col fixed lg:relative z-40 transform transition-transform duration-300 ease-in-out shrink-0"
+               x-bind:class="{ 
+                   'translate-x-0 shadow-2xl': mobileSidebarOpen, 
+                   '-translate-x-full lg:translate-x-0': !mobileSidebarOpen, 
+                   'sidebar-collapsed lg:w-20': desktopCollapsed, 
+                   'lg:w-72 w-72': !desktopCollapsed 
+               }">
+            
+            <div class="px-4 py-5 lg:p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-admin-blue/95 backdrop-blur z-10 min-h-[5rem]">
+                <!-- Desktop: Full Logo -->
+                <img src="@Url.Content(sidebarLogoPath)" alt="Organization Logo" class="sidebar-brand-full hidden lg:block h-12 lg:h-16 w-full object-contain object-left">
 
-                <!-- Desktop collapsed: show icon -->
+                <!-- Desktop: Collapsed Icon Logo -->
                 <div class="sidebar-brand-collapsed hidden w-full items-center justify-center">
-                    <i class="fas fa-graduation-cap text-2xl text-blue-200"></i>
-                </div>
-
-                <!-- Mobile: show icon + text -->
-                <div class="flex items-center gap-3 lg:hidden">
-                    <img src="@Url.Content(sidebarLogoPath)" alt="Organization Logo" class="h-10 w-12 object-contain rounded" />
-                    <div class="min-w-0">
-                        <h2 class="text-base font-bold truncate">FWU OCE</h2>
-                        <p class="text-xs text-blue-100 truncate">FWU Examination System</p>
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-xl text-blue-200"></i>
                     </div>
                 </div>
+
+                <!-- Mobile: Logo + Text -->
+                <div class="flex items-center gap-3 lg:hidden">
+                    <img src="@Url.Content(sidebarLogoPath)" alt="Logo" class="h-10 w-auto object-contain rounded" />
+                    <div class="min-w-0">
+                        <h2 class="text-sm font-bold truncate text-white leading-tight">FWU OCE</h2>
+                        <p class="text-xs text-blue-200 truncate truncate">Exam System</p>
+                    </div>
+                </div>
+
+                <!-- Mobile Close Button -->
+                <button x-on:click="mobileSidebarOpen = false" class="lg:hidden text-blue-200 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
             </div>
 
-            <nav class="mt-4 lg:mt-4 pb-6">
+            <nav class="flex-1 overflow-y-auto py-4 custom-scrollbar">
                 @if (IsSectionDefined("SideMenu"))
                 {
                     @RenderSection("SideMenu")
@@ -191,347 +164,102 @@
             </nav>
         </aside>
 
-        <div class="flex flex-col flex-1 overflow-hidden">
-            <header class="bg-white shadow-sm ">
-                <div class="flex items-center w-full">
-                    <div class="flex-1">
-                        <!-- Mobile View (optimized for small screens) -->
-                        <div class="lg:hidden bg-gradient-to-r from-blue-600 to-blue-800  shadow-lg p-4 text-white">
-                            <div class="flex items-center justify-between gap-3">
-                                <!-- Left: Toggle + Welcome (compact) -->
-                                <div class="flex items-center gap-3 flex-1 min-w-0">
-                                    <!-- Mobile Sidebar Toggle Button -->
-                                    <button id="sidebar-toggle" aria-controls="sidebar" aria-expanded="false"
-                                            class="flex-shrink-0 p-2 rounded-md bg-white/15 hover:bg-white/25 active:scale-95 transition-all duration-200">
-                                        <i id="sidebar-open-icon" class="fas fa-bars text-white text-lg"></i>
-                                        <i id="sidebar-close-icon" class="fas fa-times text-white text-lg hidden"></i>
-                                    </button>
+        <!-- Main Content Area -->
+        <div class="flex flex-col flex-1 overflow-hidden w-full relative z-10">
+            <!-- Header -->
+            <header class="bg-gradient-to-r from-blue-700 to-blue-900 shadow-md text-white shrink-0 z-20">
+                <div class="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4">
+                    
+                    <!-- Left: Toggles & Greeting -->
+                    <div class="flex items-center gap-3 lg:gap-5 min-w-0">
+                        <!-- Mobile Toggle -->
+                        <button x-on:click="mobileSidebarOpen = true" class="lg:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
+                        <!-- Desktop Toggle -->
+                        <button x-on:click="desktopCollapsed = !desktopCollapsed" class="hidden lg:block p-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white">
+                            <i class="fas fa-bars" x-show="!desktopCollapsed"></i>
+                            <i class="fas fa-indent" x-show="desktopCollapsed" x-cloak></i>
+                        </button>
 
-                                    <!-- Welcome Section (compact) -->
-                                    <div class="flex-1 min-w-0">
-                                        <h2 class="text-sm font-bold truncate">Welcome back, @displayName</h2>
-                                        <p class="text-xs text-blue-100 truncate">@roleLabel Dashboard</p>
-                                    </div>
-                                </div>
-
-                                <!-- Right: User Profile (compact) -->
-                                <div class="relative flex-shrink-0" id="user-dropdown">
-                                    <button id="user-dropdown-toggle" aria-controls="dropdown-menu" aria-expanded="false"
-                                            class="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-white/20 active:scale-95 transition-all duration-200">
-                                        <div class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                                            <i class="fas fa-user text-white text-base font-bold"></i>
-                                        </div>
-                                        <i id="user-chevron" class="fas fa-chevron-down text-white text-xs transition-transform duration-300"></i>
-                                    </button>
-
-                                    <!-- Dropdown Menu (mobile optimized) -->
-                                    <div id="dropdown-menu"
-                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 hidden">
-                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
-                                           class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
-                                            <i class="fas fa-user-circle text-gray-400 text-base"></i>
-                                            <span>Profile</span>
-                                        </a>
-                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
-                                           class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
-                                            <i class="fas fa-cog text-gray-400 text-base"></i>
-                                            <span>Settings</span>
-                                        </a>
-                                        <div class="border-t border-gray-200 my-1"></div>
-                                        <form asp-area="Identity" asp-page="/Account/Logout"
-                                              asp-route-returnUrl="/Identity/Account/Login" class="block">
-                                            <button type="submit"
-                                                    class="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200">
-                                                <i class="fas fa-sign-out-alt text-red-500 text-base"></i>
-                                                <span>Logout</span>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="hidden sm:block truncate">
+                            <h2 class="text-lg lg:text-xl font-bold truncate">Welcome back, @displayName</h2>
+                            <p class="text-xs lg:text-sm text-blue-200 truncate opacity-90">@roleLabel Portal</p>
                         </div>
+                    </div>
 
-                        <!-- Desktop View -->
-                        <div class="hidden lg:block bg-gradient-to-r from-blue-600 to-blue-800  shadow-lg p-6 text-white">
-                            <div class="flex items-center justify-between">
-                                <!-- Left: toggle + welcome text -->
-                                <div class="flex-1 flex items-center gap-4">
-                                    <button id="sidebar-toggle-desktop" aria-controls="sidebar" aria-expanded="true"
-                                            class="p-2 rounded-md bg-white/15 hover:bg-white/25 active:scale-95 transition-all duration-200"
-                                            title="Toggle sidebar">
-                                        <i id="sidebar-desktop-expand-icon" class="fas fa-bars text-white text-lg"></i>
-                                        <i id="sidebar-desktop-collapse-icon" class="fas fa-bars text-white text-lg hidden"></i>
-                                    </button>
-                                    <div>
-                                        <h2 class="text-2xl lg:text-3xl font-bold">Welcome back, @displayName</h2>
-                                        <p class="mt-1 text-sm text-blue-100">@roleLabel Dashboard</p>
-                                    </div>
-                                </div>
-
-                                <!-- Right: enlarged icon button -->
-                                <div class="relative" id="user-dropdown-desktop">
-                                    <button id="user-dropdown-toggle-desktop" aria-controls="dropdown-menu-desktop" aria-expanded="false"
-                                            class="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/10 transition-colors duration-200 ml-6">
-                                        <div class="w-10 h-10 lg:w-12 lg:h-12 bg-white/10 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-user text-white text-lg lg:text-xl"></i>
-                                        </div>
-                                        <div class="hidden sm:flex flex-col text-left">
-                                            <span class="text-sm font-medium">@displayName</span>
-                                            <span class="text-xs opacity-80">@roleLabel</span>
-                                        </div>
-                                        <i id="user-chevron-desktop" class="fas fa-chevron-down ml-2 hidden sm:inline transition-transform duration-200"></i>
-                                    </button>
-
-                                    <div id="dropdown-menu-desktop"
-                                         class="absolute right-0 mt-2 w-44 lg:w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 hidden">
-                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
-                                           class="flex items-center px-3 lg:px-4 py-2 text-xs lg:text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
-                                            <i class="fas fa-user-circle mr-2 lg:mr-3 text-gray-400"></i>
-                                            Profile
-                                        </a>
-                                        <a asp-area="Identity" asp-page="/Account/Manage/Index"
-                                           class="flex items-center px-3 lg:px-4 py-2 text-xs lg:text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
-                                            <i class="fas fa-cog mr-2 lg:mr-3 text-gray-400"></i>
-                                            Settings
-                                        </a>
-                                        <div class="border-t border-gray-200 my-1"></div>
-                                        <form asp-area="Identity" asp-page="/Account/Logout"
-                                              asp-route-returnUrl="/Identity/Account/Login" class="block">
-                                            <button type="submit"
-                                                    class="flex items-center w-full px-3 lg:px-4 py-2 text-xs lg:text-sm text-red-600 hover:bg-red-50 transition-colors duration-200">
-                                                <i class="fas fa-sign-out-alt mr-2 lg:mr-3 text-red-500"></i>
-                                                Logout
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
+                    <!-- Right: User Dropdown -->
+                    <div x-data="{ dropdownOpen: false }" x-on:click.away="dropdownOpen = false" class="relative shrink-0">
+                        <button x-on:click="dropdownOpen = !dropdownOpen" 
+                                class="flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-xl hover:bg-white/10 transition-colors duration-200">
+                            
+                            <!-- User Avatar -->
+                            <div class="w-9 h-9 lg:w-11 lg:h-11 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 flex items-center justify-center shadow-inner">
+                                <i class="fas fa-user text-white text-sm lg:text-base"></i>
                             </div>
+                            
+                            <!-- User Info (Desktop only) -->
+                            <div class="hidden md:flex flex-col text-left pr-1">
+                                <span class="text-sm font-semibold leading-tight text-white">@displayName</span>
+                                <span class="text-xs text-blue-200 leading-tight">@roleLabel</span>
+                            </div>
+                            
+                            <i class="fas fa-chevron-down text-white/70 text-xs transition-transform duration-200 hidden md:block" 
+                               x-bind:class="dropdownOpen ? 'rotate-180' : ''"></i>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="dropdownOpen" 
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 origin-top-right overflow-hidden" 
+                             x-cloak>
+                            
+                            <div class="px-4 py-3 border-b border-gray-100 md:hidden">
+                                <p class="text-sm font-medium text-gray-900 truncate">@displayName</p>
+                                <p class="text-xs text-gray-500 truncate">@roleLabel</p>
+                            </div>
+
+                            <a asp-area="Identity" asp-page="/Account/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                <i class="fas fa-user-circle w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
+                                <span class="ml-2 font-medium">My Profile</span>
+                            </a>
+                            <a asp-area="Identity" asp-page="/Account/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                <i class="fas fa-cog w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
+                                <span class="ml-2 font-medium">Account Settings</span>
+                            </a>
+                            
+                            <div class="h-px bg-gray-100 my-1.5"></div>
+                            
+                            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/Identity/Account/Login" class="block m-0">
+                                <button type="submit" class="group flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left">
+                                    <i class="fas fa-sign-out-alt w-5 text-red-400 group-hover:text-red-600 transition-colors"></i>
+                                    <span class="ml-2 font-medium">Sign out</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-3 lg:p-3">
-                @RenderBody()
+            <!-- Main Scrollable Content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50/50 p-4 lg:p-8 relative">
+                <!-- Inner Container -->
+                <div class="max-w-full mx-auto">
+                    @RenderBody()
+                </div>
             </main>
         </div>
     </div>
 
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50  z-20 lg:hidden hidden"></div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebar = document.getElementById('sidebar');
-            const toggleBtn = document.getElementById('sidebar-toggle');
-            const desktopToggleBtn = document.getElementById('sidebar-toggle-desktop');
-            const overlay = document.getElementById('sidebar-overlay');
-            const openIcon = document.getElementById('sidebar-open-icon');
-            const closeIcon = document.getElementById('sidebar-close-icon');
-            const desktopExpandIcon = document.getElementById('sidebar-desktop-expand-icon');
-            const desktopCollapseIcon = document.getElementById('sidebar-desktop-collapse-icon');
-            const MOBILE_BREAKPOINT = 1024;
-
-            if (!sidebar || !overlay) return;
-
-            let isOpen = window.innerWidth >= MOBILE_BREAKPOINT;
-            let isDesktopCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-
-            const updateDesktopToggleIcons = () => {
-                if (desktopExpandIcon) desktopExpandIcon.classList.toggle('hidden', isDesktopCollapsed);
-                if (desktopCollapseIcon) desktopCollapseIcon.classList.toggle('hidden', !isDesktopCollapsed);
-                if (desktopToggleBtn) desktopToggleBtn.setAttribute('aria-expanded', (!isDesktopCollapsed).toString());
-            };
-
-            const applyState = () => {
-                const isDesktop = window.innerWidth >= MOBILE_BREAKPOINT;
-
-                if (isDesktop) {
-                    sidebar.classList.remove('-translate-x-full');
-                    overlay.classList.add('hidden');
-                    document.body.style.overflow = 'auto';
-                    sidebar.classList.toggle('sidebar-collapsed', isDesktopCollapsed);
-                    updateDesktopToggleIcons();
-                    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
-                    return;
-                }
-
-                sidebar.classList.remove('sidebar-collapsed');
-                if (isOpen) {
-                    sidebar.classList.remove('-translate-x-full');
-                    overlay.classList.remove('hidden');
-                    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
-                    if (openIcon) openIcon.classList.add('hidden');
-                    if (closeIcon) closeIcon.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    sidebar.classList.add('-translate-x-full');
-                    overlay.classList.add('hidden');
-                    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
-                    if (openIcon) openIcon.classList.remove('hidden');
-                    if (closeIcon) closeIcon.classList.add('hidden');
-                    document.body.style.overflow = 'auto';
-                }
-            };
-
-            const closeSidebar = () => { isOpen = false; applyState(); };
-
-            applyState();
-
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    if (window.innerWidth >= MOBILE_BREAKPOINT) {
-                        isDesktopCollapsed = !isDesktopCollapsed;
-                        localStorage.setItem('sidebar-collapsed', isDesktopCollapsed.toString());
-                    } else {
-                        isOpen = !isOpen;
-                    }
-                    applyState();
-                });
-            }
-
-            if (desktopToggleBtn) {
-                desktopToggleBtn.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    isDesktopCollapsed = !isDesktopCollapsed;
-                    localStorage.setItem('sidebar-collapsed', isDesktopCollapsed.toString());
-                    applyState();
-                });
-            }
-
-            overlay.addEventListener('click', closeSidebar);
-
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && isOpen && window.innerWidth < MOBILE_BREAKPOINT) {
-                    closeSidebar();
-                }
-            });
-
-            let resizeTimer;
-            const handleResize = () => {
-                const isDesktop = window.innerWidth >= MOBILE_BREAKPOINT;
-                isOpen = isDesktop;
-                applyState();
-            };
-            window.addEventListener('resize', function () {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(handleResize, 150);
-            });
-
-            sidebar.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', function () {
-                    if (window.innerWidth < MOBILE_BREAKPOINT) {
-                        setTimeout(closeSidebar, 120);
-                    }
-                });
-            });
-
-            document.addEventListener('click', function (e) {
-                if (window.innerWidth < MOBILE_BREAKPOINT && isOpen) {
-                    const target = e.target;
-                    const clickedToggle = (toggleBtn && toggleBtn.contains(target)) || (desktopToggleBtn && desktopToggleBtn.contains(target));
-                    if (!sidebar.contains(target) && !clickedToggle && !overlay.contains(target)) {
-                        closeSidebar();
-                    }
-                }
-            }, true);
-
-            // Mobile User dropdown toggle
-            const userDropdownToggle = document.getElementById('user-dropdown-toggle');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            const userChevron = document.getElementById('user-chevron');
-            let dropdownOpen = false;
-
-            const toggleDropdown = () => {
-                dropdownOpen = !dropdownOpen;
-                if (dropdownOpen) {
-                    dropdownMenu.classList.remove('hidden');
-                    userDropdownToggle.setAttribute('aria-expanded', 'true');
-                    if (userChevron) userChevron.classList.add('rotate-180');
-                } else {
-                    dropdownMenu.classList.add('hidden');
-                    userDropdownToggle.setAttribute('aria-expanded', 'false');
-                    if (userChevron) userChevron.classList.remove('rotate-180');
-                }
-            };
-
-            const closeDropdown = () => {
-                dropdownOpen = false;
-                dropdownMenu.classList.add('hidden');
-                userDropdownToggle.setAttribute('aria-expanded', 'false');
-                if (userChevron) userChevron.classList.remove('rotate-180');
-            };
-
-            if (userDropdownToggle) {
-                userDropdownToggle.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    toggleDropdown();
-                });
-
-                document.addEventListener('click', function (e) {
-                    const userDropdown = document.getElementById('user-dropdown');
-                    if (!userDropdown.contains(e.target) && dropdownOpen) {
-                        closeDropdown();
-                    }
-                });
-
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === 'Escape' && dropdownOpen) {
-                        closeDropdown();
-                    }
-                });
-            }
-
-            // Desktop User dropdown toggle
-            const userDropdownToggleDesktop = document.getElementById('user-dropdown-toggle-desktop');
-            const dropdownMenuDesktop = document.getElementById('dropdown-menu-desktop');
-            const userChevronDesktop = document.getElementById('user-chevron-desktop');
-            let dropdownOpenDesktop = false;
-
-            const toggleDropdownDesktop = () => {
-                dropdownOpenDesktop = !dropdownOpenDesktop;
-                if (dropdownOpenDesktop) {
-                    dropdownMenuDesktop.classList.remove('hidden');
-                    userDropdownToggleDesktop.setAttribute('aria-expanded', 'true');
-                    if (userChevronDesktop) userChevronDesktop.classList.add('rotate-180');
-                } else {
-                    dropdownMenuDesktop.classList.add('hidden');
-                    userDropdownToggleDesktop.setAttribute('aria-expanded', 'false');
-                    if (userChevronDesktop) userChevronDesktop.classList.remove('rotate-180');
-                }
-            };
-
-            const closeDropdownDesktop = () => {
-                dropdownOpenDesktop = false;
-                dropdownMenuDesktop.classList.add('hidden');
-                userDropdownToggleDesktop.setAttribute('aria-expanded', 'false');
-                if (userChevronDesktop) userChevronDesktop.classList.remove('rotate-180');
-            };
-
-            if (userDropdownToggleDesktop) {
-                userDropdownToggleDesktop.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    toggleDropdownDesktop();
-                });
-
-                document.addEventListener('click', function (e) {
-                    const userDropdownDesktop = document.getElementById('user-dropdown-desktop');
-                    if (!userDropdownDesktop.contains(e.target) && dropdownOpenDesktop) {
-                        closeDropdownDesktop();
-                    }
-                });
-
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === 'Escape' && dropdownOpenDesktop) {
-                        closeDropdownDesktop();
-                    }
-                });
-            }
-        });
-    </script>
-    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <!-- Minimal Scripts Footer -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>
 
