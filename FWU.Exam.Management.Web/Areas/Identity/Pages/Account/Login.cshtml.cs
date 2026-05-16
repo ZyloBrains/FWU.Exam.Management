@@ -121,6 +121,11 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     }
                 }
 
+                if (user != null && await userManager.IsInRoleAsync(user, "Student"))
+                {
+                    return RedirectToAction("Index", "Dashboard", new { area = "" });
+                }
+
                 if (user?.OrganizationId != null)
                 {
                     var org = await context.Organizations.FindAsync(user.OrganizationId.Value);

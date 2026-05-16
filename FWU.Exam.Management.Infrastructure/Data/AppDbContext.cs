@@ -253,6 +253,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(sr => sr.EthnicityId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<StudentRegistration>()
+            .HasIndex(sr => sr.Email)
+            .IsUnique()
+            .HasFilter("[Email] IS NOT NULL");
+
         builder.Entity<StudentGuardian>()
             .HasOne(sg => sg.StudentRegistration)
             .WithMany(sr => sr.StudentGuardians)
