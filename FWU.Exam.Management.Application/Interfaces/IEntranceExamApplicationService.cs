@@ -21,12 +21,6 @@ public interface IEntranceExamApplicationService
     List<Province> GetProvinces();
     Task<List<EntranceExamApplication>> GetAllApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId);
 
-    // Entrance Schedule management
-    Task<List<EntranceSchedule>> GetAllSchedulesAsync();
-    Task<EntranceSchedule?> GetScheduleByIdAsync(int id);
-    Task<int> CreateScheduleAsync(EntranceSchedule schedule);
-    Task ToggleScheduleActiveAsync(int id);
-    Task DeleteScheduleAsync(int id);
-    Task<bool> IsFormOpenForProgramAsync(int programId, int collegeId, int academicYearId);
-    Task<List<EntranceSchedule>> GetActiveSchedulesAsync();
+ 
+    
 }

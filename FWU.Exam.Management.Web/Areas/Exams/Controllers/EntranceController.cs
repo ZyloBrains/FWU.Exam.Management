@@ -18,9 +18,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     [AllowAnonymous]
     public async Task<IActionResult> Apply()
     {
-        var activeSchedules = await service.GetActiveSchedulesAsync();
-        ViewBag.HasActiveSchedules = activeSchedules.Count > 0;
-        ViewBag.ActiveSchedules = activeSchedules;
+  
 
         var selectLists = await service.GetSelectListsAsync();
         PopulateSelectLists(selectLists);
@@ -33,13 +31,6 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     public async Task<IActionResult> Apply([Bind("AcademicYearId,CollegeId,ProgramId,FirstName,MiddleName,LastName,NepaliName,DateOfBirthBS,DateOfBirthAD,GenderId,Email,ContactNumber,Phone,FatherName,FatherContact,MotherName,MotherContact,PreviousSchoolCollege,PreviousLevelId,PreviousPassedYear,PreviousSymbolNumber,PreviousGPA")] EntranceExamApplication application)
     {
         var selectLists = await service.GetSelectListsAsync();
-
-        if (!await service.IsFormOpenForProgramAsync(application.ProgramId, application.CollegeId, application.AcademicYearId))
-        {
-            ModelState.AddModelError("", "The entrance application form is currently closed for the selected program. Please check the application schedule.");
-            PopulateSelectLists(selectLists);
-            return View(application);
-        }
 
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
@@ -64,21 +55,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
         return View(application);
     }
 
-    [AllowAnonymous]
-    public async Task<JsonResult> GetActiveSchedules()
-    {
-        var schedules = await service.GetActiveSchedulesAsync();
-        var result = schedules.Select(s => new
-        {
-            s.Id,
-            AcademicYear = s.AcademicYear?.AcademicYearName,
-            Program = s.Program?.ProgramName,
-            College = s.College?.Name,
-            FormOpenDate = s.FormOpenDate.ToString("yyyy-MM-dd HH:mm"),
-            FormCloseDate = s.FormCloseDate.ToString("yyyy-MM-dd HH:mm")
-        });
-        return Json(result);
-    }
+
 
     [HttpGet]
     [AllowAnonymous]
@@ -94,14 +71,6 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     {
         var localLevels = await service.GetLocalLevelsByDistrictAsync(districtId);
         return Json(localLevels);
-    }
-
-    [HttpGet]
-    [AllowAnonymous]
-    public async Task<JsonResult> CheckFormStatus(int programId, int collegeId, int academicYearId)
-    {
-        var isOpen = await service.IsFormOpenForProgramAsync(programId, collegeId, academicYearId);
-        return Json(new { isOpen });
     }
 
     // --- Admin actions ---
@@ -226,71 +195,6 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
 
     // --- Entrance Schedule Management (Admin) ---
 
-    [Authorize(Roles = "SystemAdmin,Admin")]
-    public async Task<IActionResult> Schedules()
-    {
-        var schedules = await service.GetAllSchedulesAsync();
-        return View(schedules);
-    }
-
-    [Authorize(Roles = "SystemAdmin,Admin")]
-    public async Task<IActionResult> ScheduleCreate()
-    {
-        var selectLists = await service.GetSelectListsAsync();
-        ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name");
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name");
-        ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name");
-        return View(new EntranceSchedule
-        {
-            FormOpenDate = DateTime.UtcNow.Date,
-            FormCloseDate = DateTime.UtcNow.Date.AddDays(30),
-            IsActive = true
-        });
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin,Admin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ScheduleCreate(EntranceSchedule schedule)
-    {
-        if (schedule.FormCloseDate <= schedule.FormOpenDate)
-        {
-            ModelState.AddModelError("FormCloseDate", "Close date must be after open date.");
-        }
-
-        if (ModelState.IsValid)
-        {
-            await service.CreateScheduleAsync(schedule);
-            TempData["SuccessMessage"] = "Entrance schedule created successfully.";
-            return RedirectToAction(nameof(Schedules));
-        }
-
-        var selectLists = await service.GetSelectListsAsync();
-        ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", schedule.AcademicYearId);
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", schedule.ProgramId);
-        ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name", schedule.CollegeId);
-        return View(schedule);
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin,Admin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ScheduleToggle(int id)
-    {
-        await service.ToggleScheduleActiveAsync(id);
-        TempData["SuccessMessage"] = "Schedule status toggled.";
-        return RedirectToAction(nameof(Schedules));
-    }
-
-    [HttpPost]
-    [Authorize(Roles = "SystemAdmin,Admin")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ScheduleDelete(int id)
-    {
-        await service.DeleteScheduleAsync(id);
-        TempData["SuccessMessage"] = "Schedule deleted.";
-        return RedirectToAction(nameof(Schedules));
-    }
 
     private void PopulateSelectLists(EntranceExamApplicationSelectListsDto selectLists)
     {

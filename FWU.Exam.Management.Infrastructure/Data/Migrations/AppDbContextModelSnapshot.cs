@@ -605,55 +605,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.ToTable("EntranceExamApplications");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntryFormat", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("EntryFormatName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EntryFormats");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Ethnicity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("EthnicityName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Ethnicities");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenter", b =>
                 {
                     b.Property<int>("Id")
@@ -3125,6 +3076,9 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SignaturePath")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -3500,33 +3454,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Navigation("PermanentAddress");
 
                     b.Navigation("PreviousLevel");
-
-                    b.Navigation("Program");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.EntranceSchedule", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
-                        .WithMany()
-                        .HasForeignKey("AcademicYearId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", "College")
-                        .WithMany()
-                        .HasForeignKey("CollegeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
-                        .WithMany()
-                        .HasForeignKey("ProgramId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AcademicYear");
-
-                    b.Navigation("College");
 
                     b.Navigation("Program");
                 });

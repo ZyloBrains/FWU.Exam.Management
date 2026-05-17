@@ -72,7 +72,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GradingScheme>? GradingSchemes { get; set; }
     public DbSet<GradeDefinition>? GradeDefinitions { get; set; }
     public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
-    public DbSet<EntranceSchedule>? EntranceSchedules { get; set; }
+ 
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -607,31 +607,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(a => a.PreviousLevel)
             .WithMany()
             .HasForeignKey(a => a.PreviousLevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<EntranceSchedule>(e =>
-        {
-            e.Property(x => x.FormOpenDate).HasColumnType("datetime2");
-            e.Property(x => x.FormCloseDate).HasColumnType("datetime2");
-            e.Property(x => x.CreatedAt).HasColumnType("datetime2");
-        });
-
-        builder.Entity<EntranceSchedule>()
-            .HasOne(s => s.AcademicYear)
-            .WithMany()
-            .HasForeignKey(s => s.AcademicYearId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<EntranceSchedule>()
-            .HasOne(s => s.Program)
-            .WithMany()
-            .HasForeignKey(s => s.ProgramId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<EntranceSchedule>()
-            .HasOne(s => s.College)
-            .WithMany()
-            .HasForeignKey(s => s.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
