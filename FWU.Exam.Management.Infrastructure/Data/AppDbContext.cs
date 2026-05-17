@@ -37,6 +37,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamRollNumberSetup>? ExamRollNumberSetup { get; set; }
     public DbSet<ExamSchedule>? ExamSchedules { get; set; }
     public DbSet<ExamSubjectResult>? ExamSubjectResults { get; set; }
+    public DbSet<ExamSlot>? ExamSlots { get; set; }
     public DbSet<ExamType>? ExamTypes { get; set; }
     public DbSet<Faculty>? Faculties { get; set; }
     public DbSet<FiscalYear>? FiscalYears { get; set; }
@@ -52,7 +53,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<QuestionSet>? QuestionSets { get; set; }
     public DbSet<ResultRecord>? ResultRecords { get; set; }
     public DbSet<SchoolType>? SchoolTypes { get; set; }
-    public DbSet<Section>? Sections { get; set; }
     public DbSet<Semester>? Semesters { get; set; }
     public DbSet<SemesterEnrollment>? SemesterEnrollments { get; set; }
     public DbSet<StudentAdmission>? StudentAdmissions { get; set; }
@@ -442,6 +442,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(esr => esr.ExamSchedule)
             .WithMany(es => es.ExamSubjectResults)
             .HasForeignKey(esr => esr.ExamScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamSlot>()
+            .HasOne(ess => ess.ExamSchedule)
+            .WithMany(es => es.ExamSlots)
+            .HasForeignKey(ess => ess.ExamScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamSlot>()
+            .HasOne(ess => ess.SubjectOffering)
+            .WithMany(so => so.ExamSlots)
+            .HasForeignKey(ess => ess.SubjectOfferingId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamSlot>()
+            .HasOne(ess => ess.Batch)
+            .WithMany(b => b.ExamSlots)
+            .HasForeignKey(ess => ess.BatchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamSlot>()
+            .HasOne(ess => ess.ExamCenter)
+            .WithMany(ec => ec.ExamSlots)
+            .HasForeignKey(ess => ess.ExamCenterId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ProgramSubjectPracticalCharge>()

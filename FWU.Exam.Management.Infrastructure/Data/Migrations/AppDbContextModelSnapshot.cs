@@ -605,7 +605,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.ToTable("EntranceExamApplications");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.EntranceSchedule", b =>
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntryFormat", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -613,36 +613,45 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AcademicYearId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CollegeId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FormCloseDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FormOpenDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("EntryFormatName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ProgramId")
-                        .HasColumnType("int");
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AcademicYearId");
+                    b.ToTable("EntryFormats");
+                });
 
-                    b.HasIndex("CollegeId");
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Ethnicity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.HasIndex("ProgramId");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.ToTable("EntranceSchedules");
+                    b.Property<string>("EthnicityName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Ethnicities");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenter", b =>
@@ -655,9 +664,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.Property<int>("Code")
                         .HasColumnType("int");
-
-                    b.Property<string>("CollegeAssignmentsJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CollegeId")
                         .HasColumnType("int");
@@ -880,9 +886,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("AdmissionCardReleaseDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("BatchesJson")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("CollegeApprovalDate")
                         .HasColumnType("datetime2");
 
@@ -951,6 +954,57 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.HasIndex("SemesterId");
 
                     b.ToTable("ExamSchedules");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BatchId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("ExamCenterId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ExamDate")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("ExamScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("RoomNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("SubjectOfferingId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("ExamCenterId");
+
+                    b.HasIndex("ExamScheduleId");
+
+                    b.HasIndex("SubjectOfferingId");
+
+                    b.ToTable("ExamSlots");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectResult", b =>
@@ -2184,41 +2238,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.ToTable("SchoolTypes");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Section", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("BatchId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("ProgramsId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("SectionName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BatchId");
-
-                    b.HasIndex("ProgramsId");
-
-                    b.ToTable("Sections");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.Semester", b =>
                 {
                     b.Property<int>("Id")
@@ -2409,9 +2428,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Property<int>("ProgramsId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SectionId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("StudentRegistrationId")
                         .HasColumnType("int");
 
@@ -2430,8 +2446,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.HasIndex("CollegeId");
 
                     b.HasIndex("ProgramsId");
-
-                    b.HasIndex("SectionId");
 
                     b.HasIndex("StudentRegistrationId");
 
@@ -3664,6 +3678,41 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Navigation("Semester");
                 });
 
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSlot", b =>
+                {
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Batch", "Batch")
+                        .WithMany("ExamSlots")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamCenter", "ExamCenter")
+                        .WithMany("ExamSlots")
+                        .HasForeignKey("ExamCenterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", "ExamSchedule")
+                        .WithMany("ExamSlots")
+                        .HasForeignKey("ExamScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", "SubjectOffering")
+                        .WithMany("ExamSlots")
+                        .HasForeignKey("SubjectOfferingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+
+                    b.Navigation("ExamCenter");
+
+                    b.Navigation("ExamSchedule");
+
+                    b.Navigation("SubjectOffering");
+                });
+
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectResult", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamRegistration", "ExamRegistration")
@@ -3924,21 +3973,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Navigation("PreviousLevel");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Section", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Batch", "Batch")
-                        .WithMany()
-                        .HasForeignKey("BatchId");
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Programs")
-                        .WithMany()
-                        .HasForeignKey("ProgramsId");
-
-                    b.Navigation("Batch");
-
-                    b.Navigation("Programs");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.Semester", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
@@ -3991,10 +4025,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Section", null)
-                        .WithMany("StudentAdmissions")
-                        .HasForeignKey("SectionId");
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Students.StudentRegistration", null)
                         .WithMany("StudentAdmissions")
@@ -4304,6 +4334,8 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Batch", b =>
                 {
+                    b.Navigation("ExamSlots");
+
                     b.Navigation("StudentAdmissions");
                 });
 
@@ -4349,6 +4381,8 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenter", b =>
                 {
                     b.Navigation("ExamRegistrations");
+
+                    b.Navigation("ExamSlots");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamRegistration", b =>
@@ -4361,6 +4395,8 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Navigation("ExamCenters");
 
                     b.Navigation("ExamRegistrations");
+
+                    b.Navigation("ExamSlots");
 
                     b.Navigation("ExamSubjectResults");
                 });
@@ -4450,11 +4486,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Navigation("Colleges");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Section", b =>
-                {
-                    b.Navigation("StudentAdmissions");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.Semester", b =>
                 {
                     b.Navigation("ExamSchedules");
@@ -4490,6 +4521,11 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectCatalog", b =>
                 {
                     b.Navigation("SubjectOfferings");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", b =>
+                {
+                    b.Navigation("ExamSlots");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectType", b =>

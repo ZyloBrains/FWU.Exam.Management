@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Intial : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -125,47 +125,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Ethnicities", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamAttendanceStatuses",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamAttendanceStatusName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamAttendanceStatuses", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamFormFeeNames",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
-                    IsCollegeFee = table.Column<bool>(type: "bit", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamFormFeeNames", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamScheduleParent",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamScheduleParentName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamScheduleParent", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -529,32 +488,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ExamRollNumberSetup",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamScheduleParentId = table.Column<int>(type: "int", nullable: false),
-                    FirstExamRollNumber = table.Column<int>(type: "int", nullable: false),
-                    Prefix = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Suffix = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    MinimumRollNumberLength = table.Column<int>(type: "int", nullable: false),
-                    Round = table.Column<int>(type: "int", nullable: false),
-                    MinimumGap = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamRollNumberSetup", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamRollNumberSetup_ExamScheduleParent_ExamScheduleParentId",
-                        column: x => x.ExamScheduleParentId,
-                        principalTable: "ExamScheduleParent",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PreviousLevels",
                 columns: table => new
                 {
@@ -803,7 +736,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     ProgramId = table.Column<int>(type: "int", nullable: false),
                     SemesterId = table.Column<int>(type: "int", nullable: false),
                     ExamTypeId = table.Column<int>(type: "int", nullable: false),
-                    ExamScheduleParentId = table.Column<int>(type: "int", nullable: true),
                     LevelId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -815,11 +747,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         principalTable: "AcademicYears",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamSchedules_ExamScheduleParent_ExamScheduleParentId",
-                        column: x => x.ExamScheduleParentId,
-                        principalTable: "ExamScheduleParent",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_ExamSchedules_ExamTypes_ExamTypeId",
                         column: x => x.ExamTypeId,
@@ -896,33 +823,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         principalTable: "Programs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Sections",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SectionName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    ProgramsId = table.Column<int>(type: "int", nullable: true),
-                    BatchId = table.Column<int>(type: "int", nullable: true),
-                    Remarks = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Sections", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Sections_Batches_BatchId",
-                        column: x => x.BatchId,
-                        principalTable: "Batches",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Sections_Programs_ProgramsId",
-                        column: x => x.ProgramsId,
-                        principalTable: "Programs",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1104,13 +1004,13 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ExamFormFeeRates",
+                name: "ExamFees",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: false),
                     ExamScheduleId = table.Column<int>(type: "int", nullable: false),
-                    ExamFormFeeNameId = table.Column<int>(type: "int", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     CollegeTypeId = table.Column<int>(type: "int", nullable: true),
                     ExamTypeId = table.Column<int>(type: "int", nullable: true),
@@ -1120,26 +1020,21 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamFormFeeRates", x => x.Id);
+                    table.PrimaryKey("PK_ExamFees", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ExamFormFeeRates_CollegeTypes_CollegeTypeId",
+                        name: "FK_ExamFees_CollegeTypes_CollegeTypeId",
                         column: x => x.CollegeTypeId,
                         principalTable: "CollegeTypes",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_ExamFormFeeRates_ExamFormFeeNames_ExamFormFeeNameId",
-                        column: x => x.ExamFormFeeNameId,
-                        principalTable: "ExamFormFeeNames",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamFormFeeRates_ExamSchedules_ExamScheduleId",
+                        name: "FK_ExamFees_ExamSchedules_ExamScheduleId",
                         column: x => x.ExamScheduleId,
                         principalTable: "ExamSchedules",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamFormFeeRates_ExamTypes_ExamTypeId",
+                        name: "FK_ExamFees_ExamTypes_ExamTypeId",
                         column: x => x.ExamTypeId,
                         principalTable: "ExamTypes",
                         principalColumn: "Id",
@@ -1147,36 +1042,30 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ExamScheduleBatch",
+                name: "ExamRollNumberSetup",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ExamScheduleId = table.Column<int>(type: "int", nullable: false),
-                    ExamTypeId = table.Column<int>(type: "int", nullable: false),
-                    BatchId = table.Column<int>(type: "int", nullable: false)
+                    FirstExamRollNumber = table.Column<int>(type: "int", nullable: false),
+                    Prefix = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Suffix = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DetailsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MinimumRollNumberLength = table.Column<int>(type: "int", nullable: false),
+                    Round = table.Column<int>(type: "int", nullable: false),
+                    MinimumGap = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamScheduleBatch", x => x.Id);
+                    table.PrimaryKey("PK_ExamRollNumberSetup", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ExamScheduleBatch_Batches_BatchId",
-                        column: x => x.BatchId,
-                        principalTable: "Batches",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExamScheduleBatch_ExamSchedules_ExamScheduleId",
+                        name: "FK_ExamRollNumberSetup_ExamSchedules_ExamScheduleId",
                         column: x => x.ExamScheduleId,
                         principalTable: "ExamSchedules",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExamScheduleBatch_ExamTypes_ExamTypeId",
-                        column: x => x.ExamTypeId,
-                        principalTable: "ExamTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -1303,8 +1192,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     VoucherAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Remarks = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    BankVoucherUserAttachmentId = table.Column<int>(type: "int", nullable: true),
-                    ExamScheduleParentId = table.Column<int>(type: "int", nullable: false)
+                    BankVoucherUserAttachmentId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1331,12 +1219,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         name: "FK_BankVoucher_Colleges_CollegeId",
                         column: x => x.CollegeId,
                         principalTable: "Colleges",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BankVoucher_ExamScheduleParent_ExamScheduleParentId",
-                        column: x => x.ExamScheduleParentId,
-                        principalTable: "ExamScheduleParent",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -1418,6 +1300,86 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EntranceExamApplications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AcademicYearId = table.Column<int>(type: "int", nullable: false),
+                    CollegeId = table.Column<int>(type: "int", nullable: false),
+                    ProgramId = table.Column<int>(type: "int", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    MiddleName = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    LastName = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    NepaliName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    DateOfBirthBS = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    DateOfBirthAD = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GenderId = table.Column<int>(type: "int", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    ContactNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    PermanentAddressId = table.Column<int>(type: "int", nullable: true),
+                    FatherName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    FatherContact = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    MotherName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    MotherContact = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: true),
+                    PreviousSchoolCollege = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    PreviousLevelId = table.Column<int>(type: "int", nullable: true),
+                    PreviousPassedYear = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    PreviousSymbolNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    PreviousGPA = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ReviewedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReviewDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReviewRemarks = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EntranceExamApplications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_EntranceExamApplications_AcademicYears_AcademicYearId",
+                        column: x => x.AcademicYearId,
+                        principalTable: "AcademicYears",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EntranceExamApplications_Addresses_PermanentAddressId",
+                        column: x => x.PermanentAddressId,
+                        principalTable: "Addresses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EntranceExamApplications_Colleges_CollegeId",
+                        column: x => x.CollegeId,
+                        principalTable: "Colleges",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EntranceExamApplications_Genders_GenderId",
+                        column: x => x.GenderId,
+                        principalTable: "Genders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EntranceExamApplications_PreviousLevels_PreviousLevelId",
+                        column: x => x.PreviousLevelId,
+                        principalTable: "PreviousLevels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EntranceExamApplications_Programs_ProgramId",
+                        column: x => x.ProgramId,
+                        principalTable: "Programs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ExamCenters",
                 columns: table => new
                 {
@@ -1425,7 +1387,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ExamScheduleId = table.Column<int>(type: "int", nullable: false),
                     CollegeId = table.Column<int>(type: "int", nullable: false),
-                    Remark = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    Remark = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     Code = table.Column<int>(type: "int", nullable: false)
                 },
@@ -1444,78 +1406,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         principalTable: "ExamSchedules",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamRollNumberSetupDetail",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamRollNumberSetupId = table.Column<int>(type: "int", nullable: false),
-                    ExamScheduleId = table.Column<int>(type: "int", nullable: false),
-                    ProgramId = table.Column<int>(type: "int", nullable: false),
-                    ExamTypeId = table.Column<int>(type: "int", nullable: false),
-                    CollegeId = table.Column<int>(type: "int", nullable: false),
-                    StartRollNumber = table.Column<int>(type: "int", nullable: false),
-                    EndRollNumber = table.Column<int>(type: "int", nullable: false),
-                    Count = table.Column<int>(type: "int", nullable: false),
-                    Prefix = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Suffix = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamRollNumberSetupDetail", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamRollNumberSetupDetail_Colleges_CollegeId",
-                        column: x => x.CollegeId,
-                        principalTable: "Colleges",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamRollNumberSetupDetail_ExamRollNumberSetup_ExamRollNumberSetupId",
-                        column: x => x.ExamRollNumberSetupId,
-                        principalTable: "ExamRollNumberSetup",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamRollNumberSetupDetail_ExamSchedules_ExamScheduleId",
-                        column: x => x.ExamScheduleId,
-                        principalTable: "ExamSchedules",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamRollNumberSetupDetail_ExamTypes_ExamTypeId",
-                        column: x => x.ExamTypeId,
-                        principalTable: "ExamTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamRollNumberSetupDetail_Programs_ProgramId",
-                        column: x => x.ProgramId,
-                        principalTable: "Programs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PreferredExamCenters",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
-                    CollegeId = table.Column<int>(type: "int", nullable: true),
-                    Remarks = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PreferredExamCenters", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PreferredExamCenters_Colleges_CollegeId",
-                        column: x => x.CollegeId,
-                        principalTable: "Colleges",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1636,38 +1526,46 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ExamCenterDetail",
+                name: "ExamSlots",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    ExamScheduleId = table.Column<int>(type: "int", nullable: false),
+                    SubjectOfferingId = table.Column<int>(type: "int", nullable: false),
+                    BatchId = table.Column<int>(type: "int", nullable: false),
                     ExamCenterId = table.Column<int>(type: "int", nullable: false),
-                    CollegeId = table.Column<int>(type: "int", nullable: false),
-                    ProgramsId = table.Column<int>(type: "int", nullable: true),
-                    RollNumberFrom = table.Column<long>(type: "bigint", nullable: false),
-                    RollNumberTo = table.Column<long>(type: "bigint", nullable: false),
-                    Remarks = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    ExamDate = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    RoomNumber = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Remarks = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamCenterDetail", x => x.Id);
+                    table.PrimaryKey("PK_ExamSlots", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ExamCenterDetail_Colleges_CollegeId",
-                        column: x => x.CollegeId,
-                        principalTable: "Colleges",
+                        name: "FK_ExamSlots_Batches_BatchId",
+                        column: x => x.BatchId,
+                        principalTable: "Batches",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamCenterDetail_ExamCenters_ExamCenterId",
+                        name: "FK_ExamSlots_ExamCenters_ExamCenterId",
                         column: x => x.ExamCenterId,
                         principalTable: "ExamCenters",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamCenterDetail_Programs_ProgramsId",
-                        column: x => x.ProgramsId,
-                        principalTable: "Programs",
+                        name: "FK_ExamSlots_ExamSchedules_ExamScheduleId",
+                        column: x => x.ExamScheduleId,
+                        principalTable: "ExamSchedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ExamSlots_SubjectOfferings_SubjectOfferingId",
+                        column: x => x.SubjectOfferingId,
+                        principalTable: "SubjectOfferings",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -1776,7 +1674,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     BatchId = table.Column<int>(type: "int", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    SectionId = table.Column<int>(type: "int", nullable: true),
                     StudentRegistrationId = table.Column<int>(type: "int", nullable: true),
                     UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -1801,11 +1698,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         principalTable: "Programs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StudentAdmissions_Sections_SectionId",
-                        column: x => x.SectionId,
-                        principalTable: "Sections",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_StudentAdmissions_StudentRegistrations_StudentRegistrationId",
                         column: x => x.StudentRegistrationId,
@@ -2071,92 +1963,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ExamSubjectRegistrationInternal",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    EntryAcademicYearId = table.Column<int>(type: "int", nullable: false),
-                    ObtainedMarksTheoryInternal = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
-                    ObtainedMarksPracticalInternal = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
-                    Remarks = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    ExamScheduleId = table.Column<int>(type: "int", nullable: true),
-                    SemesterEnrollmentId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamSubjectRegistrationInternal", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrationInternal_AcademicYears_EntryAcademicYearId",
-                        column: x => x.EntryAcademicYearId,
-                        principalTable: "AcademicYears",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrationInternal_ExamSchedules_ExamScheduleId",
-                        column: x => x.ExamScheduleId,
-                        principalTable: "ExamSchedules",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrationInternal_SemesterEnrollments_SemesterEnrollmentId",
-                        column: x => x.SemesterEnrollmentId,
-                        principalTable: "SemesterEnrollments",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamRegistrationActionLog",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamRegistrationId = table.Column<int>(type: "int", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Action = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    Remarks = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamRegistrationActionLog", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamRegistrationActionLog_ExamRegistrations_ExamRegistrationId",
-                        column: x => x.ExamRegistrationId,
-                        principalTable: "ExamRegistrations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamRegistrationCenterChange",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamRegistrationId = table.Column<int>(type: "int", nullable: false),
-                    PreferredExamCenterId = table.Column<int>(type: "int", nullable: false),
-                    RequestedTimestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CurrentExamCenterId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamRegistrationCenterChange", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamRegistrationCenterChange_ExamRegistrations_ExamRegistrationId",
-                        column: x => x.ExamRegistrationId,
-                        principalTable: "ExamRegistrations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_ExamRegistrationCenterChange_PreferredExamCenters_PreferredExamCenterId",
-                        column: x => x.PreferredExamCenterId,
-                        principalTable: "PreferredExamCenters",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamSubjectRegistrations",
+                name: "ExamSubjectResults",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -2164,10 +1971,13 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     ExamRegistrationId = table.Column<int>(type: "int", nullable: false),
                     ExamTypeId = table.Column<int>(type: "int", nullable: false),
                     SubjectOfferingId = table.Column<int>(type: "int", nullable: false),
+                    ExamScheduleId = table.Column<int>(type: "int", nullable: true),
                     ObtainedMarksTheory = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
                     ObtainedMarksTheoryConfirm = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
                     ObtainedMarksPractical = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
                     ObtainedMarksPracticalConfirm = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
+                    ObtainedMarksTheoryInternal = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    ObtainedMarksPracticalInternal = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
                     GradeLetter = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: true),
                     Remarks = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
@@ -2175,6 +1985,12 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     IsTheoryRegistered = table.Column<bool>(type: "bit", nullable: true),
                     IsPracticalRegistered = table.Column<bool>(type: "bit", nullable: true),
                     IsExtra = table.Column<bool>(type: "bit", nullable: true),
+                    ExamStartedDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsSubmitted = table.Column<bool>(type: "bit", nullable: false),
+                    ObtainedMarks = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
+                    ExamSubmittedDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsAutoSubmitted = table.Column<bool>(type: "bit", nullable: true),
+                    LastStatusSyncDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -2182,50 +1998,31 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ExamSubjectRegistrations", x => x.Id);
+                    table.PrimaryKey("PK_ExamSubjectResults", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrations_ExamRegistrations_ExamRegistrationId",
+                        name: "FK_ExamSubjectResults_ExamRegistrations_ExamRegistrationId",
                         column: x => x.ExamRegistrationId,
                         principalTable: "ExamRegistrations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrations_ExamTypes_ExamTypeId",
+                        name: "FK_ExamSubjectResults_ExamSchedules_ExamScheduleId",
+                        column: x => x.ExamScheduleId,
+                        principalTable: "ExamSchedules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ExamSubjectResults_ExamTypes_ExamTypeId",
                         column: x => x.ExamTypeId,
                         principalTable: "ExamTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrations_SubjectOfferings_SubjectOfferingId",
+                        name: "FK_ExamSubjectResults_SubjectOfferings_SubjectOfferingId",
                         column: x => x.SubjectOfferingId,
                         principalTable: "SubjectOfferings",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ExamSubjectRegistrationExamSession",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ExamSubjectRegistrationId = table.Column<int>(type: "int", nullable: false),
-                    ExamStartedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsSubmitted = table.Column<bool>(type: "bit", nullable: false),
-                    ObtainedMarks = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true),
-                    ExamSubmittedDateTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsAutoSubmitted = table.Column<bool>(type: "bit", nullable: true),
-                    LastStatusSyncDateTime = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ExamSubjectRegistrationExamSession", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamSubjectRegistrationExamSession_ExamSubjectRegistrations_ExamSubjectRegistrationId",
-                        column: x => x.ExamSubjectRegistrationId,
-                        principalTable: "ExamSubjectRegistrations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -2272,11 +2069,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "IX_BankVoucher_CollegeId",
                 table: "BankVoucher",
                 column: "CollegeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BankVoucher_ExamScheduleParentId",
-                table: "BankVoucher",
-                column: "ExamScheduleParentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Batches_AcademicYearId",
@@ -2350,19 +2142,34 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 column: "ProvinceId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamCenterDetail_CollegeId",
-                table: "ExamCenterDetail",
+                name: "IX_EntranceExamApplications_AcademicYearId",
+                table: "EntranceExamApplications",
+                column: "AcademicYearId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EntranceExamApplications_CollegeId",
+                table: "EntranceExamApplications",
                 column: "CollegeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamCenterDetail_ExamCenterId",
-                table: "ExamCenterDetail",
-                column: "ExamCenterId");
+                name: "IX_EntranceExamApplications_GenderId",
+                table: "EntranceExamApplications",
+                column: "GenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamCenterDetail_ProgramsId",
-                table: "ExamCenterDetail",
-                column: "ProgramsId");
+                name: "IX_EntranceExamApplications_PermanentAddressId",
+                table: "EntranceExamApplications",
+                column: "PermanentAddressId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EntranceExamApplications_PreviousLevelId",
+                table: "EntranceExamApplications",
+                column: "PreviousLevelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EntranceExamApplications_ProgramId",
+                table: "EntranceExamApplications",
+                column: "ProgramId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamCenters_CollegeId",
@@ -2375,39 +2182,19 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 column: "ExamScheduleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamFormFeeRates_CollegeTypeId",
-                table: "ExamFormFeeRates",
+                name: "IX_ExamFees_CollegeTypeId",
+                table: "ExamFees",
                 column: "CollegeTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamFormFeeRates_ExamFormFeeNameId",
-                table: "ExamFormFeeRates",
-                column: "ExamFormFeeNameId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamFormFeeRates_ExamScheduleId",
-                table: "ExamFormFeeRates",
+                name: "IX_ExamFees_ExamScheduleId",
+                table: "ExamFees",
                 column: "ExamScheduleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamFormFeeRates_ExamTypeId",
-                table: "ExamFormFeeRates",
+                name: "IX_ExamFees_ExamTypeId",
+                table: "ExamFees",
                 column: "ExamTypeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRegistrationActionLog_ExamRegistrationId",
-                table: "ExamRegistrationActionLog",
-                column: "ExamRegistrationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRegistrationCenterChange_ExamRegistrationId",
-                table: "ExamRegistrationCenterChange",
-                column: "ExamRegistrationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRegistrationCenterChange_PreferredExamCenterId",
-                table: "ExamRegistrationCenterChange",
-                column: "PreferredExamCenterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamRegistrations_AcademicYearId",
@@ -2445,59 +2232,14 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 column: "SemesterEnrollmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamRollNumberSetup_ExamScheduleParentId",
+                name: "IX_ExamRollNumberSetup_ExamScheduleId",
                 table: "ExamRollNumberSetup",
-                column: "ExamScheduleParentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRollNumberSetupDetail_CollegeId",
-                table: "ExamRollNumberSetupDetail",
-                column: "CollegeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRollNumberSetupDetail_ExamRollNumberSetupId",
-                table: "ExamRollNumberSetupDetail",
-                column: "ExamRollNumberSetupId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRollNumberSetupDetail_ExamScheduleId",
-                table: "ExamRollNumberSetupDetail",
                 column: "ExamScheduleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRollNumberSetupDetail_ExamTypeId",
-                table: "ExamRollNumberSetupDetail",
-                column: "ExamTypeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamRollNumberSetupDetail_ProgramId",
-                table: "ExamRollNumberSetupDetail",
-                column: "ProgramId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamScheduleBatch_BatchId",
-                table: "ExamScheduleBatch",
-                column: "BatchId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamScheduleBatch_ExamScheduleId",
-                table: "ExamScheduleBatch",
-                column: "ExamScheduleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamScheduleBatch_ExamTypeId",
-                table: "ExamScheduleBatch",
-                column: "ExamTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamSchedules_AcademicYearId",
                 table: "ExamSchedules",
                 column: "AcademicYearId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ExamSchedules_ExamScheduleParentId",
-                table: "ExamSchedules",
-                column: "ExamScheduleParentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamSchedules_ExamTypeId",
@@ -2520,39 +2262,43 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 column: "SemesterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrationExamSession_ExamSubjectRegistrationId",
-                table: "ExamSubjectRegistrationExamSession",
-                column: "ExamSubjectRegistrationId",
-                unique: true);
+                name: "IX_ExamSlots_BatchId",
+                table: "ExamSlots",
+                column: "BatchId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrationInternal_EntryAcademicYearId",
-                table: "ExamSubjectRegistrationInternal",
-                column: "EntryAcademicYearId");
+                name: "IX_ExamSlots_ExamCenterId",
+                table: "ExamSlots",
+                column: "ExamCenterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrationInternal_ExamScheduleId",
-                table: "ExamSubjectRegistrationInternal",
+                name: "IX_ExamSlots_ExamScheduleId",
+                table: "ExamSlots",
                 column: "ExamScheduleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrationInternal_SemesterEnrollmentId",
-                table: "ExamSubjectRegistrationInternal",
-                column: "SemesterEnrollmentId");
+                name: "IX_ExamSlots_SubjectOfferingId",
+                table: "ExamSlots",
+                column: "SubjectOfferingId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrations_ExamRegistrationId",
-                table: "ExamSubjectRegistrations",
+                name: "IX_ExamSubjectResults_ExamRegistrationId",
+                table: "ExamSubjectResults",
                 column: "ExamRegistrationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrations_ExamTypeId",
-                table: "ExamSubjectRegistrations",
+                name: "IX_ExamSubjectResults_ExamScheduleId",
+                table: "ExamSubjectResults",
+                column: "ExamScheduleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExamSubjectResults_ExamTypeId",
+                table: "ExamSubjectResults",
                 column: "ExamTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ExamSubjectRegistrations_SubjectOfferingId",
-                table: "ExamSubjectRegistrations",
+                name: "IX_ExamSubjectResults_SubjectOfferingId",
+                table: "ExamSubjectResults",
                 column: "SubjectOfferingId");
 
             migrationBuilder.CreateIndex(
@@ -2606,11 +2352,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 column: "PaymentRequestLogId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PreferredExamCenters_CollegeId",
-                table: "PreferredExamCenters",
-                column: "CollegeId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_PreviousLevels_LevelId",
                 table: "PreviousLevels",
                 column: "LevelId");
@@ -2653,16 +2394,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 column: "PreviousLevelId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Sections_BatchId",
-                table: "Sections",
-                column: "BatchId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Sections_ProgramsId",
-                table: "Sections",
-                column: "ProgramsId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SemesterEnrollments_SemesterId",
                 table: "SemesterEnrollments",
                 column: "SemesterId");
@@ -2696,11 +2427,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "IX_StudentAdmissions_ProgramsId",
                 table: "StudentAdmissions",
                 column: "ProgramsId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StudentAdmissions_SectionId",
-                table: "StudentAdmissions",
-                column: "SectionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentAdmissions_StudentRegistrationId",
@@ -2865,34 +2591,22 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "CurriculumVersions");
 
             migrationBuilder.DropTable(
+                name: "EntranceExamApplications");
+
+            migrationBuilder.DropTable(
                 name: "ESewaConfiguration");
 
             migrationBuilder.DropTable(
-                name: "ExamAttendanceStatuses");
+                name: "ExamFees");
 
             migrationBuilder.DropTable(
-                name: "ExamCenterDetail");
+                name: "ExamRollNumberSetup");
 
             migrationBuilder.DropTable(
-                name: "ExamFormFeeRates");
+                name: "ExamSlots");
 
             migrationBuilder.DropTable(
-                name: "ExamRegistrationActionLog");
-
-            migrationBuilder.DropTable(
-                name: "ExamRegistrationCenterChange");
-
-            migrationBuilder.DropTable(
-                name: "ExamRollNumberSetupDetail");
-
-            migrationBuilder.DropTable(
-                name: "ExamScheduleBatch");
-
-            migrationBuilder.DropTable(
-                name: "ExamSubjectRegistrationExamSession");
-
-            migrationBuilder.DropTable(
-                name: "ExamSubjectRegistrationInternal");
+                name: "ExamSubjectResults");
 
             migrationBuilder.DropTable(
                 name: "FiscalYears");
@@ -2955,16 +2669,10 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "UserAttachments");
 
             migrationBuilder.DropTable(
-                name: "ExamFormFeeNames");
+                name: "ExamRegistrations");
 
             migrationBuilder.DropTable(
-                name: "PreferredExamCenters");
-
-            migrationBuilder.DropTable(
-                name: "ExamRollNumberSetup");
-
-            migrationBuilder.DropTable(
-                name: "ExamSubjectRegistrations");
+                name: "SubjectOfferings");
 
             migrationBuilder.DropTable(
                 name: "GradingSchemes");
@@ -2979,15 +2687,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "PreviousLevels");
 
             migrationBuilder.DropTable(
-                name: "ExamRegistrations");
-
-            migrationBuilder.DropTable(
-                name: "SubjectOfferings");
-
-            migrationBuilder.DropTable(
-                name: "PaymentType");
-
-            migrationBuilder.DropTable(
                 name: "ApplicationVoucher");
 
             migrationBuilder.DropTable(
@@ -3000,6 +2699,9 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "SubjectCatalogs");
 
             migrationBuilder.DropTable(
+                name: "PaymentType");
+
+            migrationBuilder.DropTable(
                 name: "ExamSchedules");
 
             migrationBuilder.DropTable(
@@ -3009,16 +2711,16 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "SubjectTypes");
 
             migrationBuilder.DropTable(
-                name: "ExamScheduleParent");
-
-            migrationBuilder.DropTable(
                 name: "ExamTypes");
 
             migrationBuilder.DropTable(
                 name: "Semesters");
 
             migrationBuilder.DropTable(
-                name: "Sections");
+                name: "Batches");
+
+            migrationBuilder.DropTable(
+                name: "Programs");
 
             migrationBuilder.DropTable(
                 name: "StudentRegistrations");
@@ -3027,10 +2729,10 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "Batches");
+                name: "Boards");
 
             migrationBuilder.DropTable(
-                name: "Programs");
+                name: "AcademicYears");
 
             migrationBuilder.DropTable(
                 name: "Colleges");
@@ -3042,28 +2744,22 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "Ethnicities");
 
             migrationBuilder.DropTable(
+                name: "Faculties");
+
+            migrationBuilder.DropTable(
                 name: "Genders");
 
             migrationBuilder.DropTable(
                 name: "IndexGroups");
 
             migrationBuilder.DropTable(
+                name: "Levels");
+
+            migrationBuilder.DropTable(
                 name: "StudentCategories");
 
             migrationBuilder.DropTable(
                 name: "Organizations");
-
-            migrationBuilder.DropTable(
-                name: "AcademicYears");
-
-            migrationBuilder.DropTable(
-                name: "Boards");
-
-            migrationBuilder.DropTable(
-                name: "Faculties");
-
-            migrationBuilder.DropTable(
-                name: "Levels");
 
             migrationBuilder.DropTable(
                 name: "Addresses");
