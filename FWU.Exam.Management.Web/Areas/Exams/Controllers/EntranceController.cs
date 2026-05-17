@@ -18,6 +18,8 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     [AllowAnonymous]
     public async Task<IActionResult> Apply()
     {
+  
+
         var selectLists = await service.GetSelectListsAsync();
         PopulateSelectLists(selectLists);
         return View();
@@ -28,6 +30,8 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Apply([Bind("AcademicYearId,CollegeId,ProgramId,FirstName,MiddleName,LastName,NepaliName,DateOfBirthBS,DateOfBirthAD,GenderId,Email,ContactNumber,Phone,FatherName,FatherContact,MotherName,MotherContact,PreviousSchoolCollege,PreviousLevelId,PreviousPassedYear,PreviousSymbolNumber,PreviousGPA")] EntranceExamApplication application)
     {
+        var selectLists = await service.GetSelectListsAsync();
+
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
         var permanentToleStreet = Request.Form["ToleStreet"].ToString();
@@ -39,7 +43,6 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
             return RedirectToAction(nameof(Confirmation), new { id });
         }
 
-        var selectLists = await service.GetSelectListsAsync();
         PopulateSelectLists(selectLists);
         return View(application);
     }
@@ -51,6 +54,8 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
         if (application == null) return NotFound();
         return View(application);
     }
+
+
 
     [HttpGet]
     [AllowAnonymous]
@@ -187,6 +192,9 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
         return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"EntranceApplications_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
+
+    // --- Entrance Schedule Management (Admin) ---
+
 
     private void PopulateSelectLists(EntranceExamApplicationSelectListsDto selectLists)
     {

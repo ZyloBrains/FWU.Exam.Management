@@ -197,6 +197,17 @@
                     </a>
                 </li>
                 <li>
+                    <a asp-controller="StudentCategories" asp-action="Index"
+                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "StudentCategories", actionName: "Index") ? "bg-admin-blue-light text-white" : "")">
+                        <i class="fas fa-layer-group w-4 text-center"></i>
+                        <span>Student Categories</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="Core" asp-controller="Programs" asp-action="Index"
+                           class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm">
+                        <i class="fas fa-shield-alt w-4 text-center"></i>
+                        <span>Verify By Token</span>
                     <a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(false)">
                         <i class="fas fa-shield-alt w-4 text-center opacity-70"></i>
                         <span class="whitespace-nowrap">Verify By Token</span>
@@ -354,10 +365,11 @@
 
     @if (isStudent)
     {
-        var isStudentActive = IsActive(controllerName: "Entrance", actionName: "Apply", areaName: "Exams") ||
-                              IsActive(controllerName: "Program", actionName: "Index", areaName: "Core") ||
-                              IsActive(controllerName: "Subject", actionName: "Index") ||
-                              IsActive(controllerName: "ExamSchedule", actionName: "Index");
+        var isStudentActive = 
+                              IsActive(controllerName: "StudentDashboard", areaName: "Students") ||
+                              IsActive(controllerName: "StudentDashboard", actionName: "Profile", areaName: "Students") ||
+                              IsActive(controllerName: "StudentDashboard", actionName: "ExamForms", areaName: "Students") ||
+                              IsActive(controllerName: "StudentDashboard", actionName: "Marksheet", areaName: "Students");
         <li x-data="{ open: @(isStudentActive.ToString().ToLower()) }">
             <button @@click="open = !open" class="@ParentClass(isStudentActive)">
                 <div class="flex items-center justify-center w-6">
@@ -366,12 +378,13 @@
                 <span class="flex-1 text-left tracking-wide whitespace-nowrap">Academic</span>
                 <i class="fas ml-auto transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
             </button>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 400px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li><a asp-area="Exams" asp-controller="Entrance" asp-action="Apply" class="@ChildClass(IsActive(controllerName: "Entrance", actionName: "Apply", areaName: "Exams"))"><i class="fas fa-file-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Apply for Entrance Exam</span></a></li>
-                <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Program", actionName: "Index", areaName: "Core"))"><i class="fas fa-book-open w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Programs</span></a></li>
-                <li><a asp-controller="SubjectDetails" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SubjectDetails", actionName: "Index"))"><i class="fas fa-book w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subjects</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamSchedule", actionName: "Index"))"><i class="fas fa-calendar-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Schedules</span></a></li>
+            <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
+                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
+               
+                <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="Profile" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "StudentDashboard", actionName: "Profile", areaName: "Students") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-user w-4 text-center"></i><span>Profile</span></a></li>
+                <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="ExamForms" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "StudentDashboard", actionName: "ExamForms", areaName: "Students") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-file-invoice w-4 text-center"></i><span>Exam Forms</span></a></li>
+                <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="Marksheet" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "StudentDashboard", actionName: "Marksheet", areaName: "Students") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-file-alt w-4 text-center"></i><span>Marksheet</span></a></li>
+  
             </ul>
         </li>
     }

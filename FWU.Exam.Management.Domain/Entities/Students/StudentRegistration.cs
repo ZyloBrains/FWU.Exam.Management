@@ -37,8 +37,8 @@ public class StudentRegistration
     [MaxLength(50)]
     public string? Email { get; set; }
 
-    [Required, MaxLength(10)]
-    public string? DateOfBirthBS { get; set; }
+    [MaxLength(10)]
+    public string DateOfBirthBS { get; set; } = string.Empty;
     public string? DateOfBirthAD { get; set; }
 
     public int GenderId { get; set; }
