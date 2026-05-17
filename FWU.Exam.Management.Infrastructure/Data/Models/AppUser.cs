@@ -8,6 +8,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Models;
 public class AppUser: IdentityUser, IAuditable
 { 
     public string? ProfilePath { get; set; }
+    public string? SignaturePath { get; set; }
     public string? FullName { get; set; }
     public string? Designation { get; set; }
     public bool IsActive { get; set; }

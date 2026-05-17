@@ -33,7 +33,7 @@ public interface IESewaService
 {
     ESewaPaymentFormData GeneratePaymentFormData(decimal totalAmount, string transactionUuid, string successUrl, string failureUrl);
     string GenerateSignature(string message);
-    bool VerifyResponseSignature(ESewaVerifyResponse response);
+    bool VerifyResponseSignature(ESewaVerifyResponse response, string rawJson);
     string GenerateTransactionUuid();
     Task<ESewaVerifyResponse?> VerifyTransactionAsync(string transactionUuid, decimal totalAmount);
 }

@@ -10,7 +10,7 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
 {
     private string PostUrl => configuration["ESewa:PostUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
     private string ProductCode => configuration["ESewa:ProductCode"] ?? "EPAYTEST";
-    private string SecretKey => configuration["ESewa:SecretKey"] ?? "8gBm/:&4h1fE";
+    private string SecretKey => configuration["ESewa:SecretKey"] ?? "8gBm/:&EnhH.1/q";
     private string ServiceChargeAmount => configuration["ESewa:ServiceChargeAmount"] ?? "0";
     private string VerifyUrl => configuration["ESewa:VerifyUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
 
@@ -33,7 +33,7 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
     {
         var totalAmountStr = totalAmount.ToString("F0");
         var signedFieldNames = "total_amount,transaction_uuid,product_code";
-        var message = $"{totalAmountStr},{transactionUuid},{ProductCode}";
+        var message = $"total_amount={totalAmountStr},transaction_uuid={transactionUuid},product_code={ProductCode}";
         var signature = GenerateSignature(message);
 
         return new ESewaPaymentFormData
@@ -53,7 +53,7 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
         };
     }
 
-    public bool VerifyResponseSignature(ESewaVerifyResponse response)
+    public bool VerifyResponseSignature(ESewaVerifyResponse response, string rawJson)
     {
         if (response.SignedFieldNames == null || response.Signature == null)
             return false;
@@ -61,18 +61,13 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
         var fieldNames = response.SignedFieldNames.Split(',', StringSplitOptions.TrimEntries);
         var messageParts = new List<string>();
 
+        using var doc = JsonDocument.Parse(rawJson);
+        var root = doc.RootElement;
+
         foreach (var field in fieldNames)
         {
-            messageParts.Add(field switch
-            {
-                "transaction_code" => response.TransactionCode ?? "",
-                "status" => response.Status ?? "",
-                "total_amount" => response.TotalAmount.ToString("F0"),
-                "transaction_uuid" => response.TransactionUuid ?? "",
-                "product_code" => response.ProductCode ?? "",
-                "signed_field_names" => response.SignedFieldNames,
-                _ => ""
-            });
+            var value = root.TryGetProperty(field, out var prop) ? prop.GetString() ?? "" : "";
+            messageParts.Add($"{field}={value}");
         }
 
         var message = string.Join(",", messageParts);

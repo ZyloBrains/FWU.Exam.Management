@@ -60,6 +60,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
         builder.Services.AddScoped<IESewaService, ESewaService>();
         builder.Services.AddHttpClient<IESewaService, ESewaService>();
+        builder.Services.AddScoped<IKhaltiService, KhaltiService>();
+        builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

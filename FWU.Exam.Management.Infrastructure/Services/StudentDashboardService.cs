@@ -141,29 +141,24 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
-    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber)
+    public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData)
     {
-        var paymentType = await context.Set<PaymentType>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(pt => pt.IsActive && pt.PaymentTypeName != null &&
-                paymentMethod.Contains(pt.PaymentTypeName, StringComparison.OrdinalIgnoreCase));
+        var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
+        if (log == null) return;
 
-        var log = new PaymentRequestLog
+        log.TransactionId = transactionId;
+        log.PaymentRequestLogStatus = isSuccess ? 1 : 0;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
         {
-            ExamScheduleId = examScheduleId,
-            StudentRegistrationId = studentRegistrationId,
-            Amount = amount,
-            InvoiceNumber = invoiceNumber,
-            FullName = "",
-            FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}",
-            PaymentTypeId = paymentType?.Id ?? 0,
-            ForwardedTimestamp = DateTime.UtcNow,
-            StudentCount = 1
-        };
+            PaymentRequestLogId = logId,
+            ResponseTimestamp = DateTime.UtcNow,
+            IsSuccess = isSuccess,
+            ResponseMessage = isSuccess ? "Payment verified via eSewa callback" : "Payment failed via eSewa callback",
+            FullResponse = responseData
+        });
 
-        context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
-        return log.Id;
     }
 
     public async Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId)
@@ -207,12 +202,16 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         return upper is "F" or "NG";
     }
 
-    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds)
+    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
     {
         var paymentType = await context.Set<PaymentType>()
             .AsNoTracking()
             .FirstOrDefaultAsync(pt => pt.IsActive && pt.PaymentTypeName != null &&
                 paymentMethod.Contains(pt.PaymentTypeName, StringComparison.OrdinalIgnoreCase));
+
+        DateTime? dob = null;
+        if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
+            dob = parsedDob;
 
         var log = new PaymentRequestLog
         {
@@ -220,7 +219,11 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             StudentRegistrationId = studentRegistrationId,
             Amount = amount,
             InvoiceNumber = invoiceNumber,
-            FullName = "",
+            FullName = fullName ?? "",
+            Email = email,
+            MobileNumber = mobileNumber,
+            CollegeId = collegeId,
+            DateOfBirthAd = dob,
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
@@ -241,6 +244,41 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         }
         await context.SaveChangesAsync();
 
+        return log.Id;
+    }
+
+    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
+    {
+        var paymentTypes = await context.Set<PaymentType>()
+            .AsNoTracking()
+            .Where(pt => pt.IsActive && pt.PaymentTypeName != null)
+            .ToListAsync();
+        var paymentType = paymentTypes.FirstOrDefault(pt =>
+            paymentMethod.Contains(pt.PaymentTypeName, StringComparison.OrdinalIgnoreCase));
+
+        DateTime? dob = null;
+        if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
+            dob = parsedDob;
+
+        var log = new PaymentRequestLog
+        {
+            ExamScheduleId = examScheduleId,
+            StudentRegistrationId = studentRegistrationId,
+            Amount = amount,
+            InvoiceNumber = invoiceNumber,
+            FullName = fullName ?? "",
+            Email = email,
+            MobileNumber = mobileNumber,
+            CollegeId = collegeId,
+            DateOfBirthAd = dob,
+            FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}",
+            PaymentTypeId = paymentType?.Id ?? 0,
+            ForwardedTimestamp = DateTime.UtcNow,
+            StudentCount = 1
+        };
+
+        context.Set<PaymentRequestLog>().Add(log);
+        await context.SaveChangesAsync();
         return log.Id;
     }
 }
