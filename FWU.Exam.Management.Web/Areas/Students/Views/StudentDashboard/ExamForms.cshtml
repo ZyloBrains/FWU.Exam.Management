@@ -1,0 +1,102 @@
+@model FWU.Exam.Management.Web.ViewModels.ExamFormsListViewModel
+
+@{
+    ViewData["Title"] = "Exam Forms";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-file-alt text-blue-600"></i>
+        </div>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Exam Forms</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Student Home / Upcoming Exam Schedules</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Upcoming Exam Schedules</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Level</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Program</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Semester</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Exam Schedule</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Amount</th>
+                        <th class="text-left px-4 py-3 font-semibold text-gray-600">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100"> 
+                    @if (Model.ExamForms.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-inbox text-3xl text-gray-300 mb-2 block"></i>
+                                No exam schedules available
+                            </td>
+                        </tr>
+                    }
+                    @for (int i = 0; i < Model.ExamForms.Count; i++)
+                    {
+                        var form = Model.ExamForms[i];
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
+                            <td class="px-4 py-3 text-gray-800">@form.Level</td>
+                            <td class="px-4 py-3 text-gray-800">@form.Program</td>
+                            <td class="px-4 py-3 text-gray-800">@form.Semester</td>
+                            <td class="px-4 py-3 text-gray-800">@form.ExamScheduleName</td>
+                            <td class="px-4 py-3">
+                                @if (form.HasPaid)
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                        <i class="fas fa-check-circle"></i> Paid
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                                        <i class="fas fa-clock"></i> pending
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-gray-800">
+                                @if (form.Amount > 0)
+                                {
+                                    <span>Rs @form.Amount.ToString("N0")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-gray-400">-</span>
+                                }
+                            </td>
+                            <td class="px-4 py-3">
+                                @if (!form.HasPaid && form.Amount > 0)
+                                {
+                                    <a asp-action="PayExamFee" asp-route-examScheduleId="@form.ExamScheduleId"
+                                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-credit-card"></i> Pay Rs @form.Amount.ToString("N0")
+                                    </a>
+                                }
+                                else if (form.HasPaid)
+                                {
+                                    <span class="text-xs text-green-600 font-medium"><i class="fas fa-check"></i> Completed</span>
+                                }
+                                else
+                                {
+                                    <span class="text-xs text-gray-400">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

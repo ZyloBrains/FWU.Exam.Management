@@ -195,4 +195,5 @@ public class EntranceExamApplicationService(AppDbContext context) : IEntranceExa
 
         return await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
     }
+  
 }

@@ -56,6 +56,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<IBankService, BankService>();
         builder.Services.AddScoped<IPaymentTypeService, PaymentTypeService>();
         builder.Services.AddScoped<IBillTitleService, BillTitleService>();
+        builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
+        builder.Services.AddScoped<IESewaService, ESewaService>();
+        builder.Services.AddHttpClient<IESewaService, ESewaService>();
+        builder.Services.AddScoped<IKhaltiService, KhaltiService>();
+        builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -95,6 +100,7 @@ public partial class EntryPoint
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 

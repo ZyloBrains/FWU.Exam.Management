@@ -72,6 +72,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GradingScheme>? GradingSchemes { get; set; }
     public DbSet<GradeDefinition>? GradeDefinitions { get; set; }
     public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
+ 
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
