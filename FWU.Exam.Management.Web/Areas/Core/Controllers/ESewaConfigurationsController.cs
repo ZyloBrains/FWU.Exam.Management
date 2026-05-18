@@ -1,0 +1,222 @@
+using System.Text;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities.Payments;
+
+namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
+
+[Area("Core")]
+public class ESewaConfigurationsController(AppDbContext context) : Controller
+{
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
+    {
+        var query = context.ESewaConfigurations.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(s =>
+                s.ProductCode.Contains(search) ||
+                s.PostUrl.Contains(search) ||
+                s.SuccessUrl.Contains(search) ||
+                s.VerifyUrl.Contains(search)
+            );
+        }
+
+        query = sortDir.ToLower() == "desc"
+            ? query.OrderByDescending(GetSortProperty(sort))
+            : query.OrderBy(GetSortProperty(sort));
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View(items);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<ESewaConfiguration, object>> GetSortProperty(string sort)
+    {
+        return sort.ToLower() switch
+        {
+            "productcode" => s => s.ProductCode,
+            "posturl" => s => s.PostUrl,
+            "successurl" => s => s.SuccessUrl,
+            "verifyurl" => s => s.VerifyUrl,
+            "servicechargeamount" => s => s.ServiceChargeAmount,
+            _ => s => s.ProductCode
+        };
+    }
+
+    private async Task<(List<ESewaConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+    {
+        var query = context.ESewaConfigurations.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(s =>
+                s.ProductCode.Contains(search) ||
+                s.PostUrl.Contains(search) ||
+                s.SuccessUrl.Contains(search) ||
+                s.VerifyUrl.Contains(search)
+            );
+        }
+
+        var totalCount = await query.CountAsync();
+
+        query = sortDir.ToLower() == "desc"
+            ? query.OrderByDescending(GetSortProperty(sort))
+            : query.OrderBy(GetSortProperty(sort));
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private string EscapeCsv(string field)
+    {
+        if (string.IsNullOrEmpty(field)) return "";
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        return field;
+    }
+
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProductCode", string sortDir = "asc")
+    {
+        var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Product Code,Post Url,Success Url,Verify Url,Service Charge Amount");
+
+        foreach (var s in items)
+        {
+            sb.AppendLine($"{EscapeCsv(s.ProductCode)}," +
+                          $"{EscapeCsv(s.PostUrl)}," +
+                          $"{EscapeCsv(s.SuccessUrl)}," +
+                          $"{EscapeCsv(s.VerifyUrl)}," +
+                          $"{s.ServiceChargeAmount}");
+        }
+
+        var fileName = $"ESewaConfigurations_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", fileName);
+    }
+
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProductCode", string sortDir = "asc")
+    {
+        var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View("PrintPdf", items);
+    }
+
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var eSewaConfiguration = await context.ESewaConfigurations
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (eSewaConfiguration == null) return NotFound();
+
+        return View(eSewaConfiguration);
+    }
+
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([Bind("Id,PostUrl,ProductCode,SecretKey,SuccessUrl,ServiceChargeAmount,VerifyUrl")] ESewaConfiguration eSewaConfiguration)
+    {
+        if (ModelState.IsValid)
+        {
+            context.Add(eSewaConfiguration);
+            await context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        return View(eSewaConfiguration);
+    }
+
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var eSewaConfiguration = await context.ESewaConfigurations.FindAsync(id);
+        if (eSewaConfiguration == null) return NotFound();
+        return View(eSewaConfiguration);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, [Bind("Id,PostUrl,ProductCode,SecretKey,SuccessUrl,ServiceChargeAmount,VerifyUrl")] ESewaConfiguration eSewaConfiguration)
+    {
+        if (id != eSewaConfiguration.Id) return NotFound();
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                context.Update(eSewaConfiguration);
+                await context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ESewaConfigurationExists(eSewaConfiguration.Id))
+                    return NotFound();
+                throw;
+            }
+            return RedirectToAction(nameof(Index));
+        }
+        return View(eSewaConfiguration);
+    }
+
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var eSewaConfiguration = await context.ESewaConfigurations
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (eSewaConfiguration == null) return NotFound();
+
+        return View(eSewaConfiguration);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var eSewaConfiguration = await context.ESewaConfigurations.FindAsync(id);
+        if (eSewaConfiguration != null)
+        {
+            context.ESewaConfigurations.Remove(eSewaConfiguration);
+        }
+
+        await context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    private bool ESewaConfigurationExists(int id)
+    {
+        return context.ESewaConfigurations.Any(e => e.Id == id);
+    }
+}

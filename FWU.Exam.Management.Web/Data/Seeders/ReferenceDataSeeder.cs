@@ -127,4 +127,24 @@ public static class ReferenceDataSeeder
         await context.Colleges.AddRangeAsync(colleges);
         await context.SaveChangesAsync();
     }
+
+    public static async Task SeedESewaConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.ESewaConfigurations.AnyAsync())
+            return;
+
+        var eSewaConfig = new ESewaConfiguration
+        {
+            PostUrl = "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
+            ProductCode = "EPAYTEST",
+            SecretKey = "8gBm/:&EnhH.1/q",
+            SuccessUrl = "https://localhost:44333/Payment/Success",
+            VerifyUrl = "https://rc-epay.esewa.com.np/api/epay/transaction/status/",
+            ServiceChargeAmount = 0m,
+        };
+        context.ESewaConfigurations.Add(eSewaConfig);
+        await context.SaveChangesAsync();
+    }
 }

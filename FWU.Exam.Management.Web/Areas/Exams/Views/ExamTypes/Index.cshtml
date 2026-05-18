@@ -278,12 +278,32 @@
                                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
                             <i class="fas fa-chevron-left text-xs"></i>
                         </a>
-                        @for (int i = 1; i <= totalPages; i++)
-                        {
-                            <a asp-action="Index" asp-area="Exams" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-rose-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">
-                                @i
-                            </a>
+                        @{
+                            var startPage = Math.Max(1, currentPage - 2);
+                            var endPage = Math.Min(totalPages, currentPage + 2);
+                            if (startPage > 1)
+                            {
+                                <a asp-action="Index" asp-area="Exams" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
+                                if (startPage > 2)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                            }
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                <a asp-action="Index" asp-area="Exams" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-rose-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                            }
+                            if (endPage < totalPages)
+                            {
+                                if (endPage < totalPages - 1)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                                <a asp-action="Index" asp-area="Exams" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
+                            }
                         }
                         <a asp-action="Index" asp-area="Exams" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">

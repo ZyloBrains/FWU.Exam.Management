@@ -152,9 +152,9 @@
                             <div class="font-medium text-gray-800">@item.Program?.ProgramName</div>
                             <div class="text-xs text-gray-500">Code: @item.Program?.ProgramCode</div>
                         </td>
-                        <td class="px-4 py-3 text-gray-600">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</td>
                         <td class="px-4 py-3 text-right font-medium text-gray-800">@item.NumberOfStudents.ToString("N0")</td>
-                        <td class="px-4 py-3 text-gray-600 truncate max-w-[200px]">@(string.IsNullOrEmpty(item.Remarks) ? "—" : item.Remarks)</td>
+                        <td class="px-4 py-3 text-gray-600 truncate max-w-[200px]">@(string.IsNullOrEmpty(item.Remarks) ? "ï¿½" : item.Remarks)</td>
                         <td class="px-4 py-3">
                             @if (item.IsActive)
                             {
@@ -226,7 +226,7 @@
                     <div class="text-gray-500">Program Code</div>
                     <div class="text-gray-800">@item.Program?.ProgramCode</div>
                     <div class="text-gray-500">Affiliation Date</div>
-                    <div class="text-gray-800">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</div>
+                    <div class="text-gray-800">@(item.AffiliationDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</div>
                     <div class="text-gray-500">Number of Students</div>
                     <div class="text-gray-800 font-semibold">@item.NumberOfStudents.ToString("N0")</div>
                     @if (!string.IsNullOrEmpty(item.Remarks))
@@ -312,12 +312,32 @@
                                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
                             <i class="fas fa-chevron-left text-xs"></i>
                         </a>
-                        @for (int i = 1; i <= totalPages; i++)
-                        {
-                            <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                                   class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-purple-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">
-                                @i
-                            </a>
+                        @{
+                            var startPage = Math.Max(1, currentPage - 2);
+                            var endPage = Math.Min(totalPages, currentPage + 2);
+                            if (startPage > 1)
+                            {
+                                <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
+                                if (startPage > 2)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                            }
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-purple-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                            }
+                            if (endPage < totalPages)
+                            {
+                                if (endPage < totalPages - 1)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                                <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
+                            }
                         }
                         <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
