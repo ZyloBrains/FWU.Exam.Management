@@ -12,13 +12,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FWU.Exam.Management.Infrastructure;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbContext> logger) 
+public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbContext>? logger = null) 
     : IdentityDbContext<AppUser>(options)
 {
-    private readonly ILogger<AppDbContext> _logger = logger;
+    private readonly ILogger<AppDbContext> _logger = logger ?? NullLogger<AppDbContext>.Instance;
 
     public DbSet<AcademicYear>? AcademicYears { get; set; }
     public DbSet<Address>? Addresses { get; set; }
