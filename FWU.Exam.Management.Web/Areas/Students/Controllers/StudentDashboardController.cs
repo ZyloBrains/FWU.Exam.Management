@@ -309,17 +309,22 @@ public class StudentDashboardController(
             }
 
             var verified = await esewaService.VerifyTransactionAsync(response.TransactionUuid!, response.TotalAmount);
+            var verifyData = verified != null
+                ? System.Text.Json.JsonSerializer.Serialize(verified)
+                : "null";
+            var combinedData = $"{{\"callback\":{decodedJson},\"verification\":{verifyData}}}";
+
             if (verified == null || verified.Status != "COMPLETE")
             {
                 if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", false, decodedJson);
+                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", false, combinedData);
 
                 TempData["ErrorMessage"] = "Transaction verification failed.";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
             if (logId.HasValue)
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", true, decodedJson);
+                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", true, combinedData);
 
             TempData["SuccessMessage"] = "Payment successful!";
             TempData["TransactionCode"] = response.TransactionCode;
@@ -412,7 +417,13 @@ public class StudentDashboardController(
         try
         {
             var lookup = await khaltiService.LookupPaymentAsync(pidx);
-            var responseData = System.Text.Json.JsonSerializer.Serialize(new { pidx, status, transaction_id, lookup?.Status });
+            var responseData = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                pidx,
+                callback_status = status,
+                callback_transaction_id = transaction_id,
+                lookup
+            });
 
             if (lookup == null || lookup.Status != "Completed")
             {

@@ -72,6 +72,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GradingScheme>? GradingSchemes { get; set; }
     public DbSet<GradeDefinition>? GradeDefinitions { get; set; }
     public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
+    public DbSet<ESewaConfiguration>? ESewaConfigurations { get; set; }
+    public DbSet<KhaltiConfiguration>? KhaltiConfigurations { get; set; }
  
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -563,13 +565,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<ExamSubjectResult>(e => e.Property(x => x.ObtainedMarksPracticalInternal).HasPrecision(5, 2));
         builder.Entity<BillTitle>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
         builder.Entity<BillTitle>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
-        builder.Entity<ESewaConfiguration>(e => e.Property(x => x.ServiceChargeAmount).HasPrecision(18, 2));
+        builder.Entity<ESewaConfiguration>(e =>
+        {
+            e.ToTable("ESewaConfiguration");
+            e.Property(x => x.ServiceChargeAmount).HasPrecision(18, 2);
+        });
         builder.Entity<KhaltiConfiguration>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
         builder.Entity<PaymentPracticalSubjects>(e => e.Property(x => x.TotalAmount).HasPrecision(18, 2));
         builder.Entity<PaymentRequestLog>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
         builder.Entity<PeriodType>(e => e.Property(x => x.NumberOfMonths).HasPrecision(5, 2));
         builder.Entity<ProgramSubjectPracticalCharge>(e => e.Property(x => x.PracticalSubjectCharge).HasPrecision(18, 2));
         builder.Entity<StudentQualification>(e => e.Property(x => x.Percentage).HasPrecision(5, 2));
+
+        builder.Entity<BankVoucher>(e => e.Property(x => x.VoucherAmount).HasPrecision(18, 2));
+        builder.Entity<GradeDefinition>(e => e.Property(x => x.GradePoint).HasPrecision(5, 2));
+        builder.Entity<GradeDefinition>(e => e.Property(x => x.MaxPercentage).HasPrecision(5, 2));
+        builder.Entity<GradeDefinition>(e => e.Property(x => x.MinPercentage).HasPrecision(5, 2));
 
         builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA).HasPrecision(5, 2));
 
