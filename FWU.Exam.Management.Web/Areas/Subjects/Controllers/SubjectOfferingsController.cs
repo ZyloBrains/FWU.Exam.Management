@@ -114,11 +114,32 @@ public class SubjectOfferingsController : Controller
     {
         if (ModelState.IsValid)
         {
+            if (model.ProgramId <= 0)
+            {
+                ModelState.AddModelError(nameof(model.ProgramId), "Please select a valid program.");
+            }
+
+            if (model.SemesterId <= 0)
+            {
+                ModelState.AddModelError(nameof(model.SemesterId), "Please select a valid semester.");
+            }
+
             if (model.Subjects == null || model.Subjects.Count == 0)
             {
                 ModelState.AddModelError("", "Please add at least one subject.");
             }
             else
+            {
+                for (var i = 0; i < model.Subjects.Count; i++)
+                {
+                    if (model.Subjects[i].SubjectCatalogId <= 0)
+                    {
+                        ModelState.AddModelError($"Subjects[{i}].SubjectCatalogId", "Please select a valid subject.");
+                    }
+                }
+            }
+
+            if (ModelState.IsValid)
             {
                 var offerings = model.Subjects.Select(s => new SubjectOffering
                 {
