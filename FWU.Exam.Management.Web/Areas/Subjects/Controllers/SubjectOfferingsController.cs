@@ -112,6 +112,27 @@ public class SubjectOfferingsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(SubjectOfferingBulkCreateViewModel model)
     {
+        if (model.ProgramId <= 0)
+        {
+            ModelState.AddModelError(nameof(model.ProgramId), "Program is required.");
+        }
+
+        if (model.SemesterId <= 0)
+        {
+            ModelState.AddModelError(nameof(model.SemesterId), "Semester is required.");
+        }
+
+        if (model.Subjects != null)
+        {
+            for (var i = 0; i < model.Subjects.Count; i++)
+            {
+                if (model.Subjects[i].SubjectCatalogId <= 0)
+                {
+                    ModelState.AddModelError($"Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Subject is required.");
+                }
+            }
+        }
+
         if (ModelState.IsValid)
         {
             if (model.ProgramId <= 0)
