@@ -317,7 +317,25 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
             if (needsUpdate)
             {
-                await userManager.UpdateAsync(user);
+                var updateResult = await userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to update existing student user {Email}: {Errors}", studentRegistration.Email, errors);
+                    return;
+                }
+            }
+
+            var isStudent = await userManager.IsInRoleAsync(user, "Student");
+            if (!isStudent)
+            {
+                var addToRoleResult = await userManager.AddToRoleAsync(user, "Student");
+                if (!addToRoleResult.Succeeded)
+                {
+                    var errors = string.Join("; ", addToRoleResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to add existing user {Email} to Student role: {Errors}", studentRegistration.Email, errors);
+                    return;
+                }
             }
 
             var password = studentRegistration.DateOfBirthBS;
