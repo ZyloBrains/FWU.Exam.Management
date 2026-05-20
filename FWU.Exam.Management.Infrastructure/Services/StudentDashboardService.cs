@@ -97,7 +97,9 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
     public async Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId)
     {
         return await context.Set<PaymentRequestLog>()
-            .AnyAsync(prl => prl.ExamScheduleId == examScheduleId && prl.StudentRegistrationId == studentRegistrationId);
+            .AnyAsync(prl => prl.ExamScheduleId == examScheduleId
+                          && prl.StudentRegistrationId == studentRegistrationId
+                          && prl.PaymentRequestLogStatus == 1);
     }
 
     public async Task<List<PaymentType>> GetActivePaymentTypesAsync()

@@ -222,7 +222,7 @@
                 $("#DistrictId").html('<option>Loading...</option>');
                 $("#LocalLevelId").html('<option>Select Local Level</option>');
 
-                $.get("/Colleges/GetDistrictsByProvince",
+                $.get("/Colleges/Colleges/GetDistrictsByProvince",
                     { provinceId: provinceId },
                     function (data) {
 
@@ -242,7 +242,7 @@
 
                 $("#LocalLevelId").html('<option>Loading...</option>');
 
-                $.get("/Colleges/GetLocalLevelsByDistrict",
+                $.get("/Colleges/Colleges/GetLocalLevelsByDistrict",
                     { districtId: districtId },
                     function (data) {
 

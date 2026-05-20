@@ -55,6 +55,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
         builder.Services.AddScoped<IDistrictService, DistrictService>();
         builder.Services.AddScoped<IProvinceService, ProvinceService>();
+        builder.Services.AddScoped<ILocalLevelService, LocalLevelService>();
         builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
         builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
@@ -110,6 +111,7 @@ public partial class EntryPoint
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 
