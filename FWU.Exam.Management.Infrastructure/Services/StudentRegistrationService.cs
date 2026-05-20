@@ -1,13 +1,20 @@
+using System.Security.Claims;
+using System.Security.Cryptography;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService(AppDbContext context) : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger) : IStudentRegistrationService
 {
+    private const string MustChangePasswordClaimType = "must_change_password";
+
     public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync()
     {
         return await context.StudentRegistrations
@@ -37,35 +44,13 @@ public class StudentRegistrationService(AppDbContext context) : IStudentRegistra
 
     public async Task<int> CreateStudentRegistrationAsync(StudentRegistration studentRegistration, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
     {
-        if (!string.IsNullOrEmpty(permanentLocalLevelId))
-        {
-            var permanentAddress = new Address
-            {
-                LocalLevelId = int.Parse(permanentLocalLevelId),
-                WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber),
-                ToleStreet = permanentToleStreet,
-                HouseNumber = permanentHouseNumber,
-                AddressType = AddressType.Permanent,
-                IsActive = true
-            };
-            context.Addresses.Add(permanentAddress);
-            await context.SaveChangesAsync();
-            studentRegistration.PermanentAddressId = permanentAddress.Id;
-        }
+        using var transaction = await context.Database.BeginTransactionAsync();
 
-        context.StudentRegistrations.Add(studentRegistration);
-        await context.SaveChangesAsync();
-        return studentRegistration.Id;
-    }
-
-    public async Task UpdateStudentRegistrationAsync(StudentRegistration studentRegistration, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
-    {
-        if (!string.IsNullOrEmpty(permanentLocalLevelId))
+        try
         {
-            var address = await context.Addresses.FindAsync(studentRegistration.PermanentAddressId);
-            if (address == null)
+            if (!string.IsNullOrEmpty(permanentLocalLevelId))
             {
-                address = new Address
+                var permanentAddress = new Address
                 {
                     LocalLevelId = int.Parse(permanentLocalLevelId),
                     WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber),
@@ -74,22 +59,72 @@ public class StudentRegistrationService(AppDbContext context) : IStudentRegistra
                     AddressType = AddressType.Permanent,
                     IsActive = true
                 };
-                context.Addresses.Add(address);
+                context.Addresses.Add(permanentAddress);
                 await context.SaveChangesAsync();
-                studentRegistration.PermanentAddressId = address.Id;
+                studentRegistration.PermanentAddressId = permanentAddress.Id;
             }
-            else
-            {
-                address.LocalLevelId = int.Parse(permanentLocalLevelId);
-                address.WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber);
-                address.ToleStreet = permanentToleStreet;
-                address.HouseNumber = permanentHouseNumber;
-                context.Addresses.Update(address);
-            }
-        }
 
-        context.StudentRegistrations.Update(studentRegistration);
-        await context.SaveChangesAsync();
+            context.StudentRegistrations.Add(studentRegistration);
+            await context.SaveChangesAsync();
+
+            await EnsureStudentAppUserAsync(studentRegistration);
+
+            await transaction.CommitAsync();
+            return studentRegistration.Id;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task UpdateStudentRegistrationAsync(StudentRegistration studentRegistration, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
+    {
+        using var transaction = await context.Database.BeginTransactionAsync();
+
+        try
+        {
+            if (!string.IsNullOrEmpty(permanentLocalLevelId))
+            {
+                var address = await context.Addresses.FindAsync(studentRegistration.PermanentAddressId);
+                if (address == null)
+                {
+                    address = new Address
+                    {
+                        LocalLevelId = int.Parse(permanentLocalLevelId),
+                        WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber),
+                        ToleStreet = permanentToleStreet,
+                        HouseNumber = permanentHouseNumber,
+                        AddressType = AddressType.Permanent,
+                        IsActive = true
+                    };
+                    context.Addresses.Add(address);
+                    await context.SaveChangesAsync();
+                    studentRegistration.PermanentAddressId = address.Id;
+                }
+                else
+                {
+                    address.LocalLevelId = int.Parse(permanentLocalLevelId);
+                    address.WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber);
+                    address.ToleStreet = permanentToleStreet;
+                    address.HouseNumber = permanentHouseNumber;
+                    context.Addresses.Update(address);
+                }
+            }
+
+            context.StudentRegistrations.Update(studentRegistration);
+            await context.SaveChangesAsync();
+
+            await EnsureStudentAppUserAsync(studentRegistration);
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task DeleteStudentRegistrationAsync(int id)
@@ -208,5 +243,135 @@ public class StudentRegistrationService(AppDbContext context) : IStudentRegistra
     {
         var provinces =  context.Provinces.AsNoTracking().ToList();
         return provinces;
+    }
+
+    private async Task EnsureStudentAppUserAsync(StudentRegistration studentRegistration)
+    {
+        if (string.IsNullOrWhiteSpace(studentRegistration.Email))
+            return;
+
+        var user = await userManager.FindByEmailAsync(studentRegistration.Email);
+
+        if (user == null && studentRegistration.Id != 0)
+        {
+            var existingStudentEmail = await context.StudentRegistrations
+                .AsNoTracking()
+                .Where(s => s.Id == studentRegistration.Id)
+                .Select(s => s.Email)
+                .SingleOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(existingStudentEmail) &&
+                !string.Equals(existingStudentEmail, studentRegistration.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                user = await userManager.FindByEmailAsync(existingStudentEmail);
+            }
+        }
+
+        if (user == null)
+        {
+            user = new AppUser
+            {
+                UserName = studentRegistration.Email,
+                Email = studentRegistration.Email,
+                FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim(),
+                IsActive = studentRegistration.IsActive
+            };
+
+            var password = GenerateTemporaryPassword();
+
+            var result = await userManager.CreateAsync(user, password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                logger.LogError("Failed to create AppUser for student {Email}: {Errors}", studentRegistration.Email, errors);
+                throw new InvalidOperationException($"Failed to create user account for {studentRegistration.Email}: {errors}");
+            }
+
+            if (!await userManager.IsInRoleAsync(user, "Student"))
+                await userManager.AddToRoleAsync(user, "Student");
+
+            await userManager.AddClaimAsync(user, new Claim(MustChangePasswordClaimType, "true"));
+
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            await userManager.ConfirmEmailAsync(user, token);
+        }
+        else
+        {
+            var needsUpdate = false;
+
+            if (user.Email != studentRegistration.Email)
+            {
+                user.Email = studentRegistration.Email;
+                user.UserName = studentRegistration.Email;
+                needsUpdate = true;
+            }
+
+            if (user.FullName != $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim())
+            {
+                user.FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim();
+                needsUpdate = true;
+            }
+
+            if (user.IsActive != studentRegistration.IsActive)
+            {
+                user.IsActive = studentRegistration.IsActive;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate)
+            {
+                var updateResult = await userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to update existing student user {Email}: {Errors}", studentRegistration.Email, errors);
+                    return;
+                }
+            }
+
+            var isStudent = await userManager.IsInRoleAsync(user, "Student");
+            if (!isStudent)
+            {
+                var addToRoleResult = await userManager.AddToRoleAsync(user, "Student");
+                if (!addToRoleResult.Succeeded)
+                {
+                    var errors = string.Join("; ", addToRoleResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to add existing user {Email} to Student role: {Errors}", studentRegistration.Email, errors);
+                    return;
+                }
+            }
+
+            var password = studentRegistration.DateOfBirthBS;
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"DateOfBirthBS is required to reset login for student {studentRegistration.Email}");
+
+            var passwordValid = await userManager.CheckPasswordAsync(user, password);
+            if (!passwordValid)
+            {
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+                var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
+                if (!resetResult.Succeeded)
+                {
+                    var errors = string.Join("; ", resetResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to reset password for student {Email}: {Errors}", studentRegistration.Email, errors);
+                    throw new InvalidOperationException($"Failed to reset user password for {studentRegistration.Email}: {errors}");
+                }
+            }
+        }
+    }
+
+    private static string GenerateTemporaryPassword()
+    {
+        const string passwordChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
+        const string digitChars = "23456789";
+        const string specialChars = "!@#$%^&*";
+        const int passwordLength = 16;
+
+        var password = RandomNumberGenerator.GetString(passwordChars, passwordLength).ToCharArray();
+        password[RandomNumberGenerator.GetInt32(passwordLength)] = digitChars[RandomNumberGenerator.GetInt32(digitChars.Length)];
+        password[RandomNumberGenerator.GetInt32(passwordLength)] = specialChars[RandomNumberGenerator.GetInt32(specialChars.Length)];
+
+        return new string(password);
     }
 }

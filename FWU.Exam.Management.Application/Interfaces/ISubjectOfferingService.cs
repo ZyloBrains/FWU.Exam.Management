@@ -12,6 +12,7 @@ public interface ISubjectOfferingService
     Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<SubjectOffering?> GetSubjectOfferingByIdAsync(int id);
     Task CreateSubjectOfferingAsync(SubjectOffering subjectOffering);
+    Task CreateSubjectOfferingsAsync(List<SubjectOffering> subjectOfferings);
     Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task DeleteSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);

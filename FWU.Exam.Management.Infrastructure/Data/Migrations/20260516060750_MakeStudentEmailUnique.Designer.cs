@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516060750_MakeStudentEmailUnique")]
+    partial class MakeStudentEmailUnique
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1211,8 +1214,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<decimal>("GradePoint")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("GradingSchemeId")
                         .HasColumnType("int");
@@ -1221,12 +1223,10 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("MaxPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MinPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Remark")
                         .HasMaxLength(50)
@@ -1666,7 +1666,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ESewaConfiguration", (string)null);
+                    b.ToTable("ESewaConfiguration");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.KhaltiConfiguration", b =>
@@ -1710,7 +1710,7 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KhaltiConfigurations");
+                    b.ToTable("KhaltiConfiguration");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.PaymentPracticalSubjects", b =>
@@ -3083,9 +3083,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("SignaturePath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -3155,7 +3152,6 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("VoucherAmount")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("VoucherDate")

@@ -1,0 +1,199 @@
+================================================================================
+  STUDENT REGISTRATION -> APPUSER AUTO-CREATION & LOGIN FLOW
+================================================================================
+
+OVERVIEW
+--------
+When a student is registered via the Student Registration form, the system
+automatically creates an AppUser (Identity user) entry so the student can log in
+using their email and DateOfBirthBS (in BS format) as the password.
+
+No separate "Create User" step is needed for students.
+
+--------------------------------------------------------------------------------
+1. UNIQUE EMAIL CONSTRAINT
+--------------------------------------------------------------------------------
+
+File: FWU.Exam.Management.Infrastructure/Data/AppDbContext.cs (line 257-259)
+
+    builder.Entity<StudentRegistration>()
+        .HasIndex(sr => sr.Email)
+        .IsUnique()
+        .HasFilter("[Email] IS NOT NULL");
+
+- StudentRegistration.Email has a UNIQUE filtered index (only applies when
+  Email IS NOT NULL, so multiple NULL emails are allowed).
+- This means no two students can share the same email.
+- The unique index is essential because email is the lookup key for matching
+  a StudentRegistration record to an AppUser.
+
+--------------------------------------------------------------------------------
+2. AUTO-CREATING APPUSER DURING STUDENT REGISTRATION
+--------------------------------------------------------------------------------
+
+File: FWU.Exam.Management.Infrastructure/Services/StudentRegistrationService.cs
+
+METHOD: CreateStudentRegistrationAsync (line 41-76)
+
+  When a new StudentRegistration is created:
+  1. A database transaction is started.
+  2. The address (if provided) and StudentRegistration record are saved.
+  3. EnsureStudentAppUserAsync() is called — this creates/updates the AppUser.
+  4. The transaction is committed (or rolled back on failure).
+
+METHOD: UpdateStudentRegistrationAsync (line 78-124)
+
+  The same pattern: wrap in a transaction, save changes, call
+  EnsureStudentAppUserAsync(), then commit.
+
+METHOD: EnsureStudentAppUserAsync (line 244-323) — CORE LOGIC
+
+  private async Task EnsureStudentAppUserAsync(StudentRegistration sr)
+  {
+      if (string.IsNullOrWhiteSpace(sr.Email)) return;  // skip if no email
+
+      // Look up existing user by email
+      var user = await userManager.FindByEmailAsync(sr.Email);
+
+      if (user == null)
+      {
+          // --- CREATE NEW APPUSER ---
+          user = new AppUser
+          {
+              UserName = sr.Email,              // UserName = Email
+              Email = sr.Email,
+              FullName = $"{sr.FirstName} {sr.LastName}".Trim(),
+              IsActive = sr.IsActive
+          };
+
+          // Password = DateOfBirthBS (e.g. "2055-03-15")
+          var password = sr.DateOfBirthBS;
+
+          var result = await userManager.CreateAsync(user, password);
+          if (!result.Succeeded)
+              throw new InvalidOperationException(...);
+
+          // Assign "Student" role
+          await userManager.AddToRoleAsync(user, "Student");
+
+          // Auto-confirm email (no confirmation link needed)
+          var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+          await userManager.ConfirmEmailAsync(user, token);
+      }
+      else
+      {
+          // --- UPDATE EXISTING USER ---
+          // Sync Email, FullName, IsActive from StudentRegistration
+          // Also reset password if DateOfBirthBS has changed
+      }
+  }
+
+KEY POINTS:
+  - AppUser.UserName is set to the student's Email.
+  - AppUser.Password is set to StudentRegistration.DateOfBirthBS.
+  - The email is auto-confirmed (no email verification step).
+  - The "Student" role is assigned automatically.
+  - If the user already exists (by email), their details are synced and
+    password is reset to match the current DateOfBirthBS.
+
+--------------------------------------------------------------------------------
+3. PASSWORD REQUIREMENTS RELAXED FOR BS DATES
+--------------------------------------------------------------------------------
+
+File: FWU.Exam.Management.Web/EntryPoint.cs
+
+  services.Configure<IdentityOptions>(options =>
+  {
+      options.Password.RequireLowercase = false;
+      options.Password.RequireUppercase = false;
+      // ... other options
+  });
+
+- BS date strings like "2055-03-15" don't have uppercase or lowercase letters.
+- The standard Identity password policy requires upper+lower by default.
+- These two flags are set to false so BS dates pass as valid passwords.
+- Other password rules (min length, digit, non-alphanumeric) still apply.
+
+--------------------------------------------------------------------------------
+4. LOGIN FLOW FOR STUDENTS
+--------------------------------------------------------------------------------
+
+File: FWU.Exam.Management.Web/Areas/Identity/Pages/Account/Login.cshtml.cs
+
+  OnPostAsync (line 93-158):
+
+  1. signInManager.PasswordSignInAsync(email, password, ...)
+     -> Standard Identity login using AppUser table.
+  2. If successful, check if the user has the "Student" role.
+  3. If "Student" role:
+         return RedirectToAction("Index", "Dashboard", new { area = "" });
+     -> Redirects to /Dashboard (not /Identity/Dashboard).
+  4. For non-students, normal organization-based redirect logic applies.
+
+KEY: The student logs in with their EMAIL and DateOfBirthBS as the password.
+     No separate login page is needed.
+
+NOTE ON RedirectToAction:
+  The "area = """ parameter is CRITICAL. Without it, the Identity area context
+  causes the redirect to go to /Identity/Dashboard instead of /Dashboard.
+  Same fix applies in _SideMenu.cshtml (asp-area="" on the Dashboard link).
+
+--------------------------------------------------------------------------------
+5. STUDENT PROFILE PAGE
+--------------------------------------------------------------------------------
+
+File: FWU.Exam.Management.Web/Areas/Identity/Pages/Account/Manage/Index.cshtml.cs
+
+  When a logged-in user has the "Student" role, the Manage/Index page fetches
+  the corresponding StudentRegistration record (by email) and displays a
+  read-only profile card with:
+
+    - Personal Information (name, DOB, gender, blood group, nationality, etc.)
+    - Academic Information (academic year, level, faculty, college, status)
+    - Contact Information (email, contact number, phone)
+    - Address Information (permanent address with province/district)
+
+  Students cannot update their profile from this page (POST is blocked for
+  "Student" role).
+
+File: FWU.Exam.Management.Web/Areas/Identity/Pages/Account/Manage/Index.cshtml
+
+  The view conditionally renders:
+    - A modern student profile card layout if Model.IsStudent == true
+    - The default Identity profile editing form for all other users
+
+  The student profile card uses a gradient header, detail grids, and
+  status badges for a modernized UI.
+
+--------------------------------------------------------------------------------
+6. IMPORTANT FILES SUMMARY
+--------------------------------------------------------------------------------
+
+  FILE                                                    PURPOSE
+  -------------------------------------------------------------------
+  Domain/Entities/Students/StudentRegistration.cs         Entity definition (Email field)
+  Infrastructure/Data/AppDbContext.cs                     Unique index on Email + FK configs
+  Infrastructure/Services/StudentRegistrationService.cs   Auto-creates AppUser on registration
+  Infrastructure/Data/Models/AppUser.cs                   Identity user model
+  Web/EntryPoint.cs                                       Identity password options
+  Web/Areas/Identity/Pages/Account/Login.cshtml.cs        Login + Student role redirect
+  Web/Areas/Identity/Pages/Account/Manage/Index.cshtml    Student profile view
+  Web/Areas/Identity/Pages/Account/Manage/Index.cshtml.cs Student profile data loading
+  Web/Views/Shared/_SideMenu.cshtml                       Sidebar Dashboard link (area fix)
+  Web/Views/Shared/_Layout.cshtml                         Main layout (x-cloak fix)
+
+--------------------------------------------------------------------------------
+7. MIGRATION
+--------------------------------------------------------------------------------
+
+Migration: 20260516060750_MakeStudentEmailUnique
+
+  Creates a unique filtered index on StudentRegistrations.Email:
+    CREATE UNIQUE NONCLUSTERED INDEX [IX_StudentRegistrations_Email]
+        ON [StudentRegistrations] ([Email])
+        WHERE [Email] IS NOT NULL;
+
+  The migration uses IF NOT EXISTS / IF EXISTS guards so it is idempotent
+  (safe to run even if the index already exists).
+
+================================================================================

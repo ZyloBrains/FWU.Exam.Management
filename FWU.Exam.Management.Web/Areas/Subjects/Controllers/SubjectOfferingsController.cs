@@ -1,6 +1,8 @@
 using System.Text;
+using System.Text.Json;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -90,26 +92,117 @@ public class SubjectOfferingsController : Controller
     public async Task<IActionResult> Create()
     {
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
-        ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName");
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name");
+
+        var subjectsData = subjectCatalogs.Select(s => new
+        {
+            id = s.Id,
+            code = s.SubjectCode,
+            name = s.SubjectName,
+            type = s.SubjectType?.Name ?? "",
+            credits = s.CreditHours
+        });
+        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectsData);
+
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering)
+    public async Task<IActionResult> Create(SubjectOfferingBulkCreateViewModel model)
     {
+        if (model.ProgramId <= 0)
+        {
+            ModelState.AddModelError(nameof(model.ProgramId), "Program is required.");
+        }
+
+        if (model.SemesterId <= 0)
+        {
+            ModelState.AddModelError(nameof(model.SemesterId), "Semester is required.");
+        }
+
+        if (model.Subjects != null)
+        {
+            for (var i = 0; i < model.Subjects.Count; i++)
+            {
+                if (model.Subjects[i].SubjectCatalogId <= 0)
+                {
+                    ModelState.AddModelError($"Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Subject is required.");
+                }
+            }
+        }
+
         if (ModelState.IsValid)
         {
-            await _subjectOfferingService.CreateSubjectOfferingAsync(subjectOffering);
-            return RedirectToAction(nameof(Index));
+            if (model.ProgramId <= 0)
+            {
+                ModelState.AddModelError(nameof(model.ProgramId), "Please select a valid program.");
+            }
+
+            if (model.SemesterId <= 0)
+            {
+                ModelState.AddModelError(nameof(model.SemesterId), "Please select a valid semester.");
+            }
+
+            if (model.Subjects == null || model.Subjects.Count == 0)
+            {
+                ModelState.AddModelError("", "Please add at least one subject.");
+            }
+            else
+            {
+                for (var i = 0; i < model.Subjects.Count; i++)
+                {
+                    if (model.Subjects[i].SubjectCatalogId <= 0)
+                    {
+                        ModelState.AddModelError($"Subjects[{i}].SubjectCatalogId", "Please select a valid subject.");
+                    }
+                }
+            }
+
+            if (ModelState.IsValid)
+            {
+                var offerings = model.Subjects.Select(s => new SubjectOffering
+                {
+                    SubjectCatalogId = s.SubjectCatalogId,
+                    ProgramId = model.ProgramId,
+                    SemesterId = model.SemesterId,
+                    IsCompulsory = s.IsCompulsory,
+                    DisplayOrder = s.DisplayOrder,
+                    HasTheory = s.HasTheory,
+                    HasPractical = s.HasPractical,
+                    HasInternal = s.HasInternal,
+                    TheoryFullMarks = s.TheoryFullMarks,
+                    TheoryPassMarks = s.TheoryPassMarks,
+                    PracticalFullMarks = s.PracticalFullMarks,
+                    PracticalPassMarks = s.PracticalPassMarks,
+                    InternalTheoryFullMarks = s.InternalTheoryFullMarks,
+                    InternalTheoryPassMarks = s.InternalTheoryPassMarks,
+                    InternalPracticalFullMarks = s.InternalPracticalFullMarks,
+                    InternalPracticalPassMarks = s.InternalPracticalPassMarks
+                }).ToList();
+
+                await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+                TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
+                return RedirectToAction(nameof(Index));
+            }
         }
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
-        ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
-        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
-        ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
-        return View(subjectOffering);
+
+        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", model.ProgramId);
+        ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", model.SemesterId);
+
+        var subjectsData = subjectCatalogs.Select(s => new
+        {
+            id = s.Id,
+            code = s.SubjectCode,
+            name = s.SubjectName,
+            type = s.SubjectType?.Name ?? "",
+            credits = s.CreditHours
+        });
+        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectsData);
+
+        return View(model);
     }
 
     public async Task<IActionResult> Edit(int? id)

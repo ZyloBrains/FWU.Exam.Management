@@ -26,7 +26,16 @@ public partial class EntryPoint
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
         });
 
-        builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
+        builder.Services.AddDefaultIdentity<AppUser>(options =>
+        {
+            options.SignIn.RequireConfirmedAccount = true;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireDigit = true;
+            options.Password.RequireNonAlphanumeric = true;
+            options.Password.RequiredLength = 6;
+            options.Password.RequiredUniqueChars = 1;
+        })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
         builder.Services.AddControllersWithViews();
