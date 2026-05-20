@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Security.Cryptography;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
@@ -11,6 +13,8 @@ using Microsoft.Extensions.Logging;
 namespace FWU.Exam.Management.Infrastructure.Services;
 public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger) : IStudentRegistrationService
 {
+    private const string MustChangePasswordClaimType = "must_change_password";
+
     public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync()
     {
         return await context.StudentRegistrations
@@ -273,9 +277,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 IsActive = studentRegistration.IsActive
             };
 
-            var password = studentRegistration.DateOfBirthBS;
-            if (string.IsNullOrWhiteSpace(password))
-                throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {studentRegistration.Email}");
+            var password = GenerateTemporaryPassword();
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -288,6 +290,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
             if (!await userManager.IsInRoleAsync(user, "Student"))
                 await userManager.AddToRoleAsync(user, "Student");
+
+            await userManager.AddClaimAsync(user, new Claim(MustChangePasswordClaimType, "true"));
 
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
             await userManager.ConfirmEmailAsync(user, token);
@@ -355,5 +359,11 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 }
             }
         }
+    }
+
+    private static string GenerateTemporaryPassword()
+    {
+        var randomPart = RandomNumberGenerator.GetString("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789", 12);
+        return $"Tmp!{randomPart}1";
     }
 }
