@@ -87,6 +87,12 @@ public class SubjectOfferingService : ISubjectOfferingService
         await _context.SaveChangesAsync();
     }
 
+    public async Task CreateSubjectOfferingsAsync(List<SubjectOffering> subjectOfferings)
+    {
+        _context.SubjectOfferings.AddRange(subjectOfferings);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering)
     {
         _context.SubjectOfferings.Update(subjectOffering);
