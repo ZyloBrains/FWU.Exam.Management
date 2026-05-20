@@ -320,18 +320,20 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 await userManager.UpdateAsync(user);
             }
 
-            var passwordValid = await userManager.CheckPasswordAsync(user, studentRegistration.DateOfBirthBS);
+            var password = studentRegistration.DateOfBirthBS;
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"DateOfBirthBS is required to reset login for student {studentRegistration.Email}");
+
+            var passwordValid = await userManager.CheckPasswordAsync(user, password);
             if (!passwordValid)
             {
-                var removeResult = await userManager.RemovePasswordAsync(user);
-                if (removeResult.Succeeded)
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+                var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
+                if (!resetResult.Succeeded)
                 {
-                    var addResult = await userManager.AddPasswordAsync(user, studentRegistration.DateOfBirthBS);
-                    if (!addResult.Succeeded)
-                    {
-                        var errors = string.Join("; ", addResult.Errors.Select(e => e.Description));
-                        logger.LogError("Failed to reset password for student {Email}: {Errors}", studentRegistration.Email, errors);
-                    }
+                    var errors = string.Join("; ", resetResult.Errors.Select(e => e.Description));
+                    logger.LogError("Failed to reset password for student {Email}: {Errors}", studentRegistration.Email, errors);
+                    throw new InvalidOperationException($"Failed to reset user password for {studentRegistration.Email}: {errors}");
                 }
             }
         }
