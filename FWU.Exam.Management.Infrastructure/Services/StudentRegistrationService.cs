@@ -248,6 +248,21 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
         var user = await userManager.FindByEmailAsync(studentRegistration.Email);
 
+        if (user == null && studentRegistration.Id != 0)
+        {
+            var existingStudentEmail = await context.StudentRegistrations
+                .AsNoTracking()
+                .Where(s => s.Id == studentRegistration.Id)
+                .Select(s => s.Email)
+                .SingleOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(existingStudentEmail) &&
+                !string.Equals(existingStudentEmail, studentRegistration.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                user = await userManager.FindByEmailAsync(existingStudentEmail);
+            }
+        }
+
         if (user == null)
         {
             user = new AppUser
