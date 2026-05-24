@@ -35,12 +35,12 @@
                     </div>
 
                     <div>
-                        <label asp-for="OrganizationId" class="text-sm font-medium text-gray-700"></label>
-                        <select asp-for="OrganizationId" asp-items="ViewBag.Organizations"
+                        <label asp-for="TenantId" class="text-sm font-medium text-gray-700"></label>
+                        <select asp-for="TenantId" asp-items="ViewBag.Tenants"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-                            <option value="">-- Select Organization --</option>
+                            <option value="">-- Select Tenant --</option>
                         </select>
-                        <span asp-validation-for="OrganizationId" class="text-xs text-red-500 mt-1 block"></span>
+                        <span asp-validation-for="TenantId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
             </div>

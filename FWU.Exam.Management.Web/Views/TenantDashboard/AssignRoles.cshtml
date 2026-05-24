@@ -1,14 +1,14 @@
 @model AssignRolesViewModel
 
 @{
-    var org = ViewBag.Organization as Organization;
-    ViewData["Title"] = $"Assign Roles — {org!.Name}";
+    var tenant = ViewBag.Tenant as Tenant;
+    ViewData["Title"] = $"Assign Roles — {tenant!.Name}";
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="OrgDashboard" asp-action="Index" asp-route-officeCode="@org.OfficeCode">@org.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="OrgDashboard" asp-action="Users" asp-route-officeCode="@org.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item"><a asp-controller="TenantDashboard" asp-action="Index" asp-route-tenantCode="@tenant.OfficeCode">@tenant.Name</a></li>
+        <li class="breadcrumb-item"><a asp-controller="TenantDashboard" asp-action="Users" asp-route-tenantCode="@tenant.OfficeCode">Users</a></li>
         <li class="breadcrumb-item active">Assign Roles</li>
     </ol>
 </nav>
@@ -18,8 +18,8 @@
 
 <div class="row">
     <div class="col-md-4">
-        <form asp-controller="OrgDashboard" asp-action="AssignRoles"
-              asp-route-officeCode="@org.OfficeCode" asp-route-userId="@Model.UserId"
+        <form asp-controller="TenantDashboard" asp-action="AssignRoles"
+              asp-route-tenantCode="@tenant.OfficeCode" asp-route-userId="@Model.UserId"
               method="post">
             <input type="hidden" asp-for="UserId" />
             <input type="hidden" asp-for="UserEmail" />
@@ -38,8 +38,8 @@
 
             <div class="mt-3">
                 <input type="submit" value="Save" class="btn btn-primary" />
-                <a asp-controller="OrgDashboard" asp-action="Users"
-                   asp-route-officeCode="@org.OfficeCode"
+                <a asp-controller="TenantDashboard" asp-action="Users"
+                   asp-route-tenantCode="@tenant.OfficeCode"
                    class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

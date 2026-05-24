@@ -1,6 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Colleges;
-using FWU.Exam.Management.Domain.Entities.Students;
-using FWU.Exam.Management.Domain.Entities;
+﻿using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
@@ -16,6 +14,6 @@ public class AppUser: IdentityUser, IAuditable
     public DateTime? ValidTo { get; set; }
     public string? Remarks { get; set; }
 
-    public int? OrganizationId { get; set; }
-    public Organization? Organization { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 }

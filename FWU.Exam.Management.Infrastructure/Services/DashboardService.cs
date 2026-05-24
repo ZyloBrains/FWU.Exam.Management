@@ -12,7 +12,7 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
     {
         return new DashboardStats
         {
-            TotalOrganizations = await context.Organizations.CountAsync(),
+            TotalTenants = await context.Tenants.CountAsync(),
             TotalUsers = await userManager.Users.CountAsync(),
             TotalRoles = await roleManager.Roles.CountAsync(),
             TotalColleges = await context.Colleges.CountAsync(),

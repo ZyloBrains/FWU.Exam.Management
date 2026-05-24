@@ -10,58 +10,58 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
-[Route("org/{officeCode}")]
-public class OrgDashboardController(
-    IOrganizationService organizationService,
+[Route("tenant/{tenantCode}")]
+public class TenantDashboardController(
+    ITenantService tenantService,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller
 {
-    private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Organization"];
+    private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Tenant"];
 
-    private async Task<Organization?> GetOrgAsync(string officeCode) =>
-        await organizationService.GetOrganizationByOfficeCodeAsync(officeCode);
+    private async Task<Tenant?> GetTenantAsync(string tenantCode) =>
+        await tenantService.GetTenantByOfficeCodeAsync(tenantCode);
 
-    private async Task<(Organization? Org, IActionResult? DeniedResult)> GetAuthorizedOrgAsync(string officeCode)
+    private async Task<(Tenant? Tenant, IActionResult? DeniedResult)> GetAuthorizedTenantAsync(string tenantCode)
     {
-        var org = await GetOrgAsync(officeCode);
-        if (org == null)
+        var tenant = await GetTenantAsync(tenantCode);
+        if (tenant == null)
             return (null, NotFound());
 
         var currentUser = await userManager.GetUserAsync(User);
         if (currentUser == null)
             return (null, Challenge());
 
-        if (User.IsInRole(Role.SystemAdmin) || currentUser.OrganizationId == org.Id)
-            return (org, null);
+        if (User.IsInRole(Role.SystemAdmin) || currentUser.TenantId == tenant.Id)
+            return (tenant, null);
 
         return (null, Forbid());
     }
 
-    // GET: /org/{officeCode}
+    // GET: /tenant/{tenantCode}
     [HttpGet("")]
-    public async Task<IActionResult> Index(string officeCode)
+    public async Task<IActionResult> Index(string tenantCode)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
-        ViewBag.Organization = org;
-        ViewBag.UserCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id);
+        var tenant = auth.Tenant!;
+        ViewBag.Tenant = tenant;
+        ViewBag.UserCount = await userManager.Users.CountAsync(u => u.TenantId == tenant.Id);
         return View("~/Views/Home/Index.cshtml");
     }
 
-    // GET: /org/{officeCode}/users
+    // GET: /tenant/{tenantCode}/users
     [HttpGet("users")]
-    public async Task<IActionResult> Users(string officeCode)
+    public async Task<IActionResult> Users(string tenantCode)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
-        ViewBag.Organization = org;
+        var tenant = auth.Tenant!;
+        ViewBag.Tenant = tenant;
 
         var users = await userManager.Users
-            .Where(u => u.OrganizationId == org.Id)
+            .Where(u => u.TenantId == tenant.Id)
             .ToListAsync();
 
         var model = new List<UserListItemViewModel>();
@@ -71,33 +71,33 @@ public class OrgDashboardController(
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
-                OrganizationName = org.Name,
+                TenantName = tenant.Name,
                 Roles = await userManager.GetRolesAsync(user)
             });
         }
         return View(model);
     }
 
-    // GET: /org/{officeCode}/users/create
+    // GET: /tenant/{tenantCode}/users/create
     [HttpGet("users/create")]
-    public async Task<IActionResult> CreateUser(string officeCode)
+    public async Task<IActionResult> CreateUser(string tenantCode)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        ViewBag.Organization = auth.Org!;
+        ViewBag.Tenant = auth.Tenant!;
         return View(new CreateUserViewModel());
     }
 
-    // POST: /org/{officeCode}/users/create
+    // POST: /tenant/{tenantCode}/users/create
     [HttpPost("users/create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateUser(string officeCode, CreateUserViewModel model)
+    public async Task<IActionResult> CreateUser(string tenantCode, CreateUserViewModel model)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
 
         if (ModelState.IsValid)
         {
@@ -105,7 +105,7 @@ public class OrgDashboardController(
             {
                 UserName = model.Email,
                 Email = model.Email,
-                OrganizationId = org.Id,
+                TenantId = tenant.Id,
                 EmailConfirmed = true
             };
 
@@ -115,120 +115,120 @@ public class OrgDashboardController(
                 if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
                     await userManager.AddToRoleAsync(user, "Student");
 
-                return RedirectToAction(nameof(Users), new { officeCode });
+                return RedirectToAction(nameof(Users), new { tenantCode });
             }
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.Organization = org;
+        ViewBag.Tenant = tenant;
         return View(model);
     }
 
-    // GET: /org/{officeCode}/users/{userId}/edit
+    // GET: /tenant/{tenantCode}/users/{userId}/edit
     [HttpGet("users/{userId}/edit")]
-    public async Task<IActionResult> EditUser(string officeCode, string userId)
+    public async Task<IActionResult> EditUser(string tenantCode, string userId)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null || user.OrganizationId != org.Id) return NotFound();
+        if (user == null || user.TenantId != tenant.Id) return NotFound();
 
-        ViewBag.Organization = org;
+        ViewBag.Tenant = tenant;
         return View(new EditUserViewModel
         {
             Id = user.Id,
             Email = user.Email ?? string.Empty,
-            OrganizationId = org.Id
+            TenantId = tenant.Id
         });
     }
 
-    // POST: /org/{officeCode}/users/{userId}/edit
+    // POST: /tenant/{tenantCode}/users/{userId}/edit
     [HttpPost("users/{userId}/edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditUser(string officeCode, string userId, EditUserViewModel model)
+    public async Task<IActionResult> EditUser(string tenantCode, string userId, EditUserViewModel model)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
 
         if (userId != model.Id) return NotFound();
 
         if (ModelState.IsValid)
         {
             var user = await userManager.FindByIdAsync(userId);
-            if (user == null || user.OrganizationId != org.Id) return NotFound();
+            if (user == null || user.TenantId != tenant.Id) return NotFound();
 
             user.Email = model.Email;
             user.UserName = model.Email;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
-                return RedirectToAction(nameof(Users), new { officeCode });
+                return RedirectToAction(nameof(Users), new { tenantCode });
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.Organization = org;
+        ViewBag.Tenant = tenant;
         return View(model);
     }
 
-    // GET: /org/{officeCode}/users/{userId}/delete
+    // GET: /tenant/{tenantCode}/users/{userId}/delete
     [HttpGet("users/{userId}/delete")]
-    public async Task<IActionResult> DeleteUser(string officeCode, string userId)
+    public async Task<IActionResult> DeleteUser(string tenantCode, string userId)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
 
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null || user.OrganizationId != org.Id) return NotFound();
+        if (user == null || user.TenantId != tenant.Id) return NotFound();
 
-        ViewBag.Organization = org;
+        ViewBag.Tenant = tenant;
         return View(user);
     }
 
-    // POST: /org/{officeCode}/users/{userId}/delete
+    // POST: /tenant/{tenantCode}/users/{userId}/delete
     [HttpPost("users/{userId}/delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteUserConfirmed(string officeCode, string userId)
+    public async Task<IActionResult> DeleteUserConfirmed(string tenantCode, string userId)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
 
         var user = await userManager.FindByIdAsync(userId);
-        if (user != null && user.OrganizationId == org.Id)
+        if (user != null && user.TenantId == tenant.Id)
             await userManager.DeleteAsync(user);
 
-        return RedirectToAction(nameof(Users), new { officeCode });
+        return RedirectToAction(nameof(Users), new { tenantCode });
     }
 
-    // GET: /org/{officeCode}/users/{userId}/roles
+    // GET: /tenant/{tenantCode}/users/{userId}/roles
     [HttpGet("users/{userId}/roles")]
-    public async Task<IActionResult> AssignRoles(string officeCode, string userId)
+    public async Task<IActionResult> AssignRoles(string tenantCode, string userId)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
 
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null || user.OrganizationId != org.Id) return NotFound();
+        if (user == null || user.TenantId != tenant.Id) return NotFound();
 
         var allRoles = await roleManager.Roles
             .Where(r => r.Name != "Student")
             .ToListAsync();
         var userRoles = await userManager.GetRolesAsync(user);
 
-        ViewBag.Organization = org;
+        ViewBag.Tenant = tenant;
         return View(new AssignRolesViewModel
         {
             UserId = user.Id,
@@ -241,18 +241,18 @@ public class OrgDashboardController(
         });
     }
 
-    // POST: /org/{officeCode}/users/{userId}/roles
+    // POST: /tenant/{tenantCode}/users/{userId}/roles
     [HttpPost("users/{userId}/roles")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AssignRoles(string officeCode, string userId, AssignRolesViewModel model)
+    public async Task<IActionResult> AssignRoles(string tenantCode, string userId, AssignRolesViewModel model)
     {
-        var auth = await GetAuthorizedOrgAsync(officeCode);
+        var auth = await GetAuthorizedTenantAsync(tenantCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var org = auth.Org!;
+        var tenant = auth.Tenant!;
 
         var user = await userManager.FindByIdAsync(model.UserId);
-        if (user == null || user.OrganizationId != org.Id) return NotFound();
+        if (user == null || user.TenantId != tenant.Id) return NotFound();
 
         var currentRoles = await userManager.GetRolesAsync(user);
         var selectedRoles = model.Roles
@@ -274,6 +274,6 @@ public class OrgDashboardController(
         if (toRemove.Count > 0)
             await userManager.RemoveFromRolesAsync(user, toRemove);
 
-        return RedirectToAction(nameof(Users), new { officeCode });
+        return RedirectToAction(nameof(Users), new { tenantCode });
     }
 }

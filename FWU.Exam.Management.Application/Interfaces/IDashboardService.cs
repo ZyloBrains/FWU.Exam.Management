@@ -9,7 +9,7 @@ public interface IDashboardService
 
 public class DashboardStats
 {
-    public int TotalOrganizations { get; set; }
+    public int TotalTenants { get; set; }
     public int TotalUsers { get; set; }
     public int TotalRoles { get; set; }
     public int TotalColleges { get; set; }

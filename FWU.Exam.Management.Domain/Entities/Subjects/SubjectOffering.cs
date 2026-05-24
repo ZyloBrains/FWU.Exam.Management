@@ -1,12 +1,15 @@
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Subjects;
 
-public class SubjectOffering
+public class SubjectOffering : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     public int SubjectCatalogId { get; set; }
     public int ProgramId { get; set; }

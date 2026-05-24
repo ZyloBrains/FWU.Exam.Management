@@ -11,6 +11,6 @@ public class EditUserViewModel
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Display(Name = "Organization")]
-    public int? OrganizationId { get; set; }
+        [Display(Name = "Tenant")]
+        public int? TenantId { get; set; }
 }

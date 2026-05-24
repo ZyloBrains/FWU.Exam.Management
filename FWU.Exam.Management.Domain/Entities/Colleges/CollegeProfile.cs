@@ -1,11 +1,14 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Colleges;
 
-public class CollegeProfile
+public class CollegeProfile : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     [Required, MaxLength(1024)]
     public string? BankName { get; set; }

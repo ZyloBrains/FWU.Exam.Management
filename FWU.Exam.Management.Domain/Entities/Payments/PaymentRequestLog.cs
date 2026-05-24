@@ -1,13 +1,16 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Payments;
 
-public class PaymentRequestLog
+public class PaymentRequestLog : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
     public int? PaymentRequestLogStatus { get; set; }
 
     [Required, MaxLength(50)]

@@ -1,8 +1,12 @@
+using FWU.Exam.Management.Domain.Interfaces;
+
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
-public class ExamRollNumberSetup
+public class ExamRollNumberSetup : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     public int ExamScheduleId { get; set; }
     public int FirstExamRollNumber { get; set; }

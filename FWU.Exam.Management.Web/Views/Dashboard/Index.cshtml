@@ -29,13 +29,13 @@
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Organizations Card -->
+        <!-- Tenants Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Organizations</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                        <p class="text-sm font-medium text-gray-500">Tenants</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">ï¿½</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-building text-blue-600 text-xl"></i>
@@ -55,7 +55,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-500">Users</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">ï¿½</p>
                     </div>
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-users text-green-600 text-xl"></i>
@@ -75,7 +75,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-500">Roles</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">ï¿½</p>
                     </div>
                     <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-user-shield text-purple-600 text-xl"></i>
@@ -95,7 +95,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-500">Programs</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">ï¿½</p>
                     </div>
                     <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-graduation-cap text-amber-600 text-xl"></i>
@@ -115,7 +115,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-500">Examinations</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">—</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">ï¿½</p>
                     </div>
                     <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-clipboard-list text-red-600 text-xl"></i>
@@ -305,12 +305,12 @@
         </div>
         <div class="p-6">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                <a asp-controller="Organization" asp-action="Create"
+                <a asp-controller="Tenant" asp-action="Create"
                    class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200">
                     <div class="w-12 h-12 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
                         <i class="fas fa-building text-xl text-blue-600"></i>
                     </div>
-                    <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">New Organization</span>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">New Tenant</span>
                 </a>
 
                 <a asp-controller="User" asp-action="Create"
@@ -329,12 +329,12 @@
                     <span class="text-xs font-medium text-gray-700 group-hover:text-purple-700 text-center">New Role</span>
                 </a>
 
-                <a asp-controller="Organization" asp-action="Index"
+                <a asp-controller="Tenant" asp-action="Index"
                    class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-amber-50 hover:shadow-md transition-all duration-200">
                     <div class="w-12 h-12 bg-amber-100 group-hover:bg-amber-200 rounded-full flex items-center justify-center mb-3 transition-colors duration-200">
                         <i class="fas fa-list text-xl text-amber-600"></i>
                     </div>
-                    <span class="text-xs font-medium text-gray-700 group-hover:text-amber-700 text-center">Organizations</span>
+                    <span class="text-xs font-medium text-gray-700 group-hover:text-amber-700 text-center">Tenants</span>
                 </a>
 
                 <a asp-controller="User" asp-action="Index"

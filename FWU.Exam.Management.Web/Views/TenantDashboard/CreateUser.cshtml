@@ -1,23 +1,23 @@
 @model CreateUserViewModel
 
 @{
-    var org = ViewBag.Organization as Organization;
-    ViewData["Title"] = $"Add User — {org!.Name}";
+    var tenant = ViewBag.Tenant as Tenant;
+    ViewData["Title"] = $"Add User — {tenant!.Name}";
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="OrgDashboard" asp-action="Index" asp-route-officeCode="@org.OfficeCode">@org.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="OrgDashboard" asp-action="Users" asp-route-officeCode="@org.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item"><a asp-controller="TenantDashboard" asp-action="Index" asp-route-tenantCode="@tenant.OfficeCode">@tenant.Name</a></li>
+        <li class="breadcrumb-item"><a asp-controller="TenantDashboard" asp-action="Users" asp-route-tenantCode="@tenant.OfficeCode">Users</a></li>
         <li class="breadcrumb-item active">Add User</li>
     </ol>
 </nav>
 
-<h1 class="h3 mb-4">Add User — @org.Name</h1>
+<h1 class="h3 mb-4">Add User — @tenant.Name</h1>
 
 <div class="row">
     <div class="col-md-5">
-        <form asp-controller="OrgDashboard" asp-action="CreateUser" asp-route-officeCode="@org.OfficeCode" method="post">
+        <form asp-controller="TenantDashboard" asp-action="CreateUser" asp-route-tenantCode="@tenant.OfficeCode" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
@@ -36,8 +36,8 @@
             </div>
             <div>
                 <input type="submit" value="Create" class="btn btn-primary" />
-                <a asp-controller="OrgDashboard" asp-action="Users"
-                   asp-route-officeCode="@org.OfficeCode"
+                <a asp-controller="TenantDashboard" asp-action="Users"
+                   asp-route-tenantCode="@tenant.OfficeCode"
                    class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

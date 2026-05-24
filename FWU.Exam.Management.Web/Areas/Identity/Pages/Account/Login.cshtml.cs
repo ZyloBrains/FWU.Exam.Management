@@ -112,9 +112,9 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
                     {
-                        var org = user.OrganizationId != null ? await context.Organizations.FindAsync(user.OrganizationId.Value) : null;
-                        var postChangeReturnUrl = org != null && !string.IsNullOrWhiteSpace(org.OfficeCode)
-                            ? $"/org/{org.OfficeCode}"
+                        var tenant = user.TenantId != null ? await context.Tenants.FindAsync(user.TenantId.Value) : null;
+                        var postChangeReturnUrl = tenant != null && !string.IsNullOrWhiteSpace(tenant.OfficeCode)
+                            ? $"/tenant/{tenant.OfficeCode}"
                             : returnUrl;
 
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
@@ -126,12 +126,12 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     return RedirectToAction("Index", "Dashboard", new { area = "" });
                 }
 
-                if (user?.OrganizationId != null)
+                if (user?.TenantId != null)
                 {
-                    var org = await context.Organizations.FindAsync(user.OrganizationId.Value);
-                    if (org != null && !string.IsNullOrWhiteSpace(org.OfficeCode))
+                    var tenant = await context.Tenants.FindAsync(user.TenantId.Value);
+                    if (tenant != null && !string.IsNullOrWhiteSpace(tenant.OfficeCode))
                     {
-                        return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
+                        return RedirectToAction("Index", "TenantDashboard", new { tenantCode = tenant.OfficeCode });
                     }
                 }
 

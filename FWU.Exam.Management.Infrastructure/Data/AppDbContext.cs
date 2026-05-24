@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -16,10 +17,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FWU.Exam.Management.Infrastructure;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbContext>? logger = null) 
+public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbContext>? logger = null, ITenantContext? tenantContext = null) 
     : IdentityDbContext<AppUser>(options)
 {
     private readonly ILogger<AppDbContext> _logger = logger ?? NullLogger<AppDbContext>.Instance;
+    private readonly ITenantContext? _tenantContext = tenantContext;
 
     public DbSet<AcademicYear>? AcademicYears { get; set; }
     public DbSet<Address>? Addresses { get; set; }
@@ -66,7 +68,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<SubjectType>? SubjectTypes { get; set; }
     public DbSet<CurriculumVersion>? CurriculumVersions { get; set; }
     public DbSet<Province>? Provinces { get; set; }
-    public DbSet<Organization>? Organizations { get; set; }
+    public DbSet<Tenant>? Tenants { get; set; }
     public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
     public DbSet<CollegeProfile>? CollegeProfiles { get; set; }
     public DbSet<UserAttachment>? UserAttachments { get; set; }
@@ -91,6 +93,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 entityType.AddProperty("UpdatedDate", typeof(DateTime?));
             }
         }
+
+        foreach (var entityType in builder.Model.GetEntityTypes().Where(e => typeof(ITenantScoped).IsAssignableFrom(e.ClrType) && e.ClrType != typeof(Tenant)))
+        {
+            var param = Expression.Parameter(entityType.ClrType, "e");
+            var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
+            var contextField = Expression.Field(Expression.Constant(this), nameof(_tenantContext));
+            var tenantIdValue = Expression.Property(contextField, nameof(ITenantContext.TenantId));
+            var body = Expression.Equal(tenantIdProp, tenantIdValue);
+            var lambda = Expression.Lambda(body, param);
+            entityType.SetQueryFilter(lambda);
+
+            builder.Entity(entityType.ClrType)
+                .HasOne("Tenant")
+                .WithMany()
+                .HasForeignKey("TenantId")
+                .OnDelete(DeleteBehavior.Restrict);
+        }
+
+        builder.Entity<BillTitle>()
+            .HasOne(e => e.Tenant)
+            .WithMany()
+            .HasForeignKey(e => e.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ProgramSubjectPracticalCharge>()
+            .HasOne(e => e.Tenant)
+            .WithMany()
+            .HasForeignKey(e => e.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<BankVoucher>()
+            .HasOne(e => e.Tenant)
+            .WithMany()
+            .HasForeignKey(e => e.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins");
         builder.Entity<IdentityUserToken<string>>().ToTable("UserTokens");
@@ -513,9 +550,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<AppUser>()
-            .HasOne(u => u.Organization)
+            .HasOne(u => u.Tenant)
             .WithMany()
-            .HasForeignKey(u => u.OrganizationId)
+            .HasForeignKey(u => u.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<College>()

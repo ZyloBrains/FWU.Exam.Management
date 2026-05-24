@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.Middleware;
 
 public partial class EntryPoint
 {
@@ -18,12 +20,14 @@ public partial class EntryPoint
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
+        builder.Services.AddScoped<TenantSaveChangesInterceptor>();
 
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             options.UseSqlServer(connectionString);
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
+            options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
         });
 
         builder.Services.AddDefaultIdentity<AppUser>(options =>
@@ -43,7 +47,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
         builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
         builder.Services.AddScoped<ICollegeService, CollegeService>();
-        builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+        builder.Services.AddScoped<ITenantService, TenantService>();
+        builder.Services.AddScoped<ITenantContext, FWU.Exam.Management.Web.Middleware.TenantContext>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
         builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
         builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
@@ -87,6 +92,8 @@ public partial class EntryPoint
         app.UseHttpsRedirection();
         app.UseRouting();
 
+        app.UseMiddleware<TenantResolutionMiddleware>();
+
         app.UseAuthorization();
 
         app.MapStaticAssets();
@@ -109,6 +116,7 @@ public partial class EntryPoint
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);

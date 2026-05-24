@@ -20,6 +20,6 @@ public class CreateUserViewModel
     [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    [Display(Name = "Organization")]
-    public int? OrganizationId { get; set; }
+        [Display(Name = "Tenant")]
+        public int? TenantId { get; set; }
 }

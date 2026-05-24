@@ -1,10 +1,13 @@
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
 
-public class Notice
+public class Notice : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     [Required, MaxLength(1024)]
     public string? NoticeTitle { get; set; }

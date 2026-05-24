@@ -1,28 +1,28 @@
 @model EditUserViewModel
 
 @{
-    var org = ViewBag.Organization as Organization;
-    ViewData["Title"] = $"Edit User — {org!.Name}";
+    var tenant = ViewBag.Tenant as Tenant;
+    ViewData["Title"] = $"Edit User — {tenant!.Name}";
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="OrgDashboard" asp-action="Index" asp-route-officeCode="@org.OfficeCode">@org.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="OrgDashboard" asp-action="Users" asp-route-officeCode="@org.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item"><a asp-controller="TenantDashboard" asp-action="Index" asp-route-tenantCode="@tenant.OfficeCode">@tenant.Name</a></li>
+        <li class="breadcrumb-item"><a asp-controller="TenantDashboard" asp-action="Users" asp-route-tenantCode="@tenant.OfficeCode">Users</a></li>
         <li class="breadcrumb-item active">Edit User</li>
     </ol>
 </nav>
 
-<h1 class="h3 mb-4">Edit User — @org.Name</h1>
+<h1 class="h3 mb-4">Edit User — @tenant.Name</h1>
 
 <div class="row">
     <div class="col-md-5">
-        <form asp-controller="OrgDashboard" asp-action="EditUser"
-              asp-route-officeCode="@org.OfficeCode" asp-route-userId="@Model.Id"
+        <form asp-controller="TenantDashboard" asp-action="EditUser"
+              asp-route-tenantCode="@tenant.OfficeCode" asp-route-userId="@Model.Id"
               method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="OrganizationId" />
+            <input type="hidden" asp-for="TenantId" />
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
                 <input asp-for="Email" class="form-control" />
@@ -30,8 +30,8 @@
             </div>
             <div>
                 <input type="submit" value="Save" class="btn btn-primary" />
-                <a asp-controller="OrgDashboard" asp-action="Users"
-                   asp-route-officeCode="@org.OfficeCode"
+                <a asp-controller="TenantDashboard" asp-action="Users"
+                   asp-route-tenantCode="@tenant.OfficeCode"
                    class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

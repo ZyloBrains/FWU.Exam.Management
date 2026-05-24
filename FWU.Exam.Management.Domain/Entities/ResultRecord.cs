@@ -1,14 +1,17 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
 
-public class ResultRecord
+public class ResultRecord : ITenantScoped
 {
     [Key]
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     public int AcademicYearId { get; set; }
     public int ProgramsId { get; set; }

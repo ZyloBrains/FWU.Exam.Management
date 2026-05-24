@@ -24,7 +24,7 @@ public class DashboardController(IDashboardService dashboardService, UserManager
         {
             CurrentRole = primaryRole,
             UserName = user.UserName ?? user.Email ?? "User",
-            TotalOrganizations = stats.TotalOrganizations,
+            TotalTenants = stats.TotalTenants,
             TotalUsers = stats.TotalUsers,
             TotalRoles = stats.TotalRoles,
             TotalColleges = stats.TotalColleges,

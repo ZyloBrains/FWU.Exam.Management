@@ -13,7 +13,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 {
     public async Task<IActionResult> Index()
     {
-        var users = await userManager.Users.Include(u => u.Organization).ToListAsync();
+        var users = await userManager.Users.Include(u => u.Tenant).ToListAsync();
         var model = new List<UserListItemViewModel>();
         foreach (var user in users)
         {
@@ -21,7 +21,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
-                OrganizationName = user.Organization?.Name,
+                TenantName = user.Tenant?.Name,
                 Roles = await userManager.GetRolesAsync(user)
             });
         }
@@ -33,7 +33,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (id == null) return NotFound();
 
         var user = await userManager.Users
-            .Include(u => u.Organization)
+            .Include(u => u.Tenant)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null) return NotFound();
@@ -44,7 +44,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
     public async Task<IActionResult> Create()
     {
-        ViewBag.Organizations = new SelectList(await context.Organizations.ToListAsync(), "Id", "Name");
+        ViewBag.Tenants = new SelectList(await context.Tenants.ToListAsync(), "Id", "Name");
         return View();
     }
 
@@ -52,8 +52,8 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
-        if (!model.OrganizationId.HasValue)
-            ModelState.AddModelError(nameof(model.OrganizationId), "Organization is required.");
+        if (!model.TenantId.HasValue)
+            ModelState.AddModelError(nameof(model.TenantId), "Tenant is required.");
 
         if (ModelState.IsValid)
         {
@@ -61,7 +61,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             {
                 UserName = model.Email,
                 Email = model.Email,
-                OrganizationId = model.OrganizationId,
+                TenantId = model.TenantId,
                 EmailConfirmed = true
             };
 
@@ -77,7 +77,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Tenants = new SelectList(await context.Tenants.AsNoTracking().ToListAsync(), "Id", "Name", model.TenantId);
         return View(model);
     }
 
@@ -92,10 +92,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         {
             Id = user.Id,
             Email = user.Email ?? string.Empty,
-            OrganizationId = user.OrganizationId
+            TenantId = user.TenantId
         };
 
-        ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Tenants = new SelectList(await context.Tenants.AsNoTracking().ToListAsync(), "Id", "Name", model.TenantId);
         return View(model);
     }
 
@@ -112,7 +112,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
             user.Email = model.Email;
             user.UserName = model.Email;
-            user.OrganizationId = model.OrganizationId;
+            user.TenantId = model.TenantId;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -122,7 +122,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Tenants = new SelectList(await context.Tenants.AsNoTracking().ToListAsync(), "Id", "Name", model.TenantId);
         return View(model);
     }
 
@@ -131,7 +131,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (id == null) return NotFound();
 
         var user = await userManager.Users
-            .Include(u => u.Organization)
+            .Include(u => u.Tenant)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null) return NotFound();

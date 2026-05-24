@@ -1,21 +1,21 @@
-@model IEnumerable<Organization>
+@model IEnumerable<Tenant>
 
 @{
-    ViewData["Title"] = "Organizations";
+    ViewData["Title"] = "Tenants";
     var totalCount = Model.Count();
-    var orgLoginEmail = TempData["OrgLoginEmail"]?.ToString();
-    var orgLoginPassword = TempData["OrgLoginPassword"]?.ToString();
-    var orgOfficeCode = TempData["OrgOfficeCode"]?.ToString();
+    var tenantLoginEmail = TempData["TenantLoginEmail"]?.ToString();
+    var tenantLoginPassword = TempData["TenantLoginPassword"]?.ToString();
+    var tenantCode = TempData["TenantCode"]?.ToString();
 }
 
 <div class="space-y-6" x-data="{ search: '', get filtered() { return this.search.toLowerCase(); } }">
-    @if (!string.IsNullOrWhiteSpace(orgLoginEmail) && !string.IsNullOrWhiteSpace(orgLoginPassword) && !string.IsNullOrWhiteSpace(orgOfficeCode))
+    @if (!string.IsNullOrWhiteSpace(tenantLoginEmail) && !string.IsNullOrWhiteSpace(tenantLoginPassword) && !string.IsNullOrWhiteSpace(tenantCode))
     {
         <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
-            <div class="font-semibold mb-1">Organization login created</div>
-            <div>Email: <span class="font-medium">@orgLoginEmail</span></div>
-            <div>Temporary Password: <span class="font-medium">@orgLoginPassword</span></div>
-            <div>Org Page: <a class="underline" asp-controller="OrgDashboard" asp-action="Index" asp-route-officeCode="@orgOfficeCode">/org/@orgOfficeCode</a></div>
+            <div class="font-semibold mb-1">Tenant login created</div>
+            <div>Email: <span class="font-medium">@tenantLoginEmail</span></div>
+            <div>Temporary Password: <span class="font-medium">@tenantLoginPassword</span></div>
+            <div>Tenant Page: <a class="underline" asp-controller="TenantDashboard" asp-action="Index" asp-route-tenantCode="@tenantCode">/tenant/@tenantCode</a></div>
         </div>
     }
 
@@ -26,7 +26,7 @@
                 <i class="fas fa-building text-blue-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Organizations</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Tenants</h1>
                 <p class="text-sm text-gray-500 mt-0.5">
                     <span class="inline-flex items-center gap-1">
                         <span class="font-semibold text-gray-700">@totalCount</span> total records
@@ -54,7 +54,7 @@
                     <i class="fas fa-times text-xs"></i> Clear
                 </button>
                 <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2.5 text-xs text-gray-500 bg-gray-50 rounded-lg border border-gray-400">
-                    <i class="fas fa-filter text-gray-400"></i> Showing <span x-text="document.querySelectorAll('tbody tr:not([style*=display\\3A\\ none]), .org-card:not([style*=display\\3A\\ none])').length || @totalCount"></span>
+                    <i class="fas fa-filter text-gray-400"></i> Showing <span x-text="document.querySelectorAll('tbody tr:not([style*=display\\3A\\ none]), .tenant-card:not([style*=display\\3A\\ none])').length || @totalCount"></span>
                 </span>
             </div>
         </div>
@@ -116,7 +116,7 @@
             <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <i class="fas fa-search text-2xl text-gray-300"></i>
             </div>
-            <p class="text-gray-500 font-medium">No organizations match your search</p>
+            <p class="text-gray-500 font-medium">No tenants match your search</p>
             <p class="text-xs text-gray-400 mt-1">Try a different keyword</p>
         </div>
     </div>
@@ -125,7 +125,7 @@
     <div class="md:hidden space-y-4">
         @foreach (var item in Model)
         {
-            <div class="org-card bg-white rounded-xl shadow-sm border border-gray-400 p-4"
+            <div class="tenant-card bg-white rounded-xl shadow-sm border border-gray-400 p-4"
                  x-show="search === '' || '@item.Name?.ToLower()'.includes(filtered) || '@item.OfficeCode?.ToLower()'.includes(filtered) || '@item.Email?.ToLower()'.includes(filtered)"
                  x-transition>
                 <div class="flex items-start gap-3 mb-3">
@@ -165,11 +165,11 @@
             <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-building text-4xl text-blue-300"></i>
             </div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">No organizations yet</h3>
-            <p class="text-sm text-gray-500 mb-6">Get started by creating your first organization</p>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">No tenants yet</h3>
+            <p class="text-sm text-gray-500 mb-6">Get started by creating your first tenant</p>
             <a asp-action="Create"
                class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                <i class="fas fa-plus text-xs"></i> Create Organization
+                <i class="fas fa-plus text-xs"></i> Create Tenant
             </a>
         </div>
     }

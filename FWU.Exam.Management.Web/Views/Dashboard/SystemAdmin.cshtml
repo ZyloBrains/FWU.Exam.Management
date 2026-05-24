@@ -31,8 +31,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Organizations</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalOrganizations</p>
+                        <p class="text-sm font-medium text-gray-500">Tenants</p>
+                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalTenants</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-building text-blue-600 text-xl"></i>
@@ -206,9 +206,9 @@
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    <a asp-controller="Organization" asp-action="Create" class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200">
+                    <a asp-controller="Tenant" asp-action="Create" class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200">
                         <div class="w-12 h-12 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-building text-xl text-blue-600"></i></div>
-                        <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">New Organization</span>
+                        <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">New Tenant</span>
                     </a>
                     <a asp-controller="User" asp-action="Create" class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-green-50 hover:shadow-md transition-all duration-200">
                         <div class="w-12 h-12 bg-green-100 group-hover:bg-green-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-user-plus text-xl text-green-600"></i></div>
@@ -252,9 +252,9 @@
                 </div>
             </div>
             <div class="divide-y divide-gray-100">
-                <a asp-controller="Organization" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center gap-3"><div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-building text-blue-600 text-sm"></i></div><span class="text-sm font-medium text-gray-700">Organizations</span></div>
-                    <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalOrganizations</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
+                <a asp-controller="Tenant" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3"><div class="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-building text-blue-600 text-sm"></i></div><span class="text-sm font-medium text-gray-700">Tenants</span></div>
+                    <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalTenants</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
                 </a>
                 <a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-3"><div class="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center"><i class="fas fa-school text-amber-600 text-sm"></i></div><span class="text-sm font-medium text-gray-700">Colleges</span></div>

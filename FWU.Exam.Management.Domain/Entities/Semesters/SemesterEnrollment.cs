@@ -1,12 +1,15 @@
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Interfaces;
 
 namespace FWU.Exam.Management.Domain.Entities.Semesters;
 
-public class SemesterEnrollment
+public class SemesterEnrollment : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     public int StudentAdmissionId { get; set; }
     public int SemesterId { get; set; }

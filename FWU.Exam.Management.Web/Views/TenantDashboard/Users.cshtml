@@ -1,24 +1,24 @@
 @model IEnumerable<UserListItemViewModel>
 
 @{
-    var org = ViewBag.Organization as Organization;
-    ViewData["Title"] = $"{org!.Name} – Users";
+    var tenant = ViewBag.Tenant as Tenant;
+    ViewData["Title"] = $"{tenant!.Name} – Users";
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
         <li class="breadcrumb-item">
-            <a asp-controller="OrgDashboard" asp-action="Index" asp-route-officeCode="@org.OfficeCode">@org.Name</a>
+            <a asp-controller="TenantDashboard" asp-action="Index" asp-route-tenantCode="@tenant.OfficeCode">@tenant.Name</a>
         </li>
         <li class="breadcrumb-item active">Users</li>
     </ol>
 </nav>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Users — @org.Name</h1>
-    <a asp-controller="OrgDashboard" asp-action="CreateUser"
-       asp-route-officeCode="@org.OfficeCode"
+    <h1 class="h3 mb-0">Users — @tenant.Name</h1>
+    <a asp-controller="TenantDashboard" asp-action="CreateUser"
+       asp-route-tenantCode="@tenant.OfficeCode"
        class="btn btn-primary">Add User</a>
 </div>
 
@@ -46,14 +46,14 @@
                     }
                 </td>
                 <td>
-                    <a asp-controller="OrgDashboard" asp-action="EditUser"
-                       asp-route-officeCode="@org.OfficeCode" asp-route-userId="@item.Id"
+                    <a asp-controller="TenantDashboard" asp-action="EditUser"
+                       asp-route-tenantCode="@tenant.OfficeCode" asp-route-userId="@item.Id"
                        class="btn btn-sm btn-outline-secondary">Edit</a>
-                    <a asp-controller="OrgDashboard" asp-action="AssignRoles"
-                       asp-route-officeCode="@org.OfficeCode" asp-route-userId="@item.Id"
+                    <a asp-controller="TenantDashboard" asp-action="AssignRoles"
+                       asp-route-tenantCode="@tenant.OfficeCode" asp-route-userId="@item.Id"
                        class="btn btn-sm btn-outline-primary">Roles</a>
-                    <a asp-controller="OrgDashboard" asp-action="DeleteUser"
-                       asp-route-officeCode="@org.OfficeCode" asp-route-userId="@item.Id"
+                    <a asp-controller="TenantDashboard" asp-action="DeleteUser"
+                       asp-route-tenantCode="@tenant.OfficeCode" asp-route-userId="@item.Id"
                        class="btn btn-sm btn-outline-danger">Delete</a>
                 </td>
             </tr>

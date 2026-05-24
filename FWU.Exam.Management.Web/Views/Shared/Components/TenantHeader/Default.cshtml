@@ -1,4 +1,4 @@
-@model Organization?
+@model Tenant?
 
 @if (Model != null)
 {
@@ -7,6 +7,5 @@
         {
             <img src="@Model.LogoPath" alt="@Model.Name logo" style="height:50px;object-fit:contain;" />
         }
-        @* <span class="fw-semibold text-primary small">@Model.Name</span> *@
     </div>
 }

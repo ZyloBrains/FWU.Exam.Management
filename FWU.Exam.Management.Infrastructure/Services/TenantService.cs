@@ -6,19 +6,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class OrganizationService(AppDbContext context) : IOrganizationService
+public class TenantService(AppDbContext context) : ITenantService
 {
-    public async Task<Organization?> GetOrganizationAsync()
+    public async Task<Tenant?> GetTenantAsync()
     {
-        return await context.Organizations
+        return await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Organization?> GetOrganizationByOfficeCodeAsync(string officeCode)
+    public async Task<Tenant?> GetTenantByOfficeCodeAsync(string officeCode)
     {
-        return await context.Organizations
+        return await context.Tenants
             .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.OfficeCode == officeCode);
+            .FirstOrDefaultAsync(t => t.OfficeCode == officeCode);
     }
 }
