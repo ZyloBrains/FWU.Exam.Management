@@ -1,0 +1,39 @@
+@model List<Tenant>
+@{
+    ViewData["Title"] = "Select Organization";
+    Layout = "_Layout";
+}
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl w-full">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Select Organization</h1>
+            <p class="mt-2 text-gray-600">Choose an organization to continue</p>
+        </div>
+
+        <div class="grid gap-4">
+            @foreach (var tenant in Model)
+            {
+                <a href="/tenant/@tenant.OfficeCode/Home/Index"
+                   class="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-400 transition-all duration-200">
+                    <div class="flex items-center gap-4">
+                        @if (!string.IsNullOrEmpty(tenant.LogoPath))
+                        {
+                            <img src="@tenant.LogoPath" alt="@tenant.Name" class="w-14 h-14 rounded-lg object-contain bg-gray-50" />
+                        }
+                        else
+                        {
+                            <div class="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center text-xl font-bold text-blue-700">
+                                @tenant.Name?.Substring(0, 1)
+                            </div>
+                        }
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">@tenant.Name</h2>
+                            <p class="text-sm text-gray-500">@tenant.OfficeCode</p>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</div>

@@ -90,6 +90,7 @@ public partial class EntryPoint
         }
 
         app.UseHttpsRedirection();
+
         app.UseRouting();
 
         app.UseMiddleware<TenantResolutionMiddleware>();
@@ -97,6 +98,11 @@ public partial class EntryPoint
         app.UseAuthorization();
 
         app.MapStaticAssets();
+
+        app.MapControllerRoute(
+            name: "tenant",
+            pattern: "tenant/{tenantCode}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
 
         app.MapControllerRoute(
             name: "areas",

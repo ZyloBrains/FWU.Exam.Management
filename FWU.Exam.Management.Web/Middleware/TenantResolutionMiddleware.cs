@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
@@ -8,40 +7,13 @@ namespace FWU.Exam.Management.Web.Middleware;
 
 public class TenantResolutionMiddleware(RequestDelegate next)
 {
+    private static readonly string[] _staticExtensions =
+        [".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot"];
+
     public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext, AppDbContext dbContext)
     {
-        string? tenantCode = null;
-
-        // 1. Try route: /tenant/{tenantCode}/...
-        var path = context.Request.Path.Value;
-        if (path != null)
-        {
-            var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            for (var i = 0; i < segments.Length - 1; i++)
-            {
-                if (segments[i].Equals("tenant", StringComparison.OrdinalIgnoreCase))
-                {
-                    tenantCode = segments[i + 1];
-                    break;
-                }
-            }
-        }
-
-        // 2. Try user claim as fallback (authenticated users have TenantId claim or org association)
-        if (string.IsNullOrEmpty(tenantCode) && context.User.Identity?.IsAuthenticated == true)
-        {
-            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId != null)
-            {
-                var user = await dbContext.Users
-                    .Include(u => u.Tenant)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-                if (user?.Tenant != null)
-                {
-                    tenantCode = user.Tenant.OfficeCode;
-                }
-            }
-        }
+        var path = context.Request.Path.Value ?? "";
+        var tenantCode = context.GetRouteValue("tenantCode") as string;
 
         if (!string.IsNullOrEmpty(tenantCode))
         {
@@ -49,12 +21,29 @@ public class TenantResolutionMiddleware(RequestDelegate next)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(t => t.OfficeCode == tenantCode);
 
-            if (tenant != null)
+            if (tenant == null)
             {
-                tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
+                context.Response.StatusCode = 404;
+                return;
             }
+
+            tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
+        }
+        else if (!IsPublicPath(path))
+        {
+            context.Response.Redirect("/TenantSelect/Index");
+            return;
         }
 
         await next(context);
+    }
+
+    private static bool IsPublicPath(string path)
+    {
+        if (_staticExtensions.Any(e => path.EndsWith(e, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        var lower = path.TrimEnd('/').ToLowerInvariant();
+        return lower is "" or "/" or "/tenantselect" or "/tenantselect/index";
     }
 }
