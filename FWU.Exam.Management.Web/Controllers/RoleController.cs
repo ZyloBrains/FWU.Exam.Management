@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 {
 

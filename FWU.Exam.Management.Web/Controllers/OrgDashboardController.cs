@@ -13,11 +13,10 @@ namespace FWU.Exam.Management.Web.Controllers;
 [Route("org/{officeCode}")]
 public class OrgDashboardController(
     IOrganizationService organizationService,
+    IDashboardService dashboardService,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller
 {
-    private static readonly string[] RolesRequiringStudent = ["SystemAdmin", "Admin", "Organization"];
-
     private async Task<Organization?> GetOrgAsync(string officeCode) =>
         await organizationService.GetOrganizationByOfficeCodeAsync(officeCode);
 
@@ -31,7 +30,7 @@ public class OrgDashboardController(
         if (currentUser == null)
             return (null, Challenge());
 
-        if (User.IsInRole(Role.SystemAdmin) || currentUser.OrganizationId == org.Id)
+        if (User.IsInRole(Role.SuperAdmin) || User.IsInRole(Role.FacultyAdmin) || currentUser.OrganizationId == org.Id)
             return (org, null);
 
         return (null, Forbid());
@@ -47,7 +46,32 @@ public class OrgDashboardController(
         var org = auth.Org!;
         ViewBag.Organization = org;
         ViewBag.UserCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id);
-        return View("~/Views/Home/Index.cshtml");
+
+        var stats = await dashboardService.GetDashboardStatsAsync();
+        var vm = new DashboardViewModel
+        {
+            CurrentRole = "FacultyAdmin",
+            UserName = User.Identity?.Name ?? "User",
+            TotalOrganizations = stats.TotalOrganizations,
+            TotalUsers = stats.TotalUsers,
+            TotalRoles = stats.TotalRoles,
+            TotalColleges = stats.TotalColleges,
+            TotalPrograms = stats.TotalPrograms,
+            TotalStudents = stats.TotalStudents,
+            TotalExamSchedules = stats.TotalExamSchedules,
+            TotalExamRegistrations = stats.TotalExamRegistrations,
+            TotalSubjects = stats.TotalSubjects,
+            TotalAcademicYears = stats.TotalAcademicYears,
+            TotalBanks = stats.TotalBanks,
+            TotalBoards = stats.TotalBoards,
+            TotalBatches = stats.TotalBatches,
+            ActiveColleges = stats.ActiveColleges,
+            ActivePrograms = stats.ActivePrograms,
+            ActiveStudents = stats.ActiveStudents,
+            ActiveExamSchedules = stats.ActiveExamSchedules
+        };
+
+        return View("~/Views/Dashboard/FacultyAdmin.cshtml", vm);
     }
 
     // GET: /org/{officeCode}/users

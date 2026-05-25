@@ -1,6 +1,7 @@
 using System.Text;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)

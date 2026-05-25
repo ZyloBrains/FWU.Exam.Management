@@ -80,15 +80,25 @@
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
         var roleLabel = "Guest";
-        var sidebarLogoPath = "~/images/oce.png";
+        var sidebarLogoPath = "~/images/placeholder-logo.svg";
+        var orgName = "";
 
         if (appUser?.OrganizationId != null)
         {
             var organization = await DbContext.Organizations.FindAsync(appUser.OrganizationId.Value);
-            if (!string.IsNullOrWhiteSpace(organization?.LogoPath))
+            if (organization != null)
             {
-                sidebarLogoPath = organization.LogoPath;
+                orgName = organization.Name;
+                if (!string.IsNullOrWhiteSpace(organization.LogoPath))
+                {
+                    sidebarLogoPath = organization.LogoPath;
+                }
             }
+        }
+
+        if (sidebarLogoPath == "~/images/placeholder-logo.svg" && User.IsInRole("SuperAdmin"))
+        {
+            sidebarLogoPath = "~/images/oce-logo.svg";
         }
 
         if (appUser != null)
@@ -96,7 +106,7 @@
             var roles = await UserManager.GetRolesAsync(appUser);
             var firstRole = roles.FirstOrDefault();
             roleLabel = firstRole != null
-                ? System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(firstRole.Replace("_", " "))
+                ? System.Text.RegularExpressions.Regex.Replace(firstRole, "([a-z])([A-Z])", "$1 $2")
                 : "User";
         }
     }
@@ -186,7 +196,10 @@
 
                         <div class="hidden sm:block truncate">
                             <h2 class="text-lg lg:text-xl font-bold truncate">Welcome back, @displayName</h2>
-                            <p class="text-xs lg:text-sm text-blue-200 truncate opacity-90">@roleLabel Portal</p>
+                            <p class="text-xs lg:text-sm text-blue-200 truncate opacity-90">
+                                @roleLabel@(!string.IsNullOrEmpty(orgName) ? " · " + orgName : "")
+                                <span class="hidden md:inline"> · @DateTime.Now.ToString("ddd, MMM dd, yyyy")</span>
+                            </p>
                         </div>
                     </div>
 

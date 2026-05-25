@@ -5,6 +5,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 public interface IDashboardService
 {
     Task<DashboardStats> GetDashboardStatsAsync();
+    Task<DashboardStats> GetOrgDashboardStatsAsync(int organizationId);
 }
 
 public class DashboardStats

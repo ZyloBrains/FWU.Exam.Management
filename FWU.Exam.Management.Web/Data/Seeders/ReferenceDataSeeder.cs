@@ -108,6 +108,24 @@ public static class ReferenceDataSeeder
         await context.Programs.AddRangeAsync(programs);
         await context.SaveChangesAsync();
 
+        // Organizations
+        if (!await context.Organizations.AnyAsync())
+        {
+            var organizations = new[]
+            {
+                new Organization
+                {
+                    Name = "School of Engineering",
+                    OfficeCode = "SOE",
+                    ContactNumber = "021-123456",
+                    Address = "Mahendranagar, Kanchanpur",
+                    Email = "soe@fwu.edu.np",
+                },
+            };
+            await context.Organizations.AddRangeAsync(organizations);
+            await context.SaveChangesAsync();
+        }
+
         // Colleges
         var colleges = new[]
         {

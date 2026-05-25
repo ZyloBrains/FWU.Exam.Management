@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,6 +10,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()

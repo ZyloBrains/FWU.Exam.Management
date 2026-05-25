@@ -135,6 +135,12 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     }
                 }
 
+                var roles = user != null ? await userManager.GetRolesAsync(user) : [];
+                if (roles.Contains("FacultyAdmin"))
+                {
+                    return RedirectToAction("Index", "Dashboard", new { area = "" });
+                }
+
                 return LocalRedirect(returnUrl);
             }
             if (result.RequiresTwoFactor)

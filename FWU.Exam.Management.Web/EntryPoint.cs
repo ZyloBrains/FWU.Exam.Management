@@ -107,11 +107,12 @@ public partial class EntryPoint
         using (var scope = app.Services.CreateScope())
         {
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 
