@@ -42,6 +42,31 @@ public partial class EntryPoint
         })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
+
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
+            {
+                OnRedirectToLogin = ctx =>
+                {
+                    var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
+                    var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
+
+                    if (!string.IsNullOrEmpty(tenantCode))
+                    {
+                        var loginPath = $"/tenant/{tenantCode}/Identity/Account/Login";
+                        ctx.Response.Redirect($"{loginPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
+                    }
+                    else
+                    {
+                        ctx.Response.Redirect(ctx.RedirectUri);
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
+        });
+
         builder.Services.AddControllersWithViews();
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
@@ -91,9 +116,9 @@ public partial class EntryPoint
 
         app.UseHttpsRedirection();
 
-        app.UseRouting();
-
         app.UseMiddleware<TenantResolutionMiddleware>();
+
+        app.UseRouting();
 
         app.UseAuthorization();
 

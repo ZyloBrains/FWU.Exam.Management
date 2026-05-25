@@ -13,9 +13,8 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext, AppDbContext dbContext)
     {
         var path = context.Request.Path.Value ?? "";
-        var tenantCode = context.GetRouteValue("tenantCode") as string;
 
-        if (!string.IsNullOrEmpty(tenantCode))
+        if (TryExtractTenant(path, out var tenantCode, out var remainingPath))
         {
             var tenant = await dbContext.Set<Tenant>()
                 .AsNoTracking()
@@ -28,6 +27,10 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             }
 
             tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
+            context.Items["TenantCode"] = tenantCode;
+            context.Items["OriginalPath"] = path;
+            context.Request.PathBase = $"/tenant/{tenantCode}";
+            context.Request.Path = remainingPath;
         }
         else if (!IsPublicPath(path))
         {
@@ -36,6 +39,23 @@ public class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         await next(context);
+    }
+
+    private static bool TryExtractTenant(string path, out string? tenantCode, out string remainingPath)
+    {
+        tenantCode = null;
+        remainingPath = path;
+
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length >= 2 &&
+            segments[0].Equals("tenant", StringComparison.OrdinalIgnoreCase))
+        {
+            tenantCode = segments[1];
+            remainingPath = "/" + string.Join("/", segments.Skip(2));
+            return true;
+        }
+
+        return false;
     }
 
     private static bool IsPublicPath(string path)
