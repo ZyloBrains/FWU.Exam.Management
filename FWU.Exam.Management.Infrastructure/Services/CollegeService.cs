@@ -11,9 +11,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class CollegeService(AppDbContext context) : ICollegeService
 {
-    public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? organizationId = null)
     {
-        var query = BuildQuery(search);
+        var query = BuildQuery(search, organizationId);
 
         var totalCount = await query.CountAsync();
 
@@ -29,9 +29,9 @@ public class CollegeService(AppDbContext context) : ICollegeService
         return (items, totalCount);
     }
 
-    public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir)
+    public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir, int? organizationId = null)
     {
-        var query = BuildQuery(search);
+        var query = BuildQuery(search, organizationId);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -129,7 +129,7 @@ public class CollegeService(AppDbContext context) : ICollegeService
         return await context.CollegeTypes.AsNoTracking().ToListAsync();
     }
 
-    private IQueryable<College> BuildQuery(string? search)
+    private IQueryable<College> BuildQuery(string? search, int? organizationId = null)
     {
         var query = context.Colleges
             .Include(c => c.CollegeType)
@@ -137,6 +137,11 @@ public class CollegeService(AppDbContext context) : ICollegeService
             .ThenInclude(a => a.LocalLevel)
             .ThenInclude(ll => ll.District)
             .AsNoTracking();
+
+        if (organizationId.HasValue)
+        {
+            query = query.Where(c => c.OrganizationId == organizationId.Value);
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

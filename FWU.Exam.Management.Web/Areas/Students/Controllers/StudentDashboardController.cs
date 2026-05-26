@@ -134,6 +134,10 @@ public class StudentDashboardController(
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null) return NotFound("Exam schedule not found.");
 
+        var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
+        if (admission == null || schedule.ProgramId != admission.ProgramsId)
+            return Forbid();
+
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
         var practicalCharge = await dashboardService.GetPracticalChargeForProgramAsync(schedule.ProgramId);

@@ -14,17 +14,24 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
-    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync()
+    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null)
     {
-        return await context.StudentRegistrations
+        var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Faculty)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
+            .AsNoTracking();
+
+        if (collegeIds != null && collegeIds.Count > 0)
+        {
+            query = query.Where(s => collegeIds.Contains(s.CollegeId));
+        }
+
+        return await query
             .OrderByDescending(s => s.Id)
-            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -141,7 +148,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize)
+    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null)
     {
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
@@ -151,6 +158,11 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .AsNoTracking();
+
+        if (collegeIds != null && collegeIds.Count > 0)
+        {
+            query = query.Where(s => collegeIds.Contains(s.CollegeId));
+        }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {

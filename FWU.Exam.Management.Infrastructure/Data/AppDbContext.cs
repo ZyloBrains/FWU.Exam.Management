@@ -129,6 +129,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(c => c.AddressId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<College>()
+            .HasOne(c => c.Organization)
+            .WithMany()
+            .HasForeignKey(c => c.OrganizationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.PermanentAddress)
             .WithMany()

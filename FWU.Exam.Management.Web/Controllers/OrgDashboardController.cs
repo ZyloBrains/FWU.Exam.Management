@@ -47,7 +47,7 @@ public class OrgDashboardController(
         ViewBag.Organization = org;
         ViewBag.UserCount = await userManager.Users.CountAsync(u => u.OrganizationId == org.Id);
 
-        var stats = await dashboardService.GetDashboardStatsAsync();
+        var stats = await dashboardService.GetOrgDashboardStatsAsync(org.Id);
         var vm = new DashboardViewModel
         {
             CurrentRole = "FacultyAdmin",

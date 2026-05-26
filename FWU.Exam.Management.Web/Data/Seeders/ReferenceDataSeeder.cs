@@ -127,6 +127,7 @@ public static class ReferenceDataSeeder
         }
 
         // Colleges
+        var org = await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == "SOE");
         var colleges = new[]
         {
             new College
@@ -134,12 +135,14 @@ public static class ReferenceDataSeeder
                 Code = "COC",
                 Name = "College of Commerce",
                 IsActive = true,
+                OrganizationId = org?.Id,
             },
             new College
             {
                 Code = "SOM",
                 Name = "School of Management",
                 IsActive = true,
+                OrganizationId = org?.Id,
             },
         };
         await context.Colleges.AddRangeAsync(colleges);

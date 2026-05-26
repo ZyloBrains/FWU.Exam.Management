@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
-
+using Microsoft.AspNetCore.Identity;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -13,11 +15,36 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
 [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
-public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService) : Controller
+public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
+    private async Task<List<int>> GetUserCollegeIdsAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return new List<int>();
+
+        if (User.IsInRole(Role.SuperAdmin))
+            return new List<int>();
+
+        if (User.IsInRole(Role.FacultyAdmin) && user.OrganizationId != null)
+        {
+            return await context.Colleges
+                .Where(c => c.OrganizationId == user.OrganizationId)
+                .Select(c => c.Id)
+                .ToListAsync();
+        }
+
+        if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
+        {
+            return new List<int> { user.CollegeId.Value };
+        }
+
+        return new List<int>();
+    }
+
     public async Task<IActionResult> Index()
     {
-        var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync();
+        var collegeIds = await GetUserCollegeIdsAsync();
+        var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
         return View(studentRegistrations);
     }
 
@@ -125,7 +152,8 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     [HttpGet]
     public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10)
     {
-        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize);
+        var collegeIds = await GetUserCollegeIdsAsync();
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize, collegeIds.Count > 0 ? collegeIds : null);
         return Json(new { data, totalCount });
     }
 
@@ -235,7 +263,8 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     [HttpGet]
     public async Task<IActionResult> ExportExcel(string searchTerm = "")
     {
-        var data = await studentRegistrationService.GetAllStudentRegistrationsAsync();
+        var collegeIds = await GetUserCollegeIdsAsync();
+        var data = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
 
         using (var workbook = new XLWorkbook())
         {

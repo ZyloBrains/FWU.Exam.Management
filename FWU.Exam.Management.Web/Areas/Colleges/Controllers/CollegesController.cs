@@ -2,8 +2,11 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +16,23 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
-public class CollegesController(ICollegeService collegeService) : Controller
+public class CollegesController(ICollegeService collegeService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
+    private async Task<int?> GetCurrentUserOrganizationIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.OrganizationId;
+    }
+
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir);
+        int? orgId = null;
+        if (User.IsInRole(Role.FacultyAdmin))
+        {
+            orgId = await GetCurrentUserOrganizationIdAsync();
+        }
+
+        var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir, orgId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -40,7 +55,8 @@ public class CollegesController(ICollegeService collegeService) : Controller
 
     public async Task<IActionResult> ExportToCsv(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
+        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserOrganizationIdAsync() : null;
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
 
         var sb = new StringBuilder();
         sb.AppendLine("College Code,College Name,College Name (Nepali),Short Name,District,Municipality/VDC,Ward No.,House No.,Website,Email,Phone 1,Phone 2,Principal Name,Principal Contact,Fax,Remarks,Is Exam Center Only,Is Active,College Type,Allocated Amount,Area,Display Order,Established Date,Closed Date");
@@ -79,7 +95,8 @@ public class CollegesController(ICollegeService collegeService) : Controller
 
     public async Task<IActionResult> ExportToPdf(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
+        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserOrganizationIdAsync() : null;
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
         return View("PrintPdf", items);
     }
 
@@ -96,7 +113,7 @@ public class CollegesController(ICollegeService collegeService) : Controller
     public async Task<IActionResult> Create()
     {
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
-        this.PopulateSelectLists();
+        await this.PopulateSelectLists();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code");
         return View();
     }
@@ -112,13 +129,17 @@ public class CollegesController(ICollegeService collegeService) : Controller
 
         if (ModelState.IsValid)
         {
+            if (User.IsInRole(Role.FacultyAdmin))
+            {
+                college.OrganizationId = await GetCurrentUserOrganizationIdAsync();
+            }
             await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
             return RedirectToAction(nameof(Index));
         }
 
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
-        this.PopulateSelectLists();
+        await this.PopulateSelectLists();
         return View(college);
     }
 
