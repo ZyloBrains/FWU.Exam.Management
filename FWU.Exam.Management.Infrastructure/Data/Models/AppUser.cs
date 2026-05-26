@@ -18,4 +18,7 @@ public class AppUser: IdentityUser, IAuditable
 
     public int? OrganizationId { get; set; }
     public Organization? Organization { get; set; }
+
+    public int? CollegeId { get; set; }
+    public College? College { get; set; }
 }

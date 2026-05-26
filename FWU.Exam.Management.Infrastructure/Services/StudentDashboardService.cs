@@ -28,11 +28,11 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student)
+    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
         var studentAdmission = await context.StudentAdmissions!
             .AsNoTracking()
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
         var programId = studentAdmission?.ProgramsId;
 

@@ -4,6 +4,7 @@ using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -288,6 +289,124 @@ public static class DemoDataSeeder
                 new Board { CountryId = 1, BoardName = "FWU - Far Western University", IsActive = true },
             });
             await context.SaveChangesAsync();
+        }
+
+        // Demo Student Registration
+        var demoStudentEmail = "student@gmail.com";
+        if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == demoStudentEmail))
+        {
+            var demoUser = await context.Users.FirstOrDefaultAsync(u => u.Email == demoStudentEmail);
+            var college = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "COC");
+            var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
+            var faculty = await context.Faculties.FirstOrDefaultAsync(f => f.FacultyCode == "MGMT");
+            var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
+            var gender = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Male");
+            var category = await context.StudentCategories.FirstOrDefaultAsync(sc => sc.StudentCategoryName == "Regular");
+            var ethnicity = await context.Ethnicities.FirstOrDefaultAsync(e => e.EthnicityName == "Other");
+            var academicYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
+            var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
+
+            if (college != null && level != null && faculty != null && bbaProgram != null && gender != null && category != null && academicYear != null)
+            {
+                var studentRegistration = new StudentRegistration
+                {
+                    FirstName = "Test",
+                    LastName = "Student",
+                    Email = demoStudentEmail,
+                    DateOfBirthBS = "2055-03-15",
+                    DateOfBirthAD = "1998-12-30",
+                    ContactNumber = "9841234567",
+                    GenderId = gender.Id,
+                    CollegeId = college.Id,
+                    LevelId = level.Id,
+                    FacultyId = faculty.Id,
+                    StudentCategoryId = category.Id,
+                    EthnicityId = ethnicity?.Id,
+                    AcademicYearId = academicYear.Id,
+                    IsActive = true
+                };
+                context.StudentRegistrations.Add(studentRegistration);
+                await context.SaveChangesAsync();
+
+                // Student Admission
+                if (demoUser != null)
+                {
+                    var admission = new StudentAdmission
+                    {
+                        ProgramsId = bbaProgram.Id,
+                        CollegeId = college.Id,
+                        AppUserId = demoUser.Id,
+                        AdmissionDate = DateTime.UtcNow,
+                        IsActive = true
+                    };
+                    context.StudentAdmissions.Add(admission);
+                    await context.SaveChangesAsync();
+
+                    // Semester Enrollment for Semester 1
+                    if (firstSemester != null)
+                    {
+                        var enrollment = new SemesterEnrollment
+                        {
+                            StudentAdmissionId = admission.Id,
+                            SemesterId = firstSemester.Id,
+                            EnrollmentStatus = StudentEnrollmentStatus.Active,
+                            EnrollmentType = EnrollmentType.FullTime,
+                            PaymentStatus = PaymentStatus.Paid,
+                            EnrolledDate = DateTime.UtcNow,
+                            TotalCredits = 15,
+                            GradePoints = 0,
+                            TotalFee = 5000,
+                            PaidAmount = 5000
+                        };
+                        context.Set<SemesterEnrollment>().Add(enrollment);
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+        }
+
+        // Demo Exam Schedules
+        if (!await context.ExamSchedules.AnyAsync())
+        {
+            var runningYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
+            var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
+            var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
+            var regularExamType = await context.ExamTypes.FirstOrDefaultAsync(et => et.Name == "Regular");
+            var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
+
+            if (runningYear != null && bbaProgram != null && firstSemester != null && regularExamType != null)
+            {
+                var examSchedule = new ExamSchedule
+                {
+                    ExamScheduleName = "BBA First Semester Exam 2081",
+                    ExamScheduleCode = "BBA-SEM1-2081",
+                    ProgramId = bbaProgram.Id,
+                    SemesterId = firstSemester.Id,
+                    AcademicYearId = runningYear.Id,
+                    ExamTypeId = regularExamType.Id,
+                    LevelId = bachelorLevel?.Id,
+                    StartDateBs = "2081-10-01",
+                    EndDateBs = "2081-10-15",
+                    StartTime = new TimeOnly(7, 0),
+                    EndTime = new TimeOnly(10, 0),
+                    IsActive = true
+                };
+                context.ExamSchedules.Add(examSchedule);
+                await context.SaveChangesAsync();
+
+                // Exam Fee
+                if (!await context.ExamFees.AnyAsync())
+                {
+                    var examFee = new ExamFee
+                    {
+                        Name = "BBA SEM1 Regular Fee",
+                        ExamScheduleId = examSchedule.Id,
+                        Amount = 1500m
+                    };
+                    context.ExamFees.Add(examFee);
+                    await context.SaveChangesAsync();
+                }
+            }
         }
     }
 }

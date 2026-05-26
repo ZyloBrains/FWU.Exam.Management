@@ -11,6 +11,12 @@ public class EditUserViewModel
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
+    [Display(Name = "Full Name")]
+    public string? FullName { get; set; }
+
     [Display(Name = "Organization")]
     public int? OrganizationId { get; set; }
+
+    [Display(Name = "College")]
+    public int? CollegeId { get; set; }
 }

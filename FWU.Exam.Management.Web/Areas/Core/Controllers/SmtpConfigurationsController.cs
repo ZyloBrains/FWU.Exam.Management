@@ -5,9 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class SmtpConfigurationsController(AppDbContext context) : Controller
     {
 

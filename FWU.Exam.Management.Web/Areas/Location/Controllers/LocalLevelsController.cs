@@ -5,9 +5,12 @@ using FWU.Exam.Management.Domain.Entities.Location;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class LocalLevelsController(ILocalLevelService localLevelService) : Controller
 {
 

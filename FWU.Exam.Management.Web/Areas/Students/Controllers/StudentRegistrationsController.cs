@@ -7,9 +7,12 @@ using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 
 
-namespace FWU.Exam.Management.Web.Controllers;
+using Microsoft.AspNetCore.Authorization;
+
+namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService) : Controller
 {
     public async Task<IActionResult> Index()

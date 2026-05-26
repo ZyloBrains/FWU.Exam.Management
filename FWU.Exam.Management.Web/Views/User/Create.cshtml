@@ -19,7 +19,7 @@
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8" x-data="{ role: '@Model.SelectedRole' }">
         <form asp-action="Create" class="space-y-5">
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
 
@@ -47,12 +47,36 @@
                     </div>
 
                     <div>
+                        <label asp-for="SelectedRole" class="text-sm font-medium text-gray-700"></label>
+                        <select asp-for="SelectedRole" x-model="role"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                            <option value="">-- Select Role --</option>
+                            @foreach (var r in Role.AllRoles.Where(r => r != Role.SuperAdmin))
+                            {
+                                <option value="@r">@r</option>
+                            }
+                        </select>
+                        <span asp-validation-for="SelectedRole" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <!-- Organization dropdown (FacultyAdmin) -->
+                    <div x-show="role === '@Role.FacultyAdmin'" x-transition>
                         <label asp-for="OrganizationId" class="text-sm font-medium text-gray-700"></label>
-                        <select asp-for="OrganizationId" asp-items="ViewBag.Organizations" required
+                        <select asp-for="OrganizationId" asp-items="ViewBag.Organizations"
                                 class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                             <option value="">-- Select Organization --</option>
                         </select>
                         <span asp-validation-for="OrganizationId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+
+                    <!-- College dropdown (CollegeAdmin & Student) -->
+                    <div x-show="role === '@Role.CollegeAdmin' || role === '@Role.Student'" x-transition>
+                        <label asp-for="CollegeId" class="text-sm font-medium text-gray-700"></label>
+                        <select asp-for="CollegeId" asp-items="ViewBag.Colleges"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                            <option value="">-- Select College --</option>
+                        </select>
+                        <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
             </div>

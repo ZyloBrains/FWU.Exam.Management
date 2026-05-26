@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
+
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
@@ -15,7 +17,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 {
     public async Task<IActionResult> Index()
     {
-        var users = await userManager.Users.Include(u => u.Organization).ToListAsync();
+        var users = await userManager.Users
+            .Include(u => u.Organization)
+            .Include(u => u.College)
+            .ToListAsync();
         var model = new List<UserListItemViewModel>();
         foreach (var user in users)
         {
@@ -23,7 +28,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
+                FullName = user.FullName,
                 OrganizationName = user.Organization?.Name,
+                CollegeName = user.College?.Name,
                 Roles = await userManager.GetRolesAsync(user)
             });
         }
@@ -36,6 +43,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
         var user = await userManager.Users
             .Include(u => u.Organization)
+            .Include(u => u.College)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null) return NotFound();
@@ -46,16 +54,18 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
     public async Task<IActionResult> Create()
     {
+        ViewBag.RolesList = Role.AllRoles;
         ViewBag.Organizations = new SelectList(await context.Organizations.ToListAsync(), "Id", "Name");
-        return View();
+        ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
+        return View(new CreateUserViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
-        if (!model.OrganizationId.HasValue)
-            ModelState.AddModelError(nameof(model.OrganizationId), "Organization is required.");
+        if (model.SelectedRole == Role.SuperAdmin)
+            ModelState.AddModelError(nameof(model.SelectedRole), "Cannot create a Super Admin user.");
 
         if (ModelState.IsValid)
         {
@@ -63,15 +73,20 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             {
                 UserName = model.Email,
                 Email = model.Email,
-                OrganizationId = model.OrganizationId,
                 EmailConfirmed = true
             };
+
+            if (model.SelectedRole is Role.FacultyAdmin)
+                user.OrganizationId = model.OrganizationId;
+
+            if (model.SelectedRole is Role.CollegeAdmin or Role.Student)
+                user.CollegeId = model.CollegeId;
 
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
-                    await userManager.AddToRoleAsync(user, "Student");
+                if (await roleManager.RoleExistsAsync(model.SelectedRole))
+                    await userManager.AddToRoleAsync(user, model.SelectedRole);
                 return RedirectToAction(nameof(Index));
             }
 
@@ -79,7 +94,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
+        ViewBag.RolesList = Role.AllRoles;
         ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -87,17 +104,26 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     {
         if (id == null) return NotFound();
 
-        var user = await userManager.FindByIdAsync(id);
+        var user = await userManager.Users
+            .Include(u => u.College)
+            .FirstOrDefaultAsync(u => u.Id == id);
         if (user == null) return NotFound();
+
+        var roles = await userManager.GetRolesAsync(user);
+        var primaryRole = roles.FirstOrDefault() ?? string.Empty;
 
         var model = new EditUserViewModel
         {
             Id = user.Id,
             Email = user.Email ?? string.Empty,
-            OrganizationId = user.OrganizationId
+            FullName = user.FullName,
+            OrganizationId = user.OrganizationId,
+            CollegeId = user.CollegeId
         };
 
+        ViewBag.PrimaryRole = primaryRole;
         ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -114,7 +140,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
             user.Email = model.Email;
             user.UserName = model.Email;
+            user.FullName = model.FullName;
             user.OrganizationId = model.OrganizationId;
+            user.CollegeId = model.CollegeId;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -124,7 +152,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
+        var roles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(id));
+        ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
         ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -134,6 +165,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
         var user = await userManager.Users
             .Include(u => u.Organization)
+            .Include(u => u.College)
             .FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null) return NotFound();
@@ -160,7 +192,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (user == null) return NotFound();
 
         var allRoles = await roleManager.Roles
-            .Where(r => r.Name != "Student")
+            .Where(r => r.Name != "Student" && r.Name != Role.SuperAdmin)
             .ToListAsync();
         var userRoles = await userManager.GetRolesAsync(user);
 
@@ -187,7 +219,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
         var currentRoles = await userManager.GetRolesAsync(user);
         var selectedRoles = model.Roles
-            .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
+            .Where(r => r.IsAssigned
+                && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(r.RoleName, Role.SuperAdmin, StringComparison.OrdinalIgnoreCase))
             .Select(r => r.RoleName)
             .ToList();
 
@@ -195,7 +229,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             selectedRoles.Add("Student");
 
         var toAdd = selectedRoles.Except(currentRoles).ToList();
-        var toRemove = currentRoles.Except(selectedRoles).ToList();
+        var toRemove = currentRoles.Except(selectedRoles)
+            .Where(r => r != Role.SuperAdmin)
+            .ToList();
 
         if (toAdd.Count > 0)
             await userManager.AddToRolesAsync(user, toAdd);

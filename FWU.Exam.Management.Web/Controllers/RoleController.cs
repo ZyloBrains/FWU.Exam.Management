@@ -15,6 +15,19 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
         return View(await roleManager.Roles.ToListAsync());
     }
 
+    // GET: Role/Details/id
+    public async Task<IActionResult> Details(string id)
+    {
+        if (id == null)
+            return NotFound();
+
+        var role = await roleManager.FindByIdAsync(id);
+        if (role == null)
+            return NotFound();
+
+        return View(role);
+    }
+
     // GET: Role/Create
     public IActionResult Create()
     {

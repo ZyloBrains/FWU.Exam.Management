@@ -118,6 +118,7 @@ public class CollegesController(ICollegeService collegeService) : Controller
 
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
+        this.PopulateSelectLists();
         return View(college);
     }
 

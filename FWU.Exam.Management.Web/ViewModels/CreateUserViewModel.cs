@@ -20,6 +20,13 @@ public class CreateUserViewModel
     [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Role is required.")]
+    [Display(Name = "Role")]
+    public string SelectedRole { get; set; } = string.Empty;
+
     [Display(Name = "Organization")]
     public int? OrganizationId { get; set; }
+
+    [Display(Name = "College")]
+    public int? CollegeId { get; set; }
 }

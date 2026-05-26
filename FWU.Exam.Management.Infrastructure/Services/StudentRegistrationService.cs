@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Security.Cryptography;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
@@ -277,7 +276,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 IsActive = studentRegistration.IsActive
             };
 
-            var password = GenerateTemporaryPassword();
+            var password = studentRegistration.DateOfBirthBS;
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {studentRegistration.Email}");
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -359,19 +360,5 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 }
             }
         }
-    }
-
-    private static string GenerateTemporaryPassword()
-    {
-        const string passwordChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
-        const string digitChars = "23456789";
-        const string specialChars = "!@#$%^&*";
-        const int passwordLength = 16;
-
-        var password = RandomNumberGenerator.GetString(passwordChars, passwordLength).ToCharArray();
-        password[RandomNumberGenerator.GetInt32(passwordLength)] = digitChars[RandomNumberGenerator.GetInt32(digitChars.Length)];
-        password[RandomNumberGenerator.GetInt32(passwordLength)] = specialChars[RandomNumberGenerator.GetInt32(specialChars.Length)];
-
-        return new string(password);
     }
 }

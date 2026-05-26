@@ -20,7 +20,7 @@ public static class UserSeeder
 
     private static readonly (string Email, string FullName, string Role, string? OrgCode)[] SeedUsers =
     [
-        ("admin@gmail.com", "System Admin", Role.SuperAdmin, null),
+        ("admin@gmail.com", "Super Admin", Role.SuperAdmin, null),
         ("faculty@admin.com", "Faculty Admin", Role.FacultyAdmin, "SOE"),
         ("college@gmail.com", "College Admin", Role.CollegeAdmin, null),
         ("student@gmail.com", "Test Student", Role.Student, null),

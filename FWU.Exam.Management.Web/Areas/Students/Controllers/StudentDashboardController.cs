@@ -99,7 +99,7 @@ public class StudentDashboardController(
             return View(new ExamFormsListViewModel());
         }
 
-        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration);
+        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
         var forms = new List<ExamFormViewModel>();
 
         foreach (var schedule in schedules)
