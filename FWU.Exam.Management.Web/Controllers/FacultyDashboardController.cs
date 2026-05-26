@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -13,6 +14,7 @@ namespace FWU.Exam.Management.Web.Controllers;
 [Route("faculty/{officeCode}")]
 public class FacultyDashboardController(
     IFacultyService facultyService,
+    IFacultyResolver facultyResolver,
     IDashboardService dashboardService,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller
@@ -22,7 +24,24 @@ public class FacultyDashboardController(
 
     private async Task<(Faculty? Faculty, IActionResult? DeniedResult)> GetAuthorizedFacultyAsync(string officeCode)
     {
-        var faculty = await GetFacultyAsync(officeCode);
+        var currentFaculty = HttpContext.Items["CurrentFaculty"] as CurrentFaculty;
+        Faculty? faculty;
+
+        if (currentFaculty?.OfficeCode == officeCode)
+        {
+            faculty = new Faculty
+            {
+                Id = currentFaculty.Id ?? 0,
+                Name = currentFaculty.Name ?? string.Empty,
+                OfficeCode = currentFaculty.OfficeCode ?? string.Empty,
+                LogoPath = currentFaculty.LogoPath
+            };
+        }
+        else
+        {
+            faculty = await GetFacultyAsync(officeCode);
+        }
+
         if (faculty == null)
             return (null, NotFound());
 

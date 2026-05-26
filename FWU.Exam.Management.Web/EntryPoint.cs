@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.Middleware;
 
 public partial class EntryPoint
 {
@@ -50,6 +51,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
         builder.Services.AddScoped<IProgramService, ProgramService>();
         builder.Services.AddScoped<ILevelService, LevelService>();
+        builder.Services.AddScoped<INoticeService, NoticeService>();
         builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
         builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
@@ -58,6 +60,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<ILocalLevelService, LocalLevelService>();
         builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+        builder.Services.AddScoped<IFacultyResolver, FacultyResolver>();
         builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
         builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
         builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
@@ -71,6 +74,7 @@ public partial class EntryPoint
         builder.Services.AddHttpClient<IESewaService, ESewaService>();
         builder.Services.AddScoped<IKhaltiService, KhaltiService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
+        builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -86,6 +90,8 @@ public partial class EntryPoint
 
         app.UseHttpsRedirection();
         app.UseRouting();
+
+        app.UseFacultyResolution();
 
         app.UseAuthorization();
 

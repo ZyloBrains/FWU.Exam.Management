@@ -1,0 +1,58 @@
+@model List<FWU.Exam.Management.Domain.Entities.Notice>
+
+@{
+    ViewData["Title"] = "Notices Report";
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    var totalCount = ViewBag.TotalCount ?? 0;
+}
+
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    @@media print { .no-print { display: none; } }
+</style>
+
+<div class="no-print" style="margin-bottom: 20px;">
+    <button onclick="window.print()" style="padding: 10px 20px; background: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">Print</button>
+    <a href="javascript:history.back()" style="padding: 10px 20px; background: #6b7280; color: white; text-decoration: none; border-radius: 5px; margin-left: 10px;">Back</a>
+</div>
+
+<h1 style="margin-bottom: 5px;">Notices Report</h1>
+<p style="margin-bottom: 20px; color: #666;">Generated: @DateTime.Now.ToString("yyyy-MM-dd HH:mm")</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>S.N.</th>
+            <th>Title</th>
+            <th>Preview</th>
+            <th>Published Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int sn = ((currentPage - 1) * pageSize) + 1;
+        }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@sn</td>
+                <td>@item.NoticeTitle</td>
+                <td>@item.NoticePreview</td>
+                <td>@(item.PublishedDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+            </tr>
+            sn++;
+        }
+        @if (!Model.Any())
+        {
+            <tr><td colspan="4" style="text-align: center; padding: 40px; color: #999;">No notices found.</td></tr>
+        }
+    </tbody>
+</table>
+
+<p style="margin-top: 20px; color: #666; font-size: 12px;">
+    Showing page @currentPage of @(ViewBag.TotalPages ?? 1) | Total records: @totalCount
+</p>
