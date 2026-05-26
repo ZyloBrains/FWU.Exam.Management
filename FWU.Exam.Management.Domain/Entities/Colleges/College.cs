@@ -12,8 +12,8 @@ public class College
     [Required, MaxLength(50)]
     public string Code { get; set; } = string.Empty;
 
-    public int? OrganizationId { get; set; }
-    public virtual Organization? Organization { get; set; }
+    public int? FacultyId { get; set; }
+    public virtual Faculty? Faculty { get; set; }
 
     [Required, MaxLength(500)]
     public string Name { get; set; } = string.Empty;

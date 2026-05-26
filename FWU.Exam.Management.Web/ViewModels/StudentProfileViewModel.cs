@@ -20,7 +20,7 @@ public class StudentProfileViewModel
     public string? Nationality { get; set; }
     public string? Religion { get; set; }
     public string? AcademicYear { get; set; }
-    public string? Faculty { get; set; }
+    public string? Department { get; set; }
     public string? College { get; set; }
     public string? Level { get; set; }
 }

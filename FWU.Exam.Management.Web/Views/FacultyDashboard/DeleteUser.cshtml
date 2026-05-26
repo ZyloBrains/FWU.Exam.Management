@@ -1,0 +1,34 @@
+@model AppUser
+
+@{
+    var faculty = ViewBag.Faculty as Faculty;
+    ViewData["Title"] = $"Delete User — {faculty!.Name}";
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a></li>
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item active">Delete User</li>
+    </ol>
+</nav>
+
+<h1 class="h3 mb-3">Delete User</h1>
+<p class="text-danger">Are you sure you want to delete this user?</p>
+
+<dl class="row mb-4">
+    <dt class="col-sm-2">Email</dt>
+    <dd class="col-sm-10">@Model.Email</dd>
+
+    <dt class="col-sm-2">Faculty</dt>
+    <dd class="col-sm-10">@faculty.Name</dd>
+</dl>
+
+<form asp-controller="FacultyDashboard" asp-action="DeleteUserConfirmed"
+      asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@Model.Id"
+      method="post">
+    <input type="submit" value="Delete" class="btn btn-danger" />
+    <a asp-controller="FacultyDashboard" asp-action="Users"
+       asp-route-officeCode="@faculty.OfficeCode"
+       class="btn btn-outline-secondary">Cancel</a>
+</form>

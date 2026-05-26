@@ -32,15 +32,15 @@ public static class UserSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
         var orgCache = new Dictionary<string, int?>();
-        Organization? GetOrg(string? code)
+        Faculty? GetFaculty(string? code)
         {
             if (code == null) return null;
             if (!orgCache.ContainsKey(code))
             {
-                var org = context.Organizations.FirstOrDefault(o => o.OfficeCode == code);
-                orgCache[code] = org?.Id;
+                var faculty = context.Faculties.FirstOrDefault(f => f.OfficeCode == code);
+                orgCache[code] = faculty?.Id;
             }
-            return context.Organizations.FirstOrDefault(o => o.OfficeCode == code);
+            return context.Faculties.FirstOrDefault(f => f.OfficeCode == code);
         }
 
         foreach (var (email, fullName, role, orgCode) in SeedUsers)
@@ -56,7 +56,7 @@ public static class UserSeeder
                     EmailConfirmed = true,
                     FullName = fullName,
                     IsActive = true,
-                    OrganizationId = GetOrg(orgCode)?.Id
+                    FacultyId = GetFaculty(orgCode)?.Id
                 };
                 var result = await userManager.CreateAsync(user, "Admin@123");
                 if (!result.Succeeded)
@@ -66,7 +66,7 @@ public static class UserSeeder
             {
                 var token = await userManager.GeneratePasswordResetTokenAsync(user);
                 await userManager.ResetPasswordAsync(user, token, "Admin@123");
-                user.OrganizationId = GetOrg(orgCode)?.Id;
+                user.FacultyId = GetFaculty(orgCode)?.Id;
                 await userManager.UpdateAsync(user);
             }
 

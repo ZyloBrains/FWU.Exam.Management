@@ -112,9 +112,9 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
                     {
-                        var org = user.OrganizationId != null ? await context.Organizations.FindAsync(user.OrganizationId.Value) : null;
-                        var postChangeReturnUrl = org != null && !string.IsNullOrWhiteSpace(org.OfficeCode)
-                            ? $"/org/{org.OfficeCode}"
+                        var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
+                        var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
+                            ? $"/faculty/{faculty.OfficeCode}"
                             : returnUrl;
 
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
@@ -126,12 +126,12 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     return RedirectToAction("Index", "Dashboard", new { area = "" });
                 }
 
-                if (user?.OrganizationId != null)
+                if (user?.FacultyId != null)
                 {
-                    var org = await context.Organizations.FindAsync(user.OrganizationId.Value);
-                    if (org != null && !string.IsNullOrWhiteSpace(org.OfficeCode))
+                    var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+                    if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
                     {
-                        return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
+                        return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
                     }
                 }
 

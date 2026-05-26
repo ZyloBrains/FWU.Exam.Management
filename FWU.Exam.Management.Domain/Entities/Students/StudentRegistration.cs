@@ -10,7 +10,7 @@ public class StudentRegistration
     public int Id { get; set; }
 
     public int LevelId { get; set; }
-    public int FacultyId { get; set; }
+    public int DepartmentId { get; set; }
     public int CollegeId { get; set; }
 
     [MaxLength(50)]
@@ -68,7 +68,7 @@ public class StudentRegistration
     public virtual AcademicYear? AcademicYear { get; set; }
 
     public virtual Level? Level { get; set; }
-    public virtual Faculty? Faculty { get; set; }
+    public virtual Department? Department { get; set; }
     public virtual College? College { get; set; }
     public virtual Gender? Gender { get; set; }
     public virtual StudentCategory? StudentCategory { get; set; }

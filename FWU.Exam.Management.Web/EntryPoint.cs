@@ -43,14 +43,14 @@ public partial class EntryPoint
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
         builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
         builder.Services.AddScoped<ICollegeService, CollegeService>();
-        builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+        builder.Services.AddScoped<IFacultyService, FacultyService>();
+        builder.Services.AddScoped<IDepartmentService, DepartmentService>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
         builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
         builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
         builder.Services.AddScoped<IProgramService, ProgramService>();
         builder.Services.AddScoped<ILevelService, LevelService>();
         builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
-        builder.Services.AddScoped<IFacultyService, FacultyService>();
         builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
         builder.Services.AddScoped<IDistrictService, DistrictService>();

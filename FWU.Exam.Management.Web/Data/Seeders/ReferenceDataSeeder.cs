@@ -60,15 +60,15 @@ public static class ReferenceDataSeeder
         await context.Levels.AddRangeAsync(levels);
         await context.SaveChangesAsync();
 
-        // Faculties
-        var faculties = new[]
+        // Departments
+        var departments = new[]
         {
-            new Faculty { FacultyCode = "MGMT", FacultyName = "Management", ShortName = "MGT", IsActive = true },
-            new Faculty { FacultyCode = "SCI", FacultyName = "Science", ShortName = "SCI", IsActive = true },
-            new Faculty { FacultyCode = "EDU", FacultyName = "Education", ShortName = "EDU", IsActive = true },
-            new Faculty { FacultyCode = "HUM", FacultyName = "Humanities", ShortName = "HUM", IsActive = true },
+            new Department { DepartmentCode = "MGMT", DepartmentName = "Management", ShortName = "MGT", IsActive = true },
+            new Department { DepartmentCode = "SCI", DepartmentName = "Science", ShortName = "SCI", IsActive = true },
+            new Department { DepartmentCode = "EDU", DepartmentName = "Education", ShortName = "EDU", IsActive = true },
+            new Department { DepartmentCode = "HUM", DepartmentName = "Humanities", ShortName = "HUM", IsActive = true },
         };
-        await context.Faculties.AddRangeAsync(faculties);
+        await context.Departments.AddRangeAsync(departments);
         await context.SaveChangesAsync();
 
         // Programs
@@ -80,7 +80,7 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Business Administration",
                 ShortName = "BBA",
                 LevelId = levels[0].Id,
-                FacultyId = faculties[0].Id,
+                DepartmentId = departments[0].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -90,7 +90,7 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Business Studies",
                 ShortName = "BBS",
                 LevelId = levels[0].Id,
-                FacultyId = faculties[0].Id,
+                DepartmentId = departments[0].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -100,7 +100,7 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Computer Application",
                 ShortName = "BCA",
                 LevelId = levels[0].Id,
-                FacultyId = faculties[1].Id,
+                DepartmentId = departments[1].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -108,12 +108,12 @@ public static class ReferenceDataSeeder
         await context.Programs.AddRangeAsync(programs);
         await context.SaveChangesAsync();
 
-        // Organizations
-        if (!await context.Organizations.AnyAsync())
+        // Faculties
+        if (!await context.Faculties.AnyAsync())
         {
-            var organizations = new[]
+            var faculties = new[]
             {
-                new Organization
+                new Faculty
                 {
                     Name = "School of Engineering",
                     OfficeCode = "SOE",
@@ -122,12 +122,12 @@ public static class ReferenceDataSeeder
                     Email = "soe@fwu.edu.np",
                 },
             };
-            await context.Organizations.AddRangeAsync(organizations);
+            await context.Faculties.AddRangeAsync(faculties);
             await context.SaveChangesAsync();
         }
 
         // Colleges
-        var org = await context.Organizations.FirstOrDefaultAsync(o => o.OfficeCode == "SOE");
+        var org = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
         var colleges = new[]
         {
             new College
@@ -135,14 +135,14 @@ public static class ReferenceDataSeeder
                 Code = "COC",
                 Name = "College of Commerce",
                 IsActive = true,
-                OrganizationId = org?.Id,
+                FacultyId = org?.Id,
             },
             new College
             {
                 Code = "SOM",
                 Name = "School of Management",
                 IsActive = true,
-                OrganizationId = org?.Id,
+                FacultyId = org?.Id,
             },
         };
         await context.Colleges.AddRangeAsync(colleges);

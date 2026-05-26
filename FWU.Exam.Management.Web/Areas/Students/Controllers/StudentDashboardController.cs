@@ -52,7 +52,7 @@ public class StudentDashboardController(
             Nationality = registration.Nationality,
             Religion = registration.Religion,
             AcademicYear = registration.AcademicYear?.AcademicYearName,
-            Faculty = registration.Faculty?.FacultyName,
+            Department = registration.Department?.DepartmentName,
             College = registration.College?.Name,
             Level = registration.Level?.LevelName,
             Address = registration.PermanentAddress?.FullAddress

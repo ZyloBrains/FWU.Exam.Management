@@ -1,0 +1,62 @@
+@model IEnumerable<UserListItemViewModel>
+
+@{
+    var faculty = ViewBag.Faculty as Faculty;
+    ViewData["Title"] = $"{faculty!.Name} – Users";
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a>
+        </li>
+        <li class="breadcrumb-item active">Users</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Users — @faculty.Name</h1>
+    <a asp-controller="FacultyDashboard" asp-action="CreateUser"
+       asp-route-officeCode="@faculty.OfficeCode"
+       class="btn btn-primary">Add User</a>
+</div>
+
+<table class="table table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Email</th>
+            <th>Roles</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Email</td>
+                <td>
+                    @if (item.Roles.Count > 0)
+                    {
+                        @string.Join(", ", item.Roles)
+                    }
+                    else
+                    {
+                        <span class="text-muted">No roles</span>
+                    }
+                </td>
+                <td>
+                    <a asp-controller="FacultyDashboard" asp-action="EditUser"
+                       asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@item.Id"
+                       class="btn btn-sm btn-outline-secondary">Edit</a>
+                    <a asp-controller="FacultyDashboard" asp-action="AssignRoles"
+                       asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@item.Id"
+                       class="btn btn-sm btn-outline-primary">Roles</a>
+                    <a asp-controller="FacultyDashboard" asp-action="DeleteUser"
+                       asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@item.Id"
+                       class="btn btn-sm btn-outline-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

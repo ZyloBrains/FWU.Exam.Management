@@ -18,7 +18,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     public async Task<IActionResult> Index()
     {
         var users = await userManager.Users
-            .Include(u => u.Organization)
+            .Include(u => u.Faculty)
             .Include(u => u.College)
             .ToListAsync();
         var model = new List<UserListItemViewModel>();
@@ -29,7 +29,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
                 FullName = user.FullName,
-                OrganizationName = user.Organization?.Name,
+                FacultyName = user.Faculty?.Name,
                 CollegeName = user.College?.Name,
                 Roles = await userManager.GetRolesAsync(user)
             });
@@ -42,7 +42,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (id == null) return NotFound();
 
         var user = await userManager.Users
-            .Include(u => u.Organization)
+            .Include(u => u.Faculty)
             .Include(u => u.College)
             .FirstOrDefaultAsync(u => u.Id == id);
 
@@ -55,7 +55,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     public async Task<IActionResult> Create()
     {
         ViewBag.RolesList = Role.AllRoles;
-        ViewBag.Organizations = new SelectList(await context.Organizations.ToListAsync(), "Id", "Name");
+        ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
         return View(new CreateUserViewModel());
     }
@@ -77,7 +77,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             };
 
             if (model.SelectedRole is Role.FacultyAdmin)
-                user.OrganizationId = model.OrganizationId;
+                user.FacultyId = model.FacultyId;
 
             if (model.SelectedRole is Role.CollegeAdmin or Role.Student)
                 user.CollegeId = model.CollegeId;
@@ -95,7 +95,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         }
 
         ViewBag.RolesList = Role.AllRoles;
-        ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
@@ -117,12 +117,12 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             Id = user.Id,
             Email = user.Email ?? string.Empty,
             FullName = user.FullName,
-            OrganizationId = user.OrganizationId,
+            FacultyId = user.FacultyId,
             CollegeId = user.CollegeId
         };
 
         ViewBag.PrimaryRole = primaryRole;
-        ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
@@ -141,7 +141,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             user.Email = model.Email;
             user.UserName = model.Email;
             user.FullName = model.FullName;
-            user.OrganizationId = model.OrganizationId;
+            user.FacultyId = model.FacultyId;
             user.CollegeId = model.CollegeId;
 
             var result = await userManager.UpdateAsync(user);
@@ -154,7 +154,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
         var roles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(id));
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
-        ViewBag.Organizations = new SelectList(await context.Organizations.AsNoTracking().ToListAsync(), "Id", "Name", model.OrganizationId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
@@ -164,7 +164,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (id == null) return NotFound();
 
         var user = await userManager.Users
-            .Include(u => u.Organization)
+            .Include(u => u.Faculty)
             .Include(u => u.College)
             .FirstOrDefaultAsync(u => u.Id == id);
 

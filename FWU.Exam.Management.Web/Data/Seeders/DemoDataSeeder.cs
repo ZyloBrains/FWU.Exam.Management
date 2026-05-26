@@ -298,7 +298,7 @@ public static class DemoDataSeeder
             var demoUser = await context.Users.FirstOrDefaultAsync(u => u.Email == demoStudentEmail);
             var college = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "COC");
             var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-            var faculty = await context.Faculties.FirstOrDefaultAsync(f => f.FacultyCode == "MGMT");
+            var department = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "MGMT");
             var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
             var gender = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Male");
             var category = await context.StudentCategories.FirstOrDefaultAsync(sc => sc.StudentCategoryName == "Regular");
@@ -306,7 +306,7 @@ public static class DemoDataSeeder
             var academicYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
             var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
 
-            if (college != null && level != null && faculty != null && bbaProgram != null && gender != null && category != null && academicYear != null)
+            if (college != null && level != null && department != null && bbaProgram != null && gender != null && category != null && academicYear != null)
             {
                 var studentRegistration = new StudentRegistration
                 {
@@ -319,7 +319,7 @@ public static class DemoDataSeeder
                     GenderId = gender.Id,
                     CollegeId = college.Id,
                     LevelId = level.Id,
-                    FacultyId = faculty.Id,
+                    DepartmentId = department.Id,
                     StudentCategoryId = category.Id,
                     EthnicityId = ethnicity?.Id,
                     AcademicYearId = academicYear.Id,

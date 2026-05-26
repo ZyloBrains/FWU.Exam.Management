@@ -16,8 +16,8 @@ public class AppUser: IdentityUser, IAuditable
     public DateTime? ValidTo { get; set; }
     public string? Remarks { get; set; }
 
-    public int? OrganizationId { get; set; }
-    public Organization? Organization { get; set; }
+    public int? FacultyId { get; set; }
+    public Faculty? Faculty { get; set; }
 
     public int? CollegeId { get; set; }
     public College? College { get; set; }

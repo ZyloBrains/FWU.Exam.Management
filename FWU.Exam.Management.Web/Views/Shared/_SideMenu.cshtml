@@ -41,7 +41,7 @@
     var sideMenuRoles = sideMenuUser != null ? await UserManager.GetRolesAsync(sideMenuUser) : new List<string>();
     var primaryRole = sideMenuRoles.FirstOrDefault() ?? "";
     var isSuperAdmin = primaryRole == "SuperAdmin" || primaryRole == "SystemAdmin";
-    var isFacultyAdmin = primaryRole == "FacultyAdmin" || primaryRole == "OrganizationAdmin";
+    var isFacultyAdmin = primaryRole == "FacultyAdmin";
     var isCollegeAdmin = primaryRole == "CollegeAdmin" || primaryRole == "Admin";
     var isStudent = primaryRole == "Student";
 }
@@ -91,7 +91,7 @@
         // ----------------------------------------------------- //
         // Settings Section
         // ----------------------------------------------------- //
-        var isSettingsActive = IsActive(controllerName: "Organization", actionName: "Index", areaName: "Core") ||
+        var isSettingsActive = IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core") ||
                                 IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core") ||
                                 IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges") ||
                                 IsActive(controllerName: "CollegePrograms", actionName: "Index", areaName: "Colleges") ||
@@ -115,7 +115,7 @@
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
                 <li><a asp-area="Core" asp-controller="AcademicYears" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar-alt w-4 text-center"></i><span>Academic Year</span></a></li>
-                <li><a asp-area="Core" asp-controller="Organization" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Organization", actionName: "Index", areaName: "Core") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-building w-4 text-center"></i><span>Organizations</span></a></li>
+                <li><a asp-area="Core" asp-controller="Faculty" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-building w-4 text-center"></i><span>Faculties</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-school w-4 text-center"></i><span>School/College</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="CollegeTypes" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "CollegeTypes", actionName: "Index", areaName: "Colleges") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-tag w-4 text-center"></i><span>College Types</span></a></li>
                 <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-stream w-4 text-center"></i><span>Program/Stream</span></a></li>
@@ -298,9 +298,9 @@
     @if (isFacultyAdmin)
     {
         // ----------------------------------------------------- //
-        // Organization Management Section
+        // Faculty Management Section
         // ----------------------------------------------------- //
-        var isOrgSettingsActive = IsActive(controllerName: "Organization", actionName: "Index", areaName: "Core") ||
+        var isOrgSettingsActive = IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core") ||
                                    IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core") ||
                                    IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges") ||
                                    IsActive(controllerName: "CollegePrograms", actionName: "Index", areaName: "Colleges") ||
@@ -318,7 +318,7 @@
             </button>
             <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li><a asp-area="Core" asp-controller="Organization" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Organization", actionName: "Index", areaName: "Core"))"><i class="fas fa-building w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Organization</span></a></li>
+                <li><a asp-area="Core" asp-controller="Faculty" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core"))"><i class="fas fa-building w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Faculty</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-school w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Colleges</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="CollegeTypes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CollegeTypes", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-tag w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Types</span></a></li>
                 <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core"))"><i class="fas fa-stream w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Programs</span></a></li>

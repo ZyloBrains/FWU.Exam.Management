@@ -14,8 +14,8 @@ public class EditUserViewModel
     [Display(Name = "Full Name")]
     public string? FullName { get; set; }
 
-    [Display(Name = "Organization")]
-    public int? OrganizationId { get; set; }
+    [Display(Name = "Faculty")]
+    public int? FacultyId { get; set; }
 
     [Display(Name = "College")]
     public int? CollegeId { get; set; }

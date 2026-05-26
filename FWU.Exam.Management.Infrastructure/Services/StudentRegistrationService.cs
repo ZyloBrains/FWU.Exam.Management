@@ -19,7 +19,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -40,7 +40,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -153,7 +153,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -214,7 +214,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var faculties = await context.Faculties.Where(f => f.FacultyName != null).AsNoTracking().ToListAsync();
+        var faculties = await context.Departments.Where(f => f.DepartmentName != null).AsNoTracking().ToListAsync();
         var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
@@ -225,7 +225,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             Levels = levels.Select(l => new SelectOption { Id = l.Id, Name = l.LevelName }).ToList(),
-            Faculties = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.FacultyName }).ToList(),
+            Departments = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.DepartmentName }).ToList(),
             Colleges = colleges.Select(c => new SelectOption { Id = c.Id, Name = c.Name }).ToList(),
             Genders = genders.Select(g => new SelectOption { Id = g.Id, Name = g.GenderName }).ToList(),
             StudentCategories = studentCategories.Select(sc => new SelectOption { Id = sc.Id, Name = sc.StudentCategoryName }).ToList(),

@@ -11,9 +11,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class CollegeService(AppDbContext context) : ICollegeService
 {
-    public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? organizationId = null)
+    public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search, organizationId);
+        var query = BuildQuery(search, facultyId);
 
         var totalCount = await query.CountAsync();
 
@@ -29,9 +29,9 @@ public class CollegeService(AppDbContext context) : ICollegeService
         return (items, totalCount);
     }
 
-    public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir, int? organizationId = null)
+    public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search, organizationId);
+        var query = BuildQuery(search, facultyId);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -129,7 +129,7 @@ public class CollegeService(AppDbContext context) : ICollegeService
         return await context.CollegeTypes.AsNoTracking().ToListAsync();
     }
 
-    private IQueryable<College> BuildQuery(string? search, int? organizationId = null)
+    private IQueryable<College> BuildQuery(string? search, int? facultyId = null)
     {
         var query = context.Colleges
             .Include(c => c.CollegeType)
@@ -138,9 +138,9 @@ public class CollegeService(AppDbContext context) : ICollegeService
             .ThenInclude(ll => ll.District)
             .AsNoTracking();
 
-        if (organizationId.HasValue)
+        if (facultyId.HasValue)
         {
-            query = query.Where(c => c.OrganizationId == organizationId.Value);
+            query = query.Where(c => c.FacultyId == facultyId.Value);
         }
 
         if (!string.IsNullOrEmpty(search))

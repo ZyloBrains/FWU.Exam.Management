@@ -24,8 +24,8 @@ public class CreateUserViewModel
     [Display(Name = "Role")]
     public string SelectedRole { get; set; } = string.Empty;
 
-    [Display(Name = "Organization")]
-    public int? OrganizationId { get; set; }
+    [Display(Name = "Faculty")]
+    public int? FacultyId { get; set; }
 
     [Display(Name = "College")]
     public int? CollegeId { get; set; }

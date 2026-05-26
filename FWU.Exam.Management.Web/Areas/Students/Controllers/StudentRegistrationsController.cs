@@ -25,10 +25,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         if (User.IsInRole(Role.SuperAdmin))
             return new List<int>();
 
-        if (User.IsInRole(Role.FacultyAdmin) && user.OrganizationId != null)
+        if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
             return await context.Colleges
-                .Where(c => c.OrganizationId == user.OrganizationId)
+                .Where(c => c.FacultyId == user.FacultyId)
                 .Select(c => c.Id)
                 .ToListAsync();
         }
@@ -217,14 +217,14 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                                 AcademicYearId = int.TryParse(worksheet.Cell(row, 8).GetString(), out var ayId) ? ayId : 0,
                                 LevelId = int.TryParse(worksheet.Cell(row, 9).GetString(), out var levelId) ? levelId : 0,
                                 CollegeId = int.TryParse(worksheet.Cell(row, 10).GetString(), out var collId) ? collId : 0,
-                                FacultyId = int.TryParse(worksheet.Cell(row, 11).GetString(), out var facId) ? facId : 0,
+                                DepartmentId = int.TryParse(worksheet.Cell(row, 11).GetString(), out var facId) ? facId : 0,
                                 GenderId = int.TryParse(worksheet.Cell(row, 12).GetString(), out var genderId) ? genderId : 0,
                                 StudentCategoryId = int.TryParse(worksheet.Cell(row, 13).GetString(), out var catId) ? catId : 0,
                                 IsActive = true
                             };
 
                             if (registration.AcademicYearId == 0 || registration.LevelId == 0 ||
-                                registration.CollegeId == 0 || registration.FacultyId == 0)
+                                registration.CollegeId == 0 || registration.DepartmentId == 0)
                             {
                                 errors.Add($"Row {row}: Missing required IDs (AcademicYear, Level, College, or Faculty)");
                                 continue;
@@ -305,7 +305,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                 worksheet.Cell(row, 8).Value = reg.AcademicYearId;
                 worksheet.Cell(row, 9).Value = reg.LevelId;
                 worksheet.Cell(row, 10).Value = reg.CollegeId;
-                worksheet.Cell(row, 11).Value = reg.FacultyId;
+                worksheet.Cell(row, 11).Value = reg.DepartmentId;
                 worksheet.Cell(row, 12).Value = reg.GenderId;
                 worksheet.Cell(row, 13).Value = reg.StudentCategoryId;
                 worksheet.Cell(row, 14).Value = reg.IsActive ? "Yes" : "No";
@@ -347,7 +347,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);
         ViewBag.LevelId = new SelectList(selectLists.Levels, "Id", "Name", studentRegistration?.LevelId);
         ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name", studentRegistration?.CollegeId);
-        ViewBag.FacultyId = new SelectList(selectLists.Faculties, "Id", "Name", studentRegistration?.FacultyId);
+        ViewBag.FacultyId = new SelectList(selectLists.Departments, "Id", "Name", studentRegistration?.DepartmentId);
         ViewBag.GenderId = new SelectList(selectLists.Genders, "Id", "Name", studentRegistration?.GenderId);
         ViewBag.StudentCategoryId = new SelectList(selectLists.StudentCategories, "Id", "Name", studentRegistration?.StudentCategoryId);
         ViewBag.EthnicityId = new SelectList(selectLists.Ethnicities, "Id", "Name", studentRegistration?.EthnicityId);

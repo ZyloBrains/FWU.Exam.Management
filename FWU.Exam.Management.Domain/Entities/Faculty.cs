@@ -1,26 +1,11 @@
-using FWU.Exam.Management.Domain.Entities.Students;
-using System.ComponentModel.DataAnnotations;
-
 namespace FWU.Exam.Management.Domain.Entities;
-
 public class Faculty
-{
+{    
     public int Id { get; set; }
-
-    [Required, MaxLength(10)]
-    public string? FacultyCode { get; set; }
-
-    [Required, MaxLength(200)]
-    public string? FacultyName { get; set; }
-
-    [MaxLength(50)]
-    public string? ShortName { get; set; }
-
-    [MaxLength(100)]
-    public string? Remarks { get; set; }
-
-    public bool IsActive { get; set; }
-
-        public virtual ICollection<Program>? Programs { get; set; }
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string OfficeCode { get; set; } = string.Empty;
+    public string ContactNumber { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? LogoPath { get; set; }
 }

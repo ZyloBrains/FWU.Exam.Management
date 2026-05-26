@@ -18,10 +18,10 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class CollegesController(ICollegeService collegeService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
-    private async Task<int?> GetCurrentUserOrganizationIdAsync()
+    private async Task<int?> GetCurrentUserFacultyIdAsync()
     {
         var user = await userManager.GetUserAsync(User);
-        return user?.OrganizationId;
+        return user?.FacultyId;
     }
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
@@ -29,7 +29,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         int? orgId = null;
         if (User.IsInRole(Role.FacultyAdmin))
         {
-            orgId = await GetCurrentUserOrganizationIdAsync();
+            orgId = await GetCurrentUserFacultyIdAsync();
         }
 
         var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir, orgId);
@@ -55,7 +55,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     public async Task<IActionResult> ExportToCsv(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserOrganizationIdAsync() : null;
+        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
         var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
 
         var sb = new StringBuilder();
@@ -95,7 +95,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     public async Task<IActionResult> ExportToPdf(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserOrganizationIdAsync() : null;
+        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
         var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
         return View("PrintPdf", items);
     }
@@ -131,7 +131,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         {
             if (User.IsInRole(Role.FacultyAdmin))
             {
-                college.OrganizationId = await GetCurrentUserOrganizationIdAsync();
+                college.FacultyId = await GetCurrentUserFacultyIdAsync();
             }
             await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
             return RedirectToAction(nameof(Index));

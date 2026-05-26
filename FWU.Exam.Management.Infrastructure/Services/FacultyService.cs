@@ -1,64 +1,29 @@
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
-using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class FacultyService(AppDbContext context) : IFacultyService
 {
-    public async Task<(List<Faculty> Items, int TotalCount)> GetFacultiesAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<List<Faculty>> GetAllFacultiesAsync()
     {
-        var query = context.Faculties.AsNoTracking();
-
-        if (!string.IsNullOrEmpty(search))
-        {
-            query = query.Where(f =>
-                f.FacultyCode.Contains(search) ||
-                f.FacultyName.Contains(search) ||
-                (f.ShortName != null && f.ShortName.Contains(search)) ||
-                (f.Remarks != null && f.Remarks.Contains(search)));
-        }
-
-        query = sortDir.ToLower() == "desc"
-            ? query.OrderByDescending(GetSortProperty(sort))
-            : query.OrderBy(GetSortProperty(sort));
-
-        var totalCount = await query.CountAsync();
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        return await context.Faculties
+            .AsNoTracking()
+            .OrderBy(f => f.Name)
             .ToListAsync();
-
-        return (items, totalCount);
-    }
-
-    public async Task<List<Faculty>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
-    {
-        var query = context.Faculties.AsNoTracking();
-
-        if (!string.IsNullOrEmpty(search))
-        {
-            query = query.Where(f =>
-                f.FacultyCode.Contains(search) ||
-                f.FacultyName.Contains(search) ||
-                (f.ShortName != null && f.ShortName.Contains(search)) ||
-                (f.Remarks != null && f.Remarks.Contains(search)));
-        }
-
-        query = sortDir.ToLower() == "desc"
-            ? query.OrderByDescending(GetSortProperty(sort))
-            : query.OrderBy(GetSortProperty(sort));
-
-        return await query.ToListAsync();
     }
 
     public async Task<Faculty?> GetFacultyByIdAsync(int id)
     {
-        return await context.Faculties.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.Faculties.FindAsync(id);
+    }
+
+    public async Task<Faculty?> GetFacultyByOfficeCodeAsync(string officeCode)
+    {
+        return await context.Faculties
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.OfficeCode == officeCode);
     }
 
     public async Task CreateFacultyAsync(Faculty faculty)
@@ -85,19 +50,6 @@ public class FacultyService(AppDbContext context) : IFacultyService
 
     public async Task<bool> FacultyExistsAsync(int id)
     {
-        return await context.Faculties.AnyAsync(e => e.Id == id);
-    }
-
-    private static Expression<Func<Faculty, object>> GetSortProperty(string sort)
-    {
-        return sort.ToLower() switch
-        {
-            "facultycode" => f => f.FacultyCode,
-            "facultyname" => f => f.FacultyName,
-            "shortname" => f => f.ShortName ?? "",
-            "remarks" => f => f.Remarks ?? "",
-            "isactive" => f => f.IsActive,
-            _ => f => f.FacultyName
-        };
+        return await context.Faculties.AnyAsync(f => f.Id == id);
     }
 }

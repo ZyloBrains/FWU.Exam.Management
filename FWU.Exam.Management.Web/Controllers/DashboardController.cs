@@ -20,11 +20,11 @@ public class DashboardController(IDashboardService dashboardService, UserManager
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? "Student";
 
-        if (primaryRole == Role.FacultyAdmin && user.OrganizationId != null)
+        if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
         {
-            var org = await context.Organizations.FindAsync(user.OrganizationId.Value);
-            if (org?.OfficeCode != null)
-                return RedirectToAction("Index", "OrgDashboard", new { officeCode = org.OfficeCode });
+            var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+            if (faculty?.OfficeCode != null)
+                return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
         }
 
         var stats = await dashboardService.GetDashboardStatsAsync();
@@ -33,7 +33,7 @@ public class DashboardController(IDashboardService dashboardService, UserManager
         {
             CurrentRole = primaryRole,
             UserName = user.UserName ?? user.Email ?? "User",
-            TotalOrganizations = stats.TotalOrganizations,
+            TotalFaculties = stats.TotalFaculties,
             TotalUsers = stats.TotalUsers,
             TotalRoles = stats.TotalRoles,
             TotalColleges = stats.TotalColleges,
@@ -55,7 +55,7 @@ public class DashboardController(IDashboardService dashboardService, UserManager
         return primaryRole switch
         {
             "SuperAdmin" or "SystemAdmin" => View("SuperAdmin", vm),
-            "FacultyAdmin" or "OrganizationAdmin" => View("FacultyAdmin", vm),
+            "FacultyAdmin" => View("FacultyAdmin", vm),
             "CollegeAdmin" or "Admin" => View("CollegeAdmin", vm),
             "Student" => View("Student", vm),
             _ => View("Student", vm)

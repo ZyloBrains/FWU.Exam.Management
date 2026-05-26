@@ -1,0 +1,43 @@
+@model EditUserViewModel
+
+@{
+    var faculty = ViewBag.Faculty as Faculty;
+    ViewData["Title"] = $"Edit User — {faculty!.Name}";
+}
+
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a></li>
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item active">Edit User</li>
+    </ol>
+</nav>
+
+<h1 class="h3 mb-4">Edit User — @faculty.Name</h1>
+
+<div class="row">
+    <div class="col-md-5">
+        <form asp-controller="FacultyDashboard" asp-action="EditUser"
+              asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@Model.Id"
+              method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="FacultyId" />
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div>
+                <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-controller="FacultyDashboard" asp-action="Users"
+                   asp-route-officeCode="@faculty.OfficeCode"
+                   class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

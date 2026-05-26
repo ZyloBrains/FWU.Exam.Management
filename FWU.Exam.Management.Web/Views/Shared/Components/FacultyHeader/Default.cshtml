@@ -1,0 +1,11 @@
+@model Faculty?
+@if (Model != null)
+{
+    <div class="flex items-center gap-2">
+        @if (!string.IsNullOrEmpty(Model.LogoPath))
+        {
+            <img src="@Model.LogoPath" alt="@Model.Name" class="h-8 w-8 rounded object-cover" />
+        }
+        <span class="font-semibold text-sm">@Model.Name</span>
+    </div>
+}
