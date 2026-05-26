@@ -61,6 +61,26 @@
                 </div>
             </div>
 
+            <!-- Section: Admin Login -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Admin Login</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Admin Password</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="adminPassword" id="adminPassword"
+                                   class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                                   placeholder="Leave empty to auto-generate" />
+                            <button type="button" onclick="generatePassword()"
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition border border-gray-300">
+                                <i class="fas fa-key mr-1"></i> Generate
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">The email above will be used as the admin login. Leave password empty to auto-generate a secure temporary password.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section: Logo -->
             <div>
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculty Logo</h2>
@@ -99,5 +119,14 @@
                 preview.classList.add('hidden');
             }
         });
+
+        function generatePassword() {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('adminPassword').value = result + '@@' + '1';
+        }
     </script>
 }

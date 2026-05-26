@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
 {
     public async Task<IActionResult> Index()
@@ -34,7 +34,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Faculty faculty, IFormFile? logoFile)
+    public async Task<IActionResult> Create(Faculty faculty, IFormFile? logoFile, string? adminPassword)
     {
         if (ModelState.IsValid)
         {
@@ -43,7 +43,15 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
                 faculty.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
             }
 
-            await facultyService.CreateFacultyAsync(faculty);
+            var resultPassword = await facultyService.CreateFacultyAsync(faculty, adminPassword ?? string.Empty);
+
+            if (!string.IsNullOrWhiteSpace(resultPassword))
+            {
+                TempData["OrgLoginEmail"] = faculty.Email;
+                TempData["OrgLoginPassword"] = resultPassword;
+                TempData["OrgOfficeCode"] = faculty.OfficeCode;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 

@@ -301,14 +301,12 @@
         // ----------------------------------------------------- //
         // Faculty Management Section
         // ----------------------------------------------------- //
-        var isOrgSettingsActive = IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core") ||
-                                   IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core") ||
+        var isOrgSettingsActive = IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core") ||
                                    IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges") ||
                                    IsActive(controllerName: "CollegePrograms", actionName: "Index", areaName: "Colleges") ||
                                    IsActive(controllerName: "CollegeTypes", actionName: "Index", areaName: "Colleges") ||
                                    IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core") ||
-                                   IsActive(controllerName: "Semesters", actionName: "Index", areaName: "Core") ||
-                                   IsActive(controllerName: "Faculties", actionName: "Index", areaName: "Core");
+                                   IsActive(controllerName: "Semesters", actionName: "Index", areaName: "Core");
         <li x-data="{ open: @(isOrgSettingsActive.ToString().ToLower()) }">
             <button @@click="open = !open" class="@ParentClass(isOrgSettingsActive)">
                 <div class="flex items-center justify-center w-6">
@@ -319,14 +317,12 @@
             </button>
             <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li><a asp-area="Core" asp-controller="Faculty" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core"))"><i class="fas fa-building w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Faculty</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-school w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Colleges</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="CollegeTypes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CollegeTypes", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-tag w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Types</span></a></li>
                 <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core"))"><i class="fas fa-stream w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Programs</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="CollegePrograms" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CollegePrograms", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-diagram-project w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Programs</span></a></li>
                 <li><a asp-area="Core" asp-controller="Semesters" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Semesters", actionName: "Index", areaName: "Core"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Semesters</span></a></li>
                 <li><a asp-area="Core" asp-controller="AcademicYears" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core"))"><i class="fas fa-calendar-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Academic Years</span></a></li>
-                <li><a asp-area="Core" asp-controller="Faculties" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Faculties", actionName: "Index", areaName: "Core"))"><i class="fas fa-university w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Faculties</span></a></li>
             </ul>
         </li>
 

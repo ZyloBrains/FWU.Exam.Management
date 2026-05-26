@@ -54,7 +54,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
     public async Task<IActionResult> Create()
     {
-        ViewBag.RolesList = Role.AllRoles;
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin) ? Role.AllRoles : Role.AllRoles.Where(r => r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
         return View(new CreateUserViewModel());
@@ -66,6 +66,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     {
         if (model.SelectedRole == Role.SuperAdmin)
             ModelState.AddModelError(nameof(model.SelectedRole), "Cannot create a Super Admin user.");
+
+        if (model.SelectedRole == Role.FacultyAdmin && !User.IsInRole(Role.SuperAdmin))
+            ModelState.AddModelError(nameof(model.SelectedRole), "Only Super Admin can create a Faculty Admin user.");
 
         if (ModelState.IsValid)
         {
@@ -94,7 +97,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.RolesList = Role.AllRoles;
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin) ? Role.AllRoles : Role.AllRoles.Where(r => r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);

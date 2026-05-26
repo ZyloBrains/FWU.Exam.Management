@@ -273,7 +273,7 @@ public static class DemoDataSeeder
             {
                 new ExamType { Name = "Regular", Code = 1, IsActive = true },
                 new ExamType { Name = "Partial", Code = 2, IsActive = true },
-                new ExamType { Name = "Supplementary", Code = 3, IsActive = true },
+                new ExamType { Name = "Supplementary", Code = 3, IsActive = true }, 
             });
             await context.SaveChangesAsync();
         }
