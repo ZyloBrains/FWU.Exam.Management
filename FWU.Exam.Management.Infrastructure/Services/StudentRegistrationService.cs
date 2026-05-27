@@ -261,6 +261,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         if (string.IsNullOrWhiteSpace(studentRegistration.Email))
             return;
 
+        var college = await context.Colleges
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == studentRegistration.CollegeId);
+
         var user = await userManager.FindByEmailAsync(studentRegistration.Email);
 
         if (user == null && studentRegistration.Id != 0)
@@ -285,7 +289,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 UserName = studentRegistration.Email,
                 Email = studentRegistration.Email,
                 FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim(),
-                IsActive = studentRegistration.IsActive
+                IsActive = studentRegistration.IsActive,
+                FacultyId = college?.FacultyId,
+                CollegeId = college?.Id
             };
 
             var password = studentRegistration.DateOfBirthBS;
@@ -329,6 +335,18 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             if (user.IsActive != studentRegistration.IsActive)
             {
                 user.IsActive = studentRegistration.IsActive;
+                needsUpdate = true;
+            }
+
+            if (user.FacultyId != college?.FacultyId)
+            {
+                user.FacultyId = college?.FacultyId;
+                needsUpdate = true;
+            }
+
+            if (user.CollegeId != college?.Id)
+            {
+                user.CollegeId = college?.Id;
                 needsUpdate = true;
             }
 

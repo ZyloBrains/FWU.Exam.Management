@@ -21,8 +21,8 @@ public static class DemoDataSeeder
         {
             var academicYears = new[]
             {
-                new AcademicYear { AcademicYearCode = 2080, AcademicYearName = "2080/2081", IsRunning = false, IsActive = true },
-                new AcademicYear { AcademicYearCode = 2081, AcademicYearName = "2081/2082", IsRunning = true, IsActive = true },
+                new AcademicYear { AcademicYearCode = 2080, AcademicYearName = "2080/2081", AcademicYearNameNepali = "२०८०/२०८१", IsRunning = false, IsActive = true },
+                new AcademicYear { AcademicYearCode = 2081, AcademicYearName = "2081/2082", AcademicYearNameNepali = "२०८१/२०८२", IsRunning = true, IsActive = true },
             };
             await context.AcademicYears.AddRangeAsync(academicYears);
             await context.SaveChangesAsync();

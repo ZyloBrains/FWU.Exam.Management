@@ -17,10 +17,33 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 {
     public async Task<IActionResult> Index()
     {
-        var users = await userManager.Users
+        var currentUser = await userManager.GetUserAsync(User);
+        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
+
+        var usersQuery = userManager.Users
             .Include(u => u.Faculty)
-            .Include(u => u.College)
-            .ToListAsync();
+            .Include(u => u.College);
+
+        IQueryable<AppUser> filteredQuery;
+
+        if (isSuperAdmin)
+        {
+            filteredQuery = usersQuery;
+        }
+        else if (User.IsInRole(Role.FacultyAdmin) && currentUser?.FacultyId != null)
+        {
+            filteredQuery = usersQuery.Where(u => u.FacultyId == currentUser.FacultyId);
+        }
+        else if (User.IsInRole(Role.CollegeAdmin) && currentUser?.CollegeId != null)
+        {
+            filteredQuery = usersQuery.Where(u => u.CollegeId == currentUser.CollegeId);
+        }
+        else
+        {
+            filteredQuery = usersQuery;
+        }
+
+        var users = await filteredQuery.ToListAsync();
         var model = new List<UserListItemViewModel>();
         foreach (var user in users)
         {

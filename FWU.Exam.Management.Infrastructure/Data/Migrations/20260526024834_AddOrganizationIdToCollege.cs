@@ -20,22 +20,11 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
                 name: "IX_Colleges_OrganizationId",
                 table: "Colleges",
                 column: "OrganizationId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Colleges_Organizations_OrganizationId",
-                table: "Colleges",
-                column: "OrganizationId",
-                principalTable: "Organizations",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Colleges_Organizations_OrganizationId",
-                table: "Colleges");
 
             migrationBuilder.DropIndex(
                 name: "IX_Colleges_OrganizationId",

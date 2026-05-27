@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
@@ -43,6 +45,8 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
     [TempData]
     public string ErrorMessage { get; set; }
 
+    public SelectList FacultyOptions { get; set; }
+
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
     ///     directly from your code. This API may change or be removed in future releases.
@@ -71,6 +75,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         /// </summary>
         [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
+
+        [Required(ErrorMessage = "Please select your organization")]
+        [Display(Name = "Organization")]
+        public int SelectedFacultyId { get; set; }
     }
 
     public async Task OnGetAsync(string returnUrl = null)
@@ -87,6 +95,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
+        FacultyOptions = new SelectList(
+            await context.Faculties.OrderBy(f => f.Name).AsNoTracking().ToListAsync(),
+            "Id", "Name");
+
         ReturnUrl = returnUrl;
     }
 
@@ -96,18 +108,34 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
+        FacultyOptions = new SelectList(
+            await context.Faculties.OrderBy(f => f.Name).AsNoTracking().ToListAsync(),
+            "Id", "Name");
+
         if (ModelState.IsValid)
         {
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-            var result = await signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-            if (result.Succeeded)
-            {
-                logger.LogInformation("User logged in.");
+            AppUser? user;
 
-                var user = await userManager.FindByEmailAsync(Input.Email);
-                if (user != null)
+            if (Input.SelectedFacultyId == -1)
+            {
+                user = await userManager.Users
+                    .FirstOrDefaultAsync(u => u.Email == Input.Email && u.FacultyId == null);
+            }
+            else
+            {
+                user = await userManager.Users
+                    .FirstOrDefaultAsync(u => u.Email == Input.Email && u.FacultyId == Input.SelectedFacultyId);
+            }
+
+            if (user != null)
+            {
+                var result = await signInManager.CheckPasswordSignInAsync(user, Input.Password, false);
+                if (result.Succeeded)
                 {
+                    logger.LogInformation("User logged in.");
+
+                    await signInManager.SignInAsync(user, Input.RememberMe);
+
                     var claims = await userManager.GetClaimsAsync(user);
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
@@ -119,47 +147,44 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
                     }
-                }
 
-                if (user != null && await userManager.IsInRoleAsync(user, "Student"))
-                {
-                    return RedirectToAction("Index", "Dashboard", new { area = "" });
-                }
-
-                if (user?.FacultyId != null)
-                {
-                    var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
-                    if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
+                    if (await userManager.IsInRoleAsync(user, "Student"))
                     {
-                        return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
+                        return RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
-                }
 
-                var roles = user != null ? await userManager.GetRolesAsync(user) : [];
-                if (roles.Contains("FacultyAdmin"))
+                    if (user.FacultyId != null)
+                    {
+                        var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+                        if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
+                        {
+                            return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
+                        }
+                    }
+
+                    var roles = await userManager.GetRolesAsync(user);
+                    if (roles.Contains("FacultyAdmin"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                    }
+
+                    return LocalRedirect(returnUrl);
+                }
+                if (result.RequiresTwoFactor)
                 {
-                    return RedirectToAction("Index", "Dashboard", new { area = "" });
+                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
                 }
+                if (result.IsLockedOut)
+                {
+                    logger.LogWarning("User account locked out.");
+                    return RedirectToPage("./Lockout");
+                }
+            }
 
-                return LocalRedirect(returnUrl);
-            }
-            if (result.RequiresTwoFactor)
-            {
-                return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-            }
-            if (result.IsLockedOut)
-            {
-                logger.LogWarning("User account locked out.");
-                return RedirectToPage("./Lockout");
-            }
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return Page();
-            }
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return Page();
         }
 
-        // If we got this far, something failed, redisplay form
         return Page();
     }
 }

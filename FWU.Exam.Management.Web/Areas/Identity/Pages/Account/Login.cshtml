@@ -65,7 +65,8 @@
             object-fit: cover;
         }
 
-        .form-control:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2);
         }
@@ -98,6 +99,20 @@
                     <form id="account" method="post">
                         @Html.AntiForgeryToken()
 
+                        <!-- Organization / Faculty Selection -->
+                        <div class="mb-3">
+                            <label asp-for="Input.SelectedFacultyId" class="form-label fw-medium small text-dark">Organization</label>
+                            <select asp-for="Input.SelectedFacultyId"
+                                    class="form-select py-2"
+                                    asp-items="@Model.FacultyOptions"
+                                    aria-required="true"
+                                    autofocus>
+                                <option value="">— Select your organization —</option>
+                                <option value="-1">Office of Controller of Examinations (OCE)</option>
+                            </select>
+                            <span asp-validation-for="Input.SelectedFacultyId" class="text-danger small"></span>
+                        </div>
+
                         <!-- Email -->
                         <div class="mb-3">
                             <label asp-for="Input.Email" class="form-label fw-medium small text-dark">Email</label>
@@ -105,8 +120,7 @@
                                    class="form-control py-2"
                                    autocomplete="username"
                                    aria-required="true"
-                                   placeholder="you@example.com"
-                                   autofocus />
+                                   placeholder="you@example.com" />
                             <span asp-validation-for="Input.Email" class="text-danger small"></span>
                         </div>
 

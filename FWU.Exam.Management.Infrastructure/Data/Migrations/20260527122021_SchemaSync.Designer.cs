@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260526045911_RenameOrganizationToFacultyAndFacultyToDepartment")]
-    partial class RenameOrganizationToFacultyAndFacultyToDepartment
+    [Migration("20260527122021_SchemaSync")]
+    partial class SchemaSync
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
