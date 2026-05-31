@@ -42,7 +42,7 @@ public class FacultyDashboardController(
             faculty = await GetFacultyAsync(officeCode);
         }
 
-        if (faculty == null)FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        if (faculty == null)
             return (null, NotFound());
 
         var currentUser = await userManager.GetUserAsync(User);
@@ -50,14 +50,14 @@ public class FacultyDashboardController(
             return (null, Challenge());
 
         if (User.IsInRole(Role.SuperAdmin) || User.IsInRole(Role.FacultyAdmin) || currentUser.FacultyId == faculty.Id)
-            return (faculty, null);FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+            return (faculty, null);
 
         return (null, Forbid());
     }
 
-    // GET: /faculty/{officeCode}FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // GET: /faculty/{officeCode}
     [HttpGet("")]
-    public async Task<IActionResult> Index(string tenantCode)
+    public async Task<IActionResult> Index(string officeCode)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -93,9 +93,9 @@ public class FacultyDashboardController(
         return View("~/Views/Dashboard/FacultyAdmin.cshtml", vm);
     }
 
-    // GET: /faculty/{officeCode}/usersFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // GET: /faculty/{officeCode}/users
     [HttpGet("users")]
-    public async Task<IActionResult> Users(string tenantCode)
+    public async Task<IActionResult> Users(string officeCode)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -104,7 +104,7 @@ public class FacultyDashboardController(
         ViewBag.Faculty = faculty;
 
         var users = await userManager.Users
-            .Where(u => u.FacultyId == faculty.Id)FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+            .Where(u => u.FacultyId == faculty.Id)
             .ToListAsync();
 
         var model = new List<UserListItemViewModel>();
@@ -114,16 +114,16 @@ public class FacultyDashboardController(
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
-                FacultyName = faculty.Name,FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+                FacultyName = faculty.Name,
                 Roles = await userManager.GetRolesAsync(user)
             });
         }
         return View(model);
     }
 
-    // GET: /faculty/{officeCode}/users/createFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // GET: /faculty/{officeCode}/users/create
     [HttpGet("users/create")]
-    public async Task<IActionResult> CreateUser(string tenantCode)
+    public async Task<IActionResult> CreateUser(string officeCode)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -132,15 +132,15 @@ public class FacultyDashboardController(
         return View(new CreateUserViewModel());
     }
 
-    // POST: /faculty/{officeCode}/users/createFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // POST: /faculty/{officeCode}/users/create
     [HttpPost("users/create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateUser(string tenantCode, CreateUserViewModel model)
+    public async Task<IActionResult> CreateUser(string officeCode, CreateUserViewModel model)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var faculty = auth.Faculty!;FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        var faculty = auth.Faculty!;
 
         if (ModelState.IsValid)
         {
@@ -148,7 +148,7 @@ public class FacultyDashboardController(
             {
                 UserName = model.Email,
                 Email = model.Email,
-                FacultyId = faculty.Id,FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+                FacultyId = faculty.Id,
                 EmailConfirmed = true
             };
 
@@ -158,7 +158,7 @@ public class FacultyDashboardController(
                 if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
                     await userManager.AddToRoleAsync(user, "Student");
 
-                return RedirectToAction(nameof(Users), new { tenantCode });
+                return RedirectToAction(nameof(Users), new { officeCode });
             }
 
             foreach (var error in result.Errors)
@@ -169,9 +169,9 @@ public class FacultyDashboardController(
         return View(model);
     }
 
-    // GET: /faculty/{officeCode}/users/{userId}/editFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // GET: /faculty/{officeCode}/users/{userId}/edit
     [HttpGet("users/{userId}/edit")]
-    public async Task<IActionResult> EditUser(string tenantCode, string userId)
+    public async Task<IActionResult> EditUser(string officeCode, string userId)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -180,7 +180,7 @@ public class FacultyDashboardController(
         var user = await userManager.FindByIdAsync(userId);
         if (user == null || user.FacultyId != faculty.Id) return NotFound();
 
-        ViewBag.Faculty = faculty;FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        ViewBag.Faculty = faculty;
         return View(new EditUserViewModel
         {
             Id = user.Id,
@@ -189,29 +189,29 @@ public class FacultyDashboardController(
         });
     }
 
-    // POST: /faculty/{officeCode}/users/{userId}/editFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // POST: /faculty/{officeCode}/users/{userId}/edit
     [HttpPost("users/{userId}/edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditUser(string tenantCode, string userId, EditUserViewModel model)
+    public async Task<IActionResult> EditUser(string officeCode, string userId, EditUserViewModel model)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
-        var faculty = auth.Faculty!;FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        var faculty = auth.Faculty!;
 
         if (userId != model.Id) return NotFound();
 
         if (ModelState.IsValid)
         {
             var user = await userManager.FindByIdAsync(userId);
-            if (user == null || user.FacultyId != faculty.Id) return NotFound();FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+            if (user == null || user.FacultyId != faculty.Id) return NotFound();
 
             user.Email = model.Email;
             user.UserName = model.Email;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
-                return RedirectToAction(nameof(Users), new { tenantCode });
+                return RedirectToAction(nameof(Users), new { officeCode });
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
@@ -221,9 +221,9 @@ public class FacultyDashboardController(
         return View(model);
     }
 
-    // GET: /faculty/{officeCode}/users/{userId}/deleteFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // GET: /faculty/{officeCode}/users/{userId}/delete
     [HttpGet("users/{userId}/delete")]
-    public async Task<IActionResult> DeleteUser(string tenantCode, string userId)
+    public async Task<IActionResult> DeleteUser(string officeCode, string userId)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -237,10 +237,10 @@ public class FacultyDashboardController(
         return View(user);
     }
 
-    // POST: /faculty/{officeCode}/users/{userId}/deleteFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // POST: /faculty/{officeCode}/users/{userId}/delete
     [HttpPost("users/{userId}/delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteUserConfirmed(string tenantCode, string userId)
+    public async Task<IActionResult> DeleteUserConfirmed(string officeCode, string userId)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -248,15 +248,15 @@ public class FacultyDashboardController(
         var faculty = auth.Faculty!;
 
         var user = await userManager.FindByIdAsync(userId);
-        if (user != null && user.FacultyId == faculty.Id)FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        if (user != null && user.FacultyId == faculty.Id)
             await userManager.DeleteAsync(user);
 
-        return RedirectToAction(nameof(Users), new { tenantCode });
+        return RedirectToAction(nameof(Users), new { officeCode });
     }
 
-    // GET: /faculty/{officeCode}/users/{userId}/rolesFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // GET: /faculty/{officeCode}/users/{userId}/roles
     [HttpGet("users/{userId}/roles")]
-    public async Task<IActionResult> AssignRoles(string tenantCode, string userId)
+    public async Task<IActionResult> AssignRoles(string officeCode, string userId)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -264,14 +264,14 @@ public class FacultyDashboardController(
         var faculty = auth.Faculty!;
 
         var user = await userManager.FindByIdAsync(userId);
-        if (user == null || user.FacultyId != faculty.Id) return NotFound();FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        if (user == null || user.FacultyId != faculty.Id) return NotFound();
 
         var allRoles = await roleManager.Roles
             .Where(r => r.Name != "Student")
             .ToListAsync();
         var userRoles = await userManager.GetRolesAsync(user);
 
-        ViewBag.Faculty = faculty;FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        ViewBag.Faculty = faculty;
         return View(new AssignRolesViewModel
         {
             UserId = user.Id,
@@ -284,10 +284,10 @@ public class FacultyDashboardController(
         });
     }
 
-    // POST: /faculty/{officeCode}/users/{userId}/rolesFWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+    // POST: /faculty/{officeCode}/users/{userId}/roles
     [HttpPost("users/{userId}/roles")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AssignRoles(string tenantCode, string userId, AssignRolesViewModel model)
+    public async Task<IActionResult> AssignRoles(string officeCode, string userId, AssignRolesViewModel model)
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
@@ -295,7 +295,7 @@ public class FacultyDashboardController(
         var faculty = auth.Faculty!;
 
         var user = await userManager.FindByIdAsync(model.UserId);
-        if (user == null || user.FacultyId != faculty.Id) return NotFound();FWU.Exam.Management.Web/Controllers/TenantDashboardController.cs
+        if (user == null || user.FacultyId != faculty.Id) return NotFound();
 
         var currentRoles = await userManager.GetRolesAsync(user);
         var selectedRoles = model.Roles
@@ -317,6 +317,6 @@ public class FacultyDashboardController(
         if (toRemove.Count > 0)
             await userManager.RemoveFromRolesAsync(user, toRemove);
 
-        return RedirectToAction(nameof(Users), new { tenantCode });
+        return RedirectToAction(nameof(Users), new { officeCode });
     }
 }

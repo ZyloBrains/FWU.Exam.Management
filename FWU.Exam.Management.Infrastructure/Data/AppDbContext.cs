@@ -69,6 +69,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<CurriculumVersion>? CurriculumVersions { get; set; }
     public DbSet<Province>? Provinces { get; set; }
     public DbSet<Faculty>? Faculties { get; set; }
+    public DbSet<Tenant>? Tenants { get; set; }
     public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
     public DbSet<CollegeProfile>? CollegeProfiles { get; set; }
     public DbSet<UserAttachment>? UserAttachments { get; set; }
