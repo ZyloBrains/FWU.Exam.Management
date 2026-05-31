@@ -304,7 +304,15 @@ namespace FWU.Exam.Management.Infrastructure.Data.Migrations
             migrationBuilder.InsertData(
                 table: "Tenants",
                 columns: new[] { "Id", "Name", "OfficeCode", "ContactNumber", "Address", "Email", "TenantType", "IsActive" },
-                values: new object[] { 1, "Default Tenant", "DEFAULT", "000-0000000", "N/A", "default@tenant.com", 1, true });
+                values: new object[] { 1, "Office of Controller of Examinations", "OCE", "01-2345678", "Kathmandu, Nepal", "info@oce.gov.np", 1, true });
+            migrationBuilder.InsertData(
+                table: "Tenants",
+                columns: new[] { "Id", "Name", "OfficeCode", "ContactNumber", "Address", "Email", "TenantType", "IsActive" },
+                values: new object[] { 2, "Agriculture", "AGR", "01-1234567", "Kathmandu, Nepal", "info@agriculture.fwu.edu.np", 0, true });
+            migrationBuilder.InsertData(
+                table: "Tenants",
+                columns: new[] { "Id", "Name", "OfficeCode", "ContactNumber", "Address", "Email", "TenantType", "IsActive" },
+                values: new object[] { 3, "Engineering", "ENG", "01-7654321", "Kathmandu, Nepal", "info@engineering.fwu.edu.np", 0, true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubjectOfferings_TenantId",
