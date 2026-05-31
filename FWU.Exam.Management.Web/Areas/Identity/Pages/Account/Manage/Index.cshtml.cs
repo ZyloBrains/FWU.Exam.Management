@@ -54,7 +54,7 @@ public class IndexModel(
             StudentProfile = await context.StudentRegistrations
                 .Include(s => s.AcademicYear)
                 .Include(s => s.Level)
-                .Include(s => s.Faculty)
+                .Include(s => s.Department)
                 .Include(s => s.College)
                 .Include(s => s.Gender)
                 .Include(s => s.StudentCategory)

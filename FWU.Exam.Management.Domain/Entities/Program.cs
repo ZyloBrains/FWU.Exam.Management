@@ -11,7 +11,7 @@ public class Program
     public int Id { get; set; }
 
     public int LevelId { get; set; }
-    public int FacultyId { get; set; }
+    public int DepartmentId { get; set; }
     public int? BoardId { get; set; }
 
     [Required, MaxLength(50)]
@@ -42,7 +42,7 @@ public class Program
 
     public virtual Level? Level { get; set; }
 
-    public virtual Faculty? Faculty { get; set; }
+    public virtual Department? Department { get; set; }
 
     public virtual Board? Board { get; set; }
 

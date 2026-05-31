@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -19,6 +20,7 @@ public partial class EntryPoint
         // Add services to the container.
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
+        builder.Services.AddScoped<ITenantContext, TenantContext>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
 
@@ -72,15 +74,15 @@ public partial class EntryPoint
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
         builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
         builder.Services.AddScoped<ICollegeService, CollegeService>();
-        builder.Services.AddScoped<ITenantService, TenantService>();
-        builder.Services.AddScoped<ITenantContext, FWU.Exam.Management.Web.Middleware.TenantContext>();
+        builder.Services.AddScoped<IFacultyService, FacultyService>();
+        builder.Services.AddScoped<IDepartmentService, DepartmentService>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
         builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
         builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
         builder.Services.AddScoped<IProgramService, ProgramService>();
         builder.Services.AddScoped<ILevelService, LevelService>();
+        builder.Services.AddScoped<INoticeService, NoticeService>();
         builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
-        builder.Services.AddScoped<IFacultyService, FacultyService>();
         builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
         builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
         builder.Services.AddScoped<IDistrictService, DistrictService>();
@@ -88,6 +90,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<ILocalLevelService, LocalLevelService>();
         builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
         builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+        builder.Services.AddScoped<IFacultyResolver, FacultyResolver>();
         builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
         builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
         builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
@@ -101,6 +104,7 @@ public partial class EntryPoint
         builder.Services.AddHttpClient<IESewaService, ESewaService>();
         builder.Services.AddScoped<IKhaltiService, KhaltiService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
+        builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -119,6 +123,8 @@ public partial class EntryPoint
         app.UseMiddleware<TenantResolutionMiddleware>();
 
         app.UseRouting();
+
+        app.UseFacultyResolution();
 
         app.UseAuthorization();
 
@@ -144,13 +150,18 @@ public partial class EntryPoint
 
         using (var scope = app.Services.CreateScope())
         {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await dbContext.Database.MigrateAsync();
+            var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+            tenantContext.SetTenant(1, "SEED", TenantType.Central);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 

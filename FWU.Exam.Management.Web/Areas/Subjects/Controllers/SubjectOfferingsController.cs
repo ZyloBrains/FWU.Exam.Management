@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class SubjectOfferingsController : Controller
 {
     private readonly ISubjectOfferingService _subjectOfferingService;
@@ -113,79 +116,47 @@ public class SubjectOfferingsController : Controller
     public async Task<IActionResult> Create(SubjectOfferingBulkCreateViewModel model)
     {
         if (model.ProgramId <= 0)
-        {
             ModelState.AddModelError(nameof(model.ProgramId), "Program is required.");
-        }
 
         if (model.SemesterId <= 0)
-        {
             ModelState.AddModelError(nameof(model.SemesterId), "Semester is required.");
-        }
 
-        if (model.Subjects != null)
+        if (model.Subjects == null || model.Subjects.Count == 0)
+            ModelState.AddModelError("", "Please add at least one subject.");
+        else
         {
             for (var i = 0; i < model.Subjects.Count; i++)
             {
                 if (model.Subjects[i].SubjectCatalogId <= 0)
-                {
-                    ModelState.AddModelError($"Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Subject is required.");
-                }
+                    ModelState.AddModelError($"Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Please select a valid subject.");
             }
         }
 
         if (ModelState.IsValid)
         {
-            if (model.ProgramId <= 0)
+            var offerings = model.Subjects.Select(s => new SubjectOffering
             {
-                ModelState.AddModelError(nameof(model.ProgramId), "Please select a valid program.");
-            }
+                SubjectCatalogId = s.SubjectCatalogId,
+                ProgramId = model.ProgramId,
+                SemesterId = model.SemesterId,
+                IsCompulsory = s.IsCompulsory,
+                DisplayOrder = s.DisplayOrder,
+                HasTheory = s.HasTheory,
+                HasPractical = s.HasPractical,
+                HasInternal = s.HasInternal,
+                TheoryFullMarks = s.TheoryFullMarks,
+                TheoryPassMarks = s.TheoryPassMarks,
+                PracticalFullMarks = s.PracticalFullMarks,
+                PracticalPassMarks = s.PracticalPassMarks,
+                InternalTheoryFullMarks = s.InternalTheoryFullMarks,
+                InternalTheoryPassMarks = s.InternalTheoryPassMarks,
+                InternalPracticalFullMarks = s.InternalPracticalFullMarks,
+                InternalPracticalPassMarks = s.InternalPracticalPassMarks
+            }).ToList();
 
-            if (model.SemesterId <= 0)
-            {
-                ModelState.AddModelError(nameof(model.SemesterId), "Please select a valid semester.");
-            }
-
-            if (model.Subjects == null || model.Subjects.Count == 0)
-            {
-                ModelState.AddModelError("", "Please add at least one subject.");
-            }
-            else
-            {
-                for (var i = 0; i < model.Subjects.Count; i++)
-                {
-                    if (model.Subjects[i].SubjectCatalogId <= 0)
-                    {
-                        ModelState.AddModelError($"Subjects[{i}].SubjectCatalogId", "Please select a valid subject.");
-                    }
-                }
-            }
-
-            if (ModelState.IsValid)
-            {
-                var offerings = model.Subjects.Select(s => new SubjectOffering
-                {
-                    SubjectCatalogId = s.SubjectCatalogId,
-                    ProgramId = model.ProgramId,
-                    SemesterId = model.SemesterId,
-                    IsCompulsory = s.IsCompulsory,
-                    DisplayOrder = s.DisplayOrder,
-                    HasTheory = s.HasTheory,
-                    HasPractical = s.HasPractical,
-                    HasInternal = s.HasInternal,
-                    TheoryFullMarks = s.TheoryFullMarks,
-                    TheoryPassMarks = s.TheoryPassMarks,
-                    PracticalFullMarks = s.PracticalFullMarks,
-                    PracticalPassMarks = s.PracticalPassMarks,
-                    InternalTheoryFullMarks = s.InternalTheoryFullMarks,
-                    InternalTheoryPassMarks = s.InternalTheoryPassMarks,
-                    InternalPracticalFullMarks = s.InternalPracticalFullMarks,
-                    InternalPracticalPassMarks = s.InternalPracticalPassMarks
-                }).ToList();
-
-                await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
-                TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
-                return RedirectToAction(nameof(Index));
-            }
+            await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+            TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
+            return RedirectToAction(nameof(Index));
         }
 
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();

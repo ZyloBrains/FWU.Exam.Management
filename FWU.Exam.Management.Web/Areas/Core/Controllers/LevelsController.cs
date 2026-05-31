@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class LevelsController(ILevelService levelService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "LevelDisplayOrder", string sortDir = "asc", int pageSize = 10)

@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class DistrictsController(IDistrictService districtService) : Controller
 {
 
@@ -25,6 +28,16 @@ public class DistrictsController(IDistrictService districtService) : Controller
         ViewBag.SortDir = sortDir;
 
         return View(items);
+    }
+
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var district = await districtService.GetDistrictByIdAsync(id.Value);
+        if (district == null) return NotFound();
+
+        return View(district);
     }
 
     // Helper method to escape CSV fields

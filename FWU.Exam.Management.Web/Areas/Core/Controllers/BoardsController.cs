@@ -5,9 +5,12 @@ using FWU.Exam.Management.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class BoardsController(IBoardService boardService) : Controller
 {
 
@@ -44,7 +47,7 @@ public class BoardsController(IBoardService boardService) : Controller
         var sb = new StringBuilder();
 
         // CSV header
-        sb.AppendLine("Board Name,Country,Remarks,Status");
+        sb.AppendLine("Board Name,Remarks,Status");
 
         foreach (var b in items)
         {

@@ -1,0 +1,61 @@
+@model FWU.Exam.Management.Domain.Entities.Students.StudentAdmission
+
+@{
+    ViewData["Title"] = "Delete Student Admission";
+}
+
+<div class="min-h-screen bg-gray-100 py-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                <h1 class="text-xl font-semibold text-red-800">Delete Student Admission</h1>
+                <p class="text-sm text-red-600 mt-1">Are you sure you want to delete this admission record? This action cannot be undone.</p>
+            </div>
+
+            <div class="px-6 py-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">College Roll Number</p>
+                        <p class="mt-1 text-sm text-gray-900">@(Model?.CollegeRollNumber ?? "-")</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">College</p>
+                        <p class="mt-1 text-sm text-gray-900">@(Model?.College?.Name ?? "-")</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Program</p>
+                        <p class="mt-1 text-sm text-gray-900">@(Model?.Program?.ProgramName ?? "-")</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Admission Date</p>
+                        <p class="mt-1 text-sm text-gray-900">@(Model?.AdmissionDate.ToString("yyyy-MM-dd") ?? "-")</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Status</p>
+                        <p class="mt-1">
+                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset @(Model?.IsCompleted == true ? "bg-green-50 text-green-700 ring-green-600/20" : "bg-yellow-50 text-yellow-800 ring-yellow-600/20")">
+                                @(Model?.IsCompleted == true ? "Completed" : "Pending")
+                            </span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Active</p>
+                        <p class="mt-1">
+                            <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium @(Model?.IsActive == true ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" : "bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-500/20")">
+                                @(Model?.IsActive == true ? "Yes" : "No")
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <form asp-action="Delete">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="flex items-center space-x-3 pt-4 border-t border-gray-100">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">Delete</button>
+                        <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

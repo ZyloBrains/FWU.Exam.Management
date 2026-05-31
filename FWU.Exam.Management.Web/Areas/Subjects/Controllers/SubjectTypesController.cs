@@ -4,9 +4,12 @@ using FWU.Exam.Management.Domain.Entities.Subjects;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class SubjectTypesController : Controller
 {
     private readonly ISubjectTypeService _subjectTypeService;

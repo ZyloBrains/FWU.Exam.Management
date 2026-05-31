@@ -1,10 +1,12 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class StudentCategoriesController : Controller
 {
     private readonly IStudentCategoryService _studentCategoryService;

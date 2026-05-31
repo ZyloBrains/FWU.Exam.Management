@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Security.Cryptography;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
@@ -15,17 +14,24 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
-    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync()
+    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null)
     {
-        return await context.StudentRegistrations
+        var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
+            .AsNoTracking();
+
+        if (collegeIds != null && collegeIds.Count > 0)
+        {
+            query = query.Where(s => collegeIds.Contains(s.CollegeId));
+        }
+
+        return await query
             .OrderByDescending(s => s.Id)
-            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -34,7 +40,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -142,16 +148,21 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize)
+    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null)
     {
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .AsNoTracking();
+
+        if (collegeIds != null && collegeIds.Count > 0)
+        {
+            query = query.Where(s => collegeIds.Contains(s.CollegeId));
+        }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -203,7 +214,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var faculties = await context.Faculties.Where(f => f.FacultyName != null).AsNoTracking().ToListAsync();
+        var faculties = await context.Departments.Where(f => f.DepartmentName != null).AsNoTracking().ToListAsync();
         var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
@@ -214,7 +225,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             Levels = levels.Select(l => new SelectOption { Id = l.Id, Name = l.LevelName }).ToList(),
-            Faculties = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.FacultyName }).ToList(),
+            Departments = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.DepartmentName }).ToList(),
             Colleges = colleges.Select(c => new SelectOption { Id = c.Id, Name = c.Name }).ToList(),
             Genders = genders.Select(g => new SelectOption { Id = g.Id, Name = g.GenderName }).ToList(),
             StudentCategories = studentCategories.Select(sc => new SelectOption { Id = sc.Id, Name = sc.StudentCategoryName }).ToList(),
@@ -250,6 +261,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         if (string.IsNullOrWhiteSpace(studentRegistration.Email))
             return;
 
+        var college = await context.Colleges
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == studentRegistration.CollegeId);
+
         var user = await userManager.FindByEmailAsync(studentRegistration.Email);
 
         if (user == null && studentRegistration.Id != 0)
@@ -274,10 +289,14 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 UserName = studentRegistration.Email,
                 Email = studentRegistration.Email,
                 FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim(),
-                IsActive = studentRegistration.IsActive
+                IsActive = studentRegistration.IsActive,
+                FacultyId = college?.FacultyId,
+                CollegeId = college?.Id
             };
 
-            var password = GenerateTemporaryPassword();
+            var password = studentRegistration.DateOfBirthBS;
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {studentRegistration.Email}");
 
             var result = await userManager.CreateAsync(user, password);
 
@@ -316,6 +335,18 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             if (user.IsActive != studentRegistration.IsActive)
             {
                 user.IsActive = studentRegistration.IsActive;
+                needsUpdate = true;
+            }
+
+            if (user.FacultyId != college?.FacultyId)
+            {
+                user.FacultyId = college?.FacultyId;
+                needsUpdate = true;
+            }
+
+            if (user.CollegeId != college?.Id)
+            {
+                user.CollegeId = college?.Id;
                 needsUpdate = true;
             }
 
@@ -359,19 +390,5 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 }
             }
         }
-    }
-
-    private static string GenerateTemporaryPassword()
-    {
-        const string passwordChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*";
-        const string digitChars = "23456789";
-        const string specialChars = "!@#$%^&*";
-        const int passwordLength = 16;
-
-        var password = RandomNumberGenerator.GetString(passwordChars, passwordLength).ToCharArray();
-        password[RandomNumberGenerator.GetInt32(passwordLength)] = digitChars[RandomNumberGenerator.GetInt32(digitChars.Length)];
-        password[RandomNumberGenerator.GetInt32(passwordLength)] = specialChars[RandomNumberGenerator.GetInt32(specialChars.Length)];
-
-        return new string(password);
     }
 }

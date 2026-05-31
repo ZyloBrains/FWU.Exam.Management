@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class ProgramsController(IProgramService programService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
@@ -46,7 +49,7 @@ public class ProgramsController(IProgramService programService) : Controller
                            $"{EscapeCsv(p.ProgramName)}," +
                            $"{EscapeCsv(p.ShortName)}," +
                            $"{EscapeCsv(p.Level?.LevelName)}," +
-                           $"{EscapeCsv(p.Faculty?.FacultyCode)}," +
+                            $"{EscapeCsv(p.Department?.DepartmentCode)}," +
                            $"{EscapeCsv(p.Board?.BoardName)}," +
                            $"{p.Duration}," +
                            $"{p.GrandTotalMarks}," +
@@ -89,16 +92,16 @@ public class ProgramsController(IProgramService programService) : Controller
 
     public async Task<IActionResult> Create()
     {
-        var (boards, faculties, levels) = await programService.GetSelectListsAsync();
+        var (boards, departments, levels) = await programService.GetSelectListsAsync();
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName");
-        ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode");
+        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode");
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName");
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,LevelId,FacultyId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
+    public async Task<IActionResult> Create([Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
     {
         if (ModelState.IsValid)
         {
@@ -106,9 +109,9 @@ public class ProgramsController(IProgramService programService) : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, faculties, levels) = await programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode", program.FacultyId);
+        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
@@ -120,16 +123,16 @@ public class ProgramsController(IProgramService programService) : Controller
         var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
-        var (boards, faculties, levels) = await programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode", program.FacultyId);
+        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
     {
         if (id != program.Id) return NotFound();
 
@@ -148,9 +151,9 @@ public class ProgramsController(IProgramService programService) : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, faculties, levels) = await programService.GetSelectListsAsync(program.BoardId, program.FacultyId, program.LevelId);
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["FacultyId"] = new SelectList(faculties, "Id", "FacultyCode", program.FacultyId);
+        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }

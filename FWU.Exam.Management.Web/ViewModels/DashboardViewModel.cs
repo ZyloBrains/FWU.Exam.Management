@@ -2,7 +2,7 @@ namespace FWU.Exam.Management.Web.ViewModels;
 
 public class DashboardViewModel
 {
-        public int TotalTenants { get; set; }
+    public int TotalFaculties { get; set; }
     public int TotalUsers { get; set; }
     public int TotalRoles { get; set; }
     public int TotalColleges { get; set; }

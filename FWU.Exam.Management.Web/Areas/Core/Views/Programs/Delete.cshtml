@@ -57,10 +57,10 @@
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Level</p>
                 <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Level.LevelName)</p>
             </div>
-            <!-- Faculty -->
+            <!-- Department -->
             <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Faculty.FacultyCode)</p>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Department</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Department.DepartmentCode)</p>
             </div>
             <!-- Board -->
                 <div>
@@ -122,7 +122,7 @@
             <!-- Remarks -->
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
-                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
+                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "ï¿½" : Model.Remarks)</p>
             </div>
         </div>
 

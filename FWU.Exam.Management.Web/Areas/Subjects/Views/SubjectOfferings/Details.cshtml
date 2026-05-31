@@ -128,7 +128,7 @@
         </div>
 
         <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
-            @if (User.IsInRole("SystemAdmin") || User.IsInRole("Admin"))
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
             {
                 <a asp-action="Edit" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                     <i class="fas fa-edit mr-1"></i> Edit

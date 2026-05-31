@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 {
 
@@ -11,6 +13,19 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     public async Task<IActionResult> Index()
     {
         return View(await roleManager.Roles.ToListAsync());
+    }
+
+    // GET: Role/Details/id
+    public async Task<IActionResult> Details(string id)
+    {
+        if (id == null)
+            return NotFound();
+
+        var role = await roleManager.FindByIdAsync(id);
+        if (role == null)
+            return NotFound();
+
+        return View(role);
     }
 
     // GET: Role/Create

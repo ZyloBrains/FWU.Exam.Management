@@ -1,70 +1,81 @@
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
-using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class FacultyService(AppDbContext context) : IFacultyService
+public class FacultyService(
+    AppDbContext context,
+    UserManager<AppUser> userManager,
+    ILogger<FacultyService> logger) : IFacultyService
 {
-    public async Task<(List<Faculty> Items, int TotalCount)> GetFacultiesAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    private const string MustChangePasswordClaimType = "must_change_password";
+
+    public async Task<List<Faculty>> GetAllFacultiesAsync()
     {
-        var query = context.Faculties.AsNoTracking();
-
-        if (!string.IsNullOrEmpty(search))
-        {
-            query = query.Where(f =>
-                f.FacultyCode.Contains(search) ||
-                f.FacultyName.Contains(search) ||
-                (f.ShortName != null && f.ShortName.Contains(search)) ||
-                (f.Remarks != null && f.Remarks.Contains(search)));
-        }
-
-        query = sortDir.ToLower() == "desc"
-            ? query.OrderByDescending(GetSortProperty(sort))
-            : query.OrderBy(GetSortProperty(sort));
-
-        var totalCount = await query.CountAsync();
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        return await context.Faculties
+            .AsNoTracking()
+            .OrderBy(f => f.Name)
             .ToListAsync();
-
-        return (items, totalCount);
-    }
-
-    public async Task<List<Faculty>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
-    {
-        var query = context.Faculties.AsNoTracking();
-
-        if (!string.IsNullOrEmpty(search))
-        {
-            query = query.Where(f =>
-                f.FacultyCode.Contains(search) ||
-                f.FacultyName.Contains(search) ||
-                (f.ShortName != null && f.ShortName.Contains(search)) ||
-                (f.Remarks != null && f.Remarks.Contains(search)));
-        }
-
-        query = sortDir.ToLower() == "desc"
-            ? query.OrderByDescending(GetSortProperty(sort))
-            : query.OrderBy(GetSortProperty(sort));
-
-        return await query.ToListAsync();
     }
 
     public async Task<Faculty?> GetFacultyByIdAsync(int id)
     {
-        return await context.Faculties.FirstOrDefaultAsync(m => m.Id == id);
+        return await context.Faculties.FindAsync(id);
     }
 
-    public async Task CreateFacultyAsync(Faculty faculty)
+    public async Task<Faculty?> GetFacultyByOfficeCodeAsync(string officeCode)
+    {
+        return await context.Faculties
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.OfficeCode == officeCode);
+    }
+
+    public async Task<string> CreateFacultyAsync(Faculty faculty, string adminPassword)
     {
         context.Faculties.Add(faculty);
         await context.SaveChangesAsync();
+
+        if (!string.IsNullOrWhiteSpace(faculty.Email))
+        {
+            var password = string.IsNullOrWhiteSpace(adminPassword)
+                ? GenerateRandomPassword()
+                : adminPassword;
+
+            var user = new AppUser
+            {
+                UserName = faculty.Email,
+                Email = faculty.Email,
+                FullName = faculty.Name,
+                FacultyId = faculty.Id,
+                IsActive = true
+            };
+
+            var result = await userManager.CreateAsync(user, password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                logger.LogError("Failed to create AppUser for faculty admin {Email}: {Errors}", faculty.Email, errors);
+                throw new InvalidOperationException($"Failed to create user account for {faculty.Email}: {errors}");
+            }
+
+            if (!await userManager.IsInRoleAsync(user, "FacultyAdmin"))
+                await userManager.AddToRoleAsync(user, "FacultyAdmin");
+
+            await userManager.AddClaimAsync(user, new Claim(MustChangePasswordClaimType, "true"));
+
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            await userManager.ConfirmEmailAsync(user, token);
+
+            return password;
+        }
+
+        return string.Empty;
     }
 
     public async Task UpdateFacultyAsync(Faculty faculty)
@@ -85,19 +96,14 @@ public class FacultyService(AppDbContext context) : IFacultyService
 
     public async Task<bool> FacultyExistsAsync(int id)
     {
-        return await context.Faculties.AnyAsync(e => e.Id == id);
+        return await context.Faculties.AnyAsync(f => f.Id == id);
     }
 
-    private static Expression<Func<Faculty, object>> GetSortProperty(string sort)
+    private static string GenerateRandomPassword()
     {
-        return sort.ToLower() switch
-        {
-            "facultycode" => f => f.FacultyCode,
-            "facultyname" => f => f.FacultyName,
-            "shortname" => f => f.ShortName ?? "",
-            "remarks" => f => f.Remarks ?? "",
-            "isactive" => f => f.IsActive,
-            _ => f => f.FacultyName
-        };
+        var random = new Random();
+        var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var prefix = new string(Enumerable.Range(0, 8).Select(_ => chars[random.Next(chars.Length)]).ToArray());
+        return $"{prefix}@1";
     }
 }

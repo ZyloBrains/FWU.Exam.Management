@@ -44,7 +44,7 @@ public class ConfirmEmailModel(UserManager<AppUser> userManager, SignInManager<A
                 return LocalRedirect(returnUrl);
             }
 
-            return RedirectToAction("Index", "Dashboard");
+            return RedirectToAction("Index", "Dashboard", new { area = "" });
         }
 
         code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
@@ -63,6 +63,6 @@ public class ConfirmEmailModel(UserManager<AppUser> userManager, SignInManager<A
             return LocalRedirect(returnUrl);
         }
 
-        return RedirectToAction("Index", "Dashboard");
+        return RedirectToAction("Index", "Dashboard", new { area = "" });
     }
 }

@@ -61,15 +61,15 @@ public static class ReferenceDataSeeder
         await context.Levels.AddRangeAsync(levels);
         await context.SaveChangesAsync();
 
-        // Faculties
-        var faculties = new[]
+        // Departments
+        var departments = new[]
         {
-            new Faculty { FacultyCode = "MGMT", FacultyName = "Management", ShortName = "MGT", IsActive = true },
-            new Faculty { FacultyCode = "SCI", FacultyName = "Science", ShortName = "SCI", IsActive = true },
-            new Faculty { FacultyCode = "EDU", FacultyName = "Education", ShortName = "EDU", IsActive = true },
-            new Faculty { FacultyCode = "HUM", FacultyName = "Humanities", ShortName = "HUM", IsActive = true },
+            new Department { DepartmentCode = "MGMT", DepartmentName = "Management", ShortName = "MGT", IsActive = true },
+            new Department { DepartmentCode = "SCI", DepartmentName = "Science", ShortName = "SCI", IsActive = true },
+            new Department { DepartmentCode = "EDU", DepartmentName = "Education", ShortName = "EDU", IsActive = true },
+            new Department { DepartmentCode = "HUM", DepartmentName = "Humanities", ShortName = "HUM", IsActive = true },
         };
-        await context.Faculties.AddRangeAsync(faculties);
+        await context.Departments.AddRangeAsync(departments);
         await context.SaveChangesAsync();
 
         // Programs
@@ -81,7 +81,7 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Business Administration",
                 ShortName = "BBA",
                 LevelId = levels[0].Id,
-                FacultyId = faculties[0].Id,
+                DepartmentId = departments[0].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -91,7 +91,7 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Business Studies",
                 ShortName = "BBS",
                 LevelId = levels[0].Id,
-                FacultyId = faculties[0].Id,
+                DepartmentId = departments[0].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -101,7 +101,7 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Computer Application",
                 ShortName = "BCA",
                 LevelId = levels[0].Id,
-                FacultyId = faculties[1].Id,
+                DepartmentId = departments[1].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -109,7 +109,26 @@ public static class ReferenceDataSeeder
         await context.Programs.AddRangeAsync(programs);
         await context.SaveChangesAsync();
 
+        // Faculties
+        if (!await context.Faculties.AnyAsync())
+        {
+            var faculties = new[]
+            {
+                new Faculty
+                {
+                    Name = "School of Engineering",
+                    OfficeCode = "SOE",
+                    ContactNumber = "021-123456",
+                    Address = "Mahendranagar, Kanchanpur",
+                    Email = "soe@fwu.edu.np",
+                },
+            };
+            await context.Faculties.AddRangeAsync(faculties);
+            await context.SaveChangesAsync();
+        }
+
         // Colleges
+        var org = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
         var colleges = new[]
         {
             new College
@@ -118,6 +137,7 @@ public static class ReferenceDataSeeder
                 Name = "College of Commerce",
                 TenantId = 1,
                 IsActive = true,
+                FacultyId = org?.Id,
             },
             new College
             {
@@ -125,6 +145,7 @@ public static class ReferenceDataSeeder
                 Name = "School of Management",
                 TenantId = 1,
                 IsActive = true,
+                FacultyId = org?.Id,
             },
         };
         await context.Colleges.AddRangeAsync(colleges);
@@ -135,44 +156,43 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.Tenants.AnyAsync())
-            return;
-
-        var tenants = new[]
+        if (!await context.Tenants.AnyAsync())
         {
-            new Tenant
+            await context.Tenants.AddRangeAsync(new[]
             {
-                Name = "Office of Controller of Examinations",
-                OfficeCode = "OCE",
-                ContactNumber = "01-2345678",
-                Address = "Kathmandu, Nepal",
-                Email = "info@oce.gov.np",
-                TenantType = TenantType.Central,
-                IsActive = true,
-            },
-            new Tenant
-            {
-                Name = "Agriculture",
-                OfficeCode = "AGR",
-                ContactNumber = "01-1234567",
-                Address = "Kathmandu, Nepal",
-                Email = "info@agriculture.fwu.edu.np",
-                TenantType = TenantType.Standard,
-                IsActive = true,
-            },
-            new Tenant
-            {
-                Name = "Engineering",
-                OfficeCode = "ENG",
-                ContactNumber = "01-7654321",
-                Address = "Kathmandu, Nepal",
-                Email = "info@engineering.fwu.edu.np",
-                TenantType = TenantType.Standard,
-                IsActive = true,
-            },
-        };
-        await context.Tenants.AddRangeAsync(tenants);
-        await context.SaveChangesAsync();
+                new Tenant
+                {
+                    Name = "Office of Controller of Examinations",
+                    OfficeCode = "OCE",
+                    ContactNumber = "01-2345678",
+                    Address = "Kathmandu, Nepal",
+                    Email = "info@oce.gov.np",
+                    TenantType = TenantType.Central,
+                    IsActive = true,
+                },
+                new Tenant
+                {
+                    Name = "Agriculture",
+                    OfficeCode = "AGR",
+                    ContactNumber = "01-1234567",
+                    Address = "Kathmandu, Nepal",
+                    Email = "info@agriculture.fwu.edu.np",
+                    TenantType = TenantType.Standard,
+                    IsActive = true,
+                },
+                new Tenant
+                {
+                    Name = "Engineering",
+                    OfficeCode = "ENG",
+                    ContactNumber = "01-7654321",
+                    Address = "Kathmandu, Nepal",
+                    Email = "info@engineering.fwu.edu.np",
+                    TenantType = TenantType.Standard,
+                    IsActive = true,
+                },
+            });
+            await context.SaveChangesAsync();
+        }
     }
 
     public static async Task SeedESewaConfigurationAsync(IServiceProvider serviceProvider)

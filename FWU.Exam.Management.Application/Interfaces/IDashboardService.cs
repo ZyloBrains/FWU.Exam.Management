@@ -5,11 +5,12 @@ namespace FWU.Exam.Management.Application.Interfaces;
 public interface IDashboardService
 {
     Task<DashboardStats> GetDashboardStatsAsync();
+    Task<DashboardStats> GetFacultyDashboardStatsAsync(int facultyId);
 }
 
 public class DashboardStats
 {
-    public int TotalTenants { get; set; }
+    public int TotalFaculties { get; set; }
     public int TotalUsers { get; set; }
     public int TotalRoles { get; set; }
     public int TotalColleges { get; set; }

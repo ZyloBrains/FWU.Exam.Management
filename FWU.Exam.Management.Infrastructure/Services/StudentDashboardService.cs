@@ -18,7 +18,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .AsNoTracking()
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Faculty)
+            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -28,29 +28,35 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student)
+    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
         var studentAdmission = await context.StudentAdmissions!
             .AsNoTracking()
-            .FirstOrDefaultAsync();
+            .Where(sa => sa.IsActive)
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
-        var programId = studentAdmission?.ProgramsId;
+        if (studentAdmission == null)
+            return [];
 
-        var schedules = await context.ExamSchedules!
+        var query = context.ExamSchedules!
             .AsNoTracking()
             .Include(es => es.Program)
             .Include(es => es.Level)
             .Include(es => es.Semester)
             .Include(es => es.AcademicYear)
-            .Where(es => es.IsActive)
-            .ToListAsync();
+            .Where(es => es.IsActive && es.ProgramId == studentAdmission.ProgramsId);
 
-        if (programId.HasValue)
+        if (student.LevelId != 0)
         {
-            schedules = schedules.Where(es => es.ProgramId == programId.Value).ToList();
+            query = query.Where(es => es.LevelId == null || es.LevelId == student.LevelId);
         }
 
-        return schedules;
+        if (student.DepartmentId != 0)
+        {
+            query = query.Where(es => es.Program != null && es.Program.DepartmentId == student.DepartmentId);
+        }
+
+        return await query.ToListAsync();
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId)
@@ -130,6 +136,13 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Include(esr => esr.SubjectOffering).ThenInclude(so => so!.SubjectCatalog)
             .Where(esr => esr.ExamRegistrationId == examRegistrationId)
             .ToListAsync();
+    }
+
+    public async Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId)
+    {
+        return await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
     }
 
     public async Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId)

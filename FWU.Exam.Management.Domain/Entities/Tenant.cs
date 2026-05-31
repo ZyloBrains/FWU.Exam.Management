@@ -3,7 +3,7 @@ using FWU.Exam.Management.Domain.Enums;
 namespace FWU.Exam.Management.Domain.Entities;
 
 public class Tenant
-{    
+{
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string OfficeCode { get; set; } = string.Empty;

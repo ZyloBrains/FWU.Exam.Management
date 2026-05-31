@@ -52,7 +52,7 @@ public class StudentDashboardController(
             Nationality = registration.Nationality,
             Religion = registration.Religion,
             AcademicYear = registration.AcademicYear?.AcademicYearName,
-            Faculty = registration.Faculty?.FacultyName,
+            Department = registration.Department?.DepartmentName,
             College = registration.College?.Name,
             Level = registration.Level?.LevelName,
             Address = registration.PermanentAddress?.FullAddress
@@ -99,7 +99,7 @@ public class StudentDashboardController(
             return View(new ExamFormsListViewModel());
         }
 
-        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration);
+        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
         var forms = new List<ExamFormViewModel>();
 
         foreach (var schedule in schedules)
@@ -133,6 +133,10 @@ public class StudentDashboardController(
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null) return NotFound("Exam schedule not found.");
+
+        var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
+        if (admission == null || schedule.ProgramId != admission.ProgramsId)
+            return Forbid();
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);

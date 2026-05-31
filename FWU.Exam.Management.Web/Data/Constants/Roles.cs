@@ -1,7 +1,9 @@
 public class Role
 {
-    public const string SystemAdmin = nameof(SystemAdmin);
-    public const string Admin = nameof(Admin);
-    public const string ReportAdmin = nameof(ReportAdmin);
+    public const string SuperAdmin = nameof(SuperAdmin);
+    public const string FacultyAdmin = nameof(FacultyAdmin);
+    public const string CollegeAdmin = nameof(CollegeAdmin);
     public const string Student = nameof(Student);
+
+    public static readonly string[] AllRoles = [SuperAdmin, FacultyAdmin, CollegeAdmin, Student];
 }

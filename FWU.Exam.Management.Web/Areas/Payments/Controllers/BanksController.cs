@@ -4,9 +4,12 @@ using FWU.Exam.Management.Domain.Entities.Payments;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 
 [Area("Payments")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class BanksController(IBankService bankService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BankName", string sortDir = "asc", int pageSize = 10)

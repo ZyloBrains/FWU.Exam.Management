@@ -1,14 +1,16 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
-public class DashboardController(IDashboardService dashboardService, UserManager<AppUser> userManager) : Controller
+public class DashboardController(IDashboardService dashboardService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -18,13 +20,20 @@ public class DashboardController(IDashboardService dashboardService, UserManager
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? "Student";
 
+        if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
+        {
+            var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+            if (faculty?.OfficeCode != null)
+                return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
+        }
+
         var stats = await dashboardService.GetDashboardStatsAsync();
 
         var vm = new DashboardViewModel
         {
             CurrentRole = primaryRole,
             UserName = user.UserName ?? user.Email ?? "User",
-            TotalTenants = stats.TotalTenants,
+            TotalFaculties = stats.TotalFaculties,
             TotalUsers = stats.TotalUsers,
             TotalRoles = stats.TotalRoles,
             TotalColleges = stats.TotalColleges,
@@ -45,9 +54,9 @@ public class DashboardController(IDashboardService dashboardService, UserManager
 
         return primaryRole switch
         {
-            "SystemAdmin" => View("SystemAdmin", vm),
-            "Admin" => View("Admin", vm),
-            "ReportAdmin" => View("ReportAdmin", vm),
+            "SuperAdmin" or "SystemAdmin" => View("SuperAdmin", vm),
+            "FacultyAdmin" => View("FacultyAdmin", vm),
+            "CollegeAdmin" or "Admin" => View("CollegeAdmin", vm),
             "Student" => View("Student", vm),
             _ => View("Student", vm)
         };

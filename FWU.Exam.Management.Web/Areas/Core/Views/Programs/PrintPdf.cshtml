@@ -158,7 +158,7 @@
                 <th>Program Name</th>
                 <th>Short Name</th>
                 <th>Level</th>
-                <th>Faculty</th>
+                <th>Department</th>
                 <th>Board</th>
                 <th>Duration</th>
                 <th>Total Marks</th>
@@ -176,17 +176,17 @@
                 <tr>
                     <td>@item.ProgramCode</td>
                     <td>@item.ProgramName</td>
-                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "—" : item.ShortName)</td>
+                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "ï¿½" : item.ShortName)</td>
                     <td>@item.Level?.LevelName</td>
-                    <td>@item.Faculty?.FacultyCode</td>
+                    <td>@item.Department?.DepartmentCode</td>
                     <td>@item.Board?.BoardName</td>
                     <td style="text-align: center;">@item.Duration</td>
                     <td style="text-align: right;">@item.GrandTotalMarks</td>
                     <td style="text-align: right;">@item.NumberOfSeats</td>
                     <td style="text-align: right;">@item.ScholarshipSeats</td>
-                    <td style="text-align: center;">@(item.HasMultipleIntakes ? "? Yes" : "—")</td>
-                    <td>@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "—" : item.RollNumberPrefix)</td>
-                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "—" : item.Remarks)</td>
+                    <td style="text-align: center;">@(item.HasMultipleIntakes ? "? Yes" : "ï¿½")</td>
+                    <td>@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "ï¿½" : item.RollNumberPrefix)</td>
+                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "ï¿½" : item.Remarks)</td>
                     <td>
                         @if (item.IsActive)
                         {
@@ -211,7 +211,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>ï¿½ @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>

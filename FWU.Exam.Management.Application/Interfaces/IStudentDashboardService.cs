@@ -9,7 +9,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 public interface IStudentDashboardService
 {
     Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
-    Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student);
+    Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
     Task<decimal> GetPracticalChargeForProgramAsync(int programId);
@@ -18,6 +18,7 @@ public interface IStudentDashboardService
     Task<List<ResultRecord>> GetResultRecordsAsync(string registrationNumber);
     Task<List<ExamSubjectResult>> GetExamSubjectResultsAsync(int examRegistrationId);
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId);
+    Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId);
     Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null);
     Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null);
     Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData);
