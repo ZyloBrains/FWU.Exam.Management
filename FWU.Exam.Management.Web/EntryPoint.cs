@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -19,6 +20,7 @@ public partial class EntryPoint
         // Add services to the container.
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
+        builder.Services.AddScoped<ITenantContext, TenantContext>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
 
@@ -148,6 +150,10 @@ public partial class EntryPoint
 
         using (var scope = app.Services.CreateScope())
         {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await dbContext.Database.MigrateAsync();
+            var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+            tenantContext.SetTenant(1, "SEED", TenantType.Central);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
