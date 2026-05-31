@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
@@ -19,12 +20,14 @@ public partial class EntryPoint
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
+        builder.Services.AddScoped<TenantSaveChangesInterceptor>();
 
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             options.UseSqlServer(connectionString);
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
+            options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
         });
 
         builder.Services.AddDefaultIdentity<AppUser>(options =>
@@ -39,6 +42,31 @@ public partial class EntryPoint
         })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
+
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
+            {
+                OnRedirectToLogin = ctx =>
+                {
+                    var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
+                    var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
+
+                    if (!string.IsNullOrEmpty(tenantCode))
+                    {
+                        var loginPath = $"/tenant/{tenantCode}/Identity/Account/Login";
+                        ctx.Response.Redirect($"{loginPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
+                    }
+                    else
+                    {
+                        ctx.Response.Redirect(ctx.RedirectUri);
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
+        });
+
         builder.Services.AddControllersWithViews();
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
@@ -89,6 +117,9 @@ public partial class EntryPoint
         }
 
         app.UseHttpsRedirection();
+
+        app.UseMiddleware<TenantResolutionMiddleware>();
+
         app.UseRouting();
 
         app.UseFacultyResolution();
@@ -96,6 +127,11 @@ public partial class EntryPoint
         app.UseAuthorization();
 
         app.MapStaticAssets();
+
+        app.MapControllerRoute(
+            name: "tenant",
+            pattern: "tenant/{tenantCode}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
 
         app.MapControllerRoute(
             name: "areas",
@@ -114,6 +150,7 @@ public partial class EntryPoint
         {
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);

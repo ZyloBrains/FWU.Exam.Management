@@ -1,6 +1,6 @@
 @model Faculty
 @{
-    ViewData["Title"] = "Edit Faculty";
+    ViewData["Title"] = "Edit Faculty";FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Edit.cshtml
 }
 
 <div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-edit text-amber-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Edit Faculty</h1>
+            <h1 class="text-2xl font-bold text-gray-800">Edit Faculty</h1>FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Edit.cshtml
         </div>
     </div>
 
@@ -24,7 +24,6 @@
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="LogoPath" />
 
-            <!-- Section: Basic Info -->
             <div>
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
                 <div class="space-y-4">
@@ -64,22 +63,20 @@
 
             <!-- Section: Logo -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculty Logo</h2>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculty Logo</h2>FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Edit.cshtml
                 <div>
                     @if (!string.IsNullOrEmpty(Model.LogoPath))
                     {
-                        <!-- Show current logo -->
                         <img id="logoPreview" src="@Model.LogoPath" alt="Current logo"
                              class="mb-4 w-40 h-28 object-cover rounded-md border border-gray-300 shadow-sm" />
                     }
                     else
                     {
-                        <!-- Hidden placeholder until upload -->
                         <img id="logoPreview" src="#" alt="Logo preview"
                              class="hidden mb-4 w-40 h-28 object-cover rounded-md border border-gray-300 shadow-sm" />
                     }
 
-                    <input type="file" name="logoFile" id="logoFile" accept="image/*"
+                    <input type="file" name="LogoFile" id="logoFile" accept="image/*"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />
                     <p class="text-xs text-gray-500 mt-1">Leave empty to keep the current logo.</p>
                 </div>
@@ -115,10 +112,3 @@
         });
     </script>
 }
-
-
-
-
-
-
-

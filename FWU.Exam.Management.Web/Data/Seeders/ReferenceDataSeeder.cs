@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -134,6 +135,7 @@ public static class ReferenceDataSeeder
             {
                 Code = "COC",
                 Name = "College of Commerce",
+                TenantId = 1,
                 IsActive = true,
                 FacultyId = org?.Id,
             },
@@ -141,11 +143,56 @@ public static class ReferenceDataSeeder
             {
                 Code = "SOM",
                 Name = "School of Management",
+                TenantId = 1,
                 IsActive = true,
                 FacultyId = org?.Id,
             },
         };
         await context.Colleges.AddRangeAsync(colleges);
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedTenantsAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.Tenants.AnyAsync())
+            return;
+
+        var tenants = new[]
+        {
+            new Tenant
+            {
+                Name = "Office of Controller of Examinations",
+                OfficeCode = "OCE",
+                ContactNumber = "01-2345678",
+                Address = "Kathmandu, Nepal",
+                Email = "info@oce.gov.np",
+                TenantType = TenantType.Central,
+                IsActive = true,
+            },
+            new Tenant
+            {
+                Name = "Agriculture",
+                OfficeCode = "AGR",
+                ContactNumber = "01-1234567",
+                Address = "Kathmandu, Nepal",
+                Email = "info@agriculture.fwu.edu.np",
+                TenantType = TenantType.Standard,
+                IsActive = true,
+            },
+            new Tenant
+            {
+                Name = "Engineering",
+                OfficeCode = "ENG",
+                ContactNumber = "01-7654321",
+                Address = "Kathmandu, Nepal",
+                Email = "info@engineering.fwu.edu.np",
+                TenantType = TenantType.Standard,
+                IsActive = true,
+            },
+        };
+        await context.Tenants.AddRangeAsync(tenants);
         await context.SaveChangesAsync();
     }
 

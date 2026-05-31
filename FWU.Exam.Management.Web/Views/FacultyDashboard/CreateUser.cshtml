@@ -2,13 +2,13 @@
 
 @{
     var faculty = ViewBag.Faculty as Faculty;
-    ViewData["Title"] = $"Add User — {faculty!.Name}";
+    ViewData["Title"] = $"Add User — {faculty!.Name}";FWU.Exam.Management.Web/Views/TenantDashboard/CreateUser.cshtml
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>FWU.Exam.Management.Web/Views/TenantDashboard/CreateUser.cshtml
         <li class="breadcrumb-item active">Add User</li>
     </ol>
 </nav>
@@ -17,7 +17,7 @@
 
 <div class="row">
     <div class="col-md-5">
-        <form asp-controller="FacultyDashboard" asp-action="CreateUser" asp-route-officeCode="@faculty.OfficeCode" method="post">
+        <form asp-controller="FacultyDashboard" asp-action="CreateUser" asp-route-officeCode="@faculty.OfficeCode" method="post">FWU.Exam.Management.Web/Views/TenantDashboard/CreateUser.cshtml
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
@@ -37,7 +37,7 @@
             <div>
                 <input type="submit" value="Create" class="btn btn-primary" />
                 <a asp-controller="FacultyDashboard" asp-action="Users"
-                   asp-route-officeCode="@faculty.OfficeCode"
+                   asp-route-officeCode="@faculty.OfficeCode"FWU.Exam.Management.Web/Views/TenantDashboard/CreateUser.cshtml
                    class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

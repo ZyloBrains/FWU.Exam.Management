@@ -13,7 +13,13 @@ public class HomeController : Controller
             return RedirectToAction("Index", "Dashboard");
         }
 
-        return Redirect("/Identity/Account/Login");
+        var tenantCode = HttpContext.Items["TenantCode"] as string;
+        if (!string.IsNullOrEmpty(tenantCode))
+        {
+            return Redirect($"/tenant/{tenantCode}/Identity/Account/Login");
+        }
+
+        return Redirect("/TenantSelect/Index");
     }
 
     public IActionResult Privacy()

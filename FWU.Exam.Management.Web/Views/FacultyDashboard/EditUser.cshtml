@@ -2,13 +2,13 @@
 
 @{
     var faculty = ViewBag.Faculty as Faculty;
-    ViewData["Title"] = $"Edit User — {faculty!.Name}";
+    ViewData["Title"] = $"Edit User — {faculty!.Name}";FWU.Exam.Management.Web/Views/TenantDashboard/EditUser.cshtml
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>FWU.Exam.Management.Web/Views/TenantDashboard/EditUser.cshtml
         <li class="breadcrumb-item active">Edit User</li>
     </ol>
 </nav>
@@ -22,7 +22,7 @@
               method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="FacultyId" />
+            <input type="hidden" asp-for="FacultyId" />FWU.Exam.Management.Web/Views/TenantDashboard/EditUser.cshtml
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
                 <input asp-for="Email" class="form-control" />
@@ -31,7 +31,7 @@
             <div>
                 <input type="submit" value="Save" class="btn btn-primary" />
                 <a asp-controller="FacultyDashboard" asp-action="Users"
-                   asp-route-officeCode="@faculty.OfficeCode"
+                   asp-route-officeCode="@faculty.OfficeCode"FWU.Exam.Management.Web/Views/TenantDashboard/EditUser.cshtml
                    class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
-public class EntranceExamApplication : IAuditable
+public class EntranceExamApplication : IAuditable, ITenantScoped
 {
     public int Id { get; set; }
 
@@ -78,6 +78,8 @@ public class EntranceExamApplication : IAuditable
     [MaxLength(500)]
     public string? ReviewRemarks { get; set; }
 
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public virtual AcademicYear? AcademicYear { get; set; }

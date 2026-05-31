@@ -1,21 +1,21 @@
 @model IEnumerable<Faculty>
 
 @{
-    ViewData["Title"] = "Faculties";
+    ViewData["Title"] = "Faculties";FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Index.cshtml
     var totalCount = Model.Count();
-    var orgLoginEmail = TempData["OrgLoginEmail"]?.ToString();
-    var orgLoginPassword = TempData["OrgLoginPassword"]?.ToString();
-    var orgOfficeCode = TempData["OrgOfficeCode"]?.ToString();
+    var tenantLoginEmail = TempData["TenantLoginEmail"]?.ToString();
+    var tenantLoginPassword = TempData["TenantLoginPassword"]?.ToString();
+    var tenantCode = TempData["TenantCode"]?.ToString();
 }
 
 <div class="space-y-6" x-data="{ search: '', get filtered() { return this.search.toLowerCase(); } }">
-    @if (!string.IsNullOrWhiteSpace(orgLoginEmail) && !string.IsNullOrWhiteSpace(orgLoginPassword) && !string.IsNullOrWhiteSpace(orgOfficeCode))
+    @if (!string.IsNullOrWhiteSpace(tenantLoginEmail) && !string.IsNullOrWhiteSpace(tenantLoginPassword) && !string.IsNullOrWhiteSpace(tenantCode))
     {
         <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-800">
             <div class="font-semibold mb-1">Faculty login created</div>
             <div>Email: <span class="font-medium">@orgLoginEmail</span></div>
             <div>Temporary Password: <span class="font-medium">@orgLoginPassword</span></div>
-            <div>Org Page: <a class="underline" asp-area="" asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@orgOfficeCode">/faculty/@orgOfficeCode</a></div>
+            <div>Org Page: <a class="underline" asp-area="" asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@orgOfficeCode">/faculty/@orgOfficeCode</a></div>FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Index.cshtml
         </div>
     }
 
@@ -26,7 +26,7 @@
                 <i class="fas fa-building text-blue-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Faculties</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Faculties</h1>FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Index.cshtml
                 <p class="text-sm text-gray-500 mt-0.5">
                     <span class="inline-flex items-center gap-1">
                         <span class="font-semibold text-gray-700">@totalCount</span> total records
@@ -54,7 +54,7 @@
                     <i class="fas fa-times text-xs"></i> Clear
                 </button>
                 <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2.5 text-xs text-gray-500 bg-gray-50 rounded-lg border border-gray-400">
-                    <i class="fas fa-filter text-gray-400"></i> Showing <span x-text="document.querySelectorAll('tbody tr:not([style*=display\\3A\\ none]), .org-card:not([style*=display\\3A\\ none])').length || @totalCount"></span>
+                    <i class="fas fa-filter text-gray-400"></i> Showing <span x-text="document.querySelectorAll('tbody tr:not([style*=display\\3A\\ none]), .tenant-card:not([style*=display\\3A\\ none])').length || @totalCount"></span>
                 </span>
             </div>
         </div>
@@ -116,7 +116,7 @@
             <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <i class="fas fa-search text-2xl text-gray-300"></i>
             </div>
-            <p class="text-gray-500 font-medium">No faculties match your search</p>
+            <p class="text-gray-500 font-medium">No faculties match your search</p>FWU.Exam.Management.Web/Areas/Core/Views/Tenant/Index.cshtml
             <p class="text-xs text-gray-400 mt-1">Try a different keyword</p>
         </div>
     </div>
@@ -125,7 +125,7 @@
     <div class="md:hidden space-y-4">
         @foreach (var item in Model)
         {
-            <div class="org-card bg-white rounded-xl shadow-sm border border-gray-400 p-4"
+            <div class="tenant-card bg-white rounded-xl shadow-sm border border-gray-400 p-4"
                  x-show="search === '' || '@item.Name?.ToLower()'.includes(filtered) || '@item.OfficeCode?.ToLower()'.includes(filtered) || '@item.Email?.ToLower()'.includes(filtered)"
                  x-transition>
                 <div class="flex items-start gap-3 mb-3">
@@ -169,7 +169,7 @@
             <p class="text-sm text-gray-500 mb-6">Get started by creating your first faculty</p>
             <a asp-action="Create"
                class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                <i class="fas fa-plus text-xs"></i> Create Faculty
+                <i class="fas fa-plus text-xs"></i> Create FacultyFWU.Exam.Management.Web/Areas/Core/Views/Tenant/Index.cshtml
             </a>
         </div>
     }

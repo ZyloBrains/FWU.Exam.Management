@@ -2,13 +2,13 @@
 
 @{
     var faculty = ViewBag.Faculty as Faculty;
-    ViewData["Title"] = $"Assign Roles — {faculty!.Name}";
+    ViewData["Title"] = $"Assign Roles — {faculty!.Name}";FWU.Exam.Management.Web/Views/TenantDashboard/AssignRoles.cshtml
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>
+        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>FWU.Exam.Management.Web/Views/TenantDashboard/AssignRoles.cshtml
         <li class="breadcrumb-item active">Assign Roles</li>
     </ol>
 </nav>
@@ -19,7 +19,7 @@
 <div class="row">
     <div class="col-md-4">
         <form asp-controller="FacultyDashboard" asp-action="AssignRoles"
-              asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@Model.UserId"
+              asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@Model.UserId"FWU.Exam.Management.Web/Views/TenantDashboard/AssignRoles.cshtml
               method="post">
             <input type="hidden" asp-for="UserId" />
             <input type="hidden" asp-for="UserEmail" />
@@ -39,7 +39,7 @@
             <div class="mt-3">
                 <input type="submit" value="Save" class="btn btn-primary" />
                 <a asp-controller="FacultyDashboard" asp-action="Users"
-                   asp-route-officeCode="@faculty.OfficeCode"
+                   asp-route-officeCode="@faculty.OfficeCode"FWU.Exam.Management.Web/Views/TenantDashboard/AssignRoles.cshtml
                    class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>

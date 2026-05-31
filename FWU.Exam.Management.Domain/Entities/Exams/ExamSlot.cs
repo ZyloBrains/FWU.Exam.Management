@@ -1,11 +1,14 @@
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
-public class ExamSlot
+public class ExamSlot : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     public int ExamScheduleId { get; set; }
     public int SubjectOfferingId { get; set; }

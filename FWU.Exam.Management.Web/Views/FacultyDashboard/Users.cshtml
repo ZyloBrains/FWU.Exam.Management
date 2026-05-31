@@ -2,14 +2,14 @@
 
 @{
     var faculty = ViewBag.Faculty as Faculty;
-    ViewData["Title"] = $"{faculty!.Name} – Users";
+    ViewData["Title"] = $"{faculty!.Name} – Users";FWU.Exam.Management.Web/Views/TenantDashboard/Users.cshtml
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
         <li class="breadcrumb-item">
-            <a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a>
+            <a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a>FWU.Exam.Management.Web/Views/TenantDashboard/Users.cshtml
         </li>
         <li class="breadcrumb-item active">Users</li>
     </ol>
@@ -18,7 +18,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Users — @faculty.Name</h1>
     <a asp-controller="FacultyDashboard" asp-action="CreateUser"
-       asp-route-officeCode="@faculty.OfficeCode"
+       asp-route-officeCode="@faculty.OfficeCode"FWU.Exam.Management.Web/Views/TenantDashboard/Users.cshtml
        class="btn btn-primary">Add User</a>
 </div>
 
@@ -53,7 +53,7 @@
                        asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@item.Id"
                        class="btn btn-sm btn-outline-primary">Roles</a>
                     <a asp-controller="FacultyDashboard" asp-action="DeleteUser"
-                       asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@item.Id"
+                       asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@item.Id"FWU.Exam.Management.Web/Views/TenantDashboard/Users.cshtml
                        class="btn btn-sm btn-outline-danger">Delete</a>
                 </td>
             </tr>

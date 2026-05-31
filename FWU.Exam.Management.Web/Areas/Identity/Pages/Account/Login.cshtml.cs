@@ -140,10 +140,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
                     {
-                        var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
-                        var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
-                            ? $"/faculty/{faculty.OfficeCode}"
-                            : returnUrl;
+                    var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
+                    var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
+                        ? $"/faculty/{faculty.OfficeCode}"
+                        : returnUrl;
 
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
                     }
@@ -169,7 +169,6 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     }
 
                     return LocalRedirect(returnUrl);
-                }
                 if (result.RequiresTwoFactor)
                 {
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });

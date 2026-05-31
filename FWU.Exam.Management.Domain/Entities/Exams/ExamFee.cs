@@ -1,11 +1,14 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
 
-public class ExamFee
+public class ExamFee : ITenantScoped
 {
     public int Id { get; set; }
+    public int TenantId { get; set; }
+    public virtual Tenant? Tenant { get; set; }
 
     [Required, MaxLength(400)]
     public string? Name { get; set; }
