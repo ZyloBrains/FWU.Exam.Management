@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
@@ -45,40 +44,18 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
     [TempData]
     public string ErrorMessage { get; set; }
 
-    public SelectList FacultyOptions { get; set; }
-
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
     public class InputModel
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Required]
         [EmailAddress]
         public string Email { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Required]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
-
-        [Required(ErrorMessage = "Please select your organization")]
-        [Display(Name = "Organization")]
-        public int SelectedFacultyId { get; set; }
     }
 
     public async Task OnGetAsync(string returnUrl = null)
@@ -95,10 +72,6 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-        FacultyOptions = new SelectList(
-            await context.Faculties.OrderBy(f => f.Name).AsNoTracking().ToListAsync(),
-            "Id", "Name");
-
         ReturnUrl = returnUrl;
     }
 
@@ -108,24 +81,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-        FacultyOptions = new SelectList(
-            await context.Faculties.OrderBy(f => f.Name).AsNoTracking().ToListAsync(),
-            "Id", "Name");
-
         if (ModelState.IsValid)
         {
-            AppUser? user;
-
-            if (Input.SelectedFacultyId == -1)
-            {
-                user = await userManager.Users
-                    .FirstOrDefaultAsync(u => u.Email == Input.Email && u.FacultyId == null);
-            }
-            else
-            {
-                user = await userManager.Users
-                    .FirstOrDefaultAsync(u => u.Email == Input.Email && u.FacultyId == Input.SelectedFacultyId);
-            }
+            var user = await userManager.Users
+                .FirstOrDefaultAsync(u => u.Email == Input.Email);
 
             if (user != null)
             {
