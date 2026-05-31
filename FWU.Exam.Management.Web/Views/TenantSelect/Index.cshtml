@@ -26,7 +26,7 @@
                 <div class="divide-y divide-gray-100">
                     @foreach (var tenant in Model)
                     {
-                        <button @@click="selected = '@tenant.Name'; officeCode = '@tenant.OfficeCode'"
+                        <button @@click="selected = '@tenant.Name'; officeCode = '@tenant.OfficeCode'; history.replaceState(null, '', '/tenant/@tenant.OfficeCode/Identity/Account/Login')"
                                 class="w-full flex items-center gap-4 px-6 py-4 hover:bg-blue-50 transition-colors duration-200 group text-left">
                             <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors shrink-0">
                                 <span class="text-xl font-bold text-blue-600">@tenant.Name[0]</span>
@@ -56,7 +56,7 @@
                     <h2 class="text-lg font-semibold text-gray-700">
                         <i class="fas fa-sign-in-alt mr-2 text-blue-500"></i>Sign In
                     </h2>
-                    <button @@click="selected = null; officeCode = ''; email = ''; password = ''"
+                    <button @@click="selected = null; officeCode = ''; email = ''; password = ''; history.replaceState(null, '', '/TenantSelect/Index')"
                             class="text-sm text-blue-600 hover:text-blue-800 hover:underline">
                         &larr; Change faculty
                     </button>
