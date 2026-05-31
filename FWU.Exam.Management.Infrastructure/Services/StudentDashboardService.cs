@@ -32,9 +32,11 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
     {
         var studentAdmission = await context.StudentAdmissions!
             .AsNoTracking()
+            .Where(sa => sa.IsActive)
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
-        var programId = studentAdmission?.ProgramsId;
+        if (studentAdmission == null)
+            return [];
 
         var query = context.ExamSchedules!
             .AsNoTracking()
@@ -42,12 +44,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Include(es => es.Level)
             .Include(es => es.Semester)
             .Include(es => es.AcademicYear)
-            .Where(es => es.IsActive);
-
-        if (programId.HasValue)
-        {
-            query = query.Where(es => es.ProgramId == programId.Value);
-        }
+            .Where(es => es.IsActive && es.ProgramId == studentAdmission.ProgramsId);
 
         if (student.LevelId != 0)
         {
