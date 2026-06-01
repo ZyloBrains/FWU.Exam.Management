@@ -1,4 +1,6 @@
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using FWU.Exam.Management.Domain.Entities
 @inject SignInManager<AppUser> SignInManager
 @inject UserManager<AppUser> UserManager
 @inject FWU.Exam.Management.Infrastructure.AppDbContext DbContext
@@ -82,6 +84,23 @@
         var roleLabel = "Guest";
         var sidebarLogoPath = "~/images/placeholder-logo.svg";
         var orgName = "";
+
+        var tenantCode = Context.Items["TenantCode"] as string;
+        if (!string.IsNullOrEmpty(tenantCode))
+        {
+            var tenant = await DbContext.Set<Tenant>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.OfficeCode == tenantCode);
+            if (tenant != null)
+            {
+                displayName = tenant.Name;
+                orgName = tenant.OfficeCode;
+                if (!string.IsNullOrWhiteSpace(tenant.LogoPath))
+                {
+                    sidebarLogoPath = tenant.LogoPath;
+                }
+            }
+        }
 
         if (appUser?.FacultyId != null)
         {
@@ -195,7 +214,7 @@
                         </button>
 
                         <div class="hidden sm:block truncate">
-                            <h2 class="text-lg lg:text-xl font-bold truncate">Welcome back, @displayName</h2>
+                            <h2 class="text-lg lg:text-xl font-bold truncate">@displayName</h2>
                             <p class="text-xs lg:text-sm text-blue-200 truncate opacity-90">
                                 @roleLabel@(!string.IsNullOrEmpty(orgName) ? " · " + orgName : "")
                                 <span class="hidden md:inline"> · @DateTime.Now.ToString("ddd, MMM dd, yyyy")</span>
