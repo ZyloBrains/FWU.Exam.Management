@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,14 +8,9 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin")]
-public class TenantsController : Controller
+public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper) : Controller
 {
-    private readonly AppDbContext _context;
-
-    public TenantsController(AppDbContext context)
-    {
-        _context = context;
-    }
+    private readonly AppDbContext _context = context;
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
@@ -50,10 +46,15 @@ public class TenantsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Name,OfficeCode,ContactNumber,Address,Email,LogoPath,TenantType,IsActive")] Tenant tenant)
+    public async Task<IActionResult> Create(Tenant tenant, IFormFile? logoFile)
     {
         if (ModelState.IsValid)
         {
+            if (logoFile != null)
+            {
+                tenant.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
+            }
+
             _context.Add(tenant);
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = "Tenant created successfully!";
@@ -74,7 +75,7 @@ public class TenantsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Name,OfficeCode,ContactNumber,Address,Email,LogoPath,TenantType,IsActive")] Tenant tenant)
+    public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? logoFile)
     {
         if (id != tenant.Id) return NotFound();
 
@@ -82,6 +83,11 @@ public class TenantsController : Controller
         {
             try
             {
+                if (logoFile != null)
+                {
+                    tenant.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
+                }
+
                 _context.Update(tenant);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Tenant updated successfully!";
