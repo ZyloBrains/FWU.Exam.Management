@@ -263,6 +263,61 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
+    public async Task<List<SelectOption>> GetFacultiesByLevelAsync(int levelId)
+    {
+        var facultyIds = await context.Programs
+            .Where(p => p.LevelId == levelId)
+            .Join(context.CollegePrograms, p => p.Id, cp => cp.ProgramId, (p, cp) => cp.CollegeId)
+            .Join(context.Colleges, collegeId => collegeId, c => c.Id, (collegeId, c) => c.FacultyId)
+            .Distinct()
+            .ToListAsync();
+
+        var validIds = facultyIds.Where(id => id.HasValue).Select(id => id!.Value).ToList();
+        if (validIds.Count == 0) return [];
+
+        return await context.Faculties
+            .Where(f => validIds.Contains(f.Id))
+            .Select(f => new SelectOption { Id = f.Id, Name = f.Name })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetDepartmentsByCollegeAsync(int collegeId)
+    {
+        var departmentIds = await context.CollegePrograms
+            .Where(cp => cp.CollegeId == collegeId)
+            .Join(context.Programs, cp => cp.ProgramId, p => p.Id, (cp, p) => p.DepartmentId)
+            .Distinct()
+            .ToListAsync();
+
+        if (departmentIds.Count == 0) return [];
+
+        return await context.Departments
+            .Where(d => departmentIds.Contains(d.Id))
+            .Select(d => new SelectOption { Id = d.Id, Name = d.DepartmentName })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null, int? departmentId = null)
+    {
+        var query = context.CollegePrograms
+            .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
+            .Include(cp => cp.Program)
+            .AsQueryable();
+
+        if (levelId.HasValue)
+            query = query.Where(cp => cp.Program!.LevelId == levelId.Value);
+
+        if (departmentId.HasValue)
+            query = query.Where(cp => cp.Program!.DepartmentId == departmentId.Value);
+
+        return await query
+            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public List<Province> GetProvinces()
     {
         var provinces =  context.Provinces.AsNoTracking().ToList();

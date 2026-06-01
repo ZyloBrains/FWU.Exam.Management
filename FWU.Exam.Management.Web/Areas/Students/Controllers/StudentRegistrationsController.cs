@@ -373,14 +373,23 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetProgramsByCollege(int collegeId)
+    public async Task<JsonResult> GetFacultiesByLevel(int levelId)
     {
-        var programs = await context.CollegePrograms!
-            .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
-            .Include(cp => cp.Program)
-            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
-            .AsNoTracking()
-            .ToListAsync();
+        var faculties = await studentRegistrationService.GetFacultiesByLevelAsync(levelId);
+        return Json(faculties);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetDepartmentsByCollege(int collegeId)
+    {
+        var departments = await studentRegistrationService.GetDepartmentsByCollegeAsync(collegeId);
+        return Json(departments);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? levelId = null, int? departmentId = null)
+    {
+        var programs = await studentRegistrationService.GetProgramsByCollegeAsync(collegeId, levelId, departmentId);
         return Json(programs);
     }
 }
