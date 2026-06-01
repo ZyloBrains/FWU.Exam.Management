@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
@@ -20,6 +21,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Department)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -41,6 +44,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Department)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -154,6 +159,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.Department)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -190,6 +197,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 AcademicYear = s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "-",
                 Level = s.Level != null ? s.Level.LevelName : "-",
                 College = s.College != null ? s.College.Name : "-",
+                Faculty = s.Faculty != null ? s.Faculty.Name : "-",
+                Program = s.Program != null ? s.Program.ProgramName : "-",
                 Category = s.StudentCategory != null ? s.StudentCategory.StudentCategoryName : "-",
                 ContactNumber = s.ContactNumber ?? "-",
                 Email = s.Email ?? "-",
@@ -214,23 +223,27 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var faculties = await context.Departments.Where(f => f.DepartmentName != null).AsNoTracking().ToListAsync();
+        var departments = await context.Departments.Where(d => d.DepartmentName != null).AsNoTracking().ToListAsync();
         var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
         var ethnicities = await context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();
         var localLevels = await context.LocalLevels.Where(ll => ll.LocalLevelName != null).AsNoTracking().ToListAsync();
+        var faculties = await context.Faculties.Where(f => f.Name != null).AsNoTracking().ToListAsync();
+        var programs = await context.Programs.Where(p => p.ProgramName != null).AsNoTracking().ToListAsync();
 
         return new StudentRegistrationSelectListsDto
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             Levels = levels.Select(l => new SelectOption { Id = l.Id, Name = l.LevelName }).ToList(),
-            Departments = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.DepartmentName }).ToList(),
+            Departments = departments.Select(d => new SelectOption { Id = d.Id, Name = d.DepartmentName }).ToList(),
             Colleges = colleges.Select(c => new SelectOption { Id = c.Id, Name = c.Name }).ToList(),
             Genders = genders.Select(g => new SelectOption { Id = g.Id, Name = g.GenderName }).ToList(),
             StudentCategories = studentCategories.Select(sc => new SelectOption { Id = sc.Id, Name = sc.StudentCategoryName }).ToList(),
             Ethnicities = ethnicities.Select(e => new SelectOption { Id = e.Id, Name = e.EthnicityName }).ToList(),
             LocalLevels = localLevels.Select(ll => new SelectOption { Id = ll.Id, Name = ll.LocalLevelName }).ToList(),
+            Faculties = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.Name }).ToList(),
+            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
         };
     }
 
@@ -261,10 +274,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         if (string.IsNullOrWhiteSpace(studentRegistration.Email))
             return;
 
-        var college = await context.Colleges
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == studentRegistration.CollegeId);
-
         var user = await userManager.FindByEmailAsync(studentRegistration.Email);
 
         if (user == null && studentRegistration.Id != 0)
@@ -290,8 +299,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 Email = studentRegistration.Email,
                 FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim(),
                 IsActive = studentRegistration.IsActive,
-                FacultyId = college?.FacultyId,
-                CollegeId = college?.Id
+                FacultyId = studentRegistration.FacultyId,
+                CollegeId = studentRegistration.CollegeId
             };
 
             var password = studentRegistration.DateOfBirthBS;
@@ -338,15 +347,15 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 needsUpdate = true;
             }
 
-            if (user.FacultyId != college?.FacultyId)
+            if (user.FacultyId != studentRegistration.FacultyId)
             {
-                user.FacultyId = college?.FacultyId;
+                user.FacultyId = studentRegistration.FacultyId;
                 needsUpdate = true;
             }
 
-            if (user.CollegeId != college?.Id)
+            if (user.CollegeId != studentRegistration.CollegeId)
             {
-                user.CollegeId = college?.Id;
+                user.CollegeId = studentRegistration.CollegeId;
                 needsUpdate = true;
             }
 

@@ -8,6 +8,8 @@ public class StudentRegistrationListDto
     public string AcademicYear { get; set; } = string.Empty;
     public string Level { get; set; } = string.Empty;
     public string College { get; set; } = string.Empty;
+    public string Faculty { get; set; } = string.Empty;
+    public string Program { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string ContactNumber { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

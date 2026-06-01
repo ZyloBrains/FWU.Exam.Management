@@ -303,6 +303,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.Faculty)
+            .WithMany()
+            .HasForeignKey(sr => sr.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.Program)
+            .WithMany()
+            .HasForeignKey(sr => sr.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
             .HasIndex(sr => sr.Email)
             .IsUnique()
             .HasFilter("[Email] IS NOT NULL");

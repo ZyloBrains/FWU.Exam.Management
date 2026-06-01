@@ -86,7 +86,7 @@
                 var collegeId = $(this).val();
                 $("#ProgramsId").html('<option value="">Loading...</option>');
 
-                $.get("/Students/StudentAdmissions/GetCollegePrograms", { collegeId: collegeId }, function (data) {
+                $.get(tenantUrl("/Students/StudentAdmissions/GetCollegePrograms"), { collegeId: collegeId }, function (data) {
                     var programDropdown = $("#ProgramsId");
                     programDropdown.empty();
                     programDropdown.append('<option value="">Select Program</option>');

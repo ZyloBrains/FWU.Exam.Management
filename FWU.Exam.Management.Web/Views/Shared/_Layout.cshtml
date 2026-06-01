@@ -273,6 +273,12 @@
 
     <!-- Minimal Scripts Footer -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        var __tenantCode = '@Context.Items["TenantCode"]';
+        function tenantUrl(path) {
+            return __tenantCode ? '/tenant/' + __tenantCode + path : path;
+        }
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

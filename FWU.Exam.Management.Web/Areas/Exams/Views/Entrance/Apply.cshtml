@@ -241,7 +241,7 @@
                 var provinceId = $(this).val();
                 $("#DistrictId").html('<option>Loading...</option>');
                 $("#LocalLevelId").html('<option>Select Local Level</option>');
-                $.get("/Exams/Entrance/GetDistrictsByProvince",
+                $.get(tenantUrl("/Exams/Entrance/GetDistrictsByProvince"),
                     { provinceId: provinceId },
                     function (data) {
                         let districtDropdown = $("#DistrictId");
@@ -256,7 +256,7 @@
             $("#DistrictId").change(function () {
                 var districtId = $(this).val();
                 $("#LocalLevelId").html('<option>Loading...</option>');
-                $.get("/Exams/Entrance/GetLocalLevelsByDistrict",
+                $.get(tenantUrl("/Exams/Entrance/GetLocalLevelsByDistrict"),
                     { districtId: districtId },
                     function (data) {
                         let localDropdown = $("#LocalLevelId");
@@ -275,7 +275,7 @@
                 var academicYearId = $("#AcademicYearId").val();
 
                 if (programId && collegeId && academicYearId) {
-                    $.get("/Exams/Entrance/CheckFormStatus",
+                    $.get(tenantUrl("/Exams/Entrance/CheckFormStatus"),
                         {
                             programId: programId,
                             collegeId: collegeId,

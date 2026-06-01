@@ -103,7 +103,8 @@
                                 IsActive(controllerName: "ESewaConfigurations", actionName: "Index", areaName: "Core") ||
                                 IsActive(controllerName: "ExamSchedules", actionName: "Index", areaName: "Exams") ||
                                 IsActive(controllerName: "StudentCategories", actionName: "Index") ||
-                                IsActive(controllerName: "Faculties", actionName: "Index", areaName: "Core");
+                                IsActive(controllerName: "Faculties", actionName: "Index", areaName: "Core") ||
+                                IsActive(controllerName: "Tenants", actionName: "Index");
         <li x-data="{ open: @(isSettingsActive.ToString().ToLower()) }">
             <button @@click="open = !open" class="@ParentClass(isSettingsActive)">
                 <div class="flex items-center justify-center w-6">
@@ -114,6 +115,7 @@
             </button>
             <ul class="ml-4 space-y-1 overflow-hidden transition-all duration-200"
                 :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                <li><a asp-area="" asp-controller="Tenants" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Tenants", actionName: "Index") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-globe w-4 text-center"></i><span>Tenants</span></a></li>
                 <li><a asp-area="Core" asp-controller="AcademicYears" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-calendar-alt w-4 text-center"></i><span>Academic Year</span></a></li>
                 <li><a asp-area="Core" asp-controller="Faculty" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-building w-4 text-center"></i><span>Faculties</span></a></li>
                 <li><a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 hover:bg-admin-blue-light transition-colors duration-200 text-sm @(IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges") ? "bg-admin-blue-light text-white" : "")"><i class="fas fa-school w-4 text-center"></i><span>School/College</span></a></li>

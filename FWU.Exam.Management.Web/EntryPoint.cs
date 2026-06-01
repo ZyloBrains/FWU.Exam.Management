@@ -158,6 +158,7 @@ public partial class EntryPoint
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);

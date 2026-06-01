@@ -84,6 +84,8 @@
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Student Name</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Academic Year</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Level & College</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Faculty</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Program</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Category</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Contact Info</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Status</th>
@@ -92,7 +94,7 @@
                 </thead>
                 <tbody id="registrationsBody" class="divide-y divide-gray-100 bg-white">
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center">
+                        <td colspan="9" class="px-6 py-12 text-center">
                             <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-teal-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             <span class="text-sm text-gray-500 font-medium">Loading registrations...</span>
                         </td>
@@ -149,13 +151,13 @@
                     updatePagination();
                 } catch (error) {
                     console.error('Error fetching data:', error);
-                    tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-sm text-red-500 font-medium">Failed to load data. Please refresh the page and try again.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-4 text-center text-sm text-red-500 font-medium">Failed to load data. Please refresh the page and try again.</td></tr>';
                 }
             };
 
             const renderTable = (items) => {
                 if (items.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center">
+                    tbody.innerHTML = `<tr><td colspan="10" class="px-6 py-12 text-center">
                         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-4">
                             <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
                         </div>
@@ -186,6 +188,16 @@
                         <td class="whitespace-nowrap px-6 py-4">
                             <div class="font-medium text-gray-900">${item.level || '-'}</div>
                             <div class="text-xs text-gray-500 mt-1 max-w-[180px] truncate" title="${item.college || ''}">${item.college || '-'}</div>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700/10">
+                                ${item.faculty || '-'}
+                            </span>
+                        </td>
+                        <td class="whitespace-nowrap px-6 py-4">
+                            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                                ${item.program || '-'}
+                            </span>
                         </td>
                         <td class="whitespace-nowrap px-6 py-4">
                             <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
