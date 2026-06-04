@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 {
 

@@ -2,21 +2,41 @@ using System.Text;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-using Microsoft.AspNetCore.Authorization;
-
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
-public class ExamSchedulesController(IExamScheduleService examScheduleService) : Controller
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+public class ExamSchedulesController(
+    IExamScheduleService examScheduleService,
+    UserManager<AppUser> userManager,
+    AppDbContext context) : Controller
 {
+    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return (null, null);
+
+        if (User.IsInRole(Role.CollegeAdmin))
+            return (user.CollegeId, null);
+
+        if (User.IsInRole(Role.FacultyAdmin))
+            return (null, user.FacultyId);
+
+        return (null, null);
+    }
+
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -39,7 +59,8 @@ public class ExamSchedulesController(IExamScheduleService examScheduleService) :
 
     public async Task<IActionResult> ExportToCsv(string search = null)
     {
-        var items = await examScheduleService.GetFilteredItemsAsync(search);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
@@ -70,7 +91,8 @@ public class ExamSchedulesController(IExamScheduleService examScheduleService) :
 
     public async Task<IActionResult> ExportToPdf(string search = null)
     {
-        var items = await examScheduleService.GetFilteredItemsAsync(search);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
         return View("PrintPdf", items);
     }
 
