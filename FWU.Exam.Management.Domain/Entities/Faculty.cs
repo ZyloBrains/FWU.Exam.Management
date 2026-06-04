@@ -8,4 +8,6 @@ public class Faculty
     public string Address { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? LogoPath { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 }

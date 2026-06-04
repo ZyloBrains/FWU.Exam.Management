@@ -112,6 +112,7 @@ public static class ReferenceDataSeeder
         // Faculties
         if (!await context.Faculties.AnyAsync())
         {
+            var engTenant = await context.Tenants.FirstOrDefaultAsync(t => t.OfficeCode == "ENG");
             var faculties = new[]
             {
                 new Faculty
@@ -121,6 +122,7 @@ public static class ReferenceDataSeeder
                     ContactNumber = "021-123456",
                     Address = "Mahendranagar, Kanchanpur",
                     Email = "soe@fwu.edu.np",
+                    TenantId = engTenant?.Id,
                 },
             };
             await context.Faculties.AddRangeAsync(faculties);
@@ -200,9 +202,11 @@ public static class ReferenceDataSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
         Faculty? foe, fst;
+        var engTenant = await context.Tenants.FirstOrDefaultAsync(t => t.OfficeCode == "ENG");
+
         if (!await context.Faculties.AnyAsync(f => f.OfficeCode == "FOE"))
         {
-            foe = new Faculty { Name = "Faculty of Engineering", OfficeCode = "FOE", ContactNumber = "099-520296", Address = "Mahendranagar, Kanchanpur", Email = "dean.engineering@fwu.edu.np" };
+            foe = new Faculty { Name = "Faculty of Engineering", OfficeCode = "FOE", ContactNumber = "099-520296", Address = "Mahendranagar, Kanchanpur", Email = "dean.engineering@fwu.edu.np", TenantId = engTenant?.Id };
             context.Faculties.Add(foe);
             await context.SaveChangesAsync();
         }

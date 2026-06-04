@@ -24,10 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\FWU.Exam.Management.Application\FWU.Exam.Management.Application.csproj" />
     <ProjectReference Include="..\FWU.Exam.Management.Infrastructure\FWU.Exam.Management.Infrastructure.csproj" />
     <ProjectReference Include="..\FWU.Exam.Management.Domain\FWU.Exam.Management.Domain.csproj" />

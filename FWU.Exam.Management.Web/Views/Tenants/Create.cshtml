@@ -53,8 +53,15 @@
                 </div>
                 <div>
                     <label asp-for="Tenant.TenantType" class="text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
-                    <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></select>
+                    <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="TenantTypeSelect"></select>
                     <span asp-validation-for="Tenant.TenantType" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div id="FacultyField" style="display:none">
+                    <label asp-for="SelectedFacultyId" class="text-sm font-medium text-gray-700 block mb-1">Faculty</label>
+                    <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">-- Select Faculty --</option>
+                    </select>
+                    <span asp-validation-for="SelectedFacultyId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <div class="flex items-center gap-2 mt-7">
@@ -71,7 +78,7 @@
                     </div>
                     <h2 class="text-lg font-semibold text-gray-800">Admin User</h2>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">An admin user will be created for this tenant with the <span class="font-medium text-gray-700">CollegeAdmin</span> role.</p>
+                <p class="text-sm text-gray-500 mb-4">An admin user will be created for this tenant with the <span class="font-medium text-gray-700">FacultyAdmin</span> role.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label asp-for="AdminFullName" class="text-sm font-medium text-gray-700 block mb-1">Full Name</label>
@@ -112,4 +119,13 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.getElementById('TenantTypeSelect').addEventListener('change', function() {
+            var facultyField = document.getElementById('FacultyField');
+            facultyField.style.display = this.value === '0' ? 'block' : 'none';
+        });
+        if (document.getElementById('TenantTypeSelect').value === '0') {
+            document.getElementById('FacultyField').style.display = 'block';
+        }
+    </script>
 }

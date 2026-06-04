@@ -1,11 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Domain.Entities;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FWU.Exam.Management.Web.ViewModels;
 
 public class TenantCreateViewModel
 {
     public Tenant Tenant { get; set; } = new();
+
+    [Display(Name = "Faculty")]
+    public int? SelectedFacultyId { get; set; }
+    public IEnumerable<SelectListItem>? FacultyList { get; set; }
 
     [Required(ErrorMessage = "Admin full name is required.")]
     [Display(Name = "Admin Full Name")]

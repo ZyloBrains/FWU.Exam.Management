@@ -1,4 +1,8 @@
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Helpers;
@@ -6,6 +10,7 @@ using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
@@ -43,15 +48,26 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         return View(items);
     }
 
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        return View(new TenantCreateViewModel());
+        var model = new TenantCreateViewModel
+        {
+            FacultyList = await GetAvailableFacultiesAsync()
+        };
+        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? logoFile)
     {
+        viewModel.FacultyList = await GetAvailableFacultiesAsync();
+
+        if (viewModel.Tenant.TenantType == TenantType.Standard && viewModel.SelectedFacultyId == null)
+        {
+            ModelState.AddModelError(nameof(viewModel.SelectedFacultyId), "Please select a faculty for a Standard tenant.");
+        }
+
         if (ModelState.IsValid)
         {
             var tenant = viewModel.Tenant;
@@ -70,12 +86,23 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
                 Email = viewModel.AdminEmail,
                 EmailConfirmed = true,
                 FullName = viewModel.AdminFullName,
-                IsActive = true
+                IsActive = true,
+                FacultyId = viewModel.SelectedFacultyId
             };
 
             var result = await _userManager.CreateAsync(adminUser, viewModel.AdminPassword);
             if (result.Succeeded)
             {
+                if (viewModel.SelectedFacultyId.HasValue)
+                {
+                    var faculty = await _context.Faculties.FindAsync(viewModel.SelectedFacultyId.Value);
+                    if (faculty != null)
+                    {
+                        faculty.TenantId = tenant.Id;
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 await _userManager.AddToRoleAsync(adminUser, Role.FacultyAdmin);
                 TempData["SuccessMessage"] = $"Tenant '{tenant.Name}' created successfully with admin user '{viewModel.AdminEmail}'.";
             }
@@ -93,6 +120,19 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
             return RedirectToAction(nameof(Index));
         }
         return View(viewModel);
+    }
+
+    private async Task<IEnumerable<SelectListItem>> GetAvailableFacultiesAsync()
+    {
+        return await _context.Faculties
+            .Where(f => f.TenantId == null)
+            .OrderBy(f => f.Name)
+            .Select(f => new SelectListItem
+            {
+                Value = f.Id.ToString(),
+                Text = f.Name + " (" + f.OfficeCode + ")"
+            })
+            .ToListAsync();
     }
 
     public async Task<IActionResult> Edit(int? id)
@@ -142,6 +182,10 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
         if (tenant == null) return NotFound();
 
+        var dependencyCounts = await GetDependencyCountsAsync(id.Value);
+        ViewBag.DependencyCounts = dependencyCounts;
+        ViewBag.HasDependencies = dependencyCounts.Values.Sum() > 0;
+
         return View(tenant);
     }
 
@@ -150,12 +194,35 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var tenant = await _context.Tenants.FindAsync(id);
-        if (tenant != null)
+        if (tenant == null) return NotFound();
+
+        try
         {
+            var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
+            _context.Faculties.RemoveRange(faculties);
+
             _context.Tenants.Remove(tenant);
             await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Tenant deleted successfully!";
         }
-        TempData["SuccessMessage"] = "Tenant deleted successfully!";
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this tenant because it has associated data. Remove or reassign the dependent records first.";
+        }
+
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<Dictionary<string, int>> GetDependencyCountsAsync(int tenantId)
+    {
+        return new Dictionary<string, int>
+        {
+            ["Faculties"] = await _context.Faculties.CountAsync(f => f.TenantId == tenantId),
+            ["Colleges"] = await _context.Set<College>().CountAsync(c => c.TenantId == tenantId),
+            ["College Programs"] = await _context.Set<CollegeProgram>().CountAsync(cp => cp.TenantId == tenantId),
+            ["Academic Years"] = await _context.AcademicYears.CountAsync(y => y.TenantId == tenantId),
+            ["Students"] = await _context.StudentRegistrations.CountAsync(s => s.TenantId == tenantId),
+            ["Exam Schedules"] = await _context.ExamSchedules.CountAsync(e => e.TenantId == tenantId),
+        };
     }
 }
