@@ -1,16 +1,20 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Helpers;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize(Roles = "SuperAdmin")]
-public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper) : Controller
+public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
 {
     private readonly AppDbContext _context = context;
+    private readonly UserManager<AppUser> _userManager = userManager;
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
@@ -41,15 +45,17 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
 
     public IActionResult Create()
     {
-        return View();
+        return View(new TenantCreateViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Tenant tenant, IFormFile? logoFile)
+    public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? logoFile)
     {
         if (ModelState.IsValid)
         {
+            var tenant = viewModel.Tenant;
+
             if (logoFile != null)
             {
                 tenant.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
@@ -57,10 +63,36 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
 
             _context.Add(tenant);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Tenant created successfully!";
+
+            var adminUser = new AppUser
+            {
+                UserName = viewModel.AdminEmail,
+                Email = viewModel.AdminEmail,
+                EmailConfirmed = true,
+                FullName = viewModel.AdminFullName,
+                IsActive = true
+            };
+
+            var result = await _userManager.CreateAsync(adminUser, viewModel.AdminPassword);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(adminUser, Role.FacultyAdmin);
+                TempData["SuccessMessage"] = $"Tenant '{tenant.Name}' created successfully with admin user '{viewModel.AdminEmail}'.";
+            }
+            else
+            {
+                _context.Tenants.Remove(tenant);
+                await _context.SaveChangesAsync();
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(viewModel);
+            }
+
             return RedirectToAction(nameof(Index));
         }
-        return View(tenant);
+        return View(viewModel);
     }
 
     public async Task<IActionResult> Edit(int? id)
