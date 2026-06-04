@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FWU.Exam.Management.Web.Middleware;
 
@@ -10,15 +11,29 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     private static readonly string[] _staticExtensions =
         [".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".eot"];
 
-    public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext, AppDbContext dbContext)
+    private static readonly TimeSpan _tenantCacheDuration = TimeSpan.FromMinutes(5);
+    private static readonly MemoryCacheEntryOptions _cacheOptions = new()
+    {
+        SlidingExpiration = _tenantCacheDuration,
+        Priority = CacheItemPriority.High
+    };
+
+    public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext, AppDbContext dbContext, IMemoryCache cache)
     {
         var path = context.Request.Path.Value ?? "";
 
         if (TryExtractTenant(path, out var tenantCode, out var remainingPath))
         {
-            var tenant = await dbContext.Set<Tenant>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.OfficeCode == tenantCode);
+            var cacheKey = $"tenant_{tenantCode}";
+            if (!cache.TryGetValue(cacheKey, out Tenant? tenant) || tenant == null)
+            {
+                tenant = await dbContext.Set<Tenant>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.OfficeCode == tenantCode);
+
+                if (tenant != null)
+                    cache.Set(cacheKey, tenant, _cacheOptions);
+            }
 
             if (tenant == null)
             {

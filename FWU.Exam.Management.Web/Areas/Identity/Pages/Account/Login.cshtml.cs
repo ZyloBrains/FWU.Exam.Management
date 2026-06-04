@@ -88,6 +88,13 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
             if (user != null)
             {
+                if (!user.IsActive)
+                {
+                    logger.LogWarning("Login attempt by inactive user {Email}", Input.Email);
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    return Page();
+                }
+
                 var result = await signInManager.CheckPasswordSignInAsync(user, Input.Password, false);
                 if (result.Succeeded)
                 {
@@ -99,10 +106,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
                     {
-                    var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
-                    var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
-                        ? $"/faculty/{faculty.OfficeCode}"
-                        : returnUrl;
+                        var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
+                        var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
+                            ? $"/faculty/{faculty.OfficeCode}"
+                            : returnUrl;
 
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
                     }
