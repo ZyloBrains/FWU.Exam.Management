@@ -207,12 +207,12 @@ public static class ReferenceDataSeeder
 
         var facultySeedData = new[]
         {
-            new Faculty { Name = "Faculty of Engineering", OfficeCode = "FOE", ContactNumber = "099-520296", Address = "Mahendranagar, Kanchanpur", Email = "dean.engineering@fwu.edu.np", TenantId = engTenant?.Id },
-            new Faculty { Name = "Faculty of Science & Technology", OfficeCode = "FST", ContactNumber = "099-524000", Address = "Mahendranagar, Kanchanpur", Email = "faculty.science@fwu.edu.np" },
-            new Faculty { Name = "Faculty of Law", OfficeCode = "LAW", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "law@fwu.edu.np" },
-            new Faculty { Name = "Faculty of Humanities", OfficeCode = "HUM", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "humanities@fwu.edu.np" },
+            new Faculty { Name = "Faculty of Engineering", OfficeCode = "ENG", ContactNumber = "099-520296", Address = "Mahendranagar, Kanchanpur", Email = "dean.engineering@fwu.edu.np", TenantId = engTenant?.Id },
+            new Faculty { Name = "Faculty of Science and Technology", OfficeCode = "FST", ContactNumber = "099-524000", Address = "Mahendranagar, Kanchanpur", Email = "faculty.science@fwu.edu.np" },
+            new Faculty { Name = "Faculty of Law", OfficeCode = "FOL", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "law@fwu.edu.np" },
+            new Faculty { Name = "Faculty of Humanities", OfficeCode = "FO-HSS", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "humanities@fwu.edu.np" },
             new Faculty { Name = "Faculty of Education", OfficeCode = "EDU", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "education@fwu.edu.np" },
-            new Faculty { Name = "Faculty of Management", OfficeCode = "MGT", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "management@fwu.edu.np" },
+            new Faculty { Name = "Faculty of Management", OfficeCode = "FO-MGT", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "management@fwu.edu.np" },
             new Faculty { Name = "Faculty of Agriculture", OfficeCode = "AGR", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "agriculture@fwu.edu.np", TenantId = agrTenant?.Id },
             new Faculty { Name = "Faculty of Health Sciences", OfficeCode = "HSC", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "health@fwu.edu.np" },
             new Faculty { Name = "Faculty of Natural Resource Management", OfficeCode = "NRM", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "nrm@fwu.edu.np" },
@@ -225,10 +225,18 @@ public static class ReferenceDataSeeder
             {
                 context.Faculties.Add(faculty);
             }
+            else
+            {
+                existing.Name = faculty.Name;
+                existing.ContactNumber = faculty.ContactNumber;
+                existing.Address = faculty.Address;
+                existing.Email = faculty.Email;
+                existing.TenantId = faculty.TenantId;
+            }
         }
         await context.SaveChangesAsync();
 
-        foe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FOE");
+        foe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "ENG");
         fst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
 
         Department? enggDept;
@@ -268,7 +276,7 @@ public static class ReferenceDataSeeder
         }
 
         College? engCollege, csitCollege;
-        if (!await context.Colleges.AnyAsync(c => c.Code == "ENG-SOE"))
+        if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "ENG-SOE"))
         {
             engCollege = new College { Code = "ENG-SOE", Name = "School of Engineering", TenantId = 3, IsActive = true, FacultyId = foe?.Id };
             context.Colleges.Add(engCollege);
@@ -276,10 +284,10 @@ public static class ReferenceDataSeeder
         }
         else
         {
-            engCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "ENG-SOE");
+            engCollege = await context.Colleges.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Code == "ENG-SOE");
         }
 
-        if (!await context.Colleges.AnyAsync(c => c.Code == "CDC-CSIT"))
+        if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "CDC-CSIT"))
         {
             csitCollege = new College { Code = "CDC-CSIT", Name = "Central Department of Computer Science & IT", TenantId = 1, IsActive = true, FacultyId = fst?.Id };
             context.Colleges.Add(csitCollege);
@@ -287,7 +295,7 @@ public static class ReferenceDataSeeder
         }
         else
         {
-            csitCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
+            csitCollege = await context.Colleges.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
         }
 
         if (engCollege != null)
@@ -296,7 +304,7 @@ public static class ReferenceDataSeeder
             var engPrograms = await context.Programs.Where(p => engProgramCodes.Contains(p.ProgramCode)).ToListAsync();
             foreach (var program in engPrograms)
             {
-                if (!await context.CollegePrograms.AnyAsync(cp => cp.CollegeId == engCollege.Id && cp.ProgramId == program.Id))
+                if (!await context.CollegePrograms.IgnoreQueryFilters().AnyAsync(cp => cp.CollegeId == engCollege.Id && cp.ProgramId == program.Id))
                 {
                     context.CollegePrograms.Add(new CollegeProgram { CollegeId = engCollege.Id, ProgramId = program.Id, TenantId = 3, IsActive = true });
                 }
@@ -310,7 +318,7 @@ public static class ReferenceDataSeeder
             var csitPrograms = await context.Programs.Where(p => csitProgramCodes.Contains(p.ProgramCode)).ToListAsync();
             foreach (var program in csitPrograms)
             {
-                if (!await context.CollegePrograms.AnyAsync(cp => cp.CollegeId == csitCollege.Id && cp.ProgramId == program.Id))
+                if (!await context.CollegePrograms.IgnoreQueryFilters().AnyAsync(cp => cp.CollegeId == csitCollege.Id && cp.ProgramId == program.Id))
                 {
                     context.CollegePrograms.Add(new CollegeProgram { CollegeId = csitCollege.Id, ProgramId = program.Id, TenantId = 1, IsActive = true });
                 }
@@ -320,10 +328,10 @@ public static class ReferenceDataSeeder
 
         var oceTenantId = 1;
 
-        var mgtFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "MGT");
+        var mgtFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-MGT");
         var eduFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "EDU");
-        var humFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "HUM");
-        var lawFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "LAW");
+        var humFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-HSS");
+        var lawFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FOL");
         var agrFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "AGR");
 
         var centralDepartments = new[]
@@ -339,7 +347,7 @@ public static class ReferenceDataSeeder
 
         foreach (var dept in centralDepartments)
         {
-            if (!await context.Colleges.AnyAsync(c => c.Code == dept.Code))
+            if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == dept.Code))
             {
                 context.Colleges.Add(dept);
             }
@@ -367,7 +375,7 @@ public static class ReferenceDataSeeder
 
         foreach (var campus in campuses)
         {
-            if (!await context.Colleges.AnyAsync(c => c.Code == campus.Code))
+            if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == campus.Code))
             {
                 context.Colleges.Add(campus);
             }

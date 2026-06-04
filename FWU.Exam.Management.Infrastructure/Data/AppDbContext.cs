@@ -688,5 +688,126 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany()
             .HasForeignKey(a => a.PreviousLevelId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Unique indexes - Global entities
+        builder.Entity<Tenant>()
+            .HasIndex(t => t.OfficeCode)
+            .IsUnique()
+            .HasFilter("[OfficeCode] IS NOT NULL");
+
+        builder.Entity<Faculty>()
+            .HasIndex(f => f.OfficeCode)
+            .IsUnique()
+            .HasFilter("[OfficeCode] IS NOT NULL");
+
+        builder.Entity<Department>()
+            .HasIndex(d => d.DepartmentCode)
+            .IsUnique();
+
+        builder.Entity<Program>()
+            .HasIndex(p => p.ProgramCode)
+            .IsUnique()
+            .HasFilter("[ProgramCode] IS NOT NULL");
+
+        builder.Entity<Level>()
+            .HasIndex(l => l.LevelCode)
+            .IsUnique()
+            .HasFilter("[LevelCode] IS NOT NULL");
+
+        builder.Entity<SubjectType>()
+            .HasIndex(st => st.Code)
+            .IsUnique();
+
+        builder.Entity<CollegeType>()
+            .HasIndex(ct => ct.Code)
+            .IsUnique();
+
+        builder.Entity<ExamType>()
+            .HasIndex(et => et.Name)
+            .IsUnique()
+            .HasFilter("[Name] IS NOT NULL");
+
+        builder.Entity<District>()
+            .HasIndex(d => d.DistrictCode)
+            .IsUnique()
+            .HasFilter("[DistrictCode] IS NOT NULL");
+
+        builder.Entity<Province>()
+            .HasIndex(p => p.ProvinceCode)
+            .IsUnique()
+            .HasFilter("[ProvinceCode] IS NOT NULL");
+
+        builder.Entity<Bank>()
+            .HasIndex(b => b.BankCode)
+            .IsUnique()
+            .HasFilter("[BankCode] IS NOT NULL");
+
+        builder.Entity<Gender>()
+            .HasIndex(g => g.GenderName)
+            .IsUnique()
+            .HasFilter("[GenderName] IS NOT NULL");
+
+        builder.Entity<Ethnicity>()
+            .HasIndex(e => e.EthnicityName)
+            .IsUnique()
+            .HasFilter("[EthnicityName] IS NOT NULL");
+
+        builder.Entity<Board>()
+            .HasIndex(b => b.BoardName)
+            .IsUnique()
+            .HasFilter("[BoardName] IS NOT NULL");
+
+        builder.Entity<EntryFormat>()
+            .HasIndex(ef => ef.EntryFormatName)
+            .IsUnique()
+            .HasFilter("[EntryFormatName] IS NOT NULL");
+
+        builder.Entity<IndexGroup>()
+            .HasIndex(ig => ig.IndexGroupName)
+            .IsUnique()
+            .HasFilter("[IndexGroupName] IS NOT NULL");
+
+        builder.Entity<PeriodType>()
+            .HasIndex(pt => pt.PeriodTypeName)
+            .IsUnique()
+            .HasFilter("[PeriodTypeName] IS NOT NULL");
+
+        builder.Entity<PaymentType>()
+            .HasIndex(pt => pt.PaymentTypeName)
+            .IsUnique()
+            .HasFilter("[PaymentTypeName] IS NOT NULL");
+
+        builder.Entity<SchoolType>()
+            .HasIndex(st => st.SchoolTypeName)
+            .IsUnique();
+
+        // Unique indexes - Tenant-scoped composite (TenantId, Code)
+        builder.Entity<College>()
+            .HasIndex(c => new { c.TenantId, c.Code })
+            .IsUnique();
+
+        builder.Entity<AcademicYear>()
+            .HasIndex(ay => new { ay.TenantId, ay.AcademicYearCode })
+            .IsUnique();
+
+        builder.Entity<FiscalYear>()
+            .HasIndex(fy => new { fy.TenantId, fy.FiscalYearCode })
+            .IsUnique()
+            .HasFilter("[FiscalYearCode] IS NOT NULL");
+
+        builder.Entity<ExamSchedule>()
+            .HasIndex(es => new { es.TenantId, es.ExamScheduleCode })
+            .IsUnique()
+            .HasFilter("[ExamScheduleCode] IS NOT NULL");
+
+        builder.Entity<Semester>()
+            .HasIndex(s => new { s.TenantId, s.Code })
+            .IsUnique()
+            .HasFilter("[Code] IS NOT NULL");
+
+        builder.Entity<StudentRegistration>()
+            .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })
+            .IsUnique()
+            .HasFilter("[RegistrationNumber] IS NOT NULL");
     }
 }

@@ -48,12 +48,12 @@ BEGIN
     (1, 'Faculty of Humanities and Social Sciences', 'FO-HSS', '', '', ''),
     (2, 'Faculty of Management', 'FO-MGT', '', '', ''),
     (3, 'Faculty of Science and Technology', 'FST', '', '', ''),
-    (4, 'Faculty of Education', 'FOE', '', '', ''),
+    (4, 'Faculty of Education', 'EDU', '', '', ''),
     (5, 'Faculty of Law', 'FOL', '', '', ''),
-    (6, 'Faculty of Engineering', 'FOE', '', '', ''),
-    (7, 'Faculty of Agriculture', 'FOA', '', '', ''),
+    (6, 'Faculty of Engineering', 'ENG', '', '', ''),
+    (7, 'Faculty of Agriculture', 'AGR', '', '', ''),
     (8, 'Faculty of Medicine', 'FOM', '', '', ''),
-    (9, 'Faculty of Ayurveda', 'FOA', '', '', '');
+    (9, 'Faculty of Ayurveda', 'AYU', '', '', '');
     SET IDENTITY_INSERT [Faculties] OFF;
 END");
 

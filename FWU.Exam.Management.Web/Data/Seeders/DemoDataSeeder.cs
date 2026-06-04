@@ -430,7 +430,7 @@ public static class DemoDataSeeder
         }
 
         // Engineering & CSIT Demo Students
-        var facultyFoe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FOE");
+        var facultyFoe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "ENG");
         var facultyFst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
         var engCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "ENG-SOE");
         var csitCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
