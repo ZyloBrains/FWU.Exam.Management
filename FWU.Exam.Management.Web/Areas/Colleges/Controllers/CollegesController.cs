@@ -15,7 +15,7 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class CollegesController(ICollegeService collegeService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<int?> GetCurrentUserFacultyIdAsync()

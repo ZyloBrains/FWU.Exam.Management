@@ -138,6 +138,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<IdentityRole>().ToTable("Roles");
         builder.Entity<AppUser>().ToTable("Users");
 
+        builder.Entity<AppUser>()
+            .HasIndex(u => u.Email)
+            .IsUnique()
+            .HasFilter("[Email] IS NOT NULL");
+
         builder.Entity<College>()
             .HasOne(c => c.CollegeType)
             .WithMany(ct => ct.Colleges)

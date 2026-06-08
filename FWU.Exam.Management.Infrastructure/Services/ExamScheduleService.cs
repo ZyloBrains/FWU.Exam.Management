@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +9,41 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ExamScheduleService(AppDbContext context) : IExamScheduleService
 {
-    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    private IQueryable<ExamSchedule> ApplyScope(IQueryable<ExamSchedule> query, int? collegeId, int? facultyId)
     {
-        var query = BuildQuery(search, sort, sortDir);
+        if (collegeId.HasValue)
+        {
+            var programIds = context.CollegePrograms!
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .Distinct()
+                .ToList();
+
+            return query.Where(e => programIds.Contains(e.ProgramId));
+        }
+
+        if (facultyId.HasValue)
+        {
+            var collegeIds = context.Colleges
+                .Where(c => c.FacultyId == facultyId.Value)
+                .Select(c => c.Id)
+                .ToList();
+
+            var programIds = context.CollegePrograms!
+                .Where(cp => collegeIds.Contains(cp.CollegeId))
+                .Select(cp => cp.ProgramId)
+                .Distinct()
+                .ToList();
+
+            return query.Where(e => programIds.Contains(e.ProgramId));
+        }
+
+        return query;
+    }
+
+    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null)
+    {
+        var query = ApplyScope(BuildQuery(search, sort, sortDir), collegeId, facultyId);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -44,9 +77,9 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
         return (items, totalCount);
     }
 
-    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search)
+    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
     {
-        var query = BuildQuery(search, "Id", "asc");
+        var query = ApplyScope(BuildQuery(search, "Id", "asc"), collegeId, facultyId);
         return await query
             .Select(e => new ExamSchedule
             {

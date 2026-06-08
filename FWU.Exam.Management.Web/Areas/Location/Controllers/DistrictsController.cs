@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 public class DistrictsController(IDistrictService districtService) : Controller
 {
 

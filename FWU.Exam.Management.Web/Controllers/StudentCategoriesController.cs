@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 public class StudentCategoriesController : Controller
 {
     private readonly IStudentCategoryService _studentCategoryService;

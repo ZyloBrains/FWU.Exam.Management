@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[Authorize(Roles = "SuperAdmin")]
 public class ESewaConfigurationsController(AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
