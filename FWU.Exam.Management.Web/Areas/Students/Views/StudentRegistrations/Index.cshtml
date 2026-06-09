@@ -139,11 +139,13 @@
             let searchTimeout = null;
             let totalRecords = 0;
 
+            const base = window.location.pathname.replace(/\/Students\/StudentRegistrations.*/, '');
+
             const loadData = async () => {
                 const query = encodeURIComponent(searchBox.value.trim());
 
                 try {
-                    const response = await fetch(`/Students/StudentRegistrations/GetPagedData?searchTerm=${query}&page=${page}&pageSize=${pageSize}`);
+                    const response = await fetch(`${base}/Students/StudentRegistrations/GetPagedData?searchTerm=${query}&page=${page}&pageSize=${pageSize}`);
                     const result = await response.json();
 
                     totalRecords = result.totalCount;
@@ -227,13 +229,13 @@
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                 </button>
                                 ` : ''}
-                                <a href="/Students/StudentRegistrations/Details/${item.id}" class="rounded hover:bg-sky-50 hover:text-sky-600 p-1.5 transition-colors" title="Details">
+                                <a href="${base}/Students/StudentRegistrations/Details/${item.id}" class="rounded hover:bg-sky-50 hover:text-sky-600 p-1.5 transition-colors" title="Details">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                 </a>
-                                <a href="/Students/StudentRegistrations/Edit/${item.id}" class="rounded hover:bg-indigo-50 hover:text-indigo-600 p-1.5 transition-colors" title="Edit">
+                                <a href="${base}/Students/StudentRegistrations/Edit/${item.id}" class="rounded hover:bg-indigo-50 hover:text-indigo-600 p-1.5 transition-colors" title="Edit">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                 </a>
-                                <a href="/Students/StudentRegistrations/Delete/${item.id}" class="rounded hover:bg-red-50 hover:text-red-600 p-1.5 transition-colors" title="Delete">
+                                <a href="${base}/Students/StudentRegistrations/Delete/${item.id}" class="rounded hover:bg-red-50 hover:text-red-600 p-1.5 transition-colors" title="Delete">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </a>
                             </div>
@@ -287,7 +289,7 @@
 
             document.getElementById('btnExportExcel').addEventListener('click', () => {
                 const query = encodeURIComponent(searchBox.value.trim());
-                window.location.href = `/Students/StudentRegistrations/ExportExcel?searchTerm=${query}`;
+                window.location.href = `${base}/Students/StudentRegistrations/ExportExcel?searchTerm=${query}`;
             });
 
             // Make it available globally for inline onclick handlers
@@ -295,7 +297,7 @@
                 if (!confirm(`Are you sure you want to mark this registration as ${status}?`)) return;
 
                 try {
-                    const response = await fetch(`/Students/StudentRegistrations/UpdateStatus?id=${id}&status=${status}`, {
+                    const response = await fetch(`${base}/Students/StudentRegistrations/UpdateStatus?id=${id}&status=${status}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                     });
