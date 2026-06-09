@@ -82,19 +82,19 @@
                     <tr>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Registration No</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Student Name</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Academic Year</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Level & College</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Faculty</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Program</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Category</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Contact Info</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 hidden lg:table-cell">Academic Year</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 hidden xl:table-cell">Level & College</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 hidden lg:table-cell">Faculty</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 hidden xl:table-cell">Program</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 hidden xl:table-cell">Category</th>
+                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 hidden md:table-cell">Contact Info</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">Status</th>
                         <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="registrationsBody" class="divide-y divide-gray-100 bg-white">
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center">
+                        <td colspan="10" class="px-6 py-12 text-center">
                             <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-teal-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             <span class="text-sm text-gray-500 font-medium">Loading registrations...</span>
                         </td>
@@ -182,31 +182,31 @@
                                 <div class="font-medium text-gray-900">${item.fullName || '-'}</div>
                             </div>
                         </td>
-                        <td class="whitespace-nowrap px-6 py-4">
+                        <td class="whitespace-nowrap px-6 py-4 hidden lg:table-cell">
                             <span class="inline-flex items-center rounded-md bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-700/10">
                                 ${item.academicYear || '-'}
                             </span>
                         </td>
-                        <td class="whitespace-nowrap px-6 py-4">
+                        <td class="whitespace-nowrap px-6 py-4 hidden xl:table-cell">
                             <div class="font-medium text-gray-900">${item.level || '-'}</div>
                             <div class="text-xs text-gray-500 mt-1 max-w-[180px] truncate" title="${item.college || ''}">${item.college || '-'}</div>
                         </td>
-                        <td class="whitespace-nowrap px-6 py-4">
+                        <td class="whitespace-nowrap px-6 py-4 hidden lg:table-cell">
                             <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700/10">
                                 ${item.faculty || '-'}
                             </span>
                         </td>
-                        <td class="whitespace-nowrap px-6 py-4">
+                        <td class="whitespace-nowrap px-6 py-4 hidden xl:table-cell">
                             <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
                                 ${item.program || '-'}
                             </span>
                         </td>
-                        <td class="whitespace-nowrap px-6 py-4">
+                        <td class="whitespace-nowrap px-6 py-4 hidden xl:table-cell">
                             <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
                                 ${item.category || '-'}
                             </span>
                         </td>
-                        <td class="whitespace-nowrap px-6 py-4">
+                        <td class="whitespace-nowrap px-6 py-4 hidden md:table-cell">
                             <div class="text-gray-900">${item.contactNumber || '-'}</div>
                             <div class="text-gray-500 text-xs mt-1">${item.email || '-'}</div>
                         </td>
