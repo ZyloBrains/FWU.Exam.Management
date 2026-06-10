@@ -86,9 +86,37 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         return await context.Set<BillTitle>().AnyAsync(bt => bt.Id == id);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesAsync()
+    public async Task<List<ExamSchedule>> GetExamSchedulesAsync(int? collegeId = null, int? facultyId = null)
     {
-        return await context.ExamSchedules.AsNoTracking().ToListAsync();
+        IQueryable<ExamSchedule> query = context.ExamSchedules.AsNoTracking();
+
+        if (collegeId.HasValue)
+        {
+            var programIds = context.CollegePrograms!
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .Distinct()
+                .ToList();
+
+            query = query.Where(e => programIds.Contains(e.ProgramId));
+        }
+        else if (facultyId.HasValue)
+        {
+            var collegeIds = context.Colleges
+                .Where(c => c.FacultyId == facultyId.Value)
+                .Select(c => c.Id)
+                .ToList();
+
+            var programIds = context.CollegePrograms!
+                .Where(cp => collegeIds.Contains(cp.CollegeId))
+                .Select(cp => cp.ProgramId)
+                .Distinct()
+                .ToList();
+
+            query = query.Where(e => programIds.Contains(e.ProgramId));
+        }
+
+        return await query.ToListAsync();
     }
 
     private static Expression<Func<BillTitle, object>> GetSortProperty(string sort)
