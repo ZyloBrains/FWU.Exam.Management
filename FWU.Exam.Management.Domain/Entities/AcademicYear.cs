@@ -1,17 +1,14 @@
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
-using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
 
-public class AcademicYear : ITenantScoped
+public class AcademicYear
 {
     [DisplayName("Academic Year ID")]
     public int Id { get; set; }
-    public int TenantId { get; set; }
-    public virtual Tenant? Tenant { get; set; }
 
     [DisplayName("Academic Year Code")]
     [Required]

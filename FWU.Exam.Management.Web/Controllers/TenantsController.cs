@@ -220,7 +220,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
             ["Faculties"] = await _context.Faculties.CountAsync(f => f.TenantId == tenantId),
             ["Colleges"] = await _context.Set<College>().CountAsync(c => c.TenantId == tenantId),
             ["College Programs"] = await _context.Set<CollegeProgram>().CountAsync(cp => cp.TenantId == tenantId),
-            ["Academic Years"] = await _context.AcademicYears.CountAsync(y => y.TenantId == tenantId),
+            ["Academic Years"] = await _context.AcademicYears.CountAsync(),
             ["Students"] = await _context.StudentRegistrations.CountAsync(s => s.TenantId == tenantId),
             ["Exam Schedules"] = await _context.ExamSchedules.CountAsync(e => e.TenantId == tenantId),
         };

@@ -1,16 +1,13 @@
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
-using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FWU.Exam.Management.Domain.Entities;
 
-public class Batch : ITenantScoped
+public class Batch
 {
     public int Id { get; set; }
-    public int TenantId { get; set; }
-    public virtual Tenant? Tenant { get; set; }
 
     public int AcademicYearId { get; set; }
 

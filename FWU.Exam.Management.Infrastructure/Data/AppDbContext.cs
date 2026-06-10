@@ -792,11 +792,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .IsUnique();
 
         builder.Entity<AcademicYear>()
-            .HasIndex(ay => new { ay.TenantId, ay.AcademicYearCode })
+            .HasIndex(ay => ay.AcademicYearCode)
             .IsUnique();
 
         builder.Entity<FiscalYear>()
-            .HasIndex(fy => new { fy.TenantId, fy.FiscalYearCode })
+            .HasIndex(fy => fy.FiscalYearCode)
             .IsUnique()
             .HasFilter("[FiscalYearCode] IS NOT NULL");
 
@@ -806,7 +806,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ExamScheduleCode] IS NOT NULL");
 
         builder.Entity<Semester>()
-            .HasIndex(s => new { s.TenantId, s.Code })
+            .HasIndex(s => s.Code)
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL");
 
