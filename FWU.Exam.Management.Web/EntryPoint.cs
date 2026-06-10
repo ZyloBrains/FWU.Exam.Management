@@ -5,6 +5,7 @@ using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
@@ -165,6 +166,7 @@ public partial class EntryPoint
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
             await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
