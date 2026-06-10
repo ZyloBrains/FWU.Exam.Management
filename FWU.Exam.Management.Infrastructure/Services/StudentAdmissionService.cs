@@ -3,11 +3,13 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentAdmissionService(AppDbContext context) : IStudentAdmissionService
+public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager) : IStudentAdmissionService
 {
     public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null)
     {
@@ -113,6 +115,32 @@ public class StudentAdmissionService(AppDbContext context) : IStudentAdmissionSe
             .Include(sa => sa.Program)
             .AsNoTracking()
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+    }
+
+    public async Task<List<StudentRegistration>> GetAvailableStudentRegistrationsAsync(int collegeId)
+    {
+        var admittedEmails = await context.StudentAdmissions
+            .Where(sa => sa.IsActive)
+            .Join(context.Users,
+                sa => sa.AppUserId,
+                u => u.Id,
+                (sa, u) => u.Email)
+            .Distinct()
+            .ToListAsync();
+
+        return await context.StudentRegistrations
+            .AsNoTracking()
+            .Include(sr => sr.Program)
+            .Where(sr => sr.CollegeId == collegeId && sr.IsActive)
+            .Where(sr => sr.Email != null && !admittedEmails.Contains(sr.Email))
+            .OrderBy(sr => sr.RegistrationNumber)
+            .ToListAsync();
+    }
+
+    public async Task<string?> GetAppUserIdByEmailAsync(string email)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        return user?.Id;
     }
 
     private IQueryable<StudentAdmission> BuildQuery(string? search, int? collegeId = null)

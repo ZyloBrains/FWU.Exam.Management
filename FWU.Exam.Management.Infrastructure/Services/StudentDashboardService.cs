@@ -35,8 +35,19 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Where(sa => sa.IsActive)
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
-        if (studentAdmission == null)
+        int programId;
+        if (studentAdmission != null)
+        {
+            programId = studentAdmission.ProgramsId;
+        }
+        else if (student.ProgramId.HasValue)
+        {
+            programId = student.ProgramId.Value;
+        }
+        else
+        {
             return [];
+        }
 
         var query = context.ExamSchedules!
             .AsNoTracking()
@@ -44,7 +55,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Include(es => es.Level)
             .Include(es => es.Semester)
             .Include(es => es.AcademicYear)
-            .Where(es => es.IsActive && es.ProgramId == studentAdmission.ProgramsId);
+            .Where(es => es.IsActive && es.ProgramId == programId);
 
         if (student.LevelId != 0)
         {

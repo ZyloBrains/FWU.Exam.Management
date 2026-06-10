@@ -67,7 +67,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Create(int? studentRegistrationId = null)
     {
         var collegeIds = await GetUserCollegeIdsAsync();
 
@@ -82,13 +82,58 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         }
 
         ViewBag.ProgramsId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
+        ViewBag.StudentRegistrationId = studentRegistrationId;
+
+        if (studentRegistrationId.HasValue)
+        {
+            var reg = await context.StudentRegistrations
+                .AsNoTracking()
+                .Include(r => r.Program)
+                .FirstOrDefaultAsync(r => r.Id == studentRegistrationId.Value);
+            if (reg != null)
+            {
+                ViewBag.SelectedStudent = reg;
+            }
+        }
+
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(StudentAdmission admission)
+    public async Task<IActionResult> Create(StudentAdmission admission, int? studentRegistrationId)
     {
+        if (studentRegistrationId.HasValue)
+        {
+            var reg = await context.StudentRegistrations
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == studentRegistrationId.Value);
+
+            if (reg != null && !string.IsNullOrEmpty(reg.Email))
+            {
+                var appUserId = await admissionService.GetAppUserIdByEmailAsync(reg.Email);
+                if (!string.IsNullOrEmpty(appUserId))
+                {
+                    admission.AppUserId = appUserId;
+                }
+
+                if (string.IsNullOrEmpty(admission.CollegeRollNumber))
+                {
+                    admission.CollegeRollNumber = reg.RegistrationNumber;
+                }
+
+                if (admission.ProgramsId == 0 && reg.ProgramId.HasValue)
+                {
+                    admission.ProgramsId = reg.ProgramId.Value;
+                }
+
+                if (admission.CollegeId == 0)
+                {
+                    admission.CollegeId = reg.CollegeId;
+                }
+            }
+        }
+
         if (ModelState.IsValid)
         {
             await admissionService.CreateAdmissionAsync(admission);
@@ -108,6 +153,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         }
 
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
+        ViewBag.StudentRegistrationId = studentRegistrationId;
         return View(admission);
     }
 
@@ -219,6 +265,36 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> SearchStudents(string search, int collegeId)
+    {
+        if (string.IsNullOrWhiteSpace(search) || search.Length < 2)
+            return Json(new List<object>());
+
+        var lowerSearch = search.ToLower();
+        var students = await context.StudentRegistrations
+            .AsNoTracking()
+            .Include(s => s.Program)
+            .Where(s => s.CollegeId == collegeId && s.IsActive)
+            .Where(s => (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearch))
+                     || (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearch))
+                     || (s.LastName != null && s.LastName.ToLower().Contains(lowerSearch))
+                     || (s.Email != null && s.Email.ToLower().Contains(lowerSearch)))
+            .OrderBy(s => s.RegistrationNumber)
+            .Take(20)
+            .Select(s => new
+            {
+                s.Id,
+                RegistrationNumber = s.RegistrationNumber ?? "",
+                FullName = (s.FirstName + " " + s.LastName).Trim(),
+                Email = s.Email ?? "",
+                Program = s.Program != null ? s.Program.ProgramName : ""
+            })
+            .ToListAsync();
+
+        return Json(students);
     }
 
     [HttpGet]
