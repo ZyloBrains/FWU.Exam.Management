@@ -131,6 +131,11 @@ public partial class EntryPoint
         app.MapStaticAssets();
 
         app.MapControllerRoute(
+            name: "tenantArea",
+            pattern: "tenant/{tenantCode}/{area:exists}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        app.MapControllerRoute(
             name: "tenant",
             pattern: "tenant/{tenantCode}/{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets();

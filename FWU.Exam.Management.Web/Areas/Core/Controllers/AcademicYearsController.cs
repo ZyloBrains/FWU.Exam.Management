@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class AcademicYearsController(IAcademicYearService academicYearService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, int pageSize = 10)

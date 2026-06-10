@@ -182,16 +182,6 @@ public static class ReferenceDataSeeder
                     TenantType = TenantType.Standard,
                     IsActive = true,
                 },
-                new Tenant
-                {
-                    Name = "Engineering",
-                    OfficeCode = "ENG",
-                    ContactNumber = "01-7654321",
-                    Address = "Kathmandu, Nepal",
-                    Email = "info@engineering.fwu.edu.np",
-                    TenantType = TenantType.Standard,
-                    IsActive = true,
-                },
             });
             await context.SaveChangesAsync();
         }

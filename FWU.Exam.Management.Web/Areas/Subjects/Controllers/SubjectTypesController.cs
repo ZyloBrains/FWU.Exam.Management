@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
 public class SubjectTypesController : Controller
 {
     private readonly ISubjectTypeService _subjectTypeService;
