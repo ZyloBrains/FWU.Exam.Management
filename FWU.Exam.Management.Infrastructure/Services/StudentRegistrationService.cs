@@ -216,6 +216,16 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             registration.IsActive = isActive;
             await context.SaveChangesAsync();
+
+            if (!string.IsNullOrWhiteSpace(registration.Email))
+            {
+                var user = await userManager.FindByEmailAsync(registration.Email);
+                if (user != null)
+                {
+                    user.IsActive = isActive;
+                    await userManager.UpdateAsync(user);
+                }
+            }
         }
     }
 
@@ -353,7 +363,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 UserName = studentRegistration.Email,
                 Email = studentRegistration.Email,
                 FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim(),
-                IsActive = studentRegistration.IsActive,
+                IsActive = true,
                 FacultyId = studentRegistration.FacultyId,
                 CollegeId = studentRegistration.CollegeId
             };
