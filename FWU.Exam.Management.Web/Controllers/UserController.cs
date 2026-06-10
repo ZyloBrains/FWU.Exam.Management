@@ -54,6 +54,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 FullName = user.FullName,
                 FacultyName = user.Faculty?.Name,
                 CollegeName = user.College?.Name,
+                IsActive = user.IsActive,
                 Roles = await userManager.GetRolesAsync(user)
             });
         }
@@ -99,7 +100,8 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             {
                 UserName = model.Email,
                 Email = model.Email,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                IsActive = true
             };
 
             if (model.SelectedRole is Role.FacultyAdmin)
@@ -183,6 +185,19 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(string id)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        user.IsActive = !user.IsActive;
+        await userManager.UpdateAsync(user);
+
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Delete(string id)
