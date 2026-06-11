@@ -3,11 +3,8 @@
 @{
     ViewData["Title"] = "Subject Offerings";
     var totalCount = ViewBag.TotalCount ?? Model.Count();
-    var currentPage = ViewBag.CurrentPage ?? 1;
-    var totalPages = ViewBag.TotalPages ?? 1;
-    var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
-    var currentSort = ViewBag.Sort as string ?? "Subject";
+    var currentSort = ViewBag.Sort as string ?? "Program";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
 }
 
@@ -20,7 +17,10 @@
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Subject Offerings</h1>
                 <p class="text-sm text-gray-500 mt-0.5">
-                    <span class="font-semibold text-gray-700">@totalCount</span> total records
+                    <span class="font-semibold text-gray-700">@totalCount</span> records
+                </p>
+                <p class="text-xs text-gray-400 mt-1 max-w-xl">
+                    Assigns subjects to specific programs and semesters with assessment configuration (theory, practical, internal marks breakdown).
                 </p>
             </div>
         </div>
@@ -35,22 +35,18 @@
                      x-transition
                      class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
                     <a asp-action="ExportToCsv" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> CSV (Current Page)
+                        <i class="fas fa-file-csv text-blue-600"></i> Export CSV
                     </a>
                     <a asp-action="ExportToPdf" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
+                        <i class="fas fa-file-pdf text-red-600"></i> Export PDF
                     </a>
                 </div>
             </div>
@@ -81,14 +77,13 @@
             </div>
             <input type="hidden" name="sort" value="@currentSort" />
             <input type="hidden" name="sortDir" value="@currentSortDir" />
-            <input type="hidden" name="pageSize" value="@pageSize" />
             <div class="flex gap-2">
                 <button type="submit" class="px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
                     Search
                 </button>
                 @if (!string.IsNullOrEmpty(currentSearch))
                 {
-                    <a asp-action="Index" asp-area="Subjects" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                    <a asp-action="Index" asp-area="Subjects" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                            class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-times text-xs"></i> Clear
                     </a>
@@ -99,162 +94,261 @@
 
     <div class="flex flex-wrap items-center gap-2 text-sm">
         <span class="text-gray-500">Sort by:</span>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="subject" asp-route-sortDir="@(currentSort.ToLower() == "subject" && currentSortDir == "asc" ? "desc" : "asc")"
+        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="subject" asp-route-sortDir="@(currentSort.ToLower() == "subject" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "subject" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
             Subject @(currentSort.ToLower() == "subject" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="program" asp-route-sortDir="@(currentSort.ToLower() == "program" && currentSortDir == "asc" ? "desc" : "asc")"
+        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="program" asp-route-sortDir="@(currentSort.ToLower() == "program" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "program" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
             Program @(currentSort.ToLower() == "program" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="semester" asp-route-sortDir="@(currentSort.ToLower() == "semester" && currentSortDir == "asc" ? "desc" : "asc")"
+        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="semester" asp-route-sortDir="@(currentSort.ToLower() == "semester" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "semester" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
             Semester @(currentSort.ToLower() == "semester" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="displayorder" asp-route-sortDir="@(currentSort.ToLower() == "displayorder" && currentSortDir == "asc" ? "desc" : "asc")"
+        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="displayorder" asp-route-sortDir="@(currentSort.ToLower() == "displayorder" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "displayorder" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
             Order @(currentSort.ToLower() == "displayorder" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
     </div>
 
-    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-        <table class="w-full text-sm text-left">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Subject</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Semester</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Theory</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Practical</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Internal</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @foreach (var item in Model)
-                {
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-4 py-3">
-                            <div class="font-medium text-gray-800">@(item.SubjectCatalog?.SubjectName ?? "-")</div>
-                            <div class="text-xs text-gray-500">@(item.SubjectCatalog?.SubjectCode ?? "-")</div>
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">@(item.Program?.ProgramName ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.Semester?.Name ?? "-")</td>
-                        <td class="px-4 py-3">
-                            @if (item.IsCompulsory)
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Compulsory</span>
-                            }
-                            else
-                            {
-                                <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Elective</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">
-                            @if (item.HasTheory)
-                            {
-                                <span class="text-xs">@item.TheoryFullMarks / @item.TheoryPassMarks</span>
-                            }
-                            else
-                            {
-                                <span class="text-xs text-gray-400">-</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">
-                            @if (item.HasPractical)
-                            {
-                                <span class="text-xs">@(item.PracticalFullMarks ?? 0) / @(item.PracticalPassMarks ?? 0)</span>
-                            }
-                            else
-                            {
-                                <span class="text-xs text-gray-400">-</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3 text-gray-600">
-                            @if (item.HasInternal)
-                            {
-                                <span class="text-xs">Th:@(item.InternalTheoryFullMarks ?? 0)/@(item.InternalTheoryPassMarks ?? 0) Pr:@(item.InternalPracticalFullMarks ?? 0)/@(item.InternalPracticalPassMarks ?? 0)</span>
-                            }
-                            else
-                            {
-                                <span class="text-xs text-gray-400">-</span>
-                            }
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
-                                    <i class="fas fa-eye text-xs"></i>
-                                </a>
-                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
-                                {
-                                    <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
-                                        <i class="fas fa-edit text-xs"></i>
-                                    </a>
-                                    <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
-                                        <i class="fas fa-trash text-xs"></i>
-                                    </a>
-                                }
+    @{
+        var grouped = Model
+            .GroupBy(s => new { s.Program?.Id, s.Program?.ProgramName })
+            .OrderBy(g => g.Key.ProgramName)
+            .Select(g => new
+            {
+                g.Key.ProgramName,
+                g.Key.Id,
+                Semesters = g
+                    .GroupBy(s => new { s.Semester?.Id, s.Semester?.Name, s.Semester?.Number })
+                    .OrderBy(sg => sg.Key.Number ?? 0)
+                    .Select(sg => new
+                    {
+                        sg.Key.Name,
+                        sg.Key.Id,
+                        Offerings = sg.OrderBy(o => o.DisplayOrder).ThenBy(o => o.SubjectCatalog?.SubjectName)
+                    })
+            });
+    }
+
+    @{ var progIdx = 0; }
+    <div class="hidden lg:block space-y-6" x-data="{ expandedProgram: null }">
+        @foreach (var programGroup in grouped)
+        {
+            var progId = "p" + progIdx;
+            progIdx++;
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button @@click="expandedProgram = expandedProgram === '@progId' ? null : '@progId'"
+                        class="w-full flex items-center justify-between px-5 py-4 bg-gradient-to-r from-indigo-50 to-white hover:from-indigo-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-graduation-cap text-indigo-600 text-sm"></i>
+                        </div>
+                        <div class="text-left">
+                            <h2 class="text-base font-bold text-gray-800">@programGroup.ProgramName</h2>
+                            <p class="text-xs text-gray-500">@programGroup.Semesters.Count() semester(s) · @programGroup.Semesters.Sum(s => s.Offerings.Count()) subject(s)</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform"
+                       :class="{ 'rotate-180': expandedProgram === '@progId' }"></i>
+                </button>
+
+                <div x-show="expandedProgram === '@progId'"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="divide-y divide-gray-100">
+                    @foreach (var semesterGroup in programGroup.Semesters)
+                    {
+                        <div class="px-5 py-3 bg-gray-50/50">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-folder-open text-amber-500 text-xs"></i>
+                                <h3 class="text-sm font-semibold text-gray-700">@semesterGroup.Name</h3>
+                                <span class="text-xs text-gray-400">(@semesterGroup.Offerings.Count() subjects)</span>
                             </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                        <table class="w-full text-sm text-left">
+                            <thead>
+                                <tr class="border-b border-gray-100">
+                                    <th class="px-5 py-2 text-xs font-medium text-gray-400 uppercase w-8">#</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Subject</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Type</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Theory</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Practical</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Internal</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                @foreach (var item in semesterGroup.Offerings)
+                                {
+                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                        <td class="px-5 py-2.5 text-xs text-gray-400">@item.DisplayOrder</td>
+                                        <td class="px-4 py-2.5">
+                                            <div class="text-sm font-medium text-gray-800">@(item.SubjectCatalog?.SubjectName ?? "-")</div>
+                                            <div class="text-xs text-gray-400">@(item.SubjectCatalog?.SubjectCode ?? "-")</div>
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            @if (item.IsCompulsory)
+                                            {
+                                                <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Compulsory</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Elective</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            @if (item.HasTheory)
+                                            {
+                                                <div class="text-sm text-gray-700">@item.TheoryFullMarks</div>
+                                                <div class="text-xs text-gray-400">pass @item.TheoryPassMarks</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-gray-300">-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            @if (item.HasPractical)
+                                            {
+                                                <div class="text-sm text-gray-700">@(item.PracticalFullMarks ?? 0)</div>
+                                                <div class="text-xs text-gray-400">pass @(item.PracticalPassMarks ?? 0)</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-gray-300">-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5">
+                                            @if (item.HasInternal)
+                                            {
+                                                <div class="text-xs text-gray-600">Th: <span class="text-gray-800">@(item.InternalTheoryFullMarks ?? 0)</span></div>
+                                                <div class="text-xs text-gray-600">Pr: <span class="text-gray-800">@(item.InternalPracticalFullMarks ?? 0)</span></div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-xs text-gray-300">-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5 text-right">
+                                            <div class="flex items-center justify-end gap-1">
+                                                <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                                    <i class="fas fa-eye text-xs"></i>
+                                                </a>
+                                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                                {
+                                                    <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                                        <i class="fas fa-edit text-xs"></i>
+                                                    </a>
+                                                    <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                                        <i class="fas fa-trash text-xs"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        }
         @if (!Model.Any())
         {
-            <div class="text-center py-12 text-gray-500">
+            <div class="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
                 <i class="fas fa-layer-group text-4xl mb-3 opacity-50"></i>
                 <p>No subject offerings found.</p>
             </div>
         }
     </div>
 
-    <div class="lg:hidden space-y-3">
-        @foreach (var item in Model)
+    @{ var progIdxMobile = 0; }
+    <div class="lg:hidden space-y-4" x-data="{ expandedProgramMobile: null }">
+        @foreach (var programGroup in grouped)
         {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-layer-group text-indigo-600 text-sm"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-800 text-sm">@(item.SubjectCatalog?.SubjectName ?? "-")</h3>
-                            <p class="text-xs text-gray-500">@(item.Program?.ProgramName ?? "No Program") | @(item.Semester?.Name ?? "-")</p>
+            var progIdMobile = "pm" + progIdxMobile;
+            progIdxMobile++;
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button @@click="expandedProgramMobile = expandedProgramMobile === '@progIdMobile' ? null : '@progIdMobile'"
+                        class="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-indigo-50 to-white hover:from-indigo-100 transition-colors">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-graduation-cap text-indigo-500 text-sm"></i>
+                        <div class="text-left">
+                            <h2 class="text-sm font-bold text-gray-800">@programGroup.ProgramName</h2>
+                            <p class="text-xs text-gray-400">@programGroup.Semesters.Sum(s => s.Offerings.Count()) subjects</p>
                         </div>
                     </div>
-                    <div>
-                        @if (item.IsCompulsory)
-                        {
-                            <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Compulsory</span>
-                        }
-                        else
-                        {
-                            <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">Elective</span>
-                        }
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-sm border-t border-gray-100 pt-3">
-                    <div class="text-gray-500 text-xs">Theory</div>
-                    <div class="text-gray-500 text-xs">Practical</div>
-                    <div class="text-gray-500 text-xs">Internal</div>
-                    <div class="text-gray-800">@(item.HasTheory ? $"{item.TheoryFullMarks}/{item.TheoryPassMarks}" : "-")</div>
-                    <div class="text-gray-800">@(item.HasPractical ? $"{item.PracticalFullMarks}/{item.PracticalPassMarks}" : "-")</div>
-                    <div class="text-gray-800">@(item.HasInternal ? "Yes" : "-")</div>
-                </div>
-                <div class="flex items-center gap-2 pt-4 border-t border-gray-100 mt-2">
-                    <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
-                        Details
-                    </a>
-                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                    <i class="fas fa-chevron-down text-gray-400 transition-transform text-xs"
+                       :class="{ 'rotate-180': expandedProgramMobile === '@progIdMobile' }"></i>
+                </button>
+
+                <div x-show="expandedProgramMobile === '@progIdMobile'"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="divide-y divide-gray-100">
+                    @foreach (var semesterGroup in programGroup.Semesters)
                     {
-                        <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
-                            Edit
-                        </a>
-                        <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
-                            Delete
-                        </a>
+                        <div class="px-4 py-2 bg-gray-50/80">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-folder-open text-amber-500 text-xs"></i>
+                                <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wider">@semesterGroup.Name</h3>
+                                <span class="text-xs text-gray-400">(@semesterGroup.Offerings.Count())</span>
+                            </div>
+                        </div>
+                        @foreach (var item in semesterGroup.Offerings)
+                        {
+                            <div class="px-4 py-3 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs text-gray-400 font-mono">#@item.DisplayOrder</span>
+                                            <h4 class="text-sm font-medium text-gray-800 truncate">@(item.SubjectCatalog?.SubjectName ?? "-")</h4>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-0.5">@(item.SubjectCatalog?.SubjectCode ?? "-")</p>
+                                    </div>
+                                    @if (item.IsCompulsory)
+                                    {
+                                        <span class="shrink-0 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Compulsory</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="shrink-0 px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">Elective</span>
+                                    }
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 mt-2 text-xs border-t border-gray-50 pt-2">
+                                    <div>
+                                        <span class="text-gray-400">Theory</span>
+                                        <div class="text-gray-700 font-medium">@(item.HasTheory ? $"{item.TheoryFullMarks}/{item.TheoryPassMarks}" : "-")</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Practical</span>
+                                        <div class="text-gray-700 font-medium">@(item.HasPractical ? $"{item.PracticalFullMarks}/{item.PracticalPassMarks}" : "-")</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Internal</span>
+                                        <div class="text-gray-700 font-medium">@(item.HasInternal ? "Yes" : "-")</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+                                    <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                                        Details
+                                    </a>
+                                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                    {
+                                        <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-1.5 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
+                                            Edit
+                                        </a>
+                                        <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                                            Delete
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
                     }
                 </div>
             </div>
@@ -268,91 +362,5 @@
         }
     </div>
 
-    @if (totalPages > 1)
-    {
-        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
-            <div class="flex flex-1 justify-between sm:hidden">
-                @if (currentPage > 1)
-                {
-                    <a asp-action="Index" asp-area="Subjects" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Previous
-                    </a>
-                }
-                else
-                {
-                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
-                }
-                @if (currentPage < totalPages)
-                {
-                    <a asp-action="Index" asp-area="Subjects" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Next
-                    </a>
-                }
-                else
-                {
-                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
-                }
-            </div>
-            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
-                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
-                        of <span class="font-medium">@totalCount</span> results
-                    </p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Rows:</label>
-                        <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
-                            <option value="10" selected="@(pageSize == 10)">10</option>
-                            <option value="25" selected="@(pageSize == 25)">25</option>
-                            <option value="50" selected="@(pageSize == 50)">50</option>
-                            <option value="100" selected="@(pageSize == 100)">100</option>
-                        </select>
-                    </div>
-                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
-                        <a asp-action="Index" asp-area="Subjects" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                        </a>
-                        @{
-                            var startPage = Math.Max(1, currentPage - 2);
-                            var endPage = Math.Min(totalPages, currentPage + 2);
-                            if (startPage > 1)
-                            {
-                                <a asp-action="Index" asp-area="Subjects" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
-                                if (startPage > 2)
-                                {
-                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
-                                }
-                            }
-                            for (int i = startPage; i <= endPage; i++)
-                            {
-                                <a asp-action="Index" asp-area="Subjects" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-indigo-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
-                            }
-                            if (endPage < totalPages)
-                            {
-                                if (endPage < totalPages - 1)
-                                {
-                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
-                                }
-                                <a asp-action="Index" asp-area="Subjects" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
-                            }
-                        }
-                        <a asp-action="Index" asp-area="Subjects" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
-                            <i class="fas fa-chevron-right text-xs"></i>
-                        </a>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    }
+
 </div>
