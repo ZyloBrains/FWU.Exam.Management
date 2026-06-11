@@ -98,4 +98,45 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
             ActiveExamSchedules = activeExamSchedules
         };
     }
+
+    public async Task<DashboardStats> GetCollegeDashboardStatsAsync(int collegeId)
+    {
+        var totalRoles = await roleManager.Roles.CountAsync();
+        var totalPrograms = await context.Programs.CountAsync();
+        var totalExamSchedules = await context.ExamSchedules.CountAsync();
+        var totalSubjects = await context.SubjectCatalogs.CountAsync();
+        var totalAcademicYears = await context.AcademicYears.CountAsync();
+        var totalBanks = await context.Banks.CountAsync();
+        var totalBoards = await context.Boards.CountAsync();
+        var totalBatches = await context.Batches.CountAsync();
+        var activePrograms = await context.Programs.CountAsync(p => p.IsActive);
+        var activeExamSchedules = await context.ExamSchedules.CountAsync(e => e.IsActive);
+        var totalColleges = await context.Colleges.CountAsync(c => c.Id == collegeId);
+        var activeColleges = await context.Colleges.CountAsync(c => c.Id == collegeId && c.IsActive);
+        var totalStudents = await context.StudentRegistrations.CountAsync(s => s.CollegeId == collegeId);
+        var totalExamRegistrations = await context.ExamRegistrations.CountAsync(e => e.CollegeId == collegeId);
+        var activeStudents = await context.StudentRegistrations.CountAsync(s => s.CollegeId == collegeId && s.IsActive);
+        var totalUsers = await userManager.Users.CountAsync(u => u.CollegeId == collegeId);
+
+        return new DashboardStats
+        {
+            TotalFaculties = 1,
+            TotalUsers = totalUsers,
+            TotalRoles = totalRoles,
+            TotalColleges = totalColleges,
+            TotalPrograms = totalPrograms,
+            TotalStudents = totalStudents,
+            TotalExamSchedules = totalExamSchedules,
+            TotalExamRegistrations = totalExamRegistrations,
+            TotalSubjects = totalSubjects,
+            TotalAcademicYears = totalAcademicYears,
+            TotalBanks = totalBanks,
+            TotalBoards = totalBoards,
+            TotalBatches = totalBatches,
+            ActiveColleges = activeColleges,
+            ActivePrograms = activePrograms,
+            ActiveStudents = activeStudents,
+            ActiveExamSchedules = activeExamSchedules
+        };
+    }
 }

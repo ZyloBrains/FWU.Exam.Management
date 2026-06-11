@@ -129,7 +129,17 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     }
 
                     var roles = await userManager.GetRolesAsync(user);
+                    if (roles.Contains("SuperAdmin") || roles.Contains("SystemAdmin"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                    }
+
                     if (roles.Contains("FacultyAdmin"))
+                    {
+                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                    }
+
+                    if (roles.Contains("CollegeAdmin") || roles.Contains("Admin"))
                     {
                         return RedirectToAction("Index", "Dashboard", new { area = "" });
                     }

@@ -1,0 +1,83 @@
+@model RolePermissionViewModel
+
+@{
+    ViewData["Title"] = $"Edit Permissions - {Model.RoleName}";
+}
+
+<div class="container mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">
+            <i class="fas fa-shield-alt mr-2"></i>Permissions for <span class="text-indigo-600">@Model.RoleName</span>
+        </h1>
+        <a asp-action="Index" class="text-gray-600 hover:text-gray-900">
+            <i class="fas fa-arrow-left mr-1"></i>Back to Roles
+        </a>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <input type="hidden" name="id" value="@Model.RoleId" />
+
+        <div class="space-y-4">
+            @foreach (var group in Model.Groups)
+            {
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-700">
+                            <i class="fas fa-folder-open mr-2 text-indigo-500"></i>@group.GroupDisplayName
+                        </h3>
+                        <label class="flex items-center text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox"
+                                   class="group-selector rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2"
+                                   data-group="@group.GroupName" />
+                            Select All
+                        </label>
+                    </div>
+                    <div class="px-4 py-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach (var perm in group.Permissions)
+                            {
+                                <label class="flex items-start p-2 rounded hover:bg-gray-50 cursor-pointer @(perm.IsAssigned ? "bg-indigo-50" : "")">
+                                    <input type="checkbox"
+                                           name="permissionIds"
+                                           value="@perm.Id"
+                                           @(perm.IsAssigned ? "checked" : "")
+                                           class="perm-checkbox mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                           data-group="@group.GroupName" />
+                                    <div class="ml-3">
+                                        <span class="text-sm font-medium text-gray-700">@perm.DisplayName</span>
+                                        @if (!string.IsNullOrEmpty(perm.Description))
+                                        {
+                                            <p class="text-xs text-gray-500">@perm.Description</p>
+                                        }
+                                        <code class="text-xs text-gray-400">@perm.Name</code>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="mt-6 flex items-center gap-3">
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <i class="fas fa-save mr-1"></i>Save Permissions
+            </button>
+            <a asp-action="Index" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.group-selector').forEach(function(selectAll) {
+            selectAll.addEventListener('change', function() {
+                var group = this.dataset.group;
+                var checkboxes = document.querySelectorAll('.perm-checkbox[data-group="' + group + '"]');
+                checkboxes.forEach(function(cb) { cb.checked = selectAll.checked; });
+            });
+        });
+    </script>
+}

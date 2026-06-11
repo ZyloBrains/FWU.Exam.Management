@@ -169,7 +169,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             PaymentRequestLogId = logId,
             ResponseTimestamp = DateTime.UtcNow,
             IsSuccess = isSuccess,
-            ResponseMessage = isSuccess ? "Payment verified via eSewa callback" : "Payment failed via eSewa callback",
+            ResponseMessage = isSuccess ? "Payment verified successfully" : "Payment failed",
             FullResponse = responseData
         });
 

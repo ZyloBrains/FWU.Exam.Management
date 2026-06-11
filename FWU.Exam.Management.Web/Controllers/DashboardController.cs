@@ -27,7 +27,15 @@ public class DashboardController(IDashboardService dashboardService, UserManager
                 return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
         }
 
-        var stats = await dashboardService.GetDashboardStatsAsync();
+        DashboardStats stats;
+        if ((primaryRole == "CollegeAdmin" || primaryRole == "Admin") && user.CollegeId.HasValue)
+        {
+            stats = await dashboardService.GetCollegeDashboardStatsAsync(user.CollegeId.Value);
+        }
+        else
+        {
+            stats = await dashboardService.GetDashboardStatsAsync();
+        }
 
         var vm = new DashboardViewModel
         {

@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
+using FWU.Exam.Management.Infrastructure.Services.Permissions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
@@ -105,6 +106,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IKhaltiService, KhaltiService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -155,6 +157,9 @@ public partial class EntryPoint
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+            var uatResult = await PermissionSeeder.VerifyUatAsync(scope.ServiceProvider);
+            Console.WriteLine(uatResult);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);

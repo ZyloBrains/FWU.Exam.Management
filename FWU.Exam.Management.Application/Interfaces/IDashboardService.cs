@@ -6,6 +6,7 @@ public interface IDashboardService
 {
     Task<DashboardStats> GetDashboardStatsAsync();
     Task<DashboardStats> GetFacultyDashboardStatsAsync(int facultyId);
+    Task<DashboardStats> GetCollegeDashboardStatsAsync(int collegeId);
 }
 
 public class DashboardStats
