@@ -14,4 +14,6 @@ public interface ISubjectCatalogService
     Task DeleteSubjectCatalogAsync(int id);
     Task<bool> SubjectCatalogExistsAsync(int id);
     Task<List<SubjectType>> GetSelectListsAsync(int? subjectTypeId = null);
+    Task BulkCreateAsync(List<SubjectCatalog> items);
+    Task<List<string?>> GetExistingSubjectCodesAsync();
 }

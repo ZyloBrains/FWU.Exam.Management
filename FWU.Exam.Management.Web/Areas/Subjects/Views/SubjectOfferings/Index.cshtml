@@ -92,25 +92,7 @@
         </form>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2 text-sm">
-        <span class="text-gray-500">Sort by:</span>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="subject" asp-route-sortDir="@(currentSort.ToLower() == "subject" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "subject" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Subject @(currentSort.ToLower() == "subject" ? (currentSortDir == "asc" ? "?" : "?") : "")
-        </a>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="program" asp-route-sortDir="@(currentSort.ToLower() == "program" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "program" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Program @(currentSort.ToLower() == "program" ? (currentSortDir == "asc" ? "?" : "?") : "")
-        </a>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="semester" asp-route-sortDir="@(currentSort.ToLower() == "semester" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "semester" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Semester @(currentSort.ToLower() == "semester" ? (currentSortDir == "asc" ? "?" : "?") : "")
-        </a>
-        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-sort="displayorder" asp-route-sortDir="@(currentSort.ToLower() == "displayorder" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "displayorder" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Order @(currentSort.ToLower() == "displayorder" ? (currentSortDir == "asc" ? "?" : "?") : "")
-        </a>
-    </div>
+
 
     @{
         var grouped = Model
