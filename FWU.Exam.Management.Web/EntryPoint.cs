@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.Logging;
 using FWU.Exam.Management.Web.Middleware;
 
 public partial class EntryPoint
@@ -107,6 +108,10 @@ public partial class EntryPoint
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+        var logDir = Path.Combine(builder.Environment.ContentRootPath, "logs");
+        builder.Logging.AddFileLogger(logDir);
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

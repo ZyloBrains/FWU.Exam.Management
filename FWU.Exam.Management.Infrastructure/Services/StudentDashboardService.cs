@@ -93,11 +93,11 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<decimal> GetPracticalChargeForProgramAsync(int programId)
     {
-        var charge = await context.Set<ProgramSubjectPracticalCharge>()
+        var billTitle = await context.Set<BillTitle>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(pspc => pspc.ProgramsId == programId);
+            .FirstOrDefaultAsync(bt => bt.ProgramsId == programId && bt.FeeType == "Practical" && bt.IsActive);
 
-        return charge?.PracticalSubjectCharge ?? 0;
+        return billTitle?.Amount ?? 0;
     }
 
     public async Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId)

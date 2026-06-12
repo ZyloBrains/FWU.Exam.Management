@@ -12,4 +12,5 @@ public interface IBillTitleService
     Task DeleteBillTitleAsync(int id);
     Task<bool> BillTitleExistsAsync(int id);
     Task<List<Domain.Entities.Exams.ExamSchedule>> GetExamSchedulesAsync();
+    Task<List<Domain.Entities.Program>> GetProgramsAsync();
 }

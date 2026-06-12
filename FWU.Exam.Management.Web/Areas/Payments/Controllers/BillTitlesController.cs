@@ -41,14 +41,16 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Bill Title Name,Category,Amount,Exam Schedule,Applicable Date,Through Date,Status");
+        sb.AppendLine("Bill Title Name,Type,Category,Amount,Exam Schedule,Program,Applicable Date,Through Date,Status");
 
         foreach (var bt in items)
         {
             sb.AppendLine($"{EscapeCsv(bt.BillTitleName)}," +
+                           $"{EscapeCsv(bt.FeeType ?? "Theory")}," +
                            $"{EscapeCsv(bt.Category ?? "-")}," +
                            $"{bt.Amount?.ToString("F2") ?? "-"}," +
-                           $"{EscapeCsv(bt.ExamSchedule?.ExamScheduleName ?? "-")}," +
+                           $"{EscapeCsv(bt.ExamSchedule?.ExamScheduleName ?? bt.Program?.ProgramName ?? "-")}," +
+                           $"{EscapeCsv(bt.Program?.ProgramName ?? "-")}," +
                            $"{bt.ApplicableDate?.ToString("yyyy-MM-dd") ?? "-"}," +
                            $"{bt.ThroughDate?.ToString("yyyy-MM-dd") ?? "-"}," +
                            $"{(bt.IsActive ? "Active" : "Inactive")}");
@@ -86,13 +88,15 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
     public async Task<IActionResult> Create()
     {
         var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var programs = await billTitleService.GetProgramsAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName");
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
+    public async Task<IActionResult> Create([Bind("Id,BillTitleName,FeeType,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,ProgramsId")] BillTitle billTitle)
     {
         if (ModelState.IsValid)
         {
@@ -100,7 +104,9 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
             return RedirectToAction(nameof(Index));
         }
         var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var programs = await billTitleService.GetProgramsAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 
@@ -112,13 +118,15 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         if (billTitle == null) return NotFound();
 
         var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var programs = await billTitleService.GetProgramsAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,FeeType,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,ProgramsId")] BillTitle billTitle)
     {
         if (id != billTitle.Id) return NotFound();
 
@@ -137,7 +145,9 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
             return RedirectToAction(nameof(Index));
         }
         var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var programs = await billTitleService.GetProgramsAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 

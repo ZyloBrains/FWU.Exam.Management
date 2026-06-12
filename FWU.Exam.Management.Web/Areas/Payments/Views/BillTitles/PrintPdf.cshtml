@@ -38,9 +38,10 @@
         <thead>
             <tr>
                 <th>Bill Title Name</th>
+                <th>Type</th>
                 <th>Category</th>
                 <th>Amount</th>
-                <th>Exam Schedule</th>
+                <th>Schedule / Program</th>
                 <th>Applicable Date</th>
                 <th>Through Date</th>
                 <th>Status</th>
@@ -51,9 +52,10 @@
             {
                 <tr>
                     <td>@item.BillTitleName</td>
+                    <td>@(item.FeeType ?? "Theory")</td>
                     <td>@(item.Category ?? "-")</td>
                     <td>@(item.Amount?.ToString("N2") ?? "-")</td>
-                    <td>@(item.ExamSchedule?.ExamScheduleName ?? "-")</td>
+                    <td>@(item.ExamSchedule?.ExamScheduleName ?? item.Program?.ProgramName ?? "-")</td>
                     <td>@(item.ApplicableDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                     <td>@(item.ThroughDate?.ToString("yyyy-MM-dd") ?? "-")</td>
                     <td>@(item.IsActive ? "Active" : "Inactive")</td>
