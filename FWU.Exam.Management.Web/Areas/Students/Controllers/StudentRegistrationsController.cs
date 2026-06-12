@@ -10,11 +10,12 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Identity;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+[RequirePermission("students.view")]
 public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -58,6 +59,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return View(studentRegistration);
     }
 
+    [RequirePermission("students.create")]
     public async Task<IActionResult> Create()
     {
         var selectLists = await studentRegistrationService.GetSelectListDataAsync();
@@ -67,6 +69,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("students.create")]
     public async Task<IActionResult> Create([Bind("LevelId,DepartmentId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBS,DateOfBirthAD,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,AcademicYearId,SemesterId")] StudentRegistration studentRegistration)
     {
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
@@ -86,6 +89,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return View(studentRegistration);
     }
 
+    [RequirePermission("students.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -100,6 +104,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("students.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,DepartmentId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,NepaliName,ContactNumber,Phone,Email,DateOfBirthBS,DateOfBirthAD,GenderId,IndexGroupId,BloodGroup,Nationality,Religion,IsActive,StudentRegistrationIndex,StudentCategoryId,VerifiedBy,VerifiedDate,PhotoAttachmentId,EthnicityId,EntranceRollNumber,EntryFormatId,IsRegistrationNumberGenerated,RowIndex,PreviousAcademicYear,PreviousSymbolNumber,StudentRegistrationSearchId,AcademicYearId,SemesterId,PermanentAddressId")] StudentRegistration studentRegistration)
     {
         if (id != studentRegistration.Id) return NotFound();
@@ -130,6 +135,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return View(studentRegistration);
     }
 
+    [RequirePermission("students.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -142,6 +148,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("students.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await studentRegistrationService.DeleteStudentRegistrationAsync(id);

@@ -6,11 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("provinces.view")]
 public class ProvincesController(IProvinceService provinceService) : Controller
 {
 
@@ -93,12 +94,14 @@ public class ProvincesController(IProvinceService provinceService) : Controller
     }
 
     // GET: Provinces/Create
+    [RequirePermission("provinces.create")]
     public IActionResult Create()
     {
         return View();
     }
 
     // POST: Provinces/Create
+    [RequirePermission("provinces.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,ProvinceName,Remarks,IsActive")] Province province)
@@ -112,6 +115,7 @@ public class ProvincesController(IProvinceService provinceService) : Controller
     }
 
     // GET: Provinces/Edit/5
+    [RequirePermission("provinces.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -128,6 +132,7 @@ public class ProvincesController(IProvinceService provinceService) : Controller
     }
 
     // POST: Provinces/Edit/5
+    [RequirePermission("provinces.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceName,Remarks,IsActive")] Province province)
@@ -160,6 +165,7 @@ public class ProvincesController(IProvinceService provinceService) : Controller
     }
 
     // GET: Provinces/Delete/5
+    [RequirePermission("provinces.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -177,6 +183,7 @@ public class ProvincesController(IProvinceService provinceService) : Controller
     }
 
     // POST: Provinces/Delete/5
+    [RequirePermission("provinces.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

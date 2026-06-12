@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("subjects.view")]
 public class SubjectCatalogsController : Controller
 {
     private readonly ISubjectCatalogService _subjectCatalogService;
@@ -89,6 +90,7 @@ public class SubjectCatalogsController : Controller
         return View(subjectCatalog);
     }
 
+    [RequirePermission("subjects.create")]
     public async Task<IActionResult> Create()
     {
         var subjectTypes = await _subjectCatalogService.GetSelectListsAsync();
@@ -98,6 +100,7 @@ public class SubjectCatalogsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjects.create")]
     public async Task<IActionResult> Create([Bind("Id,SubjectCode,SubjectName,ShortName,Description,CreditHours,SubjectTypeId,IsActive")] SubjectCatalog subjectCatalog)
     {
         if (ModelState.IsValid)
@@ -110,6 +113,7 @@ public class SubjectCatalogsController : Controller
         return View(subjectCatalog);
     }
 
+    [RequirePermission("subjects.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -124,6 +128,7 @@ public class SubjectCatalogsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjects.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectCode,SubjectName,ShortName,Description,CreditHours,SubjectTypeId,IsActive")] SubjectCatalog subjectCatalog)
     {
         if (id != subjectCatalog.Id) return NotFound();
@@ -147,6 +152,7 @@ public class SubjectCatalogsController : Controller
         return View(subjectCatalog);
     }
 
+    [RequirePermission("subjects.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -159,6 +165,7 @@ public class SubjectCatalogsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjects.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _subjectCatalogService.DeleteSubjectCatalogAsync(id);

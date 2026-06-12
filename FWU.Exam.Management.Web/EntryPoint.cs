@@ -6,7 +6,9 @@ using FWU.Exam.Management.Infrastructure.Services.Permissions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -107,6 +109,9 @@ public partial class EntryPoint
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         builder.Services.AddScoped<IPermissionService, PermissionService>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

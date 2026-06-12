@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("roles.view")]
 public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 {
 
@@ -29,12 +30,14 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     }
 
     // GET: Role/Create
+    [RequirePermission("roles.create")]
     public IActionResult Create()
     {
         return View();
     }
 
     // POST: Role/Create
+    [RequirePermission("roles.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(string roleName)
@@ -56,6 +59,7 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     }
 
     // GET: Role/Edit/id
+    [RequirePermission("roles.edit")]
     public async Task<IActionResult> Edit(string id)
     {
         if (id == null)
@@ -69,6 +73,7 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     }
 
     // POST: Role/Edit/id
+    [RequirePermission("roles.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string id, string roleName)
@@ -95,6 +100,7 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     }
 
     // GET: Role/Delete/id
+    [RequirePermission("roles.delete")]
     public async Task<IActionResult> Delete(string id)
     {
         if (id == null)
@@ -108,6 +114,7 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     }
 
     // POST: Role/Delete/id
+    [RequirePermission("roles.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)

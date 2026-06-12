@@ -1,12 +1,13 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("studentcategories.view")]
 public class StudentCategoriesController : Controller
 {
     private readonly IStudentCategoryService _studentCategoryService;
@@ -41,11 +42,13 @@ public class StudentCategoriesController : Controller
         return View(studentCategory);
     }
 
+    [RequirePermission("studentcategories.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("studentcategories.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,StudentCategoryName,IsActive,Remarks")] StudentCategory studentCategory)
@@ -66,6 +69,7 @@ public class StudentCategoriesController : Controller
         return View(studentCategory);
     }
 
+    [RequirePermission("studentcategories.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -76,6 +80,7 @@ public class StudentCategoriesController : Controller
         return View(studentCategory);
     }
 
+    [RequirePermission("studentcategories.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,StudentCategoryName,IsActive,Remarks")] StudentCategory studentCategory)
@@ -104,6 +109,7 @@ public class StudentCategoriesController : Controller
         return View(studentCategory);
     }
 
+    [RequirePermission("studentcategories.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -114,6 +120,7 @@ public class StudentCategoriesController : Controller
         return View(studentCategory);
     }
 
+    [RequirePermission("studentcategories.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

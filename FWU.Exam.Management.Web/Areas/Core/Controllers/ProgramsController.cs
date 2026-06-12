@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("programs.view")]
 public class ProgramsController(IProgramService programService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
@@ -90,6 +91,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.create")]
     public async Task<IActionResult> Create()
     {
         var (boards, departments, levels) = await programService.GetSelectListsAsync();
@@ -99,6 +101,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View();
     }
 
+    [RequirePermission("programs.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
@@ -116,6 +119,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -130,6 +134,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
@@ -158,6 +163,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -168,6 +174,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

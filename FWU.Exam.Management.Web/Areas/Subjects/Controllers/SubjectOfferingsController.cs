@@ -8,11 +8,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("subjectofferings.view")]
 public class SubjectOfferingsController : Controller
 {
     private readonly ISubjectOfferingService _subjectOfferingService;
@@ -92,6 +93,7 @@ public class SubjectOfferingsController : Controller
         return View(subjectOffering);
     }
 
+    [RequirePermission("subjectofferings.create")]
     public async Task<IActionResult> Create()
     {
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
@@ -113,6 +115,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjectofferings.create")]
     public async Task<IActionResult> Create(SubjectOfferingBulkCreateViewModel model)
     {
         if (model.ProgramId <= 0)
@@ -176,6 +179,7 @@ public class SubjectOfferingsController : Controller
         return View(model);
     }
 
+    [RequirePermission("subjectofferings.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -192,6 +196,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjectofferings.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering)
     {
         if (id != subjectOffering.Id) return NotFound();
@@ -217,6 +222,7 @@ public class SubjectOfferingsController : Controller
         return View(subjectOffering);
     }
 
+    [RequirePermission("subjectofferings.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -229,6 +235,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjectofferings.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _subjectOfferingService.DeleteSubjectOfferingAsync(id);

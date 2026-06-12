@@ -6,11 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("locallevels.view")]
 public class LocalLevelsController(ILocalLevelService localLevelService) : Controller
 {
 
@@ -95,6 +96,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // GET: LocalLevels/Create
+    [RequirePermission("locallevels.create")]
     public async Task<IActionResult> Create()
     {
         var districts = await localLevelService.GetActiveDistrictsAsync();
@@ -103,6 +105,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // POST: LocalLevels/Create
+    [RequirePermission("locallevels.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,DistrictId,LocalLevelName,LocalLevelType,IsActive")] LocalLevel localLevel)
@@ -119,6 +122,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // GET: LocalLevels/Edit/5
+    [RequirePermission("locallevels.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -138,6 +142,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // POST: LocalLevels/Edit/5
+    [RequirePermission("locallevels.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,DistrictId,LocalLevelName,LocalLevelType,IsActive")] LocalLevel localLevel)
@@ -173,6 +178,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // GET: LocalLevels/Delete/5
+    [RequirePermission("locallevels.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -190,6 +196,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // POST: LocalLevels/Delete/5
+    [RequirePermission("locallevels.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

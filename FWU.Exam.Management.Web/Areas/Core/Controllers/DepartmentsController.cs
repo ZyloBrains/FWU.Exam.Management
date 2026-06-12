@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
+[RequirePermission("departments.view")]
 public class DepartmentsController(IDepartmentService departmentService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DepartmentName", string sortDir = "asc", int pageSize = 10)
@@ -81,11 +82,13 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("departments.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,DepartmentCode,DepartmentName,ShortName,Remarks,IsActive")] Department department)
@@ -98,6 +101,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -108,6 +112,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,DepartmentCode,DepartmentName,ShortName,Remarks,IsActive")] Department department)
@@ -131,6 +136,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -141,6 +147,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

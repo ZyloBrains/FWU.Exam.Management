@@ -6,11 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("boards.view")]
 public class BoardsController(IBoardService boardService) : Controller
 {
 
@@ -95,12 +96,14 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // GET: Boards/Create
+    [RequirePermission("boards.create")]
     public IActionResult Create()
     {
         return View();
     }
 
     // POST: Boards/Create
+    [RequirePermission("boards.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,CountryId,BoardName,Remarks,IsActive")] Board board)
@@ -114,6 +117,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // GET: Boards/Edit/5
+    [RequirePermission("boards.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -130,6 +134,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // POST: Boards/Edit/5
+    [RequirePermission("boards.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,CountryId,BoardName,Remarks,IsActive")] Board board)
@@ -162,6 +167,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // GET: Boards/Delete/5
+    [RequirePermission("boards.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -179,6 +185,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // POST: Boards/Delete/5
+    [RequirePermission("boards.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

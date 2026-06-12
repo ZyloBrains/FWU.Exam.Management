@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ClosedXML.Excel;
@@ -75,7 +76,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
 
     // --- Admin actions ---
 
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [RequirePermission("entrance.view")]
     public async Task<IActionResult> Index(int page = 1, string search = null, string status = null, int? programId = null, int? academicYearId = null, int pageSize = 10)
     {
         ApplicationStatus? statusFilter = null;
@@ -100,7 +101,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
         return View(items);
     }
 
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [RequirePermission("entrance.view")]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -112,7 +113,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [RequirePermission("entrance.approve")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(int id)
     {
@@ -122,7 +123,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [RequirePermission("entrance.reject")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(int id, string remarks)
     {
@@ -142,7 +143,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpGet]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [RequirePermission("entrance.export")]
     public async Task<IActionResult> ExportToExcel(string search = null, string status = null, int? programId = null, int? academicYearId = null)
     {
         ApplicationStatus? statusFilter = null;

@@ -8,11 +8,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+[RequirePermission("studentadmissions.view")]
 public class StudentAdmissionsController(IStudentAdmissionService admissionService, IStudentRegistrationService studentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -67,6 +68,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
+    [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create()
     {
         var collegeIds = await GetUserCollegeIdsAsync();
@@ -87,6 +89,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create(StudentAdmission admission)
     {
         if (ModelState.IsValid)
@@ -111,6 +114,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
+    [RequirePermission("studentadmissions.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -126,6 +130,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("studentadmissions.edit")]
     public async Task<IActionResult> Edit(int id, StudentAdmission admission)
     {
         if (id != admission.Id) return NotFound();
@@ -152,6 +157,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
+    [RequirePermission("studentadmissions.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -164,6 +170,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("studentadmissions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await admissionService.DeleteAdmissionAsync(id);

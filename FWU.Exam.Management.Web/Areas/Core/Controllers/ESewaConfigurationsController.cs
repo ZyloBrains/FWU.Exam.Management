@@ -5,11 +5,12 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities.Payments;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("esewa.view")]
 public class ESewaConfigurationsController(AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
@@ -160,6 +161,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -169,6 +171,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,PostUrl,ProductCode,SecretKey,SuccessUrl,ServiceChargeAmount,VerifyUrl")] ESewaConfiguration eSewaConfiguration)

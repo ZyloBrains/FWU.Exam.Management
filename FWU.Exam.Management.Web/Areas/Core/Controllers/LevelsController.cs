@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("levels.view")]
 public class LevelsController(ILevelService levelService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "LevelDisplayOrder", string sortDir = "asc", int pageSize = 10)
@@ -82,11 +83,13 @@ public class LevelsController(ILevelService levelService) : Controller
         return View(level);
     }
 
+    [RequirePermission("levels.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("levels.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,LevelCode,LevelName,LevelDisplayOrder,Remarks,IsRunning,IsActive")] Level level)
@@ -99,6 +102,7 @@ public class LevelsController(ILevelService levelService) : Controller
         return View(level);
     }
 
+    [RequirePermission("levels.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -109,6 +113,7 @@ public class LevelsController(ILevelService levelService) : Controller
         return View(level);
     }
 
+    [RequirePermission("levels.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,LevelCode,LevelName,LevelDisplayOrder,Remarks,IsRunning,IsActive")] Level level)
@@ -132,6 +137,7 @@ public class LevelsController(ILevelService levelService) : Controller
         return View(level);
     }
 
+    [RequirePermission("levels.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -142,6 +148,7 @@ public class LevelsController(ILevelService levelService) : Controller
         return View(level);
     }
 
+    [RequirePermission("levels.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

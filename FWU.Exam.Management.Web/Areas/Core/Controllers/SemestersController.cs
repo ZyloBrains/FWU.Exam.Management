@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("semesters.view")]
 public class SemestersController(ISemesterService semesterService, IAcademicYearService academicYearService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
@@ -83,12 +84,14 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(semester);
     }
 
+    [RequirePermission("semesters.create")]
     public async Task<IActionResult> Create()
     {
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName");
         return View();
     }
 
+    [RequirePermission("semesters.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,Code,Name,Number,Year,StartDate,EndDate,Remark,AcademicYearId")] Semester semester)
@@ -102,6 +105,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(semester);
     }
 
+    [RequirePermission("semesters.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -113,6 +117,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(semester);
     }
 
+    [RequirePermission("semesters.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,Number,Year,StartDate,EndDate,Remark,AcademicYearId")] Semester semester)
@@ -137,6 +142,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(semester);
     }
 
+    [RequirePermission("semesters.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -147,6 +153,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(semester);
     }
 
+    [RequirePermission("semesters.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

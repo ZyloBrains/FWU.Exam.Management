@@ -5,6 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
+[RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
     UserManager<AppUser> userManager,
@@ -106,6 +107,7 @@ public class ExamSchedulesController(
         return View(examSchedule);
     }
 
+    [RequirePermission("examschedules.create")]
     public IActionResult Create()
     {
         var selectLists = examScheduleService.GetSelectListData();
@@ -114,9 +116,16 @@ public class ExamSchedulesController(
     }
 
     [HttpPost]
+    [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
+        var (collegeId, facultyId) = await GetScopeAsync();
+        if (collegeId.HasValue)
+            examSchedule.CollegeId = collegeId;
+        else if (facultyId.HasValue)
+            examSchedule.CollegeId = null;
+
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
@@ -127,6 +136,7 @@ public class ExamSchedulesController(
         return View(examSchedule);
     }
 
+    [RequirePermission("examschedules.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -140,10 +150,15 @@ public class ExamSchedulesController(
     }
 
     [HttpPost]
+    [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
+
+        var (collegeId, facultyId) = await GetScopeAsync();
+        if (collegeId.HasValue)
+            examSchedule.CollegeId = collegeId;
 
         if (ModelState.IsValid)
         {
@@ -164,6 +179,7 @@ public class ExamSchedulesController(
         return View(examSchedule);
     }
 
+    [RequirePermission("examschedules.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -175,6 +191,7 @@ public class ExamSchedulesController(
     }
 
     [HttpPost, ActionName("Delete")]
+    [RequirePermission("examschedules.delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {

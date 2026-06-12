@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 
 [Area("Payments")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[RequirePermission("paymenttypes.view")]
 public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "PaymentTypeName", string sortDir = "asc", int pageSize = 10)
@@ -78,11 +79,13 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return View(paymentType);
     }
 
+    [RequirePermission("paymenttypes.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("paymenttypes.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,PaymentTypeName,LogoUrl,IsActive")] PaymentType paymentType)
@@ -95,6 +98,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return View(paymentType);
     }
 
+    [RequirePermission("paymenttypes.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -105,6 +109,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return View(paymentType);
     }
 
+    [RequirePermission("paymenttypes.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,PaymentTypeName,LogoUrl,IsActive")] PaymentType paymentType)
@@ -128,6 +133,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return View(paymentType);
     }
 
+    [RequirePermission("paymenttypes.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -138,6 +144,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return View(paymentType);
     }
 
+    [RequirePermission("paymenttypes.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

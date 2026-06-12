@@ -8,6 +8,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Helpers;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("tenants.view")]
 public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
 {
     private readonly AppDbContext _context = context;
@@ -48,6 +49,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         return View(items);
     }
 
+    [RequirePermission("tenants.create")]
     public async Task<IActionResult> Create()
     {
         var model = new TenantCreateViewModel
@@ -57,6 +59,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         return View(model);
     }
 
+    [RequirePermission("tenants.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? logoFile)
@@ -135,6 +138,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
             .ToListAsync();
     }
 
+    [RequirePermission("tenants.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -145,6 +149,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         return View(tenant);
     }
 
+    [RequirePermission("tenants.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? logoFile)
@@ -175,6 +180,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         return View(tenant);
     }
 
+    [RequirePermission("tenants.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -189,6 +195,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         return View(tenant);
     }
 
+    [RequirePermission("tenants.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

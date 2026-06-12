@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("curriculumversions.view")]
 public class CurriculumVersionsController : Controller
 {
     private readonly ICurriculumVersionService _curriculumVersionService;
@@ -87,6 +88,7 @@ public class CurriculumVersionsController : Controller
         return View(curriculumVersion);
     }
 
+    [RequirePermission("curriculumversions.create")]
     public async Task<IActionResult> Create()
     {
         var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
@@ -97,6 +99,7 @@ public class CurriculumVersionsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.create")]
     public async Task<IActionResult> Create([Bind("Id,Name,ProgramId,EffectiveAcademicYearId,Description,IsActive")] CurriculumVersion curriculumVersion)
     {
         if (ModelState.IsValid)
@@ -110,6 +113,7 @@ public class CurriculumVersionsController : Controller
         return View(curriculumVersion);
     }
 
+    [RequirePermission("curriculumversions.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -125,6 +129,7 @@ public class CurriculumVersionsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Name,ProgramId,EffectiveAcademicYearId,Description,IsActive")] CurriculumVersion curriculumVersion)
     {
         if (id != curriculumVersion.Id) return NotFound();
@@ -149,6 +154,7 @@ public class CurriculumVersionsController : Controller
         return View(curriculumVersion);
     }
 
+    [RequirePermission("curriculumversions.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -161,6 +167,7 @@ public class CurriculumVersionsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _curriculumVersionService.DeleteCurriculumVersionAsync(id);

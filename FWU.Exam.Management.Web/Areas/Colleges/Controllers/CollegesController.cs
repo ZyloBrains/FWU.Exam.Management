@@ -6,6 +6,7 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,7 +16,7 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("colleges.view")]
 public class CollegesController(ICollegeService collegeService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<int?> GetCurrentUserFacultyIdAsync()
@@ -110,6 +111,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         return View(college);
     }
 
+    [RequirePermission("colleges.create")]
     public async Task<IActionResult> Create()
     {
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
@@ -120,6 +122,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("colleges.create")]
     public async Task<IActionResult> Create([Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,CollegeProfileId")] College college)
     {
         var localLevelId = Request.Form["LocalLevelId"].ToString();
@@ -143,6 +146,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         return View(college);
     }
 
+    [RequirePermission("colleges.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -157,6 +161,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("colleges.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,CollegeProfileId,AddressId")] College college)
     {
         if (id != college.Id) return NotFound();
@@ -188,6 +193,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         return View(college);
     }
 
+    [RequirePermission("colleges.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -200,6 +206,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("colleges.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await collegeService.DeleteCollegeAsync(id);

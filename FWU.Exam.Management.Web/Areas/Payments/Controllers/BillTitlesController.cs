@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 
 [Area("Payments")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[RequirePermission("billtitles.view")]
 public class BillTitlesController(IBillTitleService billTitleService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BillTitleName", string sortDir = "asc", int pageSize = 10)
@@ -83,6 +84,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.create")]
     public async Task<IActionResult> Create()
     {
         var examSchedules = await billTitleService.GetExamSchedulesAsync();
@@ -90,6 +92,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         return View();
     }
 
+    [RequirePermission("billtitles.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
@@ -104,6 +107,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -116,6 +120,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
@@ -141,6 +146,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -151,6 +157,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

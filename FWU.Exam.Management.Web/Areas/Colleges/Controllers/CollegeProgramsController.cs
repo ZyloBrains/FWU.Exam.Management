@@ -6,11 +6,12 @@ using FWU.Exam.Management.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("collegeprograms.view")]
 public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
@@ -90,6 +91,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return View(collegeProgram);
     }
 
+    [RequirePermission("collegeprograms.create")]
     public async Task<IActionResult> Create()
     {
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
@@ -100,6 +102,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("collegeprograms.create")]
     public async Task<IActionResult> Create([Bind("Id,AffiliationDate,NumberOfStudents,Remarks,IsActive,CollegeId,ProgramId")] CollegeProgram collegeProgram)
     {
         if (ModelState.IsValid)
@@ -113,6 +116,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return View(collegeProgram);
     }
 
+    [RequirePermission("collegeprograms.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -133,6 +137,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("collegeprograms.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,AffiliationDate,NumberOfStudents,Remarks,IsActive,CollegeId,ProgramId")] CollegeProgram collegeProgram)
     {
         if (id != collegeProgram.Id)
@@ -165,6 +170,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return View(collegeProgram);
     }
 
+    [RequirePermission("collegeprograms.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -183,6 +189,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("collegeprograms.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await collegeProgramService.DeleteCollegeProgramAsync(id);

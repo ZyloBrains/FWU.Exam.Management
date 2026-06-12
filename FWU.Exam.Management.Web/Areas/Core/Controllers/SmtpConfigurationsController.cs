@@ -6,11 +6,12 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("smtp.view")]
 public class SmtpConfigurationsController(AppDbContext context) : Controller
     {
 
@@ -187,6 +188,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // GET: SmtpConfigurations1/Edit/5
+        [RequirePermission("smtp.edit")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -203,6 +205,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // POST: SmtpConfigurations1/Edit/5
+        [RequirePermission("smtp.edit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Host,From,Port,UserName,Password,EnableSsl")] SmtpConfiguration smtpConfiguration)

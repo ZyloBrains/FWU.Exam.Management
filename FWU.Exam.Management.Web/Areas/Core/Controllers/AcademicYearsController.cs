@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("academicyears.view")]
 public class AcademicYearsController(IAcademicYearService academicYearService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, int pageSize = 10)
@@ -96,11 +97,13 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return View(academicYear);
     }
 
+    [RequirePermission("academicyears.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("academicyears.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
@@ -113,6 +116,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return View(academicYear);
     }
 
+    [RequirePermission("academicyears.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -128,6 +132,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return View(academicYear);
     }
 
+    [RequirePermission("academicyears.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
@@ -159,6 +164,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return View(academicYear);
     }
 
+    [RequirePermission("academicyears.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -175,6 +181,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return View(academicYear);
     }
 
+    [RequirePermission("academicyears.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

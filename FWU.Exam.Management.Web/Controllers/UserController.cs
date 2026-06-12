@@ -3,6 +3,7 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,12 +13,14 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+[RequirePermission("users.view")]
 public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()
     {
         var currentUser = await userManager.GetUserAsync(User);
+        if (currentUser == null) return Challenge();
+
         var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
 
         var usersQuery = userManager.Users
@@ -30,17 +33,33 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         {
             filteredQuery = usersQuery;
         }
-        else if (User.IsInRole(Role.FacultyAdmin) && currentUser?.FacultyId != null)
-        {
-            filteredQuery = usersQuery.Where(u => u.FacultyId == currentUser.FacultyId);
-        }
-        else if (User.IsInRole(Role.CollegeAdmin) && currentUser?.CollegeId != null)
+        else if (User.IsInRole(Role.CollegeAdmin) && currentUser.CollegeId != null)
         {
             filteredQuery = usersQuery.Where(u => u.CollegeId == currentUser.CollegeId);
         }
+        else if (User.IsInRole(Role.FacultyAdmin) && currentUser.FacultyId != null)
+        {
+            var facultyCollegeIds = await context.Colleges
+                .Where(c => c.FacultyId == currentUser.FacultyId)
+                .Select(c => (int?)c.Id)
+                .ToListAsync();
+            filteredQuery = usersQuery.Where(u =>
+                u.FacultyId == currentUser.FacultyId ||
+                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
+        }
+        else if (User.IsInRole(Role.DepartmentAdmin) && currentUser.FacultyId != null)
+        {
+            var facultyCollegeIds = await context.Colleges
+                .Where(c => c.FacultyId == currentUser.FacultyId)
+                .Select(c => (int?)c.Id)
+                .ToListAsync();
+            filteredQuery = usersQuery.Where(u =>
+                u.FacultyId == currentUser.FacultyId ||
+                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
+        }
         else
         {
-            filteredQuery = usersQuery;
+            filteredQuery = usersQuery.Where(u => u.Id == currentUser.Id);
         }
 
         var users = await filteredQuery.ToListAsync();
@@ -76,6 +95,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return View(user);
     }
 
+    [RequirePermission("users.create")]
     public async Task<IActionResult> Create()
     {
         var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
@@ -87,6 +107,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return View(new CreateUserViewModel());
     }
 
+    [RequirePermission("users.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserViewModel model)
@@ -134,6 +155,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return View(model);
     }
 
+    [RequirePermission("users.edit")]
     public async Task<IActionResult> Edit(string id)
     {
         if (id == null) return NotFound();
@@ -161,6 +183,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return View(model);
     }
 
+    [RequirePermission("users.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string id, EditUserViewModel model)
@@ -206,6 +229,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return RedirectToAction(nameof(Index));
     }
 
+    [RequirePermission("users.delete")]
     public async Task<IActionResult> Delete(string id)
     {
         if (id == null) return NotFound();
@@ -220,6 +244,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return View(user);
     }
 
+    [RequirePermission("users.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
@@ -231,6 +256,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return RedirectToAction(nameof(Index));
     }
 
+    [RequirePermission("users.assign.roles")]
     public async Task<IActionResult> AssignRoles(string id)
     {
         if (id == null) return NotFound();
@@ -257,6 +283,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         return View(model);
     }
 
+    [RequirePermission("users.assign.roles")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignRoles(AssignRolesViewModel model)

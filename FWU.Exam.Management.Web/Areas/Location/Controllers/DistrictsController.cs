@@ -6,11 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Location.Controllers;
 
 [Area("Location")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("districts.view")]
 public class DistrictsController(IDistrictService districtService) : Controller
 {
 
@@ -87,6 +88,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // GET: Districts/Create
+    [RequirePermission("districts.create")]
     public async Task<IActionResult> Create()
     {
         var provinces = await districtService.GetActiveProvincesAsync();
@@ -95,6 +97,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // POST: Districts/Create
+    [RequirePermission("districts.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,ProvinceId,DistrictName,Remarks,IsActive")] District district)
@@ -111,6 +114,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // GET: Districts/Edit/5
+    [RequirePermission("districts.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -130,6 +134,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // POST: Districts/Edit/5
+    [RequirePermission("districts.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceId,DistrictName,Remarks,IsActive")] District district)
@@ -165,6 +170,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // GET: Districts/Delete/5
+    [RequirePermission("districts.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -182,6 +188,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // POST: Districts/Delete/5
+    [RequirePermission("districts.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

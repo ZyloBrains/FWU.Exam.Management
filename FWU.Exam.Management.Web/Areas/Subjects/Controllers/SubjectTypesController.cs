@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("subjecttypes.view")]
 public class SubjectTypesController : Controller
 {
     private readonly ISubjectTypeService _subjectTypeService;
@@ -87,6 +88,7 @@ public class SubjectTypesController : Controller
         return View(subjectType);
     }
 
+    [RequirePermission("subjecttypes.create")]
     public IActionResult Create()
     {
         return View();
@@ -94,6 +96,7 @@ public class SubjectTypesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjecttypes.create")]
     public async Task<IActionResult> Create([Bind("Id,Code,Name,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
     {
         if (ModelState.IsValid)
@@ -104,6 +107,7 @@ public class SubjectTypesController : Controller
         return View(subjectType);
     }
 
+    [RequirePermission("subjecttypes.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -116,6 +120,7 @@ public class SubjectTypesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjecttypes.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
     {
         if (id != subjectType.Id) return NotFound();
@@ -137,6 +142,7 @@ public class SubjectTypesController : Controller
         return View(subjectType);
     }
 
+    [RequirePermission("subjecttypes.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -149,6 +155,7 @@ public class SubjectTypesController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjecttypes.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _subjectTypeService.DeleteSubjectTypeAsync(id);

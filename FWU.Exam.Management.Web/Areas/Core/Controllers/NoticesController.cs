@@ -6,11 +6,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
+[RequirePermission("notices.view")]
 public class NoticesController(INoticeService noticeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "PublishedDate", string sortDir = "desc", int pageSize = 10)
@@ -79,11 +80,13 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("notices.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,NoticeTitle,NoticePreview,NoticeContent,PublishedDate")] Notice notice)
@@ -96,6 +99,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -106,6 +110,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,NoticeTitle,NoticePreview,NoticeContent,PublishedDate")] Notice notice)
@@ -129,6 +134,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -139,6 +145,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

@@ -18,13 +18,15 @@ public static class UserSeeder
         }
     }
 
-    private static readonly (string Email, string FullName, string Role, string? OrgCode)[] SeedUsers =
+    private static readonly (string Email, string FullName, string Role, string? FacultyCode, string? CollegeCode)[] SeedUsers =
     [
-        ("admin@gmail.com", "Super Admin", Role.SuperAdmin, null),
-        ("faculty@admin.com", "Faculty Admin", Role.FacultyAdmin, "SOE"),
-        ("college@gmail.com", "College Admin", Role.CollegeAdmin, null),
-        ("department@gmail.com", "Department Admin", Role.DepartmentAdmin, null),
-        ("student@gmail.com", "Test Student", Role.Student, null),
+        ("admin@gmail.com", "Super Admin", Role.SuperAdmin, null, null),
+        ("faculty@admin.com", "Faculty Admin (SOE)", Role.FacultyAdmin, "SOE", null),
+        ("college@gmail.com", "College Admin (COC)", Role.CollegeAdmin, null, "COC"),
+        ("campuschief@gmail.com", "College Admin (SOM)", Role.CollegeAdmin, null, "SOM"),
+        ("department@gmail.com", "Department Admin (SOE)", Role.DepartmentAdmin, "SOE", null),
+        ("student@gmail.com", "Test Student (COC)", Role.Student, null, "COC"),
+        ("student2@gmail.com", "Test Student (SOM)", Role.Student, null, "SOM"),
     ];
 
     public static async Task SeedSuperAdminAsync(IServiceProvider serviceProvider)
@@ -32,21 +34,25 @@ public static class UserSeeder
         var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        var orgCache = new Dictionary<string, int?>();
-        Faculty? GetFaculty(string? code)
-        {
-            if (code == null) return null;
-            if (!orgCache.ContainsKey(code))
-            {
-                var faculty = context.Faculties.FirstOrDefault(f => f.OfficeCode == code);
-                orgCache[code] = faculty?.Id;
-            }
-            return context.Faculties.FirstOrDefault(f => f.OfficeCode == code);
-        }
-
-        foreach (var (email, fullName, role, orgCode) in SeedUsers)
+        foreach (var (email, fullName, role, facultyCode, collegeCode) in SeedUsers)
         {
             var user = await userManager.FindByEmailAsync(email);
+            int? facultyId = null;
+            int? collegeId = null;
+
+            if (facultyCode != null)
+                facultyId = (await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == facultyCode))?.Id;
+
+            if (collegeCode != null)
+            {
+                var college = await context.Colleges.FirstOrDefaultAsync(c => c.Code == collegeCode);
+                if (college != null)
+                {
+                    collegeId = college.Id;
+                    if (facultyId == null)
+                        facultyId = college.FacultyId;
+                }
+            }
 
             if (user == null)
             {
@@ -57,7 +63,8 @@ public static class UserSeeder
                     EmailConfirmed = true,
                     FullName = fullName,
                     IsActive = true,
-                    FacultyId = GetFaculty(orgCode)?.Id
+                    FacultyId = facultyId,
+                    CollegeId = collegeId
                 };
                 var result = await userManager.CreateAsync(user, "Admin@123");
                 if (!result.Succeeded)
@@ -67,7 +74,8 @@ public static class UserSeeder
             {
                 var token = await userManager.GeneratePasswordResetTokenAsync(user);
                 await userManager.ResetPasswordAsync(user, token, "Admin@123");
-                user.FacultyId = GetFaculty(orgCode)?.Id;
+                user.FacultyId = facultyId;
+                user.CollegeId = collegeId;
                 await userManager.UpdateAsync(user);
             }
 

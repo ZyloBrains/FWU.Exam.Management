@@ -2,13 +2,14 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("faculties.view")]
 public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
 {
     public async Task<IActionResult> Index()
@@ -27,11 +28,13 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return View(faculty);
     }
 
+    [RequirePermission("faculties.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("faculties.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Faculty faculty, IFormFile? logoFile, string? adminPassword)
@@ -58,6 +61,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return View(faculty);
     }
 
+    [RequirePermission("faculties.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -68,6 +72,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return View(faculty);
     }
 
+    [RequirePermission("faculties.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Faculty faculty, IFormFile? logoFile)
@@ -97,6 +102,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return View(faculty);
     }
 
+    [RequirePermission("faculties.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -107,6 +113,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return View(faculty);
     }
 
+    [RequirePermission("faculties.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)

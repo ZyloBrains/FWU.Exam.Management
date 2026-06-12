@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("examtypes.view")]
 public class ExamTypesController(IExamTypeService examTypeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
@@ -79,12 +80,14 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
         return View(examType);
     }
 
+    [RequirePermission("examtypes.create")]
     public IActionResult Create()
     {
         return View();
     }
 
     [HttpPost]
+    [RequirePermission("examtypes.create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,Name,Remarks,IsActive,Code")] ExamType examType)
     {
@@ -96,6 +99,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
         return View(examType);
     }
 
+    [RequirePermission("examtypes.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -107,6 +111,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
     }
 
     [HttpPost]
+    [RequirePermission("examtypes.edit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Remarks,IsActive,Code")] ExamType examType)
     {
@@ -129,6 +134,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
         return View(examType);
     }
 
+    [RequirePermission("examtypes.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -140,6 +146,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
     }
 
     [HttpPost, ActionName("Delete")]
+    [RequirePermission("examtypes.delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
