@@ -78,7 +78,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
     public async Task<IActionResult> Create()
     {
-        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin) ? Role.AllRoles : Role.AllRoles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
+        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
+            ? roles
+            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
         return View(new CreateUserViewModel());
@@ -122,7 +125,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin) ? Role.AllRoles : Role.AllRoles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
+        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
+            ? roles
+            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
