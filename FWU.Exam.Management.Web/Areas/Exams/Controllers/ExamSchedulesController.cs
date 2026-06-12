@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
     UserManager<AppUser> userManager,

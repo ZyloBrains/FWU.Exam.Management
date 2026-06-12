@@ -75,7 +75,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
 
     // --- Admin actions ---
 
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
     public async Task<IActionResult> Index(int page = 1, string search = null, string status = null, int? programId = null, int? academicYearId = null, int pageSize = 10)
     {
         ApplicationStatus? statusFilter = null;
@@ -100,7 +100,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
         return View(items);
     }
 
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -112,7 +112,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(int id)
     {
@@ -122,7 +122,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(int id, string remarks)
     {
@@ -132,7 +132,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
@@ -142,7 +142,7 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
     }
 
     [HttpGet]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
     public async Task<IActionResult> ExportToExcel(string search = null, string status = null, int? programId = null, int? academicYearId = null)
     {
         ApplicationStatus? statusFilter = null;

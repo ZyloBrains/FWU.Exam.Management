@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
 public class NoticesController(INoticeService noticeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "PublishedDate", string sortDir = "desc", int pageSize = 10)

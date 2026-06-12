@@ -488,6 +488,26 @@ public static class Permissions
             BillTitlesView, BillTitlesCreate, BillTitlesEdit, BillTitlesDelete,
         ],
 
+        ["DepartmentAdmin"] =
+        [
+            DashboardView,
+
+            SubjectsView,
+            SubjectTypesView,
+            SubjectOfferingsView,
+            SemestersView,
+            AcademicYearsView,
+
+            ExamSchedulesView,
+
+            StudentsView, StudentsCreate, StudentsEdit,
+            StudentAdmissionsView,
+
+            NoticesView,
+            DepartmentsView,
+            LevelsView,
+        ],
+
         ["Student"] =
         [
             DashboardView,
