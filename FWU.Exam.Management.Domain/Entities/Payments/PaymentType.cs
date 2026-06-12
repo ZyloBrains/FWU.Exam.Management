@@ -9,6 +9,9 @@ public class PaymentType
     [Required, MaxLength(255)]
     public string? PaymentTypeName { get; set; }
 
+    [MaxLength(500)]
+    public string? LogoUrl { get; set; }
+
     public bool IsActive { get; set; }
     public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
 }

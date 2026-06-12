@@ -40,11 +40,12 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         var items = await paymentTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Payment Type Name,Status");
+        sb.AppendLine("Payment Type Name,Logo URL,Status");
 
         foreach (var pt in items)
         {
             sb.AppendLine($"{EscapeCsv(pt.PaymentTypeName)}," +
+                           $"{EscapeCsv(pt.LogoUrl)}," +
                            $"{(pt.IsActive ? "Active" : "Inactive")}");
         }
 
@@ -84,7 +85,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,PaymentTypeName,IsActive")] PaymentType paymentType)
+    public async Task<IActionResult> Create([Bind("Id,PaymentTypeName,LogoUrl,IsActive")] PaymentType paymentType)
     {
         if (ModelState.IsValid)
         {
@@ -106,7 +107,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,PaymentTypeName,IsActive")] PaymentType paymentType)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,PaymentTypeName,LogoUrl,IsActive")] PaymentType paymentType)
     {
         if (id != paymentType.Id) return NotFound();
 

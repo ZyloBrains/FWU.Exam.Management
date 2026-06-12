@@ -156,6 +156,13 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
+    public async Task<PaymentRequestLog?> GetPaymentRequestLogByIdAsync(int logId)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.Id == logId);
+    }
+
     public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData)
     {
         var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);

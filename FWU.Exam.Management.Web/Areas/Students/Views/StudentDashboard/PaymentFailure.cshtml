@@ -13,7 +13,7 @@
         </p>
 
         <div class="flex gap-3 justify-center">
-            <a asp-action="PayExamFee" asp-route-examScheduleId="@Context.Request.Query["examScheduleId"]"
+            <a asp-action="PayExamFee" asp-route-examScheduleId="@(TempData["ExamScheduleId"] ?? Context.Request.Query["examScheduleId"])"
                class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                 <i class="fas fa-redo"></i> Try Again
             </a>

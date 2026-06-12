@@ -175,13 +175,19 @@ public class StudentDashboardController(
             ExamScheduleName = schedule.ExamScheduleName,
             ProgramName = schedule.Program?.ProgramName,
             SemesterName = schedule.Semester?.Name,
-            TotalExamFee = examFee,
+            TotalExamFee = subjectList.Sum(s => s.ExamFee),
             HasESewa = hasESewa,
             HasKhalti = hasKhalti,
             HasConnectIPS = hasConnectIPS,
             IsRegular = isRegular,
             Subjects = subjectList,
-            SelectedSubjectIds = isRegular ? subjectList.Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds
+            SelectedSubjectIds = isRegular ? subjectList.Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
+            PaymentTypes = paymentTypes.Select(pt => new PaymentTypeDetail
+            {
+                Id = pt.Id,
+                Name = pt.PaymentTypeName,
+                LogoUrl = pt.LogoUrl
+            }).ToList()
         };
 
         vm.TotalPracticalFee = subjectList.Sum(s => s.PracticalFee);
@@ -289,6 +295,9 @@ public class StudentDashboardController(
 
         try
         {
+            var log = logId.HasValue ? await dashboardService.GetPaymentRequestLogByIdAsync(logId.Value) : null;
+            if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+
             var decodedBytes = Convert.FromBase64String(data);
             var decodedJson = System.Text.Encoding.UTF8.GetString(decodedBytes);
             var response = System.Text.Json.JsonSerializer.Deserialize<ESewaVerifyResponse>(decodedJson,
@@ -420,6 +429,9 @@ public class StudentDashboardController(
 
         try
         {
+            var log = logId.HasValue ? await dashboardService.GetPaymentRequestLogByIdAsync(logId.Value) : null;
+            if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+
             var lookup = await khaltiService.LookupPaymentAsync(pidx);
             var responseData = System.Text.Json.JsonSerializer.Serialize(new
             {

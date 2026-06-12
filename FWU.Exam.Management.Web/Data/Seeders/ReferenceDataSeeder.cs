@@ -13,16 +13,31 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.Set<PaymentType>().AnyAsync())
-            return;
-
-        var paymentTypes = new[]
+        var existingTypes = await context.Set<PaymentType>().ToListAsync();
+        var seedTypes = new Dictionary<string, (string logoUrl, bool isActive)>
         {
-            new PaymentType { PaymentTypeName = "eSewa", IsActive = true },
-            new PaymentType { PaymentTypeName = "Khalti", IsActive = true },
-            new PaymentType { PaymentTypeName = "ConnectIPS", IsActive = true },
+            ["eSewa"] = ("https://upload.wikimedia.org/wikipedia/commons/5/5c/ESewa_Logo.png", true),
+            ["Khalti"] = ("https://khalti.com/static/images/khalti-icon.png", true),
+            ["ConnectIPS"] = ("https://www.connectips.com/wp-content/uploads/2021/07/connect-ips-logo.png", true),
         };
-        await context.Set<PaymentType>().AddRangeAsync(paymentTypes);
+
+        foreach (var (name, (logoUrl, isActive)) in seedTypes)
+        {
+            var existing = existingTypes.FirstOrDefault(pt => string.Equals(pt.PaymentTypeName, name, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                context.Set<PaymentType>().Add(new PaymentType
+                {
+                    PaymentTypeName = name,
+                    LogoUrl = logoUrl,
+                    IsActive = isActive
+                });
+            }
+            else if (string.IsNullOrEmpty(existing.LogoUrl))
+            {
+                existing.LogoUrl = logoUrl;
+            }
+        }
         await context.SaveChangesAsync();
     }
 

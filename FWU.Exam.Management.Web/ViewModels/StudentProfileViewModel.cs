@@ -55,6 +55,13 @@ public class SubjectFeeDetail
     public bool IsFailed { get; set; }
 }
 
+public class PaymentTypeDetail
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? LogoUrl { get; set; }
+}
+
 public class ExamPaymentViewModel
 {
     public int ExamScheduleId { get; set; }
@@ -70,6 +77,7 @@ public class ExamPaymentViewModel
     public bool HasConnectIPS { get; set; }
     public bool IsRegular { get; set; }
     public List<int> SelectedSubjectIds { get; set; } = new();
+    public List<PaymentTypeDetail> PaymentTypes { get; set; } = new();
 }
 
 public class MarksheetViewModel
