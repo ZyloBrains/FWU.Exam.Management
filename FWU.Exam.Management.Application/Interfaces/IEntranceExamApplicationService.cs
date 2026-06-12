@@ -20,7 +20,5 @@ public interface IEntranceExamApplicationService
     Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId);
     List<Province> GetProvinces();
     Task<List<EntranceExamApplication>> GetAllApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId);
-
- 
-    
+    Task<int> ConvertToAdmissionAsync(int applicationId);
 }

@@ -131,27 +131,29 @@ public static class ReferenceDataSeeder
 
         // Colleges
         var org = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
-        var colleges = new[]
+        var collegeCoc = new College
         {
-            new College
-            {
-                Code = "COC",
-                Name = "College of Commerce",
-                TenantId = 1,
-                IsActive = true,
-                FacultyId = org?.Id,
-            },
-            new College
-            {
-                Code = "SOM",
-                Name = "School of Management",
-                TenantId = 1,
-                IsActive = true,
-                FacultyId = org?.Id,
-            },
+            Code = "COC",
+            Name = "College of Commerce",
+            TenantId = 1,
+            IsActive = true,
         };
-        await context.Colleges.AddRangeAsync(colleges);
+        var collegeSom = new College
+        {
+            Code = "SOM",
+            Name = "School of Management",
+            TenantId = 1,
+            IsActive = true,
+        };
+        context.Colleges.AddRange(collegeCoc, collegeSom);
         await context.SaveChangesAsync();
+
+        if (org != null)
+        {
+            collegeCoc.Faculties = new List<Faculty> { org };
+            collegeSom.Faculties = new List<Faculty> { org };
+            await context.SaveChangesAsync();
+        }
     }
 
     public static async Task SeedTenantsAsync(IServiceProvider serviceProvider)
@@ -268,9 +270,14 @@ public static class ReferenceDataSeeder
         College? engCollege, csitCollege;
         if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "ENG-SOE"))
         {
-            engCollege = new College { Code = "ENG-SOE", Name = "School of Engineering", TenantId = 3, IsActive = true, FacultyId = foe?.Id };
+            engCollege = new College { Code = "ENG-SOE", Name = "School of Engineering", TenantId = 3, IsActive = true };
             context.Colleges.Add(engCollege);
             await context.SaveChangesAsync();
+            if (foe != null)
+            {
+                engCollege.Faculties = new List<Faculty> { foe };
+                await context.SaveChangesAsync();
+            }
         }
         else
         {
@@ -279,9 +286,14 @@ public static class ReferenceDataSeeder
 
         if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "CDC-CSIT"))
         {
-            csitCollege = new College { Code = "CDC-CSIT", Name = "Central Department of Computer Science & IT", TenantId = 1, IsActive = true, FacultyId = fst?.Id };
+            csitCollege = new College { Code = "CDC-CSIT", Name = "Central Department of Computer Science & IT", TenantId = 1, IsActive = true };
             context.Colleges.Add(csitCollege);
             await context.SaveChangesAsync();
+            if (fst != null)
+            {
+                csitCollege.Faculties = new List<Faculty> { fst };
+                await context.SaveChangesAsync();
+            }
         }
         else
         {
@@ -324,25 +336,31 @@ public static class ReferenceDataSeeder
         var lawFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FOL");
         var agrFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "AGR");
 
-        var centralDepartments = new[]
+        var centralDepartmentDefs = new[]
         {
-            new College { Code = "CDC-CSIT", Name = "Central Department of Computer Science and Information Technology", TenantId = oceTenantId, IsActive = true, Website = "http://cdcsit.fwu.edu.np", FacultyId = fst?.Id },
-            new College { Code = "DGS", Name = "Central Department of General Science", TenantId = oceTenantId, IsActive = true, Website = "http://science.fwu.edu.np", FacultyId = fst?.Id },
-            new College { Code = "CDM", Name = "Central Department of Management", TenantId = oceTenantId, IsActive = true, Website = "http://management.fwu.edu.np", FacultyId = mgtFaculty?.Id },
-            new College { Code = "CDE", Name = "Central Department of Education", TenantId = oceTenantId, IsActive = true, Website = "http://education.fwu.edu.np", FacultyId = eduFaculty?.Id },
-            new College { Code = "CDH", Name = "Central Department of Humanities", TenantId = oceTenantId, IsActive = true, Website = "http://humanities.fwu.edu.np", FacultyId = humFaculty?.Id },
-            new College { Code = "CDL", Name = "Central Department of Law", TenantId = oceTenantId, IsActive = true, Website = "http://agriculture.fwu.edu.np", FacultyId = lawFaculty?.Id },
-            new College { Code = "CDA", Name = "Central Department of Agriculture", TenantId = oceTenantId, IsActive = true, Website = "http://law.fwu.edu.np", FacultyId = agrFaculty?.Id },
+            new { Code = "CDC-CSIT", Name = "Central Department of Computer Science and Information Technology", Website = "http://cdcsit.fwu.edu.np", FacultyRef = fst },
+            new { Code = "DGS", Name = "Central Department of General Science", Website = "http://science.fwu.edu.np", FacultyRef = fst },
+            new { Code = "CDM", Name = "Central Department of Management", Website = "http://management.fwu.edu.np", FacultyRef = mgtFaculty },
+            new { Code = "CDE", Name = "Central Department of Education", Website = "http://education.fwu.edu.np", FacultyRef = eduFaculty },
+            new { Code = "CDH", Name = "Central Department of Humanities", Website = "http://humanities.fwu.edu.np", FacultyRef = humFaculty },
+            new { Code = "CDL", Name = "Central Department of Law", Website = "http://agriculture.fwu.edu.np", FacultyRef = lawFaculty },
+            new { Code = "CDA", Name = "Central Department of Agriculture", Website = "http://law.fwu.edu.np", FacultyRef = agrFaculty },
         };
 
-        foreach (var dept in centralDepartments)
+        foreach (var def in centralDepartmentDefs)
         {
-            if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == dept.Code))
+            if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == def.Code))
             {
+                var dept = new College { Code = def.Code, Name = def.Name, TenantId = oceTenantId, IsActive = true, Website = def.Website };
                 context.Colleges.Add(dept);
+                await context.SaveChangesAsync();
+                if (def.FacultyRef != null)
+                {
+                    dept.Faculties = new List<Faculty> { def.FacultyRef };
+                    await context.SaveChangesAsync();
+                }
             }
         }
-        await context.SaveChangesAsync();
 
         var campuses = new[]
         {

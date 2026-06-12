@@ -328,7 +328,7 @@ public static class DemoDataSeeder
                         ContactNumber = "9841234567",
                         GenderId = genderMale.Id,
                         CollegeId = collegeCoc.Id,
-                        FacultyId = faculty?.Id ?? collegeCoc.FacultyId,
+                        FacultyId = faculty?.Id,
                         LevelId = level.Id,
                         DepartmentId = deptMgmt.Id,
                         ProgramId = bbaProgram?.Id,
@@ -386,7 +386,7 @@ public static class DemoDataSeeder
                         FirstName = "Sita", LastName = "Sharma", Email = "bbs.student@example.com",
                         DateOfBirthBS = "2056-05-20", DateOfBirthAD = "1999-08-15",
                         ContactNumber = "9841234568", GenderId = genderMale.Id,
-                        CollegeId = collegeCoc.Id, FacultyId = faculty?.Id ?? collegeCoc.FacultyId,
+                        CollegeId = collegeCoc.Id, FacultyId = faculty?.Id,
                         LevelId = level.Id, DepartmentId = deptMgmt.Id, ProgramId = bbsProgram.Id,
                         StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
                         AcademicYearId = academicYear.Id, IsActive = true
@@ -400,7 +400,7 @@ public static class DemoDataSeeder
                         FirstName = "Ram", LastName = "Poudel", Email = "bca.student@example.com",
                         DateOfBirthBS = "2056-07-15", DateOfBirthAD = "1999-10-10",
                         ContactNumber = "9841234569", GenderId = genderMale.Id,
-                        CollegeId = collegeCoc.Id, FacultyId = faculty?.Id ?? collegeCoc.FacultyId,
+                        CollegeId = collegeCoc.Id, FacultyId = faculty?.Id,
                         LevelId = level.Id, DepartmentId = deptSci.Id, ProgramId = bcaProgram.Id,
                         StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
                         AcademicYearId = academicYear.Id, IsActive = true
@@ -414,7 +414,7 @@ public static class DemoDataSeeder
                         FirstName = "Gita", LastName = "Adhikari", Email = "som.student@example.com",
                         DateOfBirthBS = "2055-01-10", DateOfBirthAD = "1998-04-20",
                         ContactNumber = "9841234570", GenderId = (genderFemale ?? genderMale).Id,
-                        CollegeId = collegeSom.Id, FacultyId = faculty?.Id ?? collegeSom.FacultyId,
+                        CollegeId = collegeSom.Id, FacultyId = faculty?.Id,
                         LevelId = level.Id, DepartmentId = deptMgmt.Id, ProgramId = bbaProgram.Id,
                         StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
                         AcademicYearId = academicYear.Id, IsActive = true

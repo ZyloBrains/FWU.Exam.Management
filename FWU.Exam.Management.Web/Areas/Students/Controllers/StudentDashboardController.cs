@@ -163,6 +163,7 @@ public class StudentDashboardController(
             SubjectCode = s.SubjectCatalog?.SubjectCode,
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
+            IsCompulsory = s.IsCompulsory,
             ExamFee = examFee,
             PracticalFee = s.HasPractical ? practicalCharge : 0,
             IsSelected = isRegular || failedSet.Contains(s.Id),
@@ -222,6 +223,8 @@ public class StudentDashboardController(
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber, subjectIds);
         }
+
+        await dashboardService.CreateExamRegistrationAsync(examScheduleId, user.Id, amount, subjectIds);
 
         TempData["SuccessMessage"] = $"Payment request of Rs {amount:N0} via {paymentMethod} has been recorded. Invoice: {invoiceNumber}";
         return RedirectToAction(nameof(ExamForms));
@@ -328,7 +331,10 @@ public class StudentDashboardController(
             }
 
             if (logId.HasValue)
+            {
                 await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", true, combinedData);
+                await HandlePostPaymentRegistration(logId.Value);
+            }
 
             TempData["SuccessMessage"] = "Payment successful!";
             TempData["TransactionCode"] = response.TransactionCode;
@@ -439,7 +445,10 @@ public class StudentDashboardController(
             }
 
             if (logId.HasValue)
+            {
                 await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData);
+                await HandlePostPaymentRegistration(logId.Value);
+            }
 
             TempData["SuccessMessage"] = "Payment successful!";
             TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
@@ -464,7 +473,37 @@ public class StudentDashboardController(
         return View();
     }
 
-    public async Task<IActionResult> Marksheet()
+        private async Task HandlePostPaymentRegistration(int logId)
+        {
+            var user = await userManager.GetUserAsync(User);
+            if (user == null) return;
+
+            var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
+            if (paymentLog == null) return;
+
+            var schedule = await dashboardService.GetExamScheduleByIdAsync(paymentLog.ExamScheduleId);
+            if (schedule == null) return;
+
+            var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(paymentLog.ExamScheduleId);
+            var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
+            var isRegular = failedSubjectIds.Count == 0;
+
+            List<int> subjectIds;
+            if (isRegular)
+            {
+                subjectIds = subjects.Where(s => s.IsCompulsory).Select(s => s.Id).ToList();
+            }
+            else
+            {
+                subjectIds = failedSubjectIds;
+            }
+
+            if (subjectIds.Count == 0) return;
+
+            await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds);
+        }
+
+        public async Task<IActionResult> Marksheet()
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();

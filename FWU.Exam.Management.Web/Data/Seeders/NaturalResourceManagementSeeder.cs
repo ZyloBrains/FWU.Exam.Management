@@ -55,10 +55,14 @@ public static class NaturalResourceManagementSeeder
                 Name = "Central Department of Natural Resource Management",
                 TenantId = 1,
                 IsActive = true,
-                FacultyId = nrmFaculty?.Id,
             };
             context.Colleges.Add(nrmCollege);
             await context.SaveChangesAsync();
+            if (nrmFaculty != null)
+            {
+                nrmCollege.Faculties = new List<Faculty> { nrmFaculty };
+                await context.SaveChangesAsync();
+            }
         }
         else
         {

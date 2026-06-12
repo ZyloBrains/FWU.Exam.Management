@@ -15,8 +15,7 @@ public class College : ITenantScoped
     [Required, MaxLength(50)]
     public string Code { get; set; } = string.Empty;
 
-    public int? FacultyId { get; set; }
-    public virtual Faculty? Faculty { get; set; }
+    public virtual ICollection<Faculty>? Faculties { get; set; }
 
     [Required, MaxLength(500)]
     public string Name { get; set; } = string.Empty;
