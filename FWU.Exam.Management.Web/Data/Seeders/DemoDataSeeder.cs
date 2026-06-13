@@ -555,5 +555,271 @@ public static class DemoDataSeeder
                 }
             }
         }
+
+        // ===== B.Sc. CSIT Subjects (Semesters 1-8) =====
+        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+        if (csitProgram != null)
+        {
+            // Ensure semesters 5-8 exist
+            var runningYearCsit = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
+            if (runningYearCsit != null && !await context.Semesters.AnyAsync(s => s.Number == 5))
+            {
+                var csitSemesters = new[]
+                {
+                    new Semester { Number = 5, Year = 3, Name = "Fifth Semester", Code = "SEM5", StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2027, 1, 30), AcademicYearId = runningYearCsit.Id },
+                    new Semester { Number = 6, Year = 3, Name = "Sixth Semester", Code = "SEM6", StartDate = new DateTime(2027, 2, 1), EndDate = new DateTime(2027, 6, 30), AcademicYearId = runningYearCsit.Id },
+                    new Semester { Number = 7, Year = 4, Name = "Seventh Semester", Code = "SEM7", StartDate = new DateTime(2027, 9, 1), EndDate = new DateTime(2028, 1, 30), AcademicYearId = runningYearCsit.Id },
+                    new Semester { Number = 8, Year = 4, Name = "Eighth Semester", Code = "SEM8", StartDate = new DateTime(2028, 2, 1), EndDate = new DateTime(2028, 6, 30), AcademicYearId = runningYearCsit.Id },
+                };
+                await context.Semesters.AddRangeAsync(csitSemesters);
+                await context.SaveChangesAsync();
+            }
+
+            // Add CSIT subject catalogs
+            var coreType = await context.SubjectTypes.FirstOrDefaultAsync(st => st.Code == "CORE");
+            var electiveType = await context.SubjectTypes.FirstOrDefaultAsync(st => st.Code == "ELECTIVE");
+            if (coreType != null && !await context.SubjectCatalogs.AnyAsync(sc => sc.SubjectCode == "CSIT111"))
+            {
+                var csitSubjects = new List<SubjectCatalog>
+                {
+                    // Semester I
+                    new SubjectCatalog { SubjectCode = "CSIT111", SubjectName = "Introduction to Information Technology", ShortName = "Intro IT", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT112", SubjectName = "Digital Logic", ShortName = "Digital Logic", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT113", SubjectName = "Discrete Mathematics", ShortName = "Discrete Math", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT114", SubjectName = "C Programming", ShortName = "C Prog", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT115", SubjectName = "English I", ShortName = "English I", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    // Semester II
+                    new SubjectCatalog { SubjectCode = "CSIT121", SubjectName = "Mathematics I", ShortName = "Math I", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT122", SubjectName = "Statistics I", ShortName = "Statistics", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT123", SubjectName = "Microprocessor and Assembly Language", ShortName = "Microprocessor", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT124", SubjectName = "Physics I", ShortName = "Physics", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT125", SubjectName = "Financial Accounting", ShortName = "Accounting", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    // Semester III
+                    new SubjectCatalog { SubjectCode = "CSIT231", SubjectName = "Data Structures and Algorithms", ShortName = "DSA", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT232", SubjectName = "Object Oriented Programming (Java)", ShortName = "OOP Java", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT233", SubjectName = "Numerical Methods", ShortName = "Num Methods", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT234", SubjectName = "Web Technology", ShortName = "Web Tech", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT235", SubjectName = "Operating Systems", ShortName = "OS", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    // Semester IV
+                    new SubjectCatalog { SubjectCode = "CSIT241", SubjectName = "Software Engineering", ShortName = "SW Engg", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT242", SubjectName = "Database Management Systems", ShortName = "DBMS", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT243", SubjectName = "Artificial Intelligence", ShortName = "AI", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT244", SubjectName = "Computer Architecture", ShortName = "Comp Arch", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT245", SubjectName = "Computer Graphics", ShortName = "CG", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    // Semester V
+                    new SubjectCatalog { SubjectCode = "CSIT351", SubjectName = "Multimedia Computing", ShortName = "Multimedia", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT352", SubjectName = "Computer Networks", ShortName = "Networks", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT353", SubjectName = "Design and Analysis of Algorithms", ShortName = "DAA", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT354", SubjectName = "Cryptography", ShortName = "Cryptography", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT355", SubjectName = "Network Security (Elective)", ShortName = "Net Security", CreditHours = 3, SubjectTypeId = electiveType!.Id, IsActive = true },
+                    // Semester VI
+                    new SubjectCatalog { SubjectCode = "CSIT361", SubjectName = "Simulation and Modeling", ShortName = "Simulation", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT362", SubjectName = "Compiler Design and Construction", ShortName = "Compiler", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT363", SubjectName = "Theory of Computation", ShortName = "TOC", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT364", SubjectName = "E-Governance", ShortName = "E-Gov", CreditHours = 3, SubjectTypeId = electiveType!.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT365", SubjectName = "Fundamentals of Management", ShortName = "Mgmt", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    // Semester VII
+                    new SubjectCatalog { SubjectCode = "CSIT471", SubjectName = "Advanced Java Programming", ShortName = "Adv Java", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT472", SubjectName = "Real Time Systems", ShortName = "Real Time", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT473", SubjectName = "Machine Learning", ShortName = "ML", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT474", SubjectName = "Advanced Database Management Systems", ShortName = "Adv DBMS", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT475", SubjectName = "Cloud Computing (Elective)", ShortName = "Cloud", CreditHours = 3, SubjectTypeId = electiveType!.Id, IsActive = true },
+                    // Semester VIII
+                    new SubjectCatalog { SubjectCode = "CSIT481", SubjectName = "Digital Image Processing", ShortName = "Image Proc", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT482", SubjectName = "Data Mining and Warehousing", ShortName = "Data Mining", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT483", SubjectName = "Project Work and Internship", ShortName = "Project", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT484", SubjectName = "Network and Cyber Security", ShortName = "Cyber Sec", CreditHours = 3, SubjectTypeId = coreType.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "CSIT485", SubjectName = "Distributed Systems (Elective)", ShortName = "Dist Sys", CreditHours = 3, SubjectTypeId = electiveType!.Id, IsActive = true },
+                };
+                await context.SubjectCatalogs.AddRangeAsync(csitSubjects);
+                await context.SaveChangesAsync();
+            }
+
+            // Add CSIT subject offerings
+            if (!await context.SubjectOfferings.AnyAsync(so => so.ProgramId == csitProgram.Id))
+            {
+                var allSemesters = await context.Semesters.ToListAsync();
+                var allCsitSubjects = await context.SubjectCatalogs
+                    .Where(sc => sc.SubjectCode.StartsWith("CSIT"))
+                    .OrderBy(sc => sc.SubjectCode)
+                    .ToListAsync();
+
+                var semesterSubjectMap = new Dictionary<int, List<SubjectCatalog>>
+                {
+                    { 1, allCsitSubjects.Where(s => s.SubjectCode is "CSIT111" or "CSIT112" or "CSIT113" or "CSIT114" or "CSIT115").ToList() },
+                    { 2, allCsitSubjects.Where(s => s.SubjectCode is "CSIT121" or "CSIT122" or "CSIT123" or "CSIT124" or "CSIT125").ToList() },
+                    { 3, allCsitSubjects.Where(s => s.SubjectCode is "CSIT231" or "CSIT232" or "CSIT233" or "CSIT234" or "CSIT235").ToList() },
+                    { 4, allCsitSubjects.Where(s => s.SubjectCode is "CSIT241" or "CSIT242" or "CSIT243" or "CSIT244" or "CSIT245").ToList() },
+                    { 5, allCsitSubjects.Where(s => s.SubjectCode is "CSIT351" or "CSIT352" or "CSIT353" or "CSIT354" or "CSIT355").ToList() },
+                    { 6, allCsitSubjects.Where(s => s.SubjectCode is "CSIT361" or "CSIT362" or "CSIT363" or "CSIT364" or "CSIT365").ToList() },
+                    { 7, allCsitSubjects.Where(s => s.SubjectCode is "CSIT471" or "CSIT472" or "CSIT473" or "CSIT474" or "CSIT475").ToList() },
+                    { 8, allCsitSubjects.Where(s => s.SubjectCode is "CSIT481" or "CSIT482" or "CSIT483" or "CSIT484" or "CSIT485").ToList() },
+                };
+
+                var csitSubjectsWithPractical = new HashSet<string>
+                {
+                    "CSIT114", "CSIT123", "CSIT231", "CSIT232", "CSIT234", "CSIT235",
+                    "CSIT242", "CSIT245", "CSIT351", "CSIT352", "CSIT353",
+                    "CSIT362", "CSIT471", "CSIT473", "CSIT481", "CSIT482",
+                };
+
+                var csitOfferings = new List<SubjectOffering>();
+                foreach (var (semNum, semSubjects) in semesterSubjectMap)
+                {
+                    var semester = allSemesters.FirstOrDefault(s => s.Number == semNum);
+                    if (semester == null) continue;
+
+                    foreach (var (subj, idx) in semSubjects.Select((s, i) => (s, i)))
+                    {
+                        var hasPractical = csitSubjectsWithPractical.Contains(subj.SubjectCode);
+                        csitOfferings.Add(new SubjectOffering
+                        {
+                            SubjectCatalogId = subj.Id,
+                            ProgramId = csitProgram.Id,
+                            SemesterId = semester.Id,
+                            IsCompulsory = subj.SubjectTypeId == coreType!.Id,
+                            DisplayOrder = idx + 1,
+                            HasTheory = true,
+                            HasPractical = hasPractical,
+                            HasInternal = true,
+                            TheoryFullMarks = 60,
+                            TheoryPassMarks = 24,
+                            PracticalFullMarks = hasPractical ? 40 : null,
+                            PracticalPassMarks = hasPractical ? 16 : null,
+                            InternalTheoryFullMarks = 40,
+                            InternalTheoryPassMarks = 16,
+                        });
+                    }
+                }
+
+                await context.SubjectOfferings.AddRangeAsync(csitOfferings);
+                await context.SaveChangesAsync();
+            }
+        }
+
+        // ===== BIT Subjects (Semesters 1-8) =====
+        var bitProg = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BIT");
+        if (bitProg != null)
+        {
+            var coreTypeBit = await context.SubjectTypes.FirstOrDefaultAsync(st => st.Code == "CORE");
+            var electiveTypeBit = await context.SubjectTypes.FirstOrDefaultAsync(st => st.Code == "ELECTIVE");
+            if (coreTypeBit != null && !await context.SubjectCatalogs.AnyAsync(sc => sc.SubjectCode == "BIT111"))
+            {
+                var bitSubjects = new List<SubjectCatalog>
+                {
+                    // Semester I
+                    new SubjectCatalog { SubjectCode = "BIT111", SubjectName = "Introduction to Information Technology", ShortName = "Intro IT", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT112", SubjectName = "C Programming", ShortName = "C Prog", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT113", SubjectName = "Digital Logic", ShortName = "Digital Logic", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT114", SubjectName = "Discrete Mathematics", ShortName = "Discrete Math", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT115", SubjectName = "English I", ShortName = "English I", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    // Semester II
+                    new SubjectCatalog { SubjectCode = "BIT121", SubjectName = "Mathematics I", ShortName = "Math I", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT122", SubjectName = "Statistics I", ShortName = "Statistics", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT123", SubjectName = "Microprocessor and Assembly Language", ShortName = "Microprocessor", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT124", SubjectName = "Object Oriented Programming (C++)", ShortName = "OOP C++", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT125", SubjectName = "Financial Accounting", ShortName = "Accounting", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    // Semester III
+                    new SubjectCatalog { SubjectCode = "BIT231", SubjectName = "Data Structures and Algorithms", ShortName = "DSA", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT232", SubjectName = "Web Technology", ShortName = "Web Tech", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT233", SubjectName = "Numerical Methods", ShortName = "Num Methods", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT234", SubjectName = "Operating Systems", ShortName = "OS", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT235", SubjectName = "Database Management Systems", ShortName = "DBMS", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    // Semester IV
+                    new SubjectCatalog { SubjectCode = "BIT241", SubjectName = "Software Engineering", ShortName = "SW Engg", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT242", SubjectName = "Computer Architecture", ShortName = "Comp Arch", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT243", SubjectName = "Computer Networks", ShortName = "Networks", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT244", SubjectName = "Artificial Intelligence", ShortName = "AI", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT245", SubjectName = "Computer Graphics", ShortName = "CG", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    // Semester V
+                    new SubjectCatalog { SubjectCode = "BIT351", SubjectName = "Multimedia Computing", ShortName = "Multimedia", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT352", SubjectName = "Java Programming", ShortName = "Java", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT353", SubjectName = "Design and Analysis of Algorithms", ShortName = "DAA", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT354", SubjectName = "Cryptography", ShortName = "Cryptography", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT355", SubjectName = "Network Security (Elective)", ShortName = "Net Security", CreditHours = 3, SubjectTypeId = electiveTypeBit!.Id, IsActive = true },
+                    // Semester VI
+                    new SubjectCatalog { SubjectCode = "BIT361", SubjectName = "Simulation and Modeling", ShortName = "Simulation", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT362", SubjectName = "Compiler Design and Construction", ShortName = "Compiler", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT363", SubjectName = "E-Commerce", ShortName = "E-Commerce", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT364", SubjectName = "Fundamentals of Management", ShortName = "Mgmt", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT365", SubjectName = "Information Security (Elective)", ShortName = "Info Security", CreditHours = 3, SubjectTypeId = electiveTypeBit!.Id, IsActive = true },
+                    // Semester VII
+                    new SubjectCatalog { SubjectCode = "BIT471", SubjectName = "Advanced Java Programming", ShortName = "Adv Java", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT472", SubjectName = "Data Mining and Warehousing", ShortName = "Data Mining", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT473", SubjectName = "Machine Learning", ShortName = "ML", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT474", SubjectName = "Cloud Computing", ShortName = "Cloud", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT475", SubjectName = "Project Work I", ShortName = "Project I", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    // Semester VIII
+                    new SubjectCatalog { SubjectCode = "BIT481", SubjectName = "Digital Image Processing", ShortName = "Image Proc", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT482", SubjectName = "Network and Cyber Security", ShortName = "Cyber Sec", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT483", SubjectName = "Project Work II / Internship", ShortName = "Project II", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT484", SubjectName = "Distributed Systems (Elective)", ShortName = "Dist Sys", CreditHours = 3, SubjectTypeId = electiveTypeBit!.Id, IsActive = true },
+                    new SubjectCatalog { SubjectCode = "BIT485", SubjectName = "Mobile Application Development", ShortName = "Mobile Dev", CreditHours = 3, SubjectTypeId = coreTypeBit.Id, IsActive = true },
+                };
+                await context.SubjectCatalogs.AddRangeAsync(bitSubjects);
+                await context.SaveChangesAsync();
+            }
+
+            if (!await context.SubjectOfferings.AnyAsync(so => so.ProgramId == bitProg.Id))
+            {
+                var allSemestersBit = await context.Semesters.ToListAsync();
+                var allBitSubjects = await context.SubjectCatalogs
+                    .Where(sc => sc.SubjectCode.StartsWith("BIT"))
+                    .OrderBy(sc => sc.SubjectCode)
+                    .ToListAsync();
+
+                var semesterSubjectMapBit = new Dictionary<int, List<SubjectCatalog>>
+                {
+                    { 1, allBitSubjects.Where(s => s.SubjectCode is "BIT111" or "BIT112" or "BIT113" or "BIT114" or "BIT115").ToList() },
+                    { 2, allBitSubjects.Where(s => s.SubjectCode is "BIT121" or "BIT122" or "BIT123" or "BIT124" or "BIT125").ToList() },
+                    { 3, allBitSubjects.Where(s => s.SubjectCode is "BIT231" or "BIT232" or "BIT233" or "BIT234" or "BIT235").ToList() },
+                    { 4, allBitSubjects.Where(s => s.SubjectCode is "BIT241" or "BIT242" or "BIT243" or "BIT244" or "BIT245").ToList() },
+                    { 5, allBitSubjects.Where(s => s.SubjectCode is "BIT351" or "BIT352" or "BIT353" or "BIT354" or "BIT355").ToList() },
+                    { 6, allBitSubjects.Where(s => s.SubjectCode is "BIT361" or "BIT362" or "BIT363" or "BIT364" or "BIT365").ToList() },
+                    { 7, allBitSubjects.Where(s => s.SubjectCode is "BIT471" or "BIT472" or "BIT473" or "BIT474" or "BIT475").ToList() },
+                    { 8, allBitSubjects.Where(s => s.SubjectCode is "BIT481" or "BIT482" or "BIT483" or "BIT484" or "BIT485").ToList() },
+                };
+
+                var bitSubjectsWithPractical = new HashSet<string>
+                {
+                    "BIT112", "BIT123", "BIT124", "BIT231", "BIT232", "BIT234",
+                    "BIT235", "BIT243", "BIT245", "BIT351", "BIT352", "BIT353",
+                    "BIT362", "BIT471", "BIT472", "BIT473", "BIT481", "BIT485",
+                };
+
+                var bitOfferings = new List<SubjectOffering>();
+                foreach (var (semNum, semSubjects) in semesterSubjectMapBit)
+                {
+                    var semester = allSemestersBit.FirstOrDefault(s => s.Number == semNum);
+                    if (semester == null) continue;
+
+                    foreach (var (subj, idx) in semSubjects.Select((s, i) => (s, i)))
+                    {
+                        var hasPractical = bitSubjectsWithPractical.Contains(subj.SubjectCode);
+                        bitOfferings.Add(new SubjectOffering
+                        {
+                            SubjectCatalogId = subj.Id,
+ProgramId = bitProg.Id,
+                            SemesterId = semester.Id,
+                            IsCompulsory = subj.SubjectTypeId == coreTypeBit!.Id,
+                            DisplayOrder = idx + 1,
+                            HasTheory = true,
+                            HasPractical = hasPractical,
+                            HasInternal = true,
+                            TheoryFullMarks = 60,
+                            TheoryPassMarks = 24,
+                            PracticalFullMarks = hasPractical ? 40 : null,
+                            PracticalPassMarks = hasPractical ? 16 : null,
+                            InternalTheoryFullMarks = 40,
+                            InternalTheoryPassMarks = 16,
+                        });
+                    }
+                }
+
+                await context.SubjectOfferings.AddRangeAsync(bitOfferings);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }
+
