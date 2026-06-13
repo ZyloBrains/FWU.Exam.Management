@@ -202,6 +202,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 Category = s.StudentCategory != null ? s.StudentCategory.StudentCategoryName : "-",
                 ContactNumber = s.ContactNumber ?? "-",
                 Email = s.Email ?? "-",
+                DepartmentId = s.DepartmentId,
                 Status = s.IsActive ? "Active" : "Inactive"
             })
             .ToListAsync();
@@ -241,6 +242,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var localLevels = await context.LocalLevels.Where(ll => ll.LocalLevelName != null).AsNoTracking().ToListAsync();
         var faculties = await context.Faculties.Where(f => f.Name != null).AsNoTracking().ToListAsync();
         var programs = await context.Programs.Where(p => p.ProgramName != null).AsNoTracking().ToListAsync();
+        var boards = await context.Boards.Where(b => b.BoardName != null).AsNoTracking().ToListAsync();
+        var previousLevels = await context.PreviousLevels.Where(pl => pl.PreviousLevelName != null).AsNoTracking().ToListAsync();
 
         return new StudentRegistrationSelectListsDto
         {
@@ -254,6 +257,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             LocalLevels = localLevels.Select(ll => new SelectOption { Id = ll.Id, Name = ll.LocalLevelName }).ToList(),
             Faculties = faculties.Select(f => new SelectOption { Id = f.Id, Name = f.Name }).ToList(),
             Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
+            Boards = boards.Select(b => new SelectOption { Id = b.Id, Name = b.BoardName }).ToList(),
+            PreviousLevels = previousLevels.Select(pl => new SelectOption { Id = pl.Id, Name = pl.PreviousLevelName }).ToList(),
         };
     }
 
@@ -275,19 +280,19 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task<List<SelectOption>> GetFacultiesByLevelAsync(int levelId)
     {
-        var facultyIds = await context.Programs
+        var collegeIds = await context.Programs
             .Where(p => p.LevelId == levelId)
             .Join(context.CollegePrograms, p => p.Id, cp => cp.ProgramId, (p, cp) => cp.CollegeId)
-            .Join(context.Colleges, collegeId => collegeId, c => c.Id, (collegeId, c) => c.FacultyId)
             .Distinct()
             .ToListAsync();
 
-        var validIds = facultyIds.Where(id => id.HasValue).Select(id => id!.Value).ToList();
-        if (validIds.Count == 0) return [];
+        if (collegeIds.Count == 0) return [];
 
-        return await context.Faculties
-            .Where(f => validIds.Contains(f.Id))
+        return await context.Colleges
+            .Where(c => collegeIds.Contains(c.Id))
+            .SelectMany(c => c.Faculties)
             .Select(f => new SelectOption { Id = f.Id, Name = f.Name })
+            .Distinct()
             .AsNoTracking()
             .ToListAsync();
     }
@@ -332,6 +337,34 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var provinces =  context.Provinces.AsNoTracking().ToList();
         return provinces;
+    }
+
+    public async Task SaveQualificationsAsync(int studentRegistrationId, List<StudentQualification> qualifications)
+    {
+        var existing = await context.StudentQualifications
+            .Where(q => q.StudentRegistrationId == studentRegistrationId)
+            .ToListAsync();
+
+        context.StudentQualifications.RemoveRange(existing);
+
+        foreach (var q in qualifications)
+        {
+            q.Id = 0;
+            q.StudentRegistrationId = studentRegistrationId;
+            context.StudentQualifications.Add(q);
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<List<StudentQualification>> GetQualificationsByRegistrationAsync(int studentRegistrationId)
+    {
+        return await context.StudentQualifications
+            .Include(q => q.Board)
+            .Include(q => q.PreviousLevel)
+            .Where(q => q.StudentRegistrationId == studentRegistrationId)
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     private async Task EnsureStudentAppUserAsync(StudentRegistration studentRegistration)

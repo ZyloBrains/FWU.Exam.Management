@@ -20,4 +20,7 @@ public class AppUser: IdentityUser, IAuditable
 
     public int? CollegeId { get; set; }
     public College? College { get; set; }
+
+    public int? DepartmentId { get; set; }
+    public Department? Department { get; set; }
 }

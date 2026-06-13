@@ -51,6 +51,7 @@ public class SubjectFeeDetail
     public bool HasPractical { get; set; }
     public decimal ExamFee { get; set; }
     public decimal PracticalFee { get; set; }
+    public bool IsCompulsory { get; set; }
     public bool IsSelected { get; set; }
     public bool IsFailed { get; set; }
 }

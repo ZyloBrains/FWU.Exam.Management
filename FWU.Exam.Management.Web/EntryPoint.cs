@@ -106,6 +106,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IKhaltiService, KhaltiService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
+        builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

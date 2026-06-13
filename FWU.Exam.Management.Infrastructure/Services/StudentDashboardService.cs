@@ -199,6 +199,69 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         await context.SaveChangesAsync();
     }
 
+    public async Task<PaymentRequestLog?> GetPaymentLogByIdAsync(int logId)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.Id == logId);
+    }
+
+    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .Include(es => es.Semester)
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        if (schedule == null) return;
+
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+
+        if (admission == null) return;
+
+        var academicYearId = schedule.AcademicYearId;
+
+        var registration = new ExamRegistration
+        {
+            ExamScheduleId = examScheduleId,
+            CollegeId = admission.CollegeId,
+            AcademicYearId = academicYearId,
+            ProgramsId = admission.ProgramsId,
+            FeeEnclosed = amount,
+            RegistrationDate = DateTime.UtcNow,
+            Status = RegistrationStatus.Pending,
+            IsActive = true,
+            IsAppliedByStudent = true
+        };
+
+        context.ExamRegistrations!.Add(registration);
+        await context.SaveChangesAsync();
+
+        foreach (var subjectOfferingId in subjectOfferingIds)
+        {
+            var subjectOffering = await context.SubjectOfferings!
+                .AsNoTracking()
+                .FirstOrDefaultAsync(so => so.Id == subjectOfferingId);
+
+            if (subjectOffering == null) continue;
+
+            context.ExamSubjectResults!.Add(new ExamSubjectResult
+            {
+                ExamRegistrationId = registration.Id,
+                SubjectOfferingId = subjectOfferingId,
+                ExamScheduleId = examScheduleId,
+                IsTheoryRegistered = subjectOffering.HasTheory,
+                IsPracticalRegistered = subjectOffering.HasPractical,
+                IsActive = true,
+                IsSubmitted = false
+            });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
     public async Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId)
     {
         var admission = await context.StudentAdmissions!

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
 public class StudentAdmissionsController(IStudentAdmissionService admissionService, IStudentRegistrationService studentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -26,12 +26,17 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
             return await context.Colleges
-                .Where(c => c.FacultyId == user.FacultyId)
+                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
                 .Select(c => c.Id)
                 .ToListAsync();
         }
 
         if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
+        {
+            return new List<int> { user.CollegeId.Value };
+        }
+
+        if (User.IsInRole(Role.DepartmentAdmin) && user.CollegeId != null)
         {
             return new List<int> { user.CollegeId.Value };
         }

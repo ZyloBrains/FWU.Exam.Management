@@ -1,3 +1,4 @@
+namespace FWU.Exam.Management.Domain.Enums;
 public enum StudentEnrollmentStatus
 {
     Active = 1,

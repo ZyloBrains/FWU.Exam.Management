@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
@@ -131,7 +132,11 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         {
             if (User.IsInRole(Role.FacultyAdmin))
             {
-                college.FacultyId = await GetCurrentUserFacultyIdAsync();
+                var facultyId = await GetCurrentUserFacultyIdAsync();
+                if (facultyId.HasValue)
+                {
+                    college.Faculties = new List<Faculty> { new Faculty { Id = facultyId.Value } };
+                }
             }
             await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
             return RedirectToAction(nameof(Index));

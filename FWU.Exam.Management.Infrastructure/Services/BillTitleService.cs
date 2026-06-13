@@ -103,7 +103,7 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         else if (facultyId.HasValue)
         {
             var collegeIds = context.Colleges
-                .Where(c => c.FacultyId == facultyId.Value)
+                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
                 .Select(c => c.Id)
                 .ToList();
 
