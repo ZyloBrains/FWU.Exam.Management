@@ -179,7 +179,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
-    public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData)
+    public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null)
     {
         var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
         if (log == null) return;
@@ -192,7 +192,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             PaymentRequestLogId = logId,
             ResponseTimestamp = DateTime.UtcNow,
             IsSuccess = isSuccess,
-            ResponseMessage = isSuccess ? "Payment verified via eSewa callback" : "Payment failed via eSewa callback",
+            ResponseMessage = responseMessage ?? (isSuccess ? "Payment verified via callback" : "Payment failed via callback"),
             FullResponse = responseData
         });
 
@@ -334,12 +334,12 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
 
-        foreach (var subjectId in subjectOfferingIds)
+        if (subjectOfferingIds.Count > 0)
         {
             context.Set<PaymentPracticalSubjects>().Add(new PaymentPracticalSubjects
             {
                 PaymentRequestLogId = log.Id,
-                PracticalSubjectsCount = 1,
+                PracticalSubjectsCount = subjectOfferingIds.Count,
                 TotalAmount = amount
             });
         }

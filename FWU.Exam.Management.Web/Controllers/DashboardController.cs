@@ -83,33 +83,24 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         if (admission != null)
         {
             programId = admission.ProgramsId;
-            var program = await context.Programs.FindAsync(programId);
-            vm.StudentProgramName = program?.ProgramName;
-            vm.StudentProgramCode = program?.ProgramCode;
         }
         else if (registration.ProgramId.HasValue)
         {
             programId = registration.ProgramId.Value;
-            var program = await context.Programs.FindAsync(programId);
-            vm.StudentProgramName = program?.ProgramName;
-            vm.StudentProgramCode = program?.ProgramCode;
         }
         else
         {
             return;
         }
 
+        var program = await context.Programs.FindAsync(programId);
+        vm.StudentProgramName = program?.ProgramName;
+        vm.StudentProgramCode = program?.ProgramCode;
+
         var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
         vm.ExamSchedules = examSchedules;
 
-        var subjectOfferings = await context.SubjectOfferings!
-            .AsNoTracking()
-            .Include(so => so.SubjectCatalog)
-            .Include(so => so.Semester)
-            .Where(so => so.ProgramId == programId)
-            .OrderBy(so => so.Semester!.Number)
-            .ThenBy(so => so.DisplayOrder)
-            .ToListAsync();
+        var subjectOfferings = await studentDashboardService.GetSubjectOfferingsByProgramAsync(programId);
 
         var latestSchedule = examSchedules.OrderByDescending(es => es.StartDateBs).FirstOrDefault();
         vm.SemesterName = latestSchedule?.Semester?.Name
