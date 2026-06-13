@@ -86,6 +86,18 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .ToListAsync();
     }
 
+    public async Task<List<SubjectOffering>> GetSubjectOfferingsByProgramAsync(int programId)
+    {
+        return await context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+            .Include(so => so.Semester)
+            .Where(so => so.ProgramId == programId)
+            .OrderBy(so => so.Semester!.Number)
+            .ThenBy(so => so.DisplayOrder)
+            .ToListAsync();
+    }
+
     public async Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId)
     {
         var billTitle = await context.Set<BillTitle>()

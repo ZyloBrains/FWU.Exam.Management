@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [Authorize]
-public class DashboardController(IDashboardService dashboardService, UserManager<AppUser> userManager, AppDbContext context) : Controller
+public class DashboardController(IDashboardService dashboardService, IStudentDashboardService studentDashboardService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -52,6 +52,11 @@ public class DashboardController(IDashboardService dashboardService, UserManager
             ActiveExamSchedules = stats.ActiveExamSchedules
         };
 
+        if (primaryRole == "Student")
+        {
+            await PopulateStudentData(vm, user);
+        }
+
         return primaryRole switch
         {
             "SuperAdmin" or "SystemAdmin" => View("SuperAdmin", vm),
@@ -60,5 +65,56 @@ public class DashboardController(IDashboardService dashboardService, UserManager
             "Student" => View("Student", vm),
             _ => View("Student", vm)
         };
+    }
+
+    private async Task PopulateStudentData(DashboardViewModel vm, AppUser user)
+    {
+        var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email!);
+        if (registration == null) return;
+
+        vm.StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}";
+        vm.RegistrationNumber = registration.RegistrationNumber;
+        vm.CollegeName = registration.College?.Name;
+        vm.AcademicYearName = registration.AcademicYear?.AcademicYearName;
+        vm.LevelName = registration.Level?.LevelName;
+
+        var admission = await studentDashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
+        int programId;
+        if (admission != null)
+        {
+            programId = admission.ProgramsId;
+            var program = await context.Programs.FindAsync(programId);
+            vm.StudentProgramName = program?.ProgramName;
+            vm.StudentProgramCode = program?.ProgramCode;
+        }
+        else if (registration.ProgramId.HasValue)
+        {
+            programId = registration.ProgramId.Value;
+            var program = await context.Programs.FindAsync(programId);
+            vm.StudentProgramName = program?.ProgramName;
+            vm.StudentProgramCode = program?.ProgramCode;
+        }
+        else
+        {
+            return;
+        }
+
+        var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        vm.ExamSchedules = examSchedules;
+
+        var subjectOfferings = await context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+            .Include(so => so.Semester)
+            .Where(so => so.ProgramId == programId)
+            .OrderBy(so => so.Semester!.Number)
+            .ThenBy(so => so.DisplayOrder)
+            .ToListAsync();
+
+        var latestSchedule = examSchedules.OrderByDescending(es => es.StartDateBs).FirstOrDefault();
+        vm.SemesterName = latestSchedule?.Semester?.Name
+            ?? subjectOfferings.FirstOrDefault(so => so.Semester != null)?.Semester?.Name;
+
+        vm.SubjectOfferings = subjectOfferings;
     }
 }

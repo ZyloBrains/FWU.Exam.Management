@@ -123,6 +123,35 @@ public class StudentDashboardController(
         return View(new ExamFormsListViewModel { ExamForms = forms });
     }
 
+    public async Task<IActionResult> MySubjects()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return NotFound("Student registration not found.");
+
+        var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
+        int programId;
+
+        if (admission != null)
+        {
+            programId = admission.ProgramsId;
+        }
+        else if (registration.ProgramId.HasValue)
+        {
+            programId = registration.ProgramId.Value;
+        }
+        else
+        {
+            return NotFound("No program assigned.");
+        }
+
+        var subjects = await dashboardService.GetSubjectOfferingsByProgramAsync(programId);
+
+        return View(subjects);
+    }
+
     public async Task<IActionResult> PayExamFee(int examScheduleId)
     {
         var user = await userManager.GetUserAsync(User);
