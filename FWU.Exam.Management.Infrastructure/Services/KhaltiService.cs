@@ -64,7 +64,7 @@ public class KhaltiService(HttpClient httpClient, IConfiguration configuration, 
         {
             Content = content
         };
-        requestMessage.Headers.Add("Authorization", $"key {SecretKey}");
+        requestMessage.Headers.Add("Authorization", $"Key {SecretKey}");
 
         logger.LogInformation("Sending Khalti lookup request for pidx={Pidx}", pidx);
 
