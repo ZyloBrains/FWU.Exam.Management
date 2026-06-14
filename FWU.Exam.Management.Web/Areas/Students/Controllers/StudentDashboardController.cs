@@ -329,7 +329,7 @@ public class StudentDashboardController(
 
         try
         {
-            var log = logId.HasValue ? await dashboardService.GetPaymentRequestLogByIdAsync(logId.Value) : null;
+            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
             var decodedBytes = Convert.FromBase64String(data);
@@ -484,7 +484,7 @@ public class StudentDashboardController(
 
         try
         {
-            var log = logId.HasValue ? await dashboardService.GetPaymentRequestLogByIdAsync(logId.Value) : null;
+            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
             logger.LogInformation("Khalti callback received: pidx={Pidx}, status={Status}, transaction_id={TransactionId}, purchase_order_id={PurchaseOrderId}",
