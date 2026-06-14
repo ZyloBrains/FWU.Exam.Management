@@ -28,6 +28,11 @@
                     <span asp-validation-for="PaymentTypeName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
+                    <label asp-for="LogoUrl" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="LogoUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter logo URL (e.g. /images/payments/esewa.svg)" />
+                    <span asp-validation-for="LogoUrl" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
                     <label asp-for="IsActive" class="text-sm font-medium text-gray-700 block mb-1"></label>
                     <select asp-for="IsActive" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="true">Active</option>

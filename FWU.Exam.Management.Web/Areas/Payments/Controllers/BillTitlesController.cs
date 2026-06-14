@@ -105,12 +105,14 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
+        var programs = await billTitleService.GetProgramsAsync();
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName");
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
+    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,FeeType,ProgramsId")] BillTitle billTitle)
     {
         if (ModelState.IsValid)
         {
@@ -120,6 +122,8 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        var programs = await billTitleService.GetProgramsAsync();
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 
@@ -138,7 +142,7 @@ public class BillTitlesController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,FeeType,ProgramsId")] BillTitle billTitle)
     {
         if (id != billTitle.Id) return NotFound();
 
@@ -159,6 +163,8 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        var programs = await billTitleService.GetProgramsAsync();
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 

@@ -11,7 +11,8 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
     public async Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
-            .Include(bt => bt.ExamSchedule);
+            .Include(bt => bt.ExamSchedule)
+            .Include(bt => bt.Program);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -36,7 +37,8 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
     public async Task<List<BillTitle>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
-            .Include(bt => bt.ExamSchedule);
+            .Include(bt => bt.ExamSchedule)
+            .Include(bt => bt.Program);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -56,6 +58,7 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
     {
         return await context.Set<BillTitle>()
             .Include(bt => bt.ExamSchedule)
+            .Include(bt => bt.Program)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -117,6 +120,11 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         }
 
         return await query.ToListAsync();
+    }
+
+    public async Task<List<Domain.Entities.Program>> GetProgramsAsync()
+    {
+        return await context.Programs.AsNoTracking().ToListAsync();
     }
 
     private static Expression<Func<BillTitle, object>> GetSortProperty(string sort)

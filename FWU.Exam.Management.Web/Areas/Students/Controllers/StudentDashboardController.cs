@@ -4,6 +4,7 @@ using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
@@ -15,6 +16,7 @@ public class StudentDashboardController(
     IESewaService esewaService,
     IKhaltiService khaltiService,
     IConfiguration configuration,
+    ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper)
     : Controller
 {
@@ -205,13 +207,19 @@ public class StudentDashboardController(
             ExamScheduleName = schedule.ExamScheduleName,
             ProgramName = schedule.Program?.ProgramName,
             SemesterName = schedule.Semester?.Name,
-            TotalExamFee = examFee,
+            TotalExamFee = subjectList.Sum(s => s.ExamFee),
             HasESewa = hasESewa,
             HasKhalti = hasKhalti,
             HasConnectIPS = hasConnectIPS,
             IsRegular = isRegular,
             Subjects = subjectList,
-            SelectedSubjectIds = isRegular ? subjectList.Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds
+            SelectedSubjectIds = isRegular ? subjectList.Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
+            PaymentTypes = paymentTypes.Select(pt => new PaymentTypeDetail
+            {
+                Id = pt.Id,
+                Name = pt.PaymentTypeName,
+                LogoUrl = pt.LogoUrl
+            }).ToList()
         };
 
         vm.TotalPracticalFee = subjectList.Sum(s => s.PracticalFee);
@@ -321,6 +329,9 @@ public class StudentDashboardController(
 
         try
         {
+            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
+            if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+
             var decodedBytes = Convert.FromBase64String(data);
             var decodedJson = System.Text.Encoding.UTF8.GetString(decodedBytes);
             var response = System.Text.Json.JsonSerializer.Deserialize<ESewaVerifyResponse>(decodedJson,
@@ -415,12 +426,17 @@ public class StudentDashboardController(
                 fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
         }
 
+        var scheme = Request.Scheme;
+        var host = Request.Host.Value;
+        var baseUrl = $"{scheme}://{host}";
+
         var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
-            new { area = "Students", logId }, Request.Scheme)!;
+            new { area = "Students", logId }, scheme)!;
 
         var khaltiRequest = new KhaltiInitiateRequest
         {
             ReturnUrl = returnUrl,
+            WebsiteUrl = baseUrl,
             Amount = (long)(amount * 100),
             PurchaseOrderId = invoiceNumber,
             PurchaseOrderName = $"Exam Fee - {schedule?.ExamScheduleName ?? ""}",
@@ -432,14 +448,27 @@ public class StudentDashboardController(
             }
         };
 
-        var response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
-        if (response?.PaymentUrl == null)
+        try
         {
-            TempData["ErrorMessage"] = "Failed to initiate Khalti payment. Please try again.";
+            logger.LogInformation("Initiating Khalti payment: amount={Amount}, invoice={Invoice}, returnUrl={ReturnUrl}, websiteUrl={WebsiteUrl}",
+                amount, invoiceNumber, returnUrl, baseUrl);
+
+            var response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
+            if (response?.PaymentUrl == null)
+            {
+                TempData["ErrorMessage"] = "Khalti did not return a payment URL. Please try again.";
+                return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+            }
+
+            logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
+            return Redirect(response.PaymentUrl);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Khalti payment initiation failed");
+            TempData["ErrorMessage"] = $"Khalti payment failed: {ex.Message}";
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
-
-        return Redirect(response.PaymentUrl);
     }
 
     public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id, int? logId)
@@ -455,7 +484,13 @@ public class StudentDashboardController(
 
         try
         {
-            var lookup = await khaltiService.LookupPaymentAsync(pidx);
+            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
+            if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+
+            logger.LogInformation("Khalti callback received: pidx={Pidx}, status={Status}, transaction_id={TransactionId}, purchase_order_id={PurchaseOrderId}",
+                pidx, status, transaction_id, purchase_order_id);
+
+            var lookup = await khaltiService.LookupPaymentAsync(pidx!);
             var responseData = System.Text.Json.JsonSerializer.Serialize(new
             {
                 pidx,
@@ -466,6 +501,7 @@ public class StudentDashboardController(
 
             if (lookup == null || lookup.Status != "Completed")
             {
+                logger.LogWarning("Khalti payment verification failed: status={LookupStatus}, callback_status={CallbackStatus}", lookup?.Status, status);
                 if (logId.HasValue)
                     await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
 
@@ -473,6 +509,7 @@ public class StudentDashboardController(
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
+            logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
             if (logId.HasValue)
             {
                 await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
@@ -485,8 +522,9 @@ public class StudentDashboardController(
 
             return RedirectToAction(nameof(PaymentSuccess));
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Khalti callback processing failed");
             TempData["ErrorMessage"] = "Failed to process Khalti callback.";
             return RedirectToAction(nameof(PaymentFailure));
         }

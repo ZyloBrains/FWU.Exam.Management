@@ -24,6 +24,23 @@
                 <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.PaymentTypeName)</p>
             </div>
             <div>
+                <p class="text-sm font-medium text-gray-600">Logo</p>
+                <p class="mt-1">
+                    @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                    {
+                        <img src="@Model.LogoUrl" alt="@Model.PaymentTypeName" class="h-10 object-contain" onerror="this.style.display='none'" />
+                    }
+                    else
+                    {
+                        <span class="text-gray-400 italic">No logo configured</span>
+                    }
+                </p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Logo URL</p>
+                <p class="mt-1 text-gray-800 font-semibold text-sm break-all">@Html.DisplayFor(model => model.LogoUrl)</p>
+            </div>
+            <div>
                 <p class="text-sm font-medium text-gray-600">Status</p>
                 <p class="mt-1">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(Model.IsActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600")">

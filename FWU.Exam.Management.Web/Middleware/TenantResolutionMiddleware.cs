@@ -24,36 +24,76 @@ public class TenantResolutionMiddleware(RequestDelegate next)
 
         if (TryExtractTenant(path, out var tenantCode, out var remainingPath))
         {
-            var cacheKey = $"tenant_{tenantCode}";
-            if (!cache.TryGetValue(cacheKey, out Tenant? tenant) || tenant == null)
+            if (await TrySetTenantAsync(context, tenantContext, dbContext, cache, tenantCode!))
             {
-                tenant = await dbContext.Set<Tenant>()
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.OfficeCode == tenantCode);
+                context.Items["TenantCode"] = tenantCode;
+                context.Items["OriginalPath"] = path;
+                context.Request.PathBase = $"/tenant/{tenantCode}";
+                context.Request.Path = remainingPath;
 
-                if (tenant != null)
-                    cache.Set(cacheKey, tenant, _cacheOptions);
+                SetTenantCookie(context, tenantCode!);
             }
-
-            if (tenant == null)
+            else
             {
                 context.Response.StatusCode = 404;
                 return;
             }
-
-            tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
-            context.Items["TenantCode"] = tenantCode;
-            context.Items["OriginalPath"] = path;
-            context.Request.PathBase = $"/tenant/{tenantCode}";
-            context.Request.Path = remainingPath;
         }
         else if (!IsPublicPath(path))
         {
-            context.Response.Redirect("/TenantSelect/Index");
-            return;
+            var cookieTenantCode = context.Request.Cookies["tenant_code"];
+            if (!string.IsNullOrEmpty(cookieTenantCode))
+            {
+                if (await TrySetTenantAsync(context, tenantContext, dbContext, cache, cookieTenantCode))
+                {
+                    context.Items["TenantCode"] = cookieTenantCode;
+                }
+                else
+                {
+                    context.Response.Cookies.Delete("tenant_code");
+                    context.Response.Redirect("/TenantSelect/Index");
+                    return;
+                }
+            }
+            else
+            {
+                context.Response.Redirect("/TenantSelect/Index");
+                return;
+            }
         }
 
         await next(context);
+    }
+
+    private static void SetTenantCookie(HttpContext context, string tenantCode)
+    {
+        context.Response.Cookies.Append("tenant_code", tenantCode, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = context.Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            IsEssential = true,
+            MaxAge = TimeSpan.FromHours(24)
+        });
+    }
+
+    private static async Task<bool> TrySetTenantAsync(HttpContext context, ITenantContext tenantContext, AppDbContext dbContext, IMemoryCache cache, string tenantCode)
+    {
+        var cacheKey = $"tenant_{tenantCode}";
+        if (!cache.TryGetValue(cacheKey, out Tenant? tenant) || tenant == null)
+        {
+            tenant = await dbContext.Set<Tenant>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.OfficeCode == tenantCode);
+
+            if (tenant != null)
+                cache.Set(cacheKey, tenant, _cacheOptions);
+        }
+
+        if (tenant == null) return false;
+
+        tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
+        return true;
     }
 
     private static bool TryExtractTenant(string path, out string? tenantCode, out string remainingPath)

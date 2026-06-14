@@ -4,6 +4,7 @@ using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Permissions;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
@@ -78,6 +79,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
     public DbSet<ESewaConfiguration>? ESewaConfigurations { get; set; }
     public DbSet<KhaltiConfiguration>? KhaltiConfigurations { get; set; }
+    public DbSet<Permission>? Permissions { get; set; }
+    public DbSet<RolePermission>? RolePermissions { get; set; }
  
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -482,6 +485,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(bt => bt.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<BillTitle>()
+            .HasOne(bt => bt.Program)
+            .WithMany()
+            .HasForeignKey(bt => bt.ProgramsId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<ExamRollNumberSetup>()
             .HasOne(ers => ers.ExamSchedule)
             .WithMany()
@@ -818,5 +827,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })
             .IsUnique()
             .HasFilter("[RegistrationNumber] IS NOT NULL");
+
+        builder.Entity<Permission>(entity =>
+        {
+            entity.ToTable("Permissions");
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name).HasMaxLength(256).IsRequired();
+            entity.Property(p => p.DisplayName).HasMaxLength(256);
+            entity.Property(p => p.Group).HasMaxLength(128);
+            entity.HasIndex(p => p.Name).IsUnique();
+        });
+
+        builder.Entity<RolePermission>(entity =>
+        {
+            entity.ToTable("RolePermissions");
+            entity.HasKey(rp => new { rp.RoleId, rp.PermissionId });
+            entity.HasOne<IdentityRole>()
+                .WithMany()
+                .HasForeignKey(rp => rp.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

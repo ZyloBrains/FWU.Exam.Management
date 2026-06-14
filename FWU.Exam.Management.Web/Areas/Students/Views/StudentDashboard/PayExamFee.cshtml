@@ -224,43 +224,40 @@
         </div>
         <div class="p-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                @if (Model.HasESewa)
+                @if (Model.PaymentTypes.Count > 0)
                 {
-                    <button type="button" onclick="processPayment('esewa')"
-                            class="group flex flex-col items-center p-6 bg-green-50 border-2 border-green-200 rounded-xl hover:bg-green-100 hover:border-green-400 transition-all duration-200">
-                        <div class="w-16 h-16 mb-3">
-                            <img src="~/images/payments/esewa.svg" alt="eSewa" class="w-full h-full" />
-                        </div>
-                        <span class="text-sm font-semibold text-green-700">eSewa</span>
-                        <span class="text-xs text-green-500 mt-1">Pay with eSewa</span>
-                    </button>
-                }
+                    var colorMap = new Dictionary<string, (string bg, string border, string text, string hoverBg, string hoverBorder, string iconBg)>
+                    {
+                        ["esewa"] = ("bg-green-50", "border-green-200", "text-green-700", "hover:bg-green-100", "hover:border-green-400", "bg-green-100"),
+                        ["khalti"] = ("bg-purple-50", "border-purple-200", "text-purple-700", "hover:bg-purple-100", "hover:border-purple-400", "bg-purple-100"),
+                        ["connectips"] = ("bg-blue-50", "border-blue-200", "text-blue-700", "hover:bg-blue-100", "hover:border-blue-400", "bg-blue-100"),
+                    };
+                    var defaultColors = ("bg-gray-50", "border-gray-200", "text-gray-700", "hover:bg-gray-100", "hover:border-gray-400", "bg-gray-100");
 
-                @if (Model.HasKhalti)
-                {
-                    <button type="button" onclick="processPayment('khalti')"
-                            class="group flex flex-col items-center p-6 bg-purple-50 border-2 border-purple-200 rounded-xl hover:bg-purple-100 hover:border-purple-400 transition-all duration-200">
-                        <div class="w-16 h-16 mb-3">
-                            <img src="~/images/payments/khalti.svg" alt="Khalti" class="w-full h-full" />
-                        </div>
-                        <span class="text-sm font-semibold text-purple-700">Khalti</span>
-                        <span class="text-xs text-purple-500 mt-1">Pay with Khalti</span>
-                    </button>
-                }
+                    foreach (var pt in Model.PaymentTypes)
+                    {
+                        var key = pt.Name?.ToLowerInvariant() ?? "";
+                        var (bg, border, text, hoverBg, hoverBorder, iconBg) = colorMap.ContainsKey(key) ? colorMap[key] : defaultColors;
+                        var methodName = key;
 
-                @if (Model.HasConnectIPS)
-                {
-                    <button type="button" onclick="processPayment('connectips')"
-                            class="group flex flex-col items-center p-6 bg-blue-50 border-2 border-blue-200 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all duration-200">
-                        <div class="w-16 h-16 mb-3">
-                            <img src="~/images/payments/connectips.svg" alt="Connect IPS" class="w-full h-full" />
-                        </div>
-                        <span class="text-sm font-semibold text-blue-700">Connect IPS</span>
-                        <span class="text-xs text-blue-500 mt-1">Pay via Internet Banking</span>
-                    </button>
+                        <button type="button" onclick="processPayment('@methodName')"
+                                class="group flex flex-col items-center p-6 @bg border-2 @border rounded-xl @hoverBg @hoverBorder transition-all duration-200">
+                            <div class="w-16 h-16 mb-3 flex items-center justify-center @iconBg rounded-full">
+                                @if (!string.IsNullOrEmpty(pt.LogoUrl))
+                                {
+                                    <img src="@pt.LogoUrl" alt="@pt.Name" class="w-12 h-12 object-contain" onerror="this.parentElement.innerHTML='<i class=\'fas fa-credit-card text-2xl @text\'></i>'" />
+                                }
+                                else
+                                {
+                                    <i class="fas fa-credit-card text-2xl @text"></i>
+                                }
+                            </div>
+                            <span class="text-sm font-semibold @text">@pt.Name</span>
+                            <span class="text-xs @(text.Replace("700", "500")) mt-1">Pay with @pt.Name</span>
+                        </button>
+                    }
                 }
-
-                @if (!Model.HasESewa && !Model.HasKhalti && !Model.HasConnectIPS)
+                else
                 {
                     <div class="col-span-full text-center py-8 text-gray-400">
                         <i class="fas fa-credit-card text-3xl mb-2 block"></i>
@@ -273,6 +270,7 @@
 </div>
 
 <form id="paymentForm" method="post" style="display:none">
+    @Html.AntiForgeryToken()
     <input type="hidden" name="examScheduleId" id="hfExamScheduleId" value="@Model.ExamScheduleId" />
     <input type="hidden" name="paymentMethod" id="hfPaymentMethod" />
     <input type="hidden" name="amount" id="hfAmount" />
@@ -308,7 +306,7 @@
             {
                 <text>
                 document.getElementById('hfAmount').value = @Model.GrandTotal;
-                document.getElementById('hfSelectedSubjectIds').value = '';
+                document.getElementById('hfSelectedSubjectIds').value = '@string.Join(",", Model.SelectedSubjectIds)';
                 </text>
             }
         }

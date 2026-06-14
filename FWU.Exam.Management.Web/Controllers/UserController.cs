@@ -12,7 +12,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
 public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()
@@ -78,7 +78,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
     public async Task<IActionResult> Create()
     {
-        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin) ? Role.AllRoles : Role.AllRoles.Where(r => r != Role.FacultyAdmin);
+        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
+            ? roles
+            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
         ViewBag.Departments = new SelectList(await context.Departments.ToListAsync(), "Id", "DepartmentName");
@@ -126,7 +129,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin) ? Role.AllRoles : Role.AllRoles.Where(r => r != Role.FacultyAdmin);
+        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
+            ? roles
+            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);

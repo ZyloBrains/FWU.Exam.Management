@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace FWU.Exam.Management.Application.Interfaces;
 
 public class KhaltiInitiateRequest
@@ -19,19 +21,37 @@ public class KhaltiCustomerInfo
 
 public class KhaltiInitiateResponse
 {
+    [JsonPropertyName("pidx")]
     public string? Pidx { get; set; }
+
+    [JsonPropertyName("payment_url")]
     public string? PaymentUrl { get; set; }
+
+    [JsonPropertyName("expires_at")]
     public DateTime? ExpiresAt { get; set; }
+
+    [JsonPropertyName("expires_in")]
     public int? ExpiresIn { get; set; }
 }
 
 public class KhaltiLookupResponse
 {
+    [JsonPropertyName("pidx")]
     public string? Pidx { get; set; }
+
+    [JsonPropertyName("total_amount")]
     public long TotalAmount { get; set; }
+
+    [JsonPropertyName("status")]
     public string? Status { get; set; }
+
+    [JsonPropertyName("transaction_id")]
     public string? TransactionId { get; set; }
+
+    [JsonPropertyName("fee")]
     public long Fee { get; set; }
+
+    [JsonPropertyName("refunded")]
     public bool Refunded { get; set; }
 }
 
