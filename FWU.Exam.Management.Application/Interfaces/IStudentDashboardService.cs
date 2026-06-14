@@ -12,7 +12,7 @@ public interface IStudentDashboardService
     Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
-    Task<decimal> GetPracticalChargeForProgramAsync(int programId);
+    Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId);
     Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId);
     Task<List<PaymentType>> GetActivePaymentTypesAsync();
     Task<List<ResultRecord>> GetResultRecordsAsync(string registrationNumber);

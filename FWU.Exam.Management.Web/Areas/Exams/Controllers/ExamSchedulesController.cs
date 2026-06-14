@@ -35,6 +35,8 @@ public class ExamSchedulesController(
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
+        await examScheduleService.DeactivateExpiredSchedulesAsync();
+
         var (collegeId, facultyId) = await GetScopeAsync();
         var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
@@ -63,7 +65,7 @@ public class ExamSchedulesController(
         var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
 
         var sb = new StringBuilder();
-        sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
+        sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Start Date (AD),End Date (AD),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
 
         foreach (var item in items)
         {
@@ -74,6 +76,8 @@ public class ExamSchedulesController(
                           $"{EscapeCsv(item.ExamType?.Name ?? string.Empty)}," +
                           $"{EscapeCsv(item.StartDateBs ?? string.Empty)}," +
                           $"{EscapeCsv(item.EndDateBs ?? string.Empty)}," +
+                          $"{EscapeCsv(item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
+                          $"{EscapeCsv(item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
                           $"{EscapeCsv(item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
                           $"{EscapeCsv(item.StartTime.ToString())}," +
                           $"{EscapeCsv(item.EndTime.ToString())}," +
@@ -115,7 +119,7 @@ public class ExamSchedulesController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (ModelState.IsValid)
         {
@@ -141,7 +145,7 @@ public class ExamSchedulesController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
 
