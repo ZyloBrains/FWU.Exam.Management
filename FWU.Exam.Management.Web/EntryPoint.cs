@@ -68,6 +68,23 @@ public partial class EntryPoint
                     }
 
                     return Task.CompletedTask;
+                },
+                OnRedirectToAccessDenied = ctx =>
+                {
+                    var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
+                    var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
+
+                    if (!string.IsNullOrEmpty(tenantCode))
+                    {
+                        var accessDeniedPath = $"/tenant/{tenantCode}/Identity/Account/AccessDenied";
+                        ctx.Response.Redirect($"{accessDeniedPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
+                    }
+                    else
+                    {
+                        ctx.Response.Redirect(ctx.RedirectUri);
+                    }
+
+                    return Task.CompletedTask;
                 }
             };
         });
