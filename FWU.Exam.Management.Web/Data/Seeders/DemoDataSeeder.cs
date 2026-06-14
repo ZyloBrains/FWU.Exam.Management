@@ -534,6 +534,8 @@ public static class DemoDataSeeder
                     LevelId = bachelorLevel?.Id,
                     StartDateBs = "2081-10-01",
                     EndDateBs = "2081-10-15",
+                    StartDate = new DateOnly(2025, 1, 14),
+                    EndDate = new DateOnly(2025, 1, 28),
                     StartTime = new TimeOnly(7, 0),
                     EndTime = new TimeOnly(10, 0),
                     IsActive = true

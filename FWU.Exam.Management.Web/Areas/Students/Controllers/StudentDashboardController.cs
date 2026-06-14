@@ -154,7 +154,7 @@ public class StudentDashboardController(
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
-        var practicalCharge = await dashboardService.GetPracticalChargeForProgramAsync(schedule.ProgramId);
+        var practicalFee = await dashboardService.GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
         var paymentTypes = await dashboardService.GetActivePaymentTypesAsync();
 
         var hasESewa = paymentTypes.Any(pt => pt.PaymentTypeName != null && pt.PaymentTypeName.Contains("esewa", StringComparison.OrdinalIgnoreCase));
@@ -178,7 +178,8 @@ public class StudentDashboardController(
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
             ExamFee = examFee,
-            PracticalFee = s.HasPractical ? practicalCharge : 0,
+            IsCompulsory = s.IsCompulsory,
+            PracticalFee = s.HasPractical ? practicalFee : 0,
             IsSelected = isRegular || failedSet.Contains(s.Id),
             IsFailed = failedSet.Contains(s.Id)
         }).ToList();
@@ -189,7 +190,7 @@ public class StudentDashboardController(
             ExamScheduleName = schedule.ExamScheduleName,
             ProgramName = schedule.Program?.ProgramName,
             SemesterName = schedule.Semester?.Name,
-            TotalExamFee = subjectList.Sum(s => s.ExamFee),
+            TotalExamFee = examFee,
             HasESewa = hasESewa,
             HasKhalti = hasKhalti,
             HasConnectIPS = hasConnectIPS,

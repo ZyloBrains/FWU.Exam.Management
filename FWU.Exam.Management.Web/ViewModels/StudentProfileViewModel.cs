@@ -49,7 +49,6 @@ public class SubjectFeeDetail
     public string? SubjectCode { get; set; }
     public bool HasTheory { get; set; }
     public bool HasPractical { get; set; }
-    public decimal ExamFee { get; set; }
     public decimal PracticalFee { get; set; }
     public bool IsSelected { get; set; }
     public bool IsFailed { get; set; }

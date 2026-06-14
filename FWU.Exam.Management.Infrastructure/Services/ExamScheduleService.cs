@@ -44,6 +44,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
                 EndDateBs = e.EndDateBs,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
                 PublishedDate = e.PublishedDate,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
@@ -51,6 +53,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 IsActive = e.IsActive,
                 ExtendedDate = e.ExtendedDate,
                 ExtendedDateCharge = e.ExtendedDateCharge,
+                ExamFee = e.ExamFee,
+                PracticalSubjectFee = e.PracticalSubjectFee,
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
@@ -58,9 +62,26 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 Program = e.Program,
                 ExamType = e.ExamType
             })
+            .Take(pageSize)
             .ToListAsync();
 
         return (items, totalCount);
+    }
+
+    public async Task DeactivateExpiredSchedulesAsync()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var expired = await context.ExamSchedules
+            .Where(e => e.IsActive && e.EndDate != null && e.EndDate < today)
+            .ToListAsync();
+
+        foreach (var schedule in expired)
+        {
+            schedule.IsActive = false;
+        }
+
+        if (expired.Count > 0)
+            await context.SaveChangesAsync();
     }
 
     public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
@@ -76,6 +97,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
                 EndDateBs = e.EndDateBs,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
                 PublishedDate = e.PublishedDate,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
@@ -83,6 +106,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 IsActive = e.IsActive,
                 ExtendedDate = e.ExtendedDate,
                 ExtendedDateCharge = e.ExtendedDateCharge,
+                ExamFee = e.ExamFee,
+                PracticalSubjectFee = e.PracticalSubjectFee,
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
@@ -107,6 +132,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
                 EndDateBs = e.EndDateBs,
+                StartDate = e.StartDate,
+                EndDate = e.EndDate,
                 PublishedDate = e.PublishedDate,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
@@ -114,6 +141,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 IsActive = e.IsActive,
                 ExtendedDate = e.ExtendedDate,
                 ExtendedDateCharge = e.ExtendedDateCharge,
+                ExamFee = e.ExamFee,
+                PracticalSubjectFee = e.PracticalSubjectFee,
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
@@ -132,6 +161,21 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
 
     public async Task UpdateExamScheduleAsync(ExamSchedule examSchedule)
     {
+        if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var threshold = examSchedule.EndDate.Value.AddDays(-7);
+            if (today < threshold && today < examSchedule.EndDate.Value)
+            {
+                throw new InvalidOperationException("Extension is only allowed when the exam end date is near or has passed.");
+            }
+
+            if (DateOnly.FromDateTime(examSchedule.ExtendedDate.Value) <= examSchedule.EndDate.Value)
+            {
+                throw new InvalidOperationException("Extended date must be after the original end date.");
+            }
+        }
+
         context.ExamSchedules.Update(examSchedule);
         await context.SaveChangesAsync();
     }

@@ -24,6 +24,12 @@ public class ExamSchedule : ITenantScoped
     [MaxLength(10)]
     public string? EndDateBs { get; set; }
 
+    [Display(Name = "Start Date (AD)")]
+    public DateOnly? StartDate { get; set; }
+
+    [Display(Name = "End Date (AD)")]
+    public DateOnly? EndDate { get; set; }
+
     public DateTime? PublishedDate { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
@@ -35,6 +41,8 @@ public class ExamSchedule : ITenantScoped
 
     public DateTime? ExtendedDate { get; set; }
     public decimal? ExtendedDateCharge { get; set; }
+    public decimal? ExamFee { get; set; }
+    public decimal? PracticalSubjectFee { get; set; }
     public DateTime? CollegeApprovalDate { get; set; }
     public DateTime? AdmissionCardReleaseDate { get; set; }
 

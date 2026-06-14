@@ -100,14 +100,24 @@
                         <span asp-validation-for="ExtendedDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="StartDateBs" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="StartDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label asp-for="StartDateBs" class="text-sm font-medium text-gray-700 block mb-1">Start Date (BS)</label>
+                        <input asp-for="StartDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2081-10-01" />
                         <span asp-validation-for="StartDateBs" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="EndDateBs" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="EndDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label asp-for="EndDateBs" class="text-sm font-medium text-gray-700 block mb-1">End Date (BS)</label>
+                        <input asp-for="EndDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2081-10-15" />
                         <span asp-validation-for="EndDateBs" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="StartDate" class="text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
+                        <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="EndDate" class="text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
+                        <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="StartTime" class="text-sm font-medium text-gray-700 block mb-1"></label>
@@ -118,6 +128,23 @@
                         <label asp-for="EndTime" class="text-sm font-medium text-gray-700 block mb-1"></label>
                         <input asp-for="EndTime" type="time" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="EndTime" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Fee Configuration -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Fee Configuration</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="ExamFee" class="text-sm font-medium text-gray-700 block mb-1">Exam Fee (Flat)</label>
+                        <input asp-for="ExamFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2400" />
+                        <span asp-validation-for="ExamFee" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="PracticalSubjectFee" class="text-sm font-medium text-gray-700 block mb-1">Practical Fee (Per Subject)</label>
+                        <input asp-for="PracticalSubjectFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 200" />
+                        <span asp-validation-for="PracticalSubjectFee" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
             </div>

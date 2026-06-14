@@ -41,6 +41,7 @@
                 @(Model.IsRegular ? "Regular" : "Non-Regular")
             </span>
         </div>
+<<<<<<< HEAD
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
@@ -120,6 +121,158 @@
                     <tr class="bg-blue-50">
                         <td colspan="@(Model.IsRegular ? 6 : 7)" class="px-4 py-3 text-right font-bold text-gray-800">Grand Total:</td>
                         <td class="px-4 py-3 text-right font-bold text-blue-700 text-base" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</td>
+=======
+
+        @{
+            var compulsorySubjects = Model.Subjects.Where(s => s.IsCompulsory).ToList();
+            var electiveSubjects = Model.Subjects.Where(s => !s.IsCompulsory).ToList();
+        }
+
+        @if (compulsorySubjects.Any())
+        {
+            <div class="px-6 py-3 bg-blue-50 border-b border-gray-200">
+                <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wider">Compulsory Subjects</h4>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            @if (!Model.IsRegular)
+                            {
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-10"></th>
+                            }
+                            <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
+                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
+                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Code</th>
+                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
+                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
+                            <th class="text-right px-4 py-3 font-semibold text-gray-600">Practical Fee</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @for (int i = 0; i < compulsorySubjects.Count; i++)
+                        {
+                            var subj = compulsorySubjects[i];
+                            <tr class="subject-row hover:bg-gray-50 transition-colors @(subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-blue-50/30") : "")">
+                                @if (!Model.IsRegular)
+                                {
+                                    <td class="px-4 py-3">
+                                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                                               data-practical-fee="@subj.PracticalFee"
+                                               class="subject-checkbox rounded border-gray-300"
+                                               onchange="updateTotals()" checked="@(subj.IsSelected ? "checked" : null)" />
+                                    </td>
+                                }
+                                <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
+                                <td class="px-4 py-3 text-gray-800 font-medium">@subj.SubjectName</td>
+                                <td class="px-4 py-3 text-gray-600">@subj.SubjectCode</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
+                                    else { <i class="fas fa-times text-gray-300"></i> }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
+                                    else { <i class="fas fa-times text-gray-300"></i> }
+                                </td>
+                                <td class="px-4 py-3 text-right text-gray-800">Rs @subj.PracticalFee.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="bg-gray-50 border-t border-gray-200">
+                        <tr class="text-sm font-semibold text-gray-700">
+                            <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Compulsory Subtotal:</td>
+                            <td class="px-4 py-3 text-right" id="compPracticalFee">Rs @compulsorySubjects.Sum(s => s.PracticalFee).ToString("N0")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+
+        @if (electiveSubjects.Any())
+        {
+            <div class="px-6 py-3 bg-purple-50 border-b border-gray-200">
+                <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects</h4>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            @if (!Model.IsRegular)
+                            {
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-10">
+                                    <input type="checkbox" id="selectAll" onchange="toggleAll(this)" class="rounded border-gray-300" />
+                                </th>
+                            }
+                            <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
+                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
+                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Code</th>
+                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
+                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
+                            <th class="text-right px-4 py-3 font-semibold text-gray-600">Practical Fee</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @for (int i = 0; i < electiveSubjects.Count; i++)
+                        {
+                            var subj = electiveSubjects[i];
+                            <tr class="subject-row hover:bg-gray-50 transition-colors @(subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "")">
+                                @if (!Model.IsRegular)
+                                {
+                                    <td class="px-4 py-3">
+                                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                                               data-practical-fee="@subj.PracticalFee"
+                                               class="subject-checkbox rounded border-gray-300"
+                                               onchange="updateTotals()" checked="@(subj.IsSelected ? "checked" : null)" />
+                                    </td>
+                                }
+                                <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
+                                <td class="px-4 py-3 text-gray-800 font-medium">
+                                    @subj.SubjectName
+                                    @if (!Model.IsRegular && subj.IsFailed)
+                                    {
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>Previously Failed
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">@subj.SubjectCode</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
+                                    else { <i class="fas fa-times text-gray-300"></i> }
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
+                                    else { <i class="fas fa-times text-gray-300"></i> }
+                                </td>
+                                <td class="px-4 py-3 text-right text-gray-800">Rs @subj.PracticalFee.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="bg-gray-50 border-t border-gray-200">
+                        <tr class="text-sm font-semibold text-gray-700">
+                            <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Elective Subtotal:</td>
+                            <td class="px-4 py-3 text-right" id="elecPracticalFee">Rs @electiveSubjects.Sum(s => s.PracticalFee).ToString("N0")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+
+        <div class="border-t-2 border-gray-200 bg-gray-50">
+            <table class="w-full text-sm">
+                <tfoot>
+                    <tr class="text-sm text-gray-700">
+                        <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Exam Fee (Flat):</td>
+                        <td class="px-4 py-3 text-right font-semibold text-gray-800" id="totalExamFee">Rs @Model.TotalExamFee.ToString("N0")</td>
+                    </tr>
+                    <tr class="text-sm text-gray-700">
+                        <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Practical Fee:</td>
+                        <td class="px-4 py-3 text-right font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</td>
+                    </tr>
+                    <tr class="bg-blue-50 font-bold">
+                        <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right text-gray-800">Grand Total:</td>
+                        <td class="px-4 py-3 text-right text-blue-700 text-base" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</td>
+>>>>>>> 861c699 (Add AD dates and fee fields to ExamSchedule and UI)
                     </tr>
                 </tfoot>
             </table>
@@ -205,23 +358,23 @@
 
 @section Scripts {
     <script>
+        var flatExamFee = @Model.TotalExamFee;
+
         function updateTotals() {
             @if (!Model.IsRegular)
             {
                 <text>
-                var totalExam = 0;
                 var totalPractical = 0;
                 var selectedIds = [];
                 document.querySelectorAll('.subject-checkbox:checked').forEach(function(cb) {
-                    totalExam += parseFloat(cb.getAttribute('data-exam-fee'));
                     totalPractical += parseFloat(cb.getAttribute('data-practical-fee'));
                     selectedIds.push(cb.value);
                 });
-                var grandTotal = totalExam + totalPractical;
-                document.getElementById('totalExamFee').innerText = 'Rs ' + totalExam.toLocaleString();
+                var grandTotal = flatExamFee + totalPractical;
+                document.getElementById('totalExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
                 document.getElementById('totalPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
                 document.getElementById('grandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();
-                document.getElementById('breakupExamFee').innerText = 'Rs ' + totalExam.toLocaleString();
+                document.getElementById('breakupExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
                 document.getElementById('breakupPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
                 document.getElementById('breakupGrandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();
                 document.getElementById('hfSelectedSubjectIds').value = selectedIds.join(',');

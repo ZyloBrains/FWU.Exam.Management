@@ -77,27 +77,20 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId)
     {
-        var billTitle = await context.Set<BillTitle>()
+        var schedule = await context.ExamSchedules!
             .AsNoTracking()
-            .FirstOrDefaultAsync(bt => bt.ExamScheduleId == examScheduleId && bt.IsActive);
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
-        if (billTitle?.Amount.HasValue == true)
-            return billTitle.Amount.Value;
-
-        var examFee = await context.ExamFees!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(ef => ef.ExamScheduleId == examScheduleId);
-
-        return examFee?.Amount ?? 0;
+        return schedule?.ExamFee ?? 0;
     }
 
-    public async Task<decimal> GetPracticalChargeForProgramAsync(int programId)
+    public async Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId)
     {
-        var charge = await context.Set<ProgramSubjectPracticalCharge>()
+        var schedule = await context.ExamSchedules!
             .AsNoTracking()
-            .FirstOrDefaultAsync(pspc => pspc.ProgramsId == programId);
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
-        return charge?.PracticalSubjectCharge ?? 0;
+        return schedule?.PracticalSubjectFee ?? 0;
     }
 
     public async Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId)

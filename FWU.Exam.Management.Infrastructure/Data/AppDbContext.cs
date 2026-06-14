@@ -638,6 +638,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<ExamRegistration>(e => e.Property(x => x.AttendancePercentage).HasPrecision(5, 2));
         builder.Entity<ExamRegistration>(e => e.Property(x => x.FeeEnclosed).HasPrecision(18, 2));
         builder.Entity<ExamSchedule>(e => e.Property(x => x.ExtendedDateCharge).HasPrecision(18, 2));
+        builder.Entity<ExamSchedule>(e => e.Property(x => x.ExamFee).HasPrecision(18, 2));
+        builder.Entity<ExamSchedule>(e => e.Property(x => x.PracticalSubjectFee).HasPrecision(18, 2));
         builder.Entity<ExamSubjectResult>(e => e.Property(x => x.ObtainedMarks).HasPrecision(5, 2));
         builder.Entity<ExamSubjectResult>(e => e.Property(x => x.ObtainedMarksTheoryInternal).HasPrecision(5, 2));
         builder.Entity<ExamSubjectResult>(e => e.Property(x => x.ObtainedMarksPracticalInternal).HasPrecision(5, 2));
