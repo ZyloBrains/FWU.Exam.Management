@@ -247,4 +247,60 @@
         </div>
 
     </div>
+
+    <!-- Qualifications Section -->
+    @{
+        var qualList = ViewBag.Qualifications as List<StudentQualification>;
+    }
+    @if (qualList != null && qualList.Count > 0)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-8">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                    <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Qualifications
+                </h3>
+            </div>
+            <div class="px-6 py-5">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead>
+                            <tr class="border-b text-gray-500">
+                                <th class="py-2 pr-4 font-medium">Level</th>
+                                <th class="py-2 pr-4 font-medium">Board</th>
+                                <th class="py-2 pr-4 font-medium">Institute</th>
+                                <th class="py-2 pr-4 font-medium">Year</th>
+                                <th class="py-2 pr-4 font-medium">Percentage</th>
+                                <th class="py-2 pr-4 font-medium">Roll No</th>
+                                <th class="py-2 font-medium">Document</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var q in qualList)
+                            {
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-2 pr-4">@q.PreviousLevel?.PreviousLevelName</td>
+                                    <td class="py-2 pr-4">@q.Board?.BoardName</td>
+                                    <td class="py-2 pr-4">@q.InstituteName</td>
+                                    <td class="py-2 pr-4">@q.PassedYear</td>
+                                    <td class="py-2 pr-4">@q.Percentage?.ToString("0.##")%</td>
+                                    <td class="py-2 pr-4">@q.ExamRollNumber</td>
+                                    <td class="py-2">
+                                        @if (!string.IsNullOrEmpty(q.DocumentPath))
+                                        {
+                                            <a href="@q.DocumentPath" target="_blank" class="text-teal-600 hover:text-teal-800 underline">View</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-gray-400">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
 </div>

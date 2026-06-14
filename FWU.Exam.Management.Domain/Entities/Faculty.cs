@@ -1,3 +1,5 @@
+using FWU.Exam.Management.Domain.Entities.Colleges;
+
 namespace FWU.Exam.Management.Domain.Entities;
 public class Faculty
 {    
@@ -10,4 +12,5 @@ public class Faculty
     public string? LogoPath { get; set; }
     public int? TenantId { get; set; }
     public Tenant? Tenant { get; set; }
+    public virtual ICollection<College>? Colleges { get; set; }
 }

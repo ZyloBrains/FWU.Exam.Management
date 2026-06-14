@@ -193,6 +193,26 @@ public class EntranceController(IEntranceExamApplicationService service) : Contr
             $"EntranceApplications_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
+    // --- Convert approved application to Student Admission ---
+
+    [HttpPost]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConvertToAdmission(int id)
+    {
+        try
+        {
+            var admissionId = await service.ConvertToAdmissionAsync(id);
+            TempData["SuccessMessage"] = "Application converted to student admission successfully!";
+            return RedirectToAction("Details", "StudentAdmissions", new { area = "Students", id = admissionId });
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+    }
+
     // --- Entrance Schedule Management (Admin) ---
 
 

@@ -140,7 +140,7 @@ public class CollegeService(AppDbContext context) : ICollegeService
 
         if (facultyId.HasValue)
         {
-            query = query.Where(c => c.FacultyId == facultyId.Value);
+            query = query.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value));
         }
 
         if (!string.IsNullOrEmpty(search))

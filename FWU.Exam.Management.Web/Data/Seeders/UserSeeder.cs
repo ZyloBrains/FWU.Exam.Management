@@ -23,7 +23,7 @@ public static class UserSeeder
         ("admin@gmail.com", "Super Admin", Role.SuperAdmin, null),
         ("faculty@admin.com", "Faculty Admin", Role.FacultyAdmin, "SOE"),
         ("college@gmail.com", "College Admin", Role.CollegeAdmin, null),
-        ("department@gmail.com", "Department Admin", Role.DepartmentAdmin, null),
+        ("deptadmin@gmail.com", "Department Admin", Role.DepartmentAdmin, null),
         ("student@gmail.com", "Test Student", Role.Student, null),
     ];
 

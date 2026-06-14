@@ -35,8 +35,19 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Where(sa => sa.IsActive)
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
-        if (studentAdmission == null)
+        int programId;
+        if (studentAdmission != null)
+        {
+            programId = studentAdmission.ProgramsId;
+        }
+        else if (student.ProgramId.HasValue)
+        {
+            programId = student.ProgramId.Value;
+        }
+        else
+        {
             return [];
+        }
 
         var query = context.ExamSchedules!
             .AsNoTracking()
@@ -44,7 +55,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Include(es => es.Level)
             .Include(es => es.Semester)
             .Include(es => es.AcademicYear)
-            .Where(es => es.IsActive && es.ProgramId == studentAdmission.ProgramsId);
+            .Where(es => es.IsActive && es.ProgramId == programId);
 
         if (student.LevelId != 0)
         {
@@ -75,6 +86,18 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .ToListAsync();
     }
 
+    public async Task<List<SubjectOffering>> GetSubjectOfferingsByProgramAsync(int programId)
+    {
+        return await context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+            .Include(so => so.Semester)
+            .Where(so => so.ProgramId == programId)
+            .OrderBy(so => so.Semester!.Number)
+            .ThenBy(so => so.DisplayOrder)
+            .ToListAsync();
+    }
+
     public async Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId)
     {
         var billTitle = await context.Set<BillTitle>()
@@ -93,11 +116,11 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<decimal> GetPracticalChargeForProgramAsync(int programId)
     {
-        var billTitle = await context.Set<BillTitle>()
+        var charge = await context.Set<ProgramSubjectPracticalCharge>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(bt => bt.ProgramsId == programId && bt.FeeType == "Practical" && bt.IsActive);
+            .FirstOrDefaultAsync(pspc => pspc.ProgramsId == programId);
 
-        return billTitle?.Amount ?? 0;
+        return charge?.PracticalSubjectCharge ?? 0;
     }
 
     public async Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId)
@@ -156,14 +179,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
-    public async Task<PaymentRequestLog?> GetPaymentRequestLogByIdAsync(int logId)
-    {
-        return await context.Set<PaymentRequestLog>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(prl => prl.Id == logId);
-    }
-
-    public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData)
+    public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null)
     {
         var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
         if (log == null) return;
@@ -176,9 +192,72 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             PaymentRequestLogId = logId,
             ResponseTimestamp = DateTime.UtcNow,
             IsSuccess = isSuccess,
-            ResponseMessage = isSuccess ? "Payment verified successfully" : "Payment failed",
+            ResponseMessage = responseMessage ?? (isSuccess ? "Payment verified via callback" : "Payment failed via callback"),
             FullResponse = responseData
         });
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<PaymentRequestLog?> GetPaymentLogByIdAsync(int logId)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.Id == logId);
+    }
+
+    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .Include(es => es.Semester)
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        if (schedule == null) return;
+
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+
+        if (admission == null) return;
+
+        var academicYearId = schedule.AcademicYearId;
+
+        var registration = new ExamRegistration
+        {
+            ExamScheduleId = examScheduleId,
+            CollegeId = admission.CollegeId,
+            AcademicYearId = academicYearId,
+            ProgramsId = admission.ProgramsId,
+            FeeEnclosed = amount,
+            RegistrationDate = DateTime.UtcNow,
+            Status = RegistrationStatus.Pending,
+            IsActive = true,
+            IsAppliedByStudent = true
+        };
+
+        context.ExamRegistrations!.Add(registration);
+        await context.SaveChangesAsync();
+
+        foreach (var subjectOfferingId in subjectOfferingIds)
+        {
+            var subjectOffering = await context.SubjectOfferings!
+                .AsNoTracking()
+                .FirstOrDefaultAsync(so => so.Id == subjectOfferingId);
+
+            if (subjectOffering == null) continue;
+
+            context.ExamSubjectResults!.Add(new ExamSubjectResult
+            {
+                ExamRegistrationId = registration.Id,
+                SubjectOfferingId = subjectOfferingId,
+                ExamScheduleId = examScheduleId,
+                IsTheoryRegistered = subjectOffering.HasTheory,
+                IsPracticalRegistered = subjectOffering.HasPractical,
+                IsActive = true,
+                IsSubmitted = false
+            });
+        }
 
         await context.SaveChangesAsync();
     }
@@ -255,12 +334,12 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
 
-        foreach (var subjectId in subjectOfferingIds)
+        if (subjectOfferingIds.Count > 0)
         {
             context.Set<PaymentPracticalSubjects>().Add(new PaymentPracticalSubjects
             {
                 PaymentRequestLogId = log.Id,
-                PracticalSubjectsCount = 1,
+                PracticalSubjectsCount = subjectOfferingIds.Count,
                 TotalAmount = amount
             });
         }
