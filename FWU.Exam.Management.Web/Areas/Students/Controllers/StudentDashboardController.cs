@@ -166,7 +166,21 @@ public class StudentDashboardController(
         if (schedule == null) return NotFound("Exam schedule not found.");
 
         var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
-        if (admission == null || schedule.ProgramId != admission.ProgramsId)
+        int programId;
+        if (admission != null)
+        {
+            programId = admission.ProgramsId;
+        }
+        else if (registration.ProgramId.HasValue)
+        {
+            programId = registration.ProgramId.Value;
+        }
+        else
+        {
+            return Forbid();
+        }
+
+        if (schedule.ProgramId != programId)
             return Forbid();
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
