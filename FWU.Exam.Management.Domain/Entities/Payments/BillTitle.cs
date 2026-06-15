@@ -22,8 +22,7 @@ public class BillTitle : ITenantScoped
     public DateTime? ApplicableDate { get; set; }
     public int? ExamScheduleId { get; set; }
 
-    [MaxLength(20)]
-    public string? FeeType { get; set; }
+    public decimal? PracticalFee { get; set; }
 
     public int? ProgramsId { get; set; }
 

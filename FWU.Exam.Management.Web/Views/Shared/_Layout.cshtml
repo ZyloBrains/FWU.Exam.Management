@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using FWU.Exam.Management.Domain.Entities
+@using FWU.Exam.Management.Web.Helpers
 @inject SignInManager<AppUser> SignInManager
 @inject UserManager<AppUser> UserManager
 @inject FWU.Exam.Management.Infrastructure.AppDbContext DbContext
@@ -218,6 +219,7 @@
                             <p class="text-xs lg:text-sm text-blue-200 truncate opacity-90">
                                 @roleLabel@(!string.IsNullOrEmpty(orgName) ? " · " + orgName : "")
                                 <span class="hidden md:inline"> · @DateTime.Now.ToString("ddd, MMM dd, yyyy")</span>
+                                <span class="hidden md:inline"> · @DateTime.Now.ToNepaliDateString()</span>
                             </p>
                         </div>
                     </div>

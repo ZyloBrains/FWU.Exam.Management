@@ -657,7 +657,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<ExamSubjectResult>(e => e.Property(x => x.ObtainedMarksTheoryInternal).HasPrecision(5, 2));
         builder.Entity<ExamSubjectResult>(e => e.Property(x => x.ObtainedMarksPracticalInternal).HasPrecision(5, 2));
         builder.Entity<BillTitle>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
-        builder.Entity<BillTitle>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
+        builder.Entity<BillTitle>(e => e.Property(x => x.PracticalFee).HasPrecision(18, 2));
         builder.Entity<ESewaConfiguration>(e =>
         {
             e.ToTable("ESewaConfiguration");

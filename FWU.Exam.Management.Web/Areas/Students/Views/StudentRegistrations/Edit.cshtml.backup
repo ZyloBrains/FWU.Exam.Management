@@ -393,29 +393,27 @@
         $(function () {
             loadExistingQualifications();
 
-            // BS <-> AD auto-conversion via server (using NepaliCalendarHelper)
-            var convertTimer;
-            $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
+            // BS -> AD auto-conversion
+            $("#DateOfBirthBS").on("change blur", function () {
+                var bsDate = $(this).val().trim();
+                if (bsDate) {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bsDate }, function (data) {
+                        if (data.adDate) {
+                            $("#DateOfBirthAD").val(data.adDate);
+                        }
+                    });
                 }
             });
 
-            $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
+            // AD -> BS auto-conversion
+            $("#DateOfBirthAD").on("change blur", function () {
+                var adDate = $(this).val().trim();
+                if (adDate) {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: adDate }, function (data) {
+                        if (data.bsDate) {
+                            $("#DateOfBirthBS").val(data.bsDate);
+                        }
+                    });
                 }
             });
 
