@@ -15,7 +15,7 @@ public class CollegeType
     [MaxLength(1024)]
     public string? Remarks { get; set; }
 
-    public bool? IsDefault { get; set; }
+    public bool IsDefault { get; set; }
     public bool IsActive { get; set; }
 
     public virtual ICollection<College>? Colleges { get; set; }
