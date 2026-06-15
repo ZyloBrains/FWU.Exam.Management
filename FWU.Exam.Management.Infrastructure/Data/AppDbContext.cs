@@ -458,6 +458,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(so => so.SemesterId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<SubjectOffering>()
+            .HasIndex(so => new { so.SubjectCatalogId, so.ProgramId })
+            .IsUnique();
+
         builder.Entity<CurriculumVersion>()
             .HasOne(cv => cv.Program)
             .WithMany()

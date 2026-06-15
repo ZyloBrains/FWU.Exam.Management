@@ -93,6 +93,13 @@ public class SubjectOfferingsController : Controller
         return View(subjectOffering);
     }
 
+    [HttpGet]
+    public async Task<JsonResult> GetExistingSubjects(int programId)
+    {
+        var ids = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(programId);
+        return Json(ids);
+    }
+
     [RequirePermission("subjectofferings.create")]
     public async Task<IActionResult> Create()
     {
@@ -132,6 +139,20 @@ public class SubjectOfferingsController : Controller
             {
                 if (model.Subjects[i].SubjectCatalogId <= 0)
                     ModelState.AddModelError($"Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Please select a valid subject.");
+            }
+        }
+
+        if (ModelState.IsValid)
+        {
+            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId);
+            var duplicateIds = model.Subjects
+                .Where(s => existingIds.Contains(s.SubjectCatalogId))
+                .Select(s => s.SubjectCatalogId)
+                .ToList();
+
+            if (duplicateIds.Any())
+            {
+                ModelState.AddModelError("", $"{duplicateIds.Count} subject(s) already exist in this semester for the selected program.");
             }
         }
 
@@ -196,14 +217,26 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-<<<<<<< HEAD
     [RequirePermission("subjectofferings.edit")]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering)
-=======
     public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering)
->>>>>>> 9cf132f (Include TenantId in SubjectOffering edit functionality)
     {
         if (id != subjectOffering.Id) return NotFound();
+
+        var current = await _subjectOfferingService.GetSubjectOfferingByIdAsync(id);
+        if (current == null) return NotFound();
+
+        var subjectChanged = current.SubjectCatalogId != subjectOffering.SubjectCatalogId
+                          || current.ProgramId != subjectOffering.ProgramId
+                          || current.SemesterId != subjectOffering.SemesterId;
+
+        if (ModelState.IsValid && subjectChanged)
+        {
+            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(subjectOffering.ProgramId);
+            if (existingIds.Contains(subjectOffering.SubjectCatalogId))
+            {
+                ModelState.AddModelError(nameof(subjectOffering.SubjectCatalogId), "This subject already exists in this semester for the selected program.");
+            }
+        }
 
         if (ModelState.IsValid)
         {

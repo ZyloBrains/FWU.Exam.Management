@@ -114,6 +114,14 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.SubjectOfferings.AnyAsync(e => e.Id == id);
     }
 
+    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId)
+    {
+        return await _context.SubjectOfferings
+            .Where(so => so.ProgramId == programId)
+            .Select(so => so.SubjectCatalogId)
+            .ToListAsync();
+    }
+
     public async Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null)
     {
         var subjectCatalogs = await _context.SubjectCatalogs

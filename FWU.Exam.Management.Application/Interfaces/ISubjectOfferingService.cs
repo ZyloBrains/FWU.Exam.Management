@@ -16,5 +16,6 @@ public interface ISubjectOfferingService
     Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task DeleteSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);
+    Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId);
     Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null);
 }
