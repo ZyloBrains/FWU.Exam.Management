@@ -27,6 +27,7 @@
                 <div>
                     <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1">Program</label>
                     <select asp-for="ProgramId" asp-items="ViewBag.ProgramId"
+                            x-on:change="initExistingSubjects()"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Select Program --</option>
                     </select>
@@ -35,6 +36,7 @@
                 <div>
                     <label asp-for="SemesterId" class="text-sm font-medium text-gray-700 block mb-1">Semester</label>
                     <select asp-for="SemesterId" asp-items="ViewBag.SemesterId"
+                            x-on:change="initExistingSubjects()"
                             class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Select Semester --</option>
                     </select>
@@ -275,17 +277,30 @@
                 search: '',
                 showDropdown: false,
                 selectedSubjects: [],
+                existingSubjectIds: [],
 
                 init() {
                     this.allSubjects = @Html.Raw(ViewBag.SubjectCatalogsJson ?? "[]");
+                },
+
+                async initExistingSubjects() {
+                    const programId = document.getElementById('ProgramId').value;
+                    if (programId) {
+                        const resp = await fetch(`/Subjects/SubjectOfferings/GetExistingSubjects?programId=${programId}`);
+                        this.existingSubjectIds = await resp.json();
+                    } else {
+                        this.existingSubjectIds = [];
+                    }
                 },
 
                 get filteredSubjects() {
                     if (!this.search.trim()) return [];
                     const q = this.search.toLowerCase().trim();
                     const selectedIds = new Set(this.selectedSubjects.map(s => s.id));
+                    const existingIdsSet = new Set(this.existingSubjectIds);
                     return this.allSubjects.filter(s =>
-                        !selectedIds.has(s.id) && (
+                        !selectedIds.has(s.id) &&
+                        !existingIdsSet.has(s.id) && (
                             (s.code && s.code.toLowerCase().includes(q)) ||
                             (s.name && s.name.toLowerCase().includes(q)) ||
                             (s.type && s.type.toLowerCase().includes(q))
@@ -295,6 +310,12 @@
 
                 addSubject(subject) {
                     if (this.selectedSubjects.some(s => s.id === subject.id)) return;
+                    if (this.existingSubjectIds.includes(subject.id)) {
+                        alert(`Already exists: "${subject.code} - ${subject.name}" is already offered in this semester for the selected program.`);
+                        this.search = '';
+                        this.showDropdown = false;
+                        return;
+                    }
                     this.selectedSubjects.push({
                         id: subject.id,
                         code: subject.code,
