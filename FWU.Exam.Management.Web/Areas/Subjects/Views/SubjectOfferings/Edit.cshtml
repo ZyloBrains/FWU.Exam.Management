@@ -20,6 +20,7 @@
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <form asp-action="Edit" method="post" class="space-y-6">
             <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="TenantId" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
 
             <div class="border-b border-gray-200 pb-4 mb-2">
