@@ -171,6 +171,8 @@ public partial class EntryPoint
             await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
             await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
             //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);

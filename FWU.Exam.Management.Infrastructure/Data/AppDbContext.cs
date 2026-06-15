@@ -79,6 +79,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
     public DbSet<ESewaConfiguration>? ESewaConfigurations { get; set; }
     public DbSet<KhaltiConfiguration>? KhaltiConfigurations { get; set; }
+    public DbSet<ConnectIpsPaymentConfiguration>? ConnectIpsPaymentConfigurations { get; set; }
     public DbSet<Permission>? Permissions { get; set; }
     public DbSet<RolePermission>? RolePermissions { get; set; }
  
@@ -648,6 +649,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             e.Property(x => x.ServiceChargeAmount).HasPrecision(18, 2);
         });
         builder.Entity<KhaltiConfiguration>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
+        builder.Entity<ConnectIpsPaymentConfiguration>(e =>
+        {
+            e.ToTable("ConnectIpsPaymentConfiguration");
+        });
         builder.Entity<PaymentPracticalSubjects>(e => e.Property(x => x.TotalAmount).HasPrecision(18, 2));
         builder.Entity<PaymentRequestLog>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
         builder.Entity<PeriodType>(e => e.Property(x => x.NumberOfMonths).HasPrecision(5, 2));

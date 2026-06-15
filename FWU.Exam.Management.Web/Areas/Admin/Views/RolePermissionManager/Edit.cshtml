@@ -54,12 +54,8 @@
         </div>
 
         <div class="space-y-4" id="groupsContainer">
-            @{
-                var groupIndex = 0;
-            }
             @foreach (var group in Model.Groups)
             {
-                var currentGroupIndex = groupIndex;
                 <div class="bg-white rounded-lg shadow overflow-hidden perm-group" data-group="@group.GroupName">
                     <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-700">
@@ -103,7 +99,6 @@
                         </div>
                     </div>
                 </div>
-                groupIndex++;
             }
         </div>
 

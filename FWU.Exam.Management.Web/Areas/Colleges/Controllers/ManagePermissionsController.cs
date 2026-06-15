@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
-[Authorize(Roles = "SuperAdmin,CollegeAdmin")]
+[RequirePermission(Permissions.PermissionsManage)]
 public class ManagePermissionsController(
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager,

@@ -35,6 +35,8 @@ public static class Permissions
     public const string GroupLevels = "levels";
     public const string GroupSmtp = "smtp";
     public const string GroupESewa = "esewa";
+    public const string GroupKhalti = "khalti";
+    public const string GroupConnectIPS = "connectips";
     public const string GroupTenants = "tenants";
     public const string GroupStudentCategories = "studentcategories";
 
@@ -235,6 +237,14 @@ public static class Permissions
     public const string ESewaView = "esewa.view";
     public const string ESewaEdit = "esewa.edit";
 
+    // Khalti Config
+    public const string KhaltiView = "khalti.view";
+    public const string KhaltiEdit = "khalti.edit";
+
+    // ConnectIPS Config
+    public const string ConnectIPSView = "connectips.view";
+    public const string ConnectIPSEdit = "connectips.edit";
+
     // Tenants
     public const string TenantsView = "tenants.view";
     public const string TenantsCreate = "tenants.create";
@@ -406,6 +416,12 @@ public static class Permissions
 
         (ESewaView, "View eSewa Config", GroupESewa, "View eSewa configuration"),
         (ESewaEdit, "Edit eSewa Config", GroupESewa, "Edit eSewa configuration"),
+
+        (KhaltiView, "View Khalti Config", GroupKhalti, "View Khalti configuration"),
+        (KhaltiEdit, "Edit Khalti Config", GroupKhalti, "Edit Khalti configuration"),
+
+        (ConnectIPSView, "View ConnectIPS Config", GroupConnectIPS, "View ConnectIPS configuration"),
+        (ConnectIPSEdit, "Edit ConnectIPS Config", GroupConnectIPS, "Edit ConnectIPS configuration"),
 
         (TenantsView, "View Tenants", GroupTenants, "View tenant list"),
         (TenantsCreate, "Create Tenants", GroupTenants, "Create new tenants"),

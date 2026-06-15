@@ -417,4 +417,49 @@ public static class ReferenceDataSeeder
         context.ESewaConfigurations.Add(eSewaConfig);
         await context.SaveChangesAsync();
     }
+
+    public static async Task SeedKhaltiConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.KhaltiConfigurations.AnyAsync())
+            return;
+
+        var khaltiConfig = new KhaltiConfiguration
+        {
+            ReturnUrl = "https://localhost:44333/Payment/KhaltiCallback",
+            WebsiteUrl = "https://example.com",
+            Amount = 0m,
+            ProductName = "Exam Fee",
+            AuthorizationKey = "test_secret_key",
+            ServiceCharge = 0,
+            PostUrl = "https://rc-epay.khalti.com/api/v2/epayment/initiate/",
+            VerifyUrl = "https://rc-epay.khalti.com/api/v2/epayment/lookup/",
+        };
+        context.KhaltiConfigurations.Add(khaltiConfig);
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedConnectIPSConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.ConnectIpsPaymentConfigurations.AnyAsync())
+            return;
+
+        var connectIpsConfig = new ConnectIpsPaymentConfiguration
+        {
+            GatewayUrl = "https://connectips.example.com/gateway",
+            MerchantId = "TEST_MERCHANT",
+            AppId = "TEST_APP_ID",
+            AppName = "Exam Management",
+            ValidationApiUrl = "https://connectips.example.com/api/validate",
+            UsernameForValidationApi = "test_user",
+            PasswordForValidationApi = "test_pass",
+            PasswordForCreditorPfx = "test_pfx_pass",
+            TransactionCurrency = "NPR",
+        };
+        context.ConnectIpsPaymentConfigurations.Add(connectIpsConfig);
+        await context.SaveChangesAsync();
+    }
 }

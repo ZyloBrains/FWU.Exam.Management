@@ -3,6 +3,8 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Domain.Entities.Permissions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission(Permissions.PermissionsManage)]
 public class ManagePermissionsController(
     RoleManager<IdentityRole> roleManager,
     AppDbContext context,

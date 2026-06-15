@@ -247,10 +247,12 @@
 
     @* System Config *@
     @{
-        var showConfig = (HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("esewa.view") || HasPerm("notices.view"));
+        var showConfig = (HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view"));
         var isConfigActive = IsActive(controllerName: "Tenants") ||
                              IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
                              IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
+                             IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
+                             IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
                              IsActive(controllerName: "Notices", areaName: "Core") ||
                              IsActive(controllerName: "GradingSchemes");
     }
@@ -267,6 +269,8 @@
             @if (HasPerm("tenants.view")) { <li><a asp-area="" asp-controller="Tenants" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Tenants", actionName: "Index"))"><i class="fas fa-globe w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tenants</span></a></li> }
             @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="SmtpConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmtpConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMTP Configuration</span></a></li> }
             @if (HasPerm("esewa.view")) { <li><a asp-area="Core" asp-controller="ESewaConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ESewaConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">eSewa Configuration</span></a></li> }
+            @if (HasPerm("khalti.view")) { <li><a asp-area="Core" asp-controller="KhaltiConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "KhaltiConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Khalti Configuration</span></a></li> }
+            @if (HasPerm("connectips.view")) { <li><a asp-area="Core" asp-controller="ConnectIPSConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ConnectIPSConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">ConnectIPS Configuration</span></a></li> }
             @if (HasPerm("notices.view")) { <li><a asp-area="Core" asp-controller="Notices" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Notices", actionName: "Index", areaName: "Core"))"><i class="fas fa-bullhorn w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Notices</span></a></li> }
         </ul>
     </li>
