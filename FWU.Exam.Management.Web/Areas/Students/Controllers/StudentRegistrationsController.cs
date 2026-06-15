@@ -15,8 +15,8 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
-public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper) : Controller
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -29,7 +29,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
             return await context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
+                .Where(c => c.FacultyId == user.FacultyId)
                 .Select(c => c.Id)
                 .ToListAsync();
         }
@@ -42,29 +42,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return new List<int>();
     }
 
-    private async Task<int?> GetUserDepartmentIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.DepartmentId;
-    }
-
-    public async Task<IActionResult> Index(int? departmentId = null)
+    public async Task<IActionResult> Index()
     {
         var collegeIds = await GetUserCollegeIdsAsync();
-        var userDeptId = await GetUserDepartmentIdAsync();
-
-        if (User.IsInRole(Role.DepartmentAdmin) && userDeptId.HasValue)
-        {
-            departmentId = userDeptId.Value;
-        }
-
-        if (departmentId.HasValue)
-        {
-            var deptRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
-            deptRegistrations = deptRegistrations.Where(r => r.DepartmentId == departmentId.Value).ToList();
-            return View(deptRegistrations);
-        }
-
         var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
         return View(studentRegistrations);
     }
@@ -76,7 +56,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         var studentRegistration = await studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
         if (studentRegistration == null) return NotFound();
 
-        ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id.Value);
         return View(studentRegistration);
     }
 
@@ -84,7 +63,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     {
         var selectLists = await studentRegistrationService.GetSelectListDataAsync();
         PopulateSelectLists(selectLists, null);
-        return View(new StudentRegistration());
+        return View();
     }
 
     [HttpPost]
@@ -98,8 +77,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         if (ModelState.IsValid)
         {
-            var registrationId = await studentRegistrationService.CreateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
-            await SaveQualificationsFromFormAsync(registrationId);
+            await studentRegistrationService.CreateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
             TempData["SuccessMessage"] = "Student registration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -115,8 +93,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         var studentRegistration = await studentRegistrationService.GetStudentRegistrationByIdAsync(id.Value);
         if (studentRegistration == null) return NotFound();
-
-        ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id.Value);
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         PopulateSelectLists(selectLists, studentRegistration);
@@ -139,7 +115,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             try
             {
                 await studentRegistrationService.UpdateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
-                await SaveQualificationsFromFormAsync(id);
                 TempData["SuccessMessage"] = "Student registration updated successfully!";
             }
             catch (DbUpdateConcurrencyException)
@@ -151,7 +126,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             return RedirectToAction(nameof(Index));
         }
 
-        ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id);
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         PopulateSelectLists(selectLists, studentRegistration);
         return View(studentRegistration);
@@ -180,15 +154,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10)
     {
         var collegeIds = await GetUserCollegeIdsAsync();
-        var userDeptId = await GetUserDepartmentIdAsync();
         var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize, collegeIds.Count > 0 ? collegeIds : null);
-
-        if (User.IsInRole(Role.DepartmentAdmin) && userDeptId.HasValue)
-        {
-            data = data.Where(d => d.DepartmentId == userDeptId.Value).ToList();
-            totalCount = data.Count;
-        }
-
         return Json(new { data, totalCount });
     }
 
@@ -379,87 +345,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return Json(localLevels);
     }
 
-    [HttpGet]
-    public JsonResult ConvertBsToAd(string bsDate)
-    {
-        if (string.IsNullOrWhiteSpace(bsDate) || bsDate.Length != 10)
-            return Json(new { adDate = "" });
-
-        var parts = bsDate.Split('-');
-        if (parts.Length != 3 ||
-            !int.TryParse(parts[0], out var year) ||
-            !int.TryParse(parts[1], out var month) ||
-            !int.TryParse(parts[2], out var day))
-            return Json(new { adDate = "" });
-
-        var adDate = NepaliCalendarHelper.BsToAd(year, month, day);
-        if (adDate == null)
-            return Json(new { adDate = "" });
-
-        return Json(new { adDate = adDate.Value.ToString("yyyy-MM-dd") });
-    }
-
-    [HttpGet]
-    public JsonResult ConvertAdToBs(string adDate)
-    {
-        if (string.IsNullOrWhiteSpace(adDate))
-            return Json(new { bsDate = "" });
-
-        if (!DateTime.TryParse(adDate, out var parsed))
-            return Json(new { bsDate = "" });
-
-        var (year, month, day) = NepaliCalendarHelper.AdToBs(parsed);
-        if (year == 0)
-            return Json(new { bsDate = "" });
-
-        return Json(new { bsDate = $"{year:D4}-{month:D2}-{day:D2}" });
-    }
-
-    private async Task SaveQualificationsFromFormAsync(int registrationId)
-    {
-        var previousLevelIds = Request.Form["Qualifications.PreviousLevelId"];
-        var boardIds = Request.Form["Qualifications.BoardId"];
-        var instituteNames = Request.Form["Qualifications.InstituteName"];
-        var passedYears = Request.Form["Qualifications.PassedYear"];
-        var percentages = Request.Form["Qualifications.Percentage"];
-        var examRollNumbers = Request.Form["Qualifications.ExamRollNumber"];
-
-        if (previousLevelIds.Count == 0) return;
-
-        var qualifications = new List<StudentQualification>();
-        var files = Request.Form.Files;
-
-        for (int i = 0; i < previousLevelIds.Count; i++)
-        {
-            if (string.IsNullOrWhiteSpace(previousLevelIds[i])) continue;
-
-            var q = new StudentQualification
-            {
-                PreviousLevelId = int.Parse(previousLevelIds[i]),
-                BoardId = int.Parse(boardIds[i]),
-                InstituteName = instituteNames[i],
-                PassedYear = passedYears[i],
-                Percentage = decimal.TryParse(percentages[i], out var pct) ? pct : null,
-                ExamRollNumber = examRollNumbers[i],
-                IsHigherDegree = false,
-                IsActive = true
-            };
-
-            var file = files.FirstOrDefault(f => f.Name == $"Qualifications.DocumentFile_{i}");
-            if (file != null && file.Length > 0)
-            {
-                q.DocumentPath = await fileUploadHelper.UploadAsync(file, "documents");
-            }
-
-            qualifications.Add(q);
-        }
-
-        if (qualifications.Count > 0)
-        {
-            await studentRegistrationService.SaveQualificationsAsync(registrationId, qualifications);
-        }
-    }
-
     private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
     {
         var provinces = studentRegistrationService.GetProvinces();
@@ -475,15 +360,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         ViewBag.StudentCategoryId = new SelectList(selectLists.StudentCategories, "Id", "Name", studentRegistration?.StudentCategoryId);
         ViewBag.EthnicityId = new SelectList(selectLists.Ethnicities, "Id", "Name", studentRegistration?.EthnicityId);
         ViewBag.LocalLevelId = new SelectList(selectLists.LocalLevels, "Id", "Name");
-        ViewBag.BoardId = new SelectList(selectLists.Boards, "Id", "Name");
-        ViewBag.PreviousLevelId = new SelectList(selectLists.PreviousLevels, "Id", "Name");
     }
 
     [HttpGet]
     public async Task<JsonResult> GetCollegesByFaculty(int facultyId)
     {
         var colleges = await context.Colleges
-            .Where(c => c.Faculties.Any(f => f.Id == facultyId) && c.Name != null)
+            .Where(c => c.FacultyId == facultyId && c.Name != null)
             .AsNoTracking()
             .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
             .ToListAsync();
@@ -509,5 +392,24 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     {
         var programs = await studentRegistrationService.GetProgramsByCollegeAsync(collegeId, levelId, departmentId);
         return Json(programs);
+    }
+
+    [HttpGet]
+    public JsonResult ConvertBsToAd(string bsDate)
+    {
+        var parts = bsDate.Split('-');
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var d))
+            return Json(new { adDate = (string?)null });
+        var ad = NepaliCalendarHelper.BsToAd(y, m, d);
+        return Json(new { adDate = ad?.ToString("yyyy-MM-dd") });
+    }
+
+    [HttpGet]
+    public JsonResult ConvertAdToBs(string adDate)
+    {
+        if (!DateTime.TryParse(adDate, out var dt))
+            return Json(new { bsDate = (string?)null });
+        var bs = NepaliCalendarHelper.AdToBs(dt);
+        return Json(new { bsDate = $"{bs.Year:D4}-{bs.Month:D2}-{bs.Day:D2}" });
     }
 }

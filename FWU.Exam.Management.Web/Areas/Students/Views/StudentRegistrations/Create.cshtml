@@ -298,32 +298,6 @@
 
         $(function () {
 
-            // BS <-> AD auto-conversion via server (using NepaliCalendarHelper)
-            var convertTimer;
-            $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
-                }
-            });
-
-            $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
-            });
-
             // Province -> District
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
@@ -448,6 +422,31 @@
                 loadPrograms();
             });
 
+            // BS <-> AD auto-conversion
+            var convertTimer;
+            $("#DateOfBirthBS").on("input", function () {
+                var bs = $(this).val().trim();
+                if (bs.length === 10) {
+                    clearTimeout(convertTimer);
+                    convertTimer = setTimeout(function () {
+                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
+                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
+                        });
+                    }, 300);
+                }
+            });
+
+            $("#DateOfBirthAD").on("input", function () {
+                var ad = $(this).val().trim();
+                if (ad.length >= 8) {
+                    clearTimeout(convertTimer);
+                    convertTimer = setTimeout(function () {
+                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
+                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
+                        });
+                    }, 300);
+                }
+            });
         });
     </script>
 

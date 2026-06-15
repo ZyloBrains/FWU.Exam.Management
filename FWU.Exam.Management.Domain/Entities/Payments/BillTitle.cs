@@ -22,5 +22,10 @@ public class BillTitle : ITenantScoped
     public DateTime? ApplicableDate { get; set; }
     public int? ExamScheduleId { get; set; }
 
+    public decimal? PracticalFee { get; set; }
+
+    public int? ProgramsId { get; set; }
+
     public virtual ExamSchedule? ExamSchedule { get; set; }
+    public virtual Program? Program { get; set; }
 }
