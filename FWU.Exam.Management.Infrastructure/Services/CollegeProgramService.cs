@@ -49,6 +49,20 @@ public class CollegeProgramService(AppDbContext context) : ICollegeProgramServic
         await context.SaveChangesAsync();
     }
 
+    public async Task CreateCollegeProgramsAsync(List<CollegeProgram> collegePrograms)
+    {
+        context.CollegePrograms.AddRange(collegePrograms);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<List<int>> GetExistingProgramIdsAsync(int collegeId)
+    {
+        return await context.CollegePrograms
+            .Where(cp => cp.CollegeId == collegeId)
+            .Select(cp => cp.ProgramId)
+            .ToListAsync();
+    }
+
     public async Task UpdateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
         context.CollegePrograms.Update(collegeProgram);
