@@ -49,8 +49,8 @@ public static class UserSeeder
                 if (college != null)
                 {
                     collegeId = college.Id;
-                    if (facultyId == null)
-                        facultyId = college.FacultyId;
+                    if (facultyId == null && college.Faculties != null)
+                        facultyId = college.Faculties.FirstOrDefault()?.Id;
                 }
             }
 

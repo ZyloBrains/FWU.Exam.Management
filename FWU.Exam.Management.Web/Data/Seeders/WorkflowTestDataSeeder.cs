@@ -19,6 +19,9 @@ public static class WorkflowTestDataSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
         var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
 
+        if (await context.Tenants.AnyAsync(t => t.OfficeCode == "OCE"))
+            return;
+
         await ClearExistingDataAsync(context);
 
         // ===================================================================
@@ -135,6 +138,11 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
         var fstFaculty = faculties[0];
         var humFaculty = faculties[1];
+
+        // Assign departments to faculties
+        deptSci.FacultyId = fstFaculty.Id;
+        deptHum.FacultyId = humFaculty.Id;
+        await context.SaveChangesAsync();
 
         // ===================================================================
         // 7. COLLEGES (with Faculty M2M links)

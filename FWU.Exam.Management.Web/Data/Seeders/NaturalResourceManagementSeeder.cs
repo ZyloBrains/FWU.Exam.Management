@@ -33,6 +33,11 @@ public static class NaturalResourceManagementSeeder
         {
             nrmDept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "NRM");
         }
+        if (nrmDept != null && nrmFaculty != null && nrmDept.FacultyId == null)
+        {
+            nrmDept.FacultyId = nrmFaculty.Id;
+            await context.SaveChangesAsync();
+        }
 
         // Programs
         if (bachelorLevel != null && nrmDept != null)

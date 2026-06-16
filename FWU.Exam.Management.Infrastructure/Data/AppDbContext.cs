@@ -733,6 +733,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasIndex(d => d.DepartmentCode)
             .IsUnique();
 
+        builder.Entity<Department>()
+            .HasOne(d => d.Faculty)
+            .WithMany(f => f.Departments)
+            .HasForeignKey(d => d.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<Program>()
             .HasIndex(p => p.ProgramCode)
             .IsUnique()

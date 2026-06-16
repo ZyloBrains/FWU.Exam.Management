@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
+using FWU.Exam.Management.Infrastructure.Services.Permissions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;

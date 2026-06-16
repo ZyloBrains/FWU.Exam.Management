@@ -1,6 +1,8 @@
 @using Microsoft.AspNetCore.Identity
+@using FWU.Exam.Management.Application.Interfaces
 @inject SignInManager<AppUser> SignInManager
 @inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     // Helper to detect active route (works for both MVC and Razor Pages)
@@ -47,6 +49,22 @@
 
     // Tenant code for URL generation
     var sideMenuTenantCode = Context.Items["TenantCode"] as string;
+
+    // Get permissions for the current user
+    var sideMenuPermissions = sideMenuUser != null
+        ? await PermissionService.GetUserPermissionsAsync(sideMenuUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => sideMenuPermissions.Contains(permission);
+
+    // System Config visibility
+    var showConfig = (HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view"));
+    var isConfigActive = IsActive(controllerName: "Tenants") ||
+                         IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
+                         IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
+                         IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
+                         IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
+                         IsActive(controllerName: "Notices", areaName: "Core") ||
+                         IsActive(controllerName: "GradingSchemes");
 }
 
 <ul class="space-y-1.5 px-3 font-poppins">
@@ -73,11 +91,12 @@
                 <i class="fas ml-auto transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
             </button>
             <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 400px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
                 <li><a asp-area="" asp-controller="User" asp-action="Index" asp-route-tenantCode="@sideMenuTenantCode" class="@ChildClass(IsActive(controllerName: "User", actionName: "Index"))"><i class="fas fa-list w-4 text-center opacity-70"></i><span class="whitespace-nowrap">All Users</span></a></li>
                 <li><a asp-area="" asp-controller="User" asp-action="Create" asp-route-tenantCode="@sideMenuTenantCode" class="@ChildClass(IsActive(controllerName: "User", actionName: "Create"))"><i class="fas fa-user-plus w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Create New User</span></a></li>
                 <li><a href="@(sideMenuTenantCode != null ? $"/tenant/{sideMenuTenantCode}/Identity/Account/ForgotPassword" : "/Identity/Account/ForgotPassword")" class="@ChildClass(IsActive(page: "/Account/ForgotPassword"))"><i class="fas fa-key w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Reset Password</span></a></li>
                 <li><a asp-area="" asp-controller="Role" asp-action="Index" asp-route-tenantCode="@sideMenuTenantCode" class="@ChildClass(IsActive(controllerName: "Role"))"><i class="fas fa-user-shield w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Roles</span></a></li>
+                @if (HasPerm("permissions.manage")) { <li><a asp-area="Admin" asp-controller="RolePermissionManager" asp-action="Index" asp-route-tenantCode="@sideMenuTenantCode" class="@ChildClass(IsActive(controllerName: "RolePermissionManager", actionName: "Index", areaName: "Admin") || IsActive(controllerName: "ManagePermissions", actionName: "Index", areaName: "Admin"))"><i class="fas fa-lock w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Permissions</span></a></li> }
             </ul>
         </li>
 
@@ -216,17 +235,6 @@
             </ul>
         </li>
 
-    @* System Config *@
-    @{
-        var showConfig = (HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view"));
-        var isConfigActive = IsActive(controllerName: "Tenants") ||
-                             IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
-                             IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
-                             IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
-                             IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
-                             IsActive(controllerName: "Notices", areaName: "Core") ||
-                             IsActive(controllerName: "GradingSchemes");
-    }
     @if (showConfig)
     {
     <li x-data="{ open: @(isConfigActive.ToString().ToLower()) }">
@@ -268,6 +276,7 @@
                 <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-file-invoice-dollar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Bank Voucher List</span></a></li>
             </ul>
         </li>
+    }
     }
 
     @if (isFacultyAdmin)

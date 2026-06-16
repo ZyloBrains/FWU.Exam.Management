@@ -2,10 +2,10 @@
 
 #nullable disable
 
-namespace FWU.Exam.Management.Infrastructure.Data.Migrations
+namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class RoleRestructure : Migration
+    public partial class AddCollegeFacultyRelationship : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
