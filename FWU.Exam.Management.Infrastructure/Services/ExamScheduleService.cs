@@ -21,7 +21,7 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 .Select(c => c.Id)
                 .ToList();
 
-            return query.Where(e => e.CollegeId != null && collegeIds.Contains(e.CollegeId));
+            return query.Where(e => e.CollegeId != null && collegeIds.Contains(e.CollegeId.Value));
         }
 
         return query;

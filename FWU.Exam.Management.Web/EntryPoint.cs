@@ -184,20 +184,10 @@ public partial class EntryPoint
             await dbContext.Database.MigrateAsync();
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
+            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
-            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
-            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
-            //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
         }
 
         app.Run();
