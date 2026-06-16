@@ -179,8 +179,8 @@ public class StudentDashboardController(
             HasPractical = s.HasPractical,
             ExamFee = examFee,
             IsCompulsory = s.IsCompulsory,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
-            IsSelected = isRegular || failedSet.Contains(s.Id),
+            PracticalFee = s.IsCompulsory && s.HasPractical ? practicalFee : 0,
+            IsSelected = isRegular ? s.IsCompulsory : failedSet.Contains(s.Id),
             IsFailed = failedSet.Contains(s.Id)
         }).ToList();
 
@@ -196,7 +196,7 @@ public class StudentDashboardController(
             HasConnectIPS = hasConnectIPS,
             IsRegular = isRegular,
             Subjects = subjectList,
-            SelectedSubjectIds = isRegular ? subjectList.Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
+            SelectedSubjectIds = isRegular ? subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
             PaymentTypes = paymentTypes.Select(pt => new PaymentTypeDetail
             {
                 Id = pt.Id,
@@ -205,7 +205,7 @@ public class StudentDashboardController(
             }).ToList()
         };
 
-        vm.TotalPracticalFee = subjectList.Sum(s => s.PracticalFee);
+        vm.TotalPracticalFee = subjectList.Where(s => s.IsSelected).Sum(s => s.PracticalFee);
         vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee;
 
         return View(vm);
@@ -226,14 +226,8 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
-        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var failedSubjectIds = schedule != null
-            ? await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId)
-            : [];
-        var isRegular = failedSubjectIds.Count == 0;
-
         int logId;
-        if (isRegular || subjectIds.Count == 0)
+        if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber);
@@ -263,16 +257,10 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
-        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var failedSubjectIds = schedule != null
-            ? await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId)
-            : [];
-        var isRegular = failedSubjectIds.Count == 0;
-
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
         int logId;
-        if (isRegular || subjectIds.Count == 0)
+        if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
@@ -383,15 +371,10 @@ public class StudentDashboardController(
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var failedSubjectIds = schedule != null
-            ? await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId)
-            : [];
-        var isRegular = failedSubjectIds.Count == 0;
-
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
         int logId;
-        if (isRegular || subjectIds.Count == 0)
+        if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber,
