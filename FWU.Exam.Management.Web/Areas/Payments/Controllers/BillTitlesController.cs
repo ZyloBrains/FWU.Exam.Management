@@ -1,6 +1,8 @@
 using System.Text;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,8 +14,23 @@ namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 
 [Area("Payments")]
 [RequirePermission("billtitles.view")]
-public class BillTitlesController(IBillTitleService billTitleService) : Controller
+public class BillTitlesController(
+    IBillTitleService billTitleService,
+    UserManager<AppUser> userManager) : Controller
 {
+    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return (null, null);
+
+        if (User.IsInRole(Role.CollegeAdmin))
+            return (user.CollegeId, null);
+
+        if (User.IsInRole(Role.FacultyAdmin))
+            return (null, user.FacultyId);
+
+        return (null, null);
+    }
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BillTitleName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir);
@@ -87,23 +104,29 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
     [RequirePermission("billtitles.create")]
     public async Task<IActionResult> Create()
     {
-        var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
+        var programs = await billTitleService.GetProgramsAsync();
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName");
         return View();
     }
 
     [RequirePermission("billtitles.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
+    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,FeeType,ProgramsId")] BillTitle billTitle)
     {
         if (ModelState.IsValid)
         {
             await billTitleService.CreateBillTitleAsync(billTitle);
             return RedirectToAction(nameof(Index));
         }
-        var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        var programs = await billTitleService.GetProgramsAsync();
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 
@@ -115,7 +138,8 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
         var billTitle = await billTitleService.GetBillTitleByIdAsync(id.Value);
         if (billTitle == null) return NotFound();
 
-        var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
         return View(billTitle);
     }
@@ -123,7 +147,7 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
     [RequirePermission("billtitles.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId")] BillTitle billTitle)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,FeeType,ProgramsId")] BillTitle billTitle)
     {
         if (id != billTitle.Id) return NotFound();
 
@@ -141,8 +165,11 @@ public class BillTitlesController(IBillTitleService billTitleService) : Controll
             }
             return RedirectToAction(nameof(Index));
         }
-        var examSchedules = await billTitleService.GetExamSchedulesAsync();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        var programs = await billTitleService.GetProgramsAsync();
+        ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 

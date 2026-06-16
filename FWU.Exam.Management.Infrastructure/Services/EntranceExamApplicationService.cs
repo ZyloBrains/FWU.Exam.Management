@@ -2,12 +2,15 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class EntranceExamApplicationService(AppDbContext context) : IEntranceExamApplicationService
+public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager) : IEntranceExamApplicationService
 {
     public async Task<int> SubmitApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
     {
@@ -195,5 +198,114 @@ public class EntranceExamApplicationService(AppDbContext context) : IEntranceExa
 
         return await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
     }
-  
+
+    public async Task<int> ConvertToAdmissionAsync(int applicationId)
+    {
+        var application = await context.EntranceExamApplications
+            .Include(a => a.PermanentAddress)
+            .Include(a => a.College)
+            .Include(a => a.Program)
+                .ThenInclude(p => p!.Level)
+            .FirstOrDefaultAsync(a => a.Id == applicationId)
+            ?? throw new InvalidOperationException("Application not found.");
+
+        if (application.Status != ApplicationStatus.Approved)
+            throw new InvalidOperationException("Only approved applications can be converted to admission.");
+
+        using var transaction = await context.Database.BeginTransactionAsync();
+        try
+        {
+            var existingRegistration = await context.StudentRegistrations
+                .FirstOrDefaultAsync(sr => sr.Email == application.Email);
+
+            int studentRegistrationId;
+            if (existingRegistration != null)
+            {
+                studentRegistrationId = existingRegistration.Id;
+            }
+            else
+            {
+                var registration = new StudentRegistration
+                {
+                    AcademicYearId = application.AcademicYearId,
+                    CollegeId = application.CollegeId,
+                    ProgramId = application.ProgramId,
+                    LevelId = application.Program?.LevelId ?? 0,
+                    DepartmentId = application.Program?.DepartmentId ?? 0,
+                    FirstName = application.FirstName,
+                    MiddleName = application.MiddleName,
+                    LastName = application.LastName!,
+                    NepaliName = application.NepaliName,
+                    DateOfBirthBS = application.DateOfBirthBS,
+                    DateOfBirthAD = application.DateOfBirthAD,
+                    Email = application.Email,
+                    ContactNumber = application.ContactNumber,
+                    Phone = application.Phone,
+                    GenderId = application.GenderId,
+                    PermanentAddressId = application.PermanentAddressId,
+                    StudentCategoryId = 1,
+                    IsActive = true,
+                    EntranceRollNumber = application.Id.ToString()
+                };
+
+                context.StudentRegistrations.Add(registration);
+                await context.SaveChangesAsync();
+                studentRegistrationId = registration.Id;
+            }
+
+            var existingAdmission = await context.StudentAdmissions
+                .FirstOrDefaultAsync(sa => sa.AppUserId != null
+                    && context.StudentRegistrations.Any(sr => sr.Id == studentRegistrationId && sr.Email == application.Email)
+                    && sa.ProgramsId == application.ProgramId
+                    && sa.CollegeId == application.CollegeId);
+
+            if (existingAdmission != null)
+            {
+                await transaction.CommitAsync();
+                return existingAdmission.Id;
+            }
+
+            var appUser = await userManager.FindByEmailAsync(application.Email);
+            var admission = new StudentAdmission
+            {
+                TenantId = application.TenantId,
+                ProgramsId = application.ProgramId,
+                CollegeId = application.CollegeId,
+                AdmissionDate = DateTime.UtcNow,
+                IsActive = true,
+                IsCompleted = false,
+                AppUserId = appUser?.Id,
+                CollegeRollNumber = await GenerateCollegeRollNumberAsync(application.CollegeId, application.ProgramId)
+            };
+
+            context.StudentAdmissions.Add(admission);
+            await context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+            return admission.Id;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    private async Task<string> GenerateCollegeRollNumberAsync(int collegeId, int programId)
+    {
+        var college = await context.Colleges.AsNoTracking().FirstOrDefaultAsync(c => c.Id == collegeId);
+        var program = await context.Programs.AsNoTracking().FirstOrDefaultAsync(p => p.Id == programId);
+        var collegeCode = college?.Code ?? "CLG";
+        var programCode = program?.ShortName ?? "PROG";
+        var year = DateTime.Now.Year.ToString();
+        var runningYear = await context.AcademicYears
+            .Where(ay => ay.IsRunning)
+            .Select(ay => ay.AcademicYearName)
+            .FirstOrDefaultAsync() ?? year;
+
+        var count = await context.StudentAdmissions
+            .CountAsync(sa => sa.CollegeId == collegeId && sa.ProgramsId == programId) + 1;
+
+        return $"{collegeCode}/{programCode}/{runningYear}/{count:D4}";
+    }
 }

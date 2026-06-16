@@ -52,7 +52,7 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
     public async Task<DashboardStats> GetFacultyDashboardStatsAsync(int facultyId)
     {
         var collegeIds = await context.Colleges
-            .Where(c => c.FacultyId == facultyId)
+            .Where(c => c.Faculties.Any(f => f.Id == facultyId))
             .Select(c => c.Id)
             .ToListAsync();
 
@@ -71,8 +71,8 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
         var totalBatches = await context.Batches.CountAsync();
         var activePrograms = await context.Programs.CountAsync(p => p.IsActive);
         var activeExamSchedules = await context.ExamSchedules.CountAsync(e => e.IsActive);
-        var totalColleges = await context.Colleges.CountAsync(c => c.FacultyId == facultyId);
-        var activeColleges = await context.Colleges.CountAsync(c => c.FacultyId == facultyId && c.IsActive);
+        var totalColleges = await context.Colleges.CountAsync(c => c.Faculties.Any(f => f.Id == facultyId));
+        var activeColleges = await context.Colleges.CountAsync(c => c.Faculties.Any(f => f.Id == facultyId) && c.IsActive);
         var totalStudents = await context.StudentRegistrations.CountAsync(s => collegeIds.Contains(s.CollegeId));
         var totalExamRegistrations = await context.ExamRegistrations.CountAsync(e => collegeIds.Contains(e.CollegeId));
         var activeStudents = await context.StudentRegistrations.CountAsync(s => collegeIds.Contains(s.CollegeId) && s.IsActive);

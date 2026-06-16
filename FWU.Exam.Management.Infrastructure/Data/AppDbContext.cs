@@ -178,10 +178,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<College>()
-            .HasOne(c => c.Faculty)
-            .WithMany()
-            .HasForeignKey(c => c.FacultyId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasMany(c => c.Faculties)
+            .WithMany(f => f.Colleges);
 
         builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.PermanentAddress)
@@ -492,6 +490,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(bt => bt.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<BillTitle>()
+            .HasOne(bt => bt.Program)
+            .WithMany()
+            .HasForeignKey(bt => bt.ProgramsId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<ExamRollNumberSetup>()
             .HasOne(ers => ers.ExamSchedule)
             .WithMany()
@@ -592,6 +596,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(u => u.College)
             .WithMany()
             .HasForeignKey(u => u.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<AppUser>()
+            .HasOne(u => u.Department)
+            .WithMany()
+            .HasForeignKey(u => u.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<College>()

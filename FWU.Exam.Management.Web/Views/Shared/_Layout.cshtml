@@ -260,11 +260,11 @@
                                 <p class="text-xs text-gray-500 truncate">@roleLabel</p>
                             </div>
 
-                            <a asp-area="Identity" asp-page="/Account/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                            <a asp-area="Identity" asp-page="/Account/Manage/Index" asp-route-tenantCode="@(Context.Items["TenantCode"])" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                 <i class="fas fa-user-circle w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
                                 <span class="ml-2 font-medium">My Profile</span>
                             </a>
-                            <a asp-area="Identity" asp-page="/Account/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                            <a asp-area="Identity" asp-page="/Account/Manage/Index" asp-route-tenantCode="@(Context.Items["TenantCode"])" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                 <i class="fas fa-cog w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
                                 <span class="ml-2 font-medium">Account Settings</span>
                             </a>
@@ -283,7 +283,7 @@
             </header>
 
             <!-- Main Scrollable Content -->
-            <main class="flex-1 overflow-y-auto bg-gray-50/50 p-4 lg:p-8 relative">
+            <main class="flex-1 overflow-y-auto bg-gray-50/50 p-4 relative">
                 <!-- Inner Container -->
                 <div class="max-w-full mx-auto">
                     @RenderBody()

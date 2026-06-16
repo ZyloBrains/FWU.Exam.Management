@@ -14,4 +14,6 @@ public class StudentRegistrationSelectListsDto
     public List<SelectOption> LocalLevels { get; set; } = [];
     public List<SelectOption> Faculties { get; set; } = [];
     public List<SelectOption> Programs { get; set; } = [];
+    public List<SelectOption> Boards { get; set; } = [];
+    public List<SelectOption> PreviousLevels { get; set; } = [];
 }

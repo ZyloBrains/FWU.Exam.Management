@@ -75,9 +75,24 @@ public class SubjectCatalogService : ISubjectCatalogService
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
+    public async Task<List<string?>> GetExistingSubjectCodesAsync()
+    {
+        return await _context.SubjectCatalogs
+            .Where(s => s.SubjectCode != null)
+            .Select(s => s.SubjectCode)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task CreateSubjectCatalogAsync(SubjectCatalog subjectCatalog)
     {
         _context.SubjectCatalogs.Add(subjectCatalog);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task BulkCreateAsync(List<SubjectCatalog> items)
+    {
+        _context.SubjectCatalogs.AddRange(items);
         await _context.SaveChangesAsync();
     }
 

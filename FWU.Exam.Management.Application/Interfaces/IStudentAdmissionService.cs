@@ -17,4 +17,6 @@ public interface IStudentAdmissionService
     Task<List<Program>> GetCollegeProgramsAsync(int collegeId);
     Task<List<SelectOption>> GetCollegeSelectListAsync();
     Task<StudentAdmission?> GetAdmissionByUserIdAsync(string userId);
+    Task<List<StudentRegistration>> GetAvailableStudentRegistrationsAsync(int collegeId);
+    Task<string?> GetAppUserIdByEmailAsync(string email);
 }

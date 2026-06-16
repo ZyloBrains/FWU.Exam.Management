@@ -11,7 +11,8 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
     public async Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
-            .Include(bt => bt.ExamSchedule);
+            .Include(bt => bt.ExamSchedule)
+            .Include(bt => bt.Program);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -36,7 +37,8 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
     public async Task<List<BillTitle>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
-            .Include(bt => bt.ExamSchedule);
+            .Include(bt => bt.ExamSchedule)
+            .Include(bt => bt.Program);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -56,6 +58,7 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
     {
         return await context.Set<BillTitle>()
             .Include(bt => bt.ExamSchedule)
+            .Include(bt => bt.Program)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -86,9 +89,42 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         return await context.Set<BillTitle>().AnyAsync(bt => bt.Id == id);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesAsync()
+    public async Task<List<ExamSchedule>> GetExamSchedulesAsync(int? collegeId = null, int? facultyId = null)
     {
-        return await context.ExamSchedules.AsNoTracking().ToListAsync();
+        IQueryable<ExamSchedule> query = context.ExamSchedules.AsNoTracking();
+
+        if (collegeId.HasValue)
+        {
+            var programIds = context.CollegePrograms!
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .Distinct()
+                .ToList();
+
+            query = query.Where(e => programIds.Contains(e.ProgramId));
+        }
+        else if (facultyId.HasValue)
+        {
+            var collegeIds = context.Colleges
+                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
+                .Select(c => c.Id)
+                .ToList();
+
+            var programIds = context.CollegePrograms!
+                .Where(cp => collegeIds.Contains(cp.CollegeId))
+                .Select(cp => cp.ProgramId)
+                .Distinct()
+                .ToList();
+
+            query = query.Where(e => programIds.Contains(e.ProgramId));
+        }
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<List<Domain.Entities.Program>> GetProgramsAsync()
+    {
+        return await context.Programs.AsNoTracking().ToListAsync();
     }
 
     private static Expression<Func<BillTitle, object>> GetSortProperty(string sort)

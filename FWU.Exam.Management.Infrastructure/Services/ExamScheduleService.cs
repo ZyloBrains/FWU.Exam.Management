@@ -17,8 +17,8 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
         if (facultyId.HasValue)
         {
             var collegeIds = context.Colleges
-                .Where(c => c.FacultyId == facultyId.Value)
-                .Select(c => (int?)c.Id)
+                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
+                .Select(c => c.Id)
                 .ToList();
 
             return query.Where(e => e.CollegeId != null && collegeIds.Contains(e.CollegeId));

@@ -7,7 +7,7 @@ public interface IFileUploadHelper
 
 public class FileUploadHelper(IWebHostEnvironment environment) : IFileUploadHelper
 {
-    private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+    private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".pdf"];
 
     public async Task<string?> UploadAsync(IFormFile? file, string subfolder = "images")
     {

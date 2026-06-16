@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +35,152 @@ public class SubjectCatalogsController : Controller
         ViewBag.SortDir = sortDir;
 
         return View(items);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ImportExcel(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No file uploaded";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var fileExtension = Path.GetExtension(file.FileName);
+        if (!string.Equals(fileExtension, ".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["ErrorMessage"] = "Please upload an Excel file in .xlsx format.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            using (var stream = new MemoryStream())
+            {
+                await file.CopyToAsync(stream);
+                stream.Position = 0;
+
+                using (var workbook = new XLWorkbook(stream))
+                {
+                    var worksheet = workbook.Worksheet(1);
+                    var rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
+
+                    if (rowCount < 2)
+                    {
+                        TempData["ErrorMessage"] = "Excel file is empty";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    var validTypeIds = (await _subjectCatalogService.GetSelectListsAsync()).Select(st => st.Id).ToHashSet();
+
+                    if (validTypeIds.Count == 0)
+                    {
+                        TempData["ErrorMessage"] = "No SubjectTypes found in the system. Seed the database first.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    var catalogs = new List<SubjectCatalog>();
+                    var errors = new List<string>();
+
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        var subjectCode = worksheet.Cell(row, 1).GetString().Trim();
+                        if (string.IsNullOrEmpty(subjectCode))
+                        {
+                            errors.Add($"Row {row}: SubjectCode is required");
+                            continue;
+                        }
+
+                        var subjectName = worksheet.Cell(row, 2).GetString().Trim();
+                        if (string.IsNullOrEmpty(subjectName))
+                        {
+                            errors.Add($"Row {row}: SubjectName is required");
+                            continue;
+                        }
+
+                        var shortName = worksheet.Cell(row, 3).GetString().Trim();
+                        var creditHours = int.TryParse(worksheet.Cell(row, 4).GetString().Trim(), out var ch) ? ch : 3;
+
+                        var subjectTypeIdStr = worksheet.Cell(row, 5).GetString().Trim();
+                        if (!int.TryParse(subjectTypeIdStr, out var subjectTypeId))
+                        {
+                            errors.Add($"Row {row}: SubjectTypeID must be a number, got '{subjectTypeIdStr}'");
+                            continue;
+                        }
+
+                        if (!validTypeIds.Contains(subjectTypeId))
+                        {
+                            errors.Add($"Row {row}: SubjectTypeID {subjectTypeId} is not valid. Valid IDs: {string.Join(", ", validTypeIds.OrderBy(x => x))}");
+                            continue;
+                        }
+
+                        var isActiveStr = worksheet.Cell(row, 6).GetString().Trim();
+
+                        catalogs.Add(new SubjectCatalog
+                        {
+                            SubjectCode = subjectCode,
+                            SubjectName = subjectName,
+                            ShortName = string.IsNullOrEmpty(shortName) ? null : shortName,
+                            CreditHours = creditHours,
+                            SubjectTypeId = subjectTypeId,
+                            IsActive = isActiveStr.Equals("Yes", StringComparison.OrdinalIgnoreCase) ||
+                                       isActiveStr.Equals("True", StringComparison.OrdinalIgnoreCase) ||
+                                       isActiveStr.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
+                                       isActiveStr.Equals("Active", StringComparison.OrdinalIgnoreCase) ||
+                                       string.IsNullOrEmpty(isActiveStr)
+                        });
+                    }
+
+                    if (catalogs.Count > 0)
+                    {
+                        var existingCodes = await _subjectCatalogService.GetExistingSubjectCodesAsync();
+
+                        var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        var deduplicated = new List<SubjectCatalog>();
+
+                        foreach (var c in catalogs)
+                        {
+                            if (existingCodes.Contains(c.SubjectCode, StringComparer.OrdinalIgnoreCase))
+                            {
+                                errors.Add($"SubjectCode '{c.SubjectCode}' already exists in the system");
+                                continue;
+                            }
+                            if (!seenCodes.Add(c.SubjectCode))
+                            {
+                                errors.Add($"Duplicate SubjectCode '{c.SubjectCode}' in Excel");
+                                continue;
+                            }
+                            deduplicated.Add(c);
+                        }
+
+                        if (deduplicated.Count > 0)
+                        {
+                            try
+                            {
+                                await _subjectCatalogService.BulkCreateAsync(deduplicated);
+                                TempData["SuccessMessage"] = $"Imported {deduplicated.Count} subject(s) successfully.";
+                            }
+                            catch (Exception saveEx)
+                            {
+                                errors.Add($"Database error: {saveEx.InnerException?.Message ?? saveEx.Message}");
+                            }
+                        }
+                    }
+
+                    if (errors.Count > 0)
+                        TempData["ErrorMessage"] = string.Join(Environment.NewLine, errors.Take(30)) +
+                                                   (errors.Count > 30 ? $"\n... and {errors.Count - 30} more error(s)" : "");
+
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            var detail = ex.InnerException?.Message ?? ex.Message;
+            TempData["ErrorMessage"] = $"Error processing file: {detail}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private string EscapeCsv(string field)

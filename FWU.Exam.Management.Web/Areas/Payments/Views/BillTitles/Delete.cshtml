@@ -33,6 +33,14 @@
                 <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.BillTitleName)</p>
             </div>
             <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Fee Type</p>
+                <p class="text-gray-800 font-medium">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(Model.FeeType == "Practical" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800")">
+                        @(Model.FeeType ?? "Theory")
+                    </span>
+                </p>
+            </div>
+            <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Category</p>
                 <p class="text-gray-800 font-medium">@(Model.Category ?? "-")</p>
             </div>
@@ -57,8 +65,8 @@
                 <p class="text-gray-800 font-medium">@(Model.ThroughDate?.ToString("yyyy-MM-dd") ?? "-")</p>
             </div>
             <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Schedule</p>
-                <p class="text-gray-800 font-medium">@(Model.ExamSchedule?.ExamScheduleName ?? "-")</p>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">@(Model.FeeType == "Practical" ? "Program" : "Exam Schedule")</p>
+                <p class="text-gray-800 font-medium">@(Model.ExamSchedule?.ExamScheduleName ?? Model.Program?.ProgramName ?? "-")</p>
             </div>
         </div>
 

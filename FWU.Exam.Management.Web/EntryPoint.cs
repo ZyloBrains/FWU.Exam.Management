@@ -2,11 +2,11 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
-using FWU.Exam.Management.Infrastructure.Services.Permissions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
 using FWU.Exam.Management.Web.Authorization;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -129,6 +129,7 @@ public partial class EntryPoint
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+        builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -155,6 +156,11 @@ public partial class EntryPoint
         app.MapStaticAssets();
 
         app.MapControllerRoute(
+            name: "tenantArea",
+            pattern: "tenant/{tenantCode}/{area:exists}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        app.MapControllerRoute(
             name: "tenant",
             pattern: "tenant/{tenantCode}/{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets();
@@ -179,13 +185,12 @@ public partial class EntryPoint
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-            var uatResult = await PermissionSeeder.VerifyUatAsync(scope.ServiceProvider);
-            Console.WriteLine(uatResult);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);

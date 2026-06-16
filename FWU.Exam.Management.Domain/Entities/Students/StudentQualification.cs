@@ -37,6 +37,9 @@ public class StudentQualification : ITenantScoped
     public bool IsActive { get; set; }
 
     [MaxLength(500)]
+    public string? DocumentPath { get; set; }
+
+    [MaxLength(500)]
     public string? ExamRollNumber { get; set; }
 
     public virtual StudentRegistration? StudentRegistration { get; set; }

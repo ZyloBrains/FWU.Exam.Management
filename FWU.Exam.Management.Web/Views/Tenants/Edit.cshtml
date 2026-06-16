@@ -4,7 +4,7 @@
     ViewData["Title"] = "Edit Tenant";
 }
 
-<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+<div class="max-w-full mx-auto mt-2 space-y-3 p-4">
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
             <i class="fas fa-arrow-left text-gray-600"></i>
@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-4">
         <form asp-action="Edit" method="post" enctype="multipart/form-data" class="space-y-6">
             <input type="hidden" asp-for="Id" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
