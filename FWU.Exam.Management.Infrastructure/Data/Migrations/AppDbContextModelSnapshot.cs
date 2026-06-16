@@ -22,21 +22,6 @@ namespace Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("CollegeFaculty", b =>
-                {
-                    b.Property<int>("CollegesId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FacultiesId")
-                        .HasColumnType("int");
-
-                    b.HasKey("CollegesId", "FacultiesId");
-
-                    b.HasIndex("FacultiesId");
-
-                    b.ToTable("CollegeFaculty");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.AcademicYear", b =>
                 {
                     b.Property<int>("Id")
@@ -252,6 +237,9 @@ namespace Data.Migrations
                     b.Property<DateTime?>("EstablishedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("FacultyId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Fax")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -308,6 +296,8 @@ namespace Data.Migrations
                     b.HasIndex("CollegeTypeId");
 
                     b.HasIndex("DistrictId");
+
+                    b.HasIndex("FacultyId");
 
                     b.HasIndex("QuestionSetId");
 
@@ -956,6 +946,9 @@ namespace Data.Migrations
                     b.Property<DateTime?>("CollegeApprovalDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CollegeId")
+                        .HasColumnType("int");
+
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
@@ -1028,6 +1021,8 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AcademicYearId");
+
+                    b.HasIndex("CollegeId");
 
                     b.HasIndex("ExamTypeId");
 
@@ -1785,6 +1780,9 @@ namespace Data.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("ProgramId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("ProgramsId")
                         .HasColumnType("int");
 
@@ -1798,11 +1796,68 @@ namespace Data.Migrations
 
                     b.HasIndex("ExamScheduleId");
 
-                    b.HasIndex("ProgramsId");
+                    b.HasIndex("ProgramId");
 
                     b.HasIndex("TenantId");
 
                     b.ToTable("BillTitle");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.ConnectIpsPaymentConfiguration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AppId")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("AppName")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("GatewayUrl")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("MerchantId")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("PasswordForCreditorPfx")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("PasswordForValidationApi")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("TransactionCurrency")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("UsernameForValidationApi")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("ValidationApiUrl")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConnectIpsPaymentConfiguration", (string)null);
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.ESewaConfiguration", b =>
@@ -2880,10 +2935,6 @@ namespace Data.Migrations
                     b.Property<int>("BoardId")
                         .HasColumnType("int");
 
-                    b.Property<string>("DocumentPath")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("ExamRollNumber")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -3414,9 +3465,6 @@ namespace Data.Migrations
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Designation")
                         .HasColumnType("nvarchar(max)");
 
@@ -3493,8 +3541,6 @@ namespace Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CollegeId");
-
-                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("Email")
                         .IsUnique()
@@ -3715,21 +3761,6 @@ namespace Data.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("CollegeFaculty", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", null)
-                        .WithMany()
-                        .HasForeignKey("CollegesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Faculty", null)
-                        .WithMany()
-                        .HasForeignKey("FacultiesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.ApplicationVoucher", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", "ExamSchedule")
@@ -3783,6 +3814,11 @@ namespace Data.Migrations
                         .WithMany("Colleges")
                         .HasForeignKey("DistrictId");
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.QuestionSet", null)
                         .WithMany("Colleges")
                         .HasForeignKey("QuestionSetId");
@@ -3796,6 +3832,8 @@ namespace Data.Migrations
                     b.Navigation("Address");
 
                     b.Navigation("CollegeType");
+
+                    b.Navigation("Faculty");
 
                     b.Navigation("Tenant");
                 });
@@ -4065,6 +4103,10 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", "College")
+                        .WithMany()
+                        .HasForeignKey("CollegeId");
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamType", "ExamType")
                         .WithMany()
                         .HasForeignKey("ExamTypeId")
@@ -4094,6 +4136,8 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("AcademicYear");
+
+                    b.Navigation("College");
 
                     b.Navigation("ExamType");
 
@@ -4282,8 +4326,7 @@ namespace Data.Migrations
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
                         .WithMany()
-                        .HasForeignKey("ProgramsId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("ProgramId");
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
@@ -4842,19 +4885,12 @@ namespace Data.Migrations
                         .HasForeignKey("CollegeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Faculty", "Faculty")
                         .WithMany()
                         .HasForeignKey("FacultyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("College");
-
-                    b.Navigation("Department");
 
                     b.Navigation("Faculty");
                 });
