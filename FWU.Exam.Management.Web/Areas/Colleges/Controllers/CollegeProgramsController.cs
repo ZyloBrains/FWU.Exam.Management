@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 
@@ -14,14 +16,11 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 [RequirePermission("collegeprograms.view")]
 public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(string search = null, string sort = "collegename", string sortDir = "asc")
     {
-        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
@@ -96,24 +95,81 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     {
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name");
-        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
+
+        var programsData = programs.Select(p => new
+        {
+            id = p.Id,
+            code = p.ProgramCode,
+            name = p.ProgramName,
+            shortName = p.ShortName
+        });
+        ViewBag.ProgramsJson = JsonSerializer.Serialize(programsData);
+
         return View();
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetExistingPrograms(int collegeId)
+    {
+        var ids = await collegeProgramService.GetExistingProgramIdsAsync(collegeId);
+        return Json(ids);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequirePermission("collegeprograms.create")]
-    public async Task<IActionResult> Create([Bind("Id,AffiliationDate,NumberOfStudents,Remarks,IsActive,CollegeId,ProgramId")] CollegeProgram collegeProgram)
+    public async Task<IActionResult> Create(CollegeProgramBulkCreateViewModel model)
     {
+        if (model.CollegeId <= 0)
+            ModelState.AddModelError(nameof(model.CollegeId), "College is required.");
+
+        if (model.Programs == null || model.Programs.Count == 0)
+            ModelState.AddModelError("", "Please add at least one program.");
+
         if (ModelState.IsValid)
         {
-            await collegeProgramService.CreateCollegeProgramAsync(collegeProgram);
+            var existingIds = await collegeProgramService.GetExistingProgramIdsAsync(model.CollegeId);
+            var duplicateIds = model.Programs
+                .Where(p => existingIds.Contains(p.ProgramId))
+                .Select(p => p.ProgramId)
+                .ToList();
+
+            if (duplicateIds.Any())
+            {
+                ModelState.AddModelError("", $"{duplicateIds.Count} program(s) already exist for this college.");
+            }
+        }
+
+        if (ModelState.IsValid)
+        {
+            var collegePrograms = model.Programs.Select(p => new CollegeProgram
+            {
+                CollegeId = model.CollegeId,
+                ProgramId = p.ProgramId,
+                AffiliationDate = p.AffiliationDate,
+                NumberOfStudents = p.NumberOfStudents,
+                Remarks = p.Remarks,
+                IsActive = p.IsActive
+            }).ToList();
+
+            await collegeProgramService.CreateCollegeProgramsAsync(collegePrograms);
+            TempData["SuccessMessage"] = $"{collegePrograms.Count} college program(s) created successfully.";
             return RedirectToAction(nameof(Index));
         }
+
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
-        ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeProgram.CollegeId);
-        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", collegeProgram.ProgramId);
-        return View(collegeProgram);
+        ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", model.CollegeId);
+
+        var programsData = programs.Select(p => new
+        {
+            id = p.Id,
+            code = p.ProgramCode,
+            name = p.ProgramName,
+            shortName = p.ShortName
+        });
+        ViewBag.ProgramsJson = JsonSerializer.Serialize(programsData);
+
+        return View(model);
     }
 
     [RequirePermission("collegeprograms.edit")]

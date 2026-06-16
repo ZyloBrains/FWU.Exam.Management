@@ -329,10 +329,6 @@
             if (data.boardId) row.querySelector('[name="Qualifications.BoardId"]').value = data.boardId;
         }
 
-        function tenantUrl(path) {
-            return __tenantCode ? '/tenant/' + __tenantCode + path : path;
-        }
-
         function loadPrograms() {
             var collegeId = $("#CollegeId").val();
             var levelId = $("#LevelId").val();

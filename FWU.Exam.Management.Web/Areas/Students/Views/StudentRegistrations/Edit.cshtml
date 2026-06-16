@@ -301,10 +301,6 @@
             data.forEach(function(q) { addQualificationRow(q); });
         }
 
-        function tenantUrl(path) {
-            return __tenantCode ? '/tenant/' + __tenantCode + path : path;
-        }
-
         function loadFaculties(levelId, selectedFacultyId, callback) {
             if (!levelId) {
                 $("#FacultyId").empty().append('<option value="">Select Faculty</option>');
