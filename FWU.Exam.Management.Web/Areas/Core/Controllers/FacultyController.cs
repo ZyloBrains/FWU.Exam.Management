@@ -1,3 +1,4 @@
+using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
@@ -13,9 +14,38 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("faculties.view")]
 public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string search = null, string sort = "Name", string sortDir = "asc")
     {
         var faculties = await facultyService.GetAllFacultiesAsync();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            faculties = faculties.Where(f =>
+                (f.Name?.ToLower().Contains(s) ?? false) ||
+                (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.Email?.ToLower().Contains(s) ?? false) ||
+                (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
+                (f.Address?.ToLower().Contains(s) ?? false)
+            ).ToList();
+        }
+
+        faculties = (sort?.ToLower()) switch
+        {
+            "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
+            "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
+            "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
+            "address" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Address).ToList() : faculties.OrderBy(f => f.Address).ToList(),
+            _ => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList()
+        };
+
+        var totalCount = faculties.Count;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
         return View(faculties);
     }
 
@@ -55,6 +85,86 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
+    private string EscapeCsv(string field)
+    {
+        if (string.IsNullOrEmpty(field)) return "";
+        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            return "\"" + field.Replace("\"", "\"\"") + "\"";
+        return field;
+    }
+
+    public async Task<IActionResult> ExportToCsv(string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var faculties = await facultyService.GetAllFacultiesAsync();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            faculties = faculties.Where(f =>
+                (f.Name?.ToLower().Contains(s) ?? false) ||
+                (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.Email?.ToLower().Contains(s) ?? false) ||
+                (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
+                (f.Address?.ToLower().Contains(s) ?? false)
+            ).ToList();
+        }
+
+        faculties = (sort?.ToLower()) switch
+        {
+            "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
+            "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
+            "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
+            "address" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Address).ToList() : faculties.OrderBy(f => f.Address).ToList(),
+            _ => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList()
+        };
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Name,Office Code,Contact Number,Email,Address");
+
+        foreach (var f in faculties)
+        {
+            sb.AppendLine($"{EscapeCsv(f.Name)},{EscapeCsv(f.OfficeCode)},{EscapeCsv(f.ContactNumber)},{EscapeCsv(f.Email)},{EscapeCsv(f.Address)}");
+        }
+
+        var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", fileName);
+    }
+
+    public async Task<IActionResult> ExportToPdf(string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var faculties = await facultyService.GetAllFacultiesAsync();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            faculties = faculties.Where(f =>
+                (f.Name?.ToLower().Contains(s) ?? false) ||
+                (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.Email?.ToLower().Contains(s) ?? false) ||
+                (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
+                (f.Address?.ToLower().Contains(s) ?? false)
+            ).ToList();
+        }
+
+        faculties = (sort?.ToLower()) switch
+        {
+            "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
+            "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
+            "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
+            "address" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Address).ToList() : faculties.OrderBy(f => f.Address).ToList(),
+            _ => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList()
+        };
+
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View("PrintPdf", faculties);
+    }
+
 
     public async Task<IActionResult> Details(int? id)
     {

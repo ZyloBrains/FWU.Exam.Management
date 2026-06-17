@@ -1,0 +1,60 @@
+@model IEnumerable<Faculty>
+
+@{
+    Layout = null;
+    var title = "Faculties Report";
+    var generatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var search = ViewBag.Search as string;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@title</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 12px; margin: 20px; color: #333; }
+        h1 { font-size: 18px; margin-bottom: 4px; color: #1e3a5f; }
+        .subtitle { font-size: 11px; color: #666; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background-color: #1e3a5f; color: white; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
+        td { padding: 6px 10px; border-bottom: 1px solid #e0e0e0; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        .office-code { background: #e8f0fe; color: #1a56db; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+        .footer { margin-top: 20px; font-size: 10px; color: #999; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>@title</h1>
+    <div class="subtitle">
+        Generated: @generatedDate
+        @if (!string.IsNullOrEmpty(search)) { <span> | Search: "@search"</span> }
+        | Total: @totalCount records
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Office Code</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Address</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><strong>@item.Name</strong></td>
+                    <td><span class="office-code">@item.OfficeCode</span></td>
+                    <td>@item.ContactNumber</td>
+                    <td>@item.Email</td>
+                    <td>@item.Address</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div class="footer">@title - Generated on @generatedDate</div>
+</body>
+</html>
