@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using Microsoft.AspNetCore.Mvc;
@@ -72,6 +73,45 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Semesters");
+
+        var headers = new[] { "Code", "Name", "Number", "Year", "Start Date", "End Date", "Remark" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var s in items)
+        {
+            worksheet.Cell(row, 1).Value = s.Code;
+            worksheet.Cell(row, 2).Value = s.Name;
+            worksheet.Cell(row, 3).Value = s.Number;
+            worksheet.Cell(row, 4).Value = s.Year;
+            worksheet.Cell(row, 5).Value = s.StartDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 6).Value = s.EndDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 7).Value = s.Remark;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Semesters_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     public async Task<IActionResult> Details(int? id)

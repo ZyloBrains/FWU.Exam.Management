@@ -56,6 +56,15 @@
                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
                     </a>
+                    <a asp-action="ExportToExcel"
+                           asp-route-page="@currentPage"
+                           asp-route-pageSize="@pageSize"
+                           asp-route-search="@currentSearch"
+                           asp-route-sort="@currentSort"
+                           asp-route-sortDir="@currentSortDir"
+                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-file-excel text-green-600"></i> Excel (Current Page)
+                    </a>
                 </div>
             </div>
             @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))

@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using System.Text;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
@@ -69,6 +70,42 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var items = await collegeTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("College Types");
+
+        var headers = new[] { "Code", "Name", "Remarks", "Is Default", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var c in items)
+        {
+            worksheet.Cell(row, 1).Value = c.Code ?? "";
+            worksheet.Cell(row, 2).Value = c.Name ?? "";
+            worksheet.Cell(row, 3).Value = c.Remarks ?? "N/A";
+            worksheet.Cell(row, 4).Value = c.IsDefault == true ? "Yes" : "No";
+            worksheet.Cell(row, 5).Value = c.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CollegeTypes_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
     public async Task<IActionResult> Details(int? id)

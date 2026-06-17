@@ -3,7 +3,7 @@ using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 
@@ -80,6 +80,45 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         //ViewBag.SortDir = sortDir;
         return View("PrintPdf", Items);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null)
+    {
+        var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize, search);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Academic Years");
+
+        var headers = new[] { "Code", "Code (Nepali)", "Name", "Name (Nepali)", "Remark", "Running", "Active" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var item in Items)
+        {
+            worksheet.Cell(row, 1).Value = item.AcademicYearCode;
+            worksheet.Cell(row, 2).Value = item.AcademicYearCodeNepali;
+            worksheet.Cell(row, 3).Value = item.AcademicYearName;
+            worksheet.Cell(row, 4).Value = item.AcademicYearNameNepali;
+            worksheet.Cell(row, 5).Value = item.Remark;
+            worksheet.Cell(row, 6).Value = item.IsRunning ? "Yes" : "No";
+            worksheet.Cell(row, 7).Value = item.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "AcademicYears.xlsx");
+    }
+
     // GET: AcademicYears/Details/5
     public async Task<IActionResult> Details(int? id)
     {

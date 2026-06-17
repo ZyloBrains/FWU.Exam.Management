@@ -302,7 +302,7 @@
 
             document.getElementById('btnExportExcel').addEventListener('click', () => {
                 const query = encodeURIComponent(searchBox.value.trim());
-                window.location.href = `${base}/Students/StudentRegistrations/ExportExcel?searchTerm=${query}`;
+                window.location.href = `${base}/Students/StudentRegistrations/ExportToExcel?searchTerm=${query}`;
             });
 
             window.updateRegStatus = async (id, status) => {

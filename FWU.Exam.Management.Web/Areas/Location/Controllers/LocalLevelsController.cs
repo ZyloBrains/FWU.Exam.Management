@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
@@ -76,6 +77,43 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    // Export to Excel (Current Page with pagination)
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "LocalLevelName", string sortDir = "asc")
+    {
+        var items = await localLevelService.GetFilteredLocalLevelsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("LocalLevels");
+
+        var headers = new[] { "Local Level Name", "Local Level Type", "District", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var ll in items)
+        {
+            worksheet.Cell(row, 1).Value = ll.LocalLevelName ?? string.Empty;
+            worksheet.Cell(row, 2).Value = ll.LocalLevelType.ToString();
+            worksheet.Cell(row, 3).Value = ll.District?.DistrictName ?? string.Empty;
+            worksheet.Cell(row, 4).Value = ll.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"LocalLevels_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     // GET: LocalLevels/Details/5

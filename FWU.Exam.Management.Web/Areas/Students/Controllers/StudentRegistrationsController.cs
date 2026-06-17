@@ -298,7 +298,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportExcel(string searchTerm = "")
+    public async Task<IActionResult> ExportToExcel(string searchTerm = "")
     {
         var collegeIds = await GetUserCollegeIdsAsync();
         var data = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);

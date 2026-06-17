@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -89,6 +90,46 @@ public class BillTitlesController(
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
+    {
+        var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("BillTitles");
+
+        var headers = new[] { "Bill Title Name", "Category", "Amount", "Exam Schedule", "Applicable Date", "Through Date", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var bt in items)
+        {
+            worksheet.Cell(row, 1).Value = bt.BillTitleName ?? "";
+            worksheet.Cell(row, 2).Value = bt.Category ?? "-";
+            worksheet.Cell(row, 3).Value = bt.Amount?.ToString("F2") ?? "-";
+            worksheet.Cell(row, 4).Value = bt.ExamSchedule?.ExamScheduleName ?? "-";
+            worksheet.Cell(row, 5).Value = bt.ApplicableDate?.ToString("yyyy-MM-dd") ?? "-";
+            worksheet.Cell(row, 6).Value = bt.ThroughDate?.ToString("yyyy-MM-dd") ?? "-";
+            worksheet.Cell(row, 7).Value = bt.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"BillTitles_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     public async Task<IActionResult> Details(int? id)

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
 using System.Text;
 
 namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
@@ -100,6 +101,62 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
         var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
+    {
+        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Colleges");
+
+        var headers = new[] { "College Code", "College Name", "College Name (Nepali)", "Short Name", "District", "Municipality/VDC", "Ward No.", "House No.", "Website", "Email", "Phone 1", "Phone 2", "Principal Name", "Principal Contact", "Fax", "Remarks", "Is Exam Center Only", "Is Active", "College Type", "Allocated Amount", "Area", "Display Order", "Established Date", "Closed Date" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var c in items)
+        {
+            worksheet.Cell(row, 1).Value = c.Code.ToString();
+            worksheet.Cell(row, 2).Value = c.Name ?? "";
+            worksheet.Cell(row, 3).Value = c.CollegeNameNepali ?? "";
+            worksheet.Cell(row, 4).Value = c.ShortName ?? "";
+            worksheet.Cell(row, 5).Value = c.Address?.LocalLevel?.District?.DistrictName ?? "";
+            worksheet.Cell(row, 6).Value = c.Address?.LocalLevel?.LocalLevelName ?? "";
+            worksheet.Cell(row, 7).Value = c.Address?.WardNumber?.ToString() ?? "";
+            worksheet.Cell(row, 8).Value = c.Address?.HouseNumber ?? "";
+            worksheet.Cell(row, 9).Value = c.Website ?? "";
+            worksheet.Cell(row, 10).Value = c.Email ?? "";
+            worksheet.Cell(row, 11).Value = c.Phone1 ?? "";
+            worksheet.Cell(row, 12).Value = c.Phone2 ?? "";
+            worksheet.Cell(row, 13).Value = c.PrincipalName ?? "";
+            worksheet.Cell(row, 14).Value = c.PrincipalContactNumber ?? "";
+            worksheet.Cell(row, 15).Value = c.Fax ?? "";
+            worksheet.Cell(row, 16).Value = c.Remarks ?? "";
+            worksheet.Cell(row, 17).Value = c.IsExamCenterOnly ? "Yes" : "No";
+            worksheet.Cell(row, 18).Value = c.IsActive ? "Active" : "Inactive";
+            worksheet.Cell(row, 19).Value = c.CollegeType?.Code ?? "";
+            worksheet.Cell(row, 20).Value = c.AllocatedAmount?.ToString() ?? "";
+            worksheet.Cell(row, 21).Value = c.Address?.ToleStreet ?? "";
+            worksheet.Cell(row, 22).Value = c.DisplayOrder?.ToString() ?? "";
+            worksheet.Cell(row, 23).Value = c.EstablishedDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 24).Value = c.ClosedDate?.ToString("yyyy-MM-dd") ?? "";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Colleges_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
     public async Task<IActionResult> Details(int? id)

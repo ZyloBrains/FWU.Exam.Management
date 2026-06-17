@@ -4,7 +4,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 
@@ -76,6 +76,41 @@ public class BoardsController(IBoardService boardService) : Controller
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BoardName", string sortDir = "asc")
+    {
+        var (items, totalCount) = await boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Boards");
+
+        var headers = new[] { "Board Name", "Remarks", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var b in items)
+        {
+            worksheet.Cell(row, 1).Value = b.BoardName;
+            worksheet.Cell(row, 2).Value = b.Remarks;
+            worksheet.Cell(row, 3).Value = b.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Boards_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     // GET: Boards/Details/5

@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using Microsoft.AspNetCore.Mvc;
@@ -62,6 +63,43 @@ public class CurriculumVersionsController : Controller
         var fileName = $"CurriculumVersions_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", fileName);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Curriculum Versions");
+
+        var headers = new[] { "Name", "Program", "Effective Year", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var c in items)
+        {
+            worksheet.Cell(row, 1).Value = c.Name ?? "-";
+            worksheet.Cell(row, 2).Value = c.Program?.ProgramName ?? "-";
+            worksheet.Cell(row, 3).Value = c.EffectiveAcademicYear?.AcademicYearName ?? "-";
+            worksheet.Cell(row, 4).Value = c.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"CurriculumVersions_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")

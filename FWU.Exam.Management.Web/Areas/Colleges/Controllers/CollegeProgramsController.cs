@@ -5,6 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -72,6 +73,45 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
+    {
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("College Programs");
+
+        var headers = new[] { "College Code", "College Name", "Program Code", "Program Name", "Affiliation Date", "Number of Students", "Remarks", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var cp in items)
+        {
+            worksheet.Cell(row, 1).Value = cp.College?.Code.ToString() ?? "";
+            worksheet.Cell(row, 2).Value = cp.College?.Name ?? "";
+            worksheet.Cell(row, 3).Value = cp.Program?.ProgramCode ?? "";
+            worksheet.Cell(row, 4).Value = cp.Program?.ProgramName ?? "";
+            worksheet.Cell(row, 5).Value = cp.AffiliationDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 6).Value = cp.NumberOfStudents.ToString();
+            worksheet.Cell(row, 7).Value = cp.Remarks ?? "";
+            worksheet.Cell(row, 8).Value = cp.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CollegePrograms_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
     public async Task<IActionResult> Details(int? id)

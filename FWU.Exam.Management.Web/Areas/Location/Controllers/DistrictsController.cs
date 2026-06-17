@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
@@ -85,6 +86,42 @@ public class DistrictsController(IDistrictService districtService) : Controller
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    // Export to Excel (Current Page with pagination)
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "DistrictName", string sortDir = "asc")
+    {
+        var items = await districtService.GetFilteredDistrictsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Districts");
+
+        var headers = new[] { "District Name", "Province", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var d in items)
+        {
+            worksheet.Cell(row, 1).Value = d.DistrictName ?? string.Empty;
+            worksheet.Cell(row, 2).Value = d.Province?.ProvinceName ?? string.Empty;
+            worksheet.Cell(row, 3).Value = d.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Districts_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     // GET: Districts/Create

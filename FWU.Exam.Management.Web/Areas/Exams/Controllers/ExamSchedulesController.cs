@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -99,6 +100,56 @@ public class ExamSchedulesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string search = null)
+    {
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ExamSchedules");
+
+        var headers = new[] { "ID", "Exam Schedule Name", "Code", "Academic Year", "Exam Type", "Start Date (BS)", "End Date (BS)", "Start Date (AD)", "End Date (AD)", "Published Date", "Start Time", "End Time", "Is Active", "Extended Date", "Extended Date Charge", "College Approval Date", "Admission Card Release Date", "Remarks" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.ExamScheduleName ?? string.Empty;
+            worksheet.Cell(row, 3).Value = item.ExamScheduleCode ?? string.Empty;
+            worksheet.Cell(row, 4).Value = item.AcademicYear?.AcademicYearName ?? string.Empty;
+            worksheet.Cell(row, 5).Value = item.ExamType?.Name ?? string.Empty;
+            worksheet.Cell(row, 6).Value = item.StartDateBs ?? string.Empty;
+            worksheet.Cell(row, 7).Value = item.EndDateBs ?? string.Empty;
+            worksheet.Cell(row, 8).Value = item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 9).Value = item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 10).Value = item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 11).Value = item.StartTime.ToString();
+            worksheet.Cell(row, 12).Value = item.EndTime.ToString();
+            worksheet.Cell(row, 13).Value = item.IsActive ? "Yes" : "No";
+            worksheet.Cell(row, 14).Value = item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 15).Value = item.ExtendedDateCharge?.ToString() ?? string.Empty;
+            worksheet.Cell(row, 16).Value = item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 17).Value = item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 18).Value = item.Remarks ?? string.Empty;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ExamSchedules.xlsx");
     }
 
     public async Task<IActionResult> Details(int? id)

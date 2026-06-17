@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -147,6 +148,43 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             ViewBag.SortDir = sortDir;
 
             return View("PrintPdf", items);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Host", string sortDir = "asc")
+        {
+            var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
+
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("SMTP Configurations");
+
+            var headers = new[] { "Host", "From Email", "Port", "Username", "Enable SSL" };
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = worksheet.Cell(1, i + 1);
+                cell.Value = headers[i];
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+            }
+
+            int row = 2;
+            foreach (var s in items)
+            {
+                worksheet.Cell(row, 1).Value = s.Host;
+                worksheet.Cell(row, 2).Value = s.From;
+                worksheet.Cell(row, 3).Value = s.Port;
+                worksheet.Cell(row, 4).Value = s.UserName;
+                worksheet.Cell(row, 5).Value = s.EnableSsl ? "Yes" : "No";
+                row++;
+            }
+
+            worksheet.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+            var fileName = $"SMTPConfigurations_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         // GET: SmtpConfigurations1/Details/5

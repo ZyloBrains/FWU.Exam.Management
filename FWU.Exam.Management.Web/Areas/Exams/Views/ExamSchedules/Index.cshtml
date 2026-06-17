@@ -25,6 +25,10 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
+            <a asp-action="ExportToExcel" asp-area="Exams" asp-route-search="@currentSearch"
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </a>
             <a asp-action="Create" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-plus text-xs"></i> Create New
             </a>

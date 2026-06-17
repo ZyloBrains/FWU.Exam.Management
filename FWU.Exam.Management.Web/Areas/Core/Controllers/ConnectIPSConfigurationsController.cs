@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
@@ -132,6 +133,44 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "MerchantId", string sortDir = "asc")
+    {
+        var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ConnectIPS Configurations");
+
+        var headers = new[] { "Merchant Id", "App Id", "App Name", "Gateway Url", "Validation Api Url", "Transaction Currency" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var s in items)
+        {
+            worksheet.Cell(row, 1).Value = s.MerchantId;
+            worksheet.Cell(row, 2).Value = s.AppId;
+            worksheet.Cell(row, 3).Value = s.AppName;
+            worksheet.Cell(row, 4).Value = s.GatewayUrl;
+            worksheet.Cell(row, 5).Value = s.ValidationApiUrl;
+            worksheet.Cell(row, 6).Value = s.TransactionCurrency;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"ConnectIPSConfigurations_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     public async Task<IActionResult> Details(int? id)

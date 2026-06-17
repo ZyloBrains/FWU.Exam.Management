@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
@@ -223,6 +224,51 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         }
 
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"SemesterEnrollments_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null)
+    {
+        var collegeIds = await GetUserCollegeIdsAsync();
+        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
+        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("SemesterEnrollments");
+
+        var headers = new[] { "S.N.", "Admission", "Semester", "Status", "Type", "Payment", "Total Fee", "Total Credits", "Result" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        int sn = 1;
+        foreach (var e in items)
+        {
+            worksheet.Cell(row, 1).Value = sn++;
+            worksheet.Cell(row, 2).Value = e.StudentAdmission?.CollegeRollNumber ?? "";
+            worksheet.Cell(row, 3).Value = e.Semester?.Name ?? "";
+            worksheet.Cell(row, 4).Value = e.EnrollmentStatus.ToString();
+            worksheet.Cell(row, 5).Value = e.EnrollmentType.ToString();
+            worksheet.Cell(row, 6).Value = e.PaymentStatus.ToString();
+            worksheet.Cell(row, 7).Value = e.TotalFee;
+            worksheet.Cell(row, 8).Value = e.TotalCredits;
+            worksheet.Cell(row, 9).Value = e.ResultStatus.ToString();
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"SemesterEnrollments_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     private string EscapeCsv(string field)

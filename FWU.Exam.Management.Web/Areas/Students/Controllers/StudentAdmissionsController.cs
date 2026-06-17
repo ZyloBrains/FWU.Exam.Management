@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
@@ -277,6 +278,49 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         ViewBag.SortDir = sortDir;
 
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    {
+        var collegeIds = await GetUserCollegeIdsAsync();
+        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : (int?)null;
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("StudentAdmissions");
+
+        var headers = new[] { "S.N.", "College Roll No.", "College", "Program", "Admission Date", "Status", "Active" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        int sn = 1;
+        foreach (var a in items)
+        {
+            worksheet.Cell(row, 1).Value = sn++;
+            worksheet.Cell(row, 2).Value = a.CollegeRollNumber ?? "";
+            worksheet.Cell(row, 3).Value = a.College?.Name ?? "";
+            worksheet.Cell(row, 4).Value = a.Program?.ProgramName ?? "";
+            worksheet.Cell(row, 5).Value = a.AdmissionDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 6).Value = a.IsCompleted ? "Completed" : "Pending";
+            worksheet.Cell(row, 7).Value = a.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"StudentAdmissions_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     [HttpGet]
