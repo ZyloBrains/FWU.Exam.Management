@@ -128,6 +128,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         builder.Services.AddScoped<IPermissionService, PermissionService>();
         builder.Services.AddMemoryCache();
+        builder.Services.AddAuthorization();
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();

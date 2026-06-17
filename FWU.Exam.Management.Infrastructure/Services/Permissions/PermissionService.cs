@@ -20,40 +20,35 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
         return permissions.Contains(permission);
     }
 
-    public async Task<List<string>> GetUserPermissionsAsync(string userId)
+    public Task<List<string>> GetUserPermissionsAsync(string userId)
     {
         var cacheKey = UserCacheKey(userId);
         if (cache.TryGetValue(cacheKey, out List<string>? cached) && cached != null)
-            return cached;
+            return Task.FromResult(cached);
 
         var lockObj = _locks.GetOrAdd(cacheKey, _ => new object());
         lock (lockObj)
         {
             if (cache.TryGetValue(cacheKey, out cached) && cached != null)
-                return cached;
+                return Task.FromResult(cached);
+
+            var roleIds = context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.RoleId)
+                .ToList();
+
+            var permissionNames = context.Set<Domain.Entities.Permissions.RolePermission>()
+                .Where(rp => roleIds.Contains(rp.RoleId))
+                .Include(rp => rp.Permission)
+                .Where(rp => rp.Permission.IsActive)
+                .Select(rp => rp.Permission.Name)
+                .Distinct()
+                .ToList();
+
+            var result = permissionNames;
+            cache.Set(cacheKey, result, CacheDuration);
+            return Task.FromResult(result);
         }
-
-        var roleNames = await context.UserRoles
-            .Where(ur => ur.UserId == userId)
-            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
-            .ToListAsync();
-
-        var roleIds = await context.Roles
-            .Where(r => roleNames.Contains(r.Name))
-            .Select(r => r.Id)
-            .ToListAsync();
-
-        var permissionNames = await context.Set<Domain.Entities.Permissions.RolePermission>()
-            .Where(rp => roleIds.Contains(rp.RoleId))
-            .Include(rp => rp.Permission)
-            .Where(rp => rp.Permission.IsActive)
-            .Select(rp => rp.Permission.Name)
-            .Distinct()
-            .ToListAsync();
-
-        var result = permissionNames;
-        cache.Set(cacheKey, result, CacheDuration);
-        return result;
     }
 
     public async Task<List<string>> GetUserPermissionsAsync(string userId, string group)
@@ -89,13 +84,28 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
 
     public async Task UpdateRolePermissionsAsync(string roleId, List<int> permissionIds)
     {
+        var allPerms = await context.Permissions!
+            .Where(p => p.IsActive)
+            .ToListAsync();
+
+        var selectedGroups = allPerms
+            .Where(p => permissionIds.Contains(p.Id))
+            .Select(p => p.Group)
+            .Distinct()
+            .ToHashSet();
+
+        var expandedIds = allPerms
+            .Where(p => selectedGroups.Contains(p.Group))
+            .Select(p => p.Id)
+            .ToList();
+
         var existing = await context.RolePermissions!
             .Where(rp => rp.RoleId == roleId)
             .ToListAsync();
 
         context.RolePermissions!.RemoveRange(existing);
 
-        var newPermissions = permissionIds.Select(pid => new Domain.Entities.Permissions.RolePermission
+        var newPermissions = expandedIds.Select(pid => new Domain.Entities.Permissions.RolePermission
         {
             RoleId = roleId,
             PermissionId = pid
