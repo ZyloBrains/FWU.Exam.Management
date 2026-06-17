@@ -40,7 +40,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         else if (User.IsInRole(Role.FacultyAdmin) && currentUser.FacultyId != null)
         {
             var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties != null && c.Faculties.Any(f => f.Id == currentUser.FacultyId))
+                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
                 .Select(c => (int?)c.Id)
                 .ToListAsync();
             filteredQuery = usersQuery.Where(u =>
@@ -50,7 +50,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         else if (User.IsInRole(Role.DepartmentAdmin) && currentUser.FacultyId != null)
         {
             var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties != null && c.Faculties.Any(f => f.Id == currentUser.FacultyId))
+                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
                 .Select(c => (int?)c.Id)
                 .ToListAsync();
             filteredQuery = usersQuery.Where(u =>

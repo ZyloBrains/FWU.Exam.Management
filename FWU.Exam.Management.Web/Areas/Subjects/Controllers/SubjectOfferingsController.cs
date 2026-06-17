@@ -182,6 +182,20 @@ public class SubjectOfferingsController : Controller
 
         if (ModelState.IsValid)
         {
+            var duplicateInRequest = model.Subjects
+                .GroupBy(s => s.SubjectCatalogId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            if (duplicateInRequest.Any())
+            {
+                ModelState.AddModelError("", "Duplicate subjects found in the request. Each subject can only be added once.");
+            }
+        }
+
+        if (ModelState.IsValid)
+        {
             var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId);
             var duplicateIds = model.Subjects
                 .Where(s => existingIds.Contains(s.SubjectCatalogId))
@@ -190,7 +204,7 @@ public class SubjectOfferingsController : Controller
 
             if (duplicateIds.Any())
             {
-                ModelState.AddModelError("", $"{duplicateIds.Count} subject(s) already exist in this semester for the selected program.");
+                ModelState.AddModelError("", $"{duplicateIds.Count} subject(s) already exist for the selected program.");
             }
         }
 
@@ -216,7 +230,26 @@ public class SubjectOfferingsController : Controller
                 InternalPracticalPassMarks = s.InternalPracticalPassMarks
             }).ToList();
 
-            await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+            try
+            {
+                await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("", "A database error occurred. The subject offering may already exist.");
+                var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync();
+                ViewData["ProgramId"] = new SelectList(progs, "Id", "ProgramName", model.ProgramId);
+                ViewData["SemesterId"] = new SelectList(sems, "Id", "Name", model.SemesterId);
+                ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(cats.Select(s => new
+                {
+                    id = s.Id,
+                    code = s.SubjectCode,
+                    name = s.SubjectName,
+                    type = s.SubjectType?.Name ?? "",
+                    credits = s.CreditHours
+                }));
+                return View(model);
+            }
             TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
             return RedirectToAction(nameof(Index));
         }
