@@ -190,6 +190,7 @@ public partial class EntryPoint
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
             await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
         }
 
         app.Run();

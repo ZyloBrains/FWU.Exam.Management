@@ -513,6 +513,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             InvoiceNumber = voucherNumber,
             FullName = studentName,
             MobileNumber = contactNumber,
+            FullRequestContent = "{}",
             Amount = schedule.ExamFee.Value,
             ForwardedTimestamp = DateTime.UtcNow,
             PaymentTypeId = paymentTypeId,

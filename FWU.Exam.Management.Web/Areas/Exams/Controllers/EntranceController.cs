@@ -24,10 +24,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [AllowAnonymous]
-    public async Task<IActionResult> VerifyPayment()
+    public IActionResult VerifyPayment()
     {
-        var paymentTypes = await service.GetActivePaymentTypesAsync();
-        ViewBag.PaymentTypes = new SelectList(paymentTypes, "Id", "PaymentTypeName");
         return View();
     }
 
@@ -39,8 +37,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (string.IsNullOrWhiteSpace(transactionCode))
         {
             TempData["ErrorMessage"] = "Please enter a transaction code or voucher number.";
-            var paymentTypes = await service.GetActivePaymentTypesAsync();
-            ViewBag.PaymentTypes = new SelectList(paymentTypes, "Id", "PaymentTypeName");
             return View();
         }
 
@@ -48,8 +44,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (voucher == null)
         {
             TempData["ErrorMessage"] = "Invalid credentials. Please verify your transaction code, name, and phone number.";
-            var paymentTypes = await service.GetActivePaymentTypesAsync();
-            ViewBag.PaymentTypes = new SelectList(paymentTypes, "Id", "PaymentTypeName");
             return View();
         }
 

@@ -97,9 +97,12 @@
                             <select name="paymentTypeId" required
                                     class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 transition appearance-none bg-white">
                                 <option value="">-- Select Payment Method --</option>
-                                @foreach (var pt in ViewBag.PaymentTypes as SelectList)
+                                @if (ViewBag.PaymentTypes is SelectList pts)
                                 {
-                                    <option value="@pt.Value">@pt.Text</option>
+                                    foreach (var pt in pts)
+                                    {
+                                        <option value="@pt.Value">@pt.Text</option>
+                                    }
                                 }
                             </select>
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
