@@ -10,92 +10,89 @@
     var admissionId = ViewBag.AdmissionId as int?;
 }
 
-<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <div class="md:flex md:items-center md:justify-between mb-8 pb-5 border-b border-gray-200">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-3xl font-bold leading-tight text-gray-900 tracking-tight">Semester Enrollments</h1>
-            <p class="mt-2 text-sm text-gray-500">Manage semester enrollments, track status and results.</p>
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center shrink-0">
+                <i class="fas fa-book-open text-teal-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Semester Enrollments</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Manage semester enrollments, track status and results.</p>
+            </div>
         </div>
-        <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
-            <a asp-action="Create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                New Enrollment
+        <div class="flex items-center gap-3">
+            <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                <i class="fas fa-plus text-xs"></i> New Enrollment
             </a>
-            <a asp-action="ExportToCsv" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all">
-                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export CSV
+            <a asp-action="ExportToCsv" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">
+                <i class="fas fa-file-csv text-xs text-gray-400"></i> CSV
             </a>
-            <a asp-action="ExportToExcel"
-               asp-route-search="@currentSearch"
-               asp-route-admissionId="@admissionId"
-               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all">
-                <svg class="-ml-1 mr-2 h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export Excel
+            <a asp-action="ExportToExcel" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">
+                <i class="fas fa-file-excel text-xs text-green-500"></i> Excel
             </a>
         </div>
     </div>
 
     @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <div class="mb-6 rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-emerald-400 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div class="rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start gap-3 shadow-sm">
+            <i class="fas fa-check-circle text-emerald-400 mt-0.5"></i>
             <div class="text-sm font-medium text-emerald-800">@successMessage</div>
         </div>
     }
 
     @if (TempData["ErrorMessage"] is string errorMessage)
     {
-        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div class="rounded-lg bg-red-50 p-4 border border-red-200 flex items-start gap-3 shadow-sm">
+            <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
             <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
         </div>
     }
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Admission</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Semester</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Payment</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Fee</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Credits</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Result</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-100">
                 @foreach (var item in Model)
                 {
                     <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            @item.StudentAdmission?.CollegeRollNumber
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            @item.Semester?.Name
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full @(item.EnrollmentStatus switch {
+                        <td class="px-4 py-3 font-medium text-gray-800">@item.StudentAdmission?.CollegeRollNumber</td>
+                        <td class="px-4 py-3 text-gray-600">@item.Semester?.Name</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.EnrollmentStatus switch {
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Active => "bg-green-100 text-green-700",
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Inactive => "bg-gray-100 text-gray-700",
                                 FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
                                 _ => "bg-yellow-100 text-yellow-700"
                             })">@item.EnrollmentStatus</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">@item.EnrollmentType</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full @(item.PaymentStatus switch {
+                        <td class="px-4 py-3 text-gray-600">@item.EnrollmentType</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.PaymentStatus switch {
                                 FWU.Exam.Management.Domain.Enums.PaymentStatus.Paid => "bg-green-100 text-green-700",
                                 FWU.Exam.Management.Domain.Enums.PaymentStatus.Pending => "bg-yellow-100 text-yellow-700",
                                 _ => "bg-gray-100 text-gray-700"
                             })">@item.PaymentStatus</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">@item.TotalFee.ToString("N0")</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">@item.TotalCredits</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full @(item.ResultStatus switch {
+                        <td class="px-4 py-3 text-gray-600">@item.TotalFee.ToString("N0")</td>
+                        <td class="px-4 py-3 text-gray-600">@item.TotalCredits</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.ResultStatus switch {
                                 FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
                                 FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
                                 FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
@@ -104,57 +101,130 @@
                                 _ => "bg-gray-100 text-gray-700"
                             })">@item.ResultStatus</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Details">
-                                <svg class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                            </a>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="text-amber-600 hover:text-amber-900 mr-3" title="Edit">
-                                <svg class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                            </a>
-                            <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="text-red-600 hover:text-red-900" title="Delete">
-                                <svg class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </a>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
+                                    <i class="fas fa-edit text-xs"></i>
+                                </a>
+                                <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
-
         @if (!Model.Any())
         {
-            <div class="text-center py-12 text-gray-500">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                <p class="mt-2 text-sm">No semester enrollments found.</p>
+            <div class="text-center py-16">
+                <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
+                <p class="text-sm text-gray-500">No semester enrollments found.</p>
+            </div>
+        }
+    </div>
+
+    <div class="lg:hidden space-y-3">
+        @if (Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-book-open text-teal-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800 text-sm">@(item.StudentAdmission?.CollegeRollNumber ?? "-")</h3>
+                                <p class="text-xs text-gray-500">@(item.Semester?.Name ?? "-")</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.EnrollmentStatus switch {
+                                FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Active => "bg-green-100 text-green-700",
+                                FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Inactive => "bg-gray-100 text-gray-700",
+                                FWU.Exam.Management.Domain.Enums.StudentEnrollmentStatus.Dropped => "bg-red-100 text-red-700",
+                                _ => "bg-yellow-100 text-yellow-700"
+                            })">@item.EnrollmentStatus</span>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.PaymentStatus switch {
+                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Paid => "bg-green-100 text-green-700",
+                                FWU.Exam.Management.Domain.Enums.PaymentStatus.Pending => "bg-yellow-100 text-yellow-700",
+                                _ => "bg-gray-100 text-gray-700"
+                            })">@item.PaymentStatus</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
+                        <div class="text-gray-500">Type</div>
+                        <div class="text-gray-800">@(item.EnrollmentType)</div>
+                        <div class="text-gray-500">Fee</div>
+                        <div class="text-gray-800">@item.TotalFee.ToString("N0")</div>
+                        <div class="text-gray-500">Credits</div>
+                        <div class="text-gray-800">@item.TotalCredits</div>
+                        <div class="text-gray-500">Result</div>
+                        <div class="text-gray-800">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.ResultStatus switch {
+                                FWU.Exam.Management.Domain.Enums.ResultStatus.Passed => "bg-green-100 text-green-700",
+                                FWU.Exam.Management.Domain.Enums.ResultStatus.Failed => "bg-red-100 text-red-700",
+                                FWU.Exam.Management.Domain.Enums.ResultStatus.Incomplete => "bg-yellow-100 text-yellow-700",
+                                FWU.Exam.Management.Domain.Enums.ResultStatus.Absent => "bg-gray-100 text-gray-700",
+                                FWU.Exam.Management.Domain.Enums.ResultStatus.Withdrawn => "bg-orange-100 text-orange-700",
+                                _ => "bg-gray-100 text-gray-700"
+                            })">@item.ResultStatus</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                            <i class="fas fa-eye mr-1"></i> Details
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
+                            <i class="fas fa-edit mr-1"></i> Edit
+                        </a>
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
+                <p class="text-sm text-gray-500">No semester enrollments found.</p>
             </div>
         }
     </div>
 
     @if (totalPages > 1)
     {
-        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg mt-6">
-            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
-                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
-                        of <span class="font-medium">@totalCount</span> results
-                    </p>
-                </div>
-                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+            <div class="text-sm text-gray-500 font-medium">
+                Showing <span class="font-semibold text-gray-900">@(((currentPage - 1) * pageSize) + 1)</span>
+                to <span class="font-semibold text-gray-900">@(Math.Min(currentPage * pageSize, totalCount))</span>
+                of <span class="font-semibold text-gray-900">@totalCount</span> entries
+            </div>
+            <div class="flex items-center justify-between sm:justify-end gap-2">
+                @if (currentPage > 1)
+                {
                     <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-                       class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
-                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                       class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                        <i class="fas fa-chevron-left text-xs"></i> Previous
                     </a>
-                    @for (int i = 1; i <= totalPages; i++)
-                    {
-                        <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-                           class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-indigo-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
-                    }
+                }
+                <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center">@currentPage / @totalPages</span>
+                @if (currentPage < totalPages)
+                {
                     <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-                       class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
-                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                       class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                        Next <i class="fas fa-chevron-right text-xs"></i>
                     </a>
-                </nav>
+                }
             </div>
         </div>
     }
