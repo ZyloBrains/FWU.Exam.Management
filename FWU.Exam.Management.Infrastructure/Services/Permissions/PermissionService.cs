@@ -84,28 +84,13 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
 
     public async Task UpdateRolePermissionsAsync(string roleId, List<int> permissionIds)
     {
-        var allPerms = await context.Permissions!
-            .Where(p => p.IsActive)
-            .ToListAsync();
-
-        var selectedGroups = allPerms
-            .Where(p => permissionIds.Contains(p.Id))
-            .Select(p => p.Group)
-            .Distinct()
-            .ToHashSet();
-
-        var expandedIds = allPerms
-            .Where(p => selectedGroups.Contains(p.Group))
-            .Select(p => p.Id)
-            .ToList();
-
         var existing = await context.RolePermissions!
             .Where(rp => rp.RoleId == roleId)
             .ToListAsync();
 
         context.RolePermissions!.RemoveRange(existing);
 
-        var newPermissions = expandedIds.Select(pid => new Domain.Entities.Permissions.RolePermission
+        var newPermissions = permissionIds.Select(pid => new Domain.Entities.Permissions.RolePermission
         {
             RoleId = roleId,
             PermissionId = pid
