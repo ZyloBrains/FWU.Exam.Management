@@ -324,7 +324,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     {
         try
         {
-            var user = await userManager.FindByIdAsync(id);
+            var user = await userManager.FindByIdAsync(id.ToString());
             if (user != null)
                 await userManager.DeleteAsync(user);
             return Json(new { success = true, message = "User deleted successfully!" });

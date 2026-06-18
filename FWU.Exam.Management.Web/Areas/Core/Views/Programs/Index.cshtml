@@ -410,7 +410,7 @@
             $.ajax({
                 url: '@Url.Action("DeleteAjax", "Programs")',
                 type: 'POST',
-                data: { id: id, __RequestVerificationToken: input[name="__RequestVerificationToken"].val() },
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
                 success: function (response) {
                     if (response.success) { alert(response.message); location.reload(); }
                     else { alert('Error: ' + response.message); }

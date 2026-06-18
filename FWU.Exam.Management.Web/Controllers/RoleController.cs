@@ -132,7 +132,7 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     {
         try
         {
-            var role = await roleManager.FindByIdAsync(id);
+            var role = await roleManager.FindByIdAsync(id.ToString());
             if (role != null)
                 await roleManager.DeleteAsync(role);
             return Json(new { success = true, message = "Role deleted successfully!" });

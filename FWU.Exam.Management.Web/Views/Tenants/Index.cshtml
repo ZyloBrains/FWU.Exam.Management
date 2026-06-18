@@ -147,9 +147,9 @@
                     <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                         Edit
                     </a>
-                    
-                        Delete
-                    </a>
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                            Delete
+                        </a>
                 </div>
             </div>
         }
@@ -260,7 +260,7 @@
             $.ajax({
                 url: '@Url.Action("DeleteAjax", "Tenants")',
                 type: 'POST',
-                data: { id: id, __RequestVerificationToken: input[name="__RequestVerificationToken"].val() },
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
                 success: function (response) {
                     if (response.success) {
                         alert(response.message);

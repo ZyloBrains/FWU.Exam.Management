@@ -271,7 +271,7 @@
                     }
                     @if (HasPerm("subjects.delete"))
                     {
-                        
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }
@@ -385,7 +385,7 @@
             $.ajax({
                 url: '@Url.Action("DeleteAjax", "SubjectCatalogs")',
                 type: 'POST',
-                data: { id: id, __RequestVerificationToken: input[name="__RequestVerificationToken"].val() },
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
                 success: function (response) {
                     if (response.success) {
                         alert(response.message);
