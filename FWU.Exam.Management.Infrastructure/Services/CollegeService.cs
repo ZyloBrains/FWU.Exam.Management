@@ -77,9 +77,35 @@ public class CollegeService(AppDbContext context) : ICollegeService
 
     public async Task<int> UpdateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber)
     {
+        var existingCollege = await context.Colleges
+            .Include(c => c.Address)
+            .FirstOrDefaultAsync(c => c.Id == college.Id)
+            ?? throw new InvalidOperationException($"College with Id {college.Id} not found.");
+
+        existingCollege.Code = college.Code;
+        existingCollege.Name = college.Name;
+        existingCollege.CollegeNameNepali = college.CollegeNameNepali;
+        existingCollege.ShortName = college.ShortName;
+        existingCollege.EstablishedDate = college.EstablishedDate;
+        existingCollege.ClosedDate = college.ClosedDate;
+        existingCollege.Website = college.Website;
+        existingCollege.Email = college.Email;
+        existingCollege.Phone1 = college.Phone1;
+        existingCollege.Phone2 = college.Phone2;
+        existingCollege.PrincipalName = college.PrincipalName;
+        existingCollege.PrincipalContactNumber = college.PrincipalContactNumber;
+        existingCollege.Fax = college.Fax;
+        existingCollege.Remarks = college.Remarks;
+        existingCollege.IsExamCenterOnly = college.IsExamCenterOnly;
+        existingCollege.IsActive = college.IsActive;
+        existingCollege.AllocatedAmount = college.AllocatedAmount;
+        existingCollege.DisplayOrder = college.DisplayOrder;
+        existingCollege.CollegeTypeId = college.CollegeTypeId;
+        existingCollege.CollegeProfileId = college.CollegeProfileId;
+
         if (!string.IsNullOrEmpty(localLevelId))
         {
-            var address = await context.Addresses.FindAsync(college.AddressId);
+            var address = existingCollege.Address;
             if (address == null)
             {
                 address = new Address
@@ -93,7 +119,7 @@ public class CollegeService(AppDbContext context) : ICollegeService
                 };
                 context.Addresses.Add(address);
                 await context.SaveChangesAsync();
-                college.AddressId = address.Id;
+                existingCollege.AddressId = address.Id;
             }
             else
             {
@@ -101,13 +127,11 @@ public class CollegeService(AppDbContext context) : ICollegeService
                 address.WardNumber = string.IsNullOrEmpty(wardNumber) ? null : int.Parse(wardNumber);
                 address.ToleStreet = toleStreet;
                 address.HouseNumber = houseNumber;
-                context.Addresses.Update(address);
             }
         }
 
-        context.Colleges.Update(college);
         await context.SaveChangesAsync();
-        return college.Id;
+        return existingCollege.Id;
     }
 
     public async Task DeleteCollegeAsync(int id)
