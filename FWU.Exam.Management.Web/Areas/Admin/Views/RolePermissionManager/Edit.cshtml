@@ -4,67 +4,78 @@
     ViewData["Title"] = $"Edit Permissions - {Model.RoleName}";
 }
 
-<div class="container mx-auto px-4 py-6">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">
-            <i class="fas fa-shield-alt mr-2"></i>Permissions for <span class="text-indigo-600">@Model.RoleName</span>
-        </h1>
-        <a asp-action="Index" class="text-gray-600 hover:text-gray-900">
-            <i class="fas fa-arrow-left mr-1"></i>Back to Roles
-        </a>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="fas fa-shield-alt text-indigo-600"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Permissions</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Manage permissions for <span class="font-semibold text-indigo-600">@Model.RoleName</span></p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form asp-action="Edit" method="post" id="permForm">
         <input type="hidden" name="id" value="@Model.RoleId" />
 
-        <div id="permToolbar" class="bg-white rounded-lg shadow mb-4 p-4">
-            <div class="flex flex-wrap items-center gap-3">
+        <div id="permToolbar" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
                 <div class="flex-1 min-w-[200px]">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="text" id="searchBox" placeholder="Search permissions..."
-                               class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
+                               class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
                     </div>
                 </div>
-                <select id="groupFilter" class="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                <select id="groupFilter" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
                     <option value="">All Groups</option>
                     @foreach (var group in Model.Groups)
                     {
                         <option value="@group.GroupName">@group.GroupDisplayName</option>
                     }
                 </select>
-                <select id="statusFilter" class="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                <select id="statusFilter" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
                     <option value="">All Status</option>
                     <option value="assigned">Assigned</option>
                     <option value="unassigned">Unassigned</option>
                 </select>
-                <select id="sortOrder" class="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                <select id="sortOrder" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
                     <option value="">Default Order</option>
                     <option value="name-asc">Name A-Z</option>
                     <option value="name-desc">Name Z-A</option>
                 </select>
-                <span id="resultCount" class="text-sm text-gray-500 whitespace-nowrap"></span>
-                <button type="button" id="collapseAll" class="text-sm text-gray-500 hover:text-gray-700" title="Collapse All">
-                    <i class="fas fa-compress-alt"></i>
-                </button>
-                <button type="button" id="expandAll" class="text-sm text-gray-500 hover:text-gray-700" title="Expand All">
-                    <i class="fas fa-expand-alt"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <span id="resultCount" class="text-sm text-gray-500 whitespace-nowrap"></span>
+                    <button type="button" id="collapseAll" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition" title="Collapse All">
+                        <i class="fas fa-compress-alt"></i>
+                    </button>
+                    <button type="button" id="expandAll" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition" title="Expand All">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="space-y-4" id="groupsContainer">
             @foreach (var group in Model.Groups)
             {
-                <div class="bg-white rounded-lg shadow overflow-hidden perm-group" data-group="@group.GroupName">
-                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-700">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden perm-group" data-group="@group.GroupName">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-700">
                             <i class="fas fa-folder-open mr-2 text-indigo-500"></i><span class="group-name">@group.GroupDisplayName</span>
                             <span class="text-sm font-normal text-gray-400 ml-2 group-count">(@group.Permissions.Count)</span>
                         </h3>
                         <label class="flex items-center text-sm text-gray-600 cursor-pointer">
                             <input type="checkbox"
-                                   class="group-selector rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2"
+                                   class="group-selector rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 mr-2"
                                    data-group="@group.GroupName" />
                             Select All
                         </label>
@@ -73,7 +84,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             @foreach (var perm in group.Permissions)
                             {
-                                <label class="perm-label flex items-start p-2 rounded hover:bg-gray-50 cursor-pointer @(perm.IsAssigned ? "bg-indigo-50" : "")"
+                                <label class="perm-label flex items-start p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition @(perm.IsAssigned ? "bg-indigo-50/50 border border-indigo-100" : "border border-transparent")"
                                        data-perm-id="@perm.Id"
                                        data-perm-name="@perm.Name.ToLowerInvariant()"
                                        data-perm-display="@perm.DisplayName.ToLowerInvariant()"
@@ -84,15 +95,15 @@
                                            name="permissionIds"
                                            value="@perm.Id"
                                            @(perm.IsAssigned ? "checked" : "")
-                                           class="perm-checkbox mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                           class="perm-checkbox mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
                                            data-group="@group.GroupName" />
-                                    <div class="ml-3">
+                                    <div class="ml-3 min-w-0">
                                         <span class="text-sm font-medium text-gray-700">@perm.DisplayName</span>
                                         @if (!string.IsNullOrEmpty(perm.Description))
                                         {
                                             <p class="text-xs text-gray-500">@perm.Description</p>
                                         }
-                                        <code class="text-xs text-gray-400">@perm.Name</code>
+                                        <code class="text-xs text-gray-400 block truncate">@perm.Name</code>
                                     </div>
                                 </label>
                             }
@@ -102,13 +113,14 @@
             }
         </div>
 
-        <div class="mt-6 flex items-center gap-3">
-            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <i class="fas fa-save mr-1"></i>Save Permissions
-            </button>
-            <a asp-action="Index" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+        <!-- Actions -->
+        <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-gray-200">
+            <a asp-action="Index" class="flex-1 sm:flex-none text-center px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-sm">
                 Cancel
             </a>
+            <button type="submit" class="flex-1 sm:flex-none text-center px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                <i class="fas fa-save mr-1"></i> Save Permissions
+            </button>
         </div>
     </form>
 </div>
