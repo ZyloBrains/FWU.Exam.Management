@@ -261,7 +261,7 @@ public class ExamSchedulesController(
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("examschedules.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

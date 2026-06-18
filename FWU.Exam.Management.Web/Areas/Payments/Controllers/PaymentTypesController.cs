@@ -189,7 +189,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         await paymentTypeService.DeletePaymentTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("paymenttypes.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

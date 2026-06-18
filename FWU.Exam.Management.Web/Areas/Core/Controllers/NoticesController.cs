@@ -189,7 +189,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         await noticeService.DeleteNoticeAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("notices.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

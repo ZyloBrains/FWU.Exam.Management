@@ -190,7 +190,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
         await examTypeService.DeleteExamTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("examtypes.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

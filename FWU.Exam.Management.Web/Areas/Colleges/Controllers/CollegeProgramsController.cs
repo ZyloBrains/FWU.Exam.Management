@@ -291,7 +291,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         await collegeProgramService.DeleteCollegeProgramAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("collegeprograms.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

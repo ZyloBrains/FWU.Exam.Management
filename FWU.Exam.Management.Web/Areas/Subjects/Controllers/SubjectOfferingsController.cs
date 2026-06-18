@@ -349,7 +349,7 @@ public class SubjectOfferingsController : Controller
         await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("subjectofferings.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

@@ -233,7 +233,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
         await districtService.DeleteDistrictAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("districts.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

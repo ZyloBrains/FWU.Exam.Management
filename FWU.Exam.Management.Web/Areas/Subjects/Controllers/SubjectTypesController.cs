@@ -200,7 +200,7 @@ public class SubjectTypesController : Controller
         await _subjectTypeService.DeleteSubjectTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("subjecttypes.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

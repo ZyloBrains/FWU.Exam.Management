@@ -269,7 +269,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         await facultyService.DeleteFacultyAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("faculties.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

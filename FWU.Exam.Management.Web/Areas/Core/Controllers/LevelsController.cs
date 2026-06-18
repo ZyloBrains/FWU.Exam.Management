@@ -195,7 +195,7 @@ public class LevelsController(ILevelService levelService) : Controller
         await levelService.DeleteLevelAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("levels.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

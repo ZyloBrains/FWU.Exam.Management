@@ -191,7 +191,7 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         await collegeTypeService.DeleteCollegeTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("collegetypes.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

@@ -369,7 +369,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         TempData["SuccessMessage"] = "Admission completed successfully!";
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("studentadmissions.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

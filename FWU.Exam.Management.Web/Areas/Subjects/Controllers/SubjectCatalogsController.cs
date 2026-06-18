@@ -357,7 +357,7 @@ public class SubjectCatalogsController : Controller
         await _subjectCatalogService.DeleteSubjectCatalogAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("subjects.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

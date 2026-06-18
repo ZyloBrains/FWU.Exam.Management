@@ -228,7 +228,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         await academicYearService.DeleteAcademicYearAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("academicyears.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

@@ -232,7 +232,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
             ["Exam Schedules"] = await _context.ExamSchedules.CountAsync(e => e.TenantId == tenantId),
         };
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("tenants.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

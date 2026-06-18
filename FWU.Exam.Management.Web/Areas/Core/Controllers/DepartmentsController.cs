@@ -193,7 +193,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         await departmentService.DeleteDepartmentAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("departments.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

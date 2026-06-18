@@ -242,7 +242,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
         await localLevelService.DeleteLocalLevelAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("locallevels.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

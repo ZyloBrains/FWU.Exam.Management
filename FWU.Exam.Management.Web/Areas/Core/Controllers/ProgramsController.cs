@@ -230,7 +230,7 @@ public class ProgramsController(IProgramService programService) : Controller
         await programService.DeleteProgramAsync(id);
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("PLACEHOLDER_PERMISSION")]
+        [RequirePermission("programs.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
