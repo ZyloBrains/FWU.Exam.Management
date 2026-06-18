@@ -312,4 +312,22 @@ public class FacultyDashboardController(
 
         return RedirectToAction(nameof(Users), new { officeCode });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(string id)
+    {
+        try
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user != null)
+                await userManager.DeleteAsync(user);
+            return Json(new { success = true, message = "User deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
 }

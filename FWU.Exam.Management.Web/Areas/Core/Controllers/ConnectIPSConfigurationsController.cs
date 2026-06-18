@@ -266,4 +266,11 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
     {
         return context.ConnectIpsPaymentConfigurations.Any(e => e.Id == id);
     }
+        [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { var entity = await context.ConnectIpsPaymentConfigurations.FindAsync(id); if (entity != null) { context.ConnectIpsPaymentConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "ConnectIPS configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

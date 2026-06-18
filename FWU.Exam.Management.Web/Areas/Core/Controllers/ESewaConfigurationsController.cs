@@ -263,4 +263,11 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
     {
         return context.ESewaConfigurations.Any(e => e.Id == id);
     }
+        [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { var entity = await context.ESewaConfigurations.FindAsync(id); if (entity != null) { context.ESewaConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "eSewa configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

@@ -4,17 +4,21 @@
     ViewData["Title"] = "Student Admissions";
 }
 
-<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <!-- Page Header -->
-    <div class="md:flex md:items-center md:justify-between mb-8 pb-5 border-b border-gray-200">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-3xl font-bold leading-tight text-gray-900 tracking-tight">Student Admissions</h1>
-            <p class="mt-2 text-sm text-gray-500">Manage student admissions, track completion status, and generate reports.</p>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center shrink-0">
+                <i class="fas fa-user-plus text-teal-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Student Admissions</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Manage student admissions, track completion status, and generate reports.</p>
+            </div>
         </div>
-        <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
-            <a asp-action="Create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                New Admission
+        <div class="flex items-center gap-3">
+            <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                <i class="fas fa-plus text-xs"></i> New Admission
             </a>
         </div>
     </div>
@@ -22,165 +26,246 @@
     <!-- Alerts -->
     @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <div class="mb-6 rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-emerald-400 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-sm font-medium text-emerald-800">@successMessage</div>
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
+            <i class="fas fa-check-circle mt-0.5"></i>
+            <span>@successMessage</span>
         </div>
     }
-
     @if (TempData["ErrorMessage"] is string errorMessage)
     {
-        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
+            <i class="fas fa-exclamation-circle mt-0.5"></i>
+            <span>@errorMessage</span>
         </div>
     }
 
     <!-- Toolbar -->
-    <div class="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-            <div class="relative w-full sm:w-80">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <form method="get" asp-action="Index" class="m-0">
+                        <input type="search" name="search" value="@ViewBag.Search" placeholder="Search by college, program, roll no..."
+                               class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                        <input type="hidden" name="sort" value="@ViewBag.Sort" />
+                        <input type="hidden" name="sortDir" value="@ViewBag.SortDir" />
+                    </form>
                 </div>
-                <input id="searchBox" type="search" placeholder="Search by college, program, roll no..." class="block w-full rounded-lg border-0 py-2 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-teal-600 sm:text-sm sm:leading-6 transition-all" value="@ViewBag.Search" />
             </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <a asp-action="ExportToCsv" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export CSV
-            </a>
-            <a asp-action="ExportToPdf" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                Export PDF
-            </a>
-            <a asp-action="ExportToExcel"
-               asp-route-search="@ViewBag.Search"
-               asp-route-sort="@ViewBag.Sort"
-               asp-route-sortDir="@ViewBag.SortDir"
-               class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export Excel
-            </a>
+            <div class="flex items-center gap-2 flex-wrap">
+                <a asp-action="ExportToCsv" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a asp-action="ExportToPdf" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+                <a asp-action="ExportToExcel" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-left text-sm">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">S.N.</th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                            <a asp-action="Index" asp-route-sort="collegerollnumber" asp-route-sortDir="@(ViewBag.Sort == "collegerollnumber" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" asp-route-page="@ViewBag.CurrentPage" class="hover:text-teal-600">College Roll No.</a>
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                            <a asp-action="Index" asp-route-sort="college" asp-route-sortDir="@(ViewBag.Sort == "college" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" asp-route-page="@ViewBag.CurrentPage" class="hover:text-teal-600">College</a>
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                            <a asp-action="Index" asp-route-sort="program" asp-route-sortDir="@(ViewBag.Sort == "program" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" asp-route-page="@ViewBag.CurrentPage" class="hover:text-teal-600">Program</a>
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                            <a asp-action="Index" asp-route-sort="admissiondate" asp-route-sortDir="@(ViewBag.Sort == "admissiondate" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" asp-route-page="@ViewBag.CurrentPage" class="hover:text-teal-600">Admission Date</a>
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                            <a asp-action="Index" asp-route-sort="iscompleted" asp-route-sortDir="@(ViewBag.Sort == "iscompleted" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" asp-route-page="@ViewBag.CurrentPage" class="hover:text-teal-600">Status</a>
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                            <a asp-action="Index" asp-route-sort="isactive" asp-route-sortDir="@(ViewBag.Sort == "isactive" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" asp-route-page="@ViewBag.CurrentPage" class="hover:text-teal-600">Active</a>
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 bg-white">
-                    @if (Model != null && Model.Any())
+    <!-- Desktop table -->
+    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">S.N.</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                        <a asp-action="Index" asp-route-sort="collegerollnumber" asp-route-sortDir="@(ViewBag.Sort == "collegerollnumber" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" class="hover:text-teal-600">College Roll No.</a>
+                    </th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                        <a asp-action="Index" asp-route-sort="college" asp-route-sortDir="@(ViewBag.Sort == "college" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" class="hover:text-teal-600">College</a>
+                    </th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                        <a asp-action="Index" asp-route-sort="program" asp-route-sortDir="@(ViewBag.Sort == "program" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" class="hover:text-teal-600">Program</a>
+                    </th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                        <a asp-action="Index" asp-route-sort="admissiondate" asp-route-sortDir="@(ViewBag.Sort == "admissiondate" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" class="hover:text-teal-600">Admission Date</a>
+                    </th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                        <a asp-action="Index" asp-route-sort="iscompleted" asp-route-sortDir="@(ViewBag.Sort == "iscompleted" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" class="hover:text-teal-600">Status</a>
+                    </th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                        <a asp-action="Index" asp-route-sort="isactive" asp-route-sortDir="@(ViewBag.Sort == "isactive" && ViewBag.SortDir == "asc" ? "desc" : "asc")" asp-route-search="@ViewBag.Search" class="hover:text-teal-600">Active</a>
+                    </th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @if (Model != null && Model.Any())
+                {
+                    int sn = ((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1;
+                    @foreach (var item in Model)
                     {
-                        int sn = ((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1;
-                        @foreach (var item in Model)
-                        {
-                            <tr class="hover:bg-gray-50 transition-colors group">
-                                <td class="whitespace-nowrap px-6 py-4 text-gray-500">@sn</td>
-                                <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900">@(item.CollegeRollNumber ?? "-")</td>
-                                <td class="whitespace-nowrap px-6 py-4">@(item.College?.Name ?? "-")</td>
-                                <td class="whitespace-nowrap px-6 py-4">@(item.Program?.ProgramName ?? "-")</td>
-                                <td class="whitespace-nowrap px-6 py-4">@item.AdmissionDate.ToString("yyyy-MM-dd")</td>
-                                <td class="whitespace-nowrap px-6 py-4">
-                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset @(item.IsCompleted ? "bg-green-50 text-green-700 ring-green-600/20" : "bg-yellow-50 text-yellow-800 ring-yellow-600/20")">
-                                        @(item.IsCompleted ? "Completed" : "Pending")
-                                    </span>
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4">
-                                    <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium @(item.IsActive ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" : "bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-500/20")">
-                                        @(item.IsActive ? "Yes" : "No")
-                                    </span>
-                                </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2 text-gray-400">
-                                        @if (!item.IsCompleted)
-                                        {
-                                            <form asp-action="CompleteAdmission" asp-route-id="@item.Id" method="post" style="display:inline;">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="rounded hover:bg-green-50 hover:text-green-600 p-1.5 transition-colors cursor-pointer" title="Complete Admission">
-                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                </button>
-                                            </form>
-                                        }
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="rounded hover:bg-sky-50 hover:text-sky-600 p-1.5 transition-colors" title="Details">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                        </a>
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="rounded hover:bg-indigo-50 hover:text-indigo-600 p-1.5 transition-colors" title="Edit">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                        </a>
-                                        <a asp-action="Delete" asp-route-id="@item.Id" class="rounded hover:bg-red-50 hover:text-red-600 p-1.5 transition-colors" title="Delete">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            sn++;
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="8" class="px-6 py-12 text-center">
-                                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-4">
-                                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-4 py-3 text-gray-500 text-sm">@sn</td>
+                            <td class="px-4 py-3 font-medium text-gray-800 text-sm">@(item.CollegeRollNumber ?? "-")</td>
+                            <td class="px-4 py-3 text-gray-600 text-sm">@(item.College?.Name ?? "-")</td>
+                            <td class="px-4 py-3 text-gray-600 text-sm">@(item.Program?.ProgramName ?? "-")</td>
+                            <td class="px-4 py-3 text-gray-600 text-sm">@item.AdmissionDate.ToString("yyyy-MM-dd")</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.IsCompleted ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-800")">
+                                    @(item.IsCompleted ? "Completed" : "Pending")
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.IsActive ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600")">
+                                    @(item.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    @if (!item.IsCompleted)
+                                    {
+                                        <form asp-action="CompleteAdmission" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Complete Admission">
+                                                <i class="fas fa-check text-xs"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                                        <i class="fas fa-eye text-xs"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
+                                        <i class="fas fa-edit text-xs"></i>
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </a>
                                 </div>
-                                <h3 class="text-sm font-medium text-gray-900">No records found</h3>
-                                <p class="mt-1 text-sm text-gray-500">We couldn't find anything matching your search criteria.</p>
                             </td>
                         </tr>
+                        sn++;
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="px-4 py-20 text-center">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
+                                <p class="text-sm text-gray-500">We couldn't find anything matching your search criteria.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-        <!-- Pagination -->
-        @if (ViewBag.TotalPages > 1)
+    <!-- Mobile card layout -->
+    <div class="lg:hidden space-y-3">
+        @if (Model != null && Model.Any())
         {
-            <div class="flex items-center justify-between border-t border-gray-200 bg-gray-50/50 px-6 py-4">
-                <div class="text-sm text-gray-500 font-medium">
-                    Showing <span class="font-semibold text-gray-900">@(((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1)</span> to <span class="font-semibold text-gray-900">@(Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalCount))</span> of <span class="font-semibold text-gray-900">@ViewBag.TotalCount</span> entries
-                </div>
-                <div class="flex items-center gap-2">
-                    @if (ViewBag.CurrentPage > 1)
-                    {
-                        <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition">
-                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" /></svg>
+            int snM = ((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1;
+            @foreach (var item in Model)
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-graduate text-teal-600 text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800 text-sm">#@(item.CollegeRollNumber ?? "-")</h3>
+                                <p class="text-xs text-gray-500">@(item.College?.Name ?? "-")</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.IsCompleted ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-800")">
+                                @(item.IsCompleted ? "Completed" : "Pending")
+                            </span>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full @(item.IsActive ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600")">
+                                @(item.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
+                        <div class="text-gray-500">Program</div>
+                        <div class="text-gray-800">@(item.Program?.ProgramName ?? "-")</div>
+                        <div class="text-gray-500">Admission Date</div>
+                        <div class="text-gray-800">@item.AdmissionDate.ToString("yyyy-MM-dd")</div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
+                        @if (!item.IsCompleted)
+                        {
+                            <form asp-action="CompleteAdmission" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="flex-1 text-center py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100">
+                                    <i class="fas fa-check mr-1"></i> Complete
+                                </button>
+                            </form>
+                        }
+                        <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                            Details
                         </a>
-                    }
-                    <span class="text-sm font-semibold text-gray-700 min-w-[3rem] text-center">@ViewBag.CurrentPage / @ViewBag.TotalPages</span>
-                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
-                    {
-                        <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition">
-                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
+                            Edit
                         </a>
-                    }
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                            Delete
+                        </a>
+                    </div>
                 </div>
+                snM++;
+            }
+        }
+        else
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
+                <p class="text-sm text-gray-500">We couldn't find anything matching your search criteria.</p>
             </div>
         }
     </div>
+
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+            <div class="text-sm text-gray-500 font-medium">
+                Showing <span class="font-semibold text-gray-900">@(((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1)</span> to <span class="font-semibold text-gray-900">@(Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalCount))</span> of <span class="font-semibold text-gray-900">@ViewBag.TotalCount</span> entries
+            </div>
+            <div class="flex items-center justify-between sm:justify-end gap-2">
+                @if (ViewBag.CurrentPage > 1)
+                {
+                    <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage - 1)" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                        <i class="fas fa-chevron-left text-xs"></i> Previous
+                    </a>
+                }
+                <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center">@ViewBag.CurrentPage / @ViewBag.TotalPages</span>
+                @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                {
+                    <a asp-action="Index" asp-route-page="@(ViewBag.CurrentPage + 1)" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                        Next <i class="fas fa-chevron-right text-xs"></i>
+                    </a>
+                }
+            </div>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "StudentAdmissions")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) { alert(response.message); location.reload(); }
+                    else { alert('Error: ' + response.message); }
+                },
+                error: function () { alert('An error occurred while deleting.'); }
+            });
+        }
+    </script>
+}

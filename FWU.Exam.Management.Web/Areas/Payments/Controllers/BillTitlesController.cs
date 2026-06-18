@@ -233,4 +233,12 @@ public class BillTitlesController(
         await billTitleService.DeleteBillTitleAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("billtitles.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await billTitleService.DeleteBillTitleAsync(id); return Json(new { success = true, message = "Bill title deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

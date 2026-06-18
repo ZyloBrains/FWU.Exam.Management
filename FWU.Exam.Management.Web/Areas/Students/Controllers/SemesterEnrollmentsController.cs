@@ -278,4 +278,11 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             return $"\"{field.Replace("\"", "\"\"")}\"";
         return field;
     }
+        [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await enrollmentService.DeleteEnrollmentAsync(id); return Json(new { success = true, message = "Semester enrollment deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

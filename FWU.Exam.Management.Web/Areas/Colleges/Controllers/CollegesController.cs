@@ -299,4 +299,12 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         // This will be implemented based on the selectLists object
         // For now, using ViewData as in the original
     }
+        [RequirePermission("colleges.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await collegeService.DeleteCollegeAsync(id); return Json(new { success = true, message = "College deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

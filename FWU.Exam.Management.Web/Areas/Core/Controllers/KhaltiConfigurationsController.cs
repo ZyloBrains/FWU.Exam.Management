@@ -267,4 +267,11 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
     {
         return context.KhaltiConfigurations.Any(e => e.Id == id);
     }
+        [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { var entity = await context.KhaltiConfigurations.FindAsync(id); if (entity != null) { context.KhaltiConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "Khalti configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

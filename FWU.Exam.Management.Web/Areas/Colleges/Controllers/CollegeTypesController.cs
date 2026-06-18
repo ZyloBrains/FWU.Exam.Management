@@ -191,4 +191,12 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         await collegeTypeService.DeleteCollegeTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("collegetypes.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await collegeTypeService.DeleteCollegeTypeAsync(id); return Json(new { success = true, message = "College type deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }
