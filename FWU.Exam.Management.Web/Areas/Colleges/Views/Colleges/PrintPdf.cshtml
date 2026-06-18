@@ -1,4 +1,4 @@
-@*
+ï»¿@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
@@ -178,24 +178,24 @@
                 <tr>
                     <td>@item.Code</td>
                     <td>@item.Name</td>
-                    <td>@(string.IsNullOrEmpty(item.CollegeNameNepali) ? "—" : item.CollegeNameNepali)</td>
-                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "—" : item.ShortName)</td>
-                    <td>@(item.Address?.LocalLevel?.District?.DistrictName ?? "—")</td>
-                    <td>@(item.Address?.LocalLevel?.LocalLevelName ?? "—")</td>
-                    <td>@(item.Address?.WardNumber?.ToString() ?? "—")</td>
-                    <td>@(item.Address?.HouseNumber ?? "—")</td>
-                    <td>@(string.IsNullOrEmpty(item.Phone1) ? "—" : item.Phone1)</td>
-                    <td>@(string.IsNullOrEmpty(item.Phone2) ? "—" : item.Phone2)</td>
-                    <td>@(string.IsNullOrEmpty(item.Email) ? "—" : item.Email)</td>
-                    <td>@(string.IsNullOrEmpty(item.Website) ? "—" : item.Website)</td>
-                    <td>@(string.IsNullOrEmpty(item.PrincipalName) ? "—" : item.PrincipalName)</td>
-                    <td>@(string.IsNullOrEmpty(item.PrincipalContactNumber) ? "—" : item.PrincipalContactNumber)</td>
-                    <td>@(string.IsNullOrEmpty(item.Fax) ? "—" : item.Fax)</td>
-                    <td>@(item.CollegeType?.Code ?? "—")</td>
-                    <td>@(item.Address?.ToleStreet ?? "—")</td>
-                    <td>@(item.EstablishedDate?.ToString("yyyy-MM-dd") ?? "—")</td>
-                    <td>@(item.ClosedDate?.ToString("yyyy-MM-dd") ?? "—")</td>
-                    <td style="text-align: right;">@(item.AllocatedAmount.HasValue ? item.AllocatedAmount.Value.ToString("N2") : "—")</td>
+                    <td>@(string.IsNullOrEmpty(item.CollegeNameNepali) ? "ï¿½" : item.CollegeNameNepali)</td>
+                    <td>@(string.IsNullOrEmpty(item.ShortName) ? "ï¿½" : item.ShortName)</td>
+                    <td>@(item.Address?.LocalLevel?.District?.DistrictName ?? "ï¿½")</td>
+                    <td>@(item.Address?.LocalLevel?.LocalLevelName ?? "ï¿½")</td>
+                    <td>@(item.Address?.WardNumber?.ToString() ?? "ï¿½")</td>
+                    <td>@(item.Address?.HouseNumber ?? "ï¿½")</td>
+                    <td>@(string.IsNullOrEmpty(item.Phone1) ? "ï¿½" : item.Phone1)</td>
+                    <td>@(string.IsNullOrEmpty(item.Phone2) ? "ï¿½" : item.Phone2)</td>
+                    <td>@(string.IsNullOrEmpty(item.Email) ? "ï¿½" : item.Email)</td>
+                    <td>@(string.IsNullOrEmpty(item.Website) ? "ï¿½" : item.Website)</td>
+                    <td>@(string.IsNullOrEmpty(item.PrincipalName) ? "ï¿½" : item.PrincipalName)</td>
+                    <td>@(string.IsNullOrEmpty(item.PrincipalContactNumber) ? "ï¿½" : item.PrincipalContactNumber)</td>
+                    <td>@(string.IsNullOrEmpty(item.Fax) ? "ï¿½" : item.Fax)</td>
+                    <td>@(item.CollegeType?.Code ?? "ï¿½")</td>
+                    <td>@(item.Address?.ToleStreet ?? "ï¿½")</td>
+                    <td>@(item.EstablishedDate.ToString("yyyy-MM-dd"))</td>
+                    <td>@(item.ClosedDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</td>
+                    <td style="text-align: right;">@(item.AllocatedAmount.HasValue ? item.AllocatedAmount.Value.ToString("N2") : "ï¿½")</td>
                     <td style="text-align: center;">@item.DisplayOrder</td>
                     <td>
                         @if (item.IsExamCenterOnly)
@@ -204,7 +204,7 @@
                         }
                         else
                         {
-                            <span>—</span>
+                            <span>ï¿½</span>
                         }
                     </td>
                     <td>
@@ -217,7 +217,7 @@
                             <span class="inactive-badge">? Inactive</span>
                         }
                     </td>
-                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "—" : item.Remarks)</td>
+                    <td>@(string.IsNullOrEmpty(item.Remarks) ? "ï¿½" : item.Remarks)</td>
                 </tr>
             }
         </tbody>
@@ -232,7 +232,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>ï¿½ @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>

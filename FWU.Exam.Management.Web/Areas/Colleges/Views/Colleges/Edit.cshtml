@@ -29,12 +29,12 @@
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="Code" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="Code" class="text-sm font-medium text-gray-700 block mb-1">Code <span class="text-red-500">*</span></label>
                         <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter college code" />
                         <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="Name" class="text-sm font-medium text-gray-700 block mb-1">Name <span class="text-red-500">*</span></label>
                         <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter college name" />
                         <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -49,7 +49,7 @@
                         <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="EstablishedDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="EstablishedDate" class="text-sm font-medium text-gray-700 block mb-1">Established Date <span class="text-red-500">*</span></label>
                         <input asp-for="EstablishedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                         <span asp-validation-for="EstablishedDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -66,19 +66,19 @@
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Address</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label class="text-sm font-medium text-gray-700">Province *</label>
+                        <label class="text-sm font-medium text-gray-700">Province <span class="text-red-500">*</span></label>
                         <select id="ProvinceId" name="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
                             <option value="">-- Select Province --</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700">District *</label>
+                        <label class="text-sm font-medium text-gray-700">District <span class="text-red-500">*</span></label>
                         <select id="DistrictId" name="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select District --</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-sm font-medium text-gray-700">Local Level *</label>
+                        <label class="text-sm font-medium text-gray-700">Local Level <span class="text-red-500">*</span></label>
                         <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select Local Level --</option>
                         </select>
@@ -108,7 +108,7 @@
                         <span asp-validation-for="Website" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="Email" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="Email" class="text-sm font-medium text-gray-700 block mb-1">Email <span class="text-red-500">*</span></label>
                         <input asp-for="Email" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="college@example.com" />
                         <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -135,12 +135,12 @@
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Principal Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="PrincipalName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="PrincipalName" class="text-sm font-medium text-gray-700 block mb-1">Principal Name <span class="text-red-500">*</span></label>
                         <input asp-for="PrincipalName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Principal's full name" />
                         <span asp-validation-for="PrincipalName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="PrincipalContactNumber" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="PrincipalContactNumber" class="text-sm font-medium text-gray-700 block mb-1">Principal Contact Number <span class="text-red-500">*</span></label>
                         <input asp-for="PrincipalContactNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Contact number" />
                         <span asp-validation-for="PrincipalContactNumber" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
