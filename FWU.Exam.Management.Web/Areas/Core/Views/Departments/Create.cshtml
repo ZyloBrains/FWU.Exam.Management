@@ -25,7 +25,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="DepartmentCode" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label for="DepartmentCode" class="text-sm font-medium text-gray-700 block mb-1">DepartmentCode <span class="text-red-500">*</span></label>
                     <input asp-for="DepartmentCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="e.g., SCI, MGT, HUM" />
                     <span asp-validation-for="DepartmentCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
@@ -35,7 +35,7 @@
                     <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="DepartmentName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label for="DepartmentName" class="text-sm font-medium text-gray-700 block mb-1">DepartmentName <span class="text-red-500">*</span></label>
                     <input asp-for="DepartmentName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Enter full department name" />
                     <span asp-validation-for="DepartmentName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>

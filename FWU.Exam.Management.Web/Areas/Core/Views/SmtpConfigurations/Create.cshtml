@@ -28,7 +28,7 @@
                 <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">SMTP Server Settings</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="Host" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="Host" class="text-sm font-medium text-gray-700 block mb-1">Host <span class="text-red-500">*</span></label>
                         <input asp-for="Host" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="smtp.gmail.com" />
                         <span asp-validation-for="Host" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -38,17 +38,17 @@
                         <span asp-validation-for="Port" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="From" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="From" class="text-sm font-medium text-gray-700 block mb-1">From <span class="text-red-500">*</span></label>
                         <input asp-for="From" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="noreply@example.com" />
                         <span asp-validation-for="From" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="UserName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="UserName" class="text-sm font-medium text-gray-700 block mb-1">UserName <span class="text-red-500">*</span></label>
                         <input asp-for="UserName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Username" />
                         <span asp-validation-for="UserName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="Password" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label for="Password" class="text-sm font-medium text-gray-700 block mb-1">Password <span class="text-red-500">*</span></label>
                         <input asp-for="Password" type="password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Password" />
                         <span asp-validation-for="Password" class="text-xs text-red-500 mt-1 block"></span>
                     </div>

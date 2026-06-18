@@ -23,7 +23,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="PaymentTypeName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="PaymentTypeName" class="text-sm font-medium text-gray-700 block mb-1">PaymentTypeName <span class="text-red-500">*</span></label>
                     <input asp-for="PaymentTypeName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter payment type name" />
                     <span asp-validation-for="PaymentTypeName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
