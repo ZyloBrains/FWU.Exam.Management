@@ -67,33 +67,33 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="text-sm font-medium text-gray-700">Province *</label>
-                        <select id="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="ProvinceId" name="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
                             <option value="">-- Select Province --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">District *</label>
-                        <select id="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="DistrictId" name="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select District --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Local Level *</label>
-                        <select id="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select Local Level --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Ward Number</label>
-                        <input id="WardNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ward number" />
+                        <input id="WardNumber" name="WardNumber" value="@(Model.Address?.WardNumber?.ToString())" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ward number" />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Tole/Street</label>
-                        <input id="ToleStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Tole or street name" />
+                        <input id="ToleStreet" name="ToleStreet" value="@(Model.Address?.ToleStreet)" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Tole or street name" />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">House Number</label>
-                        <input id="HouseNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="House number" />
+                        <input id="HouseNumber" name="HouseNumber" value="@(Model.Address?.HouseNumber)" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="House number" />
                     </div>
                 </div>
             </div>
@@ -213,4 +213,65 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(function () {
+            var selectedProvinceId = '@(Model.Address?.LocalLevel?.District?.ProvinceId)';
+            var selectedDistrictId = '@(Model.Address?.LocalLevel?.DistrictId)';
+            var selectedLocalLevelId = '@(Model.Address?.LocalLevelId)';
+
+            // Province -> District
+            $("#ProvinceId").change(function () {
+                var provinceId = $(this).val();
+
+                $("#DistrictId").html('<option>Loading...</option>');
+                $("#LocalLevelId").html('<option>Select Local Level</option>');
+
+                $.get(tenantUrl("/Colleges/Colleges/GetDistrictsByProvince"),
+                    { provinceId: provinceId },
+                    function (data) {
+                        var districtDropdown = $("#DistrictId");
+                        districtDropdown.empty();
+                        districtDropdown.append('<option value="">Select District</option>');
+
+                        $.each(data, function (index, item) {
+                            districtDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+
+                        if (selectedDistrictId && $("#DistrictId option[value=" + selectedDistrictId + "]").length) {
+                            $("#DistrictId").val(selectedDistrictId);
+                            $("#DistrictId").trigger("change");
+                        }
+                });
+            });
+
+            // District -> LocalLevel
+            $("#DistrictId").change(function () {
+                var districtId = $(this).val();
+
+                $("#LocalLevelId").html('<option>Loading...</option>');
+
+                $.get(tenantUrl("/Colleges/Colleges/GetLocalLevelsByDistrict"),
+                    { districtId: districtId },
+                    function (data) {
+                        var localDropdown = $("#LocalLevelId");
+                        localDropdown.empty();
+                        localDropdown.append('<option value="">Select Local Level</option>');
+
+                        $.each(data, function (index, item) {
+                            localDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+
+                        if (selectedLocalLevelId && $("#LocalLevelId option[value=" + selectedLocalLevelId + "]").length) {
+                            $("#LocalLevelId").val(selectedLocalLevelId);
+                        }
+                });
+            });
+
+            // Trigger pre-selection on load
+            if (selectedProvinceId && $("#ProvinceId option[value=" + selectedProvinceId + "]").length) {
+                $("#ProvinceId").val(selectedProvinceId);
+                $("#ProvinceId").trigger("change");
+            }
+        });
+    </script>
 }

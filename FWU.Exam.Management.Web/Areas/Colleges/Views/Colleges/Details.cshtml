@@ -70,6 +70,10 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
                 <div>
+                    <p class="text-sm font-medium text-gray-600">Province</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.Province?.ProvinceName ?? "-")</p>
+                </div>
+                <div>
                     <p class="text-sm font-medium text-gray-600">District</p>
                     <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.DistrictName ?? "-")</p>
                 </div>

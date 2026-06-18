@@ -66,33 +66,33 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="text-sm font-medium text-gray-700">Province *</label>
-                        <select asp-items="@ViewBag.Provinces" id="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        <select asp-items="@ViewBag.Provinces" id="ProvinceId" name="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                             <option value="">-- Select Province --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">District *</label>
-                        <select id="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        <select id="DistrictId" name="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                             <option value="">-- Select District --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Local Level *</label>
-                        <select id="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
                             <option value="">-- Select Local Level --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Ward Number</label>
-                        <input id="WardNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ward number" />
+                        <input id="WardNumber" name="WardNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ward number" />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Tole/Street</label>
-                        <input id="ToleStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Tole or street name" />
+                        <input id="ToleStreet" name="ToleStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Tole or street name" />
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">House Number</label>
-                        <input id="HouseNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="House number" />
+                        <input id="HouseNumber" name="HouseNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="House number" />
                     </div>
                 </div>
             </div>

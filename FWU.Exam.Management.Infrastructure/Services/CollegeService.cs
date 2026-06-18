@@ -47,6 +47,7 @@ public class CollegeService(AppDbContext context) : ICollegeService
             .Include(c => c.Address)
             .ThenInclude(a => a.LocalLevel)
             .ThenInclude(ll => ll.District)
+            .ThenInclude(d => d.Province)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id);
     }
