@@ -1,6 +1,8 @@
 @using FWU.Exam.Management.Domain.Entities.Location
 @using FWU.Exam.Management.Domain.Enums
 @model IEnumerable<FWU.Exam.Management.Domain.Entities.Location.LocalLevel>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Local Levels";
@@ -11,6 +13,11 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "LocalLevelName";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
@@ -67,9 +74,9 @@
                     </a>
                 </div>
             </div>
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+            @if (HasPerm("locallevels.create"))
             {
-                <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                <a asp-action="Create" asp-area="Location" class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Create New
                 </a>
             }
@@ -154,12 +161,15 @@
                                 <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
-                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                @if (HasPerm("locallevels.edit"))
                                 {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                    <a asp-action="Edit" asp-area="Location" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                }
+                                @if (HasPerm("locallevels.delete"))
+                                {
+                                    <a asp-action="Delete" asp-area="Location" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -208,12 +218,15 @@
                     <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
                         Details
                     </a>
-                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                    @if (HasPerm("locallevels.edit"))
                     {
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
+                        <a asp-action="Edit" asp-area="Location" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                             Edit
                         </a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                    }
+                    @if (HasPerm("locallevels.delete"))
+                    {
+                        <a asp-action="Delete" asp-area="Location" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }

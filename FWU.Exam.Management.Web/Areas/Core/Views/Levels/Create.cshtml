@@ -4,7 +4,7 @@
     ViewData["Title"] = "Create Level";
 }
 
-<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
@@ -35,7 +35,7 @@
                     <span asp-validation-for="LevelDisplayOrder" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="LevelName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label for="LevelName" class="text-sm font-medium text-gray-700 block mb-1">LevelName <span class="text-red-500">*</span></label>
                     <input asp-for="LevelName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500" placeholder="Enter level name" />
                     <span asp-validation-for="LevelName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
