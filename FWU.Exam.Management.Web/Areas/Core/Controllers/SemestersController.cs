@@ -207,4 +207,12 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         var (items, _) = await academicYearService.GetAllAcademicYearsAsync(1, int.MaxValue, null);
         return items;
     }
+        [RequirePermission("PLACEHOLDER_PERMISSION")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await semesterService.DeleteSemesterAsync(id); return Json(new { success = true, message = "Semester deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

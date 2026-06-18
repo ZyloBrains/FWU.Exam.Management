@@ -177,7 +177,7 @@
                                 }
                                 @if (HasPerm("departments.delete"))
                                 {
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -240,7 +240,7 @@
                     }
                     @if (HasPerm("departments.delete"))
                     {
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }
@@ -345,3 +345,22 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "Departments")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: input[name="__RequestVerificationToken"].val() },
+                success: function (response) {
+                    if (response.success) { alert(response.message); location.reload(); }
+                    else { alert('Error: ' + response.message); }
+                },
+                error: function () { alert('An error occurred while deleting.'); }
+            });
+        }
+    </script>
+}

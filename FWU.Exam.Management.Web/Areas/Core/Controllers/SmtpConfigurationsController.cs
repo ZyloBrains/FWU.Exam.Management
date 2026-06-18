@@ -309,6 +309,26 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAjax(int id)
+        {
+            try
+            {
+                var entity = await context.SmtpConfigurations.FindAsync(id);
+                if (entity != null)
+                {
+                    context.SmtpConfigurations.Remove(entity);
+                    await context.SaveChangesAsync();
+                }
+                return Json(new { success = true, message = "SMTP configuration deleted successfully!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         private bool SmtpConfigurationExists(int id)
         {
             return context.SmtpConfigurations.Any(e => e.Id == id);

@@ -227,4 +227,12 @@ public class ProvincesController(IProvinceService provinceService) : Controller
         await provinceService.DeleteProvinceAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("PLACEHOLDER_PERMISSION")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await provinceService.DeleteProvinceAsync(id); return Json(new { success = true, message = "Province deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

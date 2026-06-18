@@ -129,4 +129,20 @@ public class StudentCategoriesController : Controller
         TempData["SuccessMessage"] = "Student category deleted successfully!";
         return RedirectToAction(nameof(Index));
     }
+
+    [RequirePermission("studentcategories.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try
+        {
+            await _studentCategoryService.DeleteStudentCategoryAsync(id);
+            return Json(new { success = true, message = "Student category deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
 }

@@ -228,4 +228,12 @@ public class BoardsController(IBoardService boardService) : Controller
         await boardService.DeleteBoardAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("PLACEHOLDER_PERMISSION")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await boardService.DeleteBoardAsync(id); return Json(new { success = true, message = "Board deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

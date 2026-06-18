@@ -493,4 +493,18 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         var bs = NepaliCalendarHelper.AdToBs(dt);
         return Json(new { bsDate = $"{bs.Year:D4}-{bs.Month:D2}-{bs.Day:D2}" });
     }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try
+        {
+            await studentRegistrationService.DeleteStudentRegistrationAsync(id);
+            return Json(new { success = true, message = "Student registration deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
 }

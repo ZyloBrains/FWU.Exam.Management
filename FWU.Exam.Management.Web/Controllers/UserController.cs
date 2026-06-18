@@ -317,4 +317,22 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("PLACEHOLDER_PERMISSION")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user != null)
+                await userManager.DeleteAsync(user);
+            return Json(new { success = true, message = "User deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
 }

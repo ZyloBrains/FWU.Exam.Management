@@ -209,7 +209,7 @@
                                 }
                                 @if (HasPerm("programs.delete"))
                                 {
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -256,9 +256,9 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                     <div class="text-gray-500">Short Name</div>
-                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.ShortName) ? "�" : item.ShortName)</div>
+                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.ShortName) ? "ï¿½" : item.ShortName)</div>
                     <div class="text-gray-500">Roll Prefix</div>
-                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "�" : item.RollNumberPrefix)</div>
+                    <div class="text-gray-800">@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "ï¿½" : item.RollNumberPrefix)</div>
                     <div class="text-gray-500">Level</div>
                     <div class="text-gray-800">@item.Level?.LevelName</div>
                     <div class="text-gray-500">Department</div>
@@ -296,7 +296,7 @@
                     }
                     @if (HasPerm("programs.delete"))
                     {
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }
@@ -401,3 +401,22 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "Programs")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: input[name="__RequestVerificationToken"].val() },
+                success: function (response) {
+                    if (response.success) { alert(response.message); location.reload(); }
+                    else { alert('Error: ' + response.message); }
+                },
+                error: function () { alert('An error occurred while deleting.'); }
+            });
+        }
+    </script>
+}
