@@ -1,7 +1,15 @@
 @using FWU.Exam.Management.Domain.Entities.Location
 @model FWU.Exam.Management.Domain.Entities.Location.Province
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
+
     ViewData["Title"] = "Province Details";
 }
 
@@ -43,7 +51,7 @@
 
         <!-- Actions -->
         <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+            @if (HasPerm("provinces.edit"))
             {
                 <a asp-action="Edit" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                     <i class="fas fa-edit mr-1"></i> Edit

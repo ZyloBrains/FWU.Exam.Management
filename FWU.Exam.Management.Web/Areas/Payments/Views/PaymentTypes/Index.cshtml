@@ -1,4 +1,6 @@
 @model IEnumerable<FWU.Exam.Management.Domain.Entities.Payments.PaymentType>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Payment Types";
@@ -9,6 +11,11 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "PaymentTypeName";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
@@ -63,9 +70,9 @@
                     </a>
                 </div>
             </div>
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+            @if (HasPerm("paymenttypes.create"))
             {
-                <a asp-action="Create" asp-area="Payments" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                <a asp-action="Create" asp-area="Payments" class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Create New
                 </a>
             }
@@ -145,11 +152,14 @@
                                 <a asp-action="Details" asp-area="Payments" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
-                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                @if (HasPerm("paymenttypes.edit"))
                                 {
                                     <a asp-action="Edit" asp-area="Payments" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
+                                }
+                                @if (HasPerm("paymenttypes.delete"))
+                                {
                                     <a asp-action="Delete" asp-area="Payments" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
@@ -190,11 +200,14 @@
                     <a asp-action="Details" asp-area="Payments" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
                         Details
                     </a>
-                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                    @if (HasPerm("paymenttypes.edit"))
                     {
                         <a asp-action="Edit" asp-area="Payments" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                             Edit
                         </a>
+                    }
+                    @if (HasPerm("paymenttypes.delete"))
+                    {
                         <a asp-action="Delete" asp-area="Payments" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
