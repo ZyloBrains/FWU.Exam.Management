@@ -157,6 +157,9 @@
                         <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
+                        <input asp-for="AddressId" type="hidden" />
+                    </div>
+                    <div>
                         <label asp-for="AllocatedAmount" class="text-sm font-medium text-gray-700 block mb-1"></label>
                         <input asp-for="AllocatedAmount" type="number" step="any" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Allocated amount" />
                         <span asp-validation-for="AllocatedAmount" class="text-xs text-red-500 mt-1 block"></span>
