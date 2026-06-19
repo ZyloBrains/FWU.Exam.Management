@@ -333,6 +333,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
         var code = transactionCode.Trim();
 
+        // 1. Try by VoucherNumber exact match
         var voucher = await context.ApplicationVouchers
             .Include(v => v.ExamSchedule)
             .AsNoTracking()
@@ -345,6 +346,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             return null;
         }
 
+        // 2. Try by last 6 chars of VoucherNumber
         var last6 = code.Length >= 6 ? code[^6..] : code;
         var vouchers = await context.ApplicationVouchers
             .Include(v => v.ExamSchedule)
@@ -358,6 +360,27 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
         if (match != null && MatchesNameAndPhone(match, fullName, contactNumber))
             return match;
+
+        // 3. Try by eSewa transaction code (stored in PaymentRequestLog.TransactionId)
+        var paymentLog = await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.TransactionId == code);
+
+        if (paymentLog?.ExamScheduleId != null)
+        {
+            var voucherBySchedule = await context.ApplicationVouchers
+                .Include(v => v.ExamSchedule)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v =>
+                    v.ExamScheduleId == paymentLog.ExamScheduleId &&
+                    v.StudentName != null &&
+                    v.StudentName == paymentLog.FullName &&
+                    v.ContactNumber != null &&
+                    v.ContactNumber == paymentLog.MobileNumber);
+
+            if (voucherBySchedule != null && MatchesNameAndPhone(voucherBySchedule, fullName, contactNumber))
+                return voucherBySchedule;
+        }
 
         return null;
     }

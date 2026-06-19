@@ -1,6 +1,7 @@
 @model EntranceExamApplication
 
 @{
+    Layout = "~/Areas/Exams/Views/Shared/_PaymentLayout.cshtml";
     ViewData["Title"] = "Entrance Application Form";
     var voucherId = ViewBag.VoucherId as int? ?? 0;
     var voucherNumber = ViewBag.VoucherNumber as string ?? "";
