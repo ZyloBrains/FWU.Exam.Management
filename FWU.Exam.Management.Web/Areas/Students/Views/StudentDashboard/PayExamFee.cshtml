@@ -7,9 +7,9 @@
 }
 
 <div class="min-h-screen pb-24 sm:pb-6">
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-900 mb-6 sm:mb-8">
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-800 to-blue-950 mb-6 sm:mb-8">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
-        <div class="absolute top-0 right-0 w-72 h-72 bg-indigo-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
         <div class="relative px-5 py-8 sm:px-10 sm:py-10">
             <div class="flex items-center gap-4">
                 <div class="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20 shrink-0">
@@ -51,7 +51,7 @@
             <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20">
                             <i class="fas fa-book text-white text-sm"></i>
                         </div>
                         <div>
@@ -68,7 +68,7 @@
 
             @if (compulsorySubjects.Any())
             {
-                <div class="px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+                <div class="px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-100">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs sm:text-sm font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
                             <i class="fas fa-star-of-life text-[10px]"></i>
@@ -226,7 +226,7 @@
                 </div>
                 <p class="text-lg sm:text-xl font-bold text-gray-800" id="breakupPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</p>
             </div>
-            <div class="col-span-2 sm:col-span-1 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg shadow-blue-600/20 p-4 sm:p-5">
+            <div class="col-span-2 sm:col-span-1 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg shadow-blue-600/20 p-4 sm:p-5">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/20 flex items-center justify-center">
                         <i class="fas fa-calculator text-white text-xs sm:text-sm"></i>
@@ -308,7 +308,7 @@
                 <p class="text-[10px] text-gray-400" id="stickyCount">@Model.Subjects.Count(s => s.IsSelected) selected</p>
             </div>
             <button type="button" onclick="scrollToPayment()"
-                    class="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-indigo-700 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
+                    class="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
                 <i class="fas fa-arrow-right"></i>
                 Continue
             </button>
