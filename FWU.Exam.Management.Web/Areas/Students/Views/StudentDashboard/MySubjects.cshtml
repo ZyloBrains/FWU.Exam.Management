@@ -5,28 +5,27 @@
     var groups = Model.GroupBy(so => so.Semester?.Name ?? "Unknown").ToList();
 }
 
-<div class="min-h-screen">
-    <!-- Header -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900 mb-8">
+<div class="min-h-screen space-y-5 sm:space-y-8">
+    <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
-        <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 left-0 w-80 h-80 bg-teal-400/10 rounded-full blur-3xl"></div>
-        <div class="relative px-8 py-10 sm:px-12 sm:py-12">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                <div class="flex items-center gap-5">
-                    <div class="h-16 w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20">
-                        <svg class="h-9 w-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="absolute top-0 right-0 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-teal-400/10 rounded-full blur-3xl"></div>
+        <div class="relative px-5 py-8 sm:px-12 sm:py-12">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20 shrink-0">
+                        <svg class="h-7 w-7 sm:h-9 sm:w-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">My Subjects</h1>
-                        <p class="mt-2 text-emerald-200/80 text-sm sm:text-base">All subjects across semesters under your program</p>
+                        <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">My Subjects</h1>
+                        <p class="mt-1 text-emerald-200/80 text-sm sm:text-base">All subjects across semesters under your program</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/10 text-sm text-white/90">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    <span class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-xl rounded-lg sm:rounded-xl border border-white/10 text-xs sm:text-sm text-white/90">
+                        <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                         @Model.Count() subject@(Model.Count() != 1 ? "s" : "")
                     </span>
                 </div>
@@ -37,91 +36,86 @@
     @if (groups.Any())
     {
         <!-- Semester Navigation Pills -->
-        <div class="flex flex-wrap gap-2 mb-8">
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
             @for (int i = 0; i < groups.Count; i++)
             {
                 var g = groups[i];
                 var semesterNum = g.FirstOrDefault()?.Semester?.Number ?? 0;
                 <a href="#semester-@semesterNum"
-                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 hover:shadow-md
+                   class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold border transition-all duration-200 active:scale-95
                           @(i == 0 ? "bg-emerald-50 border-emerald-200 text-emerald-700 shadow-sm" : "bg-white border-gray-200 text-gray-600 hover:border-emerald-200 hover:text-emerald-600")">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                     @g.Key
-                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold @(i == 0 ? "bg-emerald-200 text-emerald-800" : "bg-gray-200 text-gray-600")">@g.Count()</span>
+                    <span class="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[10px] sm:text-xs font-bold @(i == 0 ? "bg-emerald-200 text-emerald-800" : "bg-gray-200 text-gray-600")">@g.Count()</span>
                 </a>
             }
         </div>
 
-        <!-- Semester Groups -->
-        <div class="space-y-8">
+        <div class="space-y-5 sm:space-y-8">
             @for (int si = 0; si < groups.Count; si++)
             {
                 var semesterGroup = groups[si];
                 var semester = semesterGroup.FirstOrDefault()?.Semester;
                 var semesterNum = semester?.Number ?? 0;
 
-                <div id="semester-@semesterNum" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden scroll-mt-4">
-                    <!-- Semester Header -->
-                    <div class="px-8 py-5 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100 flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
-                                <span class="text-white font-extrabold text-sm">@semesterNum</span>
+                <div id="semester-@semesterNum" class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden scroll-mt-4">
+                    <div class="px-4 sm:px-8 py-3 sm:py-5 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-md shrink-0">
+                                <span class="text-white font-extrabold text-xs sm:text-sm">@semesterNum</span>
                             </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900">@semesterGroup.Key</h3>
-                                <p class="text-sm text-gray-500">
+                            <div class="min-w-0">
+                                <h3 class="text-sm sm:text-lg font-bold text-gray-900 truncate">@semesterGroup.Key</h3>
+                                <p class="text-[10px] sm:text-sm text-gray-500">
                                     @semesterGroup.Count() subject@(semesterGroup.Count() != 1 ? "s" : "")
                                     @if (semester != null)
                                     {
-                                        <span class="mx-1.5">&middot;</span>
-                                        <span>@semester.Year@(semester.Year > 0 ? " Year" : "")</span>
+                                        <span class="mx-1">&middot;</span>
+                                        <span>Year @semester.Year</span>
                                     }
                                 </p>
                             </div>
                         </div>
                         @if (semester != null)
                         {
-                            <span class="text-xs text-gray-400 font-mono">@semester.Code</span>
+                            <span class="text-[10px] sm:text-xs text-gray-400 font-mono hidden sm:inline">@semester.Code</span>
                         }
                     </div>
 
-                    <!-- Subject List -->
-                    <div class="p-6">
-                        <div class="grid gap-3">
-                            @{
-                                int idx = 0;
-                            }
+                    <div class="p-3 sm:p-6">
+                        <div class="space-y-1.5 sm:space-y-2">
+                            @{ int idx = 0; }
                             @foreach (var so in semesterGroup)
                             {
                                 idx++;
-                                <div class="group flex items-center justify-between p-4 bg-gray-50/80 rounded-xl hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-200">
-                                    <div class="flex items-center gap-4 min-w-0 flex-1">
-                                        <span class="flex-shrink-0 w-9 h-9 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center text-sm font-bold text-gray-400 group-hover:text-emerald-600 group-hover:border-emerald-200 transition-colors duration-200">@idx</span>
+                                <div class="group flex items-center justify-between p-2.5 sm:p-4 bg-gray-50/80 rounded-lg sm:rounded-xl hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-200">
+                                    <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                                        <span class="hidden sm:flex flex-shrink-0 w-9 h-9 rounded-lg bg-white shadow-sm border border-gray-100 items-center justify-center text-sm font-bold text-gray-400 group-hover:text-emerald-600">@idx</span>
                                         <div class="min-w-0 flex-1">
-                                            <div class="flex items-center gap-2">
-                                                <p class="text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
+                                            <div class="flex items-center gap-1.5 sm:gap-2">
+                                                <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
                                                 @if (so.IsCompulsory)
                                                 {
-                                                    <span class="flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">C</span>
+                                                    <span class="shrink-0 px-1 sm:px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">C</span>
                                                 }
                                             </div>
-                                            <p class="text-xs text-gray-500 font-mono mt-0.5">@so.SubjectCatalog?.SubjectCode</p>
+                                            <p class="text-[10px] sm:text-xs text-gray-500 font-mono mt-0.5">@so.SubjectCatalog?.SubjectCode</p>
                                         </div>
                                     </div>
-                                    <div class="flex-shrink-0 flex items-center gap-1.5 ml-4">
+                                    <div class="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-1.5 sm:ml-4">
                                         @if (so.HasTheory)
                                         {
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">Theory</span>
+                                            <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">T</span>
                                         }
                                         @if (so.HasPractical)
                                         {
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">Practical</span>
+                                            <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">P</span>
                                         }
                                         @if (so.HasInternal)
                                         {
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">Internal</span>
+                                            <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">I</span>
                                         }
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-100">
+                                        <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-100">
                                             @so.SubjectCatalog?.CreditHours cr
                                         </span>
                                     </div>
@@ -136,14 +130,14 @@
     else
     {
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="text-center py-20">
-                <div class="w-24 h-24 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="text-center py-16 sm:py-20 px-6">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <svg class="h-10 w-10 sm:h-12 sm:w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">No Subjects Available</h3>
-                <p class="text-gray-500 max-w-sm mx-auto">Subjects for your program have not been published yet. Please check back later.</p>
+                <p class="text-gray-500 max-w-sm mx-auto text-sm">Subjects for your program have not been published yet. Please check back later.</p>
             </div>
         </div>
     }
