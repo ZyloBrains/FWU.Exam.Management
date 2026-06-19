@@ -1,0 +1,45 @@
+using System.Net;
+using System.Net.Mail;
+using FWU.Exam.Management.Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace FWU.Exam.Management.Infrastructure.Services;
+
+public class EmailService(AppDbContext context) : IEmailService
+{
+    public async Task SendEmailAsync(string toEmail, string subject, string body, bool isHtml = true)
+    {
+        var smtpConfig = await context.SmtpConfigurations.FirstOrDefaultAsync();
+        if (smtpConfig == null)
+            throw new InvalidOperationException("No SMTP configuration found. Please configure SMTP settings first.");
+
+        using var message = new MailMessage
+        {
+            From = new MailAddress(smtpConfig.From!),
+            Subject = subject,
+            Body = body,
+            IsBodyHtml = isHtml
+        };
+        message.To.Add(toEmail);
+
+        using var client = new SmtpClient(smtpConfig.Host, smtpConfig.Port)
+        {
+            Credentials = new NetworkCredential(smtpConfig.UserName, smtpConfig.Password),
+            EnableSsl = smtpConfig.EnableSsl,
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+            Timeout = 15000
+        };
+
+        try
+        {
+            await client.SendMailAsync(message);
+        }
+        catch (SmtpException ex)
+        {
+            var inner = ex.InnerException?.Message;
+            throw new InvalidOperationException(
+                $"SMTP error: {ex.Message}{(inner != null ? $" ({inner})" : "")}. " +
+                $"Host: {smtpConfig.Host}:{smtpConfig.Port}, SSL: {smtpConfig.EnableSsl}", ex);
+        }
+    }
+}

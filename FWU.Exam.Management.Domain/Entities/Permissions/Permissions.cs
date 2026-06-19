@@ -232,7 +232,9 @@ public static class Permissions
 
     // SMTP
     public const string SmtpView = "smtp.view";
+    public const string SmtpCreate = "smtp.create";
     public const string SmtpEdit = "smtp.edit";
+    public const string SmtpDelete = "smtp.delete";
 
     // eSewa Config
     public const string ESewaView = "esewa.view";
@@ -424,7 +426,9 @@ public static class Permissions
         (LevelsDelete, "Delete Levels", GroupLevels, "Delete levels"),
 
         (SmtpView, "View SMTP Config", GroupSmtp, "View SMTP configuration"),
+        (SmtpCreate, "Create SMTP Config", GroupSmtp, "Create new SMTP configuration"),
         (SmtpEdit, "Edit SMTP Config", GroupSmtp, "Edit SMTP configuration"),
+        (SmtpDelete, "Delete SMTP Config", GroupSmtp, "Delete SMTP configuration"),
 
         (ESewaView, "View eSewa Config", GroupESewa, "View eSewa configuration"),
         (ESewaEdit, "Edit eSewa Config", GroupESewa, "Edit eSewa configuration"),
