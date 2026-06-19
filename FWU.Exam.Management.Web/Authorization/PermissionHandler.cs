@@ -13,6 +13,13 @@ public class PermissionHandler(IPermissionService permissionService, UserManager
         if (context.User.Identity?.IsAuthenticated != true)
             return;
 
+        // SuperAdmin bypass: SuperAdmin has all permissions without checking the database
+        if (context.User.IsInRole("SuperAdmin"))
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
         var userId = userManager.GetUserId(context.User);
         if (string.IsNullOrEmpty(userId))
             return;

@@ -39,6 +39,7 @@ public static class Permissions
     public const string GroupConnectIPS = "connectips";
     public const string GroupTenants = "tenants";
     public const string GroupStudentCategories = "studentcategories";
+    public const string GroupReports = "reports";
 
     // Helper to build permission name
     public static string N(string group, string action) => $"{group}.{action}";
@@ -257,6 +258,17 @@ public static class Permissions
     public const string StudentCategoriesEdit = "studentcategories.edit";
     public const string StudentCategoriesDelete = "studentcategories.delete";
 
+    // Reports
+    public const string ReportsCollegePayments = "reports.collegepayments";
+    public const string ReportsSubjectCount = "reports.subjectcount";
+    public const string ReportsExamTriplicate = "reports.examtriplicate";
+    public const string ReportsSummary = "reports.summary";
+    public const string ReportsTabulationTriplicate = "reports.tabulationtriplicate";
+    public const string ReportsProgramWiseStudent = "reports.programwisestudent";
+    public const string ReportsAttendanceSheet = "reports.attendanceheet";
+    public const string ReportsMarksFoil = "reports.marksfoil";
+    public const string ReportsBankVoucherList = "reports.bankvoucherlist";
+
     // Student Portal (for student-facing pages)
     public const string StudentPortalProfile = "student.portal.profile";
     public const string StudentPortalExamForms = "student.portal.examforms";
@@ -432,6 +444,16 @@ public static class Permissions
         (StudentCategoriesCreate, "Create Student Categories", GroupStudentCategories, "Create new student categories"),
         (StudentCategoriesEdit, "Edit Student Categories", GroupStudentCategories, "Edit existing student categories"),
         (StudentCategoriesDelete, "Delete Student Categories", GroupStudentCategories, "Delete student categories"),
+
+        (ReportsCollegePayments, "College Payments Report", GroupReports, "View college payments report"),
+        (ReportsSubjectCount, "Subject Count Report", GroupReports, "View subject count report"),
+        (ReportsExamTriplicate, "Exam Triplicate Report", GroupReports, "View exam triplicate report"),
+        (ReportsSummary, "Summary Report", GroupReports, "View summary report"),
+        (ReportsTabulationTriplicate, "Tabulation Triplicate Report", GroupReports, "View tabulation triplicate report"),
+        (ReportsProgramWiseStudent, "Program Wise Student Report", GroupReports, "View program wise student report"),
+        (ReportsAttendanceSheet, "Attendance Sheet Report", GroupReports, "View attendance sheet report"),
+        (ReportsMarksFoil, "Marks Foil Report", GroupReports, "View marks foil report"),
+        (ReportsBankVoucherList, "Bank Voucher List Report", GroupReports, "View bank voucher list report"),
 
         (StudentPortalProfile, "Student Profile", "student.portal", "View own profile"),
         (StudentPortalExamForms, "Exam Forms", "student.portal", "View and submit exam forms"),
