@@ -10,6 +10,7 @@ using FWU.Exam.Management.Web.Authorization;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -132,6 +133,9 @@ public partial class EntryPoint
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
+        builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
