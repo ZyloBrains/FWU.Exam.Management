@@ -189,4 +189,12 @@ public class NoticesController(INoticeService noticeService) : Controller
         await noticeService.DeleteNoticeAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("notices.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await noticeService.DeleteNoticeAsync(id); return Json(new { success = true, message = "Notice deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

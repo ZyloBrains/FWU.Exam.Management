@@ -232,4 +232,31 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
             ["Exam Schedules"] = await _context.ExamSchedules.CountAsync(e => e.TenantId == tenantId),
         };
     }
+        [RequirePermission("tenants.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try
+        {
+            var tenant = await _context.Tenants.FindAsync(id);
+            if (tenant == null)
+                return Json(new { success = false, message = "Tenant not found." });
+
+            var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
+            _context.Faculties.RemoveRange(faculties);
+            _context.Tenants.Remove(tenant);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Tenant deleted successfully!" });
+        }
+        catch (DbUpdateException)
+        {
+            return Json(new { success = false, message = "Cannot delete this tenant because it has associated data. Remove or reassign the dependent records first." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
 }

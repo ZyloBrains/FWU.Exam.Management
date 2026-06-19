@@ -349,4 +349,12 @@ public class SubjectOfferingsController : Controller
         await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("subjectofferings.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await _subjectOfferingService.DeleteSubjectOfferingAsync(id); return Json(new { success = true, message = "Subject offering deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

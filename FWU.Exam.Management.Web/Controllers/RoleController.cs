@@ -125,4 +125,22 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("roles.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try
+        {
+            var role = await roleManager.FindByIdAsync(id.ToString());
+            if (role != null)
+                await roleManager.DeleteAsync(role);
+            return Json(new { success = true, message = "Role deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
 }

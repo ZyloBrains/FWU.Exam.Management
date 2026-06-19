@@ -115,15 +115,15 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="locallevelname" asp-route-sortDir="@(currentSort == "locallevelname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "locallevelname" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            Local Level Name @(currentSort == "locallevelname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Local Level Name @(currentSort == "locallevelname" ? (currentSortDir == "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="localleveltype" asp-route-sortDir="@(currentSort == "localleveltype" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "localleveltype" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            Type @(currentSort == "localleveltype" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            Type @(currentSort == "localleveltype" ? (currentSortDir == "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="districtname" asp-route-sortDir="@(currentSort == "districtname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "districtname" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            District @(currentSort == "districtname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
+            District @(currentSort == "districtname" ? (currentSortDir == "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ") : "")
         </a>
     </div>
 
@@ -169,7 +169,7 @@
                                 }
                                 @if (HasPerm("locallevels.delete"))
                                 {
-                                    <a asp-action="Delete" asp-area="Location" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -226,7 +226,7 @@
                     }
                     @if (HasPerm("locallevels.delete"))
                     {
-                        <a asp-action="Delete" asp-area="Location" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }
@@ -331,3 +331,29 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "LocalLevels")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting.');
+                }
+            });
+        }
+    </script>
+}

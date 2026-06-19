@@ -211,4 +211,12 @@ public class CurriculumVersionsController : Controller
         await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("curriculumversions.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await _curriculumVersionService.DeleteCurriculumVersionAsync(id); return Json(new { success = true, message = "Curriculum version deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

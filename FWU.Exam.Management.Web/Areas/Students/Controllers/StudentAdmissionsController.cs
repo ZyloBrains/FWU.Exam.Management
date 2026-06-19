@@ -369,4 +369,12 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         TempData["SuccessMessage"] = "Admission completed successfully!";
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("studentadmissions.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await admissionService.DeleteAdmissionAsync(id); return Json(new { success = true, message = "Student admission deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

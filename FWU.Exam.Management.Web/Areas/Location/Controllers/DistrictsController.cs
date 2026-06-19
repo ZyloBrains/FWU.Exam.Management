@@ -233,4 +233,12 @@ public class DistrictsController(IDistrictService districtService) : Controller
         await districtService.DeleteDistrictAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("districts.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await districtService.DeleteDistrictAsync(id); return Json(new { success = true, message = "District deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

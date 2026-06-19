@@ -96,7 +96,7 @@ public class RolePermissionManagerController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id, List<int> permissionIds)
+    public async Task<IActionResult> Edit(string id, List<int>? permissionIds)
     {
         var role = await roleManager.FindByIdAsync(id);
         if (role == null) return NotFound();
@@ -108,15 +108,17 @@ public class RolePermissionManagerController(
         if (!isSuperAdmin && (role.Name == "SuperAdmin" || role.Name == "SystemAdmin" || role.Name == "CollegeAdmin" || role.Name == "Admin"))
             return Forbid();
 
-        if (!isSuperAdmin && permissionIds.Count > 0)
+        var ids = permissionIds ?? [];
+
+        if (!isSuperAdmin && ids.Count > 0)
         {
             var userPermNames = await permissionService.GetUserPermissionsAsync(user!.Id);
             var allPerms = await permissionService.GetAllPermissionsAsync();
             var allowedIds = allPerms.Where(p => userPermNames.Contains(p.Name)).Select(p => p.Id).ToHashSet();
-            permissionIds = permissionIds.Where(id => allowedIds.Contains(id)).ToList();
+            ids = ids.Where(id => allowedIds.Contains(id)).ToList();
         }
 
-        await permissionService.UpdateRolePermissionsAsync(role.Id, permissionIds);
+        await permissionService.UpdateRolePermissionsAsync(role.Id, ids);
 
         TempData["Success"] = $"Permissions updated for role '{role.Name}' successfully.";
         return RedirectToAction(nameof(Index));

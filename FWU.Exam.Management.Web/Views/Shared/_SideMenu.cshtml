@@ -59,6 +59,9 @@
     var showLocation = HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view");
     var showStudentPortal = HasPerm("student.portal.profile") || HasPerm("student.portal.examforms") || HasPerm("student.portal.marksheet") || HasPerm("student.portal.payment");
     var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view");
+    var showReports = HasPerm("reports.collegepayments") || HasPerm("reports.subjectcount") || HasPerm("reports.examtriplicate") || HasPerm("reports.summary") ||
+                      HasPerm("reports.tabulationtriplicate") || HasPerm("reports.programwisestudent") || HasPerm("reports.attendanceheet") || HasPerm("reports.marksfoil") ||
+                      HasPerm("reports.bankvoucherlist");
 
     // Active state detection for sections
     var isUserActive = IsActive(controllerName: "User") || IsActive(page: "/Account/ForgotPassword") ||
@@ -273,7 +276,7 @@
                 @if (HasPerm("student.portal.profile")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="Profile" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "Profile", areaName: "Students"))"><i class="fas fa-user w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Profile</span></a></li> }
                 @if (HasPerm("student.portal.examforms")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="ExamForms" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "ExamForms", areaName: "Students"))"><i class="fas fa-file-invoice w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Forms</span></a></li> }
                 @if (HasPerm("student.portal.marksheet")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="Marksheet" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "Marksheet", areaName: "Students"))"><i class="fas fa-file-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marksheet</span></a></li> }
-                @if (HasPerm("student.portal.payment")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="Payment" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "Payment", areaName: "Students"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Payment</span></a></li> }
+                @if (HasPerm("student.portal.payment")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="PayExamFee" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "PayExamFee", areaName: "Students"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Payment</span></a></li> }
             </ul>
         </li>
     }
@@ -296,7 +299,10 @@
             @if (HasPerm("notices.view")) { <li><a asp-area="Core" asp-controller="Notices" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Notices", actionName: "Index", areaName: "Core"))"><i class="fas fa-bullhorn w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Notices</span></a></li> }
         </ul>
     </li>
+    }
 
+    @if (showReports)
+    {
         // ----------------------------------------------------- //
         // Reports
         // ----------------------------------------------------- //
@@ -308,15 +314,15 @@
             </button>
             <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
                 :style="open ? 'max-height: 800px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-money-check-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Payments</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-chart-bar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Count Report</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-copy w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Triplicate</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-chart-pie w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Summary Report</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-table w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tabulation Triplicate</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-user-friends w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Program Wise Student</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-clipboard-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Attendance Sheet</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-poll w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marks Foil</span></a></li>
-                <li><a asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-file-invoice-dollar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Bank Voucher List</span></a></li>
+                @if (HasPerm("reports.collegepayments")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-money-check-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Payments</span></a></li> }
+                @if (HasPerm("reports.subjectcount")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-chart-bar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Count Report</span></a></li> }
+                @if (HasPerm("reports.examtriplicate")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-copy w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Triplicate</span></a></li> }
+                @if (HasPerm("reports.summary")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-chart-pie w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Summary Report</span></a></li> }
+                @if (HasPerm("reports.tabulationtriplicate")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-table w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tabulation Triplicate</span></a></li> }
+                @if (HasPerm("reports.programwisestudent")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-user-friends w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Program Wise Student</span></a></li> }
+                @if (HasPerm("reports.attendanceheet")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-clipboard-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Attendance Sheet</span></a></li> }
+                @if (HasPerm("reports.marksfoil")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-poll w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marks Foil</span></a></li> }
+                @if (HasPerm("reports.bankvoucherlist")) { <li><a asp-area="" asp-controller="ExamSchedule" asp-action="Index" class="@ChildClass(false)"><i class="fas fa-file-invoice-dollar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Bank Voucher List</span></a></li> }
             </ul>
         </li>
     }
