@@ -66,11 +66,6 @@
                 </div>
             </div>
 
-        @{
-            var compulsorySubjects = Model.Subjects.Where(s => s.IsCompulsory).ToList();
-            var electiveSubjects = Model.Subjects.Where(s => !s.IsCompulsory).ToList();
-        }
-
         @if (compulsorySubjects.Any())
         {
             <div class="px-6 py-3 bg-blue-50 border-b border-gray-200">

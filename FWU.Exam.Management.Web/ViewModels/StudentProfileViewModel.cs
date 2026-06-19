@@ -52,6 +52,7 @@ public class SubjectFeeDetail
     public decimal PracticalFee { get; set; }
     public bool IsSelected { get; set; }
     public bool IsFailed { get; set; }
+    public bool IsCompulsory { get; set; }
 }
 
 public class PaymentTypeDetail

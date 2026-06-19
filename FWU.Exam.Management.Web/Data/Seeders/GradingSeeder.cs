@@ -13,10 +13,15 @@ public static class GradingSeeder
         if (await context.GradingSchemes.AnyAsync())
             return;
 
+        var program = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+        if (program == null)
+            return;
+
         var cbcScheme = new GradingScheme
         {
             Name = "CBCS Standard (4.0)",
             Description = "Choice Based Credit System - Standard 4.0 scale",
+            ProgramId = program.Id,
             IsActive = true
         };
         await context.GradingSchemes.AddAsync(cbcScheme);
@@ -40,6 +45,7 @@ public static class GradingSeeder
         {
             Name = "TU Semester System",
             Description = "Tribhuvan University semester grading",
+            ProgramId = program.Id,
             IsActive = true
         };
         await context.GradingSchemes.AddAsync(tuScheme);

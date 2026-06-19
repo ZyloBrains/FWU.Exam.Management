@@ -511,25 +511,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return Json(programs);
     }
 
-    [HttpGet]
-    public JsonResult ConvertBsToAd(string bsDate)
-    {
-        var parts = bsDate.Split('-');
-        if (parts.Length != 3 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var d))
-            return Json(new { adDate = (string?)null });
-        var ad = NepaliCalendarHelper.BsToAd(y, m, d);
-        return Json(new { adDate = ad?.ToString("yyyy-MM-dd") });
-    }
-
-    [HttpGet]
-    public JsonResult ConvertAdToBs(string adDate)
-    {
-        if (!DateTime.TryParse(adDate, out var dt))
-            return Json(new { bsDate = (string?)null });
-        var bs = NepaliCalendarHelper.AdToBs(dt);
-        return Json(new { bsDate = $"{bs.Year:D4}-{bs.Month:D2}-{bs.Day:D2}" });
-    }
-
     [HttpPost]
     public async Task<IActionResult> DeleteAjax(int id)
     {

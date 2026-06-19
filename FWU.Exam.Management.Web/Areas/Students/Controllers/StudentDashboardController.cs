@@ -182,7 +182,6 @@ public class StudentDashboardController(
 
         if (schedule.ProgramId != programId)
             return Forbid();
-        }
 
         if (schedule.ProgramId != programId)
             return Forbid();
@@ -212,10 +211,10 @@ public class StudentDashboardController(
             SubjectCode = s.SubjectCatalog?.SubjectCode,
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
-            IsCompulsory = s.IsCompulsory,
             PracticalFee = s.HasPractical ? practicalFee : 0,
             IsSelected = isRegular || failedSet.Contains(s.Id),
-            IsFailed = failedSet.Contains(s.Id)
+            IsFailed = failedSet.Contains(s.Id),
+            IsCompulsory = s.IsCompulsory
         }).ToList();
 
         var vm = new ExamPaymentViewModel

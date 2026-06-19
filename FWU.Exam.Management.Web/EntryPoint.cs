@@ -176,11 +176,40 @@ public partial class EntryPoint
             await dbContext.Database.MigrateAsync();
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
+
+            // Base system data
             await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+
+            // Full test data (clears and re-seeds transactional + reference data)
             await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
+
+            // Location data (seeded after WorkflowTestDataSeeder which clears it)
+            await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+
+            // Additional reference data (skips if already present)
+            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+
+            // Academic structure extensions
+            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+
+            // Demo data
+            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+
+            // Grading schemes
+            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+
+            // Payment gateways
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+
+            // Admin / test users (depends on roles, colleges, faculties being seeded)
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
         }
 
         app.Run();
