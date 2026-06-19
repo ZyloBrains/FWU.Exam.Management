@@ -298,10 +298,12 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
     {
-        var paymentType = await context.Set<PaymentType>()
+        var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(pt => pt.IsActive && pt.PaymentTypeName != null &&
-                paymentMethod.Contains(pt.PaymentTypeName, StringComparison.OrdinalIgnoreCase));
+            .Where(pt => pt.IsActive && pt.PaymentTypeName != null)
+            .ToListAsync();
+        var paymentType = paymentTypes.FirstOrDefault(pt =>
+            paymentMethod.Contains(pt.PaymentTypeName, StringComparison.OrdinalIgnoreCase));
 
         DateTime? dob = null;
         if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
