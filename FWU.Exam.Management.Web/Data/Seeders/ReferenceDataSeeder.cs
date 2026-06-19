@@ -245,17 +245,38 @@ public static class ReferenceDataSeeder
 
         foe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "ENG");
         fst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
+        var foeMgt = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-MGT");
+        var foeEdu = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "EDU");
+        var foeHss = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-HSS");
+
+        // Link departments to their faculties
+        var deptMgt = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "MGMT");
+        if (deptMgt != null && foeMgt != null) deptMgt.FacultyId = foeMgt.Id;
+
+        var deptSci = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "SCI");
+        if (deptSci != null && fst != null) deptSci.FacultyId = fst.Id;
+
+        var deptEdu = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "EDU");
+        if (deptEdu != null && foeEdu != null) deptEdu.FacultyId = foeEdu.Id;
+
+        var deptHum = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "HUM");
+        if (deptHum != null && foeHss != null) deptHum.FacultyId = foeHss.Id;
+
+        await context.SaveChangesAsync();
 
         Department? enggDept;
         if (!await context.Departments.AnyAsync(d => d.DepartmentCode == "ENGG"))
         {
-            enggDept = new Department { DepartmentCode = "ENGG", DepartmentName = "Engineering", ShortName = "ENG", IsActive = true };
+            enggDept = new Department { DepartmentCode = "ENGG", DepartmentName = "Engineering", ShortName = "ENG", IsActive = true, FacultyId = foe?.Id };
             context.Departments.Add(enggDept);
             await context.SaveChangesAsync();
         }
         else
         {
             enggDept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "ENGG");
+            if (enggDept != null && foe != null && enggDept.FacultyId == null)
+                enggDept.FacultyId = foe.Id;
+            await context.SaveChangesAsync();
         }
 
         var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
@@ -423,6 +444,51 @@ public static class ReferenceDataSeeder
             ServiceChargeAmount = 0m,
         };
         context.ESewaConfigurations.Add(eSewaConfig);
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedKhaltiConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.KhaltiConfigurations.AnyAsync())
+            return;
+
+        var khaltiConfig = new KhaltiConfiguration
+        {
+            ReturnUrl = "https://localhost:44333/Payment/KhaltiCallback",
+            WebsiteUrl = "https://example.com",
+            Amount = 0m,
+            ProductName = "Exam Fee",
+            AuthorizationKey = "test_secret_key",
+            ServiceCharge = 0,
+            PostUrl = "https://rc-epay.khalti.com/api/v2/epayment/initiate/",
+            VerifyUrl = "https://rc-epay.khalti.com/api/v2/epayment/lookup/",
+        };
+        context.KhaltiConfigurations.Add(khaltiConfig);
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedConnectIPSConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.ConnectIpsPaymentConfigurations.AnyAsync())
+            return;
+
+        var connectIpsConfig = new ConnectIpsPaymentConfiguration
+        {
+            GatewayUrl = "https://connectips.example.com/gateway",
+            MerchantId = "TEST_MERCHANT",
+            AppId = "TEST_APP_ID",
+            AppName = "Exam Management",
+            ValidationApiUrl = "https://connectips.example.com/api/validate",
+            UsernameForValidationApi = "test_user",
+            PasswordForValidationApi = "test_pass",
+            PasswordForCreditorPfx = "test_pfx_pass",
+            TransactionCurrency = "NPR",
+        };
+        context.ConnectIpsPaymentConfigurations.Add(connectIpsConfig);
         await context.SaveChangesAsync();
     }
 }

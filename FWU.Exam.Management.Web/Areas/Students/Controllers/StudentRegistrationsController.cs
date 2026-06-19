@@ -298,7 +298,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportExcel(string searchTerm = "")
+    public async Task<IActionResult> ExportToExcel(string searchTerm = "")
     {
         var collegeIds = await GetUserCollegeIdsAsync();
         var data = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
@@ -509,5 +509,38 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     {
         var programs = await studentRegistrationService.GetProgramsByCollegeAsync(collegeId, levelId, departmentId);
         return Json(programs);
+    }
+
+    [HttpGet]
+    public JsonResult ConvertBsToAd(string bsDate)
+    {
+        var parts = bsDate.Split('-');
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var d))
+            return Json(new { adDate = (string?)null });
+        var ad = NepaliCalendarHelper.BsToAd(y, m, d);
+        return Json(new { adDate = ad?.ToString("yyyy-MM-dd") });
+    }
+
+    [HttpGet]
+    public JsonResult ConvertAdToBs(string adDate)
+    {
+        if (!DateTime.TryParse(adDate, out var dt))
+            return Json(new { bsDate = (string?)null });
+        var bs = NepaliCalendarHelper.AdToBs(dt);
+        return Json(new { bsDate = $"{bs.Year:D4}-{bs.Month:D2}-{bs.Day:D2}" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try
+        {
+            await studentRegistrationService.DeleteStudentRegistrationAsync(id);
+            return Json(new { success = true, message = "Student registration deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 }

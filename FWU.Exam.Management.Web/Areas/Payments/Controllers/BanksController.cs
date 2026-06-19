@@ -1,15 +1,17 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 
 [Area("Payments")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[RequirePermission("banks.view")]
 public class BanksController(IBankService bankService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BankName", string sortDir = "asc", int pageSize = 10)
@@ -69,6 +71,43 @@ public class BanksController(IBankService bankService) : Controller
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BankName", string sortDir = "asc")
+    {
+        var items = await bankService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Banks");
+
+        var headers = new[] { "Bank Name", "Bank Code", "Remarks", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var b in items)
+        {
+            worksheet.Cell(row, 1).Value = b.BankName ?? "";
+            worksheet.Cell(row, 2).Value = b.BankCode ?? "-";
+            worksheet.Cell(row, 3).Value = b.Remarks ?? "-";
+            worksheet.Cell(row, 4).Value = b.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"Banks_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -79,11 +118,13 @@ public class BanksController(IBankService bankService) : Controller
         return View(bank);
     }
 
+    [RequirePermission("banks.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("banks.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,BankName,BankCode,Remarks,IsActive")] Bank bank)
@@ -96,6 +137,7 @@ public class BanksController(IBankService bankService) : Controller
         return View(bank);
     }
 
+    [RequirePermission("banks.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -106,6 +148,7 @@ public class BanksController(IBankService bankService) : Controller
         return View(bank);
     }
 
+    [RequirePermission("banks.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,BankName,BankCode,Remarks,IsActive")] Bank bank)
@@ -129,6 +172,7 @@ public class BanksController(IBankService bankService) : Controller
         return View(bank);
     }
 
+    [RequirePermission("banks.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -139,6 +183,7 @@ public class BanksController(IBankService bankService) : Controller
         return View(bank);
     }
 
+    [RequirePermission("banks.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -146,4 +191,12 @@ public class BanksController(IBankService bankService) : Controller
         await bankService.DeleteBankAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("banks.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await bankService.DeleteBankAsync(id); return Json(new { success = true, message = "Bank deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

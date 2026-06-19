@@ -1,15 +1,17 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("subjecttypes.view")]
 public class SubjectTypesController : Controller
 {
     private readonly ISubjectTypeService _subjectTypeService;
@@ -63,6 +65,44 @@ public class SubjectTypesController : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var items = await _subjectTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Subject Types");
+
+        var headers = new[] { "Code", "Name", "Max Allowed Subjects", "Is Default", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var s in items)
+        {
+            worksheet.Cell(row, 1).Value = s.Code ?? "-";
+            worksheet.Cell(row, 2).Value = s.Name ?? "-";
+            worksheet.Cell(row, 3).Value = s.MaxAllowedSubjects;
+            worksheet.Cell(row, 4).Value = s.IsDefault ? "Yes" : "No";
+            worksheet.Cell(row, 5).Value = s.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"SubjectTypes_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
         var (items, totalCount) = await _subjectTypeService.GetSubjectTypesAsync(page, pageSize, search, sort, sortDir);
@@ -87,6 +127,7 @@ public class SubjectTypesController : Controller
         return View(subjectType);
     }
 
+    [RequirePermission("subjecttypes.create")]
     public IActionResult Create()
     {
         return View();
@@ -94,6 +135,7 @@ public class SubjectTypesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjecttypes.create")]
     public async Task<IActionResult> Create([Bind("Id,Code,Name,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
     {
         if (ModelState.IsValid)
@@ -104,6 +146,7 @@ public class SubjectTypesController : Controller
         return View(subjectType);
     }
 
+    [RequirePermission("subjecttypes.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -116,6 +159,7 @@ public class SubjectTypesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjecttypes.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,IsActive,IsDefault,MaxAllowedSubjects")] SubjectType subjectType)
     {
         if (id != subjectType.Id) return NotFound();
@@ -137,6 +181,7 @@ public class SubjectTypesController : Controller
         return View(subjectType);
     }
 
+    [RequirePermission("subjecttypes.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -149,9 +194,18 @@ public class SubjectTypesController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjecttypes.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _subjectTypeService.DeleteSubjectTypeAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("subjecttypes.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await _subjectTypeService.DeleteSubjectTypeAsync(id); return Json(new { success = true, message = "Subject type deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

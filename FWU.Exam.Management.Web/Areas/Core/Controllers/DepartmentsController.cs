@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
+[RequirePermission("departments.view")]
 public class DepartmentsController(IDepartmentService departmentService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DepartmentName", string sortDir = "asc", int pageSize = 10)
@@ -71,6 +73,43 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "DepartmentName", string sortDir = "asc")
+    {
+        var items = await departmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Departments");
+
+        var headers = new[] { "Department Code", "Department Name", "Short Name", "Remarks", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var d in items)
+        {
+            worksheet.Cell(row, 1).Value = d.DepartmentCode;
+            worksheet.Cell(row, 2).Value = d.DepartmentName;
+            worksheet.Cell(row, 3).Value = d.ShortName;
+            worksheet.Cell(row, 4).Value = d.Remarks;
+            worksheet.Cell(row, 5).Value = d.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Departments_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -81,11 +120,13 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("departments.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,DepartmentCode,DepartmentName,ShortName,Remarks,IsActive")] Department department)
@@ -98,6 +139,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -108,6 +150,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,DepartmentCode,DepartmentName,ShortName,Remarks,IsActive")] Department department)
@@ -131,6 +174,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -141,6 +185,7 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         return View(department);
     }
 
+    [RequirePermission("departments.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -148,4 +193,12 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
         await departmentService.DeleteDepartmentAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("departments.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await departmentService.DeleteDepartmentAsync(id); return Json(new { success = true, message = "Department deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

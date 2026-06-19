@@ -4,13 +4,14 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("boards.view")]
 public class BoardsController(IBoardService boardService) : Controller
 {
 
@@ -77,6 +78,41 @@ public class BoardsController(IBoardService boardService) : Controller
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BoardName", string sortDir = "asc")
+    {
+        var (items, totalCount) = await boardService.GetBoardsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Boards");
+
+        var headers = new[] { "Board Name", "Remarks", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var b in items)
+        {
+            worksheet.Cell(row, 1).Value = b.BoardName;
+            worksheet.Cell(row, 2).Value = b.Remarks;
+            worksheet.Cell(row, 3).Value = b.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Boards_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     // GET: Boards/Details/5
     public async Task<IActionResult> Details(int? id)
     {
@@ -95,12 +131,14 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // GET: Boards/Create
+    [RequirePermission("boards.create")]
     public IActionResult Create()
     {
         return View();
     }
 
     // POST: Boards/Create
+    [RequirePermission("boards.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,CountryId,BoardName,Remarks,IsActive")] Board board)
@@ -114,6 +152,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // GET: Boards/Edit/5
+    [RequirePermission("boards.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -130,6 +169,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // POST: Boards/Edit/5
+    [RequirePermission("boards.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,CountryId,BoardName,Remarks,IsActive")] Board board)
@@ -162,6 +202,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // GET: Boards/Delete/5
+    [RequirePermission("boards.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -179,6 +220,7 @@ public class BoardsController(IBoardService boardService) : Controller
     }
 
     // POST: Boards/Delete/5
+    [RequirePermission("boards.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -186,4 +228,12 @@ public class BoardsController(IBoardService boardService) : Controller
         await boardService.DeleteBoardAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("boards.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await boardService.DeleteBoardAsync(id); return Json(new { success = true, message = "Board deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

@@ -66,7 +66,20 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
 
         foreach (var field in fieldNames)
         {
-            var value = root.TryGetProperty(field, out var prop) ? prop.GetString() ?? "" : "";
+            string value;
+            if (root.TryGetProperty(field, out var prop))
+            {
+                value = prop.ValueKind switch
+                {
+                    JsonValueKind.String => prop.GetString() ?? "",
+                    JsonValueKind.Number => prop.GetRawText(),
+                    _ => prop.GetRawText()
+                };
+            }
+            else
+            {
+                value = "";
+            }
             messageParts.Add($"{field}={value}");
         }
 
@@ -84,7 +97,7 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<ESewaVerifyResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
         }
         catch
         {

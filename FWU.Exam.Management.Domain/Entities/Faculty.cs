@@ -13,4 +13,5 @@ public class Faculty
     public int? TenantId { get; set; }
     public Tenant? Tenant { get; set; }
     public virtual ICollection<College>? Colleges { get; set; }
+    public virtual ICollection<Department>? Departments { get; set; }
 }

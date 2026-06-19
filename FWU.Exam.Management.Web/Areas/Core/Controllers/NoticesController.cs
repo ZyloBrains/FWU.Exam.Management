@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
+[RequirePermission("notices.view")]
 public class NoticesController(INoticeService noticeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "PublishedDate", string sortDir = "desc", int pageSize = 10)
@@ -69,6 +71,41 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "PublishedDate", string sortDir = "desc")
+    {
+        var items = await noticeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Notices");
+
+        var headers = new[] { "Title", "Preview", "Published Date" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var n in items)
+        {
+            worksheet.Cell(row, 1).Value = n.NoticeTitle;
+            worksheet.Cell(row, 2).Value = n.NoticePreview;
+            worksheet.Cell(row, 3).Value = n.PublishedDate.HasValue ? n.PublishedDate.Value.ToString("yyyy-MM-dd") : "";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Notices_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -79,11 +116,13 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("notices.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,NoticeTitle,NoticePreview,NoticeContent,PublishedDate")] Notice notice)
@@ -96,6 +135,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -106,6 +146,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,NoticeTitle,NoticePreview,NoticeContent,PublishedDate")] Notice notice)
@@ -129,6 +170,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -139,6 +181,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(notice);
     }
 
+    [RequirePermission("notices.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -146,4 +189,12 @@ public class NoticesController(INoticeService noticeService) : Controller
         await noticeService.DeleteNoticeAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("notices.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await noticeService.DeleteNoticeAsync(id); return Json(new { success = true, message = "Notice deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

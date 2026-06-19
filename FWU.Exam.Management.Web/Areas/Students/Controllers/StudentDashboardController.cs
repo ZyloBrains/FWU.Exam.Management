@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "Student")]
+[Authorize(Roles = "Student,SuperAdmin,SystemAdmin")]
 public class StudentDashboardController(
     IStudentDashboardService dashboardService,
     UserManager<AppUser> userManager,
@@ -182,6 +182,10 @@ public class StudentDashboardController(
 
         if (schedule.ProgramId != programId)
             return Forbid();
+        }
+
+        if (schedule.ProgramId != programId)
+            return Forbid();
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
@@ -226,7 +230,7 @@ public class StudentDashboardController(
             HasConnectIPS = hasConnectIPS,
             IsRegular = isRegular,
             Subjects = subjectList,
-            SelectedSubjectIds = isRegular ? subjectList.Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
+            SelectedSubjectIds = isRegular ? subjectList.Where(s => s.IsCompulsory).Select(s => s.SubjectOfferingId).ToList() : failedSubjectIds,
             PaymentTypes = paymentTypes.Select(pt => new PaymentTypeDetail
             {
                 Id = pt.Id,
@@ -235,7 +239,7 @@ public class StudentDashboardController(
             }).ToList()
         };
 
-        vm.TotalPracticalFee = subjectList.Sum(s => s.PracticalFee);
+        vm.TotalPracticalFee = subjectList.Where(s => s.IsSelected).Sum(s => s.PracticalFee);
         vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee;
 
         return View(vm);
@@ -256,14 +260,8 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
-        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var failedSubjectIds = schedule != null
-            ? await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId)
-            : [];
-        var isRegular = failedSubjectIds.Count == 0;
-
         int logId;
-        if (isRegular || subjectIds.Count == 0)
+        if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber);
@@ -295,16 +293,10 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
-        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var failedSubjectIds = schedule != null
-            ? await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId)
-            : [];
-        var isRegular = failedSubjectIds.Count == 0;
-
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
         int logId;
-        if (isRegular || subjectIds.Count == 0)
+        if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
@@ -418,15 +410,10 @@ public class StudentDashboardController(
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var failedSubjectIds = schedule != null
-            ? await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId)
-            : [];
-        var isRegular = failedSubjectIds.Count == 0;
-
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
         int logId;
-        if (isRegular || subjectIds.Count == 0)
+        if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber,

@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("curriculumversions.view")]
 public class CurriculumVersionsController : Controller
 {
     private readonly ICurriculumVersionService _curriculumVersionService;
@@ -63,6 +65,43 @@ public class CurriculumVersionsController : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    {
+        var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Curriculum Versions");
+
+        var headers = new[] { "Name", "Program", "Effective Year", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var c in items)
+        {
+            worksheet.Cell(row, 1).Value = c.Name ?? "-";
+            worksheet.Cell(row, 2).Value = c.Program?.ProgramName ?? "-";
+            worksheet.Cell(row, 3).Value = c.EffectiveAcademicYear?.AcademicYearName ?? "-";
+            worksheet.Cell(row, 4).Value = c.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"CurriculumVersions_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
@@ -87,6 +126,7 @@ public class CurriculumVersionsController : Controller
         return View(curriculumVersion);
     }
 
+    [RequirePermission("curriculumversions.create")]
     public async Task<IActionResult> Create()
     {
         var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
@@ -97,6 +137,7 @@ public class CurriculumVersionsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.create")]
     public async Task<IActionResult> Create([Bind("Id,Name,ProgramId,EffectiveAcademicYearId,Description,IsActive")] CurriculumVersion curriculumVersion)
     {
         if (ModelState.IsValid)
@@ -110,6 +151,7 @@ public class CurriculumVersionsController : Controller
         return View(curriculumVersion);
     }
 
+    [RequirePermission("curriculumversions.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -125,6 +167,7 @@ public class CurriculumVersionsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,Name,ProgramId,EffectiveAcademicYearId,Description,IsActive")] CurriculumVersion curriculumVersion)
     {
         if (id != curriculumVersion.Id) return NotFound();
@@ -149,6 +192,7 @@ public class CurriculumVersionsController : Controller
         return View(curriculumVersion);
     }
 
+    [RequirePermission("curriculumversions.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -161,9 +205,18 @@ public class CurriculumVersionsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("curriculumversions.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await _curriculumVersionService.DeleteCurriculumVersionAsync(id); return Json(new { success = true, message = "Curriculum version deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

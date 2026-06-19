@@ -26,14 +26,15 @@ public class College : ITenantScoped
     [MaxLength(500)]
     public string? ShortName { get; set; }
 
-    public DateTime? EstablishedDate { get; set; }
+    [Required]
+    public DateTime EstablishedDate { get; set; }
     public DateTime? ClosedDate { get; set; }
 
     [MaxLength(50)]
     public string? Website { get; set; }
 
-    [MaxLength(50)]
-    public string? Email { get; set; }
+    [Required, MaxLength(50)]
+    public string Email { get; set; } = string.Empty;
 
     [MaxLength(20)]
     public string? Phone1 { get; set; }
@@ -41,11 +42,11 @@ public class College : ITenantScoped
     [MaxLength(20)]
     public string? Phone2 { get; set; }
 
-    [MaxLength(255)]
-    public string? PrincipalName { get; set; }
+    [Required, MaxLength(255)]
+    public string PrincipalName { get; set; } = string.Empty;
 
-    [MaxLength(50)]
-    public string? PrincipalContactNumber { get; set; }
+    [Required, MaxLength(50)]
+    public string PrincipalContactNumber { get; set; } = string.Empty;
 
     [MaxLength(20)]
     public string? Fax { get; set; }

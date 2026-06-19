@@ -11,29 +11,28 @@ public static class PermissionSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.Permissions!.AnyAsync())
-            return;
+        var existingNames = await context.Permissions!.Select(p => p.Name).ToListAsync();
+        var missing = Permissions.All.Where(p => !existingNames.Contains(p.Name)).ToList();
 
-        var permissionEntities = Permissions.All.Select(p => new Permission
+        if (missing.Count > 0)
         {
-            Name = p.Name,
-            DisplayName = p.DisplayName,
-            Description = p.Description,
-            Group = p.Group,
-            IsActive = true,
-        }).ToList();
+            var permissionEntities = missing.Select(p => new Permission
+            {
+                Name = p.Name,
+                DisplayName = p.DisplayName,
+                Description = p.Description,
+                Group = p.Group,
+                IsActive = true,
+            }).ToList();
 
-        await context.Permissions!.AddRangeAsync(permissionEntities);
-        await context.SaveChangesAsync();
+            await context.Permissions!.AddRangeAsync(permissionEntities);
+            await context.SaveChangesAsync();
+        }
     }
 
     public static async Task SeedRolePermissionsAsync(IServiceProvider serviceProvider)
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
-
-        if (await context.RolePermissions!.AnyAsync())
-            return;
-
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         foreach (var (roleName, permissionNames) in Permissions.RolePermissions)
@@ -45,11 +44,25 @@ public static class PermissionSeeder
                 role = await roleManager.FindByNameAsync(roleName);
             }
 
-            var permissions = await context.Permissions!
-                .Where(p => permissionNames.Contains(p.Name))
+            var existingPermIds = await context.RolePermissions!
+                .Where(rp => rp.RoleId == role!.Id)
+                .Select(rp => rp.PermissionId)
                 .ToListAsync();
 
-            var rolePermissions = permissions.Select(p => new RolePermission
+            var existingPermNames = await context.Permissions!
+                .Where(p => existingPermIds.Contains(p.Id))
+                .Select(p => p.Name)
+                .ToListAsync();
+
+            var missingPermNames = permissionNames.Except(existingPermNames).ToList();
+            if (missingPermNames.Count == 0)
+                continue;
+
+            var missingPermissions = await context.Permissions!
+                .Where(p => missingPermNames.Contains(p.Name))
+                .ToListAsync();
+
+            var rolePermissions = missingPermissions.Select(p => new RolePermission
             {
                 RoleId = role!.Id,
                 PermissionId = p.Id,

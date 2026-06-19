@@ -6,7 +6,7 @@
 }
 
 <div class="min-h-screen bg-gray-100 py-8">
-    <div class="max-w-5xl mx-auto">
+    <div class="space-y-6">
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h1 class="text-xl font-semibold text-gray-800">Edit Student Registration</h1>
@@ -68,7 +68,7 @@
                             </div>
                             
                             <div class="md:col-span-3">
-                                <label class="block text-sm text-gray-600 mb-1">Name *</label>
+                                <label class="block text-sm text-gray-600 mb-1">Name <span class="text-red-500">*</span></label>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <input asp-for="FirstName" placeholder="First Name" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                     <input asp-for="MiddleName" placeholder="Middle Name" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
@@ -301,10 +301,6 @@
             data.forEach(function(q) { addQualificationRow(q); });
         }
 
-        function tenantUrl(path) {
-            return __tenantCode ? '/tenant/' + __tenantCode + path : path;
-        }
-
         function loadFaculties(levelId, selectedFacultyId, callback) {
             if (!levelId) {
                 $("#FacultyId").empty().append('<option value="">Select Faculty</option>');
@@ -492,6 +488,31 @@
                 });
             }
 
+            // BS <-> AD auto-conversion
+            var convertTimer;
+            $("#DateOfBirthBS").on("input", function () {
+                var bs = $(this).val().trim();
+                if (bs.length === 10) {
+                    clearTimeout(convertTimer);
+                    convertTimer = setTimeout(function () {
+                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
+                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
+                        });
+                    }, 300);
+                }
+            });
+
+            $("#DateOfBirthAD").on("input", function () {
+                var ad = $(this).val().trim();
+                if (ad.length >= 8) {
+                    clearTimeout(convertTimer);
+                    convertTimer = setTimeout(function () {
+                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
+                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
+                        });
+                    }, 300);
+                }
+            });
         });
     </script>
 }

@@ -4,7 +4,7 @@
     ViewData["Title"] = "College Details";
 }
 
-<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
@@ -69,6 +69,10 @@
             <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Address & Location</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Province</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.Province?.ProvinceName ?? "-")</p>
+                </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">District</p>
                     <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.DistrictName ?? "-")</p>
@@ -140,11 +144,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Established Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate?.ToString("yyyy-MM-dd") ?? "�")</p>
+                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate.ToString("yyyy-MM-dd"))</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Closed Date</p>
-                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "�")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "?")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">College Type</p>
@@ -156,7 +160,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Allocated Amount</p>
-                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "�")</p>
+                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "?")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Remarks</p>

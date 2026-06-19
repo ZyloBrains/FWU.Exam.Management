@@ -21,6 +21,9 @@ public class Department
 
     public bool IsActive { get; set; }
 
+    public int? FacultyId { get; set; }
+    public virtual Faculty? Faculty { get; set; }
+
     public virtual ICollection<Program>? Programs { get; set; }
     public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }

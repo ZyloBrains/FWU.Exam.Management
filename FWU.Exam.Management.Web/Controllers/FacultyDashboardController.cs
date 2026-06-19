@@ -266,9 +266,7 @@ public class FacultyDashboardController(
         var user = await userManager.FindByIdAsync(userId);
         if (user == null || user.FacultyId != faculty.Id) return NotFound();
 
-        var allRoles = await roleManager.Roles
-            .Where(r => r.Name != "Student")
-            .ToListAsync();
+        var allRoles = await roleManager.Roles.ToListAsync();
         var userRoles = await userManager.GetRolesAsync(user);
 
         ViewBag.Faculty = faculty;
@@ -299,14 +297,9 @@ public class FacultyDashboardController(
 
         var currentRoles = await userManager.GetRolesAsync(user);
         var selectedRoles = model.Roles
-            .Where(r => r.IsAssigned && !string.Equals(r.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
+            .Where(r => r.IsAssigned)
             .Select(r => r.RoleName)
             .ToList();
-
-        if (!selectedRoles.Contains("Student", StringComparer.OrdinalIgnoreCase))
-        {
-            selectedRoles.Add("Student");
-        }
 
         var toAdd = selectedRoles.Except(currentRoles).ToList();
         var toRemove = currentRoles.Except(selectedRoles).ToList();
@@ -319,4 +312,22 @@ public class FacultyDashboardController(
 
         return RedirectToAction(nameof(Users), new { officeCode });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(string id)
+    {
+        try
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user != null)
+                await userManager.DeleteAsync(user);
+            return Json(new { success = true, message = "User deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
 }

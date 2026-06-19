@@ -35,8 +35,11 @@ public static class Permissions
     public const string GroupLevels = "levels";
     public const string GroupSmtp = "smtp";
     public const string GroupESewa = "esewa";
+    public const string GroupKhalti = "khalti";
+    public const string GroupConnectIPS = "connectips";
     public const string GroupTenants = "tenants";
     public const string GroupStudentCategories = "studentcategories";
+    public const string GroupReports = "reports";
 
     // Helper to build permission name
     public static string N(string group, string action) => $"{group}.{action}";
@@ -235,6 +238,14 @@ public static class Permissions
     public const string ESewaView = "esewa.view";
     public const string ESewaEdit = "esewa.edit";
 
+    // Khalti Config
+    public const string KhaltiView = "khalti.view";
+    public const string KhaltiEdit = "khalti.edit";
+
+    // ConnectIPS Config
+    public const string ConnectIPSView = "connectips.view";
+    public const string ConnectIPSEdit = "connectips.edit";
+
     // Tenants
     public const string TenantsView = "tenants.view";
     public const string TenantsCreate = "tenants.create";
@@ -246,6 +257,17 @@ public static class Permissions
     public const string StudentCategoriesCreate = "studentcategories.create";
     public const string StudentCategoriesEdit = "studentcategories.edit";
     public const string StudentCategoriesDelete = "studentcategories.delete";
+
+    // Reports
+    public const string ReportsCollegePayments = "reports.collegepayments";
+    public const string ReportsSubjectCount = "reports.subjectcount";
+    public const string ReportsExamTriplicate = "reports.examtriplicate";
+    public const string ReportsSummary = "reports.summary";
+    public const string ReportsTabulationTriplicate = "reports.tabulationtriplicate";
+    public const string ReportsProgramWiseStudent = "reports.programwisestudent";
+    public const string ReportsAttendanceSheet = "reports.attendanceheet";
+    public const string ReportsMarksFoil = "reports.marksfoil";
+    public const string ReportsBankVoucherList = "reports.bankvoucherlist";
 
     // Student Portal (for student-facing pages)
     public const string StudentPortalProfile = "student.portal.profile";
@@ -407,6 +429,12 @@ public static class Permissions
         (ESewaView, "View eSewa Config", GroupESewa, "View eSewa configuration"),
         (ESewaEdit, "Edit eSewa Config", GroupESewa, "Edit eSewa configuration"),
 
+        (KhaltiView, "View Khalti Config", GroupKhalti, "View Khalti configuration"),
+        (KhaltiEdit, "Edit Khalti Config", GroupKhalti, "Edit Khalti configuration"),
+
+        (ConnectIPSView, "View ConnectIPS Config", GroupConnectIPS, "View ConnectIPS configuration"),
+        (ConnectIPSEdit, "Edit ConnectIPS Config", GroupConnectIPS, "Edit ConnectIPS configuration"),
+
         (TenantsView, "View Tenants", GroupTenants, "View tenant list"),
         (TenantsCreate, "Create Tenants", GroupTenants, "Create new tenants"),
         (TenantsEdit, "Edit Tenants", GroupTenants, "Edit existing tenants"),
@@ -416,6 +444,16 @@ public static class Permissions
         (StudentCategoriesCreate, "Create Student Categories", GroupStudentCategories, "Create new student categories"),
         (StudentCategoriesEdit, "Edit Student Categories", GroupStudentCategories, "Edit existing student categories"),
         (StudentCategoriesDelete, "Delete Student Categories", GroupStudentCategories, "Delete student categories"),
+
+        (ReportsCollegePayments, "College Payments Report", GroupReports, "View college payments report"),
+        (ReportsSubjectCount, "Subject Count Report", GroupReports, "View subject count report"),
+        (ReportsExamTriplicate, "Exam Triplicate Report", GroupReports, "View exam triplicate report"),
+        (ReportsSummary, "Summary Report", GroupReports, "View summary report"),
+        (ReportsTabulationTriplicate, "Tabulation Triplicate Report", GroupReports, "View tabulation triplicate report"),
+        (ReportsProgramWiseStudent, "Program Wise Student Report", GroupReports, "View program wise student report"),
+        (ReportsAttendanceSheet, "Attendance Sheet Report", GroupReports, "View attendance sheet report"),
+        (ReportsMarksFoil, "Marks Foil Report", GroupReports, "View marks foil report"),
+        (ReportsBankVoucherList, "Bank Voucher List Report", GroupReports, "View bank voucher list report"),
 
         (StudentPortalProfile, "Student Profile", "student.portal", "View own profile"),
         (StudentPortalExamForms, "Exam Forms", "student.portal", "View and submit exam forms"),

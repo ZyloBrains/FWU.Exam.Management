@@ -74,6 +74,26 @@
         #sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
         #sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
 
+        /* Safe area for mobile notch devices */
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        /* Better tap highlight for mobile */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent text size adjust on mobile orientation change */
+        body {
+            -webkit-text-size-adjust: 100%;
+        }
+
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -260,18 +280,22 @@
                                 <p class="text-xs text-gray-500 truncate">@roleLabel</p>
                             </div>
 
-                            <a asp-area="Identity" asp-page="/Account/Manage/Index" asp-route-tenantCode="@(Context.Items["TenantCode"])" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                            @{
+                                var tenantPrefix = !string.IsNullOrEmpty(tenantCode) ? $"/tenant/{tenantCode}" : "";
+                                var identityBase = $"{tenantPrefix}/Identity/Account";
+                            }
+                            <a href="@identityBase/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                 <i class="fas fa-user-circle w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
                                 <span class="ml-2 font-medium">My Profile</span>
                             </a>
-                            <a asp-area="Identity" asp-page="/Account/Manage/Index" asp-route-tenantCode="@(Context.Items["TenantCode"])" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                            <a href="@identityBase/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                 <i class="fas fa-cog w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
                                 <span class="ml-2 font-medium">Account Settings</span>
                             </a>
                             
                             <div class="h-px bg-gray-100 my-1.5"></div>
                             
-                            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/Identity/Account/Login" class="block m-0">
+                            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@($"{identityBase}/Login")" class="block m-0">
                                 <button type="submit" class="group flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left">
                                     <i class="fas fa-sign-out-alt w-5 text-red-400 group-hover:text-red-600 transition-colors"></i>
                                     <span class="ml-2 font-medium">Sign out</span>

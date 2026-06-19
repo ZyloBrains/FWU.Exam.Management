@@ -4,7 +4,7 @@
     ViewData["Title"] = "Create Subject Type";
 }
 
-<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
             <i class="fas fa-arrow-left text-gray-600"></i>
@@ -23,7 +23,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="Code" class="text-sm font-medium text-gray-700 block mb-1">Code</label>
+                    <label asp-for="Code" class="text-sm font-medium text-gray-700 block mb-1">Code <span class="text-red-500">*</span></label>
                     <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500" placeholder="e.g., CORE, ELEC, THY, PRAC" />
                     <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
@@ -33,7 +33,7 @@
                     <span asp-validation-for="MaxAllowedSubjects" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1">Subject Type Name</label>
+                    <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1">Subject Type Name <span class="text-red-500">*</span></label>
                     <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500" placeholder="e.g., Core Subject, Elective, Theory, Practical" />
                     <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                 </div>

@@ -1,4 +1,6 @@
 @model IEnumerable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectCatalog>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Subject Catalogs";
@@ -9,6 +11,11 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "SubjectName";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
@@ -73,6 +80,15 @@
                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
                     </a>
+                    <a asp-action="ExportToExcel" asp-area="Subjects"
+                           asp-route-page="@currentPage"
+                           asp-route-pageSize="@pageSize"
+                           asp-route-search="@currentSearch"
+                           asp-route-sort="@currentSort"
+                           asp-route-sortDir="@currentSortDir"
+                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-file-excel text-green-600"></i> Excel (Current Page)
+                    </a>
                 </div>
             </div>
             <form asp-action="ImportExcel" asp-area="Subjects" method="post" enctype="multipart/form-data" class="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-lg border border-dashed border-gray-300 w-full xl:w-auto" id="importForm">
@@ -89,7 +105,7 @@
                     btn.innerHTML = '<svg class="animate-spin h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Importing...';
                 });
             </script>
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+            @if (HasPerm("subjects.create"))
             {
                 <a asp-action="Create" asp-area="Subjects" class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Create New
@@ -185,12 +201,15 @@
                                 <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
-                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                @if (HasPerm("subjects.edit"))
                                 {
                                     <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                }
+                                @if (HasPerm("subjects.delete"))
+                                {
+                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -244,12 +263,15 @@
                     <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
                         Details
                     </a>
-                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                    @if (HasPerm("subjects.edit"))
                     {
                         <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                             Edit
                         </a>
-                        <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                    }
+                    @if (HasPerm("subjects.delete"))
+                    {
+                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }
@@ -353,3 +375,29 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "SubjectCatalogs")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting.');
+                }
+            });
+        }
+    </script>
+}

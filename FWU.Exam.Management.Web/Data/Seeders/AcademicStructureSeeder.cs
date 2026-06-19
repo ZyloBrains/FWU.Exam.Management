@@ -124,6 +124,25 @@ public static class AcademicStructureSeeder
         }
         await context.SaveChangesAsync();
 
+        // ----- Assign departments to faculties -----
+        var foeMgt = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-MGT");
+        var foeHss = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-HSS");
+        var foeLaw = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FOL");
+        var foeAgr = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "AGR");
+        var foeHsc = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "HSC");
+        var foeNrm = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "NRM");
+        var deptFoeMap = new[] {
+            ("LAW", foeLaw), ("AGR", foeAgr), ("HSC", foeHsc), ("NRM", foeNrm),
+            ("MGMT", foeMgt), ("HUM", foeHss), ("EDU", foeMgt)
+        };
+        foreach (var (code, faculty) in deptFoeMap)
+        {
+            var dept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == code);
+            if (dept != null && faculty != null && dept.FacultyId == null)
+                dept.FacultyId = faculty.Id;
+        }
+        await context.SaveChangesAsync();
+
         // ----- Colleges (fill missing ones by checking individual codes) -----
         await AddCollegeIfMissing(context, "COC", "College of Commerce", 1);
         await AddCollegeIfMissing(context, "SOM", "School of Management", 1);

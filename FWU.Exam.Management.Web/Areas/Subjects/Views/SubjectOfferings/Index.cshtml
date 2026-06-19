@@ -1,4 +1,6 @@
 @model IEnumerable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Subject Offerings";
@@ -6,6 +8,11 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "Program";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
@@ -48,9 +55,16 @@
                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> Export PDF
                     </a>
+                    <a asp-action="ExportToExcel" asp-area="Subjects"
+                           asp-route-search="@currentSearch"
+                           asp-route-sort="@currentSort"
+                           asp-route-sortDir="@currentSortDir"
+                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-file-excel text-green-600"></i> Export Excel
+                    </a>
                 </div>
             </div>
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+            @if (HasPerm("subjectofferings.create"))
             {
                 <a asp-action="Create" asp-area="Subjects" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Create New
@@ -129,7 +143,7 @@
                         </div>
                         <div class="text-left">
                             <h2 class="text-base font-bold text-gray-800">@programGroup.ProgramName</h2>
-                            <p class="text-xs text-gray-500">@programGroup.Semesters.Count() semester(s) · @programGroup.Semesters.Sum(s => s.Offerings.Count()) subject(s)</p>
+                            <p class="text-xs text-gray-500">@programGroup.Semesters.Count() semester(s) Ã‚Â· @programGroup.Semesters.Sum(s => s.Offerings.Count()) subject(s)</p>
                         </div>
                     </div>
                     <i class="fas fa-chevron-down text-gray-400 transition-transform"
@@ -219,12 +233,15 @@
                                                 <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                                     <i class="fas fa-eye text-xs"></i>
                                                 </a>
-                                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                                @if (HasPerm("subjectofferings.edit"))
                                                 {
                                                     <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                                         <i class="fas fa-edit text-xs"></i>
                                                     </a>
-                                                    <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                                }
+                                                @if (HasPerm("subjectofferings.delete"))
+                                                {
+                                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                                         <i class="fas fa-trash text-xs"></i>
                                                     </a>
                                                 }
@@ -319,12 +336,15 @@
                                     <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
                                         Details
                                     </a>
-                                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+                                    @if (HasPerm("subjectofferings.edit"))
                                     {
                                         <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-1.5 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                                             Edit
                                         </a>
-                                        <a asp-action="Delete" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                                    }
+                                    @if (HasPerm("subjectofferings.delete"))
+                                    {
+                                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                                             Delete
                                         </a>
                                     }
@@ -346,3 +366,29 @@
 
 
 </div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "SubjectOfferings")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while deleting.');
+                }
+            });
+        }
+    </script>
+}

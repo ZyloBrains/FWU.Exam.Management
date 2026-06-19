@@ -11,6 +11,8 @@ public interface ICollegeProgramService
     Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<CollegeProgram?> GetCollegeProgramByIdAsync(int id);
     Task CreateCollegeProgramAsync(CollegeProgram collegeProgram);
+    Task CreateCollegeProgramsAsync(List<CollegeProgram> collegePrograms);
+    Task<List<int>> GetExistingProgramIdsAsync(int collegeId);
     Task UpdateCollegeProgramAsync(CollegeProgram collegeProgram);
     Task DeleteCollegeProgramAsync(int id);
     Task<bool> CollegeProgramExistsAsync(int id);

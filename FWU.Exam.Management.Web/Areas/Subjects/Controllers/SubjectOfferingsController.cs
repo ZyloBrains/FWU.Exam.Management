@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Web.ViewModels;
@@ -8,11 +9,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("subjectofferings.view")]
 public class SubjectOfferingsController : Controller
 {
     private readonly ISubjectOfferingService _subjectOfferingService;
@@ -63,6 +65,46 @@ public class SubjectOfferingsController : Controller
         var fileName = $"SubjectOfferings_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", fileName);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
+    {
+        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Subject Offerings");
+
+        var headers = new[] { "Subject", "Program", "Semester", "Compulsory", "Theory Marks", "Practical Marks", "Internal Marks" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var s in items)
+        {
+            worksheet.Cell(row, 1).Value = s.SubjectCatalog?.SubjectName ?? "-";
+            worksheet.Cell(row, 2).Value = s.Program?.ProgramName ?? "-";
+            worksheet.Cell(row, 3).Value = s.Semester?.Name ?? "-";
+            worksheet.Cell(row, 4).Value = s.IsCompulsory ? "Yes" : "No";
+            worksheet.Cell(row, 5).Value = s.TheoryFullMarks;
+            worksheet.Cell(row, 6).Value = s.PracticalFullMarks ?? 0;
+            worksheet.Cell(row, 7).Value = (s.InternalTheoryFullMarks ?? 0) + (s.InternalPracticalFullMarks ?? 0);
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"SubjectOfferings_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
@@ -117,6 +159,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjectofferings.create")]
     public async Task<IActionResult> Create(SubjectOfferingBulkCreateViewModel model)
     {
         if (model.ProgramId <= 0)
@@ -172,7 +215,26 @@ public class SubjectOfferingsController : Controller
                 InternalPracticalPassMarks = s.InternalPracticalPassMarks
             }).ToList();
 
-            await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+            try
+            {
+                await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("", "A database error occurred. The subject offering may already exist.");
+                var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync();
+                ViewData["ProgramId"] = new SelectList(progs, "Id", "ProgramName", model.ProgramId);
+                ViewData["SemesterId"] = new SelectList(sems, "Id", "Name", model.SemesterId);
+                ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(cats.Select(s => new
+                {
+                    id = s.Id,
+                    code = s.SubjectCode,
+                    name = s.SubjectName,
+                    type = s.SubjectType?.Name ?? "",
+                    credits = s.CreditHours
+                }));
+                return View(model);
+            }
             TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -194,6 +256,7 @@ public class SubjectOfferingsController : Controller
         return View(model);
     }
 
+    [RequirePermission("subjectofferings.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -251,6 +314,7 @@ public class SubjectOfferingsController : Controller
         return View(subjectOffering);
     }
 
+    [RequirePermission("subjectofferings.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -263,9 +327,18 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjectofferings.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("subjectofferings.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await _subjectOfferingService.DeleteSubjectOfferingAsync(id); return Json(new { success = true, message = "Subject offering deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

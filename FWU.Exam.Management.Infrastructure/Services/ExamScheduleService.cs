@@ -12,15 +12,7 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
     private IQueryable<ExamSchedule> ApplyScope(IQueryable<ExamSchedule> query, int? collegeId, int? facultyId)
     {
         if (collegeId.HasValue)
-        {
-            var programIds = context.CollegePrograms!
-                .Where(cp => cp.CollegeId == collegeId.Value)
-                .Select(cp => cp.ProgramId)
-                .Distinct()
-                .ToList();
-
-            return query.Where(e => programIds.Contains(e.ProgramId));
-        }
+            return query.Where(e => e.CollegeId == null || e.CollegeId == collegeId.Value);
 
         if (facultyId.HasValue)
         {
@@ -29,13 +21,7 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
                 .Select(c => c.Id)
                 .ToList();
 
-            var programIds = context.CollegePrograms!
-                .Where(cp => collegeIds.Contains(cp.CollegeId))
-                .Select(cp => cp.ProgramId)
-                .Distinct()
-                .ToList();
-
-            return query.Where(e => programIds.Contains(e.ProgramId));
+            return query.Where(e => e.CollegeId != null && collegeIds.Contains(e.CollegeId.Value));
         }
 
         return query;

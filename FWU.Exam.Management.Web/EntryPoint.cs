@@ -2,11 +2,14 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
+using FWU.Exam.Management.Infrastructure.Services.Permissions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Data.Seeders;
 using FWU.Exam.Management.Web.Helpers;
+using FWU.Exam.Management.Web.Authorization;
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -123,6 +126,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<IKhaltiService, KhaltiService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddAuthorization();
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
         var app = builder.Build();
 
@@ -168,18 +176,11 @@ public partial class EntryPoint
             await dbContext.Database.MigrateAsync();
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
+            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
             await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
-            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+            await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
-            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
-            //await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
         }
 
         app.Run();

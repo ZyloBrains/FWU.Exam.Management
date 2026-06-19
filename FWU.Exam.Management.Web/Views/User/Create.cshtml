@@ -4,44 +4,49 @@
     ViewData["Title"] = "Create User";
 }
 
-<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center gap-3">
-        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
-            <i class="fas fa-arrow-left text-gray-600"></i>
-        </a>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-user-plus text-blue-600"></i>
+            <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="fas fa-user-plus text-blue-600"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create User</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Fill in the details below to create a new user</p>
+                </div>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create User</h1>
         </div>
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8" x-data="{ role: '@Model.SelectedRole' }">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8" x-data="{ role: '@Model.SelectedRole' }">
         <form asp-action="Create" class="space-y-5">
-            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 
             <!-- Section: Basic Info -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">User Information</h2>
+                <h3 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-2">User Information</h3>
                 <div class="space-y-4">
                     <div>
                         <label asp-for="Email" class="text-sm font-medium text-gray-700"></label>
-                        <input asp-for="Email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email address" />
+                        <input asp-for="Email" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Enter email address" />
                         <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                         <div>
                             <label asp-for="Password" class="text-sm font-medium text-gray-700"></label>
-                            <input asp-for="Password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter password" />
+                            <input asp-for="Password" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Enter password" />
                             <span asp-validation-for="Password" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
                         <div>
                             <label asp-for="ConfirmPassword" class="text-sm font-medium text-gray-700"></label>
-                            <input asp-for="ConfirmPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Confirm password" />
+                            <input asp-for="ConfirmPassword" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Confirm password" />
                             <span asp-validation-for="ConfirmPassword" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
                     </div>
@@ -49,7 +54,7 @@
                     <div>
                         <label asp-for="SelectedRole" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="SelectedRole" x-model="role"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
                             <option value="">-- Select Role --</option>
                             @foreach (var r in ViewBag.RolesList)
                             {
@@ -63,7 +68,7 @@
                     <div x-show="role === '@Role.FacultyAdmin'" x-transition>
                         <label asp-for="FacultyId" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="FacultyId" asp-items="ViewBag.Faculties"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
                             <option value="">-- Select Faculty --</option>
                         </select>
                         <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
@@ -73,7 +78,7 @@
                     <div x-show="role === '@Role.CollegeAdmin' || role === '@Role.Student'" x-transition>
                         <label asp-for="CollegeId" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="CollegeId" asp-items="ViewBag.Colleges"
-                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
                             <option value="">-- Select College --</option>
                         </select>
                         <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
@@ -82,13 +87,13 @@
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
-                    <i class="fas fa-save mr-1"></i> Create
-                </button>
-                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+            <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-gray-200">
+                <a asp-action="Index" class="flex-1 sm:flex-none text-center px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-sm">
                     Cancel
                 </a>
+                <button type="submit" class="flex-1 sm:flex-none text-center px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
             </div>
         </form>
     </div>

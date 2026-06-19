@@ -7,11 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 
 [Area("Subjects")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("subjects.view")]
 public class SubjectCatalogsController : Controller
 {
     private readonly ISubjectCatalogService _subjectCatalogService;
@@ -212,6 +213,45 @@ public class SubjectCatalogsController : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
+    {
+        var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Subject Catalogs");
+
+        var headers = new[] { "Code", "Subject Name", "Short Name", "Credit Hours", "Type", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var s in items)
+        {
+            worksheet.Cell(row, 1).Value = s.SubjectCode ?? "-";
+            worksheet.Cell(row, 2).Value = s.SubjectName ?? "-";
+            worksheet.Cell(row, 3).Value = s.ShortName ?? "-";
+            worksheet.Cell(row, 4).Value = s.CreditHours;
+            worksheet.Cell(row, 5).Value = s.SubjectType?.Name ?? "-";
+            worksheet.Cell(row, 6).Value = s.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"SubjectCatalogs_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
     {
         var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir);
@@ -236,6 +276,7 @@ public class SubjectCatalogsController : Controller
         return View(subjectCatalog);
     }
 
+    [RequirePermission("subjects.create")]
     public async Task<IActionResult> Create()
     {
         var subjectTypes = await _subjectCatalogService.GetSelectListsAsync();
@@ -245,6 +286,7 @@ public class SubjectCatalogsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjects.create")]
     public async Task<IActionResult> Create([Bind("Id,SubjectCode,SubjectName,ShortName,Description,CreditHours,SubjectTypeId,IsActive")] SubjectCatalog subjectCatalog)
     {
         if (ModelState.IsValid)
@@ -257,6 +299,7 @@ public class SubjectCatalogsController : Controller
         return View(subjectCatalog);
     }
 
+    [RequirePermission("subjects.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -271,6 +314,7 @@ public class SubjectCatalogsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjects.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectCode,SubjectName,ShortName,Description,CreditHours,SubjectTypeId,IsActive")] SubjectCatalog subjectCatalog)
     {
         if (id != subjectCatalog.Id) return NotFound();
@@ -294,6 +338,7 @@ public class SubjectCatalogsController : Controller
         return View(subjectCatalog);
     }
 
+    [RequirePermission("subjects.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -306,9 +351,18 @@ public class SubjectCatalogsController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("subjects.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _subjectCatalogService.DeleteSubjectCatalogAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("subjects.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await _subjectCatalogService.DeleteSubjectCatalogAsync(id); return Json(new { success = true, message = "Subject deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

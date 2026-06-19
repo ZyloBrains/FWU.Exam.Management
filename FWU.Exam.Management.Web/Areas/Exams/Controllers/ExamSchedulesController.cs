@@ -1,10 +1,12 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,DepartmentAdmin")]
+[RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
     UserManager<AppUser> userManager,
@@ -100,6 +102,56 @@ public class ExamSchedulesController(
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string search = null)
+    {
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ExamSchedules");
+
+        var headers = new[] { "ID", "Exam Schedule Name", "Code", "Academic Year", "Exam Type", "Start Date (BS)", "End Date (BS)", "Start Date (AD)", "End Date (AD)", "Published Date", "Start Time", "End Time", "Is Active", "Extended Date", "Extended Date Charge", "College Approval Date", "Admission Card Release Date", "Remarks" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.ExamScheduleName ?? string.Empty;
+            worksheet.Cell(row, 3).Value = item.ExamScheduleCode ?? string.Empty;
+            worksheet.Cell(row, 4).Value = item.AcademicYear?.AcademicYearName ?? string.Empty;
+            worksheet.Cell(row, 5).Value = item.ExamType?.Name ?? string.Empty;
+            worksheet.Cell(row, 6).Value = item.StartDateBs ?? string.Empty;
+            worksheet.Cell(row, 7).Value = item.EndDateBs ?? string.Empty;
+            worksheet.Cell(row, 8).Value = item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 9).Value = item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 10).Value = item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 11).Value = item.StartTime.ToString();
+            worksheet.Cell(row, 12).Value = item.EndTime.ToString();
+            worksheet.Cell(row, 13).Value = item.IsActive ? "Yes" : "No";
+            worksheet.Cell(row, 14).Value = item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 15).Value = item.ExtendedDateCharge?.ToString() ?? string.Empty;
+            worksheet.Cell(row, 16).Value = item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 17).Value = item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 18).Value = item.Remarks ?? string.Empty;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ExamSchedules.xlsx");
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -110,6 +162,7 @@ public class ExamSchedulesController(
         return View(examSchedule);
     }
 
+    [RequirePermission("examschedules.create")]
     public IActionResult Create()
     {
         var selectLists = examScheduleService.GetSelectListData();
@@ -118,9 +171,16 @@ public class ExamSchedulesController(
     }
 
     [HttpPost]
+    [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
+        var (collegeId, facultyId) = await GetScopeAsync();
+        if (collegeId.HasValue)
+            examSchedule.CollegeId = collegeId;
+        else if (facultyId.HasValue)
+            examSchedule.CollegeId = null;
+
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
@@ -131,6 +191,7 @@ public class ExamSchedulesController(
         return View(examSchedule);
     }
 
+    [RequirePermission("examschedules.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -144,10 +205,15 @@ public class ExamSchedulesController(
     }
 
     [HttpPost]
+    [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
+
+        var (collegeId, facultyId) = await GetScopeAsync();
+        if (collegeId.HasValue)
+            examSchedule.CollegeId = collegeId;
 
         if (ModelState.IsValid)
         {
@@ -168,6 +234,7 @@ public class ExamSchedulesController(
         return View(examSchedule);
     }
 
+    [RequirePermission("examschedules.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -179,6 +246,7 @@ public class ExamSchedulesController(
     }
 
     [HttpPost, ActionName("Delete")]
+    [RequirePermission("examschedules.delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
@@ -193,4 +261,12 @@ public class ExamSchedulesController(
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
     }
+        [RequirePermission("examschedules.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await examScheduleService.DeleteExamScheduleAsync(id); return Json(new { success = true, message = "Exam schedule deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

@@ -4,14 +4,16 @@
     ViewData["Title"] = "Redirecting to eSewa";
 }
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-md w-full text-center">
-        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-spinner fa-spin text-2xl text-green-600"></i>
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-10 max-w-md w-full text-center">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+            <i class="fas fa-spinner fa-spin text-3xl sm:text-4xl text-green-600"></i>
         </div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">Redirecting to eSewa</h2>
-        <p class="text-sm text-gray-500 mb-6">Please wait while we redirect you to eSewa's secure payment page...</p>
-        <p class="text-xs text-gray-400">Total Amount: <strong>Rs @Model.TotalAmount</strong></p>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Redirecting to eSewa</h2>
+        <p class="text-sm sm:text-base text-gray-500 mb-4">Please wait while we redirect you to eSewa's secure payment page...</p>
+        <p class="text-sm text-gray-400 bg-gray-50 rounded-xl p-3 sm:p-4">
+            Total Amount: <strong class="text-gray-800">Rs @Model.TotalAmount</strong>
+        </p>
 
         <form id="esewaForm" action="@Model.PostUrl" method="POST" class="hidden">
             <input type="text" name="amount" value="@Model.Amount" />

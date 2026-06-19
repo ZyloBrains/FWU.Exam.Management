@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -8,11 +9,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 
 [Area("Payments")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[RequirePermission("billtitles.view")]
 public class BillTitlesController(
     IBillTitleService billTitleService,
     UserManager<AppUser> userManager) : Controller
@@ -90,6 +92,46 @@ public class BillTitlesController(
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
+    {
+        var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("BillTitles");
+
+        var headers = new[] { "Bill Title Name", "Category", "Amount", "Exam Schedule", "Applicable Date", "Through Date", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var bt in items)
+        {
+            worksheet.Cell(row, 1).Value = bt.BillTitleName ?? "";
+            worksheet.Cell(row, 2).Value = bt.Category ?? "-";
+            worksheet.Cell(row, 3).Value = bt.Amount?.ToString("F2") ?? "-";
+            worksheet.Cell(row, 4).Value = bt.ExamSchedule?.ExamScheduleName ?? "-";
+            worksheet.Cell(row, 5).Value = bt.ApplicableDate?.ToString("yyyy-MM-dd") ?? "-";
+            worksheet.Cell(row, 6).Value = bt.ThroughDate?.ToString("yyyy-MM-dd") ?? "-";
+            worksheet.Cell(row, 7).Value = bt.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"BillTitles_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -100,6 +142,7 @@ public class BillTitlesController(
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.create")]
     public async Task<IActionResult> Create()
     {
         var (collegeId, facultyId) = await GetScopeAsync();
@@ -110,6 +153,7 @@ public class BillTitlesController(
         return View();
     }
 
+    [RequirePermission("billtitles.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,PracticalFee,ThroughDate,ApplicableDate,ExamScheduleId,ProgramsId")] BillTitle billTitle)
@@ -127,6 +171,7 @@ public class BillTitlesController(
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -140,6 +185,7 @@ public class BillTitlesController(
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,PracticalFee,ThroughDate,ApplicableDate,ExamScheduleId,ProgramsId")] BillTitle billTitle)
@@ -168,6 +214,7 @@ public class BillTitlesController(
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -178,6 +225,7 @@ public class BillTitlesController(
         return View(billTitle);
     }
 
+    [RequirePermission("billtitles.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -185,4 +233,12 @@ public class BillTitlesController(
         await billTitleService.DeleteBillTitleAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("billtitles.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await billTitleService.DeleteBillTitleAsync(id); return Json(new { success = true, message = "Bill title deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

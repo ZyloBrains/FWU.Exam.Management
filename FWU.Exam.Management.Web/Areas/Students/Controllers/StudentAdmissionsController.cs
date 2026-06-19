@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
@@ -8,11 +9,12 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+[RequirePermission("studentadmissions.view")]
 public class StudentAdmissionsController(IStudentAdmissionService admissionService, IStudentRegistrationService studentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -72,6 +74,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
+    [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create(int? studentRegistrationId = null)
     {
         var collegeIds = await GetUserCollegeIdsAsync();
@@ -106,6 +109,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create(StudentAdmission admission, int? studentRegistrationId)
     {
         if (studentRegistrationId.HasValue)
@@ -162,6 +166,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
+    [RequirePermission("studentadmissions.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -177,6 +182,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission("studentadmissions.edit")]
     public async Task<IActionResult> Edit(int id, StudentAdmission admission)
     {
         if (id != admission.Id) return NotFound();
@@ -203,6 +209,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return View(admission);
     }
 
+    [RequirePermission("studentadmissions.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -215,6 +222,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [RequirePermission("studentadmissions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await admissionService.DeleteAdmissionAsync(id);
@@ -273,6 +281,49 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     }
 
     [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    {
+        var collegeIds = await GetUserCollegeIdsAsync();
+        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : (int?)null;
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("StudentAdmissions");
+
+        var headers = new[] { "S.N.", "College Roll No.", "College", "Program", "Admission Date", "Status", "Active" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        int sn = 1;
+        foreach (var a in items)
+        {
+            worksheet.Cell(row, 1).Value = sn++;
+            worksheet.Cell(row, 2).Value = a.CollegeRollNumber ?? "";
+            worksheet.Cell(row, 3).Value = a.College?.Name ?? "";
+            worksheet.Cell(row, 4).Value = a.Program?.ProgramName ?? "";
+            worksheet.Cell(row, 5).Value = a.AdmissionDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 6).Value = a.IsCompleted ? "Completed" : "Pending";
+            worksheet.Cell(row, 7).Value = a.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        var fileName = $"StudentAdmissions_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
+    [HttpGet]
     public async Task<JsonResult> SearchStudents(string search, int collegeId)
     {
         if (string.IsNullOrWhiteSpace(search) || search.Length < 2)
@@ -318,4 +369,12 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         TempData["SuccessMessage"] = "Admission completed successfully!";
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("studentadmissions.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await admissionService.DeleteAdmissionAsync(id); return Json(new { success = true, message = "Student admission deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

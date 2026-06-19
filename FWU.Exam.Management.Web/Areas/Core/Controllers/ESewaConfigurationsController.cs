@@ -1,15 +1,17 @@
 using System.Text;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities.Payments;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin")]
+[RequirePermission("esewa.view")]
 public class ESewaConfigurationsController(AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
@@ -131,6 +133,43 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ProductCode", string sortDir = "asc")
+    {
+        var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ESewa Configurations");
+
+        var headers = new[] { "Product Code", "Post Url", "Success Url", "Verify Url", "Service Charge Amount" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var s in items)
+        {
+            worksheet.Cell(row, 1).Value = s.ProductCode;
+            worksheet.Cell(row, 2).Value = s.PostUrl;
+            worksheet.Cell(row, 3).Value = s.SuccessUrl;
+            worksheet.Cell(row, 4).Value = s.VerifyUrl;
+            worksheet.Cell(row, 5).Value = s.ServiceChargeAmount;
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"ESewaConfigurations_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -160,6 +199,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -169,6 +209,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,PostUrl,ProductCode,SecretKey,SuccessUrl,ServiceChargeAmount,VerifyUrl")] ESewaConfiguration eSewaConfiguration)
@@ -222,4 +263,11 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
     {
         return context.ESewaConfigurations.Any(e => e.Id == id);
     }
+        [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { var entity = await context.ESewaConfigurations.FindAsync(id); if (entity != null) { context.ESewaConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "eSewa configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }

@@ -1,0 +1,91 @@
+@model FWU.Exam.Management.Domain.Entities.Payments.ConnectIpsPaymentConfiguration
+
+@{
+    ViewData["Title"] = "Create ConnectIPS Configuration";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-credit-card text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Create ConnectIPS Configuration</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Create" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">ConnectIPS Payment Gateway Settings</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="MerchantId" class="text-sm font-medium text-gray-700 block mb-1">MerchantId <span class="text-red-500">*</span></label>
+                        <input asp-for="MerchantId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="MERCHANT_ID" />
+                        <span asp-validation-for="MerchantId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="AppId" class="text-sm font-medium text-gray-700 block mb-1">AppId <span class="text-red-500">*</span></label>
+                        <input asp-for="AppId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="APP_ID" />
+                        <span asp-validation-for="AppId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="AppName" class="text-sm font-medium text-gray-700 block mb-1">AppName <span class="text-red-500">*</span></label>
+                        <input asp-for="AppName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="My App" />
+                        <span asp-validation-for="AppName" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="TransactionCurrency" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="TransactionCurrency" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="NPR" />
+                        <span asp-validation-for="TransactionCurrency" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="GatewayUrl" class="text-sm font-medium text-gray-700 block mb-1">GatewayUrl <span class="text-red-500">*</span></label>
+                        <input asp-for="GatewayUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://connectips.example.com/gateway" />
+                        <span asp-validation-for="GatewayUrl" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="ValidationApiUrl" class="text-sm font-medium text-gray-700 block mb-1">ValidationApiUrl <span class="text-red-500">*</span></label>
+                        <input asp-for="ValidationApiUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://connectips.example.com/api/validate" />
+                        <span asp-validation-for="ValidationApiUrl" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="UsernameForValidationApi" class="text-sm font-medium text-gray-700 block mb-1">UsernameForValidationApi <span class="text-red-500">*</span></label>
+                        <input asp-for="UsernameForValidationApi" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Validation API Username" />
+                        <span asp-validation-for="UsernameForValidationApi" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="PasswordForValidationApi" class="text-sm font-medium text-gray-700 block mb-1">PasswordForValidationApi <span class="text-red-500">*</span></label>
+                        <input asp-for="PasswordForValidationApi" type="password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Validation API Password" />
+                        <span asp-validation-for="PasswordForValidationApi" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="PasswordForCreditorPfx" class="text-sm font-medium text-gray-700 block mb-1">PasswordForCreditorPfx <span class="text-red-500">*</span></label>
+                        <input asp-for="PasswordForCreditorPfx" type="password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Creditor PFX Password" />
+                        <span asp-validation-for="PasswordForCreditorPfx" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Create
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

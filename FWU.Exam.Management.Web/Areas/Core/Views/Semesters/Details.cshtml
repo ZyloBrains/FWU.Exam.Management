@@ -1,10 +1,17 @@
 @model FWU.Exam.Management.Domain.Entities.Semesters.Semester
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Semester Details";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
 }
 
-<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
         <a asp-action="Index" asp-area="Core" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
@@ -57,7 +64,7 @@
 
         <!-- Actions -->
         <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("CollegeAdmin"))
+            @if (HasPerm("semesters.edit"))
             {
                 <a asp-action="Edit" asp-area="Core" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                     <i class="fas fa-edit mr-1"></i> Edit

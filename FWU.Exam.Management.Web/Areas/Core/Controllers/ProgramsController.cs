@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin")]
+[RequirePermission("programs.view")]
 public class ProgramsController(IProgramService programService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
@@ -80,6 +82,53 @@ public class ProgramsController(IProgramService programService) : Controller
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
+    {
+        var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Programs");
+
+        var headers = new[] { "Program Code", "Program Name", "Short Name", "Level", "Faculty", "Board", "Program Period Type", "Duration", "Grand Total Marks", "Has Multiple Intakes", "Number of Seats", "Scholarship Seats", "Roll Number Prefix", "Remarks", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var p in items)
+        {
+            worksheet.Cell(row, 1).Value = p.ProgramCode;
+            worksheet.Cell(row, 2).Value = p.ProgramName;
+            worksheet.Cell(row, 3).Value = p.ShortName;
+            worksheet.Cell(row, 4).Value = p.Level?.LevelName;
+            worksheet.Cell(row, 5).Value = p.Department?.DepartmentCode;
+            worksheet.Cell(row, 6).Value = p.Board?.BoardName;
+            worksheet.Cell(row, 7).Value = "";
+            worksheet.Cell(row, 8).Value = p.Duration;
+            worksheet.Cell(row, 9).Value = p.GrandTotalMarks;
+            worksheet.Cell(row, 10).Value = p.HasMultipleIntakes ? "Yes" : "No";
+            worksheet.Cell(row, 11).Value = p.NumberOfSeats;
+            worksheet.Cell(row, 12).Value = p.ScholarshipSeats;
+            worksheet.Cell(row, 13).Value = p.RollNumberPrefix;
+            worksheet.Cell(row, 14).Value = p.Remarks;
+            worksheet.Cell(row, 15).Value = p.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        var fileName = $"Programs_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -90,6 +139,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.create")]
     public async Task<IActionResult> Create()
     {
         var (boards, departments, levels) = await programService.GetSelectListsAsync();
@@ -99,6 +149,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View();
     }
 
+    [RequirePermission("programs.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
@@ -116,6 +167,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.edit")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -130,6 +182,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
@@ -158,6 +211,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -168,6 +222,7 @@ public class ProgramsController(IProgramService programService) : Controller
         return View(program);
     }
 
+    [RequirePermission("programs.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -175,4 +230,12 @@ public class ProgramsController(IProgramService programService) : Controller
         await programService.DeleteProgramAsync(id);
         return RedirectToAction(nameof(Index));
     }
+        [RequirePermission("programs.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(int id)
+    {
+        try { await programService.DeleteProgramAsync(id); return Json(new { success = true, message = "Program deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
 }
