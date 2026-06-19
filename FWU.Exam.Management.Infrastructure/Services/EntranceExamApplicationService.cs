@@ -7,10 +7,11 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager) : IEntranceExamApplicationService
+public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, ISmsService smsService, ILogger<EntranceExamApplicationService> logger) : IEntranceExamApplicationService
 {
     public async Task<int> SubmitApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
     {
@@ -35,6 +36,13 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
         context.EntranceExamApplications.Add(application);
         await context.SaveChangesAsync();
+
+        var collegeName = await context.Colleges.Where(c => c.Id == application.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
+        var programName = await context.Programs.Where(p => p.Id == application.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
+        var fullName = $"{application.FirstName} {application.MiddleName} {application.LastName}".Replace("  ", " ").Trim();
+        var message = $"Dear {fullName}, your entrance application for {programName ?? "the program"} at {collegeName ?? "the college"} has been submitted successfully. Application ID: {application.Id}. Thank you.";
+        _ = smsService.SendSmsAsync(application.ContactNumber!, message);
+
         return application.Id;
     }
 

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger) : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, ISmsService smsService) : IStudentRegistrationService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -81,6 +81,11 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             await EnsureStudentAppUserAsync(studentRegistration);
 
             await transaction.CommitAsync();
+
+            var fullName = $"{studentRegistration.FirstName} {studentRegistration.MiddleName} {studentRegistration.LastName}".Replace("  ", " ").Trim();
+            var message = $"Dear {fullName}, your registration at FWU has been completed successfully. Registration ID: {studentRegistration.Id}. Thank you.";
+            _ = smsService.SendSmsAsync(studentRegistration.ContactNumber!, message);
+
             return studentRegistration.Id;
         }
         catch

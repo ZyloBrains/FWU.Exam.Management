@@ -6,10 +6,11 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager) : IStudentAdmissionService
+public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, ISmsService smsService, ILogger<StudentAdmissionService> logger) : IStudentAdmissionService
 {
     public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null)
     {
@@ -56,6 +57,11 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
     {
         context.StudentAdmissions.Add(admission);
         await context.SaveChangesAsync();
+
+        var phoneNumber = await GetStudentPhoneByAppUserIdAsync(admission.AppUserId);
+        var programName = await context.Programs.Where(p => p.Id == admission.ProgramsId).Select(p => p.ProgramName).FirstOrDefaultAsync();
+        var message = $"Dear student, your admission for {programName ?? "the program"} has been confirmed. Roll No: {admission.CollegeRollNumber}. Thank you.";
+        _ = smsService.SendSmsAsync(phoneNumber, message);
     }
 
     public async Task UpdateAdmissionAsync(StudentAdmission admission)
@@ -87,7 +93,26 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
             admission.IsCompleted = true;
             admission.CheckedBy = int.TryParse(userId, out var parsed) ? parsed : null;
             await context.SaveChangesAsync();
+
+            var phoneNumber = await GetStudentPhoneByAppUserIdAsync(admission.AppUserId);
+            var programName = await context.Programs.Where(p => p.Id == admission.ProgramsId).Select(p => p.ProgramName).FirstOrDefaultAsync();
+            var message = $"Dear student, your admission for {programName ?? "the program"} has been completed. Roll No: {admission.CollegeRollNumber}. Thank you.";
+            _ = smsService.SendSmsAsync(phoneNumber, message);
         }
+    }
+
+    private async Task<string> GetStudentPhoneByAppUserIdAsync(string? appUserId)
+    {
+        if (string.IsNullOrEmpty(appUserId)) return string.Empty;
+
+        var user = await userManager.FindByIdAsync(appUserId);
+        if (user?.Email == null) return string.Empty;
+
+        var registration = await context.StudentRegistrations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sr => sr.Email == user.Email);
+
+        return registration?.ContactNumber ?? string.Empty;
     }
 
     public async Task<List<Program>> GetCollegeProgramsAsync(int collegeId)

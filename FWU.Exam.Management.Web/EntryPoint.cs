@@ -136,6 +136,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
+        builder.Services.Configure<FWU.Exam.Management.Domain.Configuration.SparrowSmsOptions>(builder.Configuration.GetSection("SparrowSms"));
+        builder.Services.AddHttpClient<ISmsService, SparrowSmsService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

@@ -7,10 +7,11 @@ using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentDashboardService(AppDbContext context) : IStudentDashboardService
+public class StudentDashboardService(AppDbContext context, ISmsService smsService, ILogger<StudentDashboardService> logger) : IStudentDashboardService
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
@@ -253,6 +254,19 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         }
 
         await context.SaveChangesAsync();
+
+        var user = await context.Users.FindAsync(userId);
+        if (user?.Email != null)
+        {
+            var studentReg = await context.StudentRegistrations
+                .AsNoTracking()
+                .FirstOrDefaultAsync(sr => sr.Email == user.Email);
+            if (studentReg?.ContactNumber != null)
+            {
+                var message = $"Dear student, your exam form for {schedule.ExamScheduleName ?? "the exam"} has been submitted successfully. Fee: Rs.{amount:N0}. Thank you.";
+                _ = smsService.SendSmsAsync(studentReg.ContactNumber, message);
+            }
+        }
     }
 
     public async Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId)
