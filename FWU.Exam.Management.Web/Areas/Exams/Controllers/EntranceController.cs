@@ -1,7 +1,7 @@
+using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
-using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -12,7 +12,7 @@ using ClosedXML.Excel;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -91,23 +91,160 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
         }
 
-        var voucher = await service.InitiatePaymentAsync(scheduleId, studentName, contactNumber, paymentTypeId);
-        if (voucher == null)
+        var existing = await service.HasExistingVoucherAsync(scheduleId, studentName, contactNumber);
+        if (existing)
+        {
+            TempData["SuccessMessage"] = "You already have a payment record. Enter your voucher code to continue.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+
+        var schedule = (await service.GetAvailableExamSchedulesAsync()).FirstOrDefault(s => s.Id == scheduleId);
+        var amount = schedule?.ExamFee ?? 1000;
+        var transactionUuid = esewaService.GenerateTransactionUuid();
+
+        var logId = await service.CreateEsewaPaymentLogAsync(scheduleId, studentName, contactNumber, paymentTypeId, transactionUuid);
+        if (logId == 0)
         {
             TempData["ErrorMessage"] = "Unable to process payment. Please try again.";
             return RedirectToAction(nameof(AvailableSchedules));
         }
 
-        TempData["SuccessMessage"] = "Payment recorded successfully! Use the voucher code below to access the entrance form.";
-        return RedirectToAction(nameof(PaymentSuccess), new { voucherId = voucher.Id });
+        TempData["EsewaAmount"] = amount.ToString("F2");
+        TempData["EsewaTransactionUuid"] = transactionUuid;
+
+        return RedirectToAction(nameof(ESewaPayment));
     }
 
     [AllowAnonymous]
-    public async Task<IActionResult> PaymentSuccess(int voucherId)
+    public IActionResult ESewaPayment()
     {
-        var voucher = await service.GetVoucherByIdAsync(voucherId);
-        if (voucher == null) return NotFound();
-        return View(voucher);
+        var amount = decimal.TryParse(TempData["EsewaAmount"] as string, out var amt) ? amt : 1000m;
+        var transactionUuid = TempData["EsewaTransactionUuid"] as string ?? esewaService.GenerateTransactionUuid();
+
+        var successUrl = Url.Action(nameof(ESewaSuccess), "Entrance", new { area = "Exams" }, Request.Scheme);
+        var failureUrl = Url.Action(nameof(ESewaFailure), "Entrance", new { area = "Exams" }, Request.Scheme);
+
+        var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
+
+        return View(formData);
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> ESewaSuccess(string? data)
+    {
+        if (string.IsNullOrEmpty(data))
+        {
+            TempData["ErrorMessage"] = "Payment was processed but no response data was returned. If you completed the payment, please contact support with your transaction details.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+
+        try
+        {
+            var decodedBytes = Convert.FromBase64String(data);
+            var decodedJson = System.Text.Encoding.UTF8.GetString(decodedBytes);
+            var response = JsonSerializer.Deserialize<ESewaVerifyResponse>(decodedJson,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString });
+
+            if (response == null)
+            {
+                TempData["ErrorMessage"] = "Invalid response from eSewa.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+
+            if (!esewaService.VerifyResponseSignature(response, decodedJson))
+            {
+                await LogEsewaCallback(null, response.TransactionCode, false, decodedJson, "Signature verification failed");
+                TempData["ErrorMessage"] = "Signature verification failed.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+
+            var verified = await esewaService.VerifyTransactionAsync(response.TransactionUuid!, response.TotalAmount);
+            var verifyData = verified != null ? JsonSerializer.Serialize(verified) : "null";
+            var combinedData = $"{{\"callback\":{decodedJson},\"verification\":{verifyData}}}";
+
+            if (verified == null || verified.Status != "COMPLETE")
+            {
+                await LogEsewaCallback(null, response.TransactionCode, false, combinedData, "Transaction verification failed");
+                TempData["ErrorMessage"] = "Transaction verification failed.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+
+            var logId = await service.GetPaymentLogIdByTransactionUuidAsync(response.TransactionUuid!);
+            if (logId == null)
+            {
+                await LogEsewaCallback(null, response.TransactionCode, true, combinedData, "Payment log not found");
+                TempData["ErrorMessage"] = "Payment log not found. Please contact support.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+
+            var voucher = await service.CompleteEsewaPaymentAsync(logId.Value, response.TotalAmount);
+            if (voucher == null)
+            {
+                await LogEsewaCallback(logId, response.TransactionCode, false, combinedData, "Failed to record payment");
+                TempData["ErrorMessage"] = "Failed to record payment. Please contact support.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+
+            await LogEsewaCallback(logId, response.TransactionCode, true, combinedData, "Payment verified via eSewa");
+
+            TempData["SuccessMessage"] = "Payment successful!";
+            TempData["TransactionCode"] = response.TransactionCode;
+            TempData["TransactionUuid"] = response.TransactionUuid;
+            TempData["VoucherNumber"] = voucher.VoucherNumber;
+            TempData["VoucherId"] = voucher.Id;
+
+            return RedirectToAction(nameof(PaymentSuccess));
+        }
+        catch (FormatException)
+        {
+            TempData["ErrorMessage"] = "Invalid response format from eSewa. Please try again.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+        catch
+        {
+            TempData["ErrorMessage"] = "Failed to process eSewa callback.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+    }
+
+    private async Task LogEsewaCallback(int? logId, string? transactionCode, bool isSuccess, string responseData, string? message)
+    {
+        if (logId.HasValue)
+        {
+            await service.LogEsewaResponseAsync(logId.Value, transactionCode, isSuccess, responseData, message);
+        }
+        else
+        {
+            var uuid = "";
+            try
+            {
+                var doc = System.Text.Json.JsonDocument.Parse(responseData);
+                uuid = doc.RootElement.TryGetProperty("callback", out var callback)
+                    ? callback.TryGetProperty("transaction_uuid", out var tu) ? tu.GetString() ?? "" : ""
+                    : doc.RootElement.TryGetProperty("transaction_uuid", out var tu2) ? tu2.GetString() ?? "" : "";
+            }
+            catch { }
+
+            if (!string.IsNullOrEmpty(uuid))
+            {
+                var lid = await service.GetPaymentLogIdByTransactionUuidAsync(uuid);
+                if (lid.HasValue)
+                    await service.LogEsewaResponseAsync(lid.Value, transactionCode, isSuccess, responseData, message);
+            }
+        }
+    }
+
+    [AllowAnonymous]
+    public IActionResult ESewaFailure()
+    {
+        TempData["ErrorMessage"] = "Payment was cancelled or failed. Please try again.";
+        return RedirectToAction(nameof(VerifyPayment));
+    }
+
+    [AllowAnonymous]
+    public IActionResult PaymentSuccess()
+    {
+        return View();
     }
 
     [AllowAnonymous]

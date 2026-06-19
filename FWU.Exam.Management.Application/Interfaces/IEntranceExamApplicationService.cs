@@ -25,6 +25,11 @@ public interface IEntranceExamApplicationService
     Task<int> ConvertToAdmissionAsync(int applicationId);
     Task<bool> IsExamScheduleOpenAsync(int programId, int collegeId, int academicYearId);
     Task<ApplicationVoucher?> VerifyPaymentAsync(string transactionCode, string fullName, string contactNumber);
+    Task<bool> HasExistingVoucherAsync(int scheduleId, string studentName, string contactNumber);
+    Task<int> CreateEsewaPaymentLogAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId, string transactionUuid);
+    Task<int?> GetPaymentLogIdByTransactionUuidAsync(string transactionUuid);
+    Task<ApplicationVoucher?> CompleteEsewaPaymentAsync(int logId, decimal amount);
+    Task LogEsewaResponseAsync(int logId, string? transactionCode, bool isSuccess, string responseData, string? responseMessage = null);
     Task<EntranceExamApplicationSelectListsDto> GetStepFormSelectListsAsync();
     Task<int> SubmitStepApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber, int voucherId);
     Task<List<SelectOption>> GetDistrictsAsync();

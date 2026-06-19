@@ -1,4 +1,3 @@
-@model ApplicationVoucher
 @{
     ViewData["Title"] = "Payment Successful";
 }
@@ -7,11 +6,11 @@
     <div class="max-w-lg mx-auto px-4">
 
         <div class="text-center mb-8">
-            <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce">
+            <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <i class="fas fa-check text-3xl text-white"></i>
             </div>
             <h1 class="text-2xl font-bold text-gray-800">Payment Successful!</h1>
-            <p class="text-gray-500 mt-1">Your payment has been recorded. Use the voucher code below to access the entrance application form.</p>
+            <p class="text-gray-500 mt-1">Your payment has been processed. Use the voucher code below to access the entrance application form.</p>
         </div>
 
         @if (TempData["SuccessMessage"] != null)
@@ -21,41 +20,39 @@
             </div>
         }
 
+        <!-- Transaction Code -->
+        @if (TempData["TransactionCode"] is string txnCode)
+        {
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 px-6 py-4 mb-4">
+                <p class="text-xs text-gray-500 font-medium mb-1">Transaction Code (eSewa)</p>
+                <p class="text-lg font-bold text-gray-800 select-all">@txnCode</p>
+            </div>
+        }
+
+        @if (TempData["TransactionUuid"] is string txnUuid)
+        {
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 px-6 py-4 mb-4">
+                <p class="text-xs text-gray-500 font-medium mb-1">Transaction UUID</p>
+                <p class="text-sm font-mono text-gray-700 select-all">@txnUuid</p>
+            </div>
+        }
+
         <!-- Voucher Card -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-dashed border-teal-300">
             <div class="px-6 py-5 bg-gradient-to-r from-teal-600 to-cyan-600 text-center">
                 <h2 class="text-sm font-medium text-teal-100 uppercase tracking-wider">Your Voucher Code</h2>
             </div>
             <div class="px-6 py-8 text-center">
-                <div class="inline-block bg-gray-50 rounded-xl px-8 py-4 border border-gray-200">
-                    <p class="text-3xl font-bold tracking-widest text-teal-700 select-all">@Model.VoucherNumber</p>
-                </div>
+                @if (TempData["VoucherNumber"] is string vchNumber)
+                {
+                    <div class="inline-block bg-gray-50 rounded-xl px-8 py-4 border border-gray-200">
+                        <p class="text-3xl font-bold tracking-widest text-teal-700 select-all">@vchNumber</p>
+                    </div>
+                }
                 <p class="text-xs text-gray-400 mt-3">
                     <i class="fas fa-info-circle mr-1"></i>
                     Copy this code and keep it safe. You will need it to access the application form.
                 </p>
-            </div>
-        </div>
-
-        <!-- Details -->
-        <div class="mt-6 bg-white rounded-2xl shadow-sm border border-gray-200 px-6 py-5">
-            <div class="space-y-3 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Name</span>
-                    <span class="font-medium text-gray-800">@Model.StudentName</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Phone</span>
-                    <span class="font-medium text-gray-800">@Model.ContactNumber</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Amount</span>
-                    <span class="font-bold text-teal-700">Rs. @Model.Amount.ToString("N0")</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Date</span>
-                    <span class="font-medium text-gray-800">@Model.VoucherDate?.ToString("MMM dd, yyyy h:mm tt")</span>
-                </div>
             </div>
         </div>
 
@@ -73,13 +70,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(function () {
-                document.querySelector('.animate-bounce')?.classList.remove('animate-bounce');
-            }, 2000);
-        });
-    </script>
-}

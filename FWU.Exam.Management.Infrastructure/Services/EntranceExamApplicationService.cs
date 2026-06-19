@@ -484,6 +484,97 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .ToListAsync();
     }
 
+    public async Task<bool> HasExistingVoucherAsync(int scheduleId, string studentName, string contactNumber)
+    {
+        return await context.ApplicationVouchers
+            .AnyAsync(v => v.ExamScheduleId == scheduleId
+                && v.StudentName == studentName
+                && v.ContactNumber == contactNumber);
+    }
+
+    public async Task<int> CreateEsewaPaymentLogAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId, string transactionUuid)
+    {
+        var schedule = await context.ExamSchedules.FindAsync(scheduleId);
+        if (schedule == null || !schedule.IsActive || schedule.ExamFee == null)
+            return 0;
+
+        var paymentRequest = new PaymentRequestLog
+        {
+            TenantId = schedule.TenantId,
+            InvoiceNumber = transactionUuid,
+            FullName = studentName,
+            MobileNumber = contactNumber,
+            FullRequestContent = "{}",
+            Amount = schedule.ExamFee.Value,
+            ForwardedTimestamp = DateTime.UtcNow,
+            PaymentTypeId = paymentTypeId,
+            ExamScheduleId = scheduleId,
+            StudentCount = 1
+        };
+
+        context.PaymentRequestLogs.Add(paymentRequest);
+        await context.SaveChangesAsync();
+        return paymentRequest.Id;
+    }
+
+    public async Task<int?> GetPaymentLogIdByTransactionUuidAsync(string transactionUuid)
+    {
+        var log = await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.InvoiceNumber == transactionUuid);
+        return log?.Id;
+    }
+
+    public async Task LogEsewaResponseAsync(int logId, string? transactionCode, bool isSuccess, string responseData, string? responseMessage = null)
+    {
+        var log = await context.Set<PaymentRequestLog>().FindAsync(logId);
+        if (log == null) return;
+
+        log.TransactionId = transactionCode;
+        log.PaymentRequestLogStatus = isSuccess ? 1 : 0;
+
+        context.Set<PaymentResponseLog>().Add(new PaymentResponseLog
+        {
+            PaymentRequestLogId = logId,
+            IsSuccess = isSuccess,
+            ResponseMessage = responseMessage,
+            FullResponse = responseData,
+            ResponseTimestamp = DateTime.UtcNow
+        });
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<ApplicationVoucher?> CompleteEsewaPaymentAsync(int logId, decimal amount)
+    {
+        var log = await context.Set<PaymentRequestLog>().FindAsync(logId);
+        if (log == null) return null;
+
+        var schedule = await context.ExamSchedules.FindAsync(log.ExamScheduleId);
+        if (schedule == null) return null;
+
+        var voucherNumber = $"VCH-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+
+        log.PaymentRequestLogStatus = 1;
+
+        var voucher = new ApplicationVoucher
+        {
+            TenantId = schedule.TenantId,
+            VoucherNumber = voucherNumber,
+            StudentName = log.FullName,
+            ContactNumber = log.MobileNumber,
+            Amount = amount,
+            VoucherDate = DateTime.UtcNow,
+            Timestamp = DateTime.UtcNow,
+            ExamScheduleId = log.ExamScheduleId
+        };
+
+        context.ApplicationVouchers.Add(voucher);
+        await context.SaveChangesAsync();
+
+        return voucher;
+    }
+
     public async Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId)
     {
         var schedule = await context.ExamSchedules.FindAsync(scheduleId);
