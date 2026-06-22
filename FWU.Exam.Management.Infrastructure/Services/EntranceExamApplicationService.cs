@@ -14,6 +14,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager) : IEntranceExamApplicationService
 {
+    private const int EntranceExamTypeCode = 4;
+
     public async Task<int> SubmitApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
     {
         if (!string.IsNullOrEmpty(permanentLocalLevelId))
@@ -58,6 +60,26 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Include(a => a.ApplicationVoucher)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task<EntranceExamApplication?> GetApplicationByVoucherIdAsync(int voucherId)
+    {
+        return await context.EntranceExamApplications
+            .Include(a => a.AcademicYear)
+            .Include(a => a.College)
+            .Include(a => a.Program)
+            .Include(a => a.Gender)
+            .Include(a => a.PermanentAddress)
+                .ThenInclude(pa => pa != null ? pa.LocalLevel : null)
+                    .ThenInclude(ll => ll != null ? ll.District : null)
+                        .ThenInclude(d => d != null ? d.Province : null)
+            .Include(a => a.PreviousLevel)
+            .Include(a => a.PreviousLevel2)
+            .Include(a => a.PreviousLevel3)
+            .Include(a => a.CitizenshipDistrict)
+            .Include(a => a.ApplicationVoucher)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.ApplicationVoucherId == voucherId);
     }
 
     public async Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize)
@@ -318,13 +340,18 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     public async Task<bool> IsExamScheduleOpenAsync(int programId, int collegeId, int academicYearId)
     {
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
+        var entranceTypeId = await context.ExamTypes
+            .Where(et => et.Code == EntranceExamTypeCode)
+            .Select(et => et.Id)
+            .FirstOrDefaultAsync();
         return await context.ExamSchedules
             .AnyAsync(es => es.ProgramId == programId
                 && es.CollegeId == collegeId
                 && es.AcademicYearId == academicYearId
                 && es.IsActive
                 && es.StartDate <= now
-                && es.EndDate >= now);
+                && es.EndDate >= now
+                && es.ExamTypeId == entranceTypeId);
     }
 
     public async Task<ApplicationVoucher?> VerifyPaymentAsync(string transactionCode, string fullName, string contactNumber)
@@ -448,6 +475,103 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         return application.Id;
     }
 
+    public async Task<int> UpdateStepApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber, int voucherId, int applicationId)
+    {
+        var existing = await context.EntranceExamApplications
+            .Include(a => a.PermanentAddress)
+            .FirstOrDefaultAsync(a => a.Id == applicationId)
+            ?? throw new InvalidOperationException("Application not found.");
+
+        if (existing.Status != ApplicationStatus.Submitted && existing.Status != ApplicationStatus.Rejected)
+            throw new InvalidOperationException("Application cannot be edited in its current state.");
+
+        existing.AcademicYearId = application.AcademicYearId;
+        existing.CollegeId = application.CollegeId;
+        existing.ProgramId = application.ProgramId;
+        existing.FirstName = application.FirstName;
+        existing.MiddleName = application.MiddleName;
+        existing.LastName = application.LastName;
+        existing.NepaliName = application.NepaliName;
+        existing.DateOfBirthBS = application.DateOfBirthBS;
+        existing.DateOfBirthAD = application.DateOfBirthAD;
+        existing.GenderId = application.GenderId;
+        existing.Email = application.Email;
+        existing.ContactNumber = application.ContactNumber;
+        existing.Phone = application.Phone;
+        existing.FatherName = application.FatherName;
+        existing.FatherContact = application.FatherContact;
+        existing.FatherProfession = application.FatherProfession;
+        existing.MotherName = application.MotherName;
+        existing.MotherContact = application.MotherContact;
+        existing.MotherProfession = application.MotherProfession;
+        existing.GuardianEmail = application.GuardianEmail;
+        existing.CitizenshipNo = application.CitizenshipNo;
+        existing.CitizenshipDistrictId = application.CitizenshipDistrictId;
+        existing.CitizenshipIssueDateBs = application.CitizenshipIssueDateBs;
+        existing.CitizenshipIssueDateAd = application.CitizenshipIssueDateAd;
+        existing.BloodGroup = application.BloodGroup;
+        existing.BirthPlace = application.BirthPlace;
+        existing.Country = application.Country;
+        existing.PostalCode = application.PostalCode;
+        existing.PreviousLevelId = application.PreviousLevelId;
+        existing.PreviousSchoolCollege = application.PreviousSchoolCollege;
+        existing.PreviousPassedYear = application.PreviousPassedYear;
+        existing.PreviousSymbolNumber = application.PreviousSymbolNumber;
+        existing.PreviousGPA = application.PreviousGPA;
+        existing.PreviousDivision = application.PreviousDivision;
+        existing.PreviousLevel2Id = application.PreviousLevel2Id;
+        existing.PreviousSchoolCollege2 = application.PreviousSchoolCollege2;
+        existing.PreviousBoard2 = application.PreviousBoard2;
+        existing.PreviousSymbolNumber2 = application.PreviousSymbolNumber2;
+        existing.PreviousPassedYear2 = application.PreviousPassedYear2;
+        existing.PreviousGPA2 = application.PreviousGPA2;
+        existing.PreviousDivision2 = application.PreviousDivision2;
+        existing.PreviousLevel3Id = application.PreviousLevel3Id;
+        existing.PreviousSchoolCollege3 = application.PreviousSchoolCollege3;
+        existing.PreviousBoard3 = application.PreviousBoard3;
+        existing.PreviousSymbolNumber3 = application.PreviousSymbolNumber3;
+        existing.PreviousPassedYear3 = application.PreviousPassedYear3;
+        existing.PreviousGPA3 = application.PreviousGPA3;
+        existing.PreviousDivision3 = application.PreviousDivision3;
+
+        if (existing.Status == ApplicationStatus.Rejected)
+            existing.Status = ApplicationStatus.Submitted;
+
+        if (!string.IsNullOrEmpty(permanentLocalLevelId))
+        {
+            var newAddress = new Address
+            {
+                LocalLevelId = int.Parse(permanentLocalLevelId),
+                WardNumber = string.IsNullOrEmpty(permanentWardNumber) ? null : int.Parse(permanentWardNumber),
+                ToleStreet = permanentToleStreet,
+                HouseNumber = permanentHouseNumber,
+                AddressType = AddressType.Permanent,
+                IsActive = true
+            };
+
+            if (existing.PermanentAddressId.HasValue)
+            {
+                context.Addresses.Remove(existing.PermanentAddress!);
+            }
+
+            context.Addresses.Add(newAddress);
+            await context.SaveChangesAsync();
+            existing.PermanentAddressId = newAddress.Id;
+        }
+
+        if (!string.IsNullOrEmpty(application.PhotoPath))
+            existing.PhotoPath = application.PhotoPath;
+
+        if (!string.IsNullOrEmpty(application.DocumentsPath))
+            existing.DocumentsPath = application.DocumentsPath;
+
+        if (!string.IsNullOrEmpty(application.VoucherPath))
+            existing.VoucherPath = application.VoucherPath;
+
+        await context.SaveChangesAsync();
+        return existing.Id;
+    }
+
     public async Task<List<SelectOption>> GetDistrictsAsync()
     {
         return await context.Districts
@@ -467,12 +591,16 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     public async Task<List<AvailableScheduleDto>> GetAvailableExamSchedulesAsync()
     {
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
+        var entranceTypeId = await context.ExamTypes
+            .Where(et => et.Code == EntranceExamTypeCode)
+            .Select(et => et.Id)
+            .FirstOrDefaultAsync();
         return await context.ExamSchedules
             .Include(es => es.Program)
             .Include(es => es.College)
             .Include(es => es.AcademicYear)
             .Include(es => es.Semester)
-            .Where(es => es.IsActive && es.EndDate >= now && es.ExamFee != null)
+            .Where(es => es.IsActive && es.EndDate >= now && es.ExamFee != null && es.ExamTypeId == entranceTypeId)
             .OrderBy(es => es.EndDate)
             .Select(es => new AvailableScheduleDto
             {
@@ -495,6 +623,11 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     {
         return await context.ApplicationVouchers
             .Include(v => v.ExamSchedule)
+                .ThenInclude(es => es!.Program)
+            .Include(v => v.ExamSchedule)
+                .ThenInclude(es => es!.College)
+            .Include(v => v.ExamSchedule)
+                .ThenInclude(es => es!.AcademicYear)
             .AsNoTracking()
             .FirstOrDefaultAsync(v => v.Id == voucherId);
     }

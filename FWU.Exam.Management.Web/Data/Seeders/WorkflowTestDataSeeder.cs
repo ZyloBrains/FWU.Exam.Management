@@ -301,10 +301,11 @@ public static class WorkflowTestDataSeeder
             new ExamType { Name = "Regular", Code = 1, IsActive = true },
             new ExamType { Name = "Partial", Code = 2, IsActive = true },
             new ExamType { Name = "Supplementary", Code = 3, IsActive = true },
+            new ExamType { Name = "Entrance", Code = 4, IsActive = true },
         };
         await context.ExamTypes.AddRangeAsync(examTypes);
         await context.SaveChangesAsync();
-        var regularExamType = examTypes[0];
+        var entranceExamType = examTypes[3];
 
         // ===================================================================
         // 15. BOARDS
@@ -539,15 +540,16 @@ public static class WorkflowTestDataSeeder
             ProgramId = csitProgram.Id,
             SemesterId = sem1.Id,
             AcademicYearId = runningYear.Id,
-            ExamTypeId = regularExamType.Id,
+            ExamTypeId = entranceExamType.Id,
             LevelId = bachelorLevel.Id,
             StartDateBs = "2081-10-01",
             EndDateBs = "2081-10-15",
-            StartDate = new DateOnly(2025, 1, 14),
-            EndDate = new DateOnly(2025, 1, 28),
+            StartDate = new DateOnly(2026, 7, 14),
+            EndDate = new DateOnly(2026, 8, 28),
             StartTime = new TimeOnly(7, 0),
             EndTime = new TimeOnly(10, 0),
-            IsActive = true
+            IsActive = true,
+            ExamFee = 1500m
         };
         context.ExamSchedules.Add(csitExamSchedule);
 
@@ -559,15 +561,16 @@ public static class WorkflowTestDataSeeder
             ProgramId = baProgram.Id,
             SemesterId = sem1.Id,
             AcademicYearId = runningYear.Id,
-            ExamTypeId = regularExamType.Id,
+            ExamTypeId = entranceExamType.Id,
             LevelId = bachelorLevel.Id,
             StartDateBs = "2081-11-01",
             EndDateBs = "2081-11-15",
-            StartDate = new DateOnly(2025, 2, 14),
-            EndDate = new DateOnly(2025, 2, 28),
+            StartDate = new DateOnly(2026, 8, 14),
+            EndDate = new DateOnly(2026, 9, 28),
             StartTime = new TimeOnly(7, 0),
             EndTime = new TimeOnly(10, 0),
-            IsActive = true
+            IsActive = true,
+            ExamFee = 1200m
         };
         context.ExamSchedules.Add(baExamSchedule);
         await context.SaveChangesAsync();

@@ -273,8 +273,14 @@ public static class DemoDataSeeder
             {
                 new ExamType { Name = "Regular", Code = 1, IsActive = true },
                 new ExamType { Name = "Partial", Code = 2, IsActive = true },
-                new ExamType { Name = "Supplementary", Code = 3, IsActive = true }, 
+                new ExamType { Name = "Supplementary", Code = 3, IsActive = true },
+                new ExamType { Name = "Entrance", Code = 4, IsActive = true },
             });
+            await context.SaveChangesAsync();
+        }
+        else if (!await context.ExamTypes.AnyAsync(et => et.Name == "Entrance"))
+        {
+            context.ExamTypes.Add(new ExamType { Name = "Entrance", Code = 4, IsActive = true });
             await context.SaveChangesAsync();
         }
 
@@ -518,10 +524,10 @@ public static class DemoDataSeeder
             var runningYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
             var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
             var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
-            var regularExamType = await context.ExamTypes.FirstOrDefaultAsync(et => et.Name == "Regular");
+            var entranceExamType = await context.ExamTypes.FirstOrDefaultAsync(et => et.Name == "Entrance");
             var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
 
-            if (runningYear != null && bbaProgram != null && firstSemester != null && regularExamType != null)
+            if (runningYear != null && bbaProgram != null && firstSemester != null && entranceExamType != null)
             {
                 var examSchedule = new ExamSchedule
                 {
@@ -530,15 +536,16 @@ public static class DemoDataSeeder
                     ProgramId = bbaProgram.Id,
                     SemesterId = firstSemester.Id,
                     AcademicYearId = runningYear.Id,
-                    ExamTypeId = regularExamType.Id,
+                    ExamTypeId = entranceExamType.Id,
                     LevelId = bachelorLevel?.Id,
                     StartDateBs = "2081-10-01",
                     EndDateBs = "2081-10-15",
-                    StartDate = new DateOnly(2025, 1, 14),
-                    EndDate = new DateOnly(2025, 1, 28),
+                    StartDate = new DateOnly(2026, 7, 14),
+                    EndDate = new DateOnly(2026, 8, 28),
                     StartTime = new TimeOnly(7, 0),
                     EndTime = new TimeOnly(10, 0),
-                    IsActive = true
+                    IsActive = true,
+                    ExamFee = 1500m
                 };
                 context.ExamSchedules.Add(examSchedule);
                 await context.SaveChangesAsync();

@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,7 @@ using ClosedXML.Excel;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -260,22 +261,44 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var selectLists = await service.GetStepFormSelectListsAsync();
         PopulateStepSelectLists(selectLists);
 
+        var schedule = voucher.ExamSchedule;
         ViewBag.VoucherId = voucherId;
         ViewBag.VoucherNumber = voucher.VoucherNumber;
         ViewBag.EntranceFee = voucher.Amount;
+        ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
+        ViewBag.SelectedCollege = schedule?.College?.Name;
+        ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+
+        // Check for existing application linked to this voucher
+        var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
+        if (existing != null)
+        {
+            if (existing.Status == ApplicationStatus.Approved || existing.Status == ApplicationStatus.UnderReview)
+            {
+                TempData["InfoMessage"] = $"This application is already {existing.Status.ToString().ToLower()} and cannot be edited.";
+                return RedirectToAction(nameof(Confirmation), new { id = existing.Id });
+            }
+
+            ViewBag.IsEditing = true;
+            ViewBag.ExistingStatus = existing.Status.ToString();
+            return View(existing);
+        }
 
         return View(new EntranceExamApplication
         {
             ApplicationVoucherId = voucherId,
             PaymentVerified = true,
-            CollegeId = voucher.ExamSchedule?.CollegeId ?? 0
+            AcademicYearId = schedule?.AcademicYearId ?? 0,
+            CollegeId = schedule?.CollegeId ?? 0,
+            ProgramId = schedule?.ProgramId ?? 0
         });
     }
 
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApplyStep([Bind("AcademicYearId,CollegeId,ProgramId,FirstName,MiddleName,LastName,NepaliName,DateOfBirthBS,DateOfBirthAD,GenderId,Email,ContactNumber,Phone,FatherName,FatherContact,MotherName,MotherContact,GuardianEmail,FatherProfession,MotherProfession,CitizenshipNo,CitizenshipDistrictId,CitizenshipIssueDateBs,CitizenshipIssueDateAd,BloodGroup,BirthPlace,Country,PostalCode,PreviousSchoolCollege,PreviousLevelId,PreviousPassedYear,PreviousSymbolNumber,PreviousGPA,PreviousDivision,PreviousLevel2Id,PreviousSchoolCollege2,PreviousBoard2,PreviousSymbolNumber2,PreviousPassedYear2,PreviousGPA2,PreviousDivision2,PreviousLevel3Id,PreviousSchoolCollege3,PreviousBoard3,PreviousSymbolNumber3,PreviousPassedYear3,PreviousGPA3,PreviousDivision3")] EntranceExamApplication application, int voucherId)
+    public async Task<IActionResult> ApplyStep([Bind("AcademicYearId,CollegeId,ProgramId,FirstName,MiddleName,LastName,NepaliName,DateOfBirthBS,DateOfBirthAD,GenderId,Email,ContactNumber,Phone,FatherName,FatherContact,MotherName,MotherContact,GuardianEmail,FatherProfession,MotherProfession,CitizenshipNo,CitizenshipDistrictId,CitizenshipIssueDateBs,CitizenshipIssueDateAd,BloodGroup,BirthPlace,Country,PostalCode,PreviousSchoolCollege,PreviousLevelId,PreviousPassedYear,PreviousSymbolNumber,PreviousGPA,PreviousDivision,PreviousLevel2Id,PreviousSchoolCollege2,PreviousBoard2,PreviousSymbolNumber2,PreviousPassedYear2,PreviousGPA2,PreviousDivision2,PreviousLevel3Id,PreviousSchoolCollege3,PreviousBoard3,PreviousSymbolNumber3,PreviousPassedYear3,PreviousGPA3,PreviousDivision3")] EntranceExamApplication application, int voucherId,
+        IFormFile? PhotoFile, IFormFile? DocumentsFile, IFormFile? VoucherFile)
     {
         var selectLists = await service.GetStepFormSelectListsAsync();
 
@@ -284,15 +307,77 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var permanentToleStreet = Request.Form["ToleStreet"].ToString();
         var permanentHouseNumber = Request.Form["HouseNumber"].ToString();
 
+        // Validate file uploads
+        var fileErrors = ValidateUploadedFiles(PhotoFile, DocumentsFile, VoucherFile);
+        foreach (var error in fileErrors)
+            ModelState.AddModelError("", error);
+
         if (ModelState.IsValid)
         {
+            // Handle file uploads
+            application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
+            application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
+            application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers");
+
+            // Check if editing an existing application
+            var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
+            if (existing != null && (existing.Status == ApplicationStatus.Submitted || existing.Status == ApplicationStatus.Rejected))
+            {
+                await service.UpdateStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId, existing.Id);
+                TempData["SuccessMessage"] = "Application updated successfully.";
+                return RedirectToAction(nameof(Confirmation), new { id = existing.Id });
+            }
+
             var id = await service.SubmitStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId);
             return RedirectToAction(nameof(Confirmation), new { id });
         }
 
         PopulateStepSelectLists(selectLists);
         ViewBag.VoucherId = voucherId;
+
+        var schedule = (await service.GetVoucherByIdAsync(voucherId))?.ExamSchedule;
+        ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
+        ViewBag.SelectedCollege = schedule?.College?.Name;
+        ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+
         return View(application);
+    }
+
+    private List<string> ValidateUploadedFiles(IFormFile? photo, IFormFile? documents, IFormFile? voucher)
+    {
+        var errors = new List<string>();
+        var allowedImageExts = new[] { ".jpg", ".jpeg", ".png" };
+        var allowedDocExts = new[] { ".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx" };
+        var maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (photo != null && photo.Length > 0)
+        {
+            var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
+            if (!allowedImageExts.Contains(ext))
+                errors.Add("Photo must be a JPG or PNG file.");
+            if (photo.Length > maxSize)
+                errors.Add("Photo must be less than 5MB.");
+        }
+
+        if (documents != null && documents.Length > 0)
+        {
+            var ext = Path.GetExtension(documents.FileName).ToLowerInvariant();
+            if (!allowedDocExts.Contains(ext))
+                errors.Add("Documents must be PDF, JPG, PNG, or DOC/DOCX file.");
+            if (documents.Length > maxSize)
+                errors.Add("Documents must be less than 5MB.");
+        }
+
+        if (voucher != null && voucher.Length > 0)
+        {
+            var ext = Path.GetExtension(voucher.FileName).ToLowerInvariant();
+            if (!allowedDocExts.Contains(ext))
+                errors.Add("Voucher must be PDF, JPG, or DOC/DOCX file.");
+            if (voucher.Length > maxSize)
+                errors.Add("Voucher must be less than 5MB.");
+        }
+
+        return errors;
     }
 
     [AllowAnonymous]
@@ -509,7 +594,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         if (ModelState.IsValid)
         {
-            model.ExamTypeId = sl.ExamTypes.FirstOrDefault()?.Id ?? 1;
+            model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
             model.ExamScheduleCode ??= $"ENT-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
             await examScheduleService.CreateExamScheduleAsync(model);
@@ -546,6 +631,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         if (ModelState.IsValid)
         {
+            model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             await examScheduleService.UpdateExamScheduleAsync(model);
             TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
             return RedirectToAction(nameof(AdminList));

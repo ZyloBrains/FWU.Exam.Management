@@ -34,6 +34,8 @@ public interface IEntranceExamApplicationService
     Task<int> SubmitStepApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber, int voucherId);
     Task<List<SelectOption>> GetDistrictsAsync();
     Task<decimal?> GetEntranceFeeForProgramAsync(int programId, int academicYearId);
+    Task<EntranceExamApplication?> GetApplicationByVoucherIdAsync(int voucherId);
+    Task<int> UpdateStepApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber, int voucherId, int applicationId);
     Task<List<AvailableScheduleDto>> GetAvailableExamSchedulesAsync();
     Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId);
     Task<ApplicationVoucher?> GetVoucherByIdAsync(int voucherId);
