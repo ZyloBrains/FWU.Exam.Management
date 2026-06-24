@@ -545,22 +545,12 @@ public class StudentDashboardController(
             var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
             if (paymentLog == null) return;
 
-            var schedule = await dashboardService.GetExamScheduleByIdAsync(paymentLog.ExamScheduleId);
-            if (schedule == null) return;
-
-            var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(paymentLog.ExamScheduleId);
-            var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
-            var isRegular = failedSubjectIds.Count == 0;
-
-            List<int> subjectIds;
-            if (isRegular)
-            {
-                subjectIds = subjects.Where(s => s.IsCompulsory).Select(s => s.Id).ToList();
-            }
-            else
-            {
-                subjectIds = failedSubjectIds;
-            }
+            var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
+                ? new List<int>()
+                : paymentLog.SelectedSubjectIds
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(int.Parse)
+                    .ToList();
 
             if (subjectIds.Count == 0) return;
 

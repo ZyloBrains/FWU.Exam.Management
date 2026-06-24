@@ -321,7 +321,8 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
-            StudentCount = subjectOfferingIds.Count
+            StudentCount = subjectOfferingIds.Count,
+            SelectedSubjectIds = string.Join(",", subjectOfferingIds)
         };
 
         context.Set<PaymentRequestLog>().Add(log);

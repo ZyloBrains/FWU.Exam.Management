@@ -43,6 +43,9 @@ public class PaymentRequestLog : ITenantScoped
     public int? CollegeId { get; set; }
     public int StudentCount { get; set; }
 
+    [MaxLength(1000)]
+    public string? SelectedSubjectIds { get; set; }
+
     public virtual PaymentType? PaymentType { get; set; }
 
     public virtual StudentRegistration? StudentRegistration { get; set; }
