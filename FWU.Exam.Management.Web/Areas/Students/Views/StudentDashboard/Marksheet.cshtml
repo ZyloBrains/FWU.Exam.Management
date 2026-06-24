@@ -40,6 +40,10 @@
 
     @foreach (var marksheet in Model)
     {
+        var allPassed = marksheet.Subjects.All(s => s.Status == "Pass");
+        var anyFailed = marksheet.Subjects.Any(s => s.Status == "Fail");
+        var anyPending = marksheet.Subjects.Any(s => s.Status == "Pending");
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
                 <div class="flex items-center justify-between gap-3">
@@ -54,90 +58,186 @@
                 </div>
             </div>
 
-            <!-- Desktop table -->
-            <div class="hidden sm:block overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Total</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Grade</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Grade Point</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach (var subject in marksheet.Subjects)
-                        {
-                            var gradeColor = subject.Grade == "A+" || subject.Grade == "A" ? "bg-emerald-100 text-emerald-700" :
-                            subject.Grade == "B+" || subject.Grade == "B" ? "bg-blue-100 text-blue-700" :
-                            subject.Grade == "C+" || subject.Grade == "C" ? "bg-yellow-100 text-yellow-700" :
-                            subject.Grade == "D" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700";
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 text-gray-800 font-medium">@subject.SubjectName</td>
-                                <td class="px-4 py-3 text-center text-gray-800">@subject.TheoryMarks</td>
-                                <td class="px-4 py-3 text-center text-gray-800">@subject.PracticalMarks</td>
-                                <td class="px-4 py-3 text-center text-gray-800 font-medium">@subject.TotalMarks</td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold @gradeColor">@subject.Grade</span>
-                                </td>
-                                <td class="px-4 py-3 text-center text-gray-800">@subject.GradePoint</td>
+            @if (marksheet.Subjects.Count > 0)
+            {
+                <!-- Subject summary chips -->
+                <div class="px-4 sm:px-6 py-3 bg-gray-50/80 border-b border-gray-100 flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold text-gray-600">Status:</span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                        <i class="fas fa-check-circle text-[10px]"></i> @marksheet.TotalPassed Passed
+                    </span>
+                    @if (marksheet.TotalFailed > 0)
+                    {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                            <i class="fas fa-times-circle text-[10px]"></i> @marksheet.TotalFailed Failed
+                        </span>
+                    }
+                    @if (marksheet.TotalPending > 0)
+                    {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                            <i class="fas fa-clock text-[10px]"></i> @marksheet.TotalPending Pending
+                        </span>
+                    }
+                </div>
+
+                <!-- Desktop table -->
+                <div class="hidden sm:block overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Code</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Total</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Grade</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
                             </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach (var subject in marksheet.Subjects)
+                            {
+                                var rowBg = subject.Status == "Fail" ? "bg-red-50/40" : subject.Status == "Pending" ? "bg-amber-50/30" : "";
+                                <tr class="hover:bg-gray-50 transition-colors @rowBg">
+                                    <td class="px-4 py-3 text-gray-800 font-medium">@subject.SubjectName</td>
+                                    <td class="px-4 py-3 text-center text-gray-500 font-mono text-xs">@subject.SubjectCode</td>
+                                    <td class="px-4 py-3 text-center text-gray-800">@subject.TheoryMarks</td>
+                                    <td class="px-4 py-3 text-center text-gray-800">@subject.PracticalMarks</td>
+                                    <td class="px-4 py-3 text-center text-gray-800 font-medium">@subject.TotalMarks</td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if (subject.Status == "Pending")
+                                        {
+                                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">-</span>
+                                        }
+                                        else
+                                        {
+                                            var gradeColor = subject.Grade == "A+" || subject.Grade == "A" ? "bg-emerald-100 text-emerald-700" :
+                                            subject.Grade == "B+" || subject.Grade == "B" ? "bg-blue-100 text-blue-700" :
+                                            subject.Grade == "C+" || subject.Grade == "C" ? "bg-yellow-100 text-yellow-700" :
+                                            subject.Grade == "D" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700";
+                                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold @gradeColor">@subject.Grade</span>
+                                        }
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if (subject.Status == "Pass")
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                                <i class="fas fa-check-circle text-[10px]"></i> Pass
+                                            </span>
+                                        }
+                                        else if (subject.Status == "Fail")
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                                <i class="fas fa-times-circle text-[10px]"></i> Fail
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                                                <i class="fas fa-clock text-[10px]"></i> Pending
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
+                        {
+                            <tfoot class="bg-gray-50 border-t-2 border-gray-200">
+                                <tr>
+                                    <td colspan="4" class="px-4 py-3 text-right font-semibold text-gray-700">SGPA:</td>
+                                    <td class="px-4 py-3 text-center font-bold text-gray-800">@marksheet.TotalGpa</td>
+                                    <td class="px-4 py-3 text-center" colspan="2">
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
+                                            <i class="fas @(marksheet.Result == "Pass" ? "fa-check-circle" : marksheet.Result == "Fail" ? "fa-times-circle" : "fa-clock") text-[10px]"></i>
+                                            @marksheet.Result
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tfoot>
                         }
-                    </tbody>
-                    <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                        <tr>
-                            <td colspan="3" class="px-4 py-3 text-right font-semibold text-gray-700">SGPA:</td>
-                            <td class="px-4 py-3 text-center font-bold text-gray-800">@marksheet.TotalGpa</td>
-                            <td class="px-4 py-3 text-center" colspan="2">
-                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
+                    </table>
+                </div>
+
+                <!-- Mobile card list -->
+                <div class="sm:hidden divide-y divide-gray-50">
+                    @foreach (var subject in marksheet.Subjects)
+                    {
+                        var cardBg = subject.Status == "Fail" ? "bg-red-50/30" : subject.Status == "Pending" ? "bg-amber-50/20" : "";
+                        <div class="px-4 py-3 @cardBg">
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-sm font-semibold text-gray-900 truncate flex-1">@subject.SubjectName</p>
+                                @if (subject.Status == "Pass")
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 shrink-0 ml-2">
+                                        <i class="fas fa-check-circle text-[10px]"></i> Pass
+                                    </span>
+                                }
+                                else if (subject.Status == "Fail")
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 shrink-0 ml-2">
+                                        <i class="fas fa-times-circle text-[10px]"></i> Fail
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 shrink-0 ml-2">
+                                        <i class="fas fa-clock text-[10px]"></i> Pending
+                                    </span>
+                                }
+                            </div>
+                            <p class="text-[10px] text-gray-400 font-mono mb-1">@subject.SubjectCode</p>
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                <span class="flex items-center gap-1">
+                                    <span class="font-medium text-gray-700">T:</span> @subject.TheoryMarks
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <span class="font-medium text-gray-700">P:</span> @subject.PracticalMarks
+                                </span>
+                                @if (!string.IsNullOrEmpty(subject.InternalMarks))
+                                {
+                                    <span class="flex items-center gap-1">
+                                        <span class="font-medium text-gray-700">I:</span> @subject.InternalMarks
+                                    </span>
+                                }
+                                <span class="flex items-center gap-1">
+                                    <span class="font-medium text-gray-700">Total:</span> @subject.TotalMarks
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <span class="font-medium text-gray-700">Grade:</span>
+                                    @if (subject.Status == "Pending")
+                                    {
+                                        <span class="text-gray-400">-</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="font-semibold @(subject.Grade == "F" ? "text-red-600" : "text-gray-800")">@subject.Grade</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
+                    {
+                        <div class="px-4 py-3 bg-gray-50/80 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-semibold text-gray-700">SGPA: <span class="text-gray-900">@marksheet.TotalGpa</span></span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
+                                    <i class="fas @(marksheet.Result == "Pass" ? "fa-check-circle" : marksheet.Result == "Fail" ? "fa-times-circle" : "fa-clock") text-[10px]"></i>
                                     @marksheet.Result
                                 </span>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- Mobile card list -->
-            <div class="sm:hidden divide-y divide-gray-50">
-                @foreach (var subject in marksheet.Subjects)
-                {
-                    var gradeColor = subject.Grade == "A+" || subject.Grade == "A" ? "bg-emerald-100 text-emerald-700" :
-                    subject.Grade == "B+" || subject.Grade == "B" ? "bg-blue-100 text-blue-700" :
-                    subject.Grade == "C+" || subject.Grade == "C" ? "bg-yellow-100 text-yellow-700" :
-                    subject.Grade == "D" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700";
-                    <div class="px-4 py-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm font-semibold text-gray-900 truncate flex-1">@subject.SubjectName</p>
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold @gradeColor shrink-0 ml-2">@subject.Grade</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-4 text-xs text-gray-500">
-                            <span class="flex items-center gap-1">
-                                <span class="font-medium text-gray-700">T:</span> @subject.TheoryMarks
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <span class="font-medium text-gray-700">P:</span> @subject.PracticalMarks
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <span class="font-medium text-gray-700">Total:</span> @subject.TotalMarks
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <span class="font-medium text-gray-700">GP:</span> @subject.GradePoint
-                            </span>
-                        </div>
-                    </div>
-                }
-                <div class="px-4 py-3 bg-gray-50/80 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs font-semibold text-gray-700">SGPA: <span class="text-gray-900">@marksheet.TotalGpa</span></span>
-                        <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
-                            @marksheet.Result
-                        </span>
-                    </div>
+                    }
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="px-4 sm:px-6 py-8 text-center text-gray-400 text-sm">
+                    <i class="fas fa-inbox text-2xl mb-2 block"></i>
+                    No subject records for this exam.
+                </div>
+            }
         </div>
     }
 </div>

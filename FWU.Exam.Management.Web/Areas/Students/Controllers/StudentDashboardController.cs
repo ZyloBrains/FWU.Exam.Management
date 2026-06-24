@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -569,31 +570,85 @@ public class StudentDashboardController(
         }
 
         var resultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
+        var examRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
 
-        var marksheets = resultRecords.Select(rr => new MarksheetViewModel
+        var marksheets = new List<MarksheetViewModel>();
+
+        foreach (var rr in resultRecords)
         {
-            RegistrationNumber = rr.RegistrationNumber,
-            StudentName = rr.StudentName,
-            Program = rr.Program?.ProgramName,
-            ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
-            AcademicYear = rr.AcademicYear?.AcademicYearName,
-            College = rr.College?.Name,
-            TotalGpa = rr.Gpa,
-            Result = rr.Result,
-            Subjects = new List<MarksheetSubjectViewModel>
-            {
-                new()
-                {
-                    SubjectName = "Overall",
-                    TheoryMarks = rr.TheoryObtainedMarks,
-                    PracticalMarks = rr.PracticalObtainedMarks,
-                    TotalMarks = rr.TotalObtainedMarks,
-                    Grade = rr.TotalObtainedGrade,
-                    GradePoint = rr.TotalGradePoints
-                }
-            }
-        }).ToList();
+            var scheduleId = rr.ExamScheduleId;
+            if (scheduleId == null) continue;
 
-        return View(marksheets);
+            var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value);
+
+            marksheets.Add(new MarksheetViewModel
+            {
+                RegistrationNumber = rr.RegistrationNumber,
+                StudentName = rr.StudentName,
+                Program = rr.Program?.ProgramName,
+                ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
+                AcademicYear = rr.AcademicYear?.AcademicYearName,
+                College = rr.College?.Name,
+                TotalGpa = rr.Gpa,
+                Result = rr.Result,
+                ExamScheduleId = scheduleId.Value,
+                Subjects = subjects
+            });
+        }
+
+        // Also include exam registrations that have no result records yet (pending)
+        foreach (var er in examRegistrations)
+        {
+            if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
+            {
+                var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId);
+                marksheets.Add(new MarksheetViewModel
+                {
+                    RegistrationNumber = registration.RegistrationNumber,
+                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    ExamSchedule = er.ExamSchedule?.ExamScheduleName,
+                    ExamScheduleId = er.ExamScheduleId,
+                    Result = "Pending",
+                    Subjects = subjects
+                });
+            }
+        }
+
+        return View(marksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
+    }
+
+    private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(List<ExamRegistration> examRegistrations, int examScheduleId)
+    {
+        var registration = examRegistrations.FirstOrDefault(er => er.ExamScheduleId == examScheduleId);
+        if (registration?.ExamSubjectResults == null || !registration.ExamSubjectResults.Any())
+            return new();
+
+        return registration.ExamSubjectResults
+            .Where(esr => esr.IsActive)
+            .Select(esr =>
+            {
+                var gradeLetter = esr.GradeLetter?.Trim().ToUpperInvariant();
+                var isFailed = gradeLetter is "F" or "NG";
+                var isSubmitted = esr.IsSubmitted;
+                var hasGrade = !string.IsNullOrEmpty(gradeLetter);
+
+                return new MarksheetSubjectViewModel
+                {
+                    SubjectName = esr.SubjectOffering?.SubjectCatalog?.SubjectName,
+                    SubjectCode = esr.SubjectOffering?.SubjectCatalog?.SubjectCode,
+                    TheoryMarks = esr.ObtainedMarksTheory,
+                    PracticalMarks = esr.ObtainedMarksPractical,
+                    InternalMarks = esr.ObtainedMarksTheoryInternal?.ToString(),
+                    TotalMarks = esr.ObtainedMarks?.ToString(),
+                    Grade = gradeLetter,
+                    IsPassed = hasGrade && !isFailed,
+                    Status = !hasGrade ? "Pending"
+                        : isSubmitted && isFailed ? "Fail"
+                        : isSubmitted && !isFailed ? "Pass"
+                        : "Pending"
+                };
+            })
+            .OrderBy(s => s.SubjectName)
+            .ToList();
     }
 }
