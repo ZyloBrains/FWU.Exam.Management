@@ -187,11 +187,13 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return View(khaltiConfiguration);
     }
 
+    [RequirePermission(Permissions.KhaltiCreate)]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission(Permissions.KhaltiCreate)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,ReturnUrl,WebsiteUrl,Amount,ProductName,AuthorizationKey,ServiceCharge,PostUrl,VerifyUrl")] KhaltiConfiguration khaltiConfiguration)
@@ -238,6 +240,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return View(khaltiConfiguration);
     }
 
+    [RequirePermission(Permissions.KhaltiDelete)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -249,6 +252,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return View(khaltiConfiguration);
     }
 
+    [RequirePermission(Permissions.KhaltiDelete)]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -267,7 +271,8 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
     {
         return context.KhaltiConfigurations.Any(e => e.Id == id);
     }
-        [HttpPost]
+        [RequirePermission(Permissions.KhaltiDelete)]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {

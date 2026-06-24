@@ -181,11 +181,13 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.create")]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission("esewa.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,PostUrl,ProductCode,SecretKey,SuccessUrl,ServiceChargeAmount,VerifyUrl")] ESewaConfiguration eSewaConfiguration)
@@ -234,6 +236,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -245,6 +248,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return View(eSewaConfiguration);
     }
 
+    [RequirePermission("esewa.delete")]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -263,7 +267,8 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
     {
         return context.ESewaConfigurations.Any(e => e.Id == id);
     }
-        [HttpPost]
+        [RequirePermission("esewa.delete")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {

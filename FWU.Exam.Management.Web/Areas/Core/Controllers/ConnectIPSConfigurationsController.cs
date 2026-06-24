@@ -184,11 +184,13 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         return View(configuration);
     }
 
+    [RequirePermission(Permissions.ConnectIPSCreate)]
     public IActionResult Create()
     {
         return View();
     }
 
+    [RequirePermission(Permissions.ConnectIPSCreate)]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,GatewayUrl,MerchantId,AppId,AppName,ValidationApiUrl,UsernameForValidationApi,PasswordForValidationApi,PasswordForCreditorPfx,TransactionCurrency")] ConnectIpsPaymentConfiguration configuration)
@@ -237,6 +239,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         return View(configuration);
     }
 
+    [RequirePermission(Permissions.ConnectIPSDelete)]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -248,6 +251,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         return View(configuration);
     }
 
+    [RequirePermission(Permissions.ConnectIPSDelete)]
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -266,7 +270,8 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
     {
         return context.ConnectIpsPaymentConfigurations.Any(e => e.Id == id);
     }
-        [HttpPost]
+        [RequirePermission(Permissions.ConnectIPSDelete)]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {

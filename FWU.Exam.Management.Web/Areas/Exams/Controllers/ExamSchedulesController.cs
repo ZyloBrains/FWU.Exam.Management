@@ -7,6 +7,7 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -261,7 +262,27 @@ public class ExamSchedulesController(
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
     }
-        [RequirePermission("examschedules.delete")]
+
+    [HttpGet]
+    public JsonResult ConvertBsToAd(string bsDate)
+    {
+        var parts = bsDate.Split('-');
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var d))
+            return Json(new { adDate = (string?)null });
+        var ad = NepaliCalendarHelper.BsToAd(y, m, d);
+        return Json(new { adDate = ad?.ToString("yyyy-MM-dd") });
+    }
+
+    [HttpGet]
+    public JsonResult ConvertAdToBs(string adDate)
+    {
+        if (!DateTime.TryParse(adDate, out var dt))
+            return Json(new { bsDate = (string?)null });
+        var bs = NepaliCalendarHelper.AdToBs(dt);
+        return Json(new { bsDate = $"{bs.Year:D4}-{bs.Month:D2}-{bs.Day:D2}" });
+    }
+
+    [RequirePermission("examschedules.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

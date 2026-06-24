@@ -238,15 +238,21 @@ public static class Permissions
 
     // eSewa Config
     public const string ESewaView = "esewa.view";
+    public const string ESewaCreate = "esewa.create";
     public const string ESewaEdit = "esewa.edit";
+    public const string ESewaDelete = "esewa.delete";
 
     // Khalti Config
     public const string KhaltiView = "khalti.view";
+    public const string KhaltiCreate = "khalti.create";
     public const string KhaltiEdit = "khalti.edit";
+    public const string KhaltiDelete = "khalti.delete";
 
     // ConnectIPS Config
     public const string ConnectIPSView = "connectips.view";
+    public const string ConnectIPSCreate = "connectips.create";
     public const string ConnectIPSEdit = "connectips.edit";
+    public const string ConnectIPSDelete = "connectips.delete";
 
     // Tenants
     public const string TenantsView = "tenants.view";
@@ -431,13 +437,19 @@ public static class Permissions
         (SmtpDelete, "Delete SMTP Config", GroupSmtp, "Delete SMTP configuration"),
 
         (ESewaView, "View eSewa Config", GroupESewa, "View eSewa configuration"),
+        (ESewaCreate, "Create eSewa Config", GroupESewa, "Create eSewa configuration"),
         (ESewaEdit, "Edit eSewa Config", GroupESewa, "Edit eSewa configuration"),
+        (ESewaDelete, "Delete eSewa Config", GroupESewa, "Delete eSewa configuration"),
 
         (KhaltiView, "View Khalti Config", GroupKhalti, "View Khalti configuration"),
+        (KhaltiCreate, "Create Khalti Config", GroupKhalti, "Create Khalti configuration"),
         (KhaltiEdit, "Edit Khalti Config", GroupKhalti, "Edit Khalti configuration"),
+        (KhaltiDelete, "Delete Khalti Config", GroupKhalti, "Delete Khalti configuration"),
 
         (ConnectIPSView, "View ConnectIPS Config", GroupConnectIPS, "View ConnectIPS configuration"),
+        (ConnectIPSCreate, "Create ConnectIPS Config", GroupConnectIPS, "Create ConnectIPS configuration"),
         (ConnectIPSEdit, "Edit ConnectIPS Config", GroupConnectIPS, "Edit ConnectIPS configuration"),
+        (ConnectIPSDelete, "Delete ConnectIPS Config", GroupConnectIPS, "Delete ConnectIPS configuration"),
 
         (TenantsView, "View Tenants", GroupTenants, "View tenant list"),
         (TenantsCreate, "Create Tenants", GroupTenants, "Create new tenants"),
