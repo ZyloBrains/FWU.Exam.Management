@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger) : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IEmailService emailService, ISmsService smsService) : IStudentRegistrationService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -78,9 +78,12 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             context.StudentRegistrations.Add(studentRegistration);
             await context.SaveChangesAsync();
 
-            await EnsureStudentAppUserAsync(studentRegistration);
+            var isNewUser = await EnsureStudentAppUserAsync(studentRegistration);
 
             await transaction.CommitAsync();
+
+            await SendStudentRegistrationNotificationsAsync(studentRegistration, isNewUser);
+
             return studentRegistration.Id;
         }
         catch
@@ -393,10 +396,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .FirstOrDefaultAsync();
     }
 
-    private async Task EnsureStudentAppUserAsync(StudentRegistration studentRegistration)
+    private async Task<bool> EnsureStudentAppUserAsync(StudentRegistration studentRegistration)
     {
         if (string.IsNullOrWhiteSpace(studentRegistration.Email))
-            return;
+            return false;
 
         var user = await userManager.FindByEmailAsync(studentRegistration.Email);
 
@@ -447,6 +450,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
             var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
             await userManager.ConfirmEmailAsync(user, token);
+
+            return true;
         }
         else
         {
@@ -490,7 +495,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 {
                     var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
                     logger.LogError("Failed to update existing student user {Email}: {Errors}", studentRegistration.Email, errors);
-                    return;
+                    return false;
                 }
             }
 
@@ -502,7 +507,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 {
                     var errors = string.Join("; ", addToRoleResult.Errors.Select(e => e.Description));
                     logger.LogError("Failed to add existing user {Email} to Student role: {Errors}", studentRegistration.Email, errors);
-                    return;
+                    return false;
                 }
             }
 
@@ -522,6 +527,54 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                     throw new InvalidOperationException($"Failed to reset user password for {studentRegistration.Email}: {errors}");
                 }
             }
+
+            return false;
         }
+    }
+
+    private async Task SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, bool isNewUser)
+    {
+        var fullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim();
+        var program = await context.Programs.Where(p => p.Id == studentRegistration.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
+        var college = await context.Colleges.Where(c => c.Id == studentRegistration.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
+        var password = studentRegistration.DateOfBirthBS;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(studentRegistration.Email))
+            {
+                var emailBody = $@"
+                    <h3>Dear {fullName},</h3>
+                    <p>Your student registration has been created successfully.</p>
+                    <p><strong>Registration Details:</strong></p>
+                    <ul>
+                        <li><strong>Registration No:</strong> {studentRegistration.RegistrationNumber}</li>
+                        <li><strong>College:</strong> {college}</li>
+                        <li><strong>Program:</strong> {program}</li>
+                        <li><strong>Full Name:</strong> {fullName}</li>
+                    </ul>
+                    <p><strong>Login Credentials:</strong></p>
+                    <ul>
+                        <li><strong>Username (Email):</strong> {studentRegistration.Email}</li>
+                        <li><strong>Password:</strong> {password}</li>
+                    </ul>
+                    <p>Please change your password after first login.</p>
+                    <br/>
+                    <p>Regards,<br/>Far-Western University</p>";
+                await emailService.SendEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
+            }
+        }
+        catch { }
+
+        try
+        {
+            var phone = studentRegistration.ContactNumber ?? studentRegistration.Phone;
+            if (isNewUser && !string.IsNullOrWhiteSpace(phone))
+            {
+                var smsMessage = $"Dear {fullName}, your registration is complete. Reg No: {studentRegistration.RegistrationNumber}, Username: {studentRegistration.Email}, Password: {password}. Please change password on first login. - FWU";
+                await smsService.SendSmsAsync(phone, smsMessage);
+            }
+        }
+        catch { }
     }
 }

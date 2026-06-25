@@ -7,7 +7,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class EmailService(AppDbContext context) : IEmailService
 {
-    public async Task SendEmailAsync(string toEmail, string subject, string body, bool isHtml = true)
+    public async Task SendEmailAsync(string toEmail, string subject, string body, bool isHtml = true, List<string>? attachmentPaths = null)
     {
         var smtpConfig = await context.SmtpConfigurations.FirstOrDefaultAsync();
         if (smtpConfig == null)
@@ -21,6 +21,15 @@ public class EmailService(AppDbContext context) : IEmailService
             IsBodyHtml = isHtml
         };
         message.To.Add(toEmail);
+
+        if (attachmentPaths != null)
+        {
+            foreach (var path in attachmentPaths)
+            {
+                if (File.Exists(path))
+                    message.Attachments.Add(new Attachment(path));
+            }
+        }
 
         using var client = new SmtpClient(smtpConfig.Host, smtpConfig.Port)
         {
