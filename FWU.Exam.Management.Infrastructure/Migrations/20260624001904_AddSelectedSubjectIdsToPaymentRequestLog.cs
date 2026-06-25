@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
         {
             migrationBuilder.AddColumn<string>(
                 name: "SelectedSubjectIds",
-                table: "PaymentRequestLog",
+                table: "PaymentRequestLogs",
                 type: "nvarchar(1000)",
                 maxLength: 1000,
                 nullable: true);
@@ -23,7 +23,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "SelectedSubjectIds",
-                table: "PaymentRequestLog");
+                table: "PaymentRequestLogs");
         }
     }
 }
