@@ -173,6 +173,51 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
+    public async Task<List<ExamRegistration>> GetStudentExamRegistrationsAsync(string userId)
+    {
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+
+        if (admission == null) return new();
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .Include(er => er.ExamSchedule)
+            .Include(er => er.ExamSubjectResults!)
+                .ThenInclude(esr => esr.SubjectOffering)
+                    .ThenInclude(so => so!.SubjectCatalog)
+            .Where(er => er.ProgramsId == admission.ProgramsId && er.IsActive)
+            .OrderByDescending(er => er.RegistrationDate)
+            .ToListAsync();
+    }
+
+    public async Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId)
+    {
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+
+        if (admission == null) return new();
+
+        var registrations = await context.ExamRegistrations!
+            .AsNoTracking()
+            .Include(er => er.ExamSubjectResults!)
+                .ThenInclude(esr => esr.SubjectOffering)
+                    .ThenInclude(so => so!.SubjectCatalog)
+            .Where(er => er.ProgramsId == admission.ProgramsId
+                      && er.ExamScheduleId == examScheduleId
+                      && er.IsActive)
+            .ToListAsync();
+
+        return registrations
+            .SelectMany(er => er.ExamSubjectResults ?? Enumerable.Empty<ExamSubjectResult>())
+            .Where(esr => esr.IsActive)
+            .GroupBy(esr => esr.SubjectOfferingId)
+            .Select(g => g.OrderByDescending(esr => esr.Id).First())
+            .ToList();
+    }
+
     public async Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null)
     {
         var log = await context.Set<PaymentRequestLog>().FirstOrDefaultAsync(prl => prl.Id == logId);
@@ -324,7 +369,8 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
-            StudentCount = subjectOfferingIds.Count
+            StudentCount = subjectOfferingIds.Count,
+            SelectedSubjectIds = string.Join(",", subjectOfferingIds)
         };
 
         context.Set<PaymentRequestLog>().Add(log);

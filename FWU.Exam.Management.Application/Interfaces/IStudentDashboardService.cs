@@ -26,4 +26,6 @@ public interface IStudentDashboardService
     Task<List<SubjectOffering>> GetSubjectOfferingsByProgramAsync(int programId);
     Task<PaymentRequestLog?> GetPaymentLogByIdAsync(int logId);
     Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds);
+    Task<List<ExamRegistration>> GetStudentExamRegistrationsAsync(string userId);
+    Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId);
 }

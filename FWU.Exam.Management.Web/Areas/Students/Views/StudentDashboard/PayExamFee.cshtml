@@ -349,6 +349,9 @@
                 document.getElementById('hfSelectedSubjectIds').value = '@string.Join(",", Model.SelectedSubjectIds)';
                 </text>
             }
+            document.querySelectorAll('#mobileBottomBar .inline-flex').forEach(function(btn) {
+                btn.innerHTML = '<i class="fas fa-arrow-right"></i> Pay Rs ' + formatted;
+            });
         }
 
         function toggleAllElec(source) {

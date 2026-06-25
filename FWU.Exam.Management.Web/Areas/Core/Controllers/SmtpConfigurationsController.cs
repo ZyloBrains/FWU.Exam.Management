@@ -206,12 +206,14 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // GET: SmtpConfigurations1/Create
+        [RequirePermission("smtp.create")]
         public IActionResult Create()
         {
             return View();
         }
 
         // POST: SmtpConfigurations1/Create
+        [RequirePermission("smtp.create")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Host,From,Port,UserName,Password,EnableSsl")] SmtpConfiguration smtpConfiguration)
@@ -277,6 +279,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // GET: SmtpConfigurations1/Delete/5
+        [RequirePermission("smtp.delete")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -295,6 +298,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // POST: SmtpConfigurations1/Delete/5
+        [RequirePermission("smtp.delete")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -309,6 +313,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        [RequirePermission("smtp.delete")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAjax(int id)

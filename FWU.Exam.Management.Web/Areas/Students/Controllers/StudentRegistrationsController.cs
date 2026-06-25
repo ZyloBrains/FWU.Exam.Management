@@ -77,6 +77,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         if (studentRegistration == null) return NotFound();
 
         ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id.Value);
+        ViewBag.Guardian = await studentRegistrationService.GetGuardianByRegistrationAsync(id.Value);
         return View(studentRegistration);
     }
 
@@ -100,6 +101,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             var registrationId = await studentRegistrationService.CreateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
             await SaveQualificationsFromFormAsync(registrationId);
+            await SaveGuardiansFromFormAsync(registrationId);
             TempData["SuccessMessage"] = "Student registration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -117,6 +119,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         if (studentRegistration == null) return NotFound();
 
         ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id.Value);
+        ViewBag.Guardian = await studentRegistrationService.GetGuardianByRegistrationAsync(id.Value);
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         PopulateSelectLists(selectLists, studentRegistration);
@@ -140,6 +143,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             {
                 await studentRegistrationService.UpdateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
                 await SaveQualificationsFromFormAsync(id);
+                await SaveGuardiansFromFormAsync(id);
                 TempData["SuccessMessage"] = "Student registration updated successfully!";
             }
             catch (DbUpdateConcurrencyException)
@@ -458,6 +462,38 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             await studentRegistrationService.SaveQualificationsAsync(registrationId, qualifications);
         }
+    }
+
+    private async Task SaveGuardiansFromFormAsync(int registrationId)
+    {
+        var fatherFirstName = Request.Form["FatherFirstName"].ToString();
+        var fatherLastName = Request.Form["FatherLastName"].ToString();
+        var fatherOccupation = Request.Form["FatherOccupation"].ToString();
+        var fatherPhone = Request.Form["FatherPhone"].ToString();
+        var motherFirstName = Request.Form["MotherFirstName"].ToString();
+        var motherLastName = Request.Form["MotherLastName"].ToString();
+        var motherOccupation = Request.Form["MotherOccupation"].ToString();
+        var motherPhone = Request.Form["MotherPhone"].ToString();
+
+        if (string.IsNullOrWhiteSpace(fatherFirstName) && string.IsNullOrWhiteSpace(motherFirstName))
+        {
+            await studentRegistrationService.SaveGuardiansAsync(registrationId, null);
+            return;
+        }
+
+        var guardian = new StudentGuardian
+        {
+            FatherName = $"{fatherFirstName} {fatherLastName}".Trim(),
+            FatherProfession = fatherOccupation,
+            FatherContactNumber = fatherPhone,
+            MotherName = $"{motherFirstName} {motherLastName}".Trim(),
+            MotherProfession = motherOccupation,
+            MotherContactNumber = motherPhone,
+            GuardianName = $"{fatherFirstName} {fatherLastName}".Trim(),
+            RelationWithStudent = "Father"
+        };
+
+        await studentRegistrationService.SaveGuardiansAsync(registrationId, guardian);
     }
 
     private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)

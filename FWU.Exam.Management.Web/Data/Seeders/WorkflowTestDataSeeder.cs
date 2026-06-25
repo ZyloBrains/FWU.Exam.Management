@@ -576,8 +576,13 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 25. EXAM FEES
+        // 25. EXAM FEES ON SCHEDULES (used by PayExamFee page)
         // ===================================================================
+        csitExamSchedule.ExamFee = 1500m;
+        csitExamSchedule.PracticalSubjectFee = 200m;
+        baExamSchedule.ExamFee = 1200m;
+        baExamSchedule.PracticalSubjectFee = 150m;
+
         await context.ExamFees.AddRangeAsync(new[]
         {
             new ExamFee { Name = "CSIT SEM1 Regular Exam Fee", ExamScheduleId = csitExamSchedule.Id, Amount = 1500m },
@@ -589,6 +594,130 @@ public static class WorkflowTestDataSeeder
         // 26. BATCH
         // ===================================================================
         await context.Batches.AddAsync(new Batch { AcademicYearId = runningYear.Id, BatchName = "2081 Batch", IsActive = true });
+        await context.SaveChangesAsync();
+
+        // ===================================================================
+        // 27. NON-REGULAR (PARTIAL) STUDENT — has previous failed grades
+        // ===================================================================
+        var partialStudentUser = new AppUser
+        {
+            UserName = "partial.student@fwu.edu.np",
+            Email = "partial.student@fwu.edu.np",
+            EmailConfirmed = true,
+            FullName = "Hari Partial (B.Sc. CSIT - Failed Subjects)",
+            IsActive = true,
+            CollegeId = collegeCst.Id,
+            FacultyId = fstFaculty.Id
+        };
+        var partialResult = await userManager.CreateAsync(partialStudentUser, "Admin@123");
+        if (!partialResult.Succeeded)
+            throw new Exception($"Failed to create partial student: {string.Join(", ", partialResult.Errors.Select(e => e.Description))}");
+        await userManager.AddToRoleAsync(partialStudentUser, Role.Student);
+
+        var regPartial = new StudentRegistration
+        {
+            FirstName = "Hari",
+            LastName = "Partial",
+            Email = "partial.student@fwu.edu.np",
+            DateOfBirthBS = "2056-08-20",
+            DateOfBirthAD = "1999-11-25",
+            ContactNumber = "9841234580",
+            GenderId = genderMale.Id,
+            CollegeId = collegeCst.Id,
+            FacultyId = fstFaculty.Id,
+            LevelId = bachelorLevel.Id,
+            DepartmentId = deptSci.Id,
+            ProgramId = csitProgram.Id,
+            StudentCategoryId = categoryRegular.Id,
+            EthnicityId = ethnicityOther.Id,
+            AcademicYearId = runningYear.Id,
+            IsActive = true
+        };
+        context.StudentRegistrations.Add(regPartial);
+        await context.SaveChangesAsync();
+
+        var admissionPartial = new StudentAdmission
+        {
+            ProgramsId = csitProgram.Id,
+            CollegeId = collegeCst.Id,
+            AppUserId = partialStudentUser.Id,
+            AdmissionDate = DateTime.UtcNow,
+            IsActive = true
+        };
+        context.Set<StudentAdmission>().Add(admissionPartial);
+        await context.SaveChangesAsync();
+
+        context.Set<SemesterEnrollment>().Add(new SemesterEnrollment
+        {
+            StudentAdmissionId = admissionPartial.Id,
+            SemesterId = sem1.Id,
+            EnrollmentStatus = StudentEnrollmentStatus.Active,
+            EnrollmentType = EnrollmentType.FullTime,
+            PaymentStatus = PaymentStatus.Paid,
+            EnrolledDate = DateTime.UtcNow,
+            TotalCredits = 15,
+            GradePoints = 0,
+            TotalFee = 5000,
+            PaidAmount = 5000
+        });
+        await context.SaveChangesAsync();
+
+        // Create a previous exam registration with failed results
+        // Use an older exam schedule concept — we re-use the same schedule
+        var partialEnrollment = await context.Set<SemesterEnrollment>()
+            .FirstAsync(se => se.StudentAdmissionId == admissionPartial.Id && se.SemesterId == sem1.Id);
+
+        var failedExamReg = new ExamRegistration
+        {
+            ExamScheduleId = csitExamSchedule.Id,
+            CollegeId = collegeCst.Id,
+            AcademicYearId = runningYear.Id,
+            ProgramsId = csitProgram.Id,
+            FeeEnclosed = 1500m,
+            RegistrationDate = DateTime.UtcNow.AddDays(-90),
+            Status = RegistrationStatus.Registered,
+            IsActive = true,
+            IsAppliedByStudent = true
+        };
+        context.ExamRegistrations!.Add(failedExamReg);
+        await context.SaveChangesAsync();
+
+        // Assign the failed registration to the enrollment (shadow FK)
+        await context.Database.ExecuteSqlRawAsync(
+            "UPDATE [ExamRegistrations] SET [SemesterEnrollmentId] = {0} WHERE [Id] = {1}",
+            partialEnrollment.Id, failedExamReg.Id);
+
+        // Get the CSIT subject offerings for sem1
+        var csitSem1Offerings = await context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .Where(so => so.ProgramId == csitProgram.Id && so.SemesterId == sem1.Id)
+            .OrderBy(so => so.DisplayOrder)
+            .ToListAsync();
+
+        // Mark CSIT114 (C Programming, hasPractical=true) and CSIT115 (English I) as FAILED
+        // CSIT114 → has practical component → tests practical auto-include
+        // CSIT115 → no practical → tests theory-only re-take
+        var failedSubjectCodes = new[] { "CSIT114", "CSIT115" };
+        var allTypes = await context.ExamTypes.ToListAsync();
+        var regExamType = allTypes.FirstOrDefault(et => et.Name == "Regular");
+
+        foreach (var offering in csitSem1Offerings.Where(o => failedSubjectCodes.Contains(o.SubjectCatalog!.SubjectCode)))
+        {
+            context.ExamSubjectResults!.Add(new ExamSubjectResult
+            {
+                ExamRegistrationId = failedExamReg.Id,
+                SubjectOfferingId = offering.Id,
+                ExamScheduleId = csitExamSchedule.Id,
+                ExamTypeId = regExamType?.Id ?? 0,
+                GradeLetter = "F",
+                IsTheoryRegistered = true,
+                IsPracticalRegistered = offering.HasPractical,
+                IsActive = true,
+                IsSubmitted = true,
+                ObtainedMarksTheory = "15",
+                ObtainedMarksPractical = offering.HasPractical ? "8" : null
+            });
+        }
         await context.SaveChangesAsync();
     }
 

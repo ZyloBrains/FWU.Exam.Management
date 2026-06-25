@@ -91,15 +91,22 @@ public class MarksheetViewModel
     public List<MarksheetSubjectViewModel> Subjects { get; set; } = new();
     public string? TotalGpa { get; set; }
     public string? Result { get; set; }
+    public int ExamScheduleId { get; set; }
+    public int TotalPassed => Subjects.Count(s => s.IsPassed);
+    public int TotalFailed => Subjects.Count(s => s.Status == "Fail");
+    public int TotalPending => Subjects.Count(s => s.Status == "Pending");
 }
 
 public class MarksheetSubjectViewModel
 {
     public string? SubjectName { get; set; }
+    public string? SubjectCode { get; set; }
     public string? TheoryMarks { get; set; }
     public string? PracticalMarks { get; set; }
     public string? InternalMarks { get; set; }
     public string? TotalMarks { get; set; }
     public string? Grade { get; set; }
     public string? GradePoint { get; set; }
+    public bool IsPassed { get; set; }
+    public string? Status { get; set; }
 }

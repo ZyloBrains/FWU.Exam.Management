@@ -367,6 +367,32 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
+    public async Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian guardian)
+    {
+        var existing = await context.StudentGuardians
+            .Where(g => g.StudentRegistrationId == studentRegistrationId)
+            .ToListAsync();
+
+        context.StudentGuardians.RemoveRange(existing);
+
+        if (guardian != null)
+        {
+            guardian.Id = 0;
+            guardian.StudentRegistrationId = studentRegistrationId;
+            context.StudentGuardians.Add(guardian);
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<StudentGuardian?> GetGuardianByRegistrationAsync(int studentRegistrationId)
+    {
+        return await context.StudentGuardians
+            .Where(g => g.StudentRegistrationId == studentRegistrationId)
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+    }
+
     private async Task EnsureStudentAppUserAsync(StudentRegistration studentRegistration)
     {
         if (string.IsNullOrWhiteSpace(studentRegistration.Email))
