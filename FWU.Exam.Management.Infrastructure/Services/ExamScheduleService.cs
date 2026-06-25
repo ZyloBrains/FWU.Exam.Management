@@ -27,9 +27,9 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
         return query;
     }
 
-    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null)
+    public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, string? examTypeName = null)
     {
-        var query = ApplyScope(BuildQuery(search, sort, sortDir), collegeId, facultyId);
+        var query = ApplyScope(BuildQuery(search, sort, sortDir, examTypeName), collegeId, facultyId);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -84,9 +84,9 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
             await context.SaveChangesAsync();
     }
 
-    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
+    public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null, string? examTypeName = null)
     {
-        var query = ApplyScope(BuildQuery(search, "Id", "asc"), collegeId, facultyId);
+        var query = ApplyScope(BuildQuery(search, "Id", "asc", examTypeName), collegeId, facultyId);
         return await query
             .Select(e => new ExamSchedule
             {
@@ -211,9 +211,12 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
         };
     }
 
-    private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir)
+    private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null)
     {
         var query = context.ExamSchedules.AsNoTracking();
+
+        if (!string.IsNullOrEmpty(examTypeName))
+            query = query.Where(s => s.ExamType != null && s.ExamType.Name == examTypeName);
 
         if (!string.IsNullOrEmpty(search))
         {

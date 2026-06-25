@@ -1,0 +1,113 @@
+@model ExamSchedule
+@{
+    ViewData["Title"] = Model.Id == 0 ? "New Entrance Schedule" : "Edit Entrance Schedule";
+}
+
+<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+    <div class="flex items-center gap-3">
+        <a asp-action="ManageSchedule" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-graduation-cap text-teal-600"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">@(Model.Id == 0 ? "New Entrance Schedule" : "Edit Entrance Schedule")</h1>
+                <p class="text-sm text-gray-500">Configure an exam schedule for entrance applications</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="@(Model.Id == 0 ? "CreateSchedule" : "EditSchedule")" method="post" class="space-y-6">
+            @if (Model.Id != 0) { <input type="hidden" asp-for="Id" /> }
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
+
+            <div>
+                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                    <i class="fas fa-info-circle text-teal-600 mr-1.5"></i>Schedule Details
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label asp-for="ExamScheduleName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="ExamScheduleName" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Entrance Exam 2081" />
+                        <span asp-validation-for="ExamScheduleName" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.ProgramId">
+                            <option value="">-- Select Program --</option>
+                        </select>
+                        <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="AcademicYearId" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.AcademicYearId">
+                            <option value="">-- Select Academic Year --</option>
+                        </select>
+                        <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                    <i class="fas fa-calendar text-teal-600 mr-1.5"></i>Application Period
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="StartDateBs" class="text-sm font-medium text-gray-700 block mb-1">Start Date (BS)</label>
+                        <input asp-for="StartDateBs" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 2081-01-01" />
+                        <span asp-validation-for="StartDateBs" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="EndDateBs" class="text-sm font-medium text-gray-700 block mb-1">End Date (BS)</label>
+                        <input asp-for="EndDateBs" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 2081-01-30" />
+                        <span asp-validation-for="EndDateBs" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="StartDate" class="text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
+                        <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+                        <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="EndDate" class="text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
+                        <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+                        <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                    <i class="fas fa-money-bill-wave text-teal-600 mr-1.5"></i>Fee & Status
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="ExamFee" class="text-sm font-medium text-gray-700 block mb-1">Entrance Fee (Rs.)</label>
+                        <input asp-for="ExamFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 2400" />
+                        <span asp-validation-for="ExamFee" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div class="flex items-center gap-3 pt-6">
+                        <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active (visible to applicants)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
+                    <i class="fas fa-save mr-1.5"></i> @(Model.Id == 0 ? "Create Schedule" : "Update Schedule")
+                </button>
+                <a asp-action="ManageSchedule" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

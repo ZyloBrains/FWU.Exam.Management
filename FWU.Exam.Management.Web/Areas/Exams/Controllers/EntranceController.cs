@@ -9,11 +9,13 @@ using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ClosedXML.Excel;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -569,12 +571,31 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
     // --- Entrance Schedule Management (Admin) ---
 
+    [RequirePermission("examschedules.view")]
+    public async Task<IActionResult> ManageSchedule(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    {
+        await examScheduleService.DeactivateExpiredSchedulesAsync();
+
+        var (collegeId, facultyId) = await GetEntranceScopeAsync();
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, "Entrance");
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View(items);
+    }
+
     [RequirePermission("examschedules.create")]
-    public async Task<IActionResult> ManageSchedule()
+    public IActionResult CreateSchedule()
     {
         var selectLists = examScheduleService.GetSelectListData();
         PopulateScheduleDropdowns(selectLists);
-        return View(new ExamSchedule
+        return View("ScheduleForm", new ExamSchedule
         {
             IsActive = true,
             StartTime = new TimeOnly(9, 0),
@@ -586,7 +607,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [HttpPost]
     [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ManageSchedule(ExamSchedule model)
+    public async Task<IActionResult> CreateSchedule(ExamSchedule model)
     {
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
@@ -599,11 +620,11 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             model.ExamScheduleCode ??= $"ENT-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
             await examScheduleService.CreateExamScheduleAsync(model);
             TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
-            return RedirectToAction(nameof(AdminList));
+            return RedirectToAction(nameof(ManageSchedule));
         }
 
         PopulateScheduleDropdowns(sl, model);
-        return View(model);
+        return View("ScheduleForm", model);
     }
 
     [RequirePermission("examschedules.edit")]
@@ -615,7 +636,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         var selectLists = examScheduleService.GetSelectListData();
         PopulateScheduleDropdowns(selectLists, schedule);
-        return View("ManageSchedule", schedule);
+        return View("ScheduleForm", schedule);
     }
 
     [HttpPost]
@@ -632,13 +653,53 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (ModelState.IsValid)
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
+            model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
             await examScheduleService.UpdateExamScheduleAsync(model);
             TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
-            return RedirectToAction(nameof(AdminList));
+            return RedirectToAction(nameof(ManageSchedule));
         }
 
         PopulateScheduleDropdowns(sl, model);
-        return View("ManageSchedule", model);
+        return View("ScheduleForm", model);
+    }
+
+    [RequirePermission("examschedules.view")]
+    public async Task<IActionResult> ScheduleDetails(int? id)
+    {
+        if (id == null) return NotFound();
+        var schedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
+        if (schedule == null) return NotFound();
+        return View(schedule);
+    }
+
+    [RequirePermission("examschedules.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteScheduleAjax(int id)
+    {
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            return Json(new { success = true, message = "Entrance schedule deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    private async Task<(int? collegeId, int? facultyId)> GetEntranceScopeAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return (null, null);
+
+        if (User.IsInRole(Role.CollegeAdmin))
+            return (user.CollegeId, null);
+
+        if (User.IsInRole(Role.FacultyAdmin))
+            return (null, user.FacultyId);
+
+        return (null, null);
     }
 
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)
