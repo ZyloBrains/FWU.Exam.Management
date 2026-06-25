@@ -1,0 +1,50 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.ResultRecord>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Result Records Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #d1d5db; padding: 6px; font-size: 11px; text-align: left; }
+        th { background: #f3f4f6; }
+        .footer { margin-top: 30px; font-size: 11px; color: #6b7280; text-align: center; }
+    </style>
+</head>
+<body>
+    <div>
+        <h2 style="margin: 0 0 10px 0;">Result Records Report</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th><th>Student Name</th><th>Symbol No</th><th>Reg No</th><th>College</th><th>Year/Part</th><th>Total</th><th>GPA</th><th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ var counter = 1; }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@counter</td>
+                        <td><strong>@item.StudentName</strong></td>
+                        <td>@item.SymbolNumber</td>
+                        <td>@(item.RegistrationNumber ?? "-")</td>
+                        <td>@item.College?.Name</td>
+                        <td>@item.Year / @item.Part</td>
+                        <td>@(item.TotalObtainedMarks ?? "-")</td>
+                        <td>@(item.Gpa ?? "-")</td>
+                        <td>@item.Result</td>
+                    </tr>
+                    counter++;
+                }
+            </tbody>
+        </table>
+        @if (!Model.Any())
+        {
+            <div style="text-align: center; padding: 60px 20px; color: #9ca3af;"><p>No result records found.</p></div>
+        }
+    </div>
+    <script>window.onload = function () { window.print(); };</script>
+</body>
+</html>

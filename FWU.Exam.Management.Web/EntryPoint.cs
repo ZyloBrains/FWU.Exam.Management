@@ -136,6 +136,10 @@ public partial class EntryPoint
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
+        builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
+        builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
+        builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();
+        builder.Services.AddScoped<IResultRecordService, ResultRecordService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

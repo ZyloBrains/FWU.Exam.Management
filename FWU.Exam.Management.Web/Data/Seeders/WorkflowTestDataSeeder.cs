@@ -591,13 +591,104 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 26. BATCH
+        // 26. GRADING SCHEMES
+        // ===================================================================
+        var gradingScheme = new GradingScheme
+        {
+            Name = "Four-Point Grading Scale",
+            Description = "Standard four-point grading scale for B.Sc. CSIT and BA programs",
+            ProgramId = csitProgram.Id,
+            AcademicYearId = runningYear.Id,
+            IsActive = true,
+            GradeDefinitions = new List<GradeDefinition>
+            {
+                new() { GradeLetter = "A", MinPercentage = 90, MaxPercentage = 100, GradePoint = 4.0m, IsPass = true, DisplayOrder = 1 },
+                new() { GradeLetter = "B+", MinPercentage = 80, MaxPercentage = 89.99m, GradePoint = 3.6m, IsPass = true, DisplayOrder = 2 },
+                new() { GradeLetter = "B", MinPercentage = 70, MaxPercentage = 79.99m, GradePoint = 3.2m, IsPass = true, DisplayOrder = 3 },
+                new() { GradeLetter = "C+", MinPercentage = 60, MaxPercentage = 69.99m, GradePoint = 2.8m, IsPass = true, DisplayOrder = 4 },
+                new() { GradeLetter = "C", MinPercentage = 50, MaxPercentage = 59.99m, GradePoint = 2.4m, IsPass = true, DisplayOrder = 5 },
+                new() { GradeLetter = "D", MinPercentage = 40, MaxPercentage = 49.99m, GradePoint = 2.0m, IsPass = true, DisplayOrder = 6 },
+                new() { GradeLetter = "E", MinPercentage = 30, MaxPercentage = 39.99m, GradePoint = 1.6m, IsPass = false, DisplayOrder = 7 },
+                new() { GradeLetter = "F", MinPercentage = 0, MaxPercentage = 29.99m, GradePoint = 0.0m, IsPass = false, DisplayOrder = 8 },
+            }
+        };
+        context.GradingSchemes.Add(gradingScheme);
+        await context.SaveChangesAsync();
+
+        // ===================================================================
+        // 27. BATCH
         // ===================================================================
         await context.Batches.AddAsync(new Batch { AcademicYearId = runningYear.Id, BatchName = "2081 Batch", IsActive = true });
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 27. NON-REGULAR (PARTIAL) STUDENT — has previous failed grades
+        // 28. EXAM REGISTRATIONS
+        // ===================================================================
+        var examRegScience = new ExamRegistration
+        {
+            ExamScheduleId = csitExamSchedule.Id,
+            CollegeId = collegeCst.Id,
+            AcademicYearId = runningYear.Id,
+            ProgramsId = csitProgram.Id,
+            FeeEnclosed = 1500m,
+            RegistrationDate = DateTime.UtcNow.AddDays(-30),
+            Status = RegistrationStatus.Pending,
+            IsActive = true,
+            IsAppliedByStudent = true
+        };
+        context.ExamRegistrations.Add(examRegScience);
+
+        var examRegHum = new ExamRegistration
+        {
+            ExamScheduleId = baExamSchedule.Id,
+            CollegeId = collegeHum.Id,
+            AcademicYearId = runningYear.Id,
+            ProgramsId = baProgram.Id,
+            FeeEnclosed = 1200m,
+            RegistrationDate = DateTime.UtcNow.AddDays(-25),
+            Status = RegistrationStatus.CollegeVerified,
+            IsActive = true,
+            IsAppliedByStudent = true
+        };
+        context.ExamRegistrations.Add(examRegHum);
+        await context.SaveChangesAsync();
+
+        // ===================================================================
+        // 29. EXAM SUBJECT RESULTS
+        // ===================================================================
+        var csitSem1OfferingsForResults = await context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .Where(so => so.ProgramId == csitProgram.Id && so.SemesterId == sem1.Id)
+            .OrderBy(so => so.DisplayOrder)
+            .ToListAsync();
+
+        var regularExamType = await context.ExamTypes.Where(et => et.Name == "Regular").FirstOrDefaultAsync();
+
+        foreach (var (offering, idx) in csitSem1OfferingsForResults.Select((o, i) => (o, i)))
+        {
+            var theoryMarks = (20 + idx * 8).ToString();
+            var practicalMarks = offering.HasPractical ? (10 + idx * 5).ToString() : null;
+
+            context.ExamSubjectResults.Add(new ExamSubjectResult
+            {
+                ExamRegistrationId = examRegScience.Id,
+                SubjectOfferingId = offering.Id,
+                ExamScheduleId = csitExamSchedule.Id,
+                ExamTypeId = regularExamType?.Id ?? 0,
+                ObtainedMarksTheory = theoryMarks,
+                ObtainedMarksTheoryConfirm = theoryMarks,
+                ObtainedMarksPractical = practicalMarks,
+                ObtainedMarksPracticalConfirm = practicalMarks,
+                IsTheoryRegistered = true,
+                IsPracticalRegistered = offering.HasPractical,
+                IsActive = true,
+                IsSubmitted = idx < 3 // First 3 submitted, last 2 pending
+            });
+        }
+        await context.SaveChangesAsync();
+
+        // ===================================================================
+        // 30. NON-REGULAR (PARTIAL) STUDENT — has previous failed grades
         // ===================================================================
         var partialStudentUser = new AppUser
         {

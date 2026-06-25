@@ -1,0 +1,96 @@
+@model FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectResult
+
+@{
+    ViewData["Title"] = "Subject Result Details";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" asp-area="Exams" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-check-double text-teal-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Subject Result Details</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-6">
+        <div>
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Result Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Registration</p>
+                    <p class="mt-1 text-gray-800 font-semibold">Reg #@Model.ExamRegistrationId</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Subject</p>
+                    <p class="mt-1 text-gray-800">@Model.SubjectOffering?.SubjectCatalog?.SubjectName</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Exam Type</p>
+                    <p class="mt-1 text-gray-800">@Model.ExamType?.Name</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Schedule</p>
+                    <p class="mt-1 text-gray-800">@Model.ExamSchedule?.ExamScheduleName</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Theory Marks</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheory ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Theory (Confirm)</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheoryConfirm ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Practical Marks</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPractical ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Practical (Confirm)</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPracticalConfirm ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Theory Internal</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheoryInternal?.ToString("N2") ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Practical Internal</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPracticalInternal?.ToString("N2") ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Marks</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarks?.ToString("N2") ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Grade Letter</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@(Model.GradeLetter ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Submitted</p>
+                    <p class="mt-1">@if (Model.IsSubmitted) { <span class="text-green-600"><i class="fas fa-check-circle"></i> Yes</span> } else { <span class="text-gray-400"><i class="fas fa-clock"></i> No</span> }</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Active</p>
+                    <p class="mt-1">@if (Model.IsActive) { <span class="text-green-600">Yes</span> } else { <span class="text-red-600">No</span> }</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="mt-1 text-gray-800">@(Model.Remarks ?? "-")</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 pt-6 mt-8 border-t border-gray-200">
+            <a asp-action="Edit" asp-area="Exams" asp-route-id="@Model.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                <i class="fas fa-edit mr-1"></i> Edit
+            </a>
+            <a asp-action="Index" asp-area="Exams" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>

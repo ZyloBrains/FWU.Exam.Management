@@ -39,6 +39,10 @@ public static class Permissions
     public const string GroupConnectIPS = "connectips";
     public const string GroupTenants = "tenants";
     public const string GroupStudentCategories = "studentcategories";
+    public const string GroupGradingSchemes = "gradingschemes";
+    public const string GroupExamRegistration = "examregistration";
+    public const string GroupExamSubjectResults = "examsubjectresults";
+    public const string GroupResultRecords = "resultrecords";
     public const string GroupReports = "reports";
 
     // Helper to build permission name
@@ -266,6 +270,29 @@ public static class Permissions
     public const string StudentCategoriesEdit = "studentcategories.edit";
     public const string StudentCategoriesDelete = "studentcategories.delete";
 
+    // Grading Schemes
+    public const string GradingSchemesView = "gradingschemes.view";
+    public const string GradingSchemesCreate = "gradingschemes.create";
+    public const string GradingSchemesEdit = "gradingschemes.edit";
+    public const string GradingSchemesDelete = "gradingschemes.delete";
+
+    // Exam Registration
+    public const string ExamRegistrationView = "examregistration.view";
+    public const string ExamRegistrationCreate = "examregistration.create";
+    public const string ExamRegistrationEdit = "examregistration.edit";
+    public const string ExamRegistrationDelete = "examregistration.delete";
+    public const string ExamRegistrationVerify = "examregistration.verify";
+    public const string ExamRegistrationApprove = "examregistration.approve";
+
+    // Exam Subject Results
+    public const string ExamSubjectResultsView = "examsubjectresults.view";
+    public const string ExamSubjectResultsCreate = "examsubjectresults.create";
+    public const string ExamSubjectResultsEdit = "examsubjectresults.edit";
+    public const string ExamSubjectResultsDelete = "examsubjectresults.delete";
+
+    // Result Records (read-only)
+    public const string ResultRecordsView = "resultrecords.view";
+
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
@@ -461,6 +488,25 @@ public static class Permissions
         (StudentCategoriesEdit, "Edit Student Categories", GroupStudentCategories, "Edit existing student categories"),
         (StudentCategoriesDelete, "Delete Student Categories", GroupStudentCategories, "Delete student categories"),
 
+        (GradingSchemesView, "View Grading Schemes", GroupGradingSchemes, "View grading scheme list"),
+        (GradingSchemesCreate, "Create Grading Schemes", GroupGradingSchemes, "Create new grading schemes"),
+        (GradingSchemesEdit, "Edit Grading Schemes", GroupGradingSchemes, "Edit existing grading schemes"),
+        (GradingSchemesDelete, "Delete Grading Schemes", GroupGradingSchemes, "Delete grading schemes"),
+
+        (ExamRegistrationView, "View Exam Registrations", GroupExamRegistration, "View exam registration list"),
+        (ExamRegistrationCreate, "Create Exam Registrations", GroupExamRegistration, "Create new exam registrations"),
+        (ExamRegistrationEdit, "Edit Exam Registrations", GroupExamRegistration, "Edit existing exam registrations"),
+        (ExamRegistrationDelete, "Delete Exam Registrations", GroupExamRegistration, "Delete exam registrations"),
+        (ExamRegistrationVerify, "Verify Exam Registrations", GroupExamRegistration, "Verify exam registrations at college level"),
+        (ExamRegistrationApprove, "Approve Exam Registrations", GroupExamRegistration, "Approve exam registrations at admin level"),
+
+        (ExamSubjectResultsView, "View Subject Results", GroupExamSubjectResults, "View subject-wise results"),
+        (ExamSubjectResultsCreate, "Create Subject Results", GroupExamSubjectResults, "Enter subject-wise marks"),
+        (ExamSubjectResultsEdit, "Edit Subject Results", GroupExamSubjectResults, "Edit subject-wise marks"),
+        (ExamSubjectResultsDelete, "Delete Subject Results", GroupExamSubjectResults, "Delete subject results"),
+
+        (ResultRecordsView, "View Result Records", GroupResultRecords, "View published result records"),
+
         (ReportsCollegePayments, "College Payments Report", GroupReports, "View college payments report"),
         (ReportsSubjectCount, "Subject Count Report", GroupReports, "View subject count report"),
         (ReportsExamTriplicate, "Exam Triplicate Report", GroupReports, "View exam triplicate report"),
@@ -503,6 +549,11 @@ public static class Permissions
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
+            GradingSchemesView, GradingSchemesCreate, GradingSchemesEdit,
+            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
+            ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
+            ResultRecordsView,
+
             StudentsView, StudentsCreate, StudentsEdit, StudentsDelete,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
@@ -531,6 +582,11 @@ public static class Permissions
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
+            GradingSchemesView,
+            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit,
+            ExamSubjectResultsView,
+            ResultRecordsView,
+
             StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
@@ -553,6 +609,11 @@ public static class Permissions
             AcademicYearsView,
 
             ExamSchedulesView,
+
+            GradingSchemesView,
+            ExamRegistrationView,
+            ExamSubjectResultsView,
+            ResultRecordsView,
 
             StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView,
