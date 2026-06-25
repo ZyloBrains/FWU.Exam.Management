@@ -556,9 +556,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var college = await context.Colleges.Where(c => c.Id == studentRegistration.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
         var password = studentRegistration.DateOfBirthBS;
 
-        try
+        if (!string.IsNullOrWhiteSpace(studentRegistration.Email))
         {
-            if (!string.IsNullOrWhiteSpace(studentRegistration.Email))
+            try
             {
                 var emailBody = $@"
                     <h3>Dear {fullName},</h3>
@@ -580,18 +580,24 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                     <p>Regards,<br/>Far-Western University</p>";
                 await emailService.SendEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
             }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to send registration email to {Email}", studentRegistration.Email);
+            }
         }
-        catch { }
 
-        try
+        var phone = studentRegistration.ContactNumber ?? studentRegistration.Phone;
+        if (!string.IsNullOrWhiteSpace(phone))
         {
-            var phone = studentRegistration.ContactNumber ?? studentRegistration.Phone;
-            if (isNewUser && !string.IsNullOrWhiteSpace(phone))
+            try
             {
                 var smsMessage = $"Dear {fullName}, your registration is complete. Reg No: {studentRegistration.RegistrationNumber}, Username: {studentRegistration.Email}, Password: {password}. Please change password on first login. - FWU";
                 await smsService.SendSmsAsync(phone, smsMessage);
             }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to send registration SMS to {Phone}", phone);
+            }
         }
-        catch { }
     }
 }
