@@ -143,9 +143,26 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task DeleteStudentRegistrationAsync(int id)
     {
-        var studentRegistration = await context.StudentRegistrations.FindAsync(id);
+        var studentRegistration = await context.StudentRegistrations
+            .Include(sr => sr.StudentGuardians)
+            .Include(sr => sr.StudentQualifications)
+            .Include(sr => sr.ApplicationVouchers)
+            .Include(sr => sr.PaymentRequestLogs)
+            .Include(sr => sr.StudentAdmissions)
+            .FirstOrDefaultAsync(sr => sr.Id == id);
         if (studentRegistration != null)
         {
+            if (studentRegistration.StudentGuardians?.Count > 0)
+                context.StudentGuardians.RemoveRange(studentRegistration.StudentGuardians);
+            if (studentRegistration.StudentQualifications?.Count > 0)
+                context.StudentQualifications.RemoveRange(studentRegistration.StudentQualifications);
+            if (studentRegistration.ApplicationVouchers?.Count > 0)
+                context.ApplicationVouchers.RemoveRange(studentRegistration.ApplicationVouchers);
+            if (studentRegistration.PaymentRequestLogs?.Count > 0)
+                context.PaymentRequestLogs.RemoveRange(studentRegistration.PaymentRequestLogs);
+            if (studentRegistration.StudentAdmissions?.Count > 0)
+                context.StudentAdmissions.RemoveRange(studentRegistration.StudentAdmissions);
+
             context.StudentRegistrations.Remove(studentRegistration);
             await context.SaveChangesAsync();
         }
