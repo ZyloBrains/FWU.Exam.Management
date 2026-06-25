@@ -1,0 +1,135 @@
+@{
+    Layout = "~/Areas/Exams/Views/Shared/_PaymentLayout.cshtml";
+    ViewData["Title"] = "Verify Payment - Entrance Application";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-12">
+    <div class="max-w-lg mx-auto px-4">
+
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <i class="fas fa-file-alt text-3xl text-teal-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Entrance Application</h1>
+            <p class="text-gray-500 mt-1">First step toward student registration</p>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center gap-2">
+                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- New to Entrance? -->
+        <div class="mb-6">
+            <a asp-action="AvailableSchedules"
+               class="block bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl p-5 text-white hover:from-teal-600 hover:to-cyan-700 transition-all shadow-md">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-base font-bold">New Applicant?</h2>
+                        <p class="text-teal-100 text-xs mt-0.5">Pay the entrance exam fee and start your application</p>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-teal-700 text-sm font-semibold rounded-lg">
+                        Pay Now <i class="fas fa-arrow-right text-xs"></i>
+                    </span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Payment Verification Card -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                <h2 class="text-lg font-semibold text-white">Already Paid? Verify Here</h2>
+                <p class="text-teal-100 text-sm mt-0.5">Enter your transaction code and the name & phone you used during payment</p>
+            </div>
+
+            <div class="px-6 py-6">
+                <form asp-action="VerifyPayment" method="post" class="space-y-4">
+                    @Html.AntiForgeryToken()
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Transaction Code / Voucher Number</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-key text-gray-400"></i>
+                            </div>
+                            <input type="text" name="transactionCode" required
+                                   placeholder="Enter transaction code or voucher number"
+                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 transition" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name (used during payment)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" name="fullName"
+                                   placeholder="Enter your full name"
+                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 transition" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone Number (used during payment)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-phone text-gray-400"></i>
+                            </div>
+                            <input type="tel" name="contactNumber"
+                                   placeholder="Enter your phone number"
+                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 transition" />
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-400">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Enter the name and phone number you provided during payment to verify your identity
+                    </p>
+
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-xl hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
+                        <i class="fas fa-check-circle"></i> Verify & Continue
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-6 bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">How does it work?</h3>
+            <ol class="text-sm text-gray-500 space-y-2">
+                <li class="flex items-start gap-2">
+                    <span class="flex-shrink-0 w-5 h-5 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-medium">1</span>
+                    <span>Click <strong>"Pay Now"</strong> above, select a program, and complete the payment.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="flex-shrink-0 w-5 h-5 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-medium">2</span>
+                    <span>After payment, you will receive a voucher code. Enter it above along with your name & phone.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="flex-shrink-0 w-5 h-5 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-medium">3</span>
+                    <span>Once verified, fill out the entrance application form completely.</span>
+                </li>
+            </ol>
+        </div>
+
+        <div class="text-center mt-6">
+            <a asp-area="" asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition">
+                <i class="fas fa-arrow-left text-xs"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>

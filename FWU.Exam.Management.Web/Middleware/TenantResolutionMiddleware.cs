@@ -156,7 +156,14 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     private static bool IsTenantSelectPath(string path)
     {
         var lower = path.TrimEnd('/').ToLowerInvariant();
-        return lower is "" or "/" or "/tenantselect" or "/tenantselect/index";
+
+        if (lower is "" or "/" or "/tenantselect" or "/tenantselect/index")
+            return true;
+
+        if (lower.StartsWith("/identity/account/"))
+            return true;
+
+        return false;
     }
 
     private static bool IsIdentityPath(string path)

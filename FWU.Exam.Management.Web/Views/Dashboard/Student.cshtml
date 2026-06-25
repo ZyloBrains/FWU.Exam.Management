@@ -218,10 +218,19 @@
                         <div class="space-y-2 sm:space-y-3">
                             @foreach (var es in Model.ExamSchedules!.OrderByDescending(es => es.StartDateBs))
                             {
-                                var nowBs = DateTime.Now.ToString("yyyy-MM-dd");
-                                var isOngoing = string.Compare(nowBs, es.StartDateBs) >= 0 && string.Compare(nowBs, es.EndDateBs) <= 0;
-                                var isUpcoming = string.Compare(nowBs, es.StartDateBs) < 0;
-                                var isPast = string.Compare(nowBs, es.EndDateBs) > 0;
+                                var today = DateOnly.FromDateTime(DateTime.Now);
+                                var start = es.StartDate;
+                                var end = es.EndDate;
+                                var isOngoing = start.HasValue && end.HasValue && today >= start.Value && today <= end.Value;
+                                var isUpcoming = start.HasValue && today < start.Value;
+                                var isPast = end.HasValue && today > end.Value;
+                                if (!start.HasValue && !end.HasValue && es.StartDateBs != null && es.EndDateBs != null)
+                                {
+                                    var nowBs = DateTime.Now.ToString("yyyy-MM-dd");
+                                    isOngoing = string.Compare(nowBs, es.StartDateBs) >= 0 && string.Compare(nowBs, es.EndDateBs) <= 0;
+                                    isUpcoming = string.Compare(nowBs, es.StartDateBs) < 0;
+                                    isPast = string.Compare(nowBs, es.EndDateBs) > 0;
+                                }
 
                                 string statusLabel, statusBg, dotColor;
                                 if (isUpcoming) { statusLabel = "Upcoming"; statusBg = "bg-blue-50 text-blue-700 border-blue-100"; dotColor = "bg-blue-500"; }

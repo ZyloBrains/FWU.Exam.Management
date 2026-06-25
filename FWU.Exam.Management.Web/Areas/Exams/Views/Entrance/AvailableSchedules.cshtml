@@ -1,0 +1,107 @@
+@model List<AvailableScheduleDto>
+@{
+    Layout = "~/Areas/Exams/Views/Shared/_PaymentLayout.cshtml";
+    ViewData["Title"] = "Entrance Application - Select Program";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-12">
+    <div class="max-w-4xl mx-auto px-4">
+
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-graduation-cap text-3xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800">Entrance Application</h1>
+            <p class="text-gray-500 mt-2">Select a program to pay the entrance exam fee and start your application</p>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center gap-2">
+                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar-times text-2xl text-gray-400"></i>
+                </div>
+                <h2 class="text-lg font-semibold text-gray-700">No Programs Available</h2>
+                <p class="text-gray-500 text-sm mt-1">There are no entrance exam schedules open at the moment. Please check back later.</p>
+            </div>
+        }
+
+        <div class="grid gap-5">
+            @foreach (var schedule in Model)
+            {
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-4 flex-1">
+                            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+                                <i class="fas fa-book-open text-lg"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="text-lg font-semibold text-gray-900">@(schedule.ExamScheduleName ?? schedule.ProgramName ?? "Entrance Exam")</h3>
+                                @if (!string.IsNullOrEmpty(schedule.ProgramName))
+                                {
+                                    <p class="text-sm font-medium text-teal-700 mt-0.5">
+                                        <i class="fas fa-graduation-cap mr-1"></i>@schedule.ProgramName
+                                    </p>
+                                }
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
+                                    @if (!string.IsNullOrEmpty(schedule.CollegeName))
+                                    {
+                                        <span><i class="fas fa-building mr-1"></i>@schedule.CollegeName</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(schedule.AcademicYearName))
+                                    {
+                                        <span><i class="fas fa-calendar mr-1"></i>@schedule.AcademicYearName</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(schedule.SemesterName))
+                                    {
+                                        <span><i class="fas fa-layer-group mr-1"></i>@schedule.SemesterName</span>
+                                    }
+                                </div>
+                                <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                                    @if (schedule.StartDateBs != null)
+                                    {
+                                        <span><i class="far fa-calendar-alt mr-1"></i>@schedule.StartDateBs - @schedule.EndDateBs (BS)</span>
+                                    }
+                                    else
+                                    {
+                                        <span><i class="far fa-calendar-alt mr-1"></i>@schedule.StartDate?.ToString("MMM dd, yyyy") - @schedule.EndDate?.ToString("MMM dd, yyyy")</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-3 flex-shrink-0">
+                            <div class="text-right">
+                                <span class="text-sm text-gray-400">Fee</span>
+                                <p class="text-2xl font-bold text-teal-700">Rs. @(schedule.ExamFee?.ToString("N0") ?? "-")</p>
+                            </div>
+                            <a asp-action="InitiatePayment" asp-route-scheduleId="@schedule.Id"
+                               class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-xl hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
+                                <i class="fas fa-credit-card"></i> Pay Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="text-center mt-8">
+            <a asp-action="VerifyPayment" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-teal-700 transition">
+                <i class="fas fa-key mr-1"></i> Already have a voucher code? Verify here
+            </a>
+        </div>
+
+        <div class="text-center mt-4">
+            <a asp-area="" asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-arrow-left text-xs"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>

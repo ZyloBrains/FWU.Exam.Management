@@ -51,11 +51,12 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
         var query = context.ExamSchedules!
             .AsNoTracking()
+            .Include(es => es.ExamType)
             .Include(es => es.Program)
             .Include(es => es.Level)
             .Include(es => es.Semester)
             .Include(es => es.AcademicYear)
-            .Where(es => es.IsActive && es.ProgramId == programId);
+            .Where(es => es.IsActive && es.ProgramId == programId && (es.ExamType == null || es.ExamType.Name != "Entrance"));
 
         if (student.LevelId != 0)
         {

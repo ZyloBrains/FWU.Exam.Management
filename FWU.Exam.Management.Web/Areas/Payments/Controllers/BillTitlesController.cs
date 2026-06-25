@@ -156,7 +156,7 @@ public class BillTitlesController(
     [RequirePermission("billtitles.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,FeeType,ProgramsId")] BillTitle billTitle)
+    public async Task<IActionResult> Create([Bind("Id,BillTitleName,Category,IsActive,Amount,PracticalFee,ThroughDate,ApplicableDate,ExamScheduleId,ProgramsId")] BillTitle billTitle)
     {
         if (ModelState.IsValid)
         {
@@ -188,7 +188,7 @@ public class BillTitlesController(
     [RequirePermission("billtitles.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,ThroughDate,ApplicableDate,ExamScheduleId,FeeType,ProgramsId")] BillTitle billTitle)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,BillTitleName,Category,IsActive,Amount,PracticalFee,ThroughDate,ApplicableDate,ExamScheduleId,ProgramsId")] BillTitle billTitle)
     {
         if (id != billTitle.Id) return NotFound();
 

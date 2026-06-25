@@ -184,6 +184,9 @@ public class StudentDashboardController(
         if (schedule.ProgramId != programId)
             return Forbid();
 
+        if (schedule.ProgramId != programId)
+            return Forbid();
+
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
         var practicalFee = await dashboardService.GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
@@ -209,11 +212,10 @@ public class StudentDashboardController(
             SubjectCode = s.SubjectCatalog?.SubjectCode,
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
-            ExamFee = examFee,
-            IsCompulsory = s.IsCompulsory,
             PracticalFee = s.HasPractical ? practicalFee : 0,
             IsSelected = isRegular || failedSet.Contains(s.Id),
-            IsFailed = failedSet.Contains(s.Id)
+            IsFailed = failedSet.Contains(s.Id),
+            IsCompulsory = s.IsCompulsory
         }).ToList();
 
         var vm = new ExamPaymentViewModel

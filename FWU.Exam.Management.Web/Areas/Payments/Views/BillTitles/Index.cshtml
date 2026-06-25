@@ -130,7 +130,6 @@
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Bill Title Name</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Category</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Schedule / Program</th>
@@ -143,11 +142,6 @@
                 {
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 font-medium text-gray-800">@item.BillTitleName</td>
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(item.FeeType == "Practical" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800")">
-                                @(item.FeeType ?? "Theory")
-                            </span>
-                        </td>
                         <td class="px-4 py-3 text-gray-600">@(item.Category ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.Amount?.ToString("N2") ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.ExamSchedule?.ExamScheduleName ?? item.Program?.ProgramName ?? "-")</td>
@@ -200,9 +194,6 @@
                     <div>
                         <h3 class="font-semibold text-gray-800 text-sm">@item.BillTitleName</h3>
                         <p class="text-xs text-gray-500">@(item.Category ?? "-")</p>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 @(item.FeeType == "Practical" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700")">
-                            @(item.FeeType ?? "Theory")
-                        </span>
                     </div>
                     </div>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(item.IsActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600")">

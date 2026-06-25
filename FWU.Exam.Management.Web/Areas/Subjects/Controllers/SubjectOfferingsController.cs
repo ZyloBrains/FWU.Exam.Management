@@ -138,7 +138,6 @@ public class SubjectOfferingsController : Controller
         return Json(ids);
     }
 
-    [RequirePermission("subjectofferings.create")]
     public async Task<IActionResult> Create()
     {
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
@@ -182,20 +181,6 @@ public class SubjectOfferingsController : Controller
 
         if (ModelState.IsValid)
         {
-            var duplicateInRequest = model.Subjects
-                .GroupBy(s => s.SubjectCatalogId)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-
-            if (duplicateInRequest.Any())
-            {
-                ModelState.AddModelError("", "Duplicate subjects found in the request. Each subject can only be added once.");
-            }
-        }
-
-        if (ModelState.IsValid)
-        {
             var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId);
             var duplicateIds = model.Subjects
                 .Where(s => existingIds.Contains(s.SubjectCatalogId))
@@ -204,7 +189,7 @@ public class SubjectOfferingsController : Controller
 
             if (duplicateIds.Any())
             {
-                ModelState.AddModelError("", $"{duplicateIds.Count} subject(s) already exist for the selected program.");
+                ModelState.AddModelError("", $"{duplicateIds.Count} subject(s) already exist in this semester for the selected program.");
             }
         }
 
@@ -288,7 +273,6 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [RequirePermission("subjectofferings.edit")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering)
     {
         if (id != subjectOffering.Id) return NotFound();

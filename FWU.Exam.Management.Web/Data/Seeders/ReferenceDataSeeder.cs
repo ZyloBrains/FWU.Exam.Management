@@ -306,7 +306,7 @@ public static class ReferenceDataSeeder
         College? engCollege, csitCollege;
         if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "ENG-SOE"))
         {
-            engCollege = new College { Code = "ENG-SOE", Name = "School of Engineering", TenantId = 3, IsActive = true };
+            engCollege = new College { Code = "ENG-SOE", Name = "School of Engineering", TenantId = 1, IsActive = true };
             context.Colleges.Add(engCollege);
             await context.SaveChangesAsync();
             if (foe != null)
@@ -344,7 +344,7 @@ public static class ReferenceDataSeeder
             {
                 if (!await context.CollegePrograms.IgnoreQueryFilters().AnyAsync(cp => cp.CollegeId == engCollege.Id && cp.ProgramId == program.Id))
                 {
-                    context.CollegePrograms.Add(new CollegeProgram { CollegeId = engCollege.Id, ProgramId = program.Id, TenantId = 3, IsActive = true });
+                    context.CollegePrograms.Add(new CollegeProgram { CollegeId = engCollege.Id, ProgramId = program.Id, TenantId = 1, IsActive = true });
                 }
             }
             await context.SaveChangesAsync();

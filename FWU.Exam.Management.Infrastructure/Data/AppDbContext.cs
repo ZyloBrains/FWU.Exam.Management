@@ -77,6 +77,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GradingScheme>? GradingSchemes { get; set; }
     public DbSet<GradeDefinition>? GradeDefinitions { get; set; }
     public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
+    public DbSet<ApplicationVoucher>? ApplicationVouchers { get; set; }
+    public DbSet<PaymentRequestLog>? PaymentRequestLogs { get; set; }
+    public DbSet<PaymentResponseLog>? PaymentResponseLogs { get; set; }
+    public DbSet<PaymentPracticalSubjects>? PaymentPracticalSubjects { get; set; }
     public DbSet<ESewaConfiguration>? ESewaConfigurations { get; set; }
     public DbSet<KhaltiConfiguration>? KhaltiConfigurations { get; set; }
     public DbSet<ConnectIpsPaymentConfiguration>? ConnectIpsPaymentConfigurations { get; set; }
@@ -681,6 +685,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<GradeDefinition>(e => e.Property(x => x.MinPercentage).HasPrecision(5, 2));
 
         builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA).HasPrecision(5, 2));
+        builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA2).HasPrecision(5, 2));
+        builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA3).HasPrecision(5, 2));
 
         builder.Entity<EntranceExamApplication>()
             .HasOne(a => a.AcademicYear)
@@ -716,6 +722,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(a => a.PreviousLevel)
             .WithMany()
             .HasForeignKey(a => a.PreviousLevelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.PreviousLevel2)
+            .WithMany()
+            .HasForeignKey(a => a.PreviousLevel2Id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.PreviousLevel3)
+            .WithMany()
+            .HasForeignKey(a => a.PreviousLevel3Id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.CitizenshipDistrict)
+            .WithMany()
+            .HasForeignKey(a => a.CitizenshipDistrictId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<EntranceExamApplication>()
+            .HasOne(a => a.ApplicationVoucher)
+            .WithMany()
+            .HasForeignKey(a => a.ApplicationVoucherId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique indexes - Global entities

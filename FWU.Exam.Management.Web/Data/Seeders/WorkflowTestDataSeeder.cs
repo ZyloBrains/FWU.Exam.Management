@@ -301,10 +301,11 @@ public static class WorkflowTestDataSeeder
             new ExamType { Name = "Regular", Code = 1, IsActive = true },
             new ExamType { Name = "Partial", Code = 2, IsActive = true },
             new ExamType { Name = "Supplementary", Code = 3, IsActive = true },
+            new ExamType { Name = "Entrance", Code = 4, IsActive = true },
         };
         await context.ExamTypes.AddRangeAsync(examTypes);
         await context.SaveChangesAsync();
-        var regularExamType = examTypes[0];
+        var entranceExamType = examTypes[3];
 
         // ===================================================================
         // 15. BOARDS
@@ -539,15 +540,16 @@ public static class WorkflowTestDataSeeder
             ProgramId = csitProgram.Id,
             SemesterId = sem1.Id,
             AcademicYearId = runningYear.Id,
-            ExamTypeId = regularExamType.Id,
+            ExamTypeId = entranceExamType.Id,
             LevelId = bachelorLevel.Id,
             StartDateBs = "2081-10-01",
             EndDateBs = "2081-10-15",
-            StartDate = new DateOnly(2025, 1, 14),
-            EndDate = new DateOnly(2025, 1, 28),
+            StartDate = new DateOnly(2026, 7, 14),
+            EndDate = new DateOnly(2026, 8, 28),
             StartTime = new TimeOnly(7, 0),
             EndTime = new TimeOnly(10, 0),
-            IsActive = true
+            IsActive = true,
+            ExamFee = 1500m
         };
         context.ExamSchedules.Add(csitExamSchedule);
 
@@ -559,15 +561,16 @@ public static class WorkflowTestDataSeeder
             ProgramId = baProgram.Id,
             SemesterId = sem1.Id,
             AcademicYearId = runningYear.Id,
-            ExamTypeId = regularExamType.Id,
+            ExamTypeId = entranceExamType.Id,
             LevelId = bachelorLevel.Id,
             StartDateBs = "2081-11-01",
             EndDateBs = "2081-11-15",
-            StartDate = new DateOnly(2025, 2, 14),
-            EndDate = new DateOnly(2025, 2, 28),
+            StartDate = new DateOnly(2026, 8, 14),
+            EndDate = new DateOnly(2026, 9, 28),
             StartTime = new TimeOnly(7, 0),
             EndTime = new TimeOnly(10, 0),
-            IsActive = true
+            IsActive = true,
+            ExamFee = 1200m
         };
         context.ExamSchedules.Add(baExamSchedule);
         await context.SaveChangesAsync();
@@ -718,6 +721,24 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
     }
 
+    private static async Task<bool> TableExistsAsync(AppDbContext context, string tableName)
+    {
+        try
+        {
+            var conn = context.Database.GetDbConnection();
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"SELECT 1 WHERE OBJECT_ID(N'[{tableName}]', N'U') IS NOT NULL";
+            var result = await cmd.ExecuteScalarAsync();
+            await conn.CloseAsync();
+            return result != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static async Task ClearExistingDataAsync(AppDbContext context)
     {
         var tableNames = new[]
@@ -779,35 +800,49 @@ public static class WorkflowTestDataSeeder
 
         foreach (var table in tableNames)
         {
+            if (!await TableExistsAsync(context, table))
+                continue;
             try
             {
                 await context.Database.ExecuteSqlRawAsync($"DELETE FROM [{table}]");
             }
             catch
             {
-                // Skip if table doesn't exist or FK constraint
+                // Skip if FK constraint or other transient error
             }
         }
 
         // Clear Identity-related tables
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetUserRoles]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetRoleClaims]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetUserClaims]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetUserLogins]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetUserTokens]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetUsers]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [AspNetRoles]"); } catch { }
+        var identityTables = new[] { "AspNetUserRoles", "AspNetRoleClaims", "AspNetUserClaims", "AspNetUserLogins", "AspNetUserTokens", "AspNetUsers", "AspNetRoles" };
+        foreach (var table in identityTables)
+        {
+            if (!await TableExistsAsync(context, table))
+                continue;
+            try { await context.Database.ExecuteSqlRawAsync($"DELETE FROM [{table}]"); } catch { }
+        }
 
         // Clear permissions
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [RolePermissions]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [Permissions]"); } catch { }
+        var permTables = new[] { "RolePermissions", "Permissions" };
+        foreach (var table in permTables)
+        {
+            if (!await TableExistsAsync(context, table))
+                continue;
+            try { await context.Database.ExecuteSqlRawAsync($"DELETE FROM [{table}]"); } catch { }
+        }
 
-        // Clear Tenants (last, as many entities reference it)
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [Tenants]"); } catch { }
+        // Clear Tenants
+        if (await TableExistsAsync(context, "Tenants"))
+        {
+            try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [Tenants]"); } catch { }
+        }
 
-        // Clear LocalLevels, Districts, Provinces (location data)
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [LocalLevels]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [Districts]"); } catch { }
-        try { await context.Database.ExecuteSqlRawAsync("DELETE FROM [Provinces]"); } catch { }
+        // Clear location data
+        var locationTables = new[] { "LocalLevels", "Districts", "Provinces" };
+        foreach (var table in locationTables)
+        {
+            if (!await TableExistsAsync(context, table))
+                continue;
+            try { await context.Database.ExecuteSqlRawAsync($"DELETE FROM [{table}]"); } catch { }
+        }
     }
 }
