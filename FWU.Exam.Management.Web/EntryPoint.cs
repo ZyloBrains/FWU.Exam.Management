@@ -136,6 +136,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
+        builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
+        builder.Services.AddHttpClient<ISmsService, SmsService>();
         builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
         builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
         builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();

@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
@@ -12,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager) : IEntranceExamApplicationService
+public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, ISmsService smsService) : IEntranceExamApplicationService
 {
     private const int EntranceExamTypeCode = 4;
 
@@ -39,6 +40,9 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
         context.EntranceExamApplications.Add(application);
         await context.SaveChangesAsync();
+
+        await SendEntranceSubmissionNotificationsAsync(application);
+
         return application.Id;
     }
 
@@ -472,7 +476,50 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
         context.EntranceExamApplications.Add(application);
         await context.SaveChangesAsync();
+
+        await SendEntranceSubmissionNotificationsAsync(application);
+
         return application.Id;
+    }
+
+    private async Task SendEntranceSubmissionNotificationsAsync(EntranceExamApplication application)
+    {
+        var fullName = $"{application.FirstName} {application.LastName}".Trim();
+        var program = await context.Programs.Where(p => p.Id == application.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
+        var college = await context.Colleges.Where(c => c.Id == application.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(application.Email))
+            {
+                var emailBody = $@"
+                    <h3>Dear {fullName},</h3>
+                    <p>Your entrance exam application has been submitted successfully.</p>
+                    <p><strong>Details:</strong></p>
+                    <ul>
+                        <li><strong>College:</strong> {college}</li>
+                        <li><strong>Program:</strong> {program}</li>
+                        <li><strong>Application ID:</strong> {application.Id}</li>
+                        <li><strong>Date:</strong> {application.CreatedAt:yyyy-MM-dd}</li>
+                    </ul>
+                    <p>You will be notified once your application is reviewed.</p>
+                    <br/>
+                    <p>Regards,<br/>Far-Western University</p>";
+                await emailService.SendEmailAsync(application.Email, "Entrance Exam Application Submitted", emailBody);
+            }
+        }
+        catch { }
+
+        try
+        {
+            var phone = application.ContactNumber ?? application.Phone;
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                var smsMessage = $"Dear {fullName}, your entrance application for {program} at {college} has been submitted successfully. Application ID: {application.Id}. - FWU";
+                await smsService.SendSmsAsync(phone, smsMessage);
+            }
+        }
+        catch { }
     }
 
     public async Task<int> UpdateStepApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber, int voucherId, int applicationId)

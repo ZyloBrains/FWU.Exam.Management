@@ -34,6 +34,7 @@ public static class Permissions
     public const string GroupDepartments = "departments";
     public const string GroupLevels = "levels";
     public const string GroupSmtp = "smtp";
+    public const string GroupSms = "sms";
     public const string GroupESewa = "esewa";
     public const string GroupKhalti = "khalti";
     public const string GroupConnectIPS = "connectips";
@@ -239,6 +240,12 @@ public static class Permissions
     public const string SmtpCreate = "smtp.create";
     public const string SmtpEdit = "smtp.edit";
     public const string SmtpDelete = "smtp.delete";
+
+    // SMS
+    public const string SmsView = "sms.view";
+    public const string SmsCreate = "sms.create";
+    public const string SmsEdit = "sms.edit";
+    public const string SmsDelete = "sms.delete";
 
     // eSewa Config
     public const string ESewaView = "esewa.view";
@@ -463,6 +470,11 @@ public static class Permissions
         (SmtpEdit, "Edit SMTP Config", GroupSmtp, "Edit SMTP configuration"),
         (SmtpDelete, "Delete SMTP Config", GroupSmtp, "Delete SMTP configuration"),
 
+        (SmsView, "View SMS Config", GroupSms, "View SMS configuration"),
+        (SmsCreate, "Create SMS Config", GroupSms, "Create new SMS configuration"),
+        (SmsEdit, "Edit SMS Config", GroupSms, "Edit SMS configuration"),
+        (SmsDelete, "Delete SMS Config", GroupSms, "Delete SMS configuration"),
+
         (ESewaView, "View eSewa Config", GroupESewa, "View eSewa configuration"),
         (ESewaCreate, "Create eSewa Config", GroupESewa, "Create eSewa configuration"),
         (ESewaEdit, "Edit eSewa Config", GroupESewa, "Edit eSewa configuration"),
@@ -566,6 +578,8 @@ public static class Permissions
             NoticesView, NoticesCreate, NoticesEdit, NoticesDelete,
             BoardsView, BoardsCreate, BoardsEdit, BoardsDelete,
             DepartmentsView, DepartmentsCreate, DepartmentsEdit, DepartmentsDelete,
+
+            SmsView, SmsCreate, SmsEdit, SmsDelete,
         ],
 
         ["CollegeAdmin"] =

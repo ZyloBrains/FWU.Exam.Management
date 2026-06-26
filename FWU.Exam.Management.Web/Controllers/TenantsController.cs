@@ -5,6 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.Helpers;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("tenants.view")]
-public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
+public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, IEmailService emailService) : Controller
 {
     private readonly AppDbContext _context = context;
     private readonly UserManager<AppUser> _userManager = userManager;
@@ -107,6 +108,31 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
                 }
 
                 await _userManager.AddToRoleAsync(adminUser, Role.FacultyAdmin);
+
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(viewModel.AdminEmail))
+                    {
+                        var emailBody = $@"
+                            <h3>Dear {viewModel.AdminFullName},</h3>
+                            <p>Your tenant account has been created successfully.</p>
+                            <p><strong>Tenant Details:</strong></p>
+                            <ul>
+                                <li><strong>Tenant:</strong> {tenant.Name}</li>
+                                <li><strong>Office Code:</strong> {tenant.OfficeCode}</li>
+                            </ul>
+                            <p><strong>Login Credentials:</strong></p>
+                            <ul>
+                                <li><strong>Username (Email):</strong> {viewModel.AdminEmail}</li>
+                                <li><strong>Password:</strong> {viewModel.AdminPassword}</li>
+                            </ul>
+                            <br/>
+                            <p>Regards,<br/>Far-Western University</p>";
+                        await emailService.SendEmailAsync(viewModel.AdminEmail, "Tenant Account Created - Login Credentials", emailBody);
+                    }
+                }
+                catch { }
+
                 TempData["SuccessMessage"] = $"Tenant '{tenant.Name}' created successfully with admin user '{viewModel.AdminEmail}'.";
             }
             else
