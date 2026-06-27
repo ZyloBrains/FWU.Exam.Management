@@ -43,6 +43,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamSubjectResult>? ExamSubjectResults { get; set; }
     public DbSet<ExamSlot>? ExamSlots { get; set; }
     public DbSet<ExamType>? ExamTypes { get; set; }
+    public DbSet<HallTicket>? HallTickets { get; set; }
+    public DbSet<RetotalRequest>? RetotalRequests { get; set; }
     public DbSet<Department>? Departments { get; set; }
     public DbSet<FiscalYear>? FiscalYears { get; set; }
     public DbSet<Gender>? Genders { get; set; }
@@ -553,6 +555,42 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(ess => ess.ExamCenter)
             .WithMany(ec => ec.ExamSlots)
             .HasForeignKey(ess => ess.ExamCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HallTicket>()
+            .HasOne(ht => ht.ExamRegistration)
+            .WithMany()
+            .HasForeignKey(ht => ht.ExamRegistrationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HallTicket>()
+            .HasOne(ht => ht.ExamSchedule)
+            .WithMany()
+            .HasForeignKey(ht => ht.ExamScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HallTicket>()
+            .HasOne(ht => ht.StudentRegistration)
+            .WithMany()
+            .HasForeignKey(ht => ht.StudentRegistrationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<RetotalRequest>()
+            .HasOne(rr => rr.ExamSubjectResult)
+            .WithMany()
+            .HasForeignKey(rr => rr.ExamSubjectResultId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<RetotalRequest>()
+            .HasOne(rr => rr.StudentRegistration)
+            .WithMany()
+            .HasForeignKey(rr => rr.StudentRegistrationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<RetotalRequest>()
+            .HasOne(rr => rr.ExamRegistration)
+            .WithMany()
+            .HasForeignKey(rr => rr.ExamRegistrationId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ProgramSubjectPracticalCharge>()

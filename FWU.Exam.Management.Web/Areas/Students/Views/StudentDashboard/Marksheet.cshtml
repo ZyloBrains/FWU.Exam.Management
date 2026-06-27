@@ -92,6 +92,7 @@
                                 <th class="text-center px-4 py-3 font-semibold text-gray-600">Total</th>
                                 <th class="text-center px-4 py-3 font-semibold text-gray-600">Grade</th>
                                 <th class="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
+                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -138,6 +139,16 @@
                                             </span>
                                         }
                                     </td>
+                                    <td class="px-4 py-3 text-center">
+                                        @if (subject.Status == "Fail" && subject.ExamSubjectResultId > 0)
+                                        {
+                                            <a asp-action="RequestRetotal" asp-area="Students" asp-route-examSubjectResultId="@subject.ExamSubjectResultId"
+                                               class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+                                               title="Request re-evaluation">
+                                                <i class="fas fa-redo-alt text-[10px]"></i> Retotal
+                                            </a>
+                                        }
+                                    </td>
                                 </tr>
                             }
                         </tbody>
@@ -147,7 +158,7 @@
                                 <tr>
                                     <td colspan="4" class="px-4 py-3 text-right font-semibold text-gray-700">SGPA:</td>
                                     <td class="px-4 py-3 text-center font-bold text-gray-800">@marksheet.TotalGpa</td>
-                                    <td class="px-4 py-3 text-center" colspan="2">
+                                    <td class="px-4 py-3 text-center" colspan="3">
                                         <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
                                             <i class="fas @(marksheet.Result == "Pass" ? "fa-check-circle" : marksheet.Result == "Fail" ? "fa-times-circle" : "fa-clock") text-[10px]"></i>
                                             @marksheet.Result
@@ -214,6 +225,13 @@
                                         <span class="font-semibold @(subject.Grade == "F" ? "text-red-600" : "text-gray-800")">@subject.Grade</span>
                                     }
                                 </span>
+                                @if (subject.Status == "Fail" && subject.ExamSubjectResultId > 0)
+                                {
+                                    <a asp-action="RequestRetotal" asp-area="Students" asp-route-examSubjectResultId="@subject.ExamSubjectResultId"
+                                       class="ml-auto inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
+                                        <i class="fas fa-redo-alt text-[10px]"></i> Retotal
+                                    </a>
+                                }
                             </div>
                         </div>
                     }
