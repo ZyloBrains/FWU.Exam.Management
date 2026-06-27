@@ -44,6 +44,8 @@ public static class Permissions
     public const string GroupExamRegistration = "examregistration";
     public const string GroupExamSubjectResults = "examsubjectresults";
     public const string GroupResultRecords = "resultrecords";
+    public const string GroupHallTickets = "halltickets";
+    public const string GroupRetotaling = "retotaling";
     public const string GroupReports = "reports";
 
     // Helper to build permission name
@@ -300,6 +302,21 @@ public static class Permissions
     // Result Records (read-only)
     public const string ResultRecordsView = "resultrecords.view";
 
+    // Hall Tickets
+    public const string HallTicketsView = "halltickets.view";
+    public const string HallTicketsCreate = "halltickets.create";
+    public const string HallTicketsEdit = "halltickets.edit";
+    public const string HallTicketsDelete = "halltickets.delete";
+    public const string HallTicketsGenerate = "halltickets.generate";
+    public const string HallTicketsDownload = "halltickets.download";
+
+    // Retotaling
+    public const string RetotalingView = "retotaling.view";
+    public const string RetotalingRequest = "retotaling.request";
+    public const string RetotalingApprove = "retotaling.approve";
+    public const string RetotalingReject = "retotaling.reject";
+    public const string RetotalingReview = "retotaling.review";
+
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
@@ -519,6 +536,19 @@ public static class Permissions
 
         (ResultRecordsView, "View Result Records", GroupResultRecords, "View published result records"),
 
+        (HallTicketsView, "View Hall Tickets", GroupHallTickets, "View hall ticket list"),
+        (HallTicketsCreate, "Create Hall Tickets", GroupHallTickets, "Create new hall tickets"),
+        (HallTicketsEdit, "Edit Hall Tickets", GroupHallTickets, "Edit existing hall tickets"),
+        (HallTicketsDelete, "Delete Hall Tickets", GroupHallTickets, "Delete hall tickets"),
+        (HallTicketsGenerate, "Generate Hall Tickets", GroupHallTickets, "Generate hall tickets for exam registrations"),
+        (HallTicketsDownload, "Download Hall Tickets", GroupHallTickets, "Download hall tickets"),
+
+        (RetotalingView, "View Retotaling Requests", GroupRetotaling, "View retotaling/ re-evaluation requests"),
+        (RetotalingRequest, "Request Retotaling", GroupRetotaling, "Request re-evaluation of exam results"),
+        (RetotalingApprove, "Approve Retotaling", GroupRetotaling, "Approve retotaling requests"),
+        (RetotalingReject, "Reject Retotaling", GroupRetotaling, "Reject retotaling requests"),
+        (RetotalingReview, "Review Retotaling", GroupRetotaling, "Review retotaling requests and update marks"),
+
         (ReportsCollegePayments, "College Payments Report", GroupReports, "View college payments report"),
         (ReportsSubjectCount, "Subject Count Report", GroupReports, "View subject count report"),
         (ReportsExamTriplicate, "Exam Triplicate Report", GroupReports, "View exam triplicate report"),
@@ -566,6 +596,9 @@ public static class Permissions
             ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
             ResultRecordsView,
 
+            HallTicketsView, HallTicketsCreate, HallTicketsEdit, HallTicketsGenerate, HallTicketsDownload,
+            RetotalingView, RetotalingReview, RetotalingApprove, RetotalingReject,
+
             StudentsView, StudentsCreate, StudentsEdit, StudentsDelete,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
@@ -601,6 +634,9 @@ public static class Permissions
             ExamSubjectResultsView,
             ResultRecordsView,
 
+            HallTicketsView, HallTicketsDownload,
+            RetotalingView,
+
             StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
@@ -628,6 +664,8 @@ public static class Permissions
             ExamRegistrationView,
             ExamSubjectResultsView,
             ResultRecordsView,
+            HallTicketsView,
+            RetotalingView,
 
             StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView,
@@ -644,6 +682,8 @@ public static class Permissions
             StudentPortalExamForms,
             StudentPortalMarksheet,
             StudentPortalPayment,
+            HallTicketsView, HallTicketsDownload,
+            RetotalingView, RetotalingRequest,
         ],
     };
 }

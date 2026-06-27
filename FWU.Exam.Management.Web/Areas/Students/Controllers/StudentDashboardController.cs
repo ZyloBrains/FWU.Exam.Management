@@ -1,10 +1,13 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
@@ -18,7 +21,9 @@ public class StudentDashboardController(
     IKhaltiService khaltiService,
     IConfiguration configuration,
     ILogger<StudentDashboardController> logger,
-    FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper)
+    FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
+    IRetotalRequestService retotalRequestService,
+    AppDbContext context)
     : Controller
 {
     public async Task<IActionResult> Profile()
@@ -619,6 +624,110 @@ public class StudentDashboardController(
         return View(marksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
     }
 
+    public async Task<IActionResult> RetotalRequests()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null)
+            return View(new List<RetotalRequest>());
+
+        var requests = await context.RetotalRequests
+            .AsNoTracking()
+            .Where(r => r.StudentRegistrationId == registration.Id && r.IsActive)
+            .Include(r => r.ExamSubjectResult)
+                .ThenInclude(esr => esr.SubjectOffering)
+                    .ThenInclude(so => so.SubjectCatalog)
+            .Include(r => r.ExamRegistration)
+                .ThenInclude(er => er.ExamSchedule)
+            .OrderByDescending(r => r.RequestedDate)
+            .ToListAsync();
+
+        return View(requests);
+    }
+
+    public async Task<IActionResult> RequestRetotal(int? examSubjectResultId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return RedirectToAction(nameof(Profile));
+
+        if (examSubjectResultId.HasValue)
+        {
+            var result = await context.ExamSubjectResults
+                .AsNoTracking()
+                .Include(esr => esr.SubjectOffering)
+                    .ThenInclude(so => so.SubjectCatalog)
+                .Include(esr => esr.ExamRegistration)
+                    .ThenInclude(er => er.ExamSchedule)
+                .FirstOrDefaultAsync(esr => esr.Id == examSubjectResultId.Value);
+
+            if (result != null)
+            {
+                ViewBag.SubjectName = result.SubjectOffering?.SubjectCatalog?.SubjectName;
+                ViewBag.OriginalGrade = result.GradeLetter;
+                ViewBag.OriginalMarks = result.ObtainedMarks;
+                ViewBag.ExamScheduleName = result.ExamRegistration?.ExamSchedule?.ExamScheduleName;
+            }
+        }
+
+        ViewBag.ExamSubjectResultId = examSubjectResultId;
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitRetotalRequest(int examSubjectResultId, string? reason)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return RedirectToAction(nameof(Profile));
+
+        var result = await context.ExamSubjectResults
+            .AsNoTracking()
+            .FirstOrDefaultAsync(esr => esr.Id == examSubjectResultId);
+
+        if (result == null) return NotFound();
+
+        var existingRequest = await context.RetotalRequests
+            .AnyAsync(r => r.ExamSubjectResultId == examSubjectResultId
+                && r.StudentRegistrationId == registration.Id
+                && r.IsActive
+                && r.Status != RetotalStatus.Rejected);
+
+        if (existingRequest)
+        {
+            TempData["ErrorMessage"] = "A pending retotal request already exists for this subject.";
+            return RedirectToAction(nameof(RetotalRequests));
+        }
+
+        var retotalRequest = new RetotalRequest
+        {
+            ExamSubjectResultId = examSubjectResultId,
+            StudentRegistrationId = registration.Id,
+            ExamRegistrationId = result.ExamRegistrationId,
+            RequestedDate = DateTime.UtcNow,
+            Reason = reason,
+            Status = RetotalStatus.Pending,
+            OriginalGradeLetter = result.GradeLetter,
+            OriginalObtainedMarks = result.ObtainedMarks,
+            FeeAmount = 500,
+            FeePaid = false,
+            IsActive = true
+        };
+
+        context.RetotalRequests.Add(retotalRequest);
+        await context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Retotal request submitted successfully. Please pay the fee to proceed.";
+        return RedirectToAction(nameof(RetotalRequests));
+    }
+
     private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(List<ExamRegistration> examRegistrations, int examScheduleId)
     {
         var registration = examRegistrations.FirstOrDefault(er => er.ExamScheduleId == examScheduleId);
@@ -636,6 +745,7 @@ public class StudentDashboardController(
 
                 return new MarksheetSubjectViewModel
                 {
+                    ExamSubjectResultId = esr.Id,
                     SubjectName = esr.SubjectOffering?.SubjectCatalog?.SubjectName,
                     SubjectCode = esr.SubjectOffering?.SubjectCatalog?.SubjectCode,
                     TheoryMarks = esr.ObtainedMarksTheory,

@@ -829,6 +829,112 @@ ProgramId = bitProg.Id,
                 await context.SaveChangesAsync();
             }
         }
+
+        // Demo Hall Tickets
+        if (!await context.HallTickets.AnyAsync())
+        {
+            var examSchedule = await context.ExamSchedules.FirstOrDefaultAsync();
+            var examRegistration = await context.ExamRegistrations.FirstOrDefaultAsync();
+            var studentReg = await context.StudentRegistrations.FirstOrDefaultAsync();
+
+            if (examSchedule != null && examRegistration != null)
+            {
+                var hallTickets = new List<HallTicket>
+                {
+                    new HallTicket
+                    {
+                        ExamRegistrationId = examRegistration.Id,
+                        ExamScheduleId = examSchedule.Id,
+                        StudentRegistrationId = studentReg?.Id,
+                        HallTicketNumber = $"HT-{examSchedule.Id:D4}-{examRegistration.Id:D6}",
+                        GeneratedDate = DateTime.UtcNow,
+                        IsDownloaded = false,
+                        IsActive = true
+                    }
+                };
+
+                if (studentReg != null)
+                {
+                    var secondReg = await context.ExamRegistrations
+                        .Where(er => er.Id != examRegistration.Id)
+                        .FirstOrDefaultAsync();
+                    if (secondReg != null)
+                    {
+                        hallTickets.Add(new HallTicket
+                        {
+                            ExamRegistrationId = secondReg.Id,
+                            ExamScheduleId = examSchedule.Id,
+                            StudentRegistrationId = studentReg.Id,
+                            HallTicketNumber = $"HT-{examSchedule.Id:D4}-{secondReg.Id:D6}",
+                            GeneratedDate = DateTime.UtcNow,
+                            IsDownloaded = true,
+                            DownloadedDate = DateTime.UtcNow.AddDays(-1),
+                            IsActive = true
+                        });
+                    }
+                }
+
+                await context.HallTickets.AddRangeAsync(hallTickets);
+                await context.SaveChangesAsync();
+            }
+        }
+
+        // Demo Retotal Requests
+        if (!await context.RetotalRequests.AnyAsync())
+        {
+            var examSubjectResult = await context.ExamSubjectResults
+                .Include(esr => esr.SubjectOffering)
+                .FirstOrDefaultAsync();
+            var studentReg = await context.StudentRegistrations.FirstOrDefaultAsync();
+            var examRegistration = await context.ExamRegistrations.FirstOrDefaultAsync();
+
+            if (examSubjectResult != null && studentReg != null && examRegistration != null)
+            {
+                var retotalRequests = new List<RetotalRequest>
+                {
+                    new RetotalRequest
+                    {
+                        ExamSubjectResultId = examSubjectResult.Id,
+                        StudentRegistrationId = studentReg.Id,
+                        ExamRegistrationId = examRegistration.Id,
+                        RequestedDate = DateTime.UtcNow.AddDays(-5),
+                        Reason = "Marks miscalculated - total does not match individual section scores",
+                        Status = RetotalStatus.Pending,
+                        OriginalGradeLetter = examSubjectResult.GradeLetter,
+                        OriginalObtainedMarks = examSubjectResult.ObtainedMarks,
+                        FeeAmount = 500m,
+                        FeePaid = true,
+                        IsActive = true
+                    }
+                };
+
+                var secondResult = await context.ExamSubjectResults
+                    .Where(esr => esr.Id != examSubjectResult.Id)
+                    .FirstOrDefaultAsync();
+                if (secondResult != null)
+                {
+                    retotalRequests.Add(new RetotalRequest
+                    {
+                        ExamSubjectResultId = secondResult.Id,
+                        StudentRegistrationId = studentReg.Id,
+                        ExamRegistrationId = examRegistration.Id,
+                        RequestedDate = DateTime.UtcNow.AddDays(-3),
+                        Reason = "Grade seems incorrect based on obtained marks",
+                        Status = RetotalStatus.UnderReview,
+                        OriginalGradeLetter = secondResult.GradeLetter,
+                        OriginalObtainedMarks = secondResult.ObtainedMarks,
+                        ReviewedByUsername = "admin",
+                        ReviewedDate = DateTime.UtcNow.AddDays(-1),
+                        FeeAmount = 500m,
+                        FeePaid = true,
+                        IsActive = true
+                    });
+                }
+
+                await context.RetotalRequests.AddRangeAsync(retotalRequests);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }
 
