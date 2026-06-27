@@ -21,8 +21,8 @@ public static class DemoDataSeeder
         {
             var academicYears = new[]
             {
-                new AcademicYear { AcademicYearCode = 2080, AcademicYearName = "2080/2081", AcademicYearNameNepali = "२०८०/२०८१", IsRunning = false, IsActive = true },
-                new AcademicYear { AcademicYearCode = 2081, AcademicYearName = "2081/2082", AcademicYearNameNepali = "२०८१/२०८२", IsRunning = true, IsActive = true },
+                new AcademicYear { AcademicYearCode = "2080", AcademicYearName = "2080/2081", AcademicYearNameNepali = "२०८०/२०८१", IsRunning = false, IsActive = true },
+                new AcademicYear { AcademicYearCode = "2081", AcademicYearName = "2081/2082", AcademicYearNameNepali = "२०८१/२०८२", IsRunning = true, IsActive = true },
             };
             await context.AcademicYears.AddRangeAsync(academicYears);
             await context.SaveChangesAsync();
@@ -271,16 +271,16 @@ public static class DemoDataSeeder
         {
             await context.ExamTypes.AddRangeAsync(new[]
             {
-                new ExamType { Name = "Regular", Code = 1, IsActive = true },
-                new ExamType { Name = "Partial", Code = 2, IsActive = true },
-                new ExamType { Name = "Supplementary", Code = 3, IsActive = true },
-                new ExamType { Name = "Entrance", Code = 4, IsActive = true },
+                new ExamType { Name = "Regular", Code = "1", IsActive = true },
+                new ExamType { Name = "Partial", Code = "2", IsActive = true },
+                new ExamType { Name = "Supplementary", Code = "3", IsActive = true },
+                new ExamType { Name = "Entrance", Code = "4", IsActive = true },
             });
             await context.SaveChangesAsync();
         }
         else if (!await context.ExamTypes.AnyAsync(et => et.Name == "Entrance"))
         {
-            context.ExamTypes.Add(new ExamType { Name = "Entrance", Code = 4, IsActive = true });
+            context.ExamTypes.Add(new ExamType { Name = "Entrance", Code = "4", IsActive = true });
             await context.SaveChangesAsync();
         }
 

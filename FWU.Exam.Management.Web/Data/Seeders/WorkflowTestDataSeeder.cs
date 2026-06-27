@@ -184,7 +184,7 @@ public static class WorkflowTestDataSeeder
         // ===================================================================
         var runningYear = new AcademicYear
         {
-            AcademicYearCode = 2081,
+            AcademicYearCode = "2081",
             AcademicYearName = "2081/2082",
             AcademicYearNameNepali = "२०८१/२०८२",
             IsRunning = true,
@@ -298,10 +298,10 @@ public static class WorkflowTestDataSeeder
         // ===================================================================
         var examTypes = new[]
         {
-            new ExamType { Name = "Regular", Code = 1, IsActive = true },
-            new ExamType { Name = "Partial", Code = 2, IsActive = true },
-            new ExamType { Name = "Supplementary", Code = 3, IsActive = true },
-            new ExamType { Name = "Entrance", Code = 4, IsActive = true },
+            new ExamType { Name = "Regular", Code = "1", IsActive = true },
+            new ExamType { Name = "Partial", Code = "2", IsActive = true },
+            new ExamType { Name = "Supplementary", Code = "3", IsActive = true },
+            new ExamType { Name = "Entrance", Code = "4", IsActive = true },
         };
         await context.ExamTypes.AddRangeAsync(examTypes);
         await context.SaveChangesAsync();

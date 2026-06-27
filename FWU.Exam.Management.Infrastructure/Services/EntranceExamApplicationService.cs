@@ -15,7 +15,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, ISmsService smsService) : IEntranceExamApplicationService
 {
-    private const int EntranceExamTypeCode = 4;
+    private const string EntranceExamTypeCode = "4";
 
     public async Task<int> SubmitApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber)
     {

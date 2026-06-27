@@ -4,6 +4,7 @@ namespace FWU.Exam.Management.Web.ViewModels;
 
 public class EditUserViewModel
 {
+    [Display(Name = "User ID")]
     public string Id { get; set; } = string.Empty;
 
     [Required]

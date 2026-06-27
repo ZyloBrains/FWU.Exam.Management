@@ -1,12 +1,15 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Web.ViewModels;
 
 public class SubjectOfferingBulkCreateViewModel
 {
+    [Display(Name = "Program")]
     [Range(1, int.MaxValue, ErrorMessage = "Program is required.")]
     public int ProgramId { get; set; }
 
+    [Display(Name = "Semester")]
     [Range(1, int.MaxValue, ErrorMessage = "Semester is required.")]
     public int SemesterId { get; set; }
 
@@ -15,39 +18,55 @@ public class SubjectOfferingBulkCreateViewModel
 
 public class SubjectOfferingItemViewModel : IValidatableObject
 {
+    [Display(Name = "Subject")]
     [Range(1, int.MaxValue, ErrorMessage = "Subject is required.")]
     public int SubjectCatalogId { get; set; }
 
+    [Display(Name = "Compulsory")]
     public bool IsCompulsory { get; set; } = true;
 
+    [Display(Name = "Display Order")]
     [Range(1, int.MaxValue, ErrorMessage = "Display order must be greater than 0.")]
     public int DisplayOrder { get; set; }
 
+    [Display(Name = "Has Theory")]
     public bool HasTheory { get; set; } = true;
+
+    [Display(Name = "Has Practical")]
     public bool HasPractical { get; set; }
+
+    [Display(Name = "Has Internal")]
     public bool HasInternal { get; set; }
 
+    [Display(Name = "Theory Full Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Theory full marks cannot be negative.")]
     public float TheoryFullMarks { get; set; } = 75;
 
+    [Display(Name = "Theory Pass Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Theory pass marks cannot be negative.")]
     public float TheoryPassMarks { get; set; } = 27;
 
+    [Display(Name = "Practical Full Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Practical full marks cannot be negative.")]
     public float? PracticalFullMarks { get; set; }
 
+    [Display(Name = "Practical Pass Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Practical pass marks cannot be negative.")]
     public float? PracticalPassMarks { get; set; }
 
+    [Display(Name = "Internal Theory Full Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Internal theory full marks cannot be negative.")]
     public float? InternalTheoryFullMarks { get; set; }
 
+    [Display(Name = "Internal Theory Pass Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Internal theory pass marks cannot be negative.")]
     public float? InternalTheoryPassMarks { get; set; }
 
+    [Display(Name = "Internal Practical Full Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Internal practical full marks cannot be negative.")]
     public float? InternalPracticalFullMarks { get; set; }
 
+    [Display(Name = "Internal Practical Pass Marks")]
     [Range(0, float.MaxValue, ErrorMessage = "Internal practical pass marks cannot be negative.")]
     public float? InternalPracticalPassMarks { get; set; }
 
