@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Colleges;
+﻿using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -13,7 +13,7 @@ public class District
     [Display(Name = "Province")]
     public int ProvinceId { get; set; }
 
-    [MaxLength(16)]
+    [MaxLength(30)]
     [Display(Name = "District Code")]
     public string? DistrictCode { get; set; }
 
@@ -34,3 +34,4 @@ public class District
     public virtual ICollection<LocalLevel?>? LocalLevels { get; set; }
     public virtual ICollection<StudentRegistration?>? StudentRegistrations { get; set; }
 }
+

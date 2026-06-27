@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 
 namespace FWU.Exam.Management.Domain.Entities.Payments;
@@ -11,7 +11,7 @@ public class Bank
     [Display(Name = "Bank Name")]
     public string? BankName { get; set; }
 
-    [MaxLength(16)]
+    [MaxLength(30)]
     [Display(Name = "Bank Code")]
     public string? BankCode { get; set; }
 
@@ -22,3 +22,4 @@ public class Bank
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 }
+

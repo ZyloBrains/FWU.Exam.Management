@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Colleges;
+﻿using FWU.Exam.Management.Domain.Entities.Colleges;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -9,7 +9,7 @@ public class Faculty
     [Required, MaxLength(100)]
     [Display(Name = "Name")]
     public string Name { get; set; } = string.Empty;
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Office Code")]
     public string OfficeCode { get; set; } = string.Empty;
     [MaxLength(50)]
@@ -28,3 +28,4 @@ public class Faculty
     public virtual ICollection<College>? Colleges { get; set; }
     public virtual ICollection<Department>? Departments { get; set; }
 }
+

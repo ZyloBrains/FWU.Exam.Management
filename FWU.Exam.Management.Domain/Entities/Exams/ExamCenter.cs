@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Colleges;
+﻿using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -25,7 +25,7 @@ public class ExamCenter : ITenantScoped
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Code")]
     public string? Code { get; set; }
 
@@ -35,3 +35,4 @@ public class ExamCenter : ITenantScoped
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
 }
+

@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
+﻿using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +9,7 @@ public class Level
 {
     public int Id { get; set; }
 
-    [MaxLength(16)]
+    [MaxLength(30)]
     [Display(Name = "Level Code")]
     public string? LevelCode { get; set; }
 
@@ -34,3 +34,4 @@ public class Level
     public virtual ICollection<Program>? Programs { get; set; }
     public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }
+

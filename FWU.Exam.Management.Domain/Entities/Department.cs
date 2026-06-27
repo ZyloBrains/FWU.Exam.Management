@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Students;
+﻿using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -8,7 +8,7 @@ public class Department
 {
     public int Id { get; set; }
 
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Department Code")]
     public string DepartmentCode { get; set; } = string.Empty;
 
@@ -35,3 +35,4 @@ public class Department
     public virtual ICollection<Program>? Programs { get; set; }
     public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }
+

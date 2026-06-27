@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
@@ -19,7 +19,8 @@ public class ExamType
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Code")]
     public string? Code { get; set; }
 }
+

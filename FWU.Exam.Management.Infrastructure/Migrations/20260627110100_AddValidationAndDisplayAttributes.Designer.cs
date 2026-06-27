@@ -50,7 +50,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("AcademicYearCode")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("AcademicYearCodeNepali")
@@ -231,7 +231,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("CollegeNameNepali")
@@ -443,7 +443,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<bool>("IsActive")
@@ -479,7 +479,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("DepartmentCode")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("DepartmentName")
@@ -850,7 +850,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<int>("CollegeId")
@@ -1378,7 +1378,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<bool>("IsActive")
@@ -1435,7 +1435,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("OfficeCode")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<int?>("TenantId")
@@ -1466,7 +1466,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("FiscalYearCode")
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("FiscalYearName")
@@ -1659,7 +1659,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LevelCode")
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<int?>("LevelDisplayOrder")
@@ -1732,7 +1732,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("DistrictCode")
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("DistrictName")
@@ -1895,7 +1895,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("BankCode")
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("BankName")
@@ -2719,7 +2719,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<DateTime>("EndDate")
@@ -3452,7 +3452,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("SubjectCode")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<string>("SubjectName")
@@ -3556,7 +3556,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<bool>("IsActive")
@@ -3618,7 +3618,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<string>("OfficeCode")
                         .IsRequired()
-                        .HasMaxLength(16)
+                        .HasMaxLength(30)
                         .HasColumnType("nvarchar(16)");
 
                     b.Property<int>("TenantType")
@@ -5509,3 +5509,4 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
         }
     }
 }
+

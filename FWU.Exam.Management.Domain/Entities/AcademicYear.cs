@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
+﻿using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -11,7 +11,7 @@ public class AcademicYear
     public int Id { get; set; }
 
     [Display(Name = "Academic Year Code")]
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     public string? AcademicYearCode { get; set; }
 
     [MaxLength(50)]
@@ -39,3 +39,4 @@ public class AcademicYear
         public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
         public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }
+

@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Enums;
+﻿using FWU.Exam.Management.Domain.Enums;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -10,7 +10,7 @@ public class Tenant
     [Required, MaxLength(200)]
     [Display(Name = "Name")]
     public string Name { get; set; } = string.Empty;
-    [MaxLength(16)]
+    [MaxLength(30)]
     [Display(Name = "Office Code")]
     public string OfficeCode { get; set; } = string.Empty;
     [MaxLength(50)]
@@ -30,3 +30,4 @@ public class Tenant
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; } = true;
 }
+

@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
+﻿using FWU.Exam.Management.Domain.Entities.Exams;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,7 +7,7 @@ public class CollegeType
 {
     public int Id { get; set; }
 
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Code")]
     public string? Code { get; set; }
 
@@ -28,3 +28,4 @@ public class CollegeType
     public virtual ICollection<College>? Colleges { get; set; }
     public virtual ICollection<ExamFee>? ExamFees { get; set; }
 }
+

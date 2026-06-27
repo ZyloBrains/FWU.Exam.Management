@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
@@ -29,7 +29,8 @@ public class FiscalYear
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-    [MaxLength(16)]
+    [MaxLength(30)]
     [Display(Name = "Fiscal Year Code")]
     public string? FiscalYearCode { get; set; }
 }
+

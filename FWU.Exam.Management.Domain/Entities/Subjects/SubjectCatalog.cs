@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Subjects;
@@ -7,7 +7,7 @@ public class SubjectCatalog
 {
     public int Id { get; set; }
 
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Subject Code")]
     public string? SubjectCode { get; set; }
 
@@ -37,3 +37,4 @@ public class SubjectCatalog
     public virtual SubjectType? SubjectType { get; set; }
     public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }
 }
+

@@ -1,4 +1,4 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
+﻿using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -13,7 +13,7 @@ public class College : ITenantScoped
     public int TenantId { get; set; }
     public virtual Tenant? Tenant { get; set; }
 
-    [Required, MaxLength(16)]
+    [Required, MaxLength(30)]
     [Display(Name = "Code")]
     public string Code { get; set; } = string.Empty;
 
@@ -100,3 +100,4 @@ public class College : ITenantScoped
     public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
     public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
 }
+
