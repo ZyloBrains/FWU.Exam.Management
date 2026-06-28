@@ -329,7 +329,6 @@
                 document.querySelectorAll('.subject-checkbox:checked').forEach(function(cb) {
                     totalPractical += parseFloat(cb.getAttribute('data-practical-fee'));
                     selectedIds.push(cb.value);
-                    totalPractical += parseFloat(cb.getAttribute('data-practical-fee'));
                 });
                 var grandTotal = flatExamFee + totalPractical;
                 document.getElementById('totalExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();

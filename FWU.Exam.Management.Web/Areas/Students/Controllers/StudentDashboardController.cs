@@ -189,9 +189,6 @@ public class StudentDashboardController(
         if (schedule.ProgramId != programId)
             return Forbid();
 
-        if (schedule.ProgramId != programId)
-            return Forbid();
-
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
         var practicalFee = await dashboardService.GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
@@ -244,7 +241,7 @@ public class StudentDashboardController(
             }).ToList()
         };
 
-        vm.TotalPracticalFee = subjectList.Where(s => s.IsSelected).Sum(s => s.PracticalFee);
+        vm.TotalPracticalFee = subjectList.Where(s => vm.SelectedSubjectIds.Contains(s.SubjectOfferingId)).Sum(s => s.PracticalFee);
         vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee;
 
         return View(vm);
@@ -276,8 +273,6 @@ public class StudentDashboardController(
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber, subjectIds);
         }
-
-        await dashboardService.CreateExamRegistrationAsync(examScheduleId, user.Id, amount, subjectIds);
 
         TempData["SuccessMessage"] = $"Payment request of Rs {amount:N0} via {paymentMethod} has been recorded. Invoice: {invoiceNumber}";
         return RedirectToAction(nameof(ExamForms));
@@ -552,6 +547,12 @@ public class StudentDashboardController(
 
             var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
             if (paymentLog == null) return;
+
+            if (!paymentLog.StudentRegistrationId.HasValue) return;
+
+            var existingRegistration = await dashboardService.HasExistingPaymentAsync(
+                paymentLog.ExamScheduleId, paymentLog.StudentRegistrationId.Value);
+            if (existingRegistration) return;
 
             var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
                 ? new List<int>()
