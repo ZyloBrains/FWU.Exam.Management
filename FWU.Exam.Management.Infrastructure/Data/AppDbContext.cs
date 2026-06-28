@@ -400,7 +400,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ResultRecord>()
-            .ToView("vResultRecords")
+            .ToTable("ResultRecords")
             .HasKey(rr => rr.Id);
 
         builder.Entity<ExamFee>()
