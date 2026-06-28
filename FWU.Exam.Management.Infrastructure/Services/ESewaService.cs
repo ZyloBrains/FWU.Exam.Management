@@ -10,7 +10,7 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
 {
     private string PostUrl => configuration["ESewa:PostUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
     private string ProductCode => configuration["ESewa:ProductCode"] ?? "EPAYTEST";
-    private string SecretKey => configuration["ESewa:SecretKey"] ?? "8gBm/:&EnhH.1/q";
+    private string SecretKey => configuration["ESewa:SecretKey"] ?? throw new InvalidOperationException("ESewa:SecretKey is not configured");
     private string ServiceChargeAmount => configuration["ESewa:ServiceChargeAmount"] ?? "0";
     private string VerifyUrl => configuration["ESewa:VerifyUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
 

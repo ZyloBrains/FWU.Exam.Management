@@ -309,16 +309,19 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
         if (admission == null) return [];
 
-        var enrollment = await context.Set<SemesterEnrollment>()
+        var enrollments = await context.Set<SemesterEnrollment>()
             .AsNoTracking()
             .Include(se => se.ExamRegistrations!)
                 .ThenInclude(er => er.ExamSubjectResults!)
-            .FirstOrDefaultAsync(se => se.StudentAdmissionId == admission.Id && se.SemesterId == semesterId);
+            .Where(se => se.StudentAdmissionId == admission.Id && se.SemesterId != semesterId)
+            .ToListAsync();
 
-        if (enrollment?.ExamRegistrations == null || !enrollment.ExamRegistrations.Any(er => er.IsActive))
+        if (!enrollments.Any(e => e.ExamRegistrations != null && e.ExamRegistrations.Any(er => er.IsActive)))
             return [];
 
-        var results = enrollment.ExamRegistrations
+        var results = enrollments
+            .Where(e => e.ExamRegistrations != null)
+            .SelectMany(e => e.ExamRegistrations!)
             .Where(er => er.IsActive)
             .SelectMany(er => er.ExamSubjectResults ?? Enumerable.Empty<ExamSubjectResult>())
             .Where(esr => esr.IsActive)
