@@ -121,17 +121,16 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
                                 <li><strong>Tenant:</strong> {tenant.Name}</li>
                                 <li><strong>Office Code:</strong> {tenant.OfficeCode}</li>
                             </ul>
-                            <p><strong>Login Credentials:</strong></p>
-                            <ul>
-                                <li><strong>Username (Email):</strong> {viewModel.AdminEmail}</li>
-                                <li><strong>Password:</strong> {viewModel.AdminPassword}</li>
-                            </ul>
+                            <p><strong>Login:</strong> Please use your email address {viewModel.AdminEmail} to log in. If you have not set your password yet, use the 'Forgot Password' option on the login page to set your password.</p>
                             <br/>
                             <p>Regards,<br/>Far-Western University</p>";
-                        await emailService.SendEmailAsync(viewModel.AdminEmail, "Tenant Account Created - Login Credentials", emailBody);
+                        await emailService.SendEmailAsync(viewModel.AdminEmail, "Tenant Account Created - Login Instructions", emailBody);
                     }
                 }
-                catch { }
+                catch
+                {
+                    // Email failure does not block tenant creation
+                }
 
                 TempData["SuccessMessage"] = $"Tenant '{tenant.Name}' created successfully with admin user '{viewModel.AdminEmail}'.";
             }

@@ -753,6 +753,13 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         var log = await context.Set<PaymentRequestLog>().FindAsync(logId);
         if (log == null) return null;
 
+        if (log.PaymentRequestLogStatus == 1)
+            return await context.ApplicationVouchers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.ExamScheduleId == log.ExamScheduleId
+                    && v.StudentName == log.FullName
+                    && v.ContactNumber == log.MobileNumber);
+
         var schedule = await context.ExamSchedules.FindAsync(log.ExamScheduleId);
         if (schedule == null) return null;
 
