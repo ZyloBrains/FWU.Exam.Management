@@ -43,7 +43,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
     }
 
     // Export to PDF (browser print)
-    // Export to CSV â€“ only the current page
+    // Export to CSV - only the current page
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null)
     {
         var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
@@ -66,7 +66,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return File(csvBytes, "text/csv", "AcademicYears.csv");
     }
 
-    // Export to PDF â€“ only the current page (using browser print)
+    // Export to PDF - only the current page (using browser print)
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null)
     {
         var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page,pageSize,search);
