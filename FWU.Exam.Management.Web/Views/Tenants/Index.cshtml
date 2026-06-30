@@ -142,7 +142,7 @@
                         <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">@item.TenantType</span>
                     </div>
                 </div>
-                <div class="text-xs text-gray-500 mb-2">@item.Email @(!string.IsNullOrEmpty(item.ContactNumber) ? " Ã‚Â· " + item.ContactNumber : "")</div>
+                <div class="text-xs text-gray-500 mb-2">@item.Email @(!string.IsNullOrEmpty(item.ContactNumber) ? " · " + item.ContactNumber : "")</div>
                 <div class="flex items-center gap-2 pt-4 border-t border-gray-100 mt-2">
                     <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                         Edit

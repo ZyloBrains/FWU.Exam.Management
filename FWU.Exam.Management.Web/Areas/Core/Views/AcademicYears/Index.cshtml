@@ -99,7 +99,7 @@
         </form>
     </div>
 
-    @* <!-- Live search input (clientâ€‘side) -->
+    @* <!-- Live search input (client-side) -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="relative">
             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
@@ -138,7 +138,7 @@
                         @* <td class="px-6 py-4 text-gray-600">@item.AcademicYearCodeNepali</td> *@
                         <td class="px-6 py-4 text-gray-800">@item.AcademicYearName</td>
                         @* <td class="px-6 py-4 text-gray-600">@item.AcademicYearNameNepali</td> *@
-                        @* <td class="px-6 py-4 text-gray-500 max-w-xs truncate">@(string.IsNullOrEmpty(item.Remark) ? "â€”" : item.Remark)</td> *@
+                        @* <td class="px-6 py-4 text-gray-500 max-w-xs truncate">@(string.IsNullOrEmpty(item.Remark) ? "-" : item.Remark)</td> *@
                         <td class="px-6 py-4">
                             @if (item.IsRunning)
                             {
@@ -223,7 +223,7 @@
                     <div class="text-gray-500">Name (Nepali)</div>
                     <div class="text-gray-800">@item.AcademicYearNameNepali</div>
                     <div class="text-gray-500">Remark</div>
-                    <div class="text-gray-800 truncate">@(string.IsNullOrEmpty(item.Remark) ? "â€”" : item.Remark)</div>
+                    <div class="text-gray-800 truncate">@(string.IsNullOrEmpty(item.Remark) ? "-" : item.Remark)</div>
                     <div class="text-gray-500">Running</div>
                     <div class="text-gray-800">@(item.IsRunning ? "Yes" : "No")</div>
                 </div>

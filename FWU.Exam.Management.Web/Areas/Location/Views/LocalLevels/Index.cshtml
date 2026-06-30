@@ -115,15 +115,15 @@
         <span class="text-gray-500">Sort by:</span>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="locallevelname" asp-route-sortDir="@(currentSort == "locallevelname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "locallevelname" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            Local Level Name @(currentSort == "locallevelname" ? (currentSortDir == "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ") : "")
+            Local Level Name @(currentSort == "locallevelname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="localleveltype" asp-route-sortDir="@(currentSort == "localleveltype" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "localleveltype" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            Type @(currentSort == "localleveltype" ? (currentSortDir == "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ") : "")
+            Type @(currentSort == "localleveltype" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
         </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="districtname" asp-route-sortDir="@(currentSort == "districtname" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "districtname" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600") hover:bg-teal-50">
-            District @(currentSort == "districtname" ? (currentSortDir == "asc" ? "Ã¢â€ â€˜" : "Ã¢â€ â€œ") : "")
+            District @(currentSort == "districtname" ? (currentSortDir == "asc" ? "↑" : "↓") : "")
         </a>
     </div>
 
