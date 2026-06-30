@@ -144,7 +144,7 @@ public class ProgramsController(IProgramService programService) : Controller
     {
         var (boards, departments, levels) = await programService.GetSelectListsAsync();
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName");
-        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode");
+        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode");
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName");
         return View();
     }
@@ -162,7 +162,7 @@ public class ProgramsController(IProgramService programService) : Controller
 
         var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
+        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
@@ -177,7 +177,7 @@ public class ProgramsController(IProgramService programService) : Controller
 
         var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
+        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
@@ -206,7 +206,7 @@ public class ProgramsController(IProgramService programService) : Controller
 
         var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["FacultyId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
+        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
