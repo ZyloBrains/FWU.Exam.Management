@@ -99,6 +99,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
         try
         {
+            var existingRegistration = await context.StudentRegistrations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == studentRegistration.Id);
+            if (existingRegistration != null)
+                studentRegistration.TenantId = existingRegistration.TenantId;
+
             if (!string.IsNullOrEmpty(permanentLocalLevelId))
             {
                 var address = await context.Addresses.FindAsync(studentRegistration.PermanentAddressId);

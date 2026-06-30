@@ -220,7 +220,7 @@ public class ExamSchedulesController(
         {
             try
             {
-p                var existing = await examScheduleService.GetExamScheduleByIdAsync(id);
+                var existing = await examScheduleService.GetExamScheduleByIdAsync(id);
                 if (existing is null) return NotFound();
                 examSchedule.TenantId = existing.TenantId;
                 await examScheduleService.UpdateExamScheduleAsync(examSchedule);
