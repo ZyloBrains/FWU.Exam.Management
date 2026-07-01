@@ -44,7 +44,8 @@ public static class Permissions
     public const string GroupExamRegistration = "examregistration";
     public const string GroupExamSubjectResults = "examsubjectresults";
     public const string GroupResultRecords = "resultrecords";
-    public const string GroupHallTickets = "halltickets";
+    public const string GroupExamCenters = "examcenters";
+    public const string GroupAdmitCards = "admitcards";
     public const string GroupRetotaling = "retotaling";
     public const string GroupReports = "reports";
 
@@ -302,13 +303,19 @@ public static class Permissions
     // Result Records (read-only)
     public const string ResultRecordsView = "resultrecords.view";
 
-    // Hall Tickets
-    public const string HallTicketsView = "halltickets.view";
-    public const string HallTicketsCreate = "halltickets.create";
-    public const string HallTicketsEdit = "halltickets.edit";
-    public const string HallTicketsDelete = "halltickets.delete";
-    public const string HallTicketsGenerate = "halltickets.generate";
-    public const string HallTicketsDownload = "halltickets.download";
+    // Exam Centers
+    public const string ExamCentersView = "examcenters.view";
+    public const string ExamCentersCreate = "examcenters.create";
+    public const string ExamCentersEdit = "examcenters.edit";
+    public const string ExamCentersDelete = "examcenters.delete";
+
+    // Admit Cards
+    public const string AdmitCardsView = "admitcards.view";
+    public const string AdmitCardsCreate = "admitcards.create";
+    public const string AdmitCardsEdit = "admitcards.edit";
+    public const string AdmitCardsDelete = "admitcards.delete";
+    public const string AdmitCardsGenerate = "admitcards.generate";
+    public const string AdmitCardsDownload = "admitcards.download";
 
     // Retotaling
     public const string RetotalingView = "retotaling.view";
@@ -536,12 +543,17 @@ public static class Permissions
 
         (ResultRecordsView, "View Result Records", GroupResultRecords, "View published result records"),
 
-        (HallTicketsView, "View Hall Tickets", GroupHallTickets, "View hall ticket list"),
-        (HallTicketsCreate, "Create Hall Tickets", GroupHallTickets, "Create new hall tickets"),
-        (HallTicketsEdit, "Edit Hall Tickets", GroupHallTickets, "Edit existing hall tickets"),
-        (HallTicketsDelete, "Delete Hall Tickets", GroupHallTickets, "Delete hall tickets"),
-        (HallTicketsGenerate, "Generate Hall Tickets", GroupHallTickets, "Generate hall tickets for exam registrations"),
-        (HallTicketsDownload, "Download Hall Tickets", GroupHallTickets, "Download hall tickets"),
+        (ExamCentersView, "View Exam Centers", GroupExamCenters, "View exam center list"),
+        (ExamCentersCreate, "Create Exam Centers", GroupExamCenters, "Create new exam centers"),
+        (ExamCentersEdit, "Edit Exam Centers", GroupExamCenters, "Edit existing exam centers"),
+        (ExamCentersDelete, "Delete Exam Centers", GroupExamCenters, "Delete exam centers"),
+
+        (AdmitCardsView, "View Admit Cards", GroupAdmitCards, "View admit card list"),
+        (AdmitCardsCreate, "Create Admit Cards", GroupAdmitCards, "Create new admit cards"),
+        (AdmitCardsEdit, "Edit Admit Cards", GroupAdmitCards, "Edit existing admit cards"),
+        (AdmitCardsDelete, "Delete Admit Cards", GroupAdmitCards, "Delete admit cards"),
+        (AdmitCardsGenerate, "Generate Admit Cards", GroupAdmitCards, "Generate admit cards for exam registrations"),
+        (AdmitCardsDownload, "Download Admit Cards", GroupAdmitCards, "Download admit cards"),
 
         (RetotalingView, "View Retotaling Requests", GroupRetotaling, "View retotaling/ re-evaluation requests"),
         (RetotalingRequest, "Request Retotaling", GroupRetotaling, "Request re-evaluation of exam results"),
@@ -596,7 +608,9 @@ public static class Permissions
             ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
             ResultRecordsView,
 
-            HallTicketsView, HallTicketsCreate, HallTicketsEdit, HallTicketsGenerate, HallTicketsDownload,
+            ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
+
+            AdmitCardsView, AdmitCardsCreate, AdmitCardsEdit, AdmitCardsGenerate, AdmitCardsDownload,
             RetotalingView, RetotalingReview, RetotalingApprove, RetotalingReject,
 
             StudentsView, StudentsCreate, StudentsEdit, StudentsDelete,
@@ -634,7 +648,8 @@ public static class Permissions
             ExamSubjectResultsView,
             ResultRecordsView,
 
-            HallTicketsView, HallTicketsDownload,
+            ExamCentersView,
+            AdmitCardsView, AdmitCardsDownload,
             RetotalingView,
 
             StudentsView, StudentsCreate, StudentsEdit,
@@ -664,7 +679,7 @@ public static class Permissions
             ExamRegistrationView,
             ExamSubjectResultsView,
             ResultRecordsView,
-            HallTicketsView,
+            AdmitCardsView,
             RetotalingView,
 
             StudentsView, StudentsCreate, StudentsEdit,
@@ -682,7 +697,7 @@ public static class Permissions
             StudentPortalExamForms,
             StudentPortalMarksheet,
             StudentPortalPayment,
-            HallTicketsView, HallTicketsDownload,
+            AdmitCardsView, AdmitCardsDownload,
             RetotalingView, RetotalingRequest,
         ],
     };

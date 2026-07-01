@@ -43,7 +43,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamSubjectResult>? ExamSubjectResults { get; set; }
     public DbSet<ExamSlot>? ExamSlots { get; set; }
     public DbSet<ExamType>? ExamTypes { get; set; }
-    public DbSet<HallTicket>? HallTickets { get; set; }
+    public DbSet<AdmitCard>? AdmitCards { get; set; }
     public DbSet<RetotalRequest>? RetotalRequests { get; set; }
     public DbSet<Department>? Departments { get; set; }
     public DbSet<FiscalYear>? FiscalYears { get; set; }
@@ -557,23 +557,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(ess => ess.ExamCenterId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<HallTicket>()
-            .HasOne(ht => ht.ExamRegistration)
-            .WithMany()
-            .HasForeignKey(ht => ht.ExamRegistrationId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<AdmitCard>(entity =>
+        {
+            entity.ToTable("HallTickets");
 
-        builder.Entity<HallTicket>()
-            .HasOne(ht => ht.ExamSchedule)
-            .WithMany()
-            .HasForeignKey(ht => ht.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.AdmitCardNumber)
+                .HasColumnName("HallTicketNumber");
 
-        builder.Entity<HallTicket>()
-            .HasOne(ht => ht.StudentRegistration)
-            .WithMany()
-            .HasForeignKey(ht => ht.StudentRegistrationId)
-            .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(ht => ht.ExamRegistration)
+                .WithMany()
+                .HasForeignKey(ht => ht.ExamRegistrationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ht => ht.ExamSchedule)
+                .WithMany()
+                .HasForeignKey(ht => ht.ExamScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ht => ht.StudentRegistration)
+                .WithMany()
+                .HasForeignKey(ht => ht.StudentRegistrationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
 
         builder.Entity<RetotalRequest>()
             .HasOne(rr => rr.ExamSubjectResult)

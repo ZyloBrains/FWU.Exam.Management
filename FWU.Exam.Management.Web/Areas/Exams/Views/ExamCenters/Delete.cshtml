@@ -1,0 +1,49 @@
+@model ExamCenter
+
+@{
+    ViewData["Title"] = "Delete Exam Center";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-red-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Delete Exam Center</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Are you sure you want to delete this exam center?</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Code</dt>
+                <dd class="mt-1 text-sm text-gray-900">@Model.Code</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">College</dt>
+                <dd class="mt-1 text-sm text-gray-900">@(Model.College?.Name ?? "-")</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Exam Schedule</dt>
+                <dd class="mt-1 text-sm text-gray-900">@(Model.ExamSchedule?.ExamScheduleName ?? "-")</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Remark</dt>
+                <dd class="mt-1 text-sm text-gray-900">@(Model.Remark ?? "-")</dd>
+            </div>
+        </dl>
+
+        <form method="post" asp-action="Delete" class="mt-6 flex items-center gap-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <button type="submit" class="px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                <i class="fas fa-trash mr-1"></i> Delete
+            </button>
+            <a asp-action="Index" class="px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>

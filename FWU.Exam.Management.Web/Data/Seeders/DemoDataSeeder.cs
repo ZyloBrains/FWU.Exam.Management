@@ -830,8 +830,8 @@ ProgramId = bitProg.Id,
             }
         }
 
-        // Demo Hall Tickets
-        if (!await context.HallTickets.AnyAsync())
+        // Demo Admit Cards
+        if (!await context.AdmitCards.AnyAsync())
         {
             var examSchedule = await context.ExamSchedules.FirstOrDefaultAsync();
             var examRegistration = await context.ExamRegistrations.FirstOrDefaultAsync();
@@ -839,14 +839,14 @@ ProgramId = bitProg.Id,
 
             if (examSchedule != null && examRegistration != null)
             {
-                var hallTickets = new List<HallTicket>
+                var admitCards = new List<AdmitCard>
                 {
-                    new HallTicket
+                    new AdmitCard
                     {
                         ExamRegistrationId = examRegistration.Id,
                         ExamScheduleId = examSchedule.Id,
                         StudentRegistrationId = studentReg?.Id,
-                        HallTicketNumber = $"HT-{examSchedule.Id:D4}-{examRegistration.Id:D6}",
+                        AdmitCardNumber = $"AC-{examSchedule.Id:D4}-{examRegistration.Id:D6}",
                         GeneratedDate = DateTime.UtcNow,
                         IsDownloaded = false,
                         IsActive = true
@@ -860,12 +860,12 @@ ProgramId = bitProg.Id,
                         .FirstOrDefaultAsync();
                     if (secondReg != null)
                     {
-                        hallTickets.Add(new HallTicket
+                        admitCards.Add(new AdmitCard
                         {
                             ExamRegistrationId = secondReg.Id,
                             ExamScheduleId = examSchedule.Id,
                             StudentRegistrationId = studentReg.Id,
-                            HallTicketNumber = $"HT-{examSchedule.Id:D4}-{secondReg.Id:D6}",
+                            AdmitCardNumber = $"AC-{examSchedule.Id:D4}-{secondReg.Id:D6}",
                             GeneratedDate = DateTime.UtcNow,
                             IsDownloaded = true,
                             DownloadedDate = DateTime.UtcNow.AddDays(-1),
@@ -874,7 +874,7 @@ ProgramId = bitProg.Id,
                     }
                 }
 
-                await context.HallTickets.AddRangeAsync(hallTickets);
+                await context.AdmitCards.AddRangeAsync(admitCards);
                 await context.SaveChangesAsync();
             }
         }

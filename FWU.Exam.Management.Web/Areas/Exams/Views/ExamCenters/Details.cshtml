@@ -1,0 +1,59 @@
+@model ExamCenter
+
+@{
+    ViewData["Title"] = "Exam Center Details";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-orange-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Center Details</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Center: @Model.Code</p>
+            </div>
+        </div>
+        <a asp-action="Index" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800">Center Information</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Code</label>
+                <p class="mt-1 text-sm text-gray-900 font-medium">@Model.Code</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">College</label>
+                <p class="mt-1 text-sm text-gray-900">@(Model.College?.Name ?? "-")</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Exam Schedule</label>
+                <p class="mt-1 text-sm text-gray-900">@(Model.ExamSchedule?.ExamScheduleName ?? "-")</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Remark</label>
+                <p class="mt-1 text-sm text-gray-900">@(Model.Remark ?? "-")</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Status</label>
+                <p class="mt-1">
+                    @if (Model.IsActive)
+                    {
+                        <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
+                    }
+                    else
+                    {
+                        <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">Inactive</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

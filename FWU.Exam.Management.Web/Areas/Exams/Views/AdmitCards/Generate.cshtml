@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Generate Hall Tickets";
+    ViewData["Title"] = "Generate Admit Cards";
     var pendingCount = ViewBag.PendingCount as int? ?? 0;
     var totalCount = ViewBag.TotalCount as int? ?? 0;
     var existingCount = ViewBag.ExistingCount as int? ?? 0;
@@ -13,8 +13,8 @@
                 <i class="fas fa-ticket-alt text-indigo-600"></i>
             </div>
             <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Generate Hall Tickets</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Bulk generate hall tickets for exam registrations.</p>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Generate Admit Cards</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Bulk generate admit cards for exam registrations.</p>
             </div>
         </div>
         <a asp-action="Index" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
@@ -52,7 +52,7 @@
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <div class="text-2xl font-bold text-green-600">@pendingCount</div>
-                <div class="text-sm text-gray-500 mt-1">Pending (No Ticket)</div>
+                <div class="text-sm text-gray-500 mt-1">Pending (No Card)</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <div class="text-2xl font-bold text-amber-600">@existingCount</div>
@@ -66,13 +66,13 @@
                 <i class="fas fa-ticket-alt text-4xl text-blue-300 mb-4"></i>
                 <h3 class="text-lg font-semibold text-gray-800 mb-2">Ready to Generate</h3>
                 <p class="text-sm text-gray-500 mb-4">
-                    @pendingCount hall ticket(s) will be generated for the selected exam schedule.
+                    @pendingCount admit card(s) will be generated for the selected exam schedule.
                 </p>
                 <form method="post" asp-action="GenerateConfirmed" asp-area="Exams">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="examScheduleId" value="@selectedScheduleId.Value" />
                     <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                        <i class="fas fa-cogs"></i> Generate @pendingCount Ticket(s)
+                        <i class="fas fa-cogs"></i> Generate @pendingCount Card(s)
                     </button>
                 </form>
             </div>
@@ -81,8 +81,8 @@
         {
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
                 <i class="fas fa-check-circle text-4xl text-green-300 mb-4"></i>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">All Tickets Generated</h3>
-                <p class="text-sm text-gray-500">All registrations already have hall tickets for this schedule.</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">All Cards Generated</h3>
+                <p class="text-sm text-gray-500">All registrations already have admit cards for this schedule.</p>
             </div>
         }
     }
