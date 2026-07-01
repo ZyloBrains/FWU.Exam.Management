@@ -207,6 +207,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return View(khaltiConfiguration);
     }
 
+    [RequirePermission(Permissions.KhaltiEdit)]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -217,6 +218,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
     }
 
     [HttpPost]
+    [RequirePermission(Permissions.KhaltiEdit)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, [Bind("Id,ReturnUrl,WebsiteUrl,Amount,ProductName,AuthorizationKey,ServiceCharge,PostUrl,VerifyUrl")] KhaltiConfiguration khaltiConfiguration)
     {

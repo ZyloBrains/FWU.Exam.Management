@@ -46,6 +46,7 @@ public static class Permissions
     public const string GroupResultRecords = "resultrecords";
     public const string GroupHallTickets = "halltickets";
     public const string GroupRetotaling = "retotaling";
+    public const string GroupMarksEntry = "marksentry";
     public const string GroupReports = "reports";
 
     // Helper to build permission name
@@ -317,6 +318,12 @@ public static class Permissions
     public const string RetotalingReject = "retotaling.reject";
     public const string RetotalingReview = "retotaling.review";
 
+    // Marks Entry (Teacher)
+    public const string MarksEntryView = "marksentry.view";
+    public const string MarksEntrySubmit = "marksentry.submit";
+    public const string MarksEntryImport = "marksentry.import";
+    public const string MarksEntryExport = "marksentry.export";
+
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
@@ -563,6 +570,11 @@ public static class Permissions
         (StudentPortalExamForms, "Exam Forms", "student.portal", "View and submit exam forms"),
         (StudentPortalMarksheet, "Marksheet", "student.portal", "View own marksheet"),
         (StudentPortalPayment, "Make Payment", "student.portal", "Make exam fee payments"),
+
+        (MarksEntryView, "View Marks Entry", GroupMarksEntry, "View marks entry dashboard for assigned subjects"),
+        (MarksEntrySubmit, "Submit Marks", GroupMarksEntry, "Submit marks for assigned subjects"),
+        (MarksEntryImport, "Import Marks", GroupMarksEntry, "Import marks from Excel for assigned subjects"),
+        (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
     ];
 
     // Permission set per role
@@ -595,6 +607,8 @@ public static class Permissions
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
             ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
             ResultRecordsView,
+
+            MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
 
             HallTicketsView, HallTicketsCreate, HallTicketsEdit, HallTicketsGenerate, HallTicketsDownload,
             RetotalingView, RetotalingReview, RetotalingApprove, RetotalingReject,
@@ -633,6 +647,8 @@ public static class Permissions
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit,
             ExamSubjectResultsView,
             ResultRecordsView,
+
+            MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
 
             HallTicketsView, HallTicketsDownload,
             RetotalingView,
@@ -673,6 +689,17 @@ public static class Permissions
             NoticesView,
             DepartmentsView,
             LevelsView,
+        ],
+
+        ["Teacher"] =
+        [
+            DashboardView,
+
+            SubjectsView,
+            ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
+            StudentsView,
+
+            MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
         ],
 
         ["Student"] =
