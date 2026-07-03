@@ -41,23 +41,45 @@ public class ExamCentersController(
     public async Task<IActionResult> Create()
     {
         ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName");
-        ViewData["CollegeId"] = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name");
+        ViewData["VenueCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive && c.IsExamCenterOnly)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        ViewData["SourceCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequirePermission("examcenters.create")]
-    public async Task<IActionResult> Create([Bind("Code,ExamScheduleId,CollegeId,Remark,IsActive")] ExamCenter examCenter)
+    public async Task<IActionResult> Create([Bind("Code,ExamScheduleId,Remark,IsActive")] ExamCenter examCenter,
+        int[] venueColleges, int[] sourceColleges)
     {
         if (ModelState.IsValid)
         {
-            await examCenterService.CreateExamCenterAsync(examCenter);
+            await examCenterService.CreateExamCenterWithCollegesAsync(
+                examCenter,
+                [.. venueColleges],
+                [.. sourceColleges]);
             return RedirectToAction(nameof(Index));
         }
 
         ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName", examCenter.ExamScheduleId);
-        ViewData["CollegeId"] = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", examCenter.CollegeId);
+        ViewData["VenueCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive && c.IsExamCenterOnly)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        ViewData["SourceCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
         return View(examCenter);
     }
 
@@ -69,14 +91,27 @@ public class ExamCentersController(
         if (examCenter == null) return NotFound();
 
         ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName", examCenter.ExamScheduleId);
-        ViewData["CollegeId"] = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", examCenter.CollegeId);
+        ViewData["VenueCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive && c.IsExamCenterOnly)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        ViewData["SourceCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        ViewData["SelectedVenueIds"] = examCenter.ExamCenterVenues?.Select(ecv => ecv.CollegeId).ToArray() ?? [];
+        ViewData["SelectedSourceIds"] = examCenter.ExamCenterColleges?.Select(ecc => ecc.CollegeId).ToArray() ?? [];
         return View(examCenter);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequirePermission("examcenters.edit")]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,ExamScheduleId,CollegeId,Remark,IsActive")] ExamCenter examCenter)
+    public async Task<IActionResult> Edit(int id,
+        [Bind("Id,Code,ExamScheduleId,Remark,IsActive")] ExamCenter examCenter,
+        int[] venueColleges, int[] sourceColleges)
     {
         if (id != examCenter.Id) return NotFound();
 
@@ -84,7 +119,10 @@ public class ExamCentersController(
         {
             try
             {
-                await examCenterService.UpdateExamCenterAsync(examCenter);
+                await examCenterService.UpdateExamCenterWithCollegesAsync(
+                    examCenter,
+                    [.. venueColleges],
+                    [.. sourceColleges]);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -96,7 +134,18 @@ public class ExamCentersController(
         }
 
         ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName", examCenter.ExamScheduleId);
-        ViewData["CollegeId"] = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", examCenter.CollegeId);
+        ViewData["VenueCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive && c.IsExamCenterOnly)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        ViewData["SourceCollegeList"] = await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+        ViewData["SelectedVenueIds"] = venueColleges;
+        ViewData["SelectedSourceIds"] = sourceColleges;
         return View(examCenter);
     }
 

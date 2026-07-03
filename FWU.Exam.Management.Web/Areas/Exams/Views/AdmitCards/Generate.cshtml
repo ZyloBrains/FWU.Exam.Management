@@ -7,7 +7,10 @@
 }
 
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" asp-area="Exams" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-ticket-alt text-indigo-600"></i>
@@ -17,9 +20,6 @@
                 <p class="text-sm text-gray-500 mt-0.5">Bulk generate admit cards for exam registrations.</p>
             </div>
         </div>
-        <a asp-action="Index" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-            <i class="fas fa-arrow-left"></i> Back
-        </a>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

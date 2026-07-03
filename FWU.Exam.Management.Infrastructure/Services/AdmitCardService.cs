@@ -80,6 +80,10 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
             .AsNoTracking()
             .Include(e => e.ExamRegistration)
                 .ThenInclude(er => er.College)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er.ExamCenter)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er.Program)
             .Include(e => e.ExamSchedule)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);

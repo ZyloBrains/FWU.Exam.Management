@@ -84,6 +84,10 @@ public class ExamRegistration : ITenantScoped
     [Display(Name = "Admin Verified By Username")]
     public string? AdminVerifiedByUsername { get; set; }
 
+    [MaxLength(50)]
+    [Display(Name = "Symbol Number")]
+    public string? SymbolNumber { get; set; }
+
     [Display(Name = "Admin Verified Date")]
     public DateTime? AdminVerifiedDate { get; set; }
 
