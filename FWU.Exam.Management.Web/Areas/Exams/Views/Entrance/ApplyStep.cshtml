@@ -683,31 +683,19 @@
                 if (contact) $('#ContactNumber').val(contact);
             })();
 
-            // ===== BS↔AD DATE CONVERSION =====
-            // Approximate BS→AD offset: BS year - 57 ≈ AD year (Mar-Dec), BS year - 56 (Jan-Feb)
-            // Uses a lookup for known year offsets for better accuracy
-            var bsAdOffsets = (function () {
-                var offsets = {};
-                for (var y = 2050; y <= 2095; y++) {
-                    offsets[y] = y - 57;
-                }
-                return offsets;
-            })();
-
-            function bsToAd(bsStr) {
-                if (!bsStr || !/^\d{4}-\d{2}-\d{2}$/.test(bsStr)) return '';
-                var parts = bsStr.split('-');
-                var y = parseInt(parts[0]), m = parseInt(parts[1]), d = parseInt(parts[2]);
-                var offset = bsAdOffsets[y] || (y - 57);
-                // If BS month is Baisakh-Jestha (1-2) the offset may differ
-                if (m <= 2) offset = (y >= 2050 && y <= 2095) ? y - 57 : y - 57;
-                return (y - offset) + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-            }
-
+            // ===== BS↔AD DATE CONVERSION (via NepaliCalendarHelper on server) =====
+            var convertTimer;
             $('.bs-date').on('input', function () {
+                var bs = $(this).val().trim();
                 var targetId = $(this).data('target');
-                var adVal = bsToAd($(this).val());
-                $('#' + targetId).val(adVal);
+                if (bs.length === 10) {
+                    clearTimeout(convertTimer);
+                    convertTimer = setTimeout(function () {
+                        $.get(tenantUrl("/Exams/Entrance/ConvertBsToAd"), { bsDate: bs }, function (data) {
+                            if (data.adDate) $('#' + targetId).val(data.adDate);
+                        });
+                    }, 300);
+                }
             });
 
             // ===== INLINE FIELD VALIDATION =====

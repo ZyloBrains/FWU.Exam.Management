@@ -581,6 +581,17 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         return Json(provinces.Select(p => new { id = p.Id, name = p.ProvinceName }));
     }
 
+    [HttpGet]
+    [AllowAnonymous]
+    public JsonResult ConvertBsToAd(string bsDate)
+    {
+        var parts = bsDate.Split('-');
+        if (parts.Length != 3 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var d))
+            return Json(new { adDate = (string?)null });
+        var ad = NepaliCalendarHelper.BsToAd(y, m, d);
+        return Json(new { adDate = ad?.ToString("yyyy-MM-dd") });
+    }
+
     // --- Admin actions ---
 
     [RequirePermission("entrance.view")]
