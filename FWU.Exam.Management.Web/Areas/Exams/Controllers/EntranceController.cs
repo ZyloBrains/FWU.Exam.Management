@@ -213,7 +213,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             TempData["VoucherNumber"] = voucher.VoucherNumber;
             TempData["VoucherId"] = voucher.Id;
 
-            return RedirectToAction(nameof(PaymentSuccess));
+            return RedirectToAction(nameof(ApplyStep), new { voucherId = voucher.Id });
         }
         catch (FormatException)
         {
@@ -354,7 +354,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
                 TempData["VoucherNumber"] = voucher.VoucherNumber;
                 TempData["VoucherId"] = voucher.Id;
 
-                return RedirectToAction(nameof(PaymentSuccess));
+                return RedirectToAction(nameof(ApplyStep), new { voucherId = voucher.Id });
             }
 
             TempData["ErrorMessage"] = "Failed to record payment. Please contact support.";
@@ -384,7 +384,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         TempData["VoucherNumber"] = voucher.VoucherNumber;
         TempData["VoucherId"] = voucher.Id;
 
-        return RedirectToAction(nameof(PaymentSuccess));
+        return RedirectToAction(nameof(ApplyStep), new { voucherId = voucher.Id });
     }
 
     [AllowAnonymous]
