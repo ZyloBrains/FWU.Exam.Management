@@ -413,6 +413,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
         ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+        ViewBag.VoucherStudentName = voucher.StudentName ?? "";
+        ViewBag.VoucherContactNumber = voucher.ContactNumber ?? "";
 
         // Check for existing application linked to this voucher
         var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
@@ -480,10 +482,15 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         PopulateStepSelectLists(selectLists);
         ViewBag.VoucherId = voucherId;
 
-        var schedule = (await service.GetVoucherByIdAsync(voucherId))?.ExamSchedule;
+        var voucher = await service.GetVoucherByIdAsync(voucherId);
+        var schedule = voucher?.ExamSchedule;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
         ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+        ViewBag.VoucherNumber = voucher?.VoucherNumber ?? "";
+        ViewBag.EntranceFee = voucher?.Amount ?? 0;
+        ViewBag.VoucherStudentName = voucher?.StudentName ?? "";
+        ViewBag.VoucherContactNumber = voucher?.ContactNumber ?? "";
 
         return View(application);
     }
