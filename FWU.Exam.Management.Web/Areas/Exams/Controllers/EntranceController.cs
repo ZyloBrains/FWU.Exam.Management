@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Identity;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, ILogger<EntranceController> logger) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -101,6 +101,13 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             return RedirectToAction(nameof(VerifyPayment));
         }
 
+        var paymentTypeName = await service.GetPaymentTypeNameByIdAsync(paymentTypeId);
+        if (string.IsNullOrWhiteSpace(paymentTypeName))
+        {
+            TempData["ErrorMessage"] = "Invalid payment method selected.";
+            return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
+        }
+
         var schedule = (await service.GetAvailableExamSchedulesAsync()).FirstOrDefault(s => s.Id == scheduleId);
         var amount = schedule?.ExamFee ?? 1000;
         var transactionUuid = esewaService.GenerateTransactionUuid();
@@ -110,6 +117,16 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             TempData["ErrorMessage"] = "Unable to process payment. Please try again.";
             return RedirectToAction(nameof(AvailableSchedules));
+        }
+
+        if (paymentTypeName.Contains("khalti", StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction(nameof(KhaltiPayment), new { scheduleId, logId, amount, studentName, contactNumber });
+        }
+
+        if (paymentTypeName.Contains("connect", StringComparison.OrdinalIgnoreCase))
+        {
+            return RedirectToAction(nameof(ConnectIPSPayment), new { scheduleId, logId, amount, studentName, contactNumber });
         }
 
         TempData["EsewaAmount"] = amount.ToString("F2");
@@ -242,6 +259,132 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         TempData["ErrorMessage"] = "Payment was cancelled or failed. Please try again.";
         return RedirectToAction(nameof(VerifyPayment));
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> KhaltiPayment(int scheduleId, int logId, decimal amount, string studentName, string contactNumber)
+    {
+        var schedule = (await service.GetAvailableExamSchedulesAsync()).FirstOrDefault(s => s.Id == scheduleId);
+        var scheme = Request.Scheme;
+        var baseUrl = $"{scheme}://{Request.Host.Value}";
+
+        var returnUrl = Url.Action(nameof(KhaltiCallback), "Entrance",
+            new { area = "Exams", logId }, scheme)!;
+
+        var khaltiRequest = new KhaltiInitiateRequest
+        {
+            ReturnUrl = returnUrl,
+            WebsiteUrl = baseUrl,
+            Amount = (long)(amount * 100),
+            PurchaseOrderId = $"ENT-{logId}-{DateTime.Now:yyyyMMddHHmmss}",
+            PurchaseOrderName = $"Entrance Fee - {schedule?.ProgramName ?? schedule?.ExamScheduleName ?? ""}",
+            CustomerInfo = new KhaltiCustomerInfo
+            {
+                Name = studentName,
+                Email = "",
+                Phone = contactNumber
+            }
+        };
+
+        try
+        {
+            logger.LogInformation("Initiating Khalti payment for entrance: amount={Amount}, logId={LogId}", amount, logId);
+            var response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
+            if (response?.PaymentUrl == null)
+            {
+                TempData["ErrorMessage"] = "Khalti did not return a payment URL. Please try again.";
+                return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
+            }
+
+            return Redirect(response.PaymentUrl);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Khalti payment initiation failed for entrance");
+            TempData["ErrorMessage"] = $"Khalti payment failed: {ex.Message}";
+            return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
+        }
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id, int? logId)
+    {
+        if (string.IsNullOrEmpty(pidx))
+        {
+            if (logId.HasValue)
+                await service.LogEsewaResponseAsync(logId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
+
+            TempData["ErrorMessage"] = "No payment identifier received from Khalti.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+
+        try
+        {
+            logger.LogInformation("Khalti callback for entrance: pidx={Pidx}, status={Status}, logId={LogId}", pidx, status, logId);
+
+            var lookup = await khaltiService.LookupPaymentAsync(pidx!);
+            var responseData = JsonSerializer.Serialize(new
+            {
+                pidx,
+                callback_status = status,
+                callback_transaction_id = transaction_id,
+                lookup
+            });
+
+            if (lookup == null || lookup.Status != "Completed")
+            {
+                logger.LogWarning("Khalti payment verification failed for entrance: status={LookupStatus}", lookup?.Status);
+                if (logId.HasValue)
+                    await service.LogEsewaResponseAsync(logId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
+
+                TempData["ErrorMessage"] = $"Payment verification failed. Status: {lookup?.Status ?? "Unknown"}";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+
+            logger.LogInformation("Khalti payment successful for entrance: transaction_id={TransactionId}", lookup.TransactionId);
+
+            var voucher = await service.CompleteEsewaPaymentAsync(logId!.Value, lookup.TotalAmount / 100m);
+            if (voucher != null)
+            {
+                await service.LogEsewaResponseAsync(logId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
+
+                TempData["SuccessMessage"] = "Payment successful!";
+                TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
+                TempData["TransactionUuid"] = pidx;
+                TempData["VoucherNumber"] = voucher.VoucherNumber;
+                TempData["VoucherId"] = voucher.Id;
+
+                return RedirectToAction(nameof(PaymentSuccess));
+            }
+
+            TempData["ErrorMessage"] = "Failed to record payment. Please contact support.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Khalti callback processing failed for entrance");
+            TempData["ErrorMessage"] = "Failed to process Khalti callback.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> ConnectIPSPayment(int scheduleId, int logId, decimal amount, string studentName, string contactNumber)
+    {
+        await service.LogEsewaResponseAsync(logId, "", true, "{\"message\":\"ConnectIPS payment recorded\"}", "Payment recorded via ConnectIPS.");
+
+        var voucher = await service.CompleteEsewaPaymentAsync(logId, amount);
+        if (voucher == null)
+        {
+            TempData["ErrorMessage"] = "Failed to record payment. Please contact support.";
+            return RedirectToAction(nameof(VerifyPayment));
+        }
+
+        TempData["SuccessMessage"] = "Payment request recorded successfully!";
+        TempData["VoucherNumber"] = voucher.VoucherNumber;
+        TempData["VoucherId"] = voucher.Id;
+
+        return RedirectToAction(nameof(PaymentSuccess));
     }
 
     [AllowAnonymous]

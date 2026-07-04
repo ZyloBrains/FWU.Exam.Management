@@ -785,6 +785,12 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         return voucher;
     }
 
+    public async Task<string?> GetPaymentTypeNameByIdAsync(int paymentTypeId)
+    {
+        var pt = await context.Set<PaymentType>().AsNoTracking().FirstOrDefaultAsync(p => p.Id == paymentTypeId);
+        return pt?.PaymentTypeName;
+    }
+
     public async Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId)
     {
         var schedule = await context.ExamSchedules.FindAsync(scheduleId);
