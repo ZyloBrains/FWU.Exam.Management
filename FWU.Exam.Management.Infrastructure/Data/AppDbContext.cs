@@ -89,7 +89,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ConnectIpsPaymentConfiguration>? ConnectIpsPaymentConfigurations { get; set; }
     public DbSet<Permission>? Permissions { get; set; }
     public DbSet<RolePermission>? RolePermissions { get; set; }
- 
+    public DbSet<ExamCenterCollege>? ExamCenterColleges { get; set; }
+    public DbSet<ExamCenterVenue>? ExamCenterVenues { get; set; }
+    public DbSet<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -555,6 +557,42 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(ess => ess.ExamCenter)
             .WithMany(ec => ec.ExamSlots)
             .HasForeignKey(ess => ess.ExamCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamCenterCollege>()
+            .HasOne(ecc => ecc.ExamCenter)
+            .WithMany(ec => ec.ExamCenterColleges)
+            .HasForeignKey(ecc => ecc.ExamCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamCenterCollege>()
+            .HasOne(ecc => ecc.College)
+            .WithMany()
+            .HasForeignKey(ecc => ecc.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamCenterVenue>()
+            .HasOne(ecv => ecv.ExamCenter)
+            .WithMany(ec => ec.ExamCenterVenues)
+            .HasForeignKey(ecv => ecv.ExamCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamCenterVenue>()
+            .HasOne(ecv => ecv.College)
+            .WithMany()
+            .HasForeignKey(ecv => ecv.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamCenterSymbolRange>()
+            .HasOne(ecsr => ecsr.ExamSchedule)
+            .WithMany()
+            .HasForeignKey(ecsr => ecsr.ExamScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamCenterSymbolRange>()
+            .HasOne(ecsr => ecsr.ExamCenter)
+            .WithMany(ec => ec.ExamCenterSymbolRanges)
+            .HasForeignKey(ecsr => ecsr.ExamCenterId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<AdmitCard>(entity =>

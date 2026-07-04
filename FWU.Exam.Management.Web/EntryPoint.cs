@@ -144,6 +144,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IResultRecordService, ResultRecordService>();
         builder.Services.AddScoped<IExamCenterService, ExamCenterService>();
         builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
+        builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
         builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
         var app = builder.Build();
 

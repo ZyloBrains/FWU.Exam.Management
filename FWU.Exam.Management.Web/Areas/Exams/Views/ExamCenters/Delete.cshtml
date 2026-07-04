@@ -22,8 +22,17 @@
                 <dd class="mt-1 text-sm text-gray-900">@Model.Code</dd>
             </div>
             <div>
-                <dt class="text-sm font-medium text-gray-500">College</dt>
-                <dd class="mt-1 text-sm text-gray-900">@(Model.College?.Name ?? "-")</dd>
+                <dt class="text-sm font-medium text-gray-500">Venue Colleges</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                    @if (Model.ExamCenterVenues != null && Model.ExamCenterVenues.Any())
+                    {
+                        @string.Join(", ", Model.ExamCenterVenues.Select(ecv => ecv.College?.Name))
+                    }
+                    else
+                    {
+                        <span>-</span>
+                    }
+                </dd>
             </div>
             <div>
                 <dt class="text-sm font-medium text-gray-500">Exam Schedule</dt>

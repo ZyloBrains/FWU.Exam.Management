@@ -1,7 +1,10 @@
 @model ExamCenter
+@using FWU.Exam.Management.Domain.Entities.Colleges
 
 @{
     ViewData["Title"] = "Create Exam Center";
+    var venueCollegeList = ViewData["VenueCollegeList"] as List<College> ?? [];
+    var sourceCollegeList = ViewData["SourceCollegeList"] as List<College> ?? [];
 }
 
 <div class="space-y-6">
@@ -16,7 +19,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Exam Center</h1>
-                    <p class="text-sm text-gray-500 mt-0.5">Assign a college as an exam center for a schedule.</p>
+                    <p class="text-sm text-gray-500 mt-0.5">Assign colleges as exam venues for a schedule.</p>
                 </div>
             </div>
         </div>
@@ -40,13 +43,6 @@
                     <span asp-validation-for="ExamScheduleId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="CollegeId" class="text-sm font-medium text-gray-700">College <span class="text-red-500">*</span></label>
-                    <select asp-for="CollegeId" asp-items="@ViewData["CollegeId"] as SelectList" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
-                        <option value="">-- Select College --</option>
-                    </select>
-                    <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
-                <div>
                     <label asp-for="Remark" class="text-sm font-medium text-gray-700">Remark</label>
                     <input asp-for="Remark" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Optional remark" />
                     <span asp-validation-for="Remark" class="text-xs text-red-500 mt-1 block"></span>
@@ -54,6 +50,44 @@
                 <div class="flex items-center gap-3 pt-6">
                     <input asp-for="IsActive" class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500" />
                     <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Is Active</label>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+                <label class="text-sm font-medium text-gray-700 block mb-2">
+                    Venue Colleges <span class="text-red-500">*</span>
+                </label>
+                <p class="text-xs text-gray-500 mb-3">Select the colleges where exams will be conducted. Only colleges marked as exam centers are shown.</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-60 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                    @if (venueCollegeList.Count == 0)
+                    {
+                        <p class="text-sm text-gray-400 col-span-full">No exam-center colleges found. Mark a college as "Is Exam Center Only" first.</p>
+                    }
+                    @foreach (var college in venueCollegeList)
+                    {
+                        <label class="flex items-center gap-2 p-2 rounded hover:bg-white cursor-pointer">
+                            <input type="checkbox" name="venueColleges" value="@college.Id"
+                                   class="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500" />
+                            <span class="text-sm text-gray-700">@college.Name</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+                <label class="text-sm font-medium text-gray-700 block mb-2">
+                    Serves Students From Colleges
+                </label>
+                <p class="text-xs text-gray-500 mb-3">Select which colleges' students will take exams at this center. If none selected, all colleges are eligible.</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-60 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                    @foreach (var college in sourceCollegeList)
+                    {
+                        <label class="flex items-center gap-2 p-2 rounded hover:bg-white cursor-pointer">
+                            <input type="checkbox" name="sourceColleges" value="@college.Id"
+                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                            <span class="text-sm text-gray-700">@college.Name</span>
+                        </label>
+                    }
                 </div>
             </div>
 

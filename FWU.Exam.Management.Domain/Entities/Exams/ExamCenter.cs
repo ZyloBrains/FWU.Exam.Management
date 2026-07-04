@@ -14,9 +14,9 @@ public class ExamCenter : ITenantScoped
     [Range(1, int.MaxValue)]
     [Display(Name = "Exam Schedule Id")]
     public int ExamScheduleId { get; set; }
-    [Range(1, int.MaxValue)]
+
     [Display(Name = "College Id")]
-    public int CollegeId { get; set; }
+    public int? CollegeId { get; set; }
 
     [MaxLength(500)]
     [Display(Name = "Remark")]
@@ -34,5 +34,8 @@ public class ExamCenter : ITenantScoped
     public virtual College? College { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
+    public virtual ICollection<ExamCenterCollege>? ExamCenterColleges { get; set; }
+    public virtual ICollection<ExamCenterVenue>? ExamCenterVenues { get; set; }
+    public virtual ICollection<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
 }
 
