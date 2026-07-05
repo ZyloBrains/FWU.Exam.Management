@@ -126,8 +126,10 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
             .Select(e => new ExamSchedule
             {
                 Id = e.Id,
+                TenantId = e.TenantId,
                 AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
+                SemesterId = e.SemesterId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,

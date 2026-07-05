@@ -530,68 +530,7 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 24. EXAM SCHEDULES
-        // ===================================================================
-        var csitExamSchedule = new ExamSchedule
-        {
-            ExamScheduleName = "B.Sc. CSIT First Semester Exam 2081",
-            ExamScheduleCode = "CSIT-SEM1-2081",
-            CollegeId = collegeCst.Id,
-            ProgramId = csitProgram.Id,
-            SemesterId = sem1.Id,
-            AcademicYearId = runningYear.Id,
-            ExamTypeId = entranceExamType.Id,
-            LevelId = bachelorLevel.Id,
-            StartDateBs = "2081-10-01",
-            EndDateBs = "2081-10-15",
-            StartDate = new DateOnly(2026, 7, 14),
-            EndDate = new DateOnly(2026, 8, 28),
-            StartTime = new TimeOnly(7, 0),
-            EndTime = new TimeOnly(10, 0),
-            IsActive = true,
-            ExamFee = 1500m
-        };
-        context.ExamSchedules.Add(csitExamSchedule);
-
-        var baExamSchedule = new ExamSchedule
-        {
-            ExamScheduleName = "BA First Semester Exam 2081",
-            ExamScheduleCode = "BA-SEM1-2081",
-            CollegeId = collegeHum.Id,
-            ProgramId = baProgram.Id,
-            SemesterId = sem1.Id,
-            AcademicYearId = runningYear.Id,
-            ExamTypeId = entranceExamType.Id,
-            LevelId = bachelorLevel.Id,
-            StartDateBs = "2081-11-01",
-            EndDateBs = "2081-11-15",
-            StartDate = new DateOnly(2026, 8, 14),
-            EndDate = new DateOnly(2026, 9, 28),
-            StartTime = new TimeOnly(7, 0),
-            EndTime = new TimeOnly(10, 0),
-            IsActive = true,
-            ExamFee = 1200m
-        };
-        context.ExamSchedules.Add(baExamSchedule);
-        await context.SaveChangesAsync();
-
-        // ===================================================================
-        // 25. EXAM FEES ON SCHEDULES (used by PayExamFee page)
-        // ===================================================================
-        csitExamSchedule.ExamFee = 1500m;
-        csitExamSchedule.PracticalSubjectFee = 200m;
-        baExamSchedule.ExamFee = 1200m;
-        baExamSchedule.PracticalSubjectFee = 150m;
-
-        await context.ExamFees.AddRangeAsync(new[]
-        {
-            new ExamFee { Name = "CSIT SEM1 Regular Exam Fee", ExamScheduleId = csitExamSchedule.Id, Amount = 1500m },
-            new ExamFee { Name = "BA SEM1 Regular Exam Fee", ExamScheduleId = baExamSchedule.Id, Amount = 1200m },
-        });
-        await context.SaveChangesAsync();
-
-        // ===================================================================
-        // 26. GRADING SCHEMES
+        // 24. GRADING SCHEMES
         // ===================================================================
         var gradingScheme = new GradingScheme
         {
@@ -616,79 +555,13 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 27. BATCH
+        // 25. BATCH
         // ===================================================================
         await context.Batches.AddAsync(new Batch { AcademicYearId = runningYear.Id, BatchName = "2081 Batch", IsActive = true });
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 28. EXAM REGISTRATIONS
-        // ===================================================================
-        var examRegScience = new ExamRegistration
-        {
-            ExamScheduleId = csitExamSchedule.Id,
-            CollegeId = collegeCst.Id,
-            AcademicYearId = runningYear.Id,
-            ProgramsId = csitProgram.Id,
-            FeeEnclosed = 1500m,
-            RegistrationDate = DateTime.UtcNow.AddDays(-30),
-            Status = RegistrationStatus.Pending,
-            IsActive = true,
-            IsAppliedByStudent = true
-        };
-        context.ExamRegistrations.Add(examRegScience);
-
-        var examRegHum = new ExamRegistration
-        {
-            ExamScheduleId = baExamSchedule.Id,
-            CollegeId = collegeHum.Id,
-            AcademicYearId = runningYear.Id,
-            ProgramsId = baProgram.Id,
-            FeeEnclosed = 1200m,
-            RegistrationDate = DateTime.UtcNow.AddDays(-25),
-            Status = RegistrationStatus.CollegeVerified,
-            IsActive = true,
-            IsAppliedByStudent = true
-        };
-        context.ExamRegistrations.Add(examRegHum);
-        await context.SaveChangesAsync();
-
-        // ===================================================================
-        // 29. EXAM SUBJECT RESULTS
-        // ===================================================================
-        var csitSem1OfferingsForResults = await context.SubjectOfferings
-            .Include(so => so.SubjectCatalog)
-            .Where(so => so.ProgramId == csitProgram.Id && so.SemesterId == sem1.Id)
-            .OrderBy(so => so.DisplayOrder)
-            .ToListAsync();
-
-        var regularExamType = await context.ExamTypes.Where(et => et.Name == "Regular").FirstOrDefaultAsync();
-
-        foreach (var (offering, idx) in csitSem1OfferingsForResults.Select((o, i) => (o, i)))
-        {
-            var theoryMarks = (20 + idx * 8).ToString();
-            var practicalMarks = offering.HasPractical ? (10 + idx * 5).ToString() : null;
-
-            context.ExamSubjectResults.Add(new ExamSubjectResult
-            {
-                ExamRegistrationId = examRegScience.Id,
-                SubjectOfferingId = offering.Id,
-                ExamScheduleId = csitExamSchedule.Id,
-                ExamTypeId = regularExamType?.Id ?? 0,
-                ObtainedMarksTheory = theoryMarks,
-                ObtainedMarksTheoryConfirm = theoryMarks,
-                ObtainedMarksPractical = practicalMarks,
-                ObtainedMarksPracticalConfirm = practicalMarks,
-                IsTheoryRegistered = true,
-                IsPracticalRegistered = offering.HasPractical,
-                IsActive = true,
-                IsSubmitted = idx < 3 // First 3 submitted, last 2 pending
-            });
-        }
-        await context.SaveChangesAsync();
-
-        // ===================================================================
-        // 30. NON-REGULAR (PARTIAL) STUDENT — has previous failed grades
+        // 26. NON-REGULAR (PARTIAL) STUDENT — has previous failed grades
         // ===================================================================
         var partialStudentUser = new AppUser
         {
@@ -753,63 +626,6 @@ public static class WorkflowTestDataSeeder
         });
         await context.SaveChangesAsync();
 
-        // Create a previous exam registration with failed results
-        // Use an older exam schedule concept — we re-use the same schedule
-        var partialEnrollment = await context.Set<SemesterEnrollment>()
-            .FirstAsync(se => se.StudentAdmissionId == admissionPartial.Id && se.SemesterId == sem1.Id);
-
-        var failedExamReg = new ExamRegistration
-        {
-            ExamScheduleId = csitExamSchedule.Id,
-            CollegeId = collegeCst.Id,
-            AcademicYearId = runningYear.Id,
-            ProgramsId = csitProgram.Id,
-            FeeEnclosed = 1500m,
-            RegistrationDate = DateTime.UtcNow.AddDays(-90),
-            Status = RegistrationStatus.Registered,
-            IsActive = true,
-            IsAppliedByStudent = true
-        };
-        context.ExamRegistrations!.Add(failedExamReg);
-        await context.SaveChangesAsync();
-
-        // Assign the failed registration to the enrollment (shadow FK)
-        await context.Database.ExecuteSqlRawAsync(
-            "UPDATE [ExamRegistrations] SET [SemesterEnrollmentId] = {0} WHERE [Id] = {1}",
-            partialEnrollment.Id, failedExamReg.Id);
-
-        // Get the CSIT subject offerings for sem1
-        var csitSem1Offerings = await context.SubjectOfferings
-            .Include(so => so.SubjectCatalog)
-            .Where(so => so.ProgramId == csitProgram.Id && so.SemesterId == sem1.Id)
-            .OrderBy(so => so.DisplayOrder)
-            .ToListAsync();
-
-        // Mark CSIT114 (C Programming, hasPractical=true) and CSIT115 (English I) as FAILED
-        // CSIT114 → has practical component → tests practical auto-include
-        // CSIT115 → no practical → tests theory-only re-take
-        var failedSubjectCodes = new[] { "CSIT114", "CSIT115" };
-        var allTypes = await context.ExamTypes.ToListAsync();
-        var regExamType = allTypes.FirstOrDefault(et => et.Name == "Regular");
-
-        foreach (var offering in csitSem1Offerings.Where(o => failedSubjectCodes.Contains(o.SubjectCatalog!.SubjectCode)))
-        {
-            context.ExamSubjectResults!.Add(new ExamSubjectResult
-            {
-                ExamRegistrationId = failedExamReg.Id,
-                SubjectOfferingId = offering.Id,
-                ExamScheduleId = csitExamSchedule.Id,
-                ExamTypeId = regExamType?.Id ?? 0,
-                GradeLetter = "F",
-                IsTheoryRegistered = true,
-                IsPracticalRegistered = offering.HasPractical,
-                IsActive = true,
-                IsSubmitted = true,
-                ObtainedMarksTheory = "15",
-                ObtainedMarksPractical = offering.HasPractical ? "8" : null
-            });
-        }
-        await context.SaveChangesAsync();
     }
 
     private static async Task<bool> TableExistsAsync(AppDbContext context, string tableName)

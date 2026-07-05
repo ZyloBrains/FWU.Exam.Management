@@ -5,6 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Permissions;
+using FWU.Exam.Management.Domain.Entities.Teachers;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
@@ -92,6 +93,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamCenterCollege>? ExamCenterColleges { get; set; }
     public DbSet<ExamCenterVenue>? ExamCenterVenues { get; set; }
     public DbSet<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
+    public DbSet<TeacherSubjectAssignment>? TeacherSubjectAssignments { get; set; }
+ 
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -557,6 +560,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(ess => ess.ExamCenter)
             .WithMany(ec => ec.ExamSlots)
             .HasForeignKey(ess => ess.ExamCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<TeacherSubjectAssignment>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(tsa => tsa.TeacherUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<TeacherSubjectAssignment>()
+            .HasOne(tsa => tsa.SubjectOffering)
+            .WithMany()
+            .HasForeignKey(tsa => tsa.SubjectOfferingId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<TeacherSubjectAssignment>()
+            .HasOne(tsa => tsa.ExamSchedule)
+            .WithMany()
+            .HasForeignKey(tsa => tsa.ExamScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamCenterCollege>()

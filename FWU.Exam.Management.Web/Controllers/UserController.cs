@@ -132,7 +132,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             if (model.SelectedRole is Role.FacultyAdmin)
                 user.FacultyId = model.FacultyId;
 
-            if (model.SelectedRole is Role.CollegeAdmin or Role.DepartmentAdmin or Role.Student)
+            if (model.SelectedRole is Role.CollegeAdmin or Role.DepartmentAdmin or Role.Teacher or Role.Student)
                 user.CollegeId = model.CollegeId;
 
             if (model.SelectedRole is Role.DepartmentAdmin)

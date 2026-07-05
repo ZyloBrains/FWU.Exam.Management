@@ -179,7 +179,7 @@ public class GradingSchemesController(
 
     private void PopulateDropdowns(GradingSchemeSelectListsDto selectLists, GradingScheme? gradingScheme = null)
     {
-        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", gradingScheme?.ProgramId);
+        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "ProgramName", gradingScheme?.ProgramId);
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
     }
 
