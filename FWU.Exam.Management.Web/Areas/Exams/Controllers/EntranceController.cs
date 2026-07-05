@@ -407,6 +407,10 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         PopulateStepSelectLists(selectLists);
 
         var schedule = voucher.ExamSchedule;
+        if (schedule != null)
+        {
+            ViewBag.CollegeId = new SelectList(await service.GetCollegesByProgramAsync(schedule.ProgramId), "Id", "Name");
+        }
         ViewBag.VoucherId = voucherId;
         ViewBag.VoucherNumber = voucher.VoucherNumber;
         ViewBag.EntranceFee = voucher.Amount;
@@ -456,6 +460,13 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             ModelState.AddModelError("GenderId", "Gender is required.");
         }
 
+        // Fix CollegeId binding: non-nullable int from select dropdown
+        if (application.CollegeId == 0 && string.IsNullOrEmpty(Request.Form["CollegeId"]))
+        {
+            ModelState.Remove("CollegeId");
+            ModelState.AddModelError("CollegeId", "Please select a college.");
+        }
+
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
         var permanentToleStreet = Request.Form["ToleStreet"].ToString();
@@ -482,14 +493,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             application.AcademicYearId = voucherSchedule.AcademicYearId;
             application.ProgramId = voucherSchedule.ProgramId;
 
-            if (voucherSchedule.CollegeId is null or 0)
-            {
-                ModelState.AddModelError("", "The exam schedule for this payment does not have a college assigned. Please contact support.");
-                TempData["ErrorMessage"] = "The exam schedule for this payment does not have a college assigned.";
-                return RedirectToAction(nameof(VerifyPayment));
-            }
-            application.CollegeId = voucherSchedule.CollegeId.Value;
-
             // Handle file uploads
             if (PhotoFile?.Length > 0)
                 application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
@@ -515,6 +518,10 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         var voucher = await service.GetVoucherByIdAsync(voucherId);
         var schedule = voucher?.ExamSchedule;
+        if (schedule != null)
+        {
+            ViewBag.CollegeId = new SelectList(await service.GetCollegesByProgramAsync(schedule.ProgramId), "Id", "Name");
+        }
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
         ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;

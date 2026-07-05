@@ -41,4 +41,5 @@ public interface IEntranceExamApplicationService
     Task<ApplicationVoucher?> GetVoucherByIdAsync(int voucherId);
     Task<List<PaymentType>> GetActivePaymentTypesAsync();
     Task<string?> GetPaymentTypeNameByIdAsync(int paymentTypeId);
+    Task<List<SelectOption>> GetCollegesByProgramAsync(int programId);
 }

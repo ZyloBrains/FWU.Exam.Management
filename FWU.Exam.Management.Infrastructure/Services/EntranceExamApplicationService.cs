@@ -619,6 +619,15 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         return existing.Id;
     }
 
+    public async Task<List<SelectOption>> GetCollegesByProgramAsync(int programId)
+    {
+        return await context.CollegePrograms
+            .Where(cp => cp.ProgramId == programId && cp.College.IsActive)
+            .Select(cp => new SelectOption { Id = cp.College.Id, Name = cp.College.Name })
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task<List<SelectOption>> GetDistrictsAsync()
     {
         return await context.Districts
