@@ -117,7 +117,19 @@
                 <input type="hidden" name="AcademicYearId" value="@Model.AcademicYearId" />
                 <input type="hidden" name="CollegeId" value="@Model.CollegeId" />
                 <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
-                <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-4"></div>
+                @if (ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 mb-4 text-sm">
+                        <strong class="block mb-1">Please fix the following errors:</strong>
+                        <div asp-validation-summary="All"></div>
+                    </div>
+                }
+                else if (TempData["ErrorMessage"] is string errMsg)
+                {
+                    <div class="bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 mb-4 text-sm">
+                        @errMsg
+                    </div>
+                }
 
                 <!-- ===== STEP 1: Personal Information ===== -->
                 <div class="step-content" id="step1">
@@ -374,7 +386,7 @@
                                     <label asp-for="PreviousDivision" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
                                     <select asp-for="PreviousDivision" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
-                                        <option value="Distinction">Distinction</option>
+                                        <option value="Dist">Distinction</option>
                                         <option value="First">First Division</option>
                                         <option value="Second">Second Division</option>
                                         <option value="Third">Third Division</option>
@@ -421,7 +433,7 @@
                                     <label asp-for="PreviousDivision2" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
                                     <select asp-for="PreviousDivision2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
-                                        <option value="Distinction">Distinction</option>
+                                        <option value="Dist">Distinction</option>
                                         <option value="First">First Division</option>
                                         <option value="Second">Second Division</option>
                                         <option value="Third">Third Division</option>
@@ -468,7 +480,7 @@
                                     <label asp-for="PreviousDivision3" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
                                     <select asp-for="PreviousDivision3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
-                                        <option value="Distinction">Distinction</option>
+                                        <option value="Dist">Distinction</option>
                                         <option value="First">First Division</option>
                                         <option value="Second">Second Division</option>
                                         <option value="Third">Third Division</option>
@@ -515,17 +527,7 @@
                                     <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing documents kept. Upload new to replace.</p>
                                 }
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Bank Voucher</label>
-                                <input type="file" name="VoucherFile" accept=".pdf,.jpg,.jpeg,.doc,.docx" id="VoucherFile"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
-                                <p class="text-xs text-gray-400 mt-1">File name should be Student Name with Symbol No. Format: .pdf, .jpg, .doc (max 5MB)</p>
-                                <p id="VoucherFileError" class="text-xs text-red-500 mt-1 hidden"></p>
-                                @if (!string.IsNullOrEmpty(Model.VoucherPath))
-                                {
-                                    <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing voucher kept. Upload new to replace.</p>
-                                }
-                            </div>
+
                         </div>
 
                         <!-- Review Summary -->
@@ -711,10 +713,17 @@
                 else if (type === 'email' && val && !/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val)) valid = false;
                 else if (type === 'phone' && val && !/^(\+?\d{7,15})$/.test(val.replace(/[\s-]/g, ''))) valid = false;
 
-                if (val) {
+                if (val || !valid) {
                     $el.addClass(valid ? 'field-valid' : 'field-invalid');
                 }
-                return valid || !val;
+                // Sync validation state with Select2 container (if applicable)
+                var $s2 = $el.next('.select2-container').find('.select2-selection');
+                if ($s2.length) {
+                    $s2.removeClass('field-valid field-invalid');
+                    if ($el.hasClass('field-invalid')) $s2.addClass('field-invalid');
+                    else if ($el.hasClass('field-valid')) $s2.addClass('field-valid');
+                }
+                return valid;
             }
 
             $('.validate-field').on('blur', function () {
@@ -796,10 +805,6 @@
             $('#DocumentsFile').change(function () {
                 validateFile(this, ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError');
             });
-            $('#VoucherFile').change(function () {
-                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError');
-            });
-
             // ===== NAVIGATION =====
             $('#nextBtn').click(function () {
                 if (!validateStep(currentStep)) return;
@@ -816,6 +821,14 @@
                     alert('Please agree to the declaration before submitting.');
                     return;
                 }
+                // Validate all steps before submitting
+                for (var s = 1; s <= totalSteps; s++) {
+                    if (!validateStep(s)) {
+                        e.preventDefault();
+                        updateStep(s);
+                        return;
+                    }
+                }
                 var ok = true;
                 if ($('#PhotoFile')[0].files.length) {
                     ok = validateFile($('#PhotoFile')[0], ['.jpg', '.jpeg', '.png'], 5, '#PhotoFileError') && ok;
@@ -823,14 +836,22 @@
                 if ($('#DocumentsFile')[0].files.length) {
                     ok = validateFile($('#DocumentsFile')[0], ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError') && ok;
                 }
-                if ($('#VoucherFile')[0].files.length) {
-                    ok = validateFile($('#VoucherFile')[0], ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError') && ok;
-                }
                 if (!ok) {
                     e.preventDefault();
                     alert('Please fix file upload errors before submitting.');
                 }
             });
+
+            // On page load after a failed POST, navigate to the step with the first error
+            var $firstError = $('.field-validation-error, .text-red-600').first();
+            if ($firstError.length) {
+                var $errorStep = $firstError.closest('.step-content');
+                if ($errorStep.length) {
+                    var stepNum = parseInt($errorStep.attr('id').replace('step', ''));
+                    if (stepNum) updateStep(stepNum);
+                }
+                $('html, body').animate({ scrollTop: $firstError.offset().top - 100 }, 300);
+            }
 
             // ===== REVIEW SUMMARY =====
             function updateReviewSummary() {
@@ -908,10 +929,12 @@
                         });
                     }
                     // Init Select2 after data loaded
-                    $('#ProvinceId, #DistrictId, #LocalLevelId').select2({
+                    $('#ProvinceId, #DistrictId, #LocalLevelId, #CitizenshipDistrictId').select2({
                         width: '100%',
                         placeholder: function () { return $(this).find('option:first').text(); },
                         allowClear: false
+                    }).on('change', function () {
+                        validateSingleField($(this));
                     });
                 });
             }
@@ -937,7 +960,10 @@
 
             // ===== INIT =====
             initAddressCascading();
-            updateStep(1);
+            // Only default to step 1 if no server-side validation errors (e.g. initial GET)
+            if ($('.field-validation-error, .text-red-600').length === 0) {
+                updateStep(1);
+            }
         });
     </script>
 }

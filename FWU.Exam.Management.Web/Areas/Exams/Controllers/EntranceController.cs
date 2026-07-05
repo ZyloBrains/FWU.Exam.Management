@@ -445,9 +445,16 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApplyStep([Bind("AcademicYearId,CollegeId,ProgramId,FirstName,MiddleName,LastName,NepaliName,DateOfBirthBS,DateOfBirthAD,GenderId,Email,ContactNumber,Phone,FatherName,FatherContact,MotherName,MotherContact,GuardianEmail,FatherProfession,MotherProfession,CitizenshipNo,CitizenshipDistrictId,CitizenshipIssueDateBs,CitizenshipIssueDateAd,BloodGroup,BirthPlace,Country,PostalCode,PreviousSchoolCollege,PreviousLevelId,PreviousPassedYear,PreviousSymbolNumber,PreviousGPA,PreviousDivision,PreviousLevel2Id,PreviousSchoolCollege2,PreviousBoard2,PreviousSymbolNumber2,PreviousPassedYear2,PreviousGPA2,PreviousDivision2,PreviousLevel3Id,PreviousSchoolCollege3,PreviousBoard3,PreviousSymbolNumber3,PreviousPassedYear3,PreviousGPA3,PreviousDivision3")] EntranceExamApplication application, int voucherId,
-        IFormFile? PhotoFile, IFormFile? DocumentsFile, IFormFile? VoucherFile)
+        IFormFile? PhotoFile, IFormFile? DocumentsFile)
     {
         var selectLists = await service.GetStepFormSelectListsAsync();
+
+        // Fix GenderId binding: non-nullable int can't parse empty string from "Select Gender" option
+        if (application.GenderId == 0 && string.IsNullOrEmpty(Request.Form["GenderId"]))
+        {
+            ModelState.Remove("GenderId");
+            ModelState.AddModelError("GenderId", "Gender is required.");
+        }
 
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
@@ -455,30 +462,54 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var permanentHouseNumber = Request.Form["HouseNumber"].ToString();
 
         // Validate file uploads
-        var fileErrors = ValidateUploadedFiles(PhotoFile, DocumentsFile, VoucherFile);
+        var fileErrors = ValidateUploadedFiles(PhotoFile, DocumentsFile);
         foreach (var error in fileErrors)
             ModelState.AddModelError("", error);
 
         if (ModelState.IsValid)
         {
-            // Handle file uploads
-            application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
-            application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
-            application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers");
+            // Override CollegeId/ProgramId/AcademicYearId from the voucher's exam schedule
+            // (these are pre-determined by payment, not user-editable)
+            var voucherMeta = await service.GetVoucherByIdAsync(voucherId);
+            var voucherSchedule = voucherMeta?.ExamSchedule;
+            if (voucherSchedule == null)
+            {
+                ModelState.AddModelError("", "Invalid payment reference. Exam schedule not found.");
+                TempData["ErrorMessage"] = "Invalid payment reference. Exam schedule not found.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
 
+            application.AcademicYearId = voucherSchedule.AcademicYearId;
+            application.ProgramId = voucherSchedule.ProgramId;
+
+            if (voucherSchedule.CollegeId is null or 0)
+            {
+                ModelState.AddModelError("", "The exam schedule for this payment does not have a college assigned. Please contact support.");
+                TempData["ErrorMessage"] = "The exam schedule for this payment does not have a college assigned.";
+                return RedirectToAction(nameof(VerifyPayment));
+            }
+            application.CollegeId = voucherSchedule.CollegeId.Value;
+
+            // Handle file uploads
+            if (PhotoFile?.Length > 0)
+                application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
+            if (DocumentsFile?.Length > 0)
+                application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
             // Check if editing an existing application
             var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
             if (existing != null && (existing.Status == ApplicationStatus.Submitted || existing.Status == ApplicationStatus.Rejected))
             {
                 await service.UpdateStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId, existing.Id);
                 TempData["SuccessMessage"] = "Application updated successfully.";
-                return RedirectToAction(nameof(Confirmation), new { id = existing.Id });
+                return RedirectToAction("Index", "Home", new { area = "" });
             }
 
             var id = await service.SubmitStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId);
-            return RedirectToAction(nameof(Confirmation), new { id });
+            TempData["SuccessMessage"] = "Application submitted successfully.";
+            return RedirectToAction("Index", "Home", new { area = "" });
         }
 
+        TempData["ErrorMessage"] = "Please fix the validation errors and try again.";
         PopulateStepSelectLists(selectLists);
         ViewBag.VoucherId = voucherId;
 
@@ -495,7 +526,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         return View(application);
     }
 
-    private List<string> ValidateUploadedFiles(IFormFile? photo, IFormFile? documents, IFormFile? voucher)
+    private List<string> ValidateUploadedFiles(IFormFile? photo, IFormFile? documents)
     {
         var errors = new List<string>();
         var allowedImageExts = new[] { ".jpg", ".jpeg", ".png" };
@@ -518,15 +549,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
                 errors.Add("Documents must be PDF, JPG, PNG, or DOC/DOCX file.");
             if (documents.Length > maxSize)
                 errors.Add("Documents must be less than 5MB.");
-        }
-
-        if (voucher != null && voucher.Length > 0)
-        {
-            var ext = Path.GetExtension(voucher.FileName).ToLowerInvariant();
-            if (!allowedDocExts.Contains(ext))
-                errors.Add("Voucher must be PDF, JPG, or DOC/DOCX file.");
-            if (voucher.Length > maxSize)
-                errors.Add("Voucher must be less than 5MB.");
         }
 
         return errors;
