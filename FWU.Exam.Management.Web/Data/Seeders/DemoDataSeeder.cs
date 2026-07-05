@@ -518,52 +518,7 @@ public static class DemoDataSeeder
             }
         }
 
-        // Demo Exam Schedules
-        if (!await context.ExamSchedules.AnyAsync())
-        {
-            var runningYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
-            var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
-            var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
-            var entranceExamType = await context.ExamTypes.FirstOrDefaultAsync(et => et.Name == "Entrance");
-            var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-
-            if (runningYear != null && bbaProgram != null && firstSemester != null && entranceExamType != null)
-            {
-                var examSchedule = new ExamSchedule
-                {
-                    ExamScheduleName = "BBA First Semester Exam 2081",
-                    ExamScheduleCode = "BBA-SEM1-2081",
-                    ProgramId = bbaProgram.Id,
-                    SemesterId = firstSemester.Id,
-                    AcademicYearId = runningYear.Id,
-                    ExamTypeId = entranceExamType.Id,
-                    LevelId = bachelorLevel?.Id,
-                    StartDateBs = "2081-10-01",
-                    EndDateBs = "2081-10-15",
-                    StartDate = new DateOnly(2026, 7, 14),
-                    EndDate = new DateOnly(2026, 8, 28),
-                    StartTime = new TimeOnly(7, 0),
-                    EndTime = new TimeOnly(10, 0),
-                    IsActive = true,
-                    ExamFee = 1500m
-                };
-                context.ExamSchedules.Add(examSchedule);
-                await context.SaveChangesAsync();
-
-                // Exam Fee
-                if (!await context.ExamFees.AnyAsync())
-                {
-                    var examFee = new ExamFee
-                    {
-                        Name = "BBA SEM1 Regular Fee",
-                        ExamScheduleId = examSchedule.Id,
-                        Amount = 1500m
-                    };
-                    context.ExamFees.Add(examFee);
-                    await context.SaveChangesAsync();
-                }
-            }
-        }
+        // Demo Exam Schedules (no longer seeded)
 
         // ===== B.Sc. CSIT Subjects (Semesters 1-8) =====
         var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
