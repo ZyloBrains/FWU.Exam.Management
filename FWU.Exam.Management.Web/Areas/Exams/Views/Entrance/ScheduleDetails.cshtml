@@ -3,26 +3,23 @@
     ViewData["Title"] = "Entrance Schedule Details";
 }
 
-<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <div class="flex items-center gap-3">
-        <a asp-action="ManageSchedule" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+        <a asp-action="ManageSchedule" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition shrink-0">
             <i class="fas fa-arrow-left text-gray-600"></i>
         </a>
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center shrink-0">
                 <i class="fas fa-graduation-cap text-teal-600"></i>
             </div>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Entrance Schedule Details</h1>
-                <p class="text-sm text-gray-500">View entrance exam schedule information</p>
-            </div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Entrance Schedule Details</h1>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-4 sm:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div class="md:col-span-2">
-                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
                     <i class="fas fa-info-circle text-teal-600 mr-1.5"></i>Schedule Details
                 </h2>
             </div>
@@ -61,7 +58,7 @@
             </div>
 
             <div class="md:col-span-2">
-                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
                     <i class="fas fa-calendar text-teal-600 mr-1.5"></i>Application Period
                 </h2>
             </div>
@@ -83,7 +80,7 @@
             </div>
 
             <div class="md:col-span-2">
-                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
                     <i class="fas fa-money-bill-wave text-teal-600 mr-1.5"></i>Fee & Time
                 </h2>
             </div>
@@ -113,12 +110,12 @@
             }
         </div>
 
-        <div class="flex items-center gap-4 pt-6 mt-6 border-t border-gray-200">
-            <a asp-action="EditSchedule" asp-route-id="@Model.Id" class="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
-                <i class="fas fa-edit mr-1.5"></i> Edit
-            </a>
-            <a asp-action="ManageSchedule" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+        <div class="flex flex-col-reverse sm:flex-row sm:items-center gap-3 sm:gap-4 pt-6 mt-6 border-t border-gray-200">
+            <a asp-action="ManageSchedule" class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-center">
                 <i class="fas fa-arrow-left mr-1.5"></i> Back to List
+            </a>
+            <a asp-action="EditSchedule" asp-route-id="@Model.Id" class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md text-center">
+                <i class="fas fa-edit mr-1.5"></i> Edit
             </a>
         </div>
     </div>

@@ -3,29 +3,26 @@
     ViewData["Title"] = Model.Id == 0 ? "New Entrance Schedule" : "Edit Entrance Schedule";
 }
 
-<div class="max-w-4xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <div class="flex items-center gap-3">
-        <a asp-action="ManageSchedule" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+        <a asp-action="ManageSchedule" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition shrink-0">
             <i class="fas fa-arrow-left text-gray-600"></i>
         </a>
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center shrink-0">
                 <i class="fas fa-graduation-cap text-teal-600"></i>
             </div>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">@(Model.Id == 0 ? "New Entrance Schedule" : "Edit Entrance Schedule")</h1>
-                <p class="text-sm text-gray-500">Configure an exam schedule for entrance applications</p>
-            </div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">@(Model.Id == 0 ? "New Entrance Schedule" : "Edit Entrance Schedule")</h1>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-4 sm:p-8">
         <form asp-action="@(Model.Id == 0 ? "CreateSchedule" : "EditSchedule")" method="post" class="space-y-6">
             @if (Model.Id != 0) { <input type="hidden" asp-for="Id" /> }
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 
             <div>
-                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
                     <i class="fas fa-info-circle text-teal-600 mr-1.5"></i>Schedule Details
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -52,7 +49,7 @@
             </div>
 
             <div>
-                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
                     <i class="fas fa-calendar text-teal-600 mr-1.5"></i>Application Period
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -80,7 +77,7 @@
             </div>
 
             <div>
-                <h2 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
                     <i class="fas fa-money-bill-wave text-teal-600 mr-1.5"></i>Fee & Status
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -89,20 +86,20 @@
                         <input asp-for="ExamFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 2400" />
                         <span asp-validation-for="ExamFee" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
-                    <div class="flex items-center gap-3 pt-6">
+                    <div class="flex items-center gap-3 md:pt-6">
                         <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
                         <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active (visible to applicants)</label>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
-                <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
-                    <i class="fas fa-save mr-1.5"></i> @(Model.Id == 0 ? "Create Schedule" : "Update Schedule")
-                </button>
-                <a asp-action="ManageSchedule" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+            <div class="flex flex-col-reverse sm:flex-row sm:items-center gap-3 sm:gap-4 pt-4 border-t border-gray-200">
+                <a asp-action="ManageSchedule" class="w-full sm:w-auto px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-center">
                     Cancel
                 </a>
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
+                    <i class="fas fa-save mr-1.5"></i> @(Model.Id == 0 ? "Create Schedule" : "Update Schedule")
+                </button>
             </div>
         </form>
     </div>

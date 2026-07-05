@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260703170318_AddExamCenterVenuesTable")]
+    partial class AddExamCenterVenuesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3794,43 +3797,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.ToTable("SubjectTypes");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Teachers.TeacherSubjectAssignment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ExamScheduleId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SubjectOfferingId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TeacherUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamScheduleId");
-
-                    b.HasIndex("SubjectOfferingId");
-
-                    b.HasIndex("TeacherUserId");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("TeacherSubjectAssignments");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Tenant", b =>
                 {
                     b.Property<int>("Id")
@@ -5553,38 +5519,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("Semester");
 
                     b.Navigation("SubjectCatalog");
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Teachers.TeacherSubjectAssignment", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany()
-                        .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", "SubjectOffering")
-                        .WithMany()
-                        .HasForeignKey("SubjectOfferingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Infrastructure.Data.Models.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("TeacherUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ExamSchedule");
-
-                    b.Navigation("SubjectOffering");
 
                     b.Navigation("Tenant");
                 });

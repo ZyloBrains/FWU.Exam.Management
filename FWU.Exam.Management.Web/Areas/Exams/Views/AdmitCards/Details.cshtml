@@ -1,7 +1,7 @@
-@model HallTicket
+@model AdmitCard
 
 @{
-    ViewData["Title"] = "Hall Ticket Details";
+    ViewData["Title"] = "Admit Card Details";
 }
 
 <div class="space-y-6">
@@ -11,8 +11,8 @@
                 <i class="fas fa-ticket-alt text-indigo-600"></i>
             </div>
             <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Hall Ticket Details</h1>
-                <p class="text-sm text-gray-500 mt-0.5">@Model.HallTicketNumber</p>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Admit Card Details</h1>
+                <p class="text-sm text-gray-500 mt-0.5">@Model.AdmitCardNumber</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -27,12 +27,12 @@
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-800">Ticket Information</h2>
+            <h2 class="text-lg font-semibold text-gray-800">Card Information</h2>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label class="block text-sm font-medium text-gray-500">Hall Ticket Number</label>
-                <p class="mt-1 text-sm text-gray-900 font-medium">@Model.HallTicketNumber</p>
+                <label class="block text-sm font-medium text-gray-500">Admit Card Number</label>
+                <p class="mt-1 text-sm text-gray-900 font-medium">@Model.AdmitCardNumber</p>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-500">Exam Schedule</label>
@@ -83,8 +83,8 @@
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Roll Number</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.ExamRegistration.ExamRollNumber ?? "-")</p>
+                    <label class="block text-sm font-medium text-gray-500">Registration Number</label>
+                    <p class="mt-1 text-sm text-gray-900">@(Model.StudentRegistration?.RegistrationNumber ?? "-")</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">College</label>

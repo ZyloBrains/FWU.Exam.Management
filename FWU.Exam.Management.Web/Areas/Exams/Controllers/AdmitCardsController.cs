@@ -13,9 +13,9 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[RequirePermission("halltickets.view")]
-public class HallTicketsController(
-    IHallTicketService hallTicketService,
+[RequirePermission("admitcards.view")]
+public class AdmitCardsController(
+    IAdmitCardService admitCardService,
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
@@ -36,7 +36,7 @@ public class HallTicketsController(
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
         var (collegeId, facultyId) = await GetScopeAsync();
-        var (items, totalCount) = await hallTicketService.GetHallTicketsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, examScheduleId);
+        var (items, totalCount) = await admitCardService.GetAdmitCardsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, examScheduleId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -52,7 +52,7 @@ public class HallTicketsController(
         return View(items);
     }
 
-    [RequirePermission("halltickets.generate")]
+    [RequirePermission("admitcards.generate")]
     public async Task<IActionResult> Generate(int? examScheduleId)
     {
         ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
@@ -64,7 +64,7 @@ public class HallTicketsController(
                 .Include(er => er.College)
                 .ToListAsync();
 
-            var existingTicketIds = await context.HallTickets
+            var existingTicketIds = await context.AdmitCards
                 .Where(ht => ht.ExamScheduleId == examScheduleId.Value && ht.IsActive)
                 .Select(ht => ht.ExamRegistrationId)
                 .ToListAsync();
@@ -80,59 +80,59 @@ public class HallTicketsController(
     }
 
     [HttpPost]
-    [RequirePermission("halltickets.generate")]
+    [RequirePermission("admitcards.generate")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GenerateConfirmed(int examScheduleId)
     {
-        var hallTickets = await hallTicketService.GenerateBulkHallTicketsAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"{hallTickets.Count} hall ticket(s) generated successfully!";
+        var admitCards = await admitCardService.GenerateBulkAdmitCardsAsync(examScheduleId);
+        TempData["SuccessMessage"] = $"{admitCards.Count} admit card(s) generated successfully!";
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 
-    [RequirePermission("halltickets.download")]
+    [RequirePermission("admitcards.download")]
     public async Task<IActionResult> Download(int? id)
     {
         if (id == null) return NotFound();
 
-        var hallTicket = await hallTicketService.GetHallTicketByIdAsync(id.Value);
-        if (hallTicket == null) return NotFound();
+        var admitCard = await admitCardService.GetAdmitCardByIdAsync(id.Value);
+        if (admitCard == null) return NotFound();
 
-        hallTicket.IsDownloaded = true;
-        hallTicket.DownloadedDate = DateTime.UtcNow;
-        await hallTicketService.UpdateHallTicketAsync(hallTicket);
+        admitCard.IsDownloaded = true;
+        admitCard.DownloadedDate = DateTime.UtcNow;
+        await admitCardService.UpdateAdmitCardAsync(admitCard);
 
-        return View("PrintHallTicket", hallTicket);
+        return View("PrintAdmitCard", admitCard);
     }
 
-    [RequirePermission("halltickets.delete")]
+    [RequirePermission("admitcards.delete")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
 
-        var hallTicket = await hallTicketService.GetHallTicketByIdAsync(id.Value);
-        if (hallTicket == null) return NotFound();
+        var admitCard = await admitCardService.GetAdmitCardByIdAsync(id.Value);
+        if (admitCard == null) return NotFound();
 
-        return View(hallTicket);
+        return View(admitCard);
     }
 
     [HttpPost, ActionName("Delete")]
-    [RequirePermission("halltickets.delete")]
+    [RequirePermission("admitcards.delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await hallTicketService.DeleteHallTicketAsync(id);
+        await admitCardService.DeleteAdmitCardAsync(id);
         return RedirectToAction(nameof(Index));
     }
 
-    [RequirePermission("halltickets.delete")]
+    [RequirePermission("admitcards.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
         try
         {
-            await hallTicketService.DeleteHallTicketAsync(id);
-            return Json(new { success = true, message = "Hall ticket deleted successfully!" });
+            await admitCardService.DeleteAdmitCardAsync(id);
+            return Json(new { success = true, message = "Admit card deleted successfully!" });
         }
         catch (Exception ex)
         {
@@ -144,27 +144,27 @@ public class HallTicketsController(
     {
         if (id == null) return NotFound();
 
-        var hallTicket = await hallTicketService.GetHallTicketByIdAsync(id.Value);
-        if (hallTicket == null) return NotFound();
+        var admitCard = await admitCardService.GetAdmitCardByIdAsync(id.Value);
+        if (admitCard == null) return NotFound();
 
-        return View(hallTicket);
+        return View(admitCard);
     }
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
         var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await hallTicketService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await admitCardService.GetFilteredItemsAsync(search, collegeId, facultyId);
 
         var sb = new StringBuilder();
-        sb.AppendLine("ID,Hall Ticket Number,Exam Schedule,Generated Date,Downloaded,Is Active");
+        sb.AppendLine("ID,Admit Card Number,Exam Schedule,Generated Date,Downloaded,Is Active");
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.HallTicketNumber ?? "")},{EscapeCsv(item.ExamSchedule?.ExamScheduleName ?? "")},{item.GeneratedDate:yyyy-MM-dd},{(item.IsDownloaded ? "Yes" : "No")},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{EscapeCsv(item.AdmitCardNumber ?? "")},{EscapeCsv(item.ExamSchedule?.ExamScheduleName ?? "")},{item.GeneratedDate:yyyy-MM-dd},{(item.IsDownloaded ? "Yes" : "No")},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
-        return File(csvBytes, "text/csv", "HallTickets.csv");
+        return File(csvBytes, "text/csv", "AdmitCards.csv");
     }
 
     private static string EscapeCsv(string field)

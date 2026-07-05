@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class HallTicketService(AppDbContext context) : IHallTicketService
+public class AdmitCardService(AppDbContext context) : IAdmitCardService
 {
-    private IQueryable<HallTicket> ApplyScope(IQueryable<HallTicket> query, int? collegeId, int? facultyId)
+    private IQueryable<AdmitCard> ApplyScope(IQueryable<AdmitCard> query, int? collegeId, int? facultyId)
     {
         if (collegeId.HasValue)
             return query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == collegeId.Value);
@@ -26,7 +26,7 @@ public class HallTicketService(AppDbContext context) : IHallTicketService
         return query;
     }
 
-    public async Task<(List<HallTicket> Items, int TotalCount)> GetHallTicketsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, int? examScheduleId = null)
+    public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, int? examScheduleId = null)
     {
         var query = ApplyScope(BuildQuery(search, sort, sortDir, examScheduleId), collegeId, facultyId);
 
@@ -34,13 +34,13 @@ public class HallTicketService(AppDbContext context) : IHallTicketService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(e => new HallTicket
+            .Select(e => new AdmitCard
             {
                 Id = e.Id,
                 ExamRegistrationId = e.ExamRegistrationId,
                 ExamScheduleId = e.ExamScheduleId,
                 StudentRegistrationId = e.StudentRegistrationId,
-                HallTicketNumber = e.HallTicketNumber,
+                AdmitCardNumber = e.AdmitCardNumber,
                 GeneratedDate = e.GeneratedDate,
                 IsDownloaded = e.IsDownloaded,
                 DownloadedDate = e.DownloadedDate,
@@ -54,17 +54,17 @@ public class HallTicketService(AppDbContext context) : IHallTicketService
         return (items, totalCount);
     }
 
-    public async Task<List<HallTicket>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
+    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
     {
         var query = ApplyScope(BuildQuery(search, "Id", "asc", null), collegeId, facultyId);
         return await query
-            .Select(e => new HallTicket
+            .Select(e => new AdmitCard
             {
                 Id = e.Id,
                 ExamRegistrationId = e.ExamRegistrationId,
                 ExamScheduleId = e.ExamScheduleId,
                 StudentRegistrationId = e.StudentRegistrationId,
-                HallTicketNumber = e.HallTicketNumber,
+                AdmitCardNumber = e.AdmitCardNumber,
                 GeneratedDate = e.GeneratedDate,
                 IsDownloaded = e.IsDownloaded,
                 ExamRegistration = e.ExamRegistration,
@@ -74,116 +74,120 @@ public class HallTicketService(AppDbContext context) : IHallTicketService
             .ToListAsync();
     }
 
-    public async Task<HallTicket?> GetHallTicketByIdAsync(int id)
+    public async Task<AdmitCard?> GetAdmitCardByIdAsync(int id)
     {
-        return await context.HallTickets
+        return await context.AdmitCards
             .AsNoTracking()
             .Include(e => e.ExamRegistration)
                 .ThenInclude(er => er.College)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er.ExamCenter)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er.Program)
             .Include(e => e.ExamSchedule)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
-    public async Task CreateHallTicketAsync(HallTicket hallTicket)
+    public async Task CreateAdmitCardAsync(AdmitCard admitCard)
     {
-        context.HallTickets.Add(hallTicket);
+        context.AdmitCards.Add(admitCard);
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateHallTicketAsync(HallTicket hallTicket)
+    public async Task UpdateAdmitCardAsync(AdmitCard admitCard)
     {
-        var existing = await context.HallTickets.FindAsync(hallTicket.Id);
+        var existing = await context.AdmitCards.FindAsync(admitCard.Id);
         if (existing != null)
         {
-            hallTicket.TenantId = existing.TenantId;
-            context.Entry(existing).CurrentValues.SetValues(hallTicket);
+            admitCard.TenantId = existing.TenantId;
+            context.Entry(existing).CurrentValues.SetValues(admitCard);
             await context.SaveChangesAsync();
         }
     }
 
-    public async Task DeleteHallTicketAsync(int id)
+    public async Task DeleteAdmitCardAsync(int id)
     {
-        var hallTicket = await context.HallTickets.FindAsync(id);
-        if (hallTicket != null)
+        var admitCard = await context.AdmitCards.FindAsync(id);
+        if (admitCard != null)
         {
-            hallTicket.IsActive = false;
+            admitCard.IsActive = false;
             await context.SaveChangesAsync();
         }
     }
 
-    public async Task<bool> HallTicketExistsAsync(int id)
+    public async Task<bool> AdmitCardExistsAsync(int id)
     {
-        return await context.HallTickets.AnyAsync(e => e.Id == id);
+        return await context.AdmitCards.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<HallTicket> GenerateHallTicketAsync(int examRegistrationId)
+    public async Task<AdmitCard> GenerateAdmitCardAsync(int examRegistrationId)
     {
         var registration = await context.ExamRegistrations
             .Include(er => er.ExamSchedule)
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
 
-        var hallTicket = new HallTicket
+        var admitCard = new AdmitCard
         {
             ExamRegistrationId = examRegistrationId,
             ExamScheduleId = registration.ExamScheduleId,
             StudentRegistrationId = null,
-            HallTicketNumber = $"HT-{registration.ExamScheduleId:D4}-{registration.Id:D6}",
+            AdmitCardNumber = $"AC-{registration.ExamScheduleId:D4}-{registration.Id:D6}",
             GeneratedDate = DateTime.UtcNow,
             IsDownloaded = false,
             IsActive = true
         };
 
-        context.HallTickets.Add(hallTicket);
+        context.AdmitCards.Add(admitCard);
         await context.SaveChangesAsync();
-        return hallTicket;
+        return admitCard;
     }
 
-    public async Task<List<HallTicket>> GenerateBulkHallTicketsAsync(int examScheduleId)
+    public async Task<List<AdmitCard>> GenerateBulkAdmitCardsAsync(int examScheduleId)
     {
         var registrations = await context.ExamRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
             .ToListAsync();
 
-        var hallTickets = new List<HallTicket>();
+        var admitCards = new List<AdmitCard>();
         foreach (var registration in registrations)
         {
-            var existing = await context.HallTickets
+            var existing = await context.AdmitCards
                 .FirstOrDefaultAsync(ht => ht.ExamRegistrationId == registration.Id && ht.IsActive);
 
             if (existing == null)
             {
-                var hallTicket = new HallTicket
+                var admitCard = new AdmitCard
                 {
                     ExamRegistrationId = registration.Id,
                     ExamScheduleId = examScheduleId,
                     StudentRegistrationId = null,
-                    HallTicketNumber = $"HT-{examScheduleId:D4}-{registration.Id:D6}",
+                    AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
                     GeneratedDate = DateTime.UtcNow,
                     IsDownloaded = false,
                     IsActive = true
                 };
-                hallTickets.Add(hallTicket);
+                admitCards.Add(admitCard);
             }
         }
 
-        if (hallTickets.Count > 0)
+        if (admitCards.Count > 0)
         {
-            context.HallTickets.AddRange(hallTickets);
+            context.AdmitCards.AddRange(admitCards);
             await context.SaveChangesAsync();
         }
 
-        return hallTickets;
+        return admitCards;
     }
 
-    public HallTicketSelectListsDto GetSelectListData(HallTicket? hallTicket = null)
+    public AdmitCardSelectListsDto GetSelectListData(AdmitCard? admitCard = null)
     {
         var examSchedules = context.ExamSchedules.AsNoTracking().ToList();
         var examRegistrations = context.ExamRegistrations.AsNoTracking().ToList();
         var examCenters = context.ExamCenters.AsNoTracking().ToList();
 
-        return new HallTicketSelectListsDto
+        return new AdmitCardSelectListsDto
         {
             ExamSchedules = examSchedules.Select(es => new SelectOption { Id = es.Id, Name = es.ExamScheduleName }).ToList(),
             ExamRegistrations = examRegistrations.Select(er => new SelectOption { Id = er.Id, Name = $"Reg #{er.Id}" }).ToList(),
@@ -191,9 +195,9 @@ public class HallTicketService(AppDbContext context) : IHallTicketService
         };
     }
 
-    private IQueryable<HallTicket> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null)
+    private IQueryable<AdmitCard> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null)
     {
-        IQueryable<HallTicket> query = context.HallTickets.AsNoTracking()
+        IQueryable<AdmitCard> query = context.AdmitCards.AsNoTracking()
             .Include(e => e.ExamRegistration)
             .Include(e => e.ExamSchedule)
             .Include(e => e.StudentRegistration);
@@ -204,14 +208,14 @@ public class HallTicketService(AppDbContext context) : IHallTicketService
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(e =>
-                (e.HallTicketNumber != null && e.HallTicketNumber.Contains(search)) ||
+                (e.AdmitCardNumber != null && e.AdmitCardNumber.Contains(search)) ||
                 (e.ExamSchedule != null && e.ExamSchedule.ExamScheduleName != null && e.ExamSchedule.ExamScheduleName.Contains(search)));
         }
 
         var descending = sortDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
         return sort.ToLower() switch
         {
-            "hallticketnumber" => descending ? query.OrderByDescending(e => e.HallTicketNumber) : query.OrderBy(e => e.HallTicketNumber),
+            "admitcardnumber" => descending ? query.OrderByDescending(e => e.AdmitCardNumber) : query.OrderBy(e => e.AdmitCardNumber),
             "schedule" => descending
                 ? query.OrderByDescending(e => e.ExamSchedule != null ? e.ExamSchedule.ExamScheduleName : string.Empty)
                 : query.OrderBy(e => e.ExamSchedule != null ? e.ExamSchedule.ExamScheduleName : string.Empty),

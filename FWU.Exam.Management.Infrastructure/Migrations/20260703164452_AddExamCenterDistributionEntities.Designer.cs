@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260703164452_AddExamCenterDistributionEntities")]
+    partial class AddExamCenterDistributionEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -899,7 +902,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<int?>("CollegeId")
+                    b.Property<int>("CollegeId")
                         .HasColumnType("int");
 
                     b.Property<int>("ExamScheduleId")
@@ -986,34 +989,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("ExamCenterSymbolRanges");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenterVenue", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CollegeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ExamCenterId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CollegeId");
-
-                    b.HasIndex("ExamCenterId");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("ExamCenterVenues");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamFee", b =>
@@ -3794,43 +3769,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.ToTable("SubjectTypes");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Teachers.TeacherSubjectAssignment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ExamScheduleId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SubjectOfferingId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TeacherUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ExamScheduleId");
-
-                    b.HasIndex("SubjectOfferingId");
-
-                    b.HasIndex("TeacherUserId");
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("TeacherSubjectAssignments");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Tenant", b =>
                 {
                     b.Property<int>("Id")
@@ -4525,7 +4463,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", "College")
                         .WithMany("ExamCenters")
-                        .HasForeignKey("CollegeId");
+                        .HasForeignKey("CollegeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", "ExamSchedule")
                         .WithMany("ExamCenters")
@@ -4596,33 +4536,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("ExamCenter");
 
                     b.Navigation("ExamSchedule");
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamCenterVenue", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", "College")
-                        .WithMany()
-                        .HasForeignKey("CollegeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamCenter", "ExamCenter")
-                        .WithMany("ExamCenterVenues")
-                        .HasForeignKey("ExamCenterId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("College");
-
-                    b.Navigation("ExamCenter");
 
                     b.Navigation("Tenant");
                 });
@@ -5557,38 +5470,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Teachers.TeacherSubjectAssignment", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", "ExamSchedule")
-                        .WithMany()
-                        .HasForeignKey("ExamScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", "SubjectOffering")
-                        .WithMany()
-                        .HasForeignKey("SubjectOfferingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Infrastructure.Data.Models.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("TeacherUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ExamSchedule");
-
-                    b.Navigation("SubjectOffering");
-
-                    b.Navigation("Tenant");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Infrastructure.Data.Models.AppUser", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", "College")
@@ -5783,8 +5664,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("ExamCenterColleges");
 
                     b.Navigation("ExamCenterSymbolRanges");
-
-                    b.Navigation("ExamCenterVenues");
 
                     b.Navigation("ExamRegistrations");
 
