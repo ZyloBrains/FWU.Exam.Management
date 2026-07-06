@@ -329,71 +329,74 @@
     </div>
 
     <!-- Documents -->
-    @if (!string.IsNullOrEmpty(Model.PhotoPath) || !string.IsNullOrEmpty(Model.DocumentsPath) || !string.IsNullOrEmpty(Model.VoucherPath))
-    {
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
-            </div>
-            <div class="px-6 py-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    @if (!string.IsNullOrEmpty(Model.PhotoPath))
-                    {
-                        <div>
-                            <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Photo</label>
-                            <a href="@Model.PhotoPath" target="_blank">
-                                <img src="@Model.PhotoPath" alt="Applicant Photo" class="w-full max-w-[200px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(image not available)</span>'">
-                            </a>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
+        </div>
+        <div class="px-6 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @if (!string.IsNullOrEmpty(Model.PhotoPath))
+                {
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Photo</label>
+                        <a href="@Model.PhotoPath" target="_blank">
+                            <img src="@Model.PhotoPath" alt="Applicant Photo" class="w-full max-w-[200px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(image not available)</span>'">
+                        </a>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.DocumentsPath))
+                {
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Documents</label>
+                        <div class="flex flex-col gap-2">
+                            @{
+                                var docExt = System.IO.Path.GetExtension(Model.DocumentsPath)?.ToLowerInvariant();
+                            }
+                            @if (docExt == ".pdf")
+                            {
+                                <embed src="@Model.DocumentsPath" type="application/pdf" class="w-full max-w-[300px] h-40 rounded-lg border border-gray-200" />
+                            }
+                            else
+                            {
+                                <a href="@Model.DocumentsPath" target="_blank">
+                                    <img src="@Model.DocumentsPath" alt="Documents" class="w-full max-w-[300px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(document not available)</span>'">
+                                </a>
+                            }
+                            <a href="@Model.DocumentsPath" target="_blank" class="text-sm text-teal-600 hover:underline"><i class="fas fa-download mr-1"></i>Download</a>
                         </div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.DocumentsPath))
-                    {
-                        <div>
-                            <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Documents</label>
-                            <div class="flex flex-col gap-2">
-                                @{
-                                    var docExt = System.IO.Path.GetExtension(Model.DocumentsPath)?.ToLowerInvariant();
-                                }
-                                @if (docExt == ".pdf")
-                                {
-                                    <embed src="@Model.DocumentsPath" type="application/pdf" class="w-full max-w-[300px] h-40 rounded-lg border border-gray-200" />
-                                }
-                                else
-                                {
-                                    <a href="@Model.DocumentsPath" target="_blank">
-                                        <img src="@Model.DocumentsPath" alt="Documents" class="w-full max-w-[300px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(document not available)</span>'">
-                                    </a>
-                                }
-                                <a href="@Model.DocumentsPath" target="_blank" class="text-sm text-teal-600 hover:underline"><i class="fas fa-download mr-1"></i>Download</a>
-                            </div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.VoucherPath))
+                {
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Bank Voucher</label>
+                        <div class="flex flex-col gap-2">
+                            @{
+                                var voucherExt = System.IO.Path.GetExtension(Model.VoucherPath)?.ToLowerInvariant();
+                            }
+                            @if (voucherExt == ".pdf")
+                            {
+                                <embed src="@Model.VoucherPath" type="application/pdf" class="w-full max-w-[300px] h-40 rounded-lg border border-gray-200" />
+                            }
+                            else
+                            {
+                                <a href="@Model.VoucherPath" target="_blank">
+                                    <img src="@Model.VoucherPath" alt="Bank Voucher" class="w-full max-w-[300px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(image not available)</span>'">
+                                </a>
+                            }
+                            <a href="@Model.VoucherPath" target="_blank" class="text-sm text-teal-600 hover:underline"><i class="fas fa-download mr-1"></i>Download</a>
                         </div>
-                    }
-                    @if (!string.IsNullOrEmpty(Model.VoucherPath))
-                    {
-                        <div>
-                            <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Bank Voucher</label>
-                            <div class="flex flex-col gap-2">
-                                @{
-                                    var voucherExt = System.IO.Path.GetExtension(Model.VoucherPath)?.ToLowerInvariant();
-                                }
-                                @if (voucherExt == ".pdf")
-                                {
-                                    <embed src="@Model.VoucherPath" type="application/pdf" class="w-full max-w-[300px] h-40 rounded-lg border border-gray-200" />
-                                }
-                                else
-                                {
-                                    <a href="@Model.VoucherPath" target="_blank">
-                                        <img src="@Model.VoucherPath" alt="Bank Voucher" class="w-full max-w-[300px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(image not available)</span>'">
-                                    </a>
-                                }
-                                <a href="@Model.VoucherPath" target="_blank" class="text-sm text-teal-600 hover:underline"><i class="fas fa-download mr-1"></i>Download</a>
-                            </div>
-                        </div>
-                    }
-                </div>
+                    </div>
+                }
+                @if (string.IsNullOrEmpty(Model.PhotoPath) && string.IsNullOrEmpty(Model.DocumentsPath) && string.IsNullOrEmpty(Model.VoucherPath))
+                {
+                    <div class="col-span-full text-sm text-gray-400 py-4 text-center">
+                        No documents uploaded.
+                    </div>
+                }
             </div>
         </div>
-    }
+    </div>
 
     <!-- Review Section -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
