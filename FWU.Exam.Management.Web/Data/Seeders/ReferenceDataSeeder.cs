@@ -62,8 +62,11 @@ public static class ReferenceDataSeeder
         {
             new PreviousLevel { PreviousLevelName = "SEE (Grade 10)", IsActive = true },
             new PreviousLevel { PreviousLevelName = "+2 / 10+2", IsActive = true },
+            new PreviousLevel { PreviousLevelName = "Diploma / PCL", IsActive = true },
             new PreviousLevel { PreviousLevelName = "Bachelor", IsActive = true },
             new PreviousLevel { PreviousLevelName = "Master", IsActive = true },
+            new PreviousLevel { PreviousLevelName = "MPhil", IsActive = true },
+            new PreviousLevel { PreviousLevelName = "PhD", IsActive = true },
         };
         await context.PreviousLevels.AddRangeAsync(previousLevels);
 
@@ -422,6 +425,26 @@ public static class ReferenceDataSeeder
             if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == campus.Code))
             {
                 context.Colleges.Add(campus);
+            }
+        }
+        await context.SaveChangesAsync();
+
+        // Previous Levels (upsert)
+        var previousLevels = new[]
+        {
+            "SEE (Grade 10)",
+            "+2 / 10+2",
+            "Diploma / PCL",
+            "Bachelor",
+            "Master",
+            "MPhil",
+            "PhD",
+        };
+        foreach (var name in previousLevels)
+        {
+            if (!await context.PreviousLevels.AnyAsync(pl => pl.PreviousLevelName == name))
+            {
+                context.PreviousLevels.Add(new PreviousLevel { PreviousLevelName = name, IsActive = true });
             }
         }
         await context.SaveChangesAsync();
