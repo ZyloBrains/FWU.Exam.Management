@@ -3,10 +3,15 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public static class EmailTemplateHelper
 {
     public static string? LogoUrl { get; set; }
+    public static string? LogoBase64 { get; set; }
 
-    private static string LogoImg() => string.IsNullOrEmpty(LogoUrl)
-        ? ""
-        : $@"<img src=""{LogoUrl}"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
+    private static string LogoImg()
+    {
+        var src = LogoBase64 ?? LogoUrl;
+        return string.IsNullOrEmpty(src)
+            ? ""
+            : $@"<img src=""{src}"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
+    }
 
     private static string Layout(string title, string content) => $@"
 <!DOCTYPE html>
