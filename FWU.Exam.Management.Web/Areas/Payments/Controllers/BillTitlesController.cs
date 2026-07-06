@@ -34,7 +34,8 @@ public class BillTitlesController(
     }
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BillTitleName", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -57,7 +58,8 @@ public class BillTitlesController(
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
-        var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         var sb = new StringBuilder();
         sb.AppendLine("Bill Title Name,Category,Amount,Exam Schedule,Applicable Date,Through Date,Status");
@@ -80,7 +82,8 @@ public class BillTitlesController(
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
-        var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -95,7 +98,8 @@ public class BillTitlesController(
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
-        var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("BillTitles");

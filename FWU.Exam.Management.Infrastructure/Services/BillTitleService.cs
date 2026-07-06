@@ -8,11 +8,27 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class BillTitleService(AppDbContext context) : IBillTitleService
 {
-    public async Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
             .Include(bt => bt.ExamSchedule)
             .Include(bt => bt.Program);
+
+        if (collegeId.HasValue)
+        {
+            var collegeProgramIds = context.CollegePrograms
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .Distinct();
+            query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
+        }
+        else if (facultyId.HasValue)
+        {
+            var facultyDeptIds = context.Departments
+                .Where(d => d.FacultyId == facultyId.Value)
+                .Select(d => d.Id);
+            query = query.Where(bt => bt.ProgramsId != null && context.Programs.Any(p => p.Id == bt.ProgramsId && facultyDeptIds.Contains(p.DepartmentId)));
+        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -34,11 +50,27 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         return (items, totalCount);
     }
 
-    public async Task<List<BillTitle>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<List<BillTitle>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
             .Include(bt => bt.ExamSchedule)
             .Include(bt => bt.Program);
+
+        if (collegeId.HasValue)
+        {
+            var collegeProgramIds = context.CollegePrograms
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .Distinct();
+            query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
+        }
+        else if (facultyId.HasValue)
+        {
+            var facultyDeptIds = context.Departments
+                .Where(d => d.FacultyId == facultyId.Value)
+                .Select(d => d.Id);
+            query = query.Where(bt => bt.ProgramsId != null && context.Programs.Any(p => p.Id == bt.ProgramsId && facultyDeptIds.Contains(p.DepartmentId)));
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

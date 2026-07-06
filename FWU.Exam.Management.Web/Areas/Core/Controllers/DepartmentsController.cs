@@ -2,6 +2,8 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +15,22 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("departments.view")]
-public class DepartmentsController(IDepartmentService departmentService) : Controller
+public class DepartmentsController(IDepartmentService departmentService, UserManager<AppUser> userManager) : Controller
 {
+    private async Task<int?> GetCurrentUserFacultyIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.FacultyId;
+    }
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DepartmentName", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await departmentService.GetDepartmentsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = null;
+        if (User.IsInRole(Role.FacultyAdmin))
+        {
+            facultyId = await GetCurrentUserFacultyIdAsync();
+        }
+
+        var (items, totalCount) = await departmentService.GetDepartmentsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -40,7 +53,8 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "DepartmentName", string sortDir = "asc")
     {
-        var items = await departmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await departmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         var sb = new StringBuilder();
         sb.AppendLine("Department Code,Department Name,Short Name,Remarks,Status");
@@ -61,7 +75,8 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "DepartmentName", string sortDir = "asc")
     {
-        var (items, totalCount) = await departmentService.GetDepartmentsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (items, totalCount) = await departmentService.GetDepartmentsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -76,7 +91,8 @@ public class DepartmentsController(IDepartmentService departmentService) : Contr
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "DepartmentName", string sortDir = "asc")
     {
-        var items = await departmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await departmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Departments");

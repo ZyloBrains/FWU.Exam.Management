@@ -11,9 +11,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class CollegeProgramService(AppDbContext context) : ICollegeProgramService
 {
-    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search);
+        var query = BuildQuery(search, facultyId);
 
         var totalCount = await query.CountAsync();
 
@@ -29,9 +29,9 @@ public class CollegeProgramService(AppDbContext context) : ICollegeProgramServic
         return (items, totalCount);
     }
 
-    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
-        return await GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
+        return await GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir, facultyId);
     }
 
     public async Task<CollegeProgram?> GetCollegeProgramByIdAsync(int id)
@@ -84,20 +84,27 @@ public class CollegeProgramService(AppDbContext context) : ICollegeProgramServic
         return await context.CollegePrograms.AnyAsync(cp => cp.Id == id);
     }
 
-    public async Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync()
+    public async Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync(int? facultyId = null)
     {
-        var colleges = await context.Colleges.AsNoTracking().ToListAsync();
+        var colleges = facultyId.HasValue
+            ? await context.Colleges.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value)).AsNoTracking().ToListAsync()
+            : await context.Colleges.AsNoTracking().ToListAsync();
         var programs = await context.Programs.AsNoTracking().ToListAsync();
 
         return (colleges, programs);
     }
 
-    private IQueryable<CollegeProgram> BuildQuery(string? search)
+    private IQueryable<CollegeProgram> BuildQuery(string? search, int? facultyId = null)
     {
         var query = context.CollegePrograms
             .Include(cp => cp.College)
             .Include(cp => cp.Program)
             .AsNoTracking();
+
+        if (facultyId.HasValue)
+        {
+            query = query.Where(cp => cp.College.Faculties.Any(f => f.Id == facultyId.Value));
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

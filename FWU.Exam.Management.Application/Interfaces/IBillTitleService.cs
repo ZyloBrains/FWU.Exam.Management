@@ -4,8 +4,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IBillTitleService
 {
-    Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir);
-    Task<List<BillTitle>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null);
+    Task<List<BillTitle>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null);
     Task<BillTitle?> GetBillTitleByIdAsync(int id);
     Task CreateBillTitleAsync(BillTitle billTitle);
     Task UpdateBillTitleAsync(BillTitle billTitle);

@@ -7,7 +7,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class DepartmentService(AppDbContext context) : IDepartmentService
 {
-    public async Task<(List<Department> Items, int TotalCount)> GetDepartmentsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<Department> Items, int TotalCount)> GetDepartmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.Departments.AsNoTracking();
 
@@ -18,6 +18,11 @@ public class DepartmentService(AppDbContext context) : IDepartmentService
                 d.DepartmentName.Contains(search) ||
                 (d.ShortName != null && d.ShortName.Contains(search)) ||
                 (d.Remarks != null && d.Remarks.Contains(search)));
+        }
+
+        if (facultyId.HasValue)
+        {
+            query = query.Where(d => d.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"
@@ -33,7 +38,7 @@ public class DepartmentService(AppDbContext context) : IDepartmentService
         return (items, totalCount);
     }
 
-    public async Task<List<Department>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<List<Department>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.Departments.AsNoTracking();
 
@@ -44,6 +49,11 @@ public class DepartmentService(AppDbContext context) : IDepartmentService
                 d.DepartmentName.Contains(search) ||
                 (d.ShortName != null && d.ShortName.Contains(search)) ||
                 (d.Remarks != null && d.Remarks.Contains(search)));
+        }
+
+        if (facultyId.HasValue)
+        {
+            query = query.Where(d => d.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"

@@ -3,7 +3,9 @@ using System.Text.Json;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,15 +20,24 @@ namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 public class SubjectOfferingsController : Controller
 {
     private readonly ISubjectOfferingService _subjectOfferingService;
+    private readonly UserManager<AppUser> _userManager;
 
-    public SubjectOfferingsController(ISubjectOfferingService subjectOfferingService)
+    public SubjectOfferingsController(ISubjectOfferingService subjectOfferingService, UserManager<AppUser> userManager)
     {
         _subjectOfferingService = subjectOfferingService;
+        _userManager = userManager;
+    }
+
+    private async Task<int?> GetCurrentUserFacultyIdAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        return user?.FacultyId;
     }
 
     public async Task<IActionResult> Index(string search = null, string sort = "Program", string sortDir = "asc")
     {
-        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(1, int.MaxValue, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(1, int.MaxValue, search, sort, sortDir, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.Search = search;
@@ -46,7 +57,8 @@ public class SubjectOfferingsController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
     {
-        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         var sb = new StringBuilder();
         sb.AppendLine("Subject,Program,Semester,Compulsory,Theory Marks,Practical Marks,Internal Marks");
@@ -70,7 +82,8 @@ public class SubjectOfferingsController : Controller
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
     {
-        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Subject Offerings");
@@ -109,7 +122,8 @@ public class SubjectOfferingsController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
     {
-        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -140,7 +154,8 @@ public class SubjectOfferingsController : Controller
 
     public async Task<IActionResult> Create()
     {
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(facultyId: facultyId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name");
 
@@ -162,6 +177,8 @@ public class SubjectOfferingsController : Controller
     [RequirePermission("subjectofferings.create")]
     public async Task<IActionResult> Create(SubjectOfferingBulkCreateViewModel model)
     {
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+
         if (model.ProgramId <= 0)
             ModelState.AddModelError(nameof(model.ProgramId), "Program is required.");
 
@@ -222,7 +239,7 @@ public class SubjectOfferingsController : Controller
             catch (DbUpdateException)
             {
                 ModelState.AddModelError("", "A database error occurred. The subject offering may already exist.");
-                var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync();
+                var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync(facultyId: facultyId);
                 ViewData["ProgramId"] = new SelectList(progs, "Id", "ProgramName", model.ProgramId);
                 ViewData["SemesterId"] = new SelectList(sems, "Id", "Name", model.SemesterId);
                 ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(cats.Select(s => new
@@ -239,7 +256,7 @@ public class SubjectOfferingsController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
+        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(facultyId: facultyId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", model.ProgramId);
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", model.SemesterId);
 
@@ -264,7 +281,8 @@ public class SubjectOfferingsController : Controller
         var subjectOffering = await _subjectOfferingService.GetSubjectOfferingByIdAsync(id.Value);
         if (subjectOffering == null) return NotFound();
 
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId, facultyId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
@@ -307,7 +325,8 @@ public class SubjectOfferingsController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId, facultyId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
