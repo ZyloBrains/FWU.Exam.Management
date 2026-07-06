@@ -32,6 +32,7 @@
                         'admin-blue': '#1d4ed8',
                         'admin-blue-light': '#2563eb',
                         'admin-blue-dark': '#1e40af',
+                        'sidebar-blue': '#1C4CD2',
                     }
                 }
             }
@@ -44,7 +45,18 @@
         /* Custom sidebar animations and styles applied to _SideMenu items */
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 0 25px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Subtle sidebar border glow */
+        #sidebar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent);
         }
 
         @@media (min-width: 1024px) {
@@ -69,11 +81,14 @@
             }
         }
 
-        /* Sidebar scrollbar styling */
-        #sidebar::-webkit-scrollbar { width: 4px; }
-        #sidebar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
-        #sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        #sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        /* Sidebar scrollbar styling - subtle glass look */
+        #sidebar::-webkit-scrollbar { width: 3px; }
+        #sidebar::-webkit-scrollbar-track { background: transparent; }
+        #sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+        #sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+        /* Hide scrollbar when not hovering sidebar */
+        #sidebar { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
 
         /* Safe area for mobile notch devices */
         .safe-area-bottom {
@@ -165,7 +180,7 @@
         <!-- Sidebar -->
         <aside id="sidebar"
                x-cloak
-               class="bg-admin-blue text-white h-screen flex flex-col fixed lg:relative z-40 transform transition-transform duration-300 ease-in-out shrink-0"
+               class="bg-gradient-to-b from-[#1C4CD2] via-[#1a3fac] to-[#143290] text-white h-screen flex flex-col fixed lg:relative z-40 transform transition-transform duration-300 ease-in-out shrink-0"
                x-bind:class="{ 
                    'translate-x-0 shadow-2xl': mobileSidebarOpen, 
                    '-translate-x-full lg:translate-x-0': !mobileSidebarOpen, 
@@ -173,14 +188,14 @@
                    'lg:w-72 w-72': !desktopCollapsed 
                }">
             
-            <div class="px-4 py-5 lg:p-6 border-b border-white/10 flex items-center justify-between sticky top-0 bg-admin-blue/95 backdrop-blur z-10 min-h-[5rem]">
+            <div class="px-4 py-5 lg:p-6 border-b border-white/[0.07] flex items-center justify-between sticky top-0 bg-[#1C4CD2]/70 backdrop-blur-xl z-10 min-h-[5rem]">
                 <!-- Desktop: Full Logo -->
                 <img src="@Url.Content(sidebarLogoPath)" alt="Faculty Logo" class="sidebar-brand-full hidden lg:block h-12 lg:h-16 w-full object-contain object-left">
 
                 <!-- Desktop: Collapsed Icon Logo -->
                 <div class="sidebar-brand-collapsed hidden w-full items-center justify-center">
-                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-graduation-cap text-xl text-blue-200"></i>
+                    <div class="w-10 h-10 bg-white/[0.08] rounded-xl flex items-center justify-center ring-1 ring-white/10">
+                        <i class="fas fa-graduation-cap text-xl text-sky-300"></i>
                     </div>
                 </div>
 
