@@ -190,16 +190,26 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
         if (ModelState.IsValid)
         {
-            if (User.IsInRole(Role.FacultyAdmin))
+            try
             {
-                var facultyId = await GetCurrentUserFacultyIdAsync();
-                if (facultyId.HasValue)
+                if (User.IsInRole(Role.FacultyAdmin))
                 {
-                    college.Faculties = new List<Faculty> { new Faculty { Id = facultyId.Value } };
+                    var facultyId = await GetCurrentUserFacultyIdAsync();
+                    if (facultyId.HasValue)
+                    {
+                        var faculty = new Faculty { Id = facultyId.Value };
+                        context.Faculties.Attach(faculty);
+                        college.Faculties = new List<Faculty> { faculty };
+                    }
                 }
+                await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
+                TempData["SuccessMessage"] = "College created successfully!";
+                return RedirectToAction(nameof(Index));
             }
-            await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"An error occurred while creating the college: {ex.Message}");
+            }
         }
 
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
