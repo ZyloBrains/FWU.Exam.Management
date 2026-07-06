@@ -104,7 +104,7 @@
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
         var roleLabel = "Guest";
-        var sidebarLogoPath = "~/images/placeholder-logo.svg";
+        var sidebarLogoPath = "~/images/oce.png";
         var orgName = "";
 
         var tenantCode = Context.Items["TenantCode"] as string;
@@ -135,11 +135,6 @@
                     sidebarLogoPath = faculty.LogoPath;
                 }
             }
-        }
-
-        if (sidebarLogoPath == "~/images/placeholder-logo.svg" && User.IsInRole("SuperAdmin"))
-        {
-            sidebarLogoPath = "~/images/oce.png";
         }
 
         if (appUser != null)
