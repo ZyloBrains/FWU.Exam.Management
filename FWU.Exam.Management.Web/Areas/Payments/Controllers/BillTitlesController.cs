@@ -19,22 +19,25 @@ public class BillTitlesController(
     IBillTitleService billTitleService,
     UserManager<AppUser> userManager) : Controller
 {
-    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
+    private async Task<(int? collegeId, int? facultyId, int? departmentId)> GetScopeAsync()
     {
         var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
+        if (user == null) return (null, null, null);
 
         if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
+            return (user.CollegeId, null, null);
 
         if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
+            return (null, user.FacultyId, null);
 
-        return (null, null);
+        if (User.IsInRole(Role.DepartmentAdmin))
+            return (user.CollegeId, null, user.DepartmentId);
+
+        return (null, null, null);
     }
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BillTitleName", string sortDir = "asc", int pageSize = 10)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
+        var (collegeId, facultyId, _) = await GetScopeAsync();
         var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         ViewBag.TotalCount = totalCount;
@@ -58,7 +61,7 @@ public class BillTitlesController(
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
+        var (collegeId, facultyId, _) = await GetScopeAsync();
         var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         var sb = new StringBuilder();
@@ -82,7 +85,7 @@ public class BillTitlesController(
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
+        var (collegeId, facultyId, _) = await GetScopeAsync();
         var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         ViewBag.CurrentPage = page;
@@ -98,7 +101,7 @@ public class BillTitlesController(
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
+        var (collegeId, facultyId, _) = await GetScopeAsync();
         var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         using var workbook = new XLWorkbook();
@@ -149,10 +152,10 @@ public class BillTitlesController(
     [RequirePermission("billtitles.create")]
     public async Task<IActionResult> Create()
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
+        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId, departmentId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
-        var programs = await billTitleService.GetProgramsAsync(facultyId);
+        var programs = await billTitleService.GetProgramsAsync(collegeId, facultyId, departmentId);
         ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName");
         return View();
     }
@@ -167,10 +170,10 @@ public class BillTitlesController(
             await billTitleService.CreateBillTitleAsync(billTitle);
             return RedirectToAction(nameof(Index));
         }
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
+        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId, departmentId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
-        var programs = await billTitleService.GetProgramsAsync(facultyId);
+        var programs = await billTitleService.GetProgramsAsync(collegeId, facultyId, departmentId);
         ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
@@ -183,10 +186,10 @@ public class BillTitlesController(
         var billTitle = await billTitleService.GetBillTitleByIdAsync(id.Value);
         if (billTitle == null) return NotFound();
 
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
+        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId, departmentId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
-        var programList = await billTitleService.GetProgramsAsync(facultyId);
+        var programList = await billTitleService.GetProgramsAsync(collegeId, facultyId, departmentId);
         ViewData["ProgramsId"] = new SelectList(programList, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
@@ -212,10 +215,10 @@ public class BillTitlesController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
+        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
+        var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId, departmentId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
-        var programs = await billTitleService.GetProgramsAsync(facultyId);
+        var programs = await billTitleService.GetProgramsAsync(collegeId, facultyId, departmentId);
         ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }

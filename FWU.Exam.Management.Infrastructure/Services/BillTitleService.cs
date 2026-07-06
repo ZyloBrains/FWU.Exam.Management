@@ -121,7 +121,7 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         return await context.Set<BillTitle>().AnyAsync(bt => bt.Id == id);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesAsync(int? collegeId = null, int? facultyId = null)
+    public async Task<List<ExamSchedule>> GetExamSchedulesAsync(int? collegeId = null, int? facultyId = null, int? departmentId = null)
     {
         IQueryable<ExamSchedule> query = context.ExamSchedules.AsNoTracking();
 
@@ -150,11 +150,21 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
 
             query = query.Where(e => programIds.Contains(e.ProgramId));
         }
+        else if (departmentId.HasValue)
+        {
+            var programIds = context.Programs
+                .Where(p => p.DepartmentId == departmentId.Value)
+                .Select(p => p.Id)
+                .Distinct()
+                .ToList();
+
+            query = query.Where(e => programIds.Contains(e.ProgramId));
+        }
 
         return await query.ToListAsync();
     }
 
-    public async Task<List<Domain.Entities.Program>> GetProgramsAsync(int? collegeId = null, int? facultyId = null)
+    public async Task<List<Domain.Entities.Program>> GetProgramsAsync(int? collegeId = null, int? facultyId = null, int? departmentId = null)
     {
         var query = context.Programs.AsNoTracking();
         if (collegeId.HasValue)
@@ -167,6 +177,8 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         }
         if (facultyId.HasValue)
             query = query.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        if (departmentId.HasValue)
+            query = query.Where(p => p.DepartmentId == departmentId.Value);
         return await query.ToListAsync();
     }
 

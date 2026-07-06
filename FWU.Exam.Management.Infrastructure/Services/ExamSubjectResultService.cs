@@ -108,13 +108,15 @@ public class ExamSubjectResultService(AppDbContext context) : IExamSubjectResult
         return await context.ExamSubjectResults.AnyAsync(e => e.Id == id);
     }
 
-    public ExamSubjectResultSelectListsDto GetSelectListData(ExamSubjectResult? examSubjectResult = null, int? collegeId = null, int? facultyId = null)
+    public ExamSubjectResultSelectListsDto GetSelectListData(ExamSubjectResult? examSubjectResult = null, int? collegeId = null, int? facultyId = null, int? departmentId = null)
     {
         var examRegistrationsQuery = context.ExamRegistrations.AsNoTracking();
         if (collegeId.HasValue)
             examRegistrationsQuery = examRegistrationsQuery.Where(er => er.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             examRegistrationsQuery = examRegistrationsQuery.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.Department != null && er.ExamSchedule.Program.Department.FacultyId == facultyId.Value);
+        if (departmentId.HasValue)
+            examRegistrationsQuery = examRegistrationsQuery.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.DepartmentId == departmentId.Value);
         var examRegistrations = examRegistrationsQuery.ToList();
 
         var subjectOfferings = context.SubjectOfferings.AsNoTracking().ToList();
@@ -131,6 +133,8 @@ public class ExamSubjectResultService(AppDbContext context) : IExamSubjectResult
         }
         if (facultyId.HasValue)
             examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
+        if (departmentId.HasValue)
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.DepartmentId == departmentId.Value);
         var examSchedules = examSchedulesQuery.ToList();
 
         return new ExamSubjectResultSelectListsDto

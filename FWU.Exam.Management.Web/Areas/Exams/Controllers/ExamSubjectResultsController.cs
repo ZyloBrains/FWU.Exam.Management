@@ -27,6 +27,18 @@ public class ExamSubjectResultsController(
         return user?.FacultyId;
     }
 
+    private async Task<int?> GetCurrentUserCollegeIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.CollegeId;
+    }
+
+    private async Task<int?> GetCurrentUserDepartmentIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.DepartmentId;
+    }
+
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? examRegistrationId = null)
     {
         int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
@@ -51,8 +63,10 @@ public class ExamSubjectResultsController(
     [RequirePermission("examsubjectresults.create")]
     public async Task<IActionResult> Create()
     {
+        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
         int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(facultyId: facultyId);
+        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
+        var selectLists = examSubjectResultService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -67,8 +81,10 @@ public class ExamSubjectResultsController(
             await examSubjectResultService.CreateExamSubjectResultAsync(examSubjectResult);
             return RedirectToAction(nameof(Index));
         }
+        int? createCollegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
         int? createFacultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(facultyId: createFacultyId);
+        int? createDepartmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
+        var selectLists = examSubjectResultService.GetSelectListData(collegeId: createCollegeId, facultyId: createFacultyId, departmentId: createDepartmentId);
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -81,8 +97,10 @@ public class ExamSubjectResultsController(
         var examSubjectResult = await examSubjectResultService.GetExamSubjectResultByIdAsync(id.Value);
         if (examSubjectResult == null) return NotFound();
 
+        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
         int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(facultyId: facultyId);
+        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
+        var selectLists = examSubjectResultService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -108,8 +126,10 @@ public class ExamSubjectResultsController(
             }
             return RedirectToAction(nameof(Index));
         }
+        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
         int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(facultyId: facultyId);
+        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
+        var selectLists = examSubjectResultService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }

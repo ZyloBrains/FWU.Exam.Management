@@ -161,11 +161,13 @@ public class ExamRegistrationService(AppDbContext context) : IExamRegistrationSe
         }
     }
 
-    public ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null, int? collegeId = null, int? facultyId = null)
+    public ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null, int? collegeId = null, int? facultyId = null, int? departmentId = null)
     {
         var examSchedulesQuery = context.ExamSchedules.AsNoTracking();
         if (facultyId.HasValue)
             examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
+        if (departmentId.HasValue)
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.DepartmentId == departmentId.Value);
         var examSchedules = examSchedulesQuery.ToList();
 
         var collegesQuery = context.Colleges.AsNoTracking();
@@ -186,6 +188,8 @@ public class ExamRegistrationService(AppDbContext context) : IExamRegistrationSe
         }
         if (facultyId.HasValue)
             programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        if (departmentId.HasValue)
+            programsQuery = programsQuery.Where(p => p.DepartmentId == departmentId.Value);
         var programs = programsQuery.ToList();
 
         var examCentersQuery = context.ExamCenters.AsNoTracking();
