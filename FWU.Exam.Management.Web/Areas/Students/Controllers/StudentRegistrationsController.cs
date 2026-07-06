@@ -506,7 +506,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         ViewBag.DepartmentId = new SelectList(selectLists.Departments, "Id", "Name", studentRegistration?.DepartmentId);
         ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name", studentRegistration?.CollegeId);
         ViewBag.FacultyId = new SelectList(selectLists.Faculties, "Id", "Name", studentRegistration?.FacultyId);
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "ProgramName", studentRegistration?.ProgramId);
+        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", studentRegistration?.ProgramId);
         ViewBag.GenderId = new SelectList(selectLists.Genders, "Id", "Name", studentRegistration?.GenderId);
         ViewBag.StudentCategoryId = new SelectList(selectLists.StudentCategories, "Id", "Name", studentRegistration?.StudentCategoryId);
         ViewBag.EthnicityId = new SelectList(selectLists.Ethnicities, "Id", "Name", studentRegistration?.EthnicityId);

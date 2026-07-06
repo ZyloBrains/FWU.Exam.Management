@@ -17,15 +17,23 @@ public class TeacherAssignmentsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
+    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
     {
         var user = await userManager.GetUserAsync(User);
-        return user?.FacultyId;
+        if (user == null) return (null, null);
+
+        if (User.IsInRole(Role.CollegeAdmin))
+            return (user.CollegeId, null);
+
+        if (User.IsInRole(Role.FacultyAdmin))
+            return (null, user.FacultyId);
+
+        return (null, null);
     }
 
     public async Task<IActionResult> Index()
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (collegeId, facultyId) = await GetScopeAsync();
         var items = await assignmentService.GetAssignmentsAsync(facultyId: facultyId);
         var teacherIds = items.Select(i => i.TeacherUserId).Distinct().ToList();
         var teachers = await context.Users
@@ -108,10 +116,16 @@ public class TeacherAssignmentsController(
 
     private async Task PopulateDropdowns(TeacherSubjectAssignment? model = null)
     {
+        var (collegeId, facultyId) = await GetScopeAsync();
+
         var teachers = await userManager.GetUsersInRoleAsync("Teacher");
         ViewBag.TeacherUserId = new SelectList(teachers.Select(t => new { t.Id, Name = t.FullName ?? t.Email }), "Id", "Name", model?.TeacherUserId);
 
-        ViewBag.ProgramId = new SelectList(await context.Programs.AsNoTracking().ToListAsync(), "Id", "ProgramName");
+        var programsQuery = context.Programs.AsNoTracking();
+        if (facultyId.HasValue)
+            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        ViewBag.ProgramId = new SelectList(await programsQuery.ToListAsync(), "Id", "ProgramName");
+
         ViewBag.SemesterId = new SelectList(await context.Semesters.AsNoTracking().ToListAsync(), "Id", "Name");
 
         if (model?.SubjectOfferingId > 0)
@@ -127,8 +141,9 @@ public class TeacherAssignmentsController(
             }
         }
 
-        ViewBag.ExamScheduleId = new SelectList(
-            await context.ExamSchedules.AsNoTracking().Where(es => es.IsActive).ToListAsync(),
-            "Id", "ExamScheduleName", model?.ExamScheduleId);
+        var examSchedulesQuery = context.ExamSchedules.AsNoTracking().Where(es => es.IsActive);
+        if (facultyId.HasValue)
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
+        ViewBag.ExamScheduleId = new SelectList(await examSchedulesQuery.ToListAsync(), "Id", "ExamScheduleName", model?.ExamScheduleId);
     }
 }

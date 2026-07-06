@@ -197,11 +197,14 @@ public class ExamScheduleService(AppDbContext context) : IExamScheduleService
         return await context.ExamSchedules.AnyAsync(e => e.Id == id);
     }
 
-    public ExamScheduleSelectListsDto GetSelectListData(ExamSchedule? examSchedule = null)
+    public ExamScheduleSelectListsDto GetSelectListData(ExamSchedule? examSchedule = null, int? facultyId = null)
     {
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
         var examTypes = context.ExamTypes.AsNoTracking().ToList();
-        var programs = context.Programs.AsNoTracking().ToList();
+        var programsQuery = context.Programs.AsNoTracking();
+        if (facultyId.HasValue)
+            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        var programs = programsQuery.ToList();
         var semesters = context.Semesters.AsNoTracking().ToList();
 
         return new ExamScheduleSelectListsDto

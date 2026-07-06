@@ -164,9 +164,10 @@ public class ExamSchedulesController(
     }
 
     [RequirePermission("examschedules.create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        var selectLists = examScheduleService.GetSelectListData();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -187,7 +188,7 @@ public class ExamSchedulesController(
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -200,7 +201,8 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var selectLists = examScheduleService.GetSelectListData();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -233,7 +235,7 @@ public class ExamSchedulesController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
