@@ -151,6 +151,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         var app = builder.Build();
 
+        EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {

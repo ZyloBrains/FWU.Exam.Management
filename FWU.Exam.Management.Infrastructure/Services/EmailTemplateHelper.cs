@@ -6,7 +6,7 @@ public static class EmailTemplateHelper
 
     private static string LogoImg() => string.IsNullOrEmpty(LogoUrl)
         ? ""
-        : $@"<img src=""{LogoUrl}"" alt=""FWU Logo"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" />";
+        : $@"<img src=""{LogoUrl}"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
 
     private static string Layout(string title, string content) => $@"
 <!DOCTYPE html>
