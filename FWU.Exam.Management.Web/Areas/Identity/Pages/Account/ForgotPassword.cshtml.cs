@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -63,7 +64,7 @@ public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender 
             await emailSender.SendEmailAsync(
                 Input.Email,
                 "Reset Password",
-                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                EmailTemplateHelper.ResetPassword(Input.Email, callbackUrl));
 
             return RedirectToPage("./ForgotPasswordConfirmation");
         }

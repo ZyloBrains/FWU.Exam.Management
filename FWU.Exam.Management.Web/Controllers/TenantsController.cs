@@ -107,17 +107,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
                 {
                     if (!string.IsNullOrWhiteSpace(viewModel.AdminEmail))
                     {
-                        var emailBody = $@"
-                            <h3>Dear {viewModel.AdminFullName},</h3>
-                            <p>Your tenant account has been created successfully.</p>
-                            <p><strong>Tenant Details:</strong></p>
-                            <ul>
-                                <li><strong>Tenant:</strong> {tenant.Name}</li>
-                                <li><strong>Office Code:</strong> {tenant.OfficeCode}</li>
-                            </ul>
-                            <p><strong>Login:</strong> Please use your email address {viewModel.AdminEmail} to log in. If you have not set your password yet, use the 'Forgot Password' option on the login page to set your password.</p>
-                            <br/>
-                            <p>Regards,<br/>Far-Western University</p>";
+                        var emailBody = EmailTemplateHelper.TenantAccountCreated(viewModel.AdminFullName, tenant.Name, tenant.OfficeCode, viewModel.AdminEmail);
                         await emailService.SendEmailAsync(viewModel.AdminEmail, "Tenant Account Created - Login Instructions", emailBody);
                     }
                 }

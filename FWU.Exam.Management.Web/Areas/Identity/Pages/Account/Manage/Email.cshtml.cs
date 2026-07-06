@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -115,7 +116,7 @@ public class EmailModel(
             await emailSender.SendEmailAsync(
                 Input.NewEmail,
                 "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                EmailTemplateHelper.ChangeEmail(Input.NewEmail, callbackUrl));
 
             StatusMessage = "Confirmation link to change email sent. Please check your email.";
             return RedirectToPage();
@@ -151,7 +152,7 @@ public class EmailModel(
         await emailSender.SendEmailAsync(
             email,
             "Confirm your email",
-            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+            EmailTemplateHelper.ConfirmEmail(email, callbackUrl));
 
         StatusMessage = "Verification email sent. Please check your email.";
         return RedirectToPage();

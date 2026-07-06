@@ -492,19 +492,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         {
             if (!string.IsNullOrWhiteSpace(application.Email))
             {
-                var emailBody = $@"
-                    <h3>Dear {fullName},</h3>
-                    <p>Your entrance exam application has been submitted successfully.</p>
-                    <p><strong>Details:</strong></p>
-                    <ul>
-                        <li><strong>College:</strong> {college}</li>
-                        <li><strong>Program:</strong> {program}</li>
-                        <li><strong>Application ID:</strong> {application.Id}</li>
-                        <li><strong>Date:</strong> {application.CreatedAt:yyyy-MM-dd}</li>
-                    </ul>
-                    <p>You will be notified once your application is reviewed.</p>
-                    <br/>
-                    <p>Regards,<br/>Far-Western University</p>";
+                var emailBody = EmailTemplateHelper.EntranceApplicationSubmitted(fullName, college, program, application.Id, application.CreatedAt.ToString("yyyy-MM-dd"));
                 await emailService.SendEmailAsync(application.Email, "Entrance Exam Application Submitted", emailBody);
             }
         }

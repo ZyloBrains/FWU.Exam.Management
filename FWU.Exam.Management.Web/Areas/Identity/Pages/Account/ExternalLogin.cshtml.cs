@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
@@ -170,7 +171,7 @@ public class ExternalLoginModel : PageModel
                         protocol: Request.Scheme);
 
                     await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                        EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
 
                     // If account confirmation is required, we need to show the link if we don't have a real email sender
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
