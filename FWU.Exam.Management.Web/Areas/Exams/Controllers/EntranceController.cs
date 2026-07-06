@@ -642,7 +642,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.AcademicYearId = academicYearId;
 
         var selectLists = await service.GetSelectListsAsync();
-        ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "ProgramName", programId);
+        ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "Name", programId);
         ViewBag.AcademicYearIdList = new SelectList(selectLists.AcademicYears, "Id", "Name", academicYearId);
 
         return View(items);
