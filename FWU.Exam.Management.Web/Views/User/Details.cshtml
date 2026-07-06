@@ -1,10 +1,10 @@
-@model fwu_examination_management_system.Models.AppUser
+@model AppUser
 
 @{
     ViewData["Title"] = "User Details";
 }
 
-<div class="max-w-7xl mx-auto mt-2 space-y-3 px-4">
+<div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
@@ -21,13 +21,23 @@
     <!-- Details Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-5">
         <div class="flex flex-col sm:flex-row gap-2">
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Full Name</span>
+            <span class="text-sm text-gray-800 font-medium">@(Model.FullName ?? "—")</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
             <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Email</span>
             <span class="text-sm text-gray-800 font-medium">@Model.Email</span>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2">
-            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Organization</span>
-            <span class="text-sm text-gray-800">@(Model.Organization?.Name ?? "—")</span>
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">Faculty</span>
+            <span class="text-sm text-gray-800">@(Model.Faculty?.Name ?? "—")</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+            <span class="text-sm font-medium text-gray-600 sm:w-40 shrink-0">College</span>
+            <span class="text-sm text-gray-800">@(Model.College?.Name ?? "—")</span>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2">

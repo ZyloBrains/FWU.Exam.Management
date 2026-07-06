@@ -1,73 +1,119 @@
-﻿using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Models;
-using fwu_examination_management_system.ViewModels;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace fwu_examination_management_system.Controllers
+namespace FWU.Exam.Management.Web.Controllers;
+
+[Authorize]
+public class DashboardController(IDashboardService dashboardService, IStudentDashboardService studentDashboardService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
-    [Authorize]
-    public class DashboardController : Controller
+    public async Task<IActionResult> Index()
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<AppUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
 
-        public DashboardController(ApplicationDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+        var roles = await userManager.GetRolesAsync(user);
+        var primaryRole = roles.FirstOrDefault() ?? "Student";
+
+        if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
         {
-            _context = context;
-            _userManager = userManager;
-            _roleManager = roleManager;
+            var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+            if (faculty?.OfficeCode != null)
+                return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
         }
 
-        public async Task<IActionResult> Index()
+        DashboardStats stats;
+        if ((primaryRole == "CollegeAdmin" || primaryRole == "Admin") && user.CollegeId.HasValue)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-
-            var roles = await _userManager.GetRolesAsync(user);
-            var primaryRole = roles.FirstOrDefault() ?? "Student";
-
-            var vm = await BuildDashboardViewModel(user, primaryRole);
-
-            return primaryRole switch
-            {
-                "SystemAdmin" => View("SystemAdmin", vm),
-                "Admin" => View("Admin", vm),
-                "ReportAdmin" => View("ReportAdmin", vm),
-                "Student" => View("Student", vm),
-                _ => View("Student", vm)
-            };
+            stats = await dashboardService.GetCollegeDashboardStatsAsync(user.CollegeId.Value);
+        }
+        else
+        {
+            stats = await dashboardService.GetDashboardStatsAsync();
         }
 
-        private async Task<DashboardViewModel> BuildDashboardViewModel(AppUser user, string role)
+        var vm = new DashboardViewModel
         {
-            var vm = new DashboardViewModel
-            {
-                CurrentRole = role,
-                UserName = user.UserName ?? user.Email ?? "User",
-                TotalOrganizations = await _context.Organizations.CountAsync(),
-                TotalUsers = await _userManager.Users.CountAsync(),
-                TotalRoles = await _roleManager.Roles.CountAsync(),
-                TotalColleges = await _context.Colleges.CountAsync(),
-                TotalPrograms = await _context.CPrograms.CountAsync(),
-                TotalStudents = await _context.StudentRegistrations.CountAsync(),
-                TotalExamSchedules = await _context.ExamSchedules.CountAsync(),
-                TotalExamRegistrations = await _context.ExamRegistrations.CountAsync(),
-                TotalSubjects = await _context.SubjectDetails.CountAsync(),
-                TotalAcademicYears = await _context.AcademicYears.CountAsync(),
-                TotalBanks = await _context.Banks.CountAsync(),
-                TotalBoards = await _context.Boards.CountAsync(),
-                TotalBatches = await _context.Batches.CountAsync(),
-                ActiveColleges = await _context.Colleges.CountAsync(c => c.IsActive),
-                ActivePrograms = await _context.CPrograms.CountAsync(p => p.IsActive),
-                ActiveStudents = await _context.StudentRegistrations.CountAsync(s => s.IsActive),
-                ActiveExamSchedules = await _context.ExamSchedules.CountAsync(e => e.Active)
-            };
+            CurrentRole = primaryRole,
+            UserName = user.UserName ?? user.Email ?? "User",
+            TotalFaculties = stats.TotalFaculties,
+            TotalUsers = stats.TotalUsers,
+            TotalRoles = stats.TotalRoles,
+            TotalColleges = stats.TotalColleges,
+            TotalPrograms = stats.TotalPrograms,
+            TotalStudents = stats.TotalStudents,
+            TotalExamSchedules = stats.TotalExamSchedules,
+            TotalExamRegistrations = stats.TotalExamRegistrations,
+            TotalSubjects = stats.TotalSubjects,
+            TotalAcademicYears = stats.TotalAcademicYears,
+            TotalBanks = stats.TotalBanks,
+            TotalBoards = stats.TotalBoards,
+            TotalBatches = stats.TotalBatches,
+            ActiveColleges = stats.ActiveColleges,
+            ActivePrograms = stats.ActivePrograms,
+            ActiveStudents = stats.ActiveStudents,
+            ActiveExamSchedules = stats.ActiveExamSchedules
+        };
 
-            return vm;
+        if (primaryRole == "Student")
+        {
+            await PopulateStudentData(vm, user);
         }
+
+        return primaryRole switch
+        {
+            "SuperAdmin" or "SystemAdmin" => View("SuperAdmin", vm),
+            "FacultyAdmin" => View("FacultyAdmin", vm),
+            "CollegeAdmin" or "Admin" => View("CollegeAdmin", vm),
+            "Student" => View("Student", vm),
+            _ => View("Student", vm)
+        };
+    }
+
+    private async Task PopulateStudentData(DashboardViewModel vm, AppUser user)
+    {
+        var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email!);
+        if (registration == null) return;
+
+        vm.StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}";
+        vm.RegistrationNumber = registration.RegistrationNumber;
+        vm.CollegeName = registration.College?.Name;
+        vm.AcademicYearName = registration.AcademicYear?.AcademicYearName;
+        vm.LevelName = registration.Level?.LevelName;
+
+        var admission = await studentDashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
+        int programId;
+        if (admission != null)
+        {
+            programId = admission.ProgramsId;
+        }
+        else if (registration.ProgramId.HasValue)
+        {
+            programId = registration.ProgramId.Value;
+        }
+        else
+        {
+            return;
+        }
+
+        var program = await context.Programs.FindAsync(programId);
+        vm.StudentProgramName = program?.ProgramName;
+        vm.StudentProgramCode = program?.ProgramCode;
+
+        var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        vm.ExamSchedules = examSchedules;
+
+        var subjectOfferings = await studentDashboardService.GetSubjectOfferingsByProgramAsync(programId);
+
+        var latestSchedule = examSchedules.OrderByDescending(es => es.StartDateBs).FirstOrDefault();
+        vm.SemesterName = latestSchedule?.Semester?.Name
+            ?? subjectOfferings.FirstOrDefault(so => so.Semester != null)?.Semester?.Name;
+
+        vm.SubjectOfferings = subjectOfferings;
     }
 }

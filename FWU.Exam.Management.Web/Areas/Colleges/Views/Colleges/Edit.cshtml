@@ -1,0 +1,280 @@
+@model FWU.Exam.Management.Domain.Entities.Colleges.College
+
+@{
+    ViewData["Title"] = "Edit College";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-university text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Edit College</h1>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Edit" method="post" class="space-y-6">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <!-- Section: Basic Information -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="Code" class="text-sm font-medium text-gray-700 block mb-1">Code <span class="text-red-500">*</span></label>
+                        <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter college code" />
+                        <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="Name" class="text-sm font-medium text-gray-700 block mb-1">Name <span class="text-red-500">*</span></label>
+                        <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter college name" />
+                        <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CollegeNameNepali" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="CollegeNameNepali" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter name in Nepali" />
+                        <span asp-validation-for="CollegeNameNepali" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ShortName" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="ShortName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Short name" />
+                        <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="EstablishedDate" class="text-sm font-medium text-gray-700 block mb-1">Established Date <span class="text-red-500">*</span></label>
+                        <input asp-for="EstablishedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <span asp-validation-for="EstablishedDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ClosedDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="ClosedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <span asp-validation-for="ClosedDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Address -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Address</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Province <span class="text-red-500">*</span></label>
+                        <select id="ProvinceId" name="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
+                            <option value="">-- Select Province --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">District <span class="text-red-500">*</span></label>
+                        <select id="DistrictId" name="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">-- Select District --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Local Level <span class="text-red-500">*</span></label>
+                        <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">-- Select Local Level --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Ward Number</label>
+                        <input id="WardNumber" name="WardNumber" value="@(Model.Address?.WardNumber?.ToString())" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ward number" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Tole/Street</label>
+                        <input id="ToleStreet" name="ToleStreet" value="@(Model.Address?.ToleStreet)" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Tole or street name" />
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">House Number</label>
+                        <input id="HouseNumber" name="HouseNumber" value="@(Model.Address?.HouseNumber)" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="House number" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Contact Information -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Contact Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="Website" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="Website" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://..." />
+                        <span asp-validation-for="Website" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="Email" class="text-sm font-medium text-gray-700 block mb-1">Email <span class="text-red-500">*</span></label>
+                        <input asp-for="Email" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="college@example.com" />
+                        <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Phone1" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="Phone1" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Primary phone" />
+                        <span asp-validation-for="Phone1" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Phone2" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="Phone2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Secondary phone" />
+                        <span asp-validation-for="Phone2" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Fax" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="Fax" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Fax number" />
+                        <span asp-validation-for="Fax" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Principal Information -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Principal Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label for="PrincipalName" class="text-sm font-medium text-gray-700 block mb-1">Principal Name <span class="text-red-500">*</span></label>
+                        <input asp-for="PrincipalName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Principal's full name" />
+                        <span asp-validation-for="PrincipalName" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label for="PrincipalContactNumber" class="text-sm font-medium text-gray-700 block mb-1">Principal Contact Number <span class="text-red-500">*</span></label>
+                        <input asp-for="PrincipalContactNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Contact number" />
+                        <span asp-validation-for="PrincipalContactNumber" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Additional Settings -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Settings</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label asp-for="Remarks" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="Remarks" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Any remarks" />
+                        <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <input asp-for="AddressId" type="hidden" />
+                    </div>
+                    <div>
+                        <label asp-for="AllocatedAmount" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="AllocatedAmount" type="number" step="any" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Allocated amount" />
+                        <span asp-validation-for="AllocatedAmount" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="DisplayOrder" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="DisplayOrder" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Display order" />
+                        <span asp-validation-for="DisplayOrder" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CollegeTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="CollegeTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeTypeId">
+                            <option value="">-- Select College Type --</option>
+                        </select>
+                        <span asp-validation-for="CollegeTypeId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CollegeProfileId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <input asp-for="CollegeProfileId" type="hidden" />
+                        <span asp-validation-for="CollegeProfileId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Options (Checkboxes) -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Options</h2>
+                <div class="flex flex-wrap gap-6">
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsExamCenterOnly" type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                        <label asp-for="IsExamCenterOnly" class="text-sm font-medium text-gray-700">Exam Center Only</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Update
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(function () {
+            var selectedProvinceId = '@(Model.Address?.LocalLevel?.District?.ProvinceId)';
+            var selectedDistrictId = '@(Model.Address?.LocalLevel?.DistrictId)';
+            var selectedLocalLevelId = '@(Model.Address?.LocalLevelId)';
+
+            // Province -> District
+            $("#ProvinceId").change(function () {
+                var provinceId = $(this).val();
+
+                $("#DistrictId").html('<option>Loading...</option>');
+                $("#LocalLevelId").html('<option>Select Local Level</option>');
+
+                $.get(tenantUrl("/Colleges/Colleges/GetDistrictsByProvince"),
+                    { provinceId: provinceId },
+                    function (data) {
+                        var districtDropdown = $("#DistrictId");
+                        districtDropdown.empty();
+                        districtDropdown.append('<option value="">Select District</option>');
+
+                        $.each(data, function (index, item) {
+                            districtDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+
+                        if (selectedDistrictId && $("#DistrictId option[value=" + selectedDistrictId + "]").length) {
+                            $("#DistrictId").val(selectedDistrictId);
+                            $("#DistrictId").trigger("change");
+                        }
+                });
+            });
+
+            // District -> LocalLevel
+            $("#DistrictId").change(function () {
+                var districtId = $(this).val();
+
+                $("#LocalLevelId").html('<option>Loading...</option>');
+
+                $.get(tenantUrl("/Colleges/Colleges/GetLocalLevelsByDistrict"),
+                    { districtId: districtId },
+                    function (data) {
+                        var localDropdown = $("#LocalLevelId");
+                        localDropdown.empty();
+                        localDropdown.append('<option value="">Select Local Level</option>');
+
+                        $.each(data, function (index, item) {
+                            localDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+
+                        if (selectedLocalLevelId && $("#LocalLevelId option[value=" + selectedLocalLevelId + "]").length) {
+                            $("#LocalLevelId").val(selectedLocalLevelId);
+                        }
+                });
+            });
+
+            // Trigger pre-selection on load
+            if (selectedProvinceId && $("#ProvinceId option[value=" + selectedProvinceId + "]").length) {
+                $("#ProvinceId").val(selectedProvinceId);
+                $("#ProvinceId").trigger("change");
+            }
+        });
+    </script>
+}

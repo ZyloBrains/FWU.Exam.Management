@@ -1,33 +1,42 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Models;
-using Microsoft.AspNetCore.Identity;
+using FWU.Exam.Management.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
-namespace fwu_examination_management_system.Controllers
+namespace FWU.Exam.Management.Web.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController(UserManager<AppUser> userManager, ApplicationDbContext context) : Controller
+    public IActionResult Index()
     {
-        public async Task<IActionResult> Index()
+        if (User.Identity?.IsAuthenticated == true)
         {
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                return RedirectToAction("Index", "Dashboard");
-            }
-
-            return Redirect("/Identity/Account/Login");
+            return RedirectToAction("Index", "Dashboard");
         }
 
-        public IActionResult Privacy()
+        var tenantCode = HttpContext.Items["TenantCode"] as string;
+        if (!string.IsNullOrEmpty(tenantCode))
         {
-            return View();
+            return Redirect($"/tenant/{tenantCode}/Identity/Account/Login");
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        return Redirect("/TenantSelect/Index");
+    }
+
+    public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    public IActionResult Entrance()
+    {
+        return RedirectToAction("VerifyPayment", "Entrance", new { area = "Exams" });
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

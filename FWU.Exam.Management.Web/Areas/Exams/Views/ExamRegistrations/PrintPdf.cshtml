@@ -1,0 +1,26 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Exams.ExamRegistration>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>Exam Registrations Report</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; }
+    th { background: #f3f4f6; }
+</style></head>
+<body>
+    <h2>Exam Registrations Report</h2>
+    <table>
+        <thead><tr><th>#</th><th>Roll Number</th><th>Schedule</th><th>College</th><th>Status</th><th>Fee</th><th>Date</th></tr></thead>
+        <tbody>
+            @{ var c = 1; }
+            @foreach (var item in Model) {
+                <tr><td>@c</td><td>@(item.ExamRollNumber ?? "-")</td><td>@item.ExamSchedule?.ExamScheduleName</td><td>@item.College?.Name</td><td>@item.Status</td><td>@item.FeeEnclosed?.ToString("N2")</td><td>@item.RegistrationDate?.ToString("yyyy-MM-dd")</td></tr>
+                c++;
+            }
+        </tbody>
+    </table>
+    @if (!Model.Any()) { <div style="text-align:center;padding:60px;color:#9ca3af;"><p>No registrations found.</p></div> }
+    <script>window.onload=function(){window.print();}</script>
+</body>
+</html>

@@ -1,3 +1,7 @@
 <Solution>
+  <Project Path="FWU.Exam.Management.Api/FWU.Exam.Management.Api.csproj" />
+  <Project Path="FWU.Exam.Management.Application/FWU.Exam.Management.Application.csproj" />
+  <Project Path="FWU.Exam.Management.Domain/FWU.Exam.Management.Domain.csproj" />
+  <Project Path="FWU.Exam.Management.Infrastructure/FWU.Exam.Management.Infrastructure.csproj" />
   <Project Path="FWU.Exam.Management.Web/FWU.Exam.Management.Web.csproj" />
 </Solution>

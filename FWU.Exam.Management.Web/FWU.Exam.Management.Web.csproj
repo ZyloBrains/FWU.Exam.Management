@@ -5,23 +5,30 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-fwu_examination_management_system-47a25181-ae66-4f3f-b57a-87d759e229c0</UserSecretsId>
-    <RootNamespace>fwu_examination_management_system</RootNamespace>
+    <RootNamespace>FWU.Exam.Management.Web</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.3">
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
+    <PackageReference Include="NepDate" Version="2.0.7" />
+    <PackageReference Include="NuGet.Packaging" Version="7.3.1" />
+    <PackageReference Include="NuGet.Protocol" Version="7.3.1" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
+    <ProjectReference Include="..\FWU.Exam.Management.Application\FWU.Exam.Management.Application.csproj" />
+    <ProjectReference Include="..\FWU.Exam.Management.Infrastructure\FWU.Exam.Management.Infrastructure.csproj" />
+    <ProjectReference Include="..\FWU.Exam.Management.Domain\FWU.Exam.Management.Domain.csproj" />
+    <ProjectReference Include="..\FWU.Exam.Management.Api\FWU.Exam.Management.Api.csproj" />
   </ItemGroup>
 
 </Project>

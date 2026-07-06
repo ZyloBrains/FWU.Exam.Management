@@ -1,10 +1,10 @@
-@model fwu_examination_management_system.Models.AppUser
+@model AppUser
 
 @{
     ViewData["Title"] = "Delete User";
 }
 
-<div class="max-w-2xl mx-auto space-y-6">
+<div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-3">
         <a asp-action="Index" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
@@ -31,8 +31,12 @@
             <span class="text-sm text-gray-800 font-medium">@Model.Email</span>
         </div>
         <div class="flex flex-col sm:flex-row gap-1">
-            <span class="text-sm font-medium text-gray-500 sm:w-36 shrink-0">Organization</span>
-            <span class="text-sm text-gray-800">@(Model.Organization?.Name ?? "—")</span>
+            <span class="text-sm font-medium text-gray-500 sm:w-36 shrink-0">Faculty</span>
+            <span class="text-sm text-gray-800">@(Model.Faculty?.Name ?? "—")</span>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-1">
+            <span class="text-sm font-medium text-gray-500 sm:w-36 shrink-0">College</span>
+            <span class="text-sm text-gray-800">@(Model.College?.Name ?? "—")</span>
         </div>
     </div>
 

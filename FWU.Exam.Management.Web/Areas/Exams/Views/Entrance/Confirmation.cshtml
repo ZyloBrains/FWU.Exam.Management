@@ -1,0 +1,97 @@
+@model EntranceExamApplication
+
+@{
+    Layout = "~/Areas/Exams/Views/Shared/_PaymentLayout.cshtml";
+    ViewData["Title"] = "Application Submitted";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-12">
+    <div class="max-w-2xl mx-auto px-4">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <!-- Success Header -->
+            <div class="px-6 py-8 text-center bg-gradient-to-r from-teal-600 to-cyan-600">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check-circle text-4xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white">Application Submitted!</h1>
+                <p class="text-teal-100 mt-1">Your entrance exam application has been received successfully.</p>
+            </div>
+
+            <div class="px-6 py-6 space-y-4">
+                <!-- Application Details -->
+                <div class="bg-gray-50 rounded-xl p-5 space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-gray-200">
+                        <span class="text-sm font-semibold text-gray-700">Application Summary</span>
+                        <span class="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Submitted</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-y-2 text-sm">
+                        <span class="text-gray-500">Application ID</span>
+                        <span class="font-semibold text-gray-800 text-right">@Model.Id</span>
+
+                        <span class="text-gray-500">Full Name</span>
+                        <span class="font-semibold text-gray-800 text-right">@(Model.FirstName + " " + (Model.MiddleName ?? "") + " " + Model.LastName)</span>
+
+                        <span class="text-gray-500">Email</span>
+                        <span class="text-gray-800 text-right">@Model.Email</span>
+
+                        <span class="text-gray-500">Contact</span>
+                        <span class="text-gray-800 text-right">@Model.ContactNumber</span>
+
+                        <span class="text-gray-500">Program</span>
+                        <span class="font-semibold text-gray-800 text-right">@Model.Program?.ProgramName</span>
+
+                        <span class="text-gray-500">College</span>
+                        <span class="text-gray-800 text-right">@Model.College?.Name</span>
+
+                        <span class="text-gray-500">Academic Year</span>
+                        <span class="text-gray-800 text-right">@Model.AcademicYear?.AcademicYearName</span>
+
+                        <span class="text-gray-500">Submitted Date</span>
+                        <span class="text-gray-800 text-right">@Model.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")</span>
+                    </div>
+                </div>
+
+                <!-- Payment Info -->
+                @if (Model.PaymentVerified && Model.ApplicationVoucher != null)
+                {
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-5">
+                        <div class="flex items-center gap-2 text-green-700 mb-2">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="font-medium text-sm">Payment Verified</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-y-1 text-sm">
+                            <span class="text-green-600">Voucher Number</span>
+                            <span class="text-green-800 font-medium text-right">@Model.ApplicationVoucher.VoucherNumber</span>
+                        </div>
+                    </div>
+                }
+
+                <!-- Next Steps -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                    <h3 class="text-sm font-semibold text-blue-800 mb-3">Next Steps</h3>
+                    <ol class="text-sm text-blue-700 space-y-2">
+                        <li class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-medium">1</span>
+                            <span>Your application will be reviewed by the college administration.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-medium">2</span>
+                            <span>You will be notified of the entrance exam schedule via email/contact.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-medium">3</span>
+                            <span>Appear for the entrance examination on the scheduled date.</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-sm text-gray-400 mb-4">Please save your Application ID for future reference.</p>
+                    <a asp-area="" asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition shadow-sm">
+                        <i class="fas fa-home text-xs"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

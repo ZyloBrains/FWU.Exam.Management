@@ -1,37 +1,24 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-using System;
-using System.Threading.Tasks;
-using fwu_examination_management_system.Models;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 
-namespace fwu_examination_management_system.Areas.Identity.Pages.Account.Manage
+namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account.Manage;
+
+public class PersonalDataModel(
+    UserManager<AppUser> userManager,
+    ILogger<PersonalDataModel> logger) : PageModel
 {
-    public class PersonalDataModel : PageModel
+    public async Task<IActionResult> OnGet()
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly ILogger<PersonalDataModel> _logger;
-
-        public PersonalDataModel(
-            UserManager<AppUser> userManager,
-            ILogger<PersonalDataModel> logger)
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
         {
-            _userManager = userManager;
-            _logger = logger;
+            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
         }
 
-        public async Task<IActionResult> OnGet()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-            }
-
-            return Page();
-        }
+        return Page();
     }
 }

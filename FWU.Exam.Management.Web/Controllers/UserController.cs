@@ -1,223 +1,338 @@
-using fwu_examination_management_system.Data;
-using fwu_examination_management_system.Models;
-using fwu_examination_management_system.ViewModels;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Web.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 
-namespace fwu_examination_management_system.Controllers
+
+namespace FWU.Exam.Management.Web.Controllers;
+
+[RequirePermission("users.view")]
+public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
 {
-    public class UserController : Controller
+    public async Task<IActionResult> Index()
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly ApplicationDbContext _context;
+        var currentUser = await userManager.GetUserAsync(User);
+        if (currentUser == null) return Challenge();
 
-        public UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context)
+        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
+
+        var usersQuery = userManager.Users
+            .Include(u => u.Faculty)
+            .Include(u => u.College);
+
+        IQueryable<AppUser> filteredQuery;
+
+        if (isSuperAdmin)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            _context = context;
+            filteredQuery = usersQuery;
+        }
+        else if (User.IsInRole(Role.CollegeAdmin) && currentUser.CollegeId != null)
+        {
+            filteredQuery = usersQuery.Where(u => u.CollegeId == currentUser.CollegeId);
+        }
+        else if (User.IsInRole(Role.FacultyAdmin) && currentUser.FacultyId != null)
+        {
+            var facultyCollegeIds = await context.Colleges
+                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
+                .Select(c => (int?)c.Id)
+                .ToListAsync();
+            filteredQuery = usersQuery.Where(u =>
+                u.FacultyId == currentUser.FacultyId ||
+                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
+        }
+        else if (User.IsInRole(Role.DepartmentAdmin) && currentUser.FacultyId != null)
+        {
+            var facultyCollegeIds = await context.Colleges
+                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
+                .Select(c => (int?)c.Id)
+                .ToListAsync();
+            filteredQuery = usersQuery.Where(u =>
+                u.FacultyId == currentUser.FacultyId ||
+                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
+        }
+        else
+        {
+            filteredQuery = usersQuery.Where(u => u.Id == currentUser.Id);
         }
 
-        // GET: User
-        public async Task<IActionResult> Index()
+        var users = await filteredQuery.ToListAsync();
+        var model = new List<UserListItemViewModel>();
+        foreach (var user in users)
         {
-            var users = await _userManager.Users.Include(u => u.Organization).ToListAsync();
-            var model = new List<UserListItemViewModel>();
-            foreach (var user in users)
-            {
-                model.Add(new UserListItemViewModel
-                {
-                    Id = user.Id,
-                    Email = user.Email ?? string.Empty,
-                    OrganizationName = user.Organization?.Name,
-                    Roles = await _userManager.GetRolesAsync(user)
-                });
-            }
-            return View(model);
-        }
-
-        // GET: User/Details/id
-        public async Task<IActionResult> Details(string id)
-        {
-            if (id == null)
-                return NotFound();
-
-            var user = await _userManager.Users
-                .Include(u => u.Organization)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (user == null)
-                return NotFound();
-
-            ViewBag.Roles = await _userManager.GetRolesAsync(user);
-            return View(user);
-        }
-
-        // GET: User/Create
-        public async Task<IActionResult> Create()
-        {
-            ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name");
-            return View();
-        }
-
-        // POST: User/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateUserViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                var user = new AppUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    OrganizationId = model.OrganizationId,
-                    EmailConfirmed = true
-                };
-
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                    return RedirectToAction(nameof(Index));
-
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name", model.OrganizationId);
-            return View(model);
-        }
-
-        // GET: User/Edit/id
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-                return NotFound();
-
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            var model = new EditUserViewModel
+            model.Add(new UserListItemViewModel
             {
                 Id = user.Id,
                 Email = user.Email ?? string.Empty,
-                OrganizationId = user.OrganizationId
+                FullName = user.FullName,
+                FacultyName = user.Faculty?.Name,
+                CollegeName = user.College?.Name,
+                IsActive = user.IsActive,
+                Roles = await userManager.GetRolesAsync(user)
+            });
+        }
+        return View(model);
+    }
+
+    public async Task<IActionResult> Details(string id)
+    {
+        if (id == null) return NotFound();
+
+        var user = await userManager.Users
+            .Include(u => u.Faculty)
+            .Include(u => u.College)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null) return NotFound();
+
+        ViewBag.Roles = await userManager.GetRolesAsync(user);
+        return View(user);
+    }
+
+    [RequirePermission("users.create")]
+    public async Task<IActionResult> Create()
+    {
+        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
+            ? roles
+            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
+        ViewBag.Departments = new SelectList(await context.Departments.ToListAsync(), "Id", "DepartmentName");
+        return View(new CreateUserViewModel());
+    }
+
+    [RequirePermission("users.create")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CreateUserViewModel model)
+    {
+        if (model.SelectedRole == Role.SuperAdmin)
+            ModelState.AddModelError(nameof(model.SelectedRole), "Cannot create a Super Admin user.");
+
+        if (model.SelectedRole == Role.FacultyAdmin && !User.IsInRole(Role.SuperAdmin))
+            ModelState.AddModelError(nameof(model.SelectedRole), "Only Super Admin can create a Faculty Admin user.");
+
+        if (ModelState.IsValid)
+        {
+            var user = new AppUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                EmailConfirmed = true,
+                IsActive = true
             };
 
-            ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name", model.OrganizationId);
-            return View(model);
-        }
+            if (model.SelectedRole is Role.FacultyAdmin)
+                user.FacultyId = model.FacultyId;
 
-        // POST: User/Edit/id
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, EditUserViewModel model)
-        {
-            if (id != model.Id)
-                return NotFound();
+            if (model.SelectedRole is Role.CollegeAdmin or Role.DepartmentAdmin or Role.Teacher or Role.Student)
+                user.CollegeId = model.CollegeId;
 
-            if (ModelState.IsValid)
+            if (model.SelectedRole is Role.DepartmentAdmin)
+                user.DepartmentId = model.DepartmentId;
+
+            var result = await userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
             {
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null)
-                    return NotFound();
-
-                user.Email = model.Email;
-                user.UserName = model.Email;
-                user.OrganizationId = model.OrganizationId;
-
-                var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
-                    return RedirectToAction(nameof(Index));
-
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
+                if (await roleManager.RoleExistsAsync(model.SelectedRole))
+                    await userManager.AddToRoleAsync(user, model.SelectedRole);
+                return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Organizations = new SelectList(await _context.Organizations.ToListAsync(), "Id", "Name", model.OrganizationId);
-            return View(model);
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        // GET: User/Delete/id
-        public async Task<IActionResult> Delete(string id)
+        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
+        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
+            ? roles
+            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
+        return View(model);
+    }
+
+    [RequirePermission("users.edit")]
+    public async Task<IActionResult> Edit(string id)
+    {
+        if (id == null) return NotFound();
+
+        var user = await userManager.Users
+            .Include(u => u.College)
+            .FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null) return NotFound();
+
+        var roles = await userManager.GetRolesAsync(user);
+        var primaryRole = roles.FirstOrDefault() ?? string.Empty;
+
+        var model = new EditUserViewModel
         {
-            if (id == null)
-                return NotFound();
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FullName = user.FullName,
+            FacultyId = user.FacultyId,
+            CollegeId = user.CollegeId,
+            DepartmentId = user.DepartmentId
+        };
 
-            var user = await _userManager.Users
-                .Include(u => u.Organization)
-                .FirstOrDefaultAsync(u => u.Id == id);
+        ViewBag.PrimaryRole = primaryRole;
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
+        return View(model);
+    }
 
-            if (user == null)
-                return NotFound();
+    [RequirePermission("users.edit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string id, EditUserViewModel model)
+    {
+        if (id != model.Id) return NotFound();
 
-            return View(user);
+        if (ModelState.IsValid)
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+
+            user.Email = model.Email;
+            user.UserName = model.Email;
+            user.FullName = model.FullName;
+            user.FacultyId = model.FacultyId;
+            user.CollegeId = model.CollegeId;
+            user.DepartmentId = model.DepartmentId;
+
+            var result = await userManager.UpdateAsync(user);
+            if (result.Succeeded)
+                return RedirectToAction(nameof(Index));
+
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        // POST: User/Delete/id
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
+        var roles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(id));
+        ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(string id)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        user.IsActive = !user.IsActive;
+        await userManager.UpdateAsync(user);
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [RequirePermission("users.delete")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        if (id == null) return NotFound();
+
+        var user = await userManager.Users
+            .Include(u => u.Faculty)
+            .Include(u => u.College)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user == null) return NotFound();
+
+        return View(user);
+    }
+
+    [RequirePermission("users.delete")]
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(string id)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user != null)
+            await userManager.DeleteAsync(user);
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [RequirePermission("users.assign.roles")]
+    public async Task<IActionResult> AssignRoles(string id)
+    {
+        if (id == null) return NotFound();
+
+        var user = await userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        var allRoles = await roleManager.Roles.ToListAsync();
+        var userRoles = await userManager.GetRolesAsync(user);
+
+        var model = new AssignRolesViewModel
         {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-                await _userManager.DeleteAsync(user);
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: User/AssignRoles/id
-        public async Task<IActionResult> AssignRoles(string id)
-        {
-            if (id == null)
-                return NotFound();
-
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            var allRoles = await _roleManager.Roles.ToListAsync();
-            var userRoles = await _userManager.GetRolesAsync(user);
-
-            var model = new AssignRolesViewModel
+            UserId = user.Id,
+            UserEmail = user.Email ?? string.Empty,
+            Roles = allRoles.Select(r => new RoleAssignmentItem
             {
-                UserId = user.Id,
-                UserEmail = user.Email ?? string.Empty,
-                Roles = allRoles.Select(r => new RoleAssignmentItem
-                {
-                    RoleName = r.Name ?? string.Empty,
-                    IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
-                }).ToList()
-            };
+                RoleName = r.Name ?? string.Empty,
+                IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
+            }).ToList()
+        };
 
-            return View(model);
-        }
+        return View(model);
+    }
 
-        // POST: User/AssignRoles
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AssignRoles(AssignRolesViewModel model)
+    [RequirePermission("users.assign.roles")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignRoles(AssignRolesViewModel model)
+    {
+        var user = await userManager.FindByIdAsync(model.UserId);
+        if (user == null) return NotFound();
+
+        var currentRoles = await userManager.GetRolesAsync(user);
+        var selectedRoles = model.Roles
+            .Where(r => r.IsAssigned)
+            .Select(r => r.RoleName)
+            .ToList();
+
+        var toAdd = selectedRoles.Except(currentRoles).ToList();
+        var toRemove = currentRoles.Except(selectedRoles)
+            .Where(r => r != Role.SuperAdmin)
+            .ToList();
+
+        if (toAdd.Count > 0)
+            await userManager.AddToRolesAsync(user, toAdd);
+
+        if (toRemove.Count > 0)
+            await userManager.RemoveFromRolesAsync(user, toRemove);
+
+        return RedirectToAction(nameof(Index));
+    }
+    [RequirePermission("users.delete")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAjax(string id)
+    {
+        try
         {
-            var user = await _userManager.FindByIdAsync(model.UserId);
-            if (user == null)
-                return NotFound();
-
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            var selectedRoles = model.Roles.Where(r => r.IsAssigned).Select(r => r.RoleName).ToList();
-
-            var toAdd = selectedRoles.Except(currentRoles).ToList();
-            var toRemove = currentRoles.Except(selectedRoles).ToList();
-
-            if (toAdd.Count > 0)
-                await _userManager.AddToRolesAsync(user, toAdd);
-
-            if (toRemove.Count > 0)
-                await _userManager.RemoveFromRolesAsync(user, toRemove);
-
-            return RedirectToAction(nameof(Index));
+            var user = await userManager.FindByIdAsync(id);
+            if (user != null)
+                await userManager.DeleteAsync(user);
+            return Json(new { success = true, message = "User deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
         }
     }
+
 }

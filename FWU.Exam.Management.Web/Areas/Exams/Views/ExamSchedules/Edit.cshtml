@@ -1,0 +1,201 @@
+@model FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule
+
+@{
+    ViewData["Title"] = "Edit Exam Schedule";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" asp-area="Exams" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-alt text-indigo-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Edit Exam Schedule</h1>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Edit" asp-area="Exams" method="post" class="space-y-6">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label for="ExamScheduleName" class="text-sm font-medium text-gray-700 block mb-1">Exam Schedule Name <span class="text-red-500">*</span></label>
+                    <input asp-for="ExamScheduleName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="ExamScheduleName" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ExamScheduleCode" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="ExamScheduleCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="ExamScheduleCode" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="AcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <option value="">-- Select Academic Year --</option>
+                    </select>
+                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
+                        <option value="">-- Select Program --</option>
+                    </select>
+                    <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ExamTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="ExamTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ExamTypeId">
+                        <option value="">-- Select Exam Type --</option>
+                    </select>
+                    <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="SemesterId" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="SemesterId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                        <option value="">-- Select Semester --</option>
+                    </select>
+                    <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>                
+                <div>
+                    <label asp-for="PublishedDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="PublishedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="PublishedDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="CollegeApprovalDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="CollegeApprovalDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="CollegeApprovalDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="AdmissionCardReleaseDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="AdmissionCardReleaseDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="AdmissionCardReleaseDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ExtendedDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="ExtendedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="ExtendedDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="StartDateBs" class="text-sm font-medium text-gray-700 block mb-1">Start Date (BS)</label>
+                    <input asp-for="StartDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2081-10-01" />
+                    <span asp-validation-for="StartDateBs" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="EndDateBs" class="text-sm font-medium text-gray-700 block mb-1">End Date (BS)</label>
+                    <input asp-for="EndDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2081-10-15" />
+                    <span asp-validation-for="EndDateBs" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="StartDate" class="text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
+                    <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="EndDate" class="text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
+                    <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="StartTime" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="StartTime" type="time" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="StartTime" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="EndTime" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="EndTime" type="time" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <span asp-validation-for="EndTime" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Remarks" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <textarea asp-for="Remarks" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ExamFee" class="text-sm font-medium text-gray-700 block mb-1">Exam Fee (Flat)</label>
+                    <input asp-for="ExamFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2400" />
+                    <span asp-validation-for="ExamFee" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="PracticalSubjectFee" class="text-sm font-medium text-gray-700 block mb-1">Practical Fee (Per Subject)</label>
+                    <input asp-for="PracticalSubjectFee" type="number" step="0.01" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 200" />
+                    <span asp-validation-for="PracticalSubjectFee" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div class="flex items-center gap-3 pt-4">
+                    <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" />
+                    <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Update
+                </button>
+                <a asp-action="Index" asp-area="Exams" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        var convertTimer;
+        $("#StartDateBs").on("input", function () {
+            var bs = $(this).val().trim();
+            if (bs.length === 10) {
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
+                        if (data.adDate) $("#StartDate").val(data.adDate);
+                    });
+                }, 300);
+            }
+        });
+        $("#EndDateBs").on("input", function () {
+            var bs = $(this).val().trim();
+            if (bs.length === 10) {
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
+                        if (data.adDate) $("#EndDate").val(data.adDate);
+                    });
+                }, 300);
+            }
+        });
+        $("#StartDate").on("input", function () {
+            var ad = $(this).val().trim();
+            if (ad.length >= 8) {
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
+                        if (data.bsDate) $("#StartDateBs").val(data.bsDate);
+                    });
+                }, 300);
+            }
+        });
+        $("#EndDate").on("input", function () {
+            var ad = $(this).val().trim();
+            if (ad.length >= 8) {
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
+                        if (data.bsDate) $("#EndDateBs").val(data.bsDate);
+                    });
+                }, 300);
+            }
+        });
+    </script>
+}

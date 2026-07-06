@@ -1,23 +1,21 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
-
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace fwu_examination_management_system.Areas.Identity.Pages.Account
+namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
+
+public class AccessDeniedModel : PageModel
 {
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
-    public class AccessDeniedModel : PageModel
+    public List<string> CurrentRoles { get; set; } = new();
+
+    public void OnGet()
     {
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public void OnGet()
+        if (User.Identity?.IsAuthenticated == true)
         {
+            var claims = User.Claims
+                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            CurrentRoles = claims;
         }
     }
 }

@@ -1,0 +1,435 @@
+@model MarksEntryViewModel
+@{
+    ViewData["Title"] = "Marks Entry (Spreadsheet) - " + Model.SubjectName;
+    string ColLetter(int idx) => idx < 26 ? ((char)('A' + idx)).ToString() : "A" + ((char)('A' + idx - 26));
+    var headerCols = new List<(int idx, string letter, string label)>();
+    int n = 0;
+    headerCols.Add((n, ColLetter(n++), "Student"));
+    headerCols.Add((n, ColLetter(n++), "Student"));
+    headerCols.Add((n, ColLetter(n++), "Symbol No."));
+    headerCols.Add((n, ColLetter(n++), "Reg No."));
+    if (Model.HasTheory) { headerCols.Add((n, ColLetter(n++), "Theory (" + Model.TheoryFullMarks + ")")); headerCols.Add((n, ColLetter(n++), "Theory Confirm")); }
+    if (Model.HasPractical) { headerCols.Add((n, ColLetter(n++), "Practical (" + Model.PracticalFullMarks + ")")); headerCols.Add((n, ColLetter(n++), "Practical Confirm")); }
+    if (Model.HasInternal) { headerCols.Add((n, ColLetter(n++), "Theory Int.")); headerCols.Add((n, ColLetter(n++), "Practical Int.")); }
+    headerCols.Add((n, ColLetter(n++), "Total"));
+    headerCols.Add((n, ColLetter(n++), "Grade"));
+    headerCols.Add((n, ColLetter(n++), "Status"));
+    headerCols.Add((n, ColLetter(n++), "Submit"));
+}
+
+@section Styles {
+    <style>
+        .excel-sheet { flex: 1; overflow: auto; position: relative; cursor: cell; }
+        .excel-sheet::-webkit-scrollbar { width: 14px; height: 14px; }
+        .excel-sheet::-webkit-scrollbar-track { background: #f1f1f1; }
+        .excel-sheet::-webkit-scrollbar-thumb { background: #c1c1c1; border: 2px solid #f1f1f1; border-radius: 7px; }
+        .excel-sheet::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+        .excel-table { border-collapse: collapse; width: 100%; min-width: max-content; font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif; font-size: 11px; table-layout: fixed; border: 1px solid #777; }
+        .excel-col-headers { position: sticky; top: 0; z-index: 10; }
+        .excel-col-headers th { background: #e4e8ed; border: 1px solid #b5b5b5; border-bottom: 2px solid #999; font-weight: 600; font-size: 10px; color: #3c3c3c; padding: 2px 3px 1px; text-align: center; white-space: nowrap; user-select: none; height: 22px; }
+        .excel-col-headers th span { display: block; font-weight: 400; font-size: 8px; color: #808080; margin-top: 0; line-height: 1.2; letter-spacing: 0.2px; }
+        .excel-corner { width: 32px; min-width: 32px; background: #e4e8ed !important; border: 1px solid #b5b5b5 !important; border-bottom: 2px solid #999 !important; cursor: default; }
+        .excel-col-header { width: 75px; min-width: 65px; }
+        .excel-row-num { width: 32px; min-width: 32px; background: #e4e8ed; border: 1px solid #b5b5b5; text-align: center; font-size: 10px; color: #8c8c8c; padding: 0; user-select: none; font-weight: 500; height: 24px; cursor: default; }
+        .excel-cell { border: 1px solid #b5b5b5; padding: 0; vertical-align: middle; height: 24px; }
+        .excel-cell-readonly { padding: 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #444; cursor: default; }
+        .excel-cell-name { min-width: 160px; max-width: 260px; font-weight: 500; font-size: 11px; background: #f2f4f8; cursor: pointer; }
+        .excel-cell-symbol { min-width: 85px; font-size: 11px; color: #555; font-family: 'Consolas','Courier New',monospace; background: #f2f4f8; }
+        .excel-cell-regno { min-width: 100px; font-size: 10px; color: #666; font-family: 'Consolas','Courier New',monospace; background: #f2f4f8; }
+        .excel-name-expanded { white-space: normal !important; overflow: visible !important; max-width: none !important; min-width: 320px !important; background: #fff !important; border: 1px solid #0d9488 !important; z-index: 5; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.12); cursor: text; }
+        .excel-cell-input { padding: 0; background: #fff; }
+        .excel-input { width: 100%; height: 100%; border: none; outline: none; padding: 0 4px; font-family: 'Calibri','Segoe UI','Arial',sans-serif; font-size: 11px; text-align: center; background: transparent; box-sizing: border-box; min-height: 24px; line-height: 24px; cursor: cell; }
+        .excel-input:focus { background: #fff; outline: 2.5px solid #0d9488; outline-offset: -1px; z-index: 3; position: relative; caret-color: #0d9488; }
+        .excel-input:hover { background: #eef2f6; }
+        .excel-input[type="number"]::-webkit-inner-spin-button,.excel-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .excel-input[type="number"] { -moz-appearance: textfield; }
+        .excel-cell-total { font-weight: 600; text-align: center; font-size: 11px; font-family: 'Consolas','Courier New',monospace; background: #eef2f6; cursor: default; }
+        .excel-total-pass { color: #0d9488; }
+        .excel-total-fail { color: #dc2626; }
+        .excel-cell-grade { text-align: center; font-weight: 700; font-size: 12px; color: #444; background: #eef2f6; cursor: default; }
+        .excel-cell-status { text-align: center; background: #eef2f6; cursor: default; }
+        .excel-badge-pass { display: inline-block; background: #0d9488; color: #fff; font-size: 9px; font-weight: 700; padding: 0 6px; border-radius: 2px; letter-spacing: 0.5px; line-height: 17px; }
+        .excel-badge-fail { display: inline-block; background: #dc2626; color: #fff; font-size: 9px; font-weight: 700; padding: 0 6px; border-radius: 2px; letter-spacing: 0.5px; line-height: 17px; }
+        .excel-cell-submit { text-align: center; background: #eef2f6; cursor: default; }
+        .excel-checkbox { width: 14px; height: 14px; cursor: pointer; accent-color: #0d9488; vertical-align: middle; }
+        .excel-row-pass { background: #f0fdfa; }
+        .excel-row-fail { background: #fef2f2; }
+        .excel-row-pass .excel-input,.excel-row-fail .excel-input { background: transparent; }
+        .excel-row:hover td:not(.excel-cell-input) { background-color: #e8ecf2 !important; }
+        .excel-row:hover .excel-row-num { background: #d0d5dd !important; color: #333 !important; font-weight: 700; }
+        .excel-row-active .excel-row-num { background: #0d9488 !important; color: #fff !important; font-weight: 700; }
+        .excel-name-box { width: 52px; height: 22px; border: 1px solid #7a7a7a; background: #fff; display: flex; align-items: center; justify-content: center; padding: 0 2px; font-size: 11px; font-family: 'Calibri','Segoe UI','Arial',sans-serif; font-weight: 600; color: #222; flex-shrink: 0; user-select: none; }
+        .excel-fx-label { height: 22px; display: flex; align-items: center; padding: 0 5px; font-style: italic; font-weight: bold; font-size: 10px; color: #1a73e8; font-family: 'Calibri','Segoe UI','Arial',sans-serif; background: #f0f2f5; border: 1px solid #7a7a7a; border-left: none; user-select: none; }
+        .excel-fx-bar { flex: 1; min-width: 120px; max-width: 260px; height: 22px; border: 1px solid #7a7a7a; border-left: none; background: #fff; display: flex; align-items: center; padding: 0 6px; font-size: 11px; font-family: 'Calibri','Segoe UI','Arial',sans-serif; color: #333; cursor: default; }
+        .excel-name-box,.excel-fx-label,.excel-fx-bar { position: relative; }
+        @@media (max-width: 768px) { .excel-fx-bar { display: none; } .excel-fx-label { display: none; } .excel-col-header { width: 55px; min-width: 48px; } .excel-cell-name { min-width: 100px; max-width: 140px; } .excel-name-box { width: 34px; } }
+    </style>
+}
+
+@{
+    var studentDataJson = System.Text.Json.JsonSerializer.Serialize(Model.Students.Select(s => new {
+        s.StudentName,
+        SymbolNumber = s.SymbolNumber ?? "",
+        RegistrationNumber = s.RegistrationNumber ?? ""
+    }));
+}
+
+<div class="bg-white border border-gray-300 overflow-hidden" style="display:flex;flex-direction:column;height:calc(100vh - 130px);min-height:400px;">
+    <div class="flex items-center justify-between gap-2 px-2 py-1 bg-[#f3f5f8] border-b border-gray-300 flex-shrink-0">
+        <div class="flex items-center gap-2">
+            <a asp-action="Dashboard" class="inline-flex items-center justify-center w-7 h-7 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded" title="Back to Dashboard">
+                <i class="fas fa-arrow-left text-xs"></i>
+            </a>
+            <div class="text-xs">
+                <strong class="text-sm text-gray-800">@Model.SubjectName</strong>
+                <span class="text-gray-500 ml-1">
+                    Theory: @Model.TheoryFullMarks/@Model.TheoryPassMarks
+                    @if (Model.HasPractical) { <span>| Practical: @Model.PracticalFullMarks/@Model.PracticalPassMarks</span> }
+                </span>
+            </div>
+        </div>
+        <div class="flex items-center gap-1">
+            <div class="excel-name-box" id="cellRef">A1</div>
+            <div class="excel-fx-label">fx</div>
+            <div class="excel-fx-bar" id="fxBar" contenteditable="false"></div>
+            <div class="flex items-center gap-0.5 ml-1 border-l border-gray-300 pl-1">
+                <a asp-action="Import" asp-route-subjectOfferingId="@Model.SubjectOfferingId" asp-route-examScheduleId="@Model.ExamScheduleId" asp-route-source="excel"
+                   class="inline-flex items-center gap-0.5 px-2 py-0.5 text-xs bg-white border border-gray-400 text-gray-700 hover:bg-gray-100 no-underline whitespace-nowrap h-6 leading-tight" title="Import from Excel">
+                    <i class="fas fa-upload text-blue-700" style="font-size:10px;"></i> Import
+                </a>
+                <a asp-action="MarksEntry" asp-route-subjectOfferingId="@Model.SubjectOfferingId" asp-route-examScheduleId="@Model.ExamScheduleId"
+                   class="inline-flex items-center gap-0.5 px-2 py-0.5 text-xs bg-teal-600 border border-teal-700 text-white hover:bg-teal-700 no-underline whitespace-nowrap font-semibold h-6 leading-tight" title="Switch to Standard View">
+                    <i class="fas fa-list" style="font-size:10px;"></i> Standard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="px-3 py-1 text-xs font-medium text-green-800 bg-green-100 border-b border-green-200">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="px-3 py-1 text-xs font-medium text-red-800 bg-red-100 border-b border-red-200">@TempData["Error"]</div>
+    }
+
+    <form method="post" asp-action="MarksEntryExcel" x-data="marksEntry()" @@submit.prevent="submitForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="SubjectOfferingId" value="@Model.SubjectOfferingId" />
+        <input type="hidden" name="ExamScheduleId" value="@Model.ExamScheduleId" />
+        <input type="hidden" name="SubmitAll" value="false" id="submitAllFlag" />
+
+        <div class="excel-sheet">
+            <table class="excel-table" id="marksTable">
+                <thead>
+                    <tr class="excel-col-headers">
+                        <th class="excel-corner"></th>
+                        @foreach (var c in headerCols)
+                        {
+                            <th class="excel-col-header" data-col="@c.idx">
+                                @c.letter<span>@c.label</span>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Students.Count; i++)
+                    {
+                        var s = Model.Students[i];
+                        var rowNum = i + 1;
+                        <tr class="excel-row" data-row="@rowNum" data-index="@i"
+                            :class="{ 'excel-row-pass': isPass(@i), 'excel-row-fail': !isPass(@i) && hasAnyMarks(@i) }">
+                            <td class="excel-row-num">@rowNum</td>
+                            <td class="excel-cell excel-cell-readonly excel-cell-name"
+                                @@click="toggleName(@i)"
+                                :class="{ 'excel-name-expanded': isNameExpanded(@i) }"
+                                title="@s.StudentName">@s.StudentName</td>
+                            <td class="excel-cell excel-cell-readonly excel-cell-symbol">@s.SymbolNumber</td>
+                            <td class="excel-cell excel-cell-readonly excel-cell-regno">@s.RegistrationNumber</td>
+                            <input type="hidden" name="Students[@i].ExamRegistrationId" value="@s.ExamRegistrationId" />
+                            <input type="hidden" name="Students[@i].ExamSubjectResultId" value="@(s.ExamSubjectResultId ?? 0)" />
+                            <input type="hidden" name="Students[@i].StudentName" value="@s.StudentName" />
+                            <input type="hidden" name="Students[@i].SymbolNumber" value="@s.SymbolNumber" />
+                            @if (Model.HasTheory)
+                            {
+                                <td class="excel-cell excel-cell-input">
+                                    <input type="text" name="Students[@i].TheoryMarks" value="@s.TheoryMarks" maxlength="3"
+                                           class="excel-input" data-row="@rowNum" data-col="theory" autocomplete="off"
+                                           @@input="calculate(@i)" @@keydown="onKeyDown" @@focus="onCellFocus" />
+                                </td>
+                                <td class="excel-cell excel-cell-input">
+                                    <input type="text" name="Students[@i].TheoryConfirm" value="@s.TheoryConfirm" maxlength="3"
+                                           class="excel-input" data-row="@rowNum" data-col="theoryConfirm" autocomplete="off"
+                                           @@keydown="onKeyDown" @@focus="onCellFocus" />
+                                </td>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="Students[@i].TheoryMarks" value="" />
+                                <input type="hidden" name="Students[@i].TheoryConfirm" value="" />
+                            }
+                            @if (Model.HasPractical)
+                            {
+                                <td class="excel-cell excel-cell-input">
+                                    <input type="text" name="Students[@i].PracticalMarks" value="@s.PracticalMarks" maxlength="3"
+                                           class="excel-input" data-row="@rowNum" data-col="practical" autocomplete="off"
+                                           @@input="calculate(@i)" @@keydown="onKeyDown" @@focus="onCellFocus" />
+                                </td>
+                                <td class="excel-cell excel-cell-input">
+                                    <input type="text" name="Students[@i].PracticalConfirm" value="@s.PracticalConfirm" maxlength="3"
+                                           class="excel-input" data-row="@rowNum" data-col="practicalConfirm" autocomplete="off"
+                                           @@keydown="onKeyDown" @@focus="onCellFocus" />
+                                </td>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="Students[@i].PracticalMarks" value="" />
+                                <input type="hidden" name="Students[@i].PracticalConfirm" value="" />
+                            }
+                            @if (Model.HasInternal)
+                            {
+                                <td class="excel-cell excel-cell-input">
+                                    <input type="number" name="Students[@i].TheoryInternal" value="@s.TheoryInternal" step="0.01"
+                                           class="excel-input" data-row="@rowNum" data-col="theoryInternal" autocomplete="off"
+                                           @@input="calculate(@i)" @@keydown="onKeyDown" @@focus="onCellFocus" />
+                                </td>
+                                <td class="excel-cell excel-cell-input">
+                                    <input type="number" name="Students[@i].PracticalInternal" value="@s.PracticalInternal" step="0.01"
+                                           class="excel-input" data-row="@rowNum" data-col="practicalInternal" autocomplete="off"
+                                           @@input="calculate(@i)" @@keydown="onKeyDown" @@focus="onCellFocus" />
+                                </td>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="Students[@i].TheoryInternal" value="" />
+                                <input type="hidden" name="Students[@i].PracticalInternal" value="" />
+                            }
+                            <td class="excel-cell excel-cell-total" x-text="totals[@i] || ''" :class="isPass(@i) ? 'excel-total-pass' : 'excel-total-fail'"></td>
+                            <td class="excel-cell excel-cell-grade" x-text="grades[@i] || ''"></td>
+                            <td class="excel-cell excel-cell-status">
+                                <span x-show="isPass(@i)" class="excel-badge-pass">P</span>
+                                <span x-show="!isPass(@i)" class="excel-badge-fail">F</span>
+                            </td>
+                            <td class="excel-cell excel-cell-submit">
+                                <input type="checkbox" name="Students[@i].IsSubmitted" value="true" @(s.IsSubmitted ? "checked" : "")
+                                       class="excel-checkbox" @@keydown="onKeyDown" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex items-center justify-between px-2 py-0.5 bg-[#e8edf2] border-t border-gray-300 flex-shrink-0 text-xs text-gray-600">
+            <div class="flex items-center gap-3">
+                <span><strong class="text-gray-700" x-text="studentCount"></strong> students</span>
+                <span class="text-green-700"><span x-text="passCount"></span> Passed</span>
+                <span class="text-red-700"><span x-text="failCount"></span> Failed</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button type="submit" class="inline-flex items-center gap-0.5 px-3 py-1 text-xs bg-white border border-gray-400 text-gray-700 hover:bg-gray-100 cursor-pointer font-semibold h-6 leading-tight" @@click="document.getElementById('submitAllFlag').value='false'">
+                    <i class="fas fa-save" style="font-size:10px;"></i> Save Draft
+                </button>
+                <button type="submit" class="inline-flex items-center gap-0.5 px-3 py-1 text-xs bg-teal-700 border border-teal-800 text-white hover:bg-teal-800 cursor-pointer font-semibold h-6 leading-tight" @@click="document.getElementById('submitAllFlag').value='true'">
+                    <i class="fas fa-check-double" style="font-size:10px;"></i> Submit All
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="flex items-center bg-[#e8edf2] border-t border-gray-300 flex-shrink-0" style="height:20px;">
+        <div class="flex items-center h-full">
+            <div class="flex items-center gap-1 px-3 h-full bg-white border-t-2 border-t-green-700 border-l border-r border-gray-300 text-xs font-medium text-gray-700 select-none" style="font-size:10px;line-height:18px;">
+                <i class="fas fa-table" style="font-size:8px;"></i> Sheet1
+            </div>
+        </div>
+        <div class="ml-auto text-gray-400 text-xs select-none px-2" style="font-size:9px;">Ready</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script id="studentDataJson" type="application/json">@Html.Raw(studentDataJson)</script>
+    <script>
+        function marksEntry() {
+            var theoryFull = @Model.TheoryFullMarks;
+            var theoryPass = @Model.TheoryPassMarks;
+            var practicalFull = @(Model.PracticalFullMarks ?? 0);
+            var practicalPass = @(Model.PracticalPassMarks ?? 0);
+            var hasPractical = @Model.HasPractical.ToString().ToLower();
+            var hasInternal = @Model.HasInternal.ToString().ToLower();
+            var studentData = JSON.parse(document.getElementById('studentDataJson').textContent);
+            var studentCount = studentData.length;
+            var grades = new Array(studentCount).fill('-');
+            var totals = new Array(studentCount).fill(0);
+
+            return {
+                grades: grades,
+                totals: totals,
+                passCount: 0,
+                failCount: 0,
+                expandedNames: [],
+
+                init() {
+                    for (var i = 0; i < studentCount; i++) {
+                        this.calculate(i);
+                    }
+                    this.updateStats();
+                    this.setupExcelNav();
+                },
+
+                getVal(row, col) { var el = row.querySelector('input[data-col="' + col + '"]'); return el ? parseFloat(el.value) || 0 : 0; },
+
+                calculate(index) {
+                    var row = document.querySelector('tbody tr[data-index="' + index + '"]');
+                    if (!row) return;
+                    var theory = this.getVal(row, 'theory');
+                    var practical = this.getVal(row, 'practical');
+                    var tInternal = this.getVal(row, 'theoryInternal');
+                    var pInternal = this.getVal(row, 'practicalInternal');
+                    var total = theory + practical + tInternal + pInternal;
+                    this.totals[index] = total > 0 ? total.toFixed(2) : '';
+                    var grade = '';
+                    if (total > 0) {
+                        var totalFull = theoryFull + (hasPractical ? practicalFull : 0);
+                        var pct = totalFull > 0 ? (total / totalFull) * 100 : 0;
+                        if (pct >= 90) grade = 'A';
+                        else if (pct >= 80) grade = 'B+';
+                        else if (pct >= 70) grade = 'B';
+                        else if (pct >= 60) grade = 'C+';
+                        else if (pct >= 50) grade = 'C';
+                        else if (pct >= 40) grade = 'D';
+                        else grade = 'F';
+                    }
+                    this.grades[index] = grade;
+                    this.updateStats();
+                },
+
+                hasAnyMarks(index) {
+                    var row = document.querySelector('tbody tr[data-index="' + index + '"]');
+                    if (!row) return false;
+                    var inputs = row.querySelectorAll('.excel-input');
+                    for (var j = 0; j < inputs.length; j++) {
+                        if (inputs[j].value && parseFloat(inputs[j].value) > 0) return true;
+                    }
+                    return false;
+                },
+
+                isPass(index) {
+                    var row = document.querySelector('tbody tr[data-index="' + index + '"]');
+                    if (!row) return false;
+                    var theory = this.getVal(row, 'theory');
+                    if (theory > 0 && theory < theoryPass) return false;
+                    if (hasPractical) {
+                        var practical = this.getVal(row, 'practical');
+                        if (practical > 0 && practical < practicalPass) return false;
+                    }
+                    return this.totals[index] && this.totals[index] !== '';
+                },
+
+                updateStats() {
+                    var p = 0, f = 0;
+                    for (var i = 0; i < studentCount; i++) {
+                        if (this.totals[i] && this.totals[i] !== '') {
+                            if (this.isPass(i)) p++; else f++;
+                        }
+                    }
+                    this.passCount = p; this.failCount = f;
+                },
+
+                toggleName(index) {
+                    var idx = this.expandedNames.indexOf(index);
+                    if (idx >= 0) { this.expandedNames.splice(idx, 1); }
+                    else { this.expandedNames.push(index); }
+                },
+
+                isNameExpanded(index) {
+                    return this.expandedNames.indexOf(index) >= 0;
+                },
+
+                onKeyDown(event) {
+                    var input = event.target;
+                    var row = parseInt(input.getAttribute('data-row')) || 0;
+                    var key = event.key;
+                    var allInputs = Array.from(document.querySelectorAll('.excel-input'));
+                    var currentIndex = allInputs.indexOf(input);
+
+                    if (key === 'Enter' || key === 'ArrowDown') {
+                        event.preventDefault();
+                        var target = allInputs.find(function(inp) {
+                            return parseInt(inp.getAttribute('data-row')) === row + 1 && inp.getAttribute('data-col') === input.getAttribute('data-col');
+                        });
+                        if (target) { target.focus(); target.select(); }
+                    }
+                    else if (key === 'ArrowUp') {
+                        event.preventDefault();
+                        var target = allInputs.find(function(inp) {
+                            return parseInt(inp.getAttribute('data-row')) === row - 1 && inp.getAttribute('data-col') === input.getAttribute('data-col');
+                        });
+                        if (target) { target.focus(); target.select(); }
+                    }
+                    else if (key === 'Tab') {
+                        event.preventDefault();
+                        var next = currentIndex + (event.shiftKey ? -1 : 1);
+                        if (next >= 0 && next < allInputs.length) {
+                            allInputs[next].focus(); allInputs[next].select();
+                        }
+                    }
+                    else if (key === 'ArrowRight') {
+                        if (input.selectionStart === input.value.length) {
+                            event.preventDefault();
+                            var next = currentIndex + 1;
+                            if (next < allInputs.length) { allInputs[next].focus(); allInputs[next].select(); }
+                        }
+                    }
+                    else if (key === 'ArrowLeft') {
+                        if (input.selectionStart === 0) {
+                            event.preventDefault();
+                            var prev = currentIndex - 1;
+                            if (prev >= 0) { allInputs[prev].focus(); allInputs[prev].select(); }
+                        }
+                    }
+                },
+
+                onCellFocus(event) {
+                    var input = event.target;
+                    var r = input.getAttribute('data-row');
+                    var c = input.closest('td');
+                    var ths = document.querySelectorAll('thead th.excel-col-header');
+                    var colIndex = Array.from(c.parentElement.children).filter(function(el) { return el.tagName === 'TD'; }).indexOf(c) - 1;
+                    var colLetter = (colIndex >= 0 && colIndex < ths.length) ? ths[colIndex].textContent.trim().charAt(0) : '';
+                    document.getElementById('cellRef').textContent = colLetter + r;
+                    document.getElementById('fxBar').textContent = input.value;
+
+                    document.querySelectorAll('tr.excel-row-active').forEach(function(rr) { rr.classList.remove('excel-row-active'); });
+                    var row = input.closest('tr');
+                    if (row) row.classList.add('excel-row-active');
+                },
+
+                setupExcelNav() {
+                    var table = document.getElementById('marksTable');
+                    var inputs = table.querySelectorAll('.excel-input');
+                    var self = this;
+                    inputs.forEach(function(inp) {
+                        inp.addEventListener('input', function() {
+                            document.getElementById('fxBar').textContent = this.value;
+                        });
+                        inp.addEventListener('blur', function() {
+                            var row = this.closest('tr');
+                            if (row) row.classList.remove('excel-row-active');
+                        });
+                    });
+                },
+
+                submitForm() {
+                    var submitAll = document.getElementById('submitAllFlag').value === 'true';
+                    if (submitAll && !confirm('Submit marks for ALL students? This will finalize the entries.')) {
+                        document.getElementById('submitAllFlag').value = 'false';
+                        return;
+                    }
+                    this.$el.submit();
+                }
+            };
+        }
+    </script>
+}

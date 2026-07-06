@@ -1,4 +1,3 @@
-﻿@using fwu_examination_management_system.Models
 @inject SignInManager<AppUser> SignInManager
 @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();

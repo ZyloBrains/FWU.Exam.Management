@@ -1,0 +1,110 @@
+@model Faculty
+@{
+    ViewData["Title"] = "Delete Faculty";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-trash text-red-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Delete Faculty</h1>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 relative">
+        @if (!string.IsNullOrEmpty(Model.LogoPath))
+        {
+            <div class="mb-6 flex justify-center border-b border-gray-200 pb-4">
+                <img src="@Model.LogoPath" alt="@Model.Name logo"
+                     class="w-32 h-32 object-cover rounded-full border border-gray-300 shadow-sm" />
+            </div>
+        }
+
+        <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculty Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+            <div class="p-3 border border-gray-200 rounded-lg shadow-sm bg-gray-50">
+                <p class="text-xs font-semibold text-gray-500 uppercase">Name</p>
+                <p class="text-base font-medium text-gray-800">@Model.Name</p>
+            </div>
+            <div class="p-3 border border-gray-200 rounded-lg shadow-sm bg-gray-50">
+                <p class="text-xs font-semibold text-gray-500 uppercase">Office Code</p>
+                <p class="text-base font-medium text-gray-800">@Model.OfficeCode</p>
+            </div>
+            <div class="p-3 border border-gray-200 rounded-lg shadow-sm bg-gray-50">
+                <p class="text-xs font-semibold text-gray-500 uppercase">Contact</p>
+                <p class="text-base font-medium text-gray-800">@Model.ContactNumber</p>
+            </div>
+            <div class="p-3 border border-gray-200 rounded-lg shadow-sm bg-gray-50">
+                <p class="text-xs font-semibold text-gray-500 uppercase">Address</p>
+                <p class="text-base font-medium text-gray-800">@Model.Address</p>
+            </div>
+            <div class="p-3 border border-gray-200 rounded-lg shadow-sm bg-gray-50 md:col-span-2">
+                <p class="text-xs font-semibold text-gray-500 uppercase">Email</p>
+                <p class="text-base font-medium text-blue-600">
+                    <a href="mailto:@Model.Email" class="hover:underline">@Model.Email</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+            <button type="button" id="deleteBtn"
+                    class="px-6 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition shadow-md">
+                <i class="fas fa-trash mr-1"></i> Delete
+            </button>
+            <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Cancel
+            </a>
+        </div>
+
+        <!-- Centered Confirmation Card -->
+        <div id="confirmCard" class="hidden absolute inset-0 flex items-center justify-center bg-white bg-opacity-95 rounded-xl shadow-lg">
+            <div class="text-center p-6 max-w-sm w-full">
+                <div class="flex flex-col items-center gap-3 mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-3xl"></i>
+                    <p class="text-sm font-semibold text-red-700">
+                        Are you sure you want to delete this faculty? This action cannot be undone.
+                    </p>
+                </div>
+                <form asp-action="Delete" method="post" class="flex items-center justify-center gap-4">
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" class="px-6 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition shadow-md">
+                        Yes, Delete
+                    </button>
+                    <button type="button" id="cancelCard" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                        Cancel
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const deleteBtn = document.getElementById('deleteBtn');
+        const confirmCard = document.getElementById('confirmCard');
+        const cancelCard = document.getElementById('cancelCard');
+
+        deleteBtn.addEventListener('click', () => {
+            confirmCard.classList.remove('hidden');
+        });
+
+        cancelCard.addEventListener('click', () => {
+            confirmCard.classList.add('hidden');
+        });
+    </script>
+}
+
+
+
+
+
+

@@ -1,0 +1,76 @@
+@model FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment
+
+@{
+    ViewData["Title"] = "Edit Semester Enrollment";
+}
+
+<div class="space-y-6">
+    <div class="md:flex md:items-center md:justify-between mb-8 pb-5 border-b border-gray-200">
+        <div class="flex-1 min-w-0">
+            <h1 class="text-3xl font-bold leading-tight text-gray-900 tracking-tight">Edit Semester Enrollment</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-6">
+            <form asp-action="Edit" class="space-y-6">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">College Roll Number</label>
+                    <p class="text-sm text-gray-900 font-medium">@Model.StudentAdmission?.CollegeRollNumber</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                    <p class="text-sm text-gray-900 font-medium">@Model.Semester?.Name</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label asp-for="EnrollmentType" class="block text-sm font-medium text-gray-700 mb-1">Enrollment Type</label>
+                        <select asp-for="EnrollmentType" asp-items="ViewBag.EnrollmentTypeList" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"></select>
+                        <span asp-validation-for="EnrollmentType" class="text-red-600 text-xs"></span>
+                    </div>
+                    <div>
+                        <label asp-for="EnrollmentStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select asp-for="EnrollmentStatus" asp-items="ViewBag.EnrollmentStatusList" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"></select>
+                        <span asp-validation-for="EnrollmentStatus" class="text-red-600 text-xs"></span>
+                    </div>
+                    <div>
+                        <label asp-for="PaymentStatus" class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                        <select asp-for="PaymentStatus" asp-items="ViewBag.PaymentStatusList" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"></select>
+                        <span asp-validation-for="PaymentStatus" class="text-red-600 text-xs"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ResultStatus" class="block text-sm font-medium text-gray-700 mb-1">Result Status</label>
+                        <select asp-for="ResultStatus" asp-items="ViewBag.ResultStatusList" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"></select>
+                        <span asp-validation-for="ResultStatus" class="text-red-600 text-xs"></span>
+                    </div>
+                    <div>
+                        <label asp-for="TotalFee" class="block text-sm font-medium text-gray-700 mb-1">Total Fee</label>
+                        <input asp-for="TotalFee" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                    </div>
+                    <div>
+                        <label asp-for="PaidAmount" class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
+                        <input asp-for="PaidAmount" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                    </div>
+                    <div>
+                        <label asp-for="TotalCredits" class="block text-sm font-medium text-gray-700 mb-1">Total Credits</label>
+                        <input asp-for="TotalCredits" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 pt-4">
+                    <button type="submit" class="inline-flex items-center px-6 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition shadow-sm">Save Changes</button>
+                    <a asp-action="Index" class="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

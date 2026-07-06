@@ -87,3 +87,326 @@ body {
   font-weight: 500;
   color: #1f2937;
 }
+
+/* =============== Excel-Style Grid =============== */
+
+/* ── Formula Bar ── */
+.excel-name-box {
+  width: 52px;
+  height: 22px;
+  border: 1px solid #7a7a7a;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
+  font-size: 11px;
+  font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+  font-weight: 600;
+  color: #222;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.excel-fx-label {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 5px;
+  font-style: italic;
+  font-weight: bold;
+  font-size: 10px;
+  color: #1a73e8;
+  font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+  background: #f0f2f5;
+  border: 1px solid #7a7a7a;
+  border-left: none;
+  user-select: none;
+}
+
+.excel-fx-bar {
+  flex: 1;
+  min-width: 120px;
+  max-width: 260px;
+  height: 22px;
+  border: 1px solid #7a7a7a;
+  border-left: none;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 11px;
+  font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+  color: #333;
+  cursor: default;
+}
+
+/* ── Sheet Area (scrollable grid) ── */
+.excel-sheet {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  cursor: cell;
+}
+.excel-sheet::-webkit-scrollbar { width: 14px; height: 14px; }
+.excel-sheet::-webkit-scrollbar-track { background: #f1f1f1; }
+.excel-sheet::-webkit-scrollbar-thumb { background: #c1c1c1; border: 2px solid #f1f1f1; border-radius: 7px; }
+.excel-sheet::-webkit-scrollbar-thumb:hover { background: #a1a1a1; }
+
+/* ── Table ── */
+.excel-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: max-content;
+  font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 11px;
+  table-layout: fixed;
+  border: 1px solid #777;
+}
+
+/* ── Column Headers ── */
+.excel-col-headers {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.excel-col-headers th {
+  background: #e4e8ed;
+  border: 1px solid #b5b5b5;
+  border-bottom: 2px solid #999;
+  font-weight: 600;
+  font-size: 10px;
+  color: #3c3c3c;
+  padding: 2px 3px 1px;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  height: 22px;
+}
+
+.excel-col-headers th span {
+  display: block;
+  font-weight: 400;
+  font-size: 8px;
+  color: #808080;
+  margin-top: 0;
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+}
+
+.excel-corner {
+  width: 32px;
+  min-width: 32px;
+  background: #e4e8ed !important;
+  border: 1px solid #b5b5b5 !important;
+  border-bottom: 2px solid #999 !important;
+  cursor: default;
+}
+
+.excel-col-header {
+  width: 75px;
+  min-width: 65px;
+}
+
+/* ── Row Numbers ── */
+.excel-row-num {
+  width: 32px;
+  min-width: 32px;
+  background: #e4e8ed;
+  border: 1px solid #b5b5b5;
+  text-align: center;
+  font-size: 10px;
+  color: #8c8c8c;
+  padding: 0;
+  user-select: none;
+  font-weight: 500;
+  height: 24px;
+  cursor: default;
+}
+
+/* ── All Data Cells ── */
+.excel-cell {
+  border: 1px solid #b5b5b5;
+  padding: 0;
+  vertical-align: middle;
+  height: 24px;
+}
+
+.excel-cell-readonly {
+  padding: 0 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #444;
+  cursor: default;
+}
+
+/* ── Info Columns (student info - light gray bg) ── */
+.excel-cell-name {
+  min-width: 160px;
+  max-width: 260px;
+  font-weight: 500;
+  font-size: 11px;
+  background: #f2f4f8;
+  cursor: pointer;
+}
+.excel-cell-symbol {
+  min-width: 85px;
+  font-size: 11px;
+  color: #555;
+  font-family: 'Consolas', 'Courier New', monospace;
+  background: #f2f4f8;
+}
+.excel-cell-regno {
+  min-width: 100px;
+  font-size: 10px;
+  color: #666;
+  font-family: 'Consolas', 'Courier New', monospace;
+  background: #f2f4f8;
+}
+
+.excel-name-expanded {
+  white-space: normal !important;
+  overflow: visible !important;
+  max-width: none !important;
+  min-width: 320px !important;
+  background: #fff !important;
+  border: 1px solid #0d9488 !important;
+  z-index: 5;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  cursor: text;
+}
+
+.excel-cell-input {
+  padding: 0;
+  background: #fff;
+}
+
+/* ── Input Fields ── */
+.excel-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  padding: 0 4px;
+  font-family: 'Calibri', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 11px;
+  text-align: center;
+  background: transparent;
+  box-sizing: border-box;
+  min-height: 24px;
+  line-height: 24px;
+  cursor: cell;
+}
+.excel-input:focus {
+  background: #fff;
+  outline: 2.5px solid #0d9488;
+  outline-offset: -1px;
+  z-index: 3;
+  position: relative;
+  caret-color: #0d9488;
+}
+.excel-input:hover {
+  background: #eef2f6;
+}
+
+.excel-input[type="number"]::-webkit-inner-spin-button,
+.excel-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.excel-input[type="number"] { -moz-appearance: textfield; }
+
+/* ── Calculated Columns (Total, Grade, Status, Submit) ── */
+.excel-cell-total {
+  font-weight: 600;
+  text-align: center;
+  font-size: 11px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  background: #eef2f6;
+  cursor: default;
+}
+.excel-total-pass { color: #0d9488; }
+.excel-total-fail  { color: #dc2626; }
+
+.excel-cell-grade {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #444;
+  background: #eef2f6;
+  cursor: default;
+}
+
+.excel-cell-status {
+  text-align: center;
+  background: #eef2f6;
+  cursor: default;
+}
+
+.excel-badge-pass {
+  display: inline-block;
+  background: #0d9488;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 6px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  line-height: 17px;
+}
+.excel-badge-fail {
+  display: inline-block;
+  background: #dc2626;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 6px;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+  line-height: 17px;
+}
+
+.excel-cell-submit {
+  text-align: center;
+  background: #eef2f6;
+  cursor: default;
+}
+.excel-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  accent-color: #0d9488;
+  vertical-align: middle;
+}
+
+/* ── Row States ── */
+.excel-row-pass { background: #f0fdfa; }
+.excel-row-fail  { background: #fef2f2; }
+.excel-row-pass .excel-input,
+.excel-row-fail .excel-input { background: transparent; }
+
+/* ── Row hover ── */
+.excel-row:hover td:not(.excel-cell-input) { background-color: #e8ecf2 !important; }
+.excel-row:hover .excel-row-num {
+  background: #d0d5dd !important;
+  color: #333 !important;
+  font-weight: 700;
+}
+
+/* ── Active row (when a cell is focused) ── */
+.excel-row-active .excel-row-num {
+  background: #0d9488 !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .excel-fx-bar { display: none; }
+  .excel-fx-label { display: none; }
+  .excel-col-header { width: 55px; min-width: 48px; }
+  .excel-cell-name { min-width: 100px; max-width: 140px; }
+  .excel-name-box { width: 34px; }
+}

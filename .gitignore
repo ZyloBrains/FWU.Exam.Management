@@ -178,6 +178,7 @@ DocProject/Help/html
 
 # Click-Once directory
 publish/
+publish_*/
 
 # Publish Web Output
 *.[Pp]ublish.xml
@@ -362,3 +363,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /fwu-examination-management-system/wwwroot/images
+/FWU.Exam.Management.Web/wwwroot/faculty
+/FWU.Exam.Management.Web/wwwroot/images
+/learning

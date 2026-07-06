@@ -1,10 +1,12 @@
-namespace fwu_examination_management_system.ViewModels
+namespace FWU.Exam.Management.Web.ViewModels;
+
+public class UserListItemViewModel
 {
-    public class UserListItemViewModel
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string? OrganizationName { get; set; }
-        public IList<string> Roles { get; set; } = [];
-    }
+    public string Id { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? FullName { get; set; }
+    public string? FacultyName { get; set; }
+    public string? CollegeName { get; set; }
+    public bool IsActive { get; set; }
+    public IList<string> Roles { get; set; } = [];
 }

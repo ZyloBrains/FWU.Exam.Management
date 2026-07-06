@@ -1,0 +1,92 @@
+@model FWU.Exam.Management.Domain.Entities.Tenant
+
+@{
+    ViewData["Title"] = "Edit Tenant";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-building text-amber-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Edit Tenant</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-4">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label asp-for="Name" class="text-sm font-medium text-gray-700 block mb-1">Organization Name</label>
+                    <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="OfficeCode" class="text-sm font-medium text-gray-700 block mb-1">Office Code</label>
+                    <input asp-for="OfficeCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    <span asp-validation-for="OfficeCode" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Email" class="text-sm font-medium text-gray-700 block mb-1">Email</label>
+                    <input asp-for="Email" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="ContactNumber" class="text-sm font-medium text-gray-700 block mb-1">Contact Number</label>
+                    <input asp-for="ContactNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    <span asp-validation-for="ContactNumber" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div class="md:col-span-2">
+                    <label asp-for="Address" class="text-sm font-medium text-gray-700 block mb-1">Address</label>
+                    <input asp-for="Address" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
+                    <span asp-validation-for="Address" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-sm font-medium text-gray-700 block mb-1">Logo</label>
+                    <input type="hidden" asp-for="LogoPath" />
+                    @if (!string.IsNullOrEmpty(Model.LogoPath))
+                    {
+                        <div class="mb-2">
+                            <img src="@Url.Content(Model.LogoPath)" alt="Current logo" class="h-16 w-auto border rounded" />
+                        </div>
+                    }
+                    <input type="file" name="logoFile" accept="image/*" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                    <span asp-validation-for="LogoPath" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="TenantType" class="text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
+                    <select asp-for="TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></select>
+                    <span asp-validation-for="TenantType" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mt-7">
+                        <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
+                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                    <i class="fas fa-save mr-1"></i> Update
+                </button>
+                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,104 @@
+@model AdmitCard
+
+@{
+    ViewData["Title"] = "Admit Card Details";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-ticket-alt text-indigo-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Admit Card Details</h1>
+                <p class="text-sm text-gray-500 mt-0.5">@Model.AdmitCardNumber</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a asp-action="Download" asp-area="Exams" asp-route-id="@Model.Id" class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                <i class="fas fa-download"></i> Download
+            </a>
+            <a asp-action="Index" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-800">Card Information</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Admit Card Number</label>
+                <p class="mt-1 text-sm text-gray-900 font-medium">@Model.AdmitCardNumber</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Exam Schedule</label>
+                <p class="mt-1 text-sm text-gray-900">@Model.ExamSchedule?.ExamScheduleName</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Student Name</label>
+                <p class="mt-1 text-sm text-gray-900">
+                    @(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}" : "-")
+                </p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Generated Date</label>
+                <p class="mt-1 text-sm text-gray-900">@Model.GeneratedDate.ToString("yyyy-MM-dd HH:mm")</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Downloaded</label>
+                <p class="mt-1 text-sm text-gray-900">@(Model.IsDownloaded ? "Yes" : "No")</p>
+            </div>
+            @if (Model.IsDownloaded)
+            {
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Downloaded Date</label>
+                    <p class="mt-1 text-sm text-gray-900">@Model.DownloadedDate?.ToString("yyyy-MM-dd HH:mm")</p>
+                </div>
+            }
+            <div>
+                <label class="block text-sm font-medium text-gray-500">Status</label>
+                <p class="mt-1">
+                    @if (Model.IsActive)
+                    {
+                        <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
+                    }
+                    else
+                    {
+                        <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Inactive</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ExamRegistration != null)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-gray-800">Exam Registration Details</h2>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Registration Number</label>
+                    <p class="mt-1 text-sm text-gray-900">@(Model.StudentRegistration?.RegistrationNumber ?? "-")</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">College</label>
+                    <p class="mt-1 text-sm text-gray-900">@(Model.ExamRegistration.College?.Name ?? "-")</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Status</label>
+                    <p class="mt-1 text-sm text-gray-900">@Model.ExamRegistration.Status</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Registration Date</label>
+                    <p class="mt-1 text-sm text-gray-900">@Model.ExamRegistration.RegistrationDate?.ToString("yyyy-MM-dd")</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,64 @@
+@model FWU.Exam.Management.Domain.Entities.Payments.Bank
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
+
+    ViewData["Title"] = "Bank Details";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" asp-area="Payments" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-university text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Bank Details</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Bank Name</p>
+                <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.BankName)</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Bank Code</p>
+                <p class="mt-1 text-gray-800">@(Model.BankCode ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Status</p>
+                <p class="mt-1">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(Model.IsActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600")">
+                        @(Model.IsActive ? "Active" : "Inactive")
+                    </span>
+                </p>
+            </div>
+            <div class="md:col-span-2">
+                <p class="text-sm font-medium text-gray-600">Remarks</p>
+                <p class="mt-1 text-gray-800">@(Model.Remarks ?? "-")</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+            @if (HasPerm("banks.edit"))
+            {
+                <a asp-action="Edit" asp-area="Payments" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </a>
+            }
+            <a asp-action="Index" asp-area="Payments" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>

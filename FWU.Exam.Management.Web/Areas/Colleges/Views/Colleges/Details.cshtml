@@ -1,0 +1,190 @@
+@model FWU.Exam.Management.Domain.Entities.Colleges.College
+
+@{
+    ViewData["Title"] = "College Details";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-university text-blue-600"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">College Details</h1>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <!-- Basic Information Section -->
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">College Code</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Code)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Short Name</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ShortName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">College Name</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Name)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">College Name (Nepali)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeNameNepali)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Display Order</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.DisplayOrder)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <div class="mt-1 flex gap-2">
+                        @if (Model.IsActive)
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Active</span>
+                        }
+                        else
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Inactive</span>
+                        }
+                        @if (Model.IsExamCenterOnly)
+                        {
+                            <span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">Exam Center Only</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address & Location Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Address & Location</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Province</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.Province?.ProvinceName ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">District</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.District?.DistrictName ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Local Level</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.LocalLevel?.LocalLevelName ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Ward Number</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.WardNumber?.ToString() ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Tole/Street</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.ToleStreet ?? "-")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">House Number</p>
+                    <p class="mt-1 text-gray-800">@(Model.Address?.HouseNumber ?? "-")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Contact Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Phone 1</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Phone1)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Phone 2</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Phone2)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Fax</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Fax)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Email</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Email)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Website</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Website)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Principal Details Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Principal Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Principal Name</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PrincipalName)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Principal Contact Number</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PrincipalContactNumber)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Established Date</p>
+                    <p class="mt-1 text-gray-800">@(Model.EstablishedDate.ToString("yyyy-MM-dd"))</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Closed Date</p>
+                    <p class="mt-1 text-gray-800">@(Model.ClosedDate?.ToString("yyyy-MM-dd") ?? "?")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">College Type</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeType.Code)</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">College Profile</p>
+                    <p class="mt-1 text-gray-800">@(Model.CollegeProfile?.BankName ?? "N/A")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Allocated Amount</p>
+                    <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "?")</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Remarks)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+            <a asp-action="Edit" asp-route-id="@Model?.Id"
+                   class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
+                <i class="fas fa-edit mr-1"></i> Edit
+            </a>
+            <a asp-action="Index"
+                   class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,8 +1,11 @@
-namespace fwu_examination_management_system.ViewModels;
+using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Subjects;
+
+namespace FWU.Exam.Management.Web.ViewModels;
 
 public class DashboardViewModel
 {
-    public int TotalOrganizations { get; set; }
+    public int TotalFaculties { get; set; }
     public int TotalUsers { get; set; }
     public int TotalRoles { get; set; }
     public int TotalColleges { get; set; }
@@ -21,4 +24,15 @@ public class DashboardViewModel
     public int ActiveExamSchedules { get; set; }
     public string CurrentRole { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
+
+    public string? StudentName { get; set; }
+    public string? StudentProgramName { get; set; }
+    public string? StudentProgramCode { get; set; }
+    public string? RegistrationNumber { get; set; }
+    public string? CollegeName { get; set; }
+    public string? AcademicYearName { get; set; }
+    public string? LevelName { get; set; }
+    public string? SemesterName { get; set; }
+    public List<SubjectOffering>? SubjectOfferings { get; set; }
+    public List<ExamSchedule>? ExamSchedules { get; set; }
 }

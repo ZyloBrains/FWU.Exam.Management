@@ -1,0 +1,241 @@
+@model RolePermissionViewModel
+
+@{
+    ViewData["Title"] = $"Edit Permissions - {Model.RoleName}";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors shrink-0">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </a>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
+                    <i class="fas fa-shield-alt text-indigo-600"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Permissions</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Manage permissions for <span class="font-semibold text-indigo-600">@Model.RoleName</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Edit" method="post" id="permForm">
+        <input type="hidden" name="id" value="@Model.RoleId" />
+
+        <div id="permToolbar" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+                <div class="flex-1 min-w-[200px]">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="searchBox" placeholder="Search permissions..."
+                               class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+                    </div>
+                </div>
+                <select id="groupFilter" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
+                    <option value="">All Groups</option>
+                    @foreach (var group in Model.Groups)
+                    {
+                        <option value="@group.GroupName">@group.GroupDisplayName</option>
+                    }
+                </select>
+                <select id="statusFilter" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
+                    <option value="">All Status</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="unassigned">Unassigned</option>
+                </select>
+                <select id="sortOrder" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
+                    <option value="">Default Order</option>
+                    <option value="name-asc">Name A-Z</option>
+                    <option value="name-desc">Name Z-A</option>
+                </select>
+                <div class="flex items-center gap-2">
+                    <span id="resultCount" class="text-sm text-gray-500 whitespace-nowrap"></span>
+                    <button type="button" id="collapseAll" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition" title="Collapse All">
+                        <i class="fas fa-compress-alt"></i>
+                    </button>
+                    <button type="button" id="expandAll" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition" title="Expand All">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4" id="groupsContainer">
+            @foreach (var group in Model.Groups)
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden perm-group" data-group="@group.GroupName">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-700">
+                            <i class="fas fa-folder-open mr-2 text-indigo-500"></i><span class="group-name">@group.GroupDisplayName</span>
+                            <span class="text-sm font-normal text-gray-400 ml-2 group-count">(@group.Permissions.Count)</span>
+                        </h3>
+                        <label class="flex items-center text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox"
+                                   class="group-selector rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 mr-2"
+                                   data-group="@group.GroupName" />
+                            Select All
+                        </label>
+                    </div>
+                    <div class="px-4 py-3 group-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach (var perm in group.Permissions)
+                            {
+                                <label class="perm-label flex items-start p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition @(perm.IsAssigned ? "bg-indigo-50/50 border border-indigo-100" : "border border-transparent")"
+                                       data-perm-id="@perm.Id"
+                                       data-perm-name="@perm.Name.ToLowerInvariant()"
+                                       data-perm-display="@perm.DisplayName.ToLowerInvariant()"
+                                       data-perm-desc="@(perm.Description?.ToLowerInvariant() ?? "")"
+                                       data-perm-assigned="@(perm.IsAssigned ? "true" : "false")"
+                                       data-perm-group="@group.GroupName">
+                                    <input type="checkbox"
+                                           name="permissionIds"
+                                           value="@perm.Id"
+                                           @(perm.IsAssigned ? "checked" : "")
+                                           class="perm-checkbox mt-0.5 rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                           data-group="@group.GroupName" />
+                                    <div class="ml-3 min-w-0">
+                                        <span class="text-sm font-medium text-gray-700">@perm.DisplayName</span>
+                                        @if (!string.IsNullOrEmpty(perm.Description))
+                                        {
+                                            <p class="text-xs text-gray-500">@perm.Description</p>
+                                        }
+                                        <code class="text-xs text-gray-400 block truncate">@perm.Name</code>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-gray-200">
+            <a asp-action="Index" class="flex-1 sm:flex-none text-center px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-sm">
+                Cancel
+            </a>
+            <button type="submit" class="flex-1 sm:flex-none text-center px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                <i class="fas fa-save mr-1"></i> Save Permissions
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function() {
+            var searchBox = document.getElementById('searchBox');
+            var groupFilter = document.getElementById('groupFilter');
+            var statusFilter = document.getElementById('statusFilter');
+            var sortOrder = document.getElementById('sortOrder');
+            var resultCount = document.getElementById('resultCount');
+            var groupsContainer = document.getElementById('groupsContainer');
+
+            function debounce(fn, delay) {
+                var timer;
+                return function() {
+                    var args = arguments, ctx = this;
+                    clearTimeout(timer);
+                    timer = setTimeout(function() { fn.apply(ctx, args); }, delay);
+                };
+            }
+
+            function updateVisibility() {
+                var search = searchBox.value.trim().toLowerCase();
+                var groupVal = groupFilter.value;
+                var statusVal = statusFilter.value;
+                var sortVal = sortOrder.value;
+                var visibleCount = 0;
+
+                var groups = groupsContainer.querySelectorAll('.perm-group');
+
+                groups.forEach(function(group) {
+                    var groupName = group.dataset.group;
+                    var labels = group.querySelectorAll('.perm-label');
+                    var groupBody = group.querySelector('.group-body');
+                    var groupCount = group.querySelector('.group-count');
+                    var anyVisible = false;
+
+                    var labelsArray = Array.from(labels);
+
+                    if (sortVal === 'name-asc') {
+                        labelsArray.sort(function(a, b) {
+                            return a.dataset.permDisplay.localeCompare(b.dataset.permDisplay);
+                        });
+                    } else if (sortVal === 'name-desc') {
+                        labelsArray.sort(function(a, b) {
+                            return b.dataset.permDisplay.localeCompare(a.dataset.permDisplay);
+                        });
+                    }
+
+                    var grid = groupBody.querySelector('.grid');
+                    labelsArray.forEach(function(label) {
+                        var matchesSearch = search === '' ||
+                            label.dataset.permDisplay.indexOf(search) !== -1 ||
+                            label.dataset.permName.indexOf(search) !== -1 ||
+                            label.dataset.permDesc.indexOf(search) !== -1;
+                        var matchesGroup = groupVal === '' || groupName === groupVal;
+                        var matchesStatus = statusVal === '' ||
+                            (statusVal === 'assigned' && label.dataset.permAssigned === 'true') ||
+                            (statusVal === 'unassigned' && label.dataset.permAssigned === 'false');
+
+                        var visible = matchesSearch && matchesGroup && matchesStatus;
+                        label.style.display = visible ? '' : 'none';
+                        if (visible) {
+                            anyVisible = true;
+                            visibleCount++;
+                        }
+                    });
+
+                    if (sortVal !== '') {
+                        labelsArray.forEach(function(label) {
+                            grid.appendChild(label);
+                        });
+                    }
+
+                    var showGroup = anyVisible && (groupVal === '' || groupName === groupVal);
+                    group.style.display = showGroup ? '' : 'none';
+                    if (groupCount) {
+                        var vis = labelsArray.filter(function(l) { return l.style.display !== 'none'; }).length;
+                        groupCount.textContent = '(' + vis + ')';
+                    }
+                });
+
+                resultCount.textContent = visibleCount + ' permission' + (visibleCount !== 1 ? 's' : '') + ' visible';
+            }
+
+            var debouncedUpdate = debounce(updateVisibility, 200);
+
+            searchBox.addEventListener('input', debouncedUpdate);
+            groupFilter.addEventListener('change', updateVisibility);
+            statusFilter.addEventListener('change', updateVisibility);
+            sortOrder.addEventListener('change', updateVisibility);
+
+            document.getElementById('collapseAll').addEventListener('click', function() {
+                groupsContainer.querySelectorAll('.group-body').forEach(function(b) { b.style.display = 'none'; });
+            });
+            document.getElementById('expandAll').addEventListener('click', function() {
+                groupsContainer.querySelectorAll('.group-body').forEach(function(b) { b.style.display = ''; });
+            });
+
+            document.querySelectorAll('.group-selector').forEach(function(selectAll) {
+                selectAll.addEventListener('change', function() {
+                    var group = this.dataset.group;
+                    var checkboxes = groupsContainer.querySelectorAll('.perm-checkbox[data-group="' + group + '"]');
+                    checkboxes.forEach(function(cb) {
+                        var label = cb.closest('.perm-label');
+                        if (label && label.style.display !== 'none') {
+                            cb.checked = selectAll.checked;
+                        }
+                    });
+                });
+            });
+
+            updateVisibility();
+        })();
+    </script>
+}

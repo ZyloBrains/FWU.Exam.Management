@@ -1,34 +1,154 @@
-﻿@page
+@page
 @model ResendEmailConfirmationModel
 @{
-    ViewData["Title"] = "Resend email confirmation";
+    ViewData["Title"] = "FWU - EMIS";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FWU - EMIS</title>
 
-<div class="max-w-lg mx-auto mt-10">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-envelope text-blue-600"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold text-gray-800">@ViewData["Title"]</h1>
-                <p class="text-sm text-gray-500">Enter your email.</p>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background-image: url('@Url.Content("~/images/college.jpg")');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+            body::before {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.40);
+                z-index: 0;
+            }
+
+        .login-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            background: linear-gradient(135deg, #2563eb, #38bdf8);
+        }
+
+        .btn-login {
+            background: linear-gradient(to right, #2563eb, #38bdf8);
+            border: none;
+            font-weight: 600;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+            .btn-login:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+            }
+
+        .logo-circle {
+            width: 9rem;
+            height: 9rem;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2);
+        }
+
+        .validation-summary-valid {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="d-flex align-items-center justify-content-center p-4">
+
+    <div class="login-wrapper w-100" style="max-width: 900px;">
+        <div class="card shadow-lg">
+            <div class="row g-0">
+
+                <!-- LEFT SECTION -->
+                <div class="col-12 col-md-6 px-4 px-md-5 py-5 d-flex flex-column justify-content-center">
+
+                    <h1 class="fs-4 fw-bold text-dark mb-1">Resend email confirmation</h1>
+                    <p class="text-muted small mb-4">Enter your email to receive a new confirmation link.</p>
+
+                    @* Model-level Validation Errors *@
+                    <div asp-validation-summary="All" class="alert alert-danger py-2 small" role="alert"></div>
+
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label asp-for="Input.Email" class="form-label fw-medium small text-dark">Email</label>
+                            <input asp-for="Input.Email"
+                                   class="form-control py-2"
+                                   autocomplete="username"
+                                   aria-required="true"
+                                   placeholder="you@example.com"
+                                   autofocus />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Resend Button -->
+                        <button id="resend-submit" type="submit"
+                                class="btn btn-login btn-primary w-100 py-2 text-white mt-2">
+                            Resend
+                        </button>
+
+                        <!-- Back to Login -->
+                        <div class="mt-3 text-center small text-muted">
+                            <a asp-page="./Login"
+                               class="text-primary text-decoration-none">Back to login</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- RIGHT SECTION -->
+                <div class="col-12 col-md-6 right-panel px-4 py-5 text-white d-none d-md-flex flex-column align-items-center justify-content-center text-center">
+
+                    <img src="~/images/fwu-logo.jpg"
+                         class="logo-circle mb-4"
+                         alt="FWU Logo" />
+
+                    <h2 class="fw-bold fs-4">FAR WESTERN UNIVERSITY</h2>
+
+                    <p class="small mt-3 lh-base">
+                        Secure examination management platform designed for modern university operations.
+                    </p>
+
+                    <div class="mt-4 small">
+                        &copy; 2025 Far Western University. All rights reserved.
+                    </div>
+
+                </div>
+
             </div>
         </div>
-        <form method="post" class="space-y-5">
-            <div asp-validation-summary="All" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
-            <div>
-                <label asp-for="Input.Email" class="block text-sm font-semibold text-gray-700 mb-2"></label>
-                <input asp-for="Input.Email" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" aria-required="true" placeholder="name@example.com" />
-                <span asp-validation-for="Input.Email" class="text-xs text-red-500 mt-1 block"></span>
-            </div>
-            <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                <i class="fas fa-paper-plane mr-1"></i> Resend
-            </button>
-        </form>
     </div>
-</div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    @* Client-side validation scripts *@
+    @section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+    }
+</body>
+</html>

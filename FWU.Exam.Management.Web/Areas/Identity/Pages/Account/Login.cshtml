@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model LoginModel
 @{
     ViewData["Title"] = "FWU - EMIS";
@@ -68,6 +68,10 @@
         .form-control:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.2);
+        }
+
+        .validation-summary-valid {
+            display: none;
         }
     </style>
 </head>
@@ -174,7 +178,7 @@
                 </div>
 
                 <!-- RIGHT SECTION -->
-                <div class="col-12 col-md-6 right-panel px-4 py-5 text-white d-flex flex-column align-items-center justify-content-center text-center">
+                <div class="col-12 col-md-6 right-panel px-4 py-5 text-white d-none d-md-flex flex-column align-items-center justify-content-center text-center">
 
                     <img src="~/images/fwu-logo.jpg"
                          class="logo-circle mb-4"

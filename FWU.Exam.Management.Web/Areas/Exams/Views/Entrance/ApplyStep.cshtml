@@ -1,0 +1,881 @@
+@model EntranceExamApplication
+
+@{
+    Layout = "~/Areas/Exams/Views/Shared/_PaymentLayout.cshtml";
+    ViewData["Title"] = "Entrance Application Form";
+    var voucherId = ViewBag.VoucherId as int? ?? 0;
+    var voucherNumber = ViewBag.VoucherNumber as string ?? "";
+    var entranceFee = ViewBag.EntranceFee as decimal? ?? 0;
+    var isEditing = ViewBag.IsEditing as bool? ?? false;
+    var existingStatus = ViewBag.ExistingStatus as string ?? "";
+    var selectedProgram = ViewBag.SelectedProgram as string ?? "";
+    var selectedCollege = ViewBag.SelectedCollege as string ?? "";
+    var selectedAcademicYear = ViewBag.SelectedAcademicYear as string ?? "";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+
+        <!-- Header with Progress -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Entrance Application Form</h1>
+            <p class="text-gray-500 text-sm mt-1">Fill in your details to apply for the entrance examination</p>
+        </div>
+
+        <!-- Voucher Info Banner -->
+        <div class="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-xl px-5 py-3 mb-6 text-white shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-check-circle text-xl"></i>
+                <div>
+                    <p class="text-sm font-medium">Payment Verified</p>
+                    <p class="text-xs text-teal-100">Voucher: @voucherNumber | Fee: रू @entranceFee.ToString("N2")</p>
+                </div>
+            </div>
+            <span class="bg-white/20 text-white text-xs font-medium px-3 py-1 rounded-full">Verified</span>
+        </div>
+
+        <!-- Status Banners -->
+        @if (isEditing && existingStatus == "Rejected")
+        {
+            <div class="bg-red-50 border border-red-200 rounded-xl px-5 py-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                    <div>
+                        <p class="text-sm font-medium text-red-800">Application Rejected</p>
+                        <p class="text-xs text-red-600">Your previous application was rejected. Please fix the issues below and re-submit.</p>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (isEditing && existingStatus == "Submitted")
+        {
+            <div class="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-pencil-alt text-amber-500 text-xl"></i>
+                    <div>
+                        <p class="text-sm font-medium text-amber-800">Editing Existing Application</p>
+                        <p class="text-xs text-amber-600">You have a submitted application. Editing will update your previous submission.</p>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(selectedProgram))
+        {
+            <div class="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-graduation-cap text-blue-600 text-xl"></i>
+                    <div>
+                        <p class="text-sm font-medium text-blue-800">Applying for</p>
+                        <p class="text-xs text-blue-600">@selectedProgram — @selectedCollege (@selectedAcademicYear)</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Step Progress Indicator -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 mb-6">
+            <div class="flex items-center justify-between" id="stepProgress">
+                <div class="flex items-center">
+                    <div class="step-indicator active" data-step="1">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white bg-teal-600">1</div>
+                        <span class="text-xs mt-1 font-medium text-teal-600">Program</span>
+                    </div>
+                    <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="1"></div>
+                </div>
+                <div class="flex items-center">
+                    <div class="step-indicator" data-step="2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">2</div>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Personal</span>
+                    </div>
+                    <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="2"></div>
+                </div>
+                <div class="flex items-center">
+                    <div class="step-indicator" data-step="3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">3</div>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Address & Guardian</span>
+                    </div>
+                    <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="3"></div>
+                </div>
+                <div class="flex items-center">
+                    <div class="step-indicator" data-step="4">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">4</div>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Qualification</span>
+                    </div>
+                    <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="4"></div>
+                </div>
+                <div class="flex items-center">
+                    <div class="step-indicator" data-step="5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">5</div>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Documents & Submit</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <form asp-action="ApplyStep" method="post" enctype="multipart/form-data" id="entranceForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="voucherId" value="@voucherId" />
+                <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-4"></div>
+
+                <!-- ===== STEP 1: Program Selection ===== -->
+                <div class="step-content" id="step1">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                        <h2 class="text-lg font-semibold text-white">Step 1: Program Selection</h2>
+                        <p class="text-teal-100 text-sm">Select the program you wish to apply for</p>
+                    </div>
+                    <div class="px-6 py-6 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                                <div class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
+                                    @(selectedAcademicYear)
+                                </div>
+                                <input type="hidden" name="AcademicYearId" value="@Model.AcademicYearId" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
+                                <div class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
+                                    @(selectedCollege)
+                                </div>
+                                <input type="hidden" name="CollegeId" value="@Model.CollegeId" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                                <div class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 program-display-text">
+                                    @(selectedProgram)
+                                </div>
+                                <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
+                            </div>
+                        </div>
+                        <div id="scheduleWarning" class="hidden text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <span id="scheduleWarningText">The entrance application form is not currently open for this program.</span>
+                        </div>
+                        <div id="feeInfo" class="hidden text-sm text-teal-700 bg-teal-50 border border-teal-200 rounded-lg px-4 py-3">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Entrance Fee: रू <span id="feeAmount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 2: Personal Information ===== -->
+                <div class="step-content hidden" id="step2">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                        <h2 class="text-lg font-semibold text-white">Step 2: Personal Information</h2>
+                        <p class="text-teal-100 text-sm">Your personal details as per citizenship</p>
+                    </div>
+                    <div class="px-6 py-6 space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name (In BLOCK LETTER) *</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <input asp-for="FirstName" placeholder="First Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase" />
+                                    <span asp-validation-for="FirstName" class="text-red-600 text-xs"></span>
+                                </div>
+                                <div>
+                                    <input asp-for="MiddleName" placeholder="Middle Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase" />
+                                </div>
+                                <div>
+                                    <input asp-for="LastName" placeholder="Last Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase" />
+                                    <span asp-validation-for="LastName" class="text-red-600 text-xs"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="NepaliName" class="block text-sm font-medium text-gray-700 mb-1">Name (Nepali)</label>
+                                <input asp-for="NepaliName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                            <div>
+                                <label asp-for="GenderId" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                                <select asp-for="GenderId" asp-items="ViewBag.GenderId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">Select Gender</option>
+                                </select>
+                                <span asp-validation-for="GenderId" class="text-red-600 text-xs"></span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="DateOfBirthBS" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (BS) *</label>
+                                <input asp-for="DateOfBirthBS" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="DateOfBirthBS" class="text-red-600 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="DateOfBirthAD" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (AD)</label>
+                                <input asp-for="DateOfBirthAD" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="BloodGroup" class="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
+                                <select asp-for="BloodGroup" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">Select Blood Group</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label asp-for="BirthPlace" class="block text-sm font-medium text-gray-700 mb-1">Birth Place</label>
+                                <input asp-for="BirthPlace" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-100 pt-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Citizenship Details</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="CitizenshipNo" class="block text-sm font-medium text-gray-700 mb-1">Citizenship No</label>
+                                    <input asp-for="CitizenshipNo" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="CitizenshipDistrictId" class="block text-sm font-medium text-gray-700 mb-1">Citizenship Issued District</label>
+                                    <select asp-for="CitizenshipDistrictId" asp-items="ViewBag.CitizenshipDistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select District</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="CitizenshipIssueDateBs" class="block text-sm font-medium text-gray-700 mb-1">Issue Date (BS)</label>
+                                    <input asp-for="CitizenshipIssueDateBs" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="CitizenshipIssueDateAd" class="block text-sm font-medium text-gray-700 mb-1">Issue Date (AD)</label>
+                                    <input asp-for="CitizenshipIssueDateAd" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="Email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                <input asp-for="Email" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="Email" class="text-red-600 text-xs"></span>
+                            </div>
+                            <div>
+                                <label asp-for="ContactNumber" class="block text-sm font-medium text-gray-700 mb-1">Mobile No *</label>
+                                <input asp-for="ContactNumber" placeholder="98XXXXXXXX" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <span asp-validation-for="ContactNumber" class="text-red-600 text-xs"></span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="Phone" class="block text-sm font-medium text-gray-700 mb-1">Phone (Landline)</label>
+                                <input asp-for="Phone" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 3: Address & Guardian ===== -->
+                <div class="step-content hidden" id="step3">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                        <h2 class="text-lg font-semibold text-white">Step 3: Address & Guardian Information</h2>
+                        <p class="text-teal-100 text-sm">Your permanent address and guardian details</p>
+                    </div>
+                    <div class="px-6 py-6 space-y-5">
+
+                        <!-- Permanent Address -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Permanent Address</h3>
+                            <div id="existingAddressData"
+                                 data-province-id="@(Model.PermanentAddress?.LocalLevel?.District?.ProvinceId ?? 0)"
+                                 data-district-id="@(Model.PermanentAddress?.LocalLevel?.DistrictId ?? 0)"
+                                 data-local-level-id="@(Model.PermanentAddress?.LocalLevelId ?? 0)">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
+                                    <select id="ProvinceId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                        <option value="">Select Province</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">District *</label>
+                                    <select id="DistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                        <option value="">Select District</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Local Level / Municipality *</label>
+                                    <select id="LocalLevelId" name="LocalLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                        <option value="">Select Local Level</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ward No *</label>
+                                    <input id="WardNumber" name="WardNumber" value="@(Model.PermanentAddress?.WardNumber.HasValue == true ? Model.PermanentAddress.WardNumber.Value.ToString() : "")" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tole / Street</label>
+                                    <input id="ToleStreet" name="ToleStreet" value="@(Model.PermanentAddress?.ToleStreet ?? "")" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">House Number</label>
+                                    <input id="HouseNumber" name="HouseNumber" value="@(Model.PermanentAddress?.HouseNumber ?? "")" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="Country" class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                                    <input asp-for="Country" value="Nepal" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PostalCode" class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                                    <input asp-for="PostalCode" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Guardian Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="FatherName" class="block text-sm font-medium text-gray-700 mb-1">Father's Name *</label>
+                                    <input asp-for="FatherName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                    <span asp-validation-for="FatherName" class="text-red-600 text-xs"></span>
+                                </div>
+                                <div>
+                                    <label asp-for="FatherContact" class="block text-sm font-medium text-gray-700 mb-1">Father's Phone *</label>
+                                    <input asp-for="FatherContact" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="FatherProfession" class="block text-sm font-medium text-gray-700 mb-1">Father's Profession</label>
+                                    <input asp-for="FatherProfession" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="MotherName" class="block text-sm font-medium text-gray-700 mb-1">Mother's Name</label>
+                                    <input asp-for="MotherName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="MotherContact" class="block text-sm font-medium text-gray-700 mb-1">Mother's Phone</label>
+                                    <input asp-for="MotherContact" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="MotherProfession" class="block text-sm font-medium text-gray-700 mb-1">Mother's Profession</label>
+                                    <input asp-for="MotherProfession" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label asp-for="GuardianEmail" class="block text-sm font-medium text-gray-700 mb-1">Guardian Email</label>
+                                <input asp-for="GuardianEmail" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 4: Academic Qualification ===== -->
+                <div class="step-content hidden" id="step4">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                        <h2 class="text-lg font-semibold text-white">Step 4: Academic Qualifications</h2>
+                        <p class="text-teal-100 text-sm">Your previous academic records</p>
+                    </div>
+                    <div class="px-6 py-6 space-y-6">
+
+                        <!-- Qualification 1 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Highest Qualification</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="PreviousLevelId" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination *</label>
+                                    <select asp-for="PreviousLevelId" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select Level</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousSchoolCollege" class="block text-sm font-medium text-gray-700 mb-1">Institution / Board *</label>
+                                    <input asp-for="PreviousSchoolCollege" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="PreviousSymbolNumber" class="block text-sm font-medium text-gray-700 mb-1">Symbol No</label>
+                                    <input asp-for="PreviousSymbolNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousPassedYear" class="block text-sm font-medium text-gray-700 mb-1">Passed Year *</label>
+                                    <input asp-for="PreviousPassedYear" placeholder="e.g. 2080" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousGPA" class="block text-sm font-medium text-gray-700 mb-1">Percentage / CGPA *</label>
+                                    <input asp-for="PreviousGPA" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousDivision" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
+                                    <select asp-for="PreviousDivision" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select</option>
+                                        <option value="Distinction">Distinction</option>
+                                        <option value="First">First Division</option>
+                                        <option value="Second">Second Division</option>
+                                        <option value="Third">Third Division</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Qualification 2 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Previous Qualification (if any)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="PreviousLevel2Id" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination</label>
+                                    <select asp-for="PreviousLevel2Id" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select Level</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousSchoolCollege2" class="block text-sm font-medium text-gray-700 mb-1">Institution / Board</label>
+                                    <input asp-for="PreviousSchoolCollege2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="PreviousBoard2" class="block text-sm font-medium text-gray-700 mb-1">Board / University</label>
+                                    <input asp-for="PreviousBoard2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousSymbolNumber2" class="block text-sm font-medium text-gray-700 mb-1">Symbol No</label>
+                                    <input asp-for="PreviousSymbolNumber2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="PreviousPassedYear2" class="block text-sm font-medium text-gray-700 mb-1">Passed Year</label>
+                                    <input asp-for="PreviousPassedYear2" placeholder="e.g. 2080" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousGPA2" class="block text-sm font-medium text-gray-700 mb-1">Percentage / CGPA</label>
+                                    <input asp-for="PreviousGPA2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousDivision2" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
+                                    <select asp-for="PreviousDivision2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select</option>
+                                        <option value="Distinction">Distinction</option>
+                                        <option value="First">First Division</option>
+                                        <option value="Second">Second Division</option>
+                                        <option value="Third">Third Division</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Qualification 3 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Additional Qualification (if any)</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label asp-for="PreviousLevel3Id" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination</label>
+                                    <select asp-for="PreviousLevel3Id" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select Level</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousSchoolCollege3" class="block text-sm font-medium text-gray-700 mb-1">Institution / Board</label>
+                                    <input asp-for="PreviousSchoolCollege3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="PreviousBoard3" class="block text-sm font-medium text-gray-700 mb-1">Board / University</label>
+                                    <input asp-for="PreviousBoard3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousSymbolNumber3" class="block text-sm font-medium text-gray-700 mb-1">Symbol No</label>
+                                    <input asp-for="PreviousSymbolNumber3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
+                                <div>
+                                    <label asp-for="PreviousPassedYear3" class="block text-sm font-medium text-gray-700 mb-1">Passed Year</label>
+                                    <input asp-for="PreviousPassedYear3" placeholder="e.g. 2080" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousGPA3" class="block text-sm font-medium text-gray-700 mb-1">Percentage / CGPA</label>
+                                    <input asp-for="PreviousGPA3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                </div>
+                                <div>
+                                    <label asp-for="PreviousDivision3" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
+                                    <select asp-for="PreviousDivision3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                        <option value="">Select</option>
+                                        <option value="Distinction">Distinction</option>
+                                        <option value="First">First Division</option>
+                                        <option value="Second">Second Division</option>
+                                        <option value="Third">Third Division</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 5: Documents & Submit ===== -->
+                <div class="step-content hidden" id="step5">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                        <h2 class="text-lg font-semibold text-white">Step 5: Documents & Review</h2>
+                        <p class="text-teal-100 text-sm">Upload required documents and review your application</p>
+                    </div>
+                    <div class="px-6 py-6 space-y-5">
+
+                        <!-- Documents Section -->
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Documents: Applicants should make a single copy of self-attested documents like Transcript, Character Certificate, Transfer Certificate (Bachelors and Masters) and Citizenship.
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Passport Size Photo</label>
+                                <input type="file" name="PhotoFile" accept=".jpg,.jpeg,.png" id="PhotoFile"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <p class="text-xs text-gray-400 mt-1">Format: .jpg, .jpeg, .png (max 5MB)</p>
+                                <p id="PhotoFileError" class="text-xs text-red-500 mt-1 hidden"></p>
+                                @if (!string.IsNullOrEmpty(Model.PhotoPath))
+                                {
+                                    <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing photo kept. Upload new to replace.</p>
+                                }
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Documents (Transcript, Character, TC, Citizenship)</label>
+                                <input type="file" name="DocumentsFile" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple id="DocumentsFile"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <p class="text-xs text-gray-400 mt-1">Format: .pdf, .jpg, .png, .doc, .docx (max 5MB)</p>
+                                <p id="DocumentsFileError" class="text-xs text-red-500 mt-1 hidden"></p>
+                                @if (!string.IsNullOrEmpty(Model.DocumentsPath))
+                                {
+                                    <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing documents kept. Upload new to replace.</p>
+                                }
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Bank Voucher</label>
+                                <input type="file" name="VoucherFile" accept=".pdf,.jpg,.jpeg,.doc,.docx" id="VoucherFile"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <p class="text-xs text-gray-400 mt-1">File name should be Student Name with Symbol No. Format: .pdf, .jpg, .doc (max 5MB)</p>
+                                <p id="VoucherFileError" class="text-xs text-red-500 mt-1 hidden"></p>
+                                @if (!string.IsNullOrEmpty(Model.VoucherPath))
+                                {
+                                    <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing voucher kept. Upload new to replace.</p>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Review Summary -->
+                        <div class="border-t border-gray-100 pt-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">Review Your Application</h3>
+                            <div class="bg-gray-50 rounded-lg p-4 text-sm space-y-2" id="reviewSummary">
+                                <p class="text-gray-400 italic">Fill in your details in previous steps to see the summary here.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-teal-50 border border-teal-200 rounded-lg px-4 py-3">
+                            <label class="flex items-start gap-3">
+                                <input type="checkbox" id="agreeCheck" class="mt-0.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                <span class="text-sm text-gray-600">
+                                    I hereby declare that all the information provided above is true and correct to the best of my knowledge. I understand that any false information may lead to disqualification.
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                    <div>
+                        <button type="button" id="prevBtn" class="hidden inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition">
+                            <i class="fas fa-arrow-left text-xs"></i> Previous
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a asp-area="" asp-controller="Home" asp-action="Index" class="text-sm text-gray-500 hover:text-gray-700 transition">Cancel</a>
+                        <button type="button" id="nextBtn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition shadow-sm">
+                            Next <i class="fas fa-arrow-right text-xs"></i>
+                        </button>
+                        <button type="submit" id="submitBtn" class="hidden inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-sm font-semibold rounded-lg hover:from-teal-700 hover:to-cyan-700 transition shadow-md">
+                            <i class="fas fa-paper-plane text-xs"></i> @(isEditing ? "Update Application" : "Submit Application")
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(function () {
+            var currentStep = 1;
+            var totalSteps = 5;
+
+            // Get existing address data for pre-population
+            var addrData = $('#existingAddressData');
+            var existingProvinceId = addrData.length ? parseInt(addrData.data('province-id')) : 0;
+            var existingDistrictId = addrData.length ? parseInt(addrData.data('district-id')) : 0;
+            var existingLocalLevelId = addrData.length ? parseInt(addrData.data('local-level-id')) : 0;
+
+            function updateStep(step) {
+                currentStep = step;
+                $('.step-content').addClass('hidden');
+                $('#step' + step).removeClass('hidden');
+
+                $('.step-indicator').each(function () {
+                    var s = parseInt($(this).data('step'));
+                    var circle = $(this).find('div:first');
+                    var label = $(this).find('span');
+                    if (s < step) {
+                        circle.removeClass('bg-teal-600 bg-gray-200').addClass('bg-teal-600');
+                        label.removeClass('text-teal-600 text-gray-400').addClass('text-teal-600');
+                    } else if (s === step) {
+                        circle.removeClass('bg-teal-600 bg-gray-200').addClass('bg-teal-600');
+                        label.removeClass('text-teal-600 text-gray-400').addClass('text-teal-600');
+                    } else {
+                        circle.removeClass('bg-teal-600 bg-gray-200').addClass('bg-gray-200');
+                        label.removeClass('text-teal-600 text-gray-400').addClass('text-gray-400');
+                    }
+                });
+
+                $('.step-line').each(function () {
+                    var s = parseInt($(this).data('step'));
+                    if (s < step) {
+                        $(this).removeClass('bg-gray-200').addClass('bg-teal-500');
+                    } else {
+                        $(this).removeClass('bg-teal-500').addClass('bg-gray-200');
+                    }
+                });
+
+                $('#prevBtn').toggleClass('hidden', step === 1);
+                $('#nextBtn').toggleClass('hidden', step === totalSteps);
+                $('#submitBtn').toggleClass('hidden', step !== totalSteps);
+            }
+
+            function validateStep(step) {
+                if (step === 2) {
+                    var fn = $('#FirstName').val();
+                    var ln = $('#LastName').val();
+                    var g = $('#GenderId').val();
+                    var dob = $('#DateOfBirthBS').val();
+                    var em = $('#Email').val();
+                    var mob = $('#ContactNumber').val();
+                    if (!fn || !ln || !g || !dob || !em || !mob) {
+                        alert('Please fill in all required fields (First Name, Last Name, Gender, Date of Birth, Email, Mobile No).');
+                        return false;
+                    }
+                }
+                if (step === 3) {
+                    if (!$('#WardNumber').val()) {
+                        alert('Please enter Ward Number.');
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function updateReviewSummary() {
+                var progText = $('.program-display-text').length
+                    ? $('.program-display-text').text()
+                    : ($('input[name="ProgramId"]').val() || '-');
+                var html = '<table class="w-full text-sm">';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Name:</td><td class="py-1 text-gray-800">' +
+                    ($('#FirstName').val() || '') + ' ' + ($('#MiddleName').val() || '') + ' ' + ($('#LastName').val() || '') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Email:</td><td class="py-1 text-gray-800">' + ($('#Email').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Mobile:</td><td class="py-1 text-gray-800">' + ($('#ContactNumber').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Gender:</td><td class="py-1 text-gray-800">' + ($('#GenderId option:selected').text() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Date of Birth (BS):</td><td class="py-1 text-gray-800">' + ($('#DateOfBirthBS').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Father\'s Name:</td><td class="py-1 text-gray-800">' + ($('#FatherName').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Program:</td><td class="py-1 text-gray-800">' + progText + '</td></tr>';
+                html += '</table>';
+                $('#reviewSummary').html(html);
+            }
+
+            // File validation
+            function validateFile(input, allowedExts, maxSizeMB, errorEl) {
+                if (!input.files.length) return true;
+                var file = input.files[0];
+                var ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (allowedExts.indexOf(ext) === -1) {
+                    $(errorEl).text('Invalid file type. Allowed: ' + allowedExts.join(', ')).removeClass('hidden');
+                    return false;
+                }
+                if (file.size > maxSizeMB * 1024 * 1024) {
+                    $(errorEl).text('File must be less than ' + maxSizeMB + 'MB.').removeClass('hidden');
+                    return false;
+                }
+                $(errorEl).addClass('hidden');
+                return true;
+            }
+
+            $('#PhotoFile').change(function () {
+                validateFile(this, ['.jpg', '.jpeg', '.png'], 5, '#PhotoFileError');
+            });
+            $('#DocumentsFile').change(function () {
+                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError');
+            });
+            $('#VoucherFile').change(function () {
+                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError');
+            });
+
+            $('#nextBtn').click(function () {
+                if (!validateStep(currentStep)) return;
+                if (currentStep === 4) updateReviewSummary();
+                if (currentStep < totalSteps) updateStep(currentStep + 1);
+            });
+
+            $('#prevBtn').click(function () {
+                if (currentStep > 1) updateStep(currentStep - 1);
+            });
+
+            $('#submitBtn').click(function (e) {
+                if (!$('#agreeCheck').is(':checked')) {
+                    e.preventDefault();
+                    alert('Please agree to the declaration before submitting.');
+                    return;
+                }
+                // Validate files before submit
+                var ok = true;
+                if ($('#PhotoFile')[0].files.length) {
+                    ok = validateFile($('#PhotoFile')[0], ['.jpg', '.jpeg', '.png'], 5, '#PhotoFileError') && ok;
+                }
+                if ($('#DocumentsFile')[0].files.length) {
+                    ok = validateFile($('#DocumentsFile')[0], ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError') && ok;
+                }
+                if ($('#VoucherFile')[0].files.length) {
+                    ok = validateFile($('#VoucherFile')[0], ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError') && ok;
+                }
+                if (!ok) {
+                    e.preventDefault();
+                    alert('Please fix file upload errors before submitting.');
+                }
+            });
+
+            // Province/District/LocalLevel cascading
+            function loadProvinces(callback) {
+                $.get(tenantUrl("/Exams/Entrance/GetProvinces"), function (data) {
+                    var ps = $("#ProvinceId");
+                    ps.empty();
+                    ps.append('<option value="">Select Province</option>');
+                    $.each(data, function (i, item) {
+                        ps.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                    if (callback) callback();
+                });
+            }
+
+            function loadDistricts(provinceId, callback) {
+                $("#DistrictId").html('<option>Loading...</option>');
+                $("#LocalLevelId").html('<option>Select Local Level</option>');
+                $.get(tenantUrl("/Exams/Entrance/GetDistrictsByProvince"),
+                    { provinceId: provinceId },
+                    function (data) {
+                        var dd = $("#DistrictId");
+                        dd.empty();
+                        dd.append('<option value="">Select District</option>');
+                        $.each(data, function (i, item) {
+                            dd.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                        if (callback) callback();
+                    });
+            }
+
+            function loadLocalLevels(districtId, callback) {
+                $("#LocalLevelId").html('<option>Loading...</option>');
+                $.get(tenantUrl("/Exams/Entrance/GetLocalLevelsByDistrict"),
+                    { districtId: districtId },
+                    function (data) {
+                        var ll = $("#LocalLevelId");
+                        ll.empty();
+                        ll.append('<option value="">Select Local Level</option>');
+                        $.each(data, function (i, item) {
+                            ll.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        });
+                        if (callback) callback();
+                    });
+            }
+
+            // Pre-populate address cascading if editing
+            function initAddressCascading() {
+                loadProvinces(function () {
+                    if (existingProvinceId) {
+                        $("#ProvinceId").val(existingProvinceId);
+                        loadDistricts(existingProvinceId, function () {
+                            if (existingDistrictId) {
+                                $("#DistrictId").val(existingDistrictId);
+                                loadLocalLevels(existingDistrictId, function () {
+                                    if (existingLocalLevelId) {
+                                        $("#LocalLevelId").val(existingLocalLevelId);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+
+            $("#ProvinceId").change(function () {
+                var provinceId = $(this).val();
+                if (provinceId) {
+                    loadDistricts(provinceId);
+                } else {
+                    $("#DistrictId").html('<option value="">Select District</option>');
+                    $("#LocalLevelId").html('<option value="">Select Local Level</option>');
+                }
+            });
+
+            $("#DistrictId").change(function () {
+                var districtId = $(this).val();
+                if (districtId) {
+                    loadLocalLevels(districtId);
+                } else {
+                    $("#LocalLevelId").html('<option value="">Select Local Level</option>');
+                }
+            });
+
+            // Check schedule status on page load using hidden input values
+            function checkFormStatus() {
+                var programId = $('input[name="ProgramId"]').val();
+                var collegeId = $('input[name="CollegeId"]').val();
+                var academicYearId = $('input[name="AcademicYearId"]').val();
+
+                if (programId && collegeId && academicYearId) {
+                    $.get(tenantUrl("/Exams/Entrance/CheckFormStatus"),
+                        {
+                            programId: programId,
+                            collegeId: collegeId,
+                            academicYearId: academicYearId
+                        },
+                        function (result) {
+                            if (result.isOpen) {
+                                $("#scheduleWarning").addClass("hidden");
+                                if (result.fee) {
+                                    $("#feeAmount").text(parseFloat(result.fee).toFixed(2));
+                                    $("#feeInfo").removeClass("hidden");
+                                }
+                            } else {
+                                $("#scheduleWarningText").text("The entrance application form is not currently open for this program.");
+                                $("#scheduleWarning").removeClass("hidden");
+                                $("#feeInfo").addClass("hidden");
+                            }
+                        });
+                } else {
+                    $("#scheduleWarning").addClass("hidden");
+                    $("#feeInfo").addClass("hidden");
+                }
+            }
+
+            // Init
+            checkFormStatus();
+            initAddressCascading();
+        });
+    </script>
+}

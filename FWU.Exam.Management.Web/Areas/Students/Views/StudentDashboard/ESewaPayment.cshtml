@@ -1,0 +1,40 @@
+@model FWU.Exam.Management.Application.Interfaces.ESewaPaymentFormData
+
+@{
+    ViewData["Title"] = "Redirecting to eSewa";
+}
+
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-10 max-w-md w-full text-center">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+            <i class="fas fa-spinner fa-spin text-3xl sm:text-4xl text-green-600"></i>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Redirecting to eSewa</h2>
+        <p class="text-sm sm:text-base text-gray-500 mb-4">Please wait while we redirect you to eSewa's secure payment page...</p>
+        <p class="text-sm text-gray-400 bg-gray-50 rounded-xl p-3 sm:p-4">
+            Total Amount: <strong class="text-gray-800">Rs @Model.TotalAmount</strong>
+        </p>
+
+        <form id="esewaForm" action="@Model.PostUrl" method="POST" class="hidden">
+            <input type="text" name="amount" value="@Model.Amount" />
+            <input type="text" name="tax_amount" value="@Model.TaxAmount" />
+            <input type="text" name="total_amount" value="@Model.TotalAmount" />
+            <input type="text" name="transaction_uuid" value="@Model.TransactionUuid" />
+            <input type="text" name="product_code" value="@Model.ProductCode" />
+            <input type="text" name="product_service_charge" value="@Model.ProductServiceCharge" />
+            <input type="text" name="product_delivery_charge" value="@Model.ProductDeliveryCharge" />
+            <input type="text" name="success_url" value="@Model.SuccessUrl" />
+            <input type="text" name="failure_url" value="@Model.FailureUrl" />
+            <input type="text" name="signed_field_names" value="@Model.SignedFieldNames" />
+            <input type="text" name="signature" value="@Model.Signature" />
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('esewaForm').submit();
+        });
+    </script>
+}
