@@ -3,14 +3,17 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public static class EmailTemplateHelper
 {
     public static string? LogoUrl { get; set; }
-    public static string? LogoBase64 { get; set; }
 
     private static string LogoImg()
     {
-        var src = LogoBase64 ?? LogoUrl;
-        return string.IsNullOrEmpty(src)
-            ? ""
-            : $@"<img src=""{src}"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
+        if (!string.IsNullOrEmpty(LogoUrl))
+        //    var logoUrl = LogoUrl.Trim();
+            return $@"<img src=""http://localhost:5211/images/fwu-logo.jpg"" alt=""Far-Western University"" style=""max-width:140px;height:auto;display:block;margin:0 auto 10px;border-radius:8px;"" class=""logo-img"" onerror=""this.style.display='none'"" />";
+
+        return @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""140"" height=""50"" viewBox=""0 0 140 50"" style=""display:block;margin:0 auto 10px;"">
+            <rect width=""140"" height=""50"" rx=""8"" fill=""rgba(255,255,255,0.15)""/>
+            <text x=""70"" y=""30"" text-anchor=""middle"" fill=""#ffffff"" font-size=""20"" font-weight=""bold"" font-family=""'Segoe UI',sans-serif"">FWU</text>
+        </svg>";
     }
 
     private static string Layout(string title, string content) => $@"

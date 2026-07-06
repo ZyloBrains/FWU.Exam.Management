@@ -153,14 +153,6 @@ public partial class EntryPoint
 
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
 
-        var logoPath = Path.Combine(builder.Environment.WebRootPath, "images", "fwu-logo.jpg");
-        if (File.Exists(logoPath))
-        {
-            var bytes = File.ReadAllBytes(logoPath);
-            var mime = "image/jpeg";
-            EmailTemplateHelper.LogoBase64 = $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
-        }
-
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
