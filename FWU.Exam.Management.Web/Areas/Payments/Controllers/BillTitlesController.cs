@@ -152,7 +152,7 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
-        var programs = await billTitleService.GetProgramsAsync();
+        var programs = await billTitleService.GetProgramsAsync(facultyId);
         ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName");
         return View();
     }
@@ -170,7 +170,7 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
-        var programs = await billTitleService.GetProgramsAsync();
+        var programs = await billTitleService.GetProgramsAsync(facultyId);
         ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
@@ -186,6 +186,8 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
+        var programList = await billTitleService.GetProgramsAsync(facultyId);
+        ViewData["ProgramsId"] = new SelectList(programList, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }
 
@@ -213,7 +215,7 @@ public class BillTitlesController(
         var (collegeId, facultyId) = await GetScopeAsync();
         var examSchedules = await billTitleService.GetExamSchedulesAsync(collegeId, facultyId);
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", billTitle.ExamScheduleId);
-        var programs = await billTitleService.GetProgramsAsync();
+        var programs = await billTitleService.GetProgramsAsync(facultyId);
         ViewData["ProgramsId"] = new SelectList(programs, "Id", "ProgramName", billTitle.ProgramsId);
         return View(billTitle);
     }

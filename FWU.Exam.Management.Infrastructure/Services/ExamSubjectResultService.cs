@@ -108,12 +108,30 @@ public class ExamSubjectResultService(AppDbContext context) : IExamSubjectResult
         return await context.ExamSubjectResults.AnyAsync(e => e.Id == id);
     }
 
-    public ExamSubjectResultSelectListsDto GetSelectListData(ExamSubjectResult? examSubjectResult = null)
+    public ExamSubjectResultSelectListsDto GetSelectListData(ExamSubjectResult? examSubjectResult = null, int? collegeId = null, int? facultyId = null)
     {
-        var examRegistrations = context.ExamRegistrations.AsNoTracking().ToList();
+        var examRegistrationsQuery = context.ExamRegistrations.AsNoTracking();
+        if (collegeId.HasValue)
+            examRegistrationsQuery = examRegistrationsQuery.Where(er => er.CollegeId == collegeId.Value);
+        if (facultyId.HasValue)
+            examRegistrationsQuery = examRegistrationsQuery.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.Department != null && er.ExamSchedule.Program.Department.FacultyId == facultyId.Value);
+        var examRegistrations = examRegistrationsQuery.ToList();
+
         var subjectOfferings = context.SubjectOfferings.AsNoTracking().ToList();
         var examTypes = context.ExamTypes.AsNoTracking().ToList();
-        var examSchedules = context.ExamSchedules.AsNoTracking().ToList();
+
+        var examSchedulesQuery = context.ExamSchedules.AsNoTracking();
+        if (collegeId.HasValue)
+        {
+            var collegeProgramIds = context.CollegePrograms.AsNoTracking()
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .ToList();
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && collegeProgramIds.Contains(es.Program.Id));
+        }
+        if (facultyId.HasValue)
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
+        var examSchedules = examSchedulesQuery.ToList();
 
         return new ExamSubjectResultSelectListsDto
         {

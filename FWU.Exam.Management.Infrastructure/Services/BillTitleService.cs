@@ -154,9 +154,20 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         return await query.ToListAsync();
     }
 
-    public async Task<List<Domain.Entities.Program>> GetProgramsAsync()
+    public async Task<List<Domain.Entities.Program>> GetProgramsAsync(int? collegeId = null, int? facultyId = null)
     {
-        return await context.Programs.AsNoTracking().ToListAsync();
+        var query = context.Programs.AsNoTracking();
+        if (collegeId.HasValue)
+        {
+            var collegeProgramIds = await context.CollegePrograms.AsNoTracking()
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .ToListAsync();
+            query = query.Where(p => collegeProgramIds.Contains(p.Id));
+        }
+        if (facultyId.HasValue)
+            query = query.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        return await query.ToListAsync();
     }
 
     private static Expression<Func<BillTitle, object>> GetSortProperty(string sort)

@@ -57,9 +57,10 @@ public class ExamRegistrationsController(
     }
 
     [RequirePermission("examregistration.create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        var selectLists = examRegistrationService.GetSelectListData();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var selectLists = examRegistrationService.GetSelectListData(facultyId: facultyId);
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -78,7 +79,8 @@ public class ExamRegistrationsController(
             await examRegistrationService.CreateExamRegistrationAsync(examRegistration);
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examRegistrationService.GetSelectListData();
+        var (createCollegeId, createFacultyId) = await GetScopeAsync();
+        var selectLists = examRegistrationService.GetSelectListData(examRegistration, createFacultyId);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -91,7 +93,8 @@ public class ExamRegistrationsController(
         var examRegistration = await examRegistrationService.GetExamRegistrationByIdAsync(id.Value);
         if (examRegistration == null) return NotFound();
 
-        var selectLists = examRegistrationService.GetSelectListData();
+        var (collegeId, facultyId) = await GetScopeAsync();
+        var selectLists = examRegistrationService.GetSelectListData(examRegistration, facultyId);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -121,7 +124,7 @@ public class ExamRegistrationsController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examRegistrationService.GetSelectListData();
+        var selectLists = examRegistrationService.GetSelectListData(examRegistration, facultyId);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }

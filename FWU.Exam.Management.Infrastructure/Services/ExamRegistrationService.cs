@@ -161,13 +161,44 @@ public class ExamRegistrationService(AppDbContext context) : IExamRegistrationSe
         }
     }
 
-    public ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null)
+    public ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null, int? collegeId = null, int? facultyId = null)
     {
-        var examSchedules = context.ExamSchedules.AsNoTracking().ToList();
-        var colleges = context.Colleges.AsNoTracking().ToList();
+        var examSchedulesQuery = context.ExamSchedules.AsNoTracking();
+        if (facultyId.HasValue)
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
+        var examSchedules = examSchedulesQuery.ToList();
+
+        var collegesQuery = context.Colleges.AsNoTracking();
+        if (collegeId.HasValue)
+            collegesQuery = collegesQuery.Where(c => c.Id == collegeId.Value);
+        var colleges = collegesQuery.ToList();
+
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
-        var programs = context.Programs.AsNoTracking().ToList();
-        var examCenters = context.ExamCenters.AsNoTracking().ToList();
+
+        var programsQuery = context.Programs.AsNoTracking();
+        if (collegeId.HasValue)
+        {
+            var collegeProgramIds = context.CollegePrograms.AsNoTracking()
+                .Where(cp => cp.CollegeId == collegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .ToList();
+            programsQuery = programsQuery.Where(p => collegeProgramIds.Contains(p.Id));
+        }
+        if (facultyId.HasValue)
+            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        var programs = programsQuery.ToList();
+
+        var examCentersQuery = context.ExamCenters.AsNoTracking();
+        if (collegeId.HasValue)
+        {
+            var examCenterIds = context.ExamCenterVenues.AsNoTracking()
+                .Where(ecv => ecv.CollegeId == collegeId.Value)
+                .Select(ecv => ecv.ExamCenterId)
+                .Distinct()
+                .ToList();
+            examCentersQuery = examCentersQuery.Where(ec => examCenterIds.Contains(ec.Id));
+        }
+        var examCenters = examCentersQuery.ToList();
 
         return new ExamRegistrationSelectListsDto
         {

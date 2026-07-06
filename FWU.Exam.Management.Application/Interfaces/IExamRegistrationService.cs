@@ -16,5 +16,5 @@ public interface IExamRegistrationService
     Task<bool> ExamRegistrationExistsAsync(int id);
     Task VerifyExamRegistrationAsync(int id);
     Task ApproveExamRegistrationAsync(int id);
-    ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null);
+    ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null, int? collegeId = null, int? facultyId = null);
 }

@@ -144,7 +144,10 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             DisplayName = $"{a.CollegeRollNumber} - {a.Program?.ProgramName} ({a.College?.Name})"
         }), "Id", "DisplayName", enrollment.StudentAdmissionId);
 
-        var semesters = await context.Semesters.AsNoTracking().ToListAsync();
+        var admission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
+        var semesters = admission != null
+            ? await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId)
+            : await context.Semesters.AsNoTracking().ToListAsync();
         ViewBag.SemesterId = new SelectList(semesters, "Id", "Name", enrollment.SemesterId);
         ViewBag.EnrollmentStatusList = new SelectList(Enum.GetValues<StudentEnrollmentStatus>(), enrollment.EnrollmentStatus);
         ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);
