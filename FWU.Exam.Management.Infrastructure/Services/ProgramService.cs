@@ -10,7 +10,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ProgramService(AppDbContext context) : IProgramService
 {
-    public async Task<(List<Program> Items, int TotalCount)> GetProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<Program> Items, int TotalCount)> GetProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.Programs
             .Include(p => p.Board)
@@ -30,6 +30,11 @@ public class ProgramService(AppDbContext context) : IProgramService
                 (p.Board != null && p.Board.BoardName.Contains(search)));
         }
 
+        if (facultyId.HasValue)
+        {
+            query = query.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        }
+
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
             : query.OrderBy(GetSortProperty(sort));
@@ -43,7 +48,7 @@ public class ProgramService(AppDbContext context) : IProgramService
         return (items, totalCount);
     }
 
-    public async Task<List<Program>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<List<Program>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.Programs
             .Include(p => p.Board)
@@ -61,6 +66,11 @@ public class ProgramService(AppDbContext context) : IProgramService
                 (p.Level != null && p.Level.LevelName.Contains(search)) ||
                 (p.Department != null && p.Department.DepartmentCode.Contains(search)) ||
                 (p.Board != null && p.Board.BoardName.Contains(search)));
+        }
+
+        if (facultyId.HasValue)
+        {
+            query = query.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"
@@ -106,10 +116,12 @@ public class ProgramService(AppDbContext context) : IProgramService
         return await context.Programs.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<Board> Boards, List<Department> Departments, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? departmentId = null, int? levelId = null)
+    public async Task<(List<Board> Boards, List<Department> Departments, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? departmentId = null, int? levelId = null, int? facultyId = null)
     {
         var boards = await context.Boards.AsNoTracking().ToListAsync();
-        var departments = await context.Departments.AsNoTracking().ToListAsync();
+        var departments = facultyId.HasValue
+            ? await context.Departments.Where(d => d.FacultyId == facultyId.Value).AsNoTracking().ToListAsync()
+            : await context.Departments.AsNoTracking().ToListAsync();
         var levels = await context.Levels.AsNoTracking().ToListAsync();
 
         return (boards, departments, levels);

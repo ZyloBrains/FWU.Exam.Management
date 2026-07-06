@@ -2,6 +2,9 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +16,22 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("programs.view")]
-public class ProgramsController(IProgramService programService) : Controller
+public class ProgramsController(IProgramService programService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
+    private async Task<int?> GetCurrentUserFacultyIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.FacultyId;
+    }
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = null;
+        if (User.IsInRole(Role.FacultyAdmin))
+        {
+            facultyId = await GetCurrentUserFacultyIdAsync();
+        }
+
+        var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -40,7 +54,8 @@ public class ProgramsController(IProgramService programService) : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
-        var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         var sb = new StringBuilder();
         sb.AppendLine("Program Code,Program Name,Short Name,Level,Faculty,Board,Program Period Type,Duration,Grand Total Marks,Has Multiple Intakes,Number of Seats,Scholarship Seats,Roll Number Prefix,Remarks,Status");
@@ -70,7 +85,8 @@ public class ProgramsController(IProgramService programService) : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
-        var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -85,7 +101,8 @@ public class ProgramsController(IProgramService programService) : Controller
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
-        var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Programs");
@@ -142,7 +159,8 @@ public class ProgramsController(IProgramService programService) : Controller
     [RequirePermission("programs.create")]
     public async Task<IActionResult> Create()
     {
-        var (boards, departments, levels) = await programService.GetSelectListsAsync();
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(facultyId: facultyId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName");
         ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode");
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName");
@@ -160,7 +178,8 @@ public class ProgramsController(IProgramService programService) : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId, facultyId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
         ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
@@ -175,7 +194,8 @@ public class ProgramsController(IProgramService programService) : Controller
         var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
-        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId, facultyId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
         ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
@@ -204,7 +224,8 @@ public class ProgramsController(IProgramService programService) : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId, facultyId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
         ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
