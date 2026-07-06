@@ -40,4 +40,6 @@ public interface IEntranceExamApplicationService
     Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId);
     Task<ApplicationVoucher?> GetVoucherByIdAsync(int voucherId);
     Task<List<PaymentType>> GetActivePaymentTypesAsync();
+    Task<string?> GetPaymentTypeNameByIdAsync(int paymentTypeId);
+    Task<List<SelectOption>> GetCollegesByProgramAsync(int programId);
 }
