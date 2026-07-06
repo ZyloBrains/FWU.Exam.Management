@@ -83,8 +83,8 @@
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Roll Number</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.ExamRegistration.ExamRollNumber ?? "-")</p>
+                    <label class="block text-sm font-medium text-gray-500">Registration Number</label>
+                    <p class="mt-1 text-sm text-gray-900">@(Model.StudentRegistration?.RegistrationNumber ?? "-")</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-500">College</label>

@@ -97,8 +97,12 @@
             @if (Model.ExamRegistration != null)
             {
                 <tr>
-                    <td>Roll Number</td>
-                    <td>@(Model.ExamRegistration.ExamRollNumber ?? "-")</td>
+                    <td>Symbol Number</td>
+                    <td>@(Model.ExamRegistration.SymbolNumber ?? "-")</td>
+                </tr>
+                <tr>
+                    <td>Registration Number</td>
+                    <td>@(Model.StudentRegistration?.RegistrationNumber ?? "-")</td>
                 </tr>
                 <tr>
                     <td>Program</td>
@@ -107,6 +111,10 @@
                 <tr>
                     <td>College</td>
                     <td>@(Model.ExamRegistration.College?.Name ?? "-")</td>
+                </tr>
+                <tr>
+                    <td>Exam Center</td>
+                    <td>@(Model.ExamRegistration.ExamCenter?.College?.Name ?? Model.ExamRegistration.ExamCenter?.Code ?? "-")</td>
                 </tr>
             }
             <tr>

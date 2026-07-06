@@ -20,7 +20,7 @@ public class HomeController : Controller
             return Redirect($"/tenant/{tenantCode}/Identity/Account/Login");
         }
 
-        return Redirect("/TenantSelect/Index");
+        return Redirect("/Identity/Account/Login");
     }
 
     public IActionResult Privacy()

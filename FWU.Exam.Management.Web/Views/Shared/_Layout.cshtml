@@ -19,6 +19,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
     
     <script>
         tailwind.config = {
@@ -103,7 +104,7 @@
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
         var roleLabel = "Guest";
-        var sidebarLogoPath = "~/images/placeholder-logo.svg";
+        var sidebarLogoPath = "~/images/oce.png";
         var orgName = "";
 
         var tenantCode = Context.Items["TenantCode"] as string;
@@ -134,11 +135,6 @@
                     sidebarLogoPath = faculty.LogoPath;
                 }
             }
-        }
-
-        if (sidebarLogoPath == "~/images/placeholder-logo.svg" && User.IsInRole("SuperAdmin"))
-        {
-            sidebarLogoPath = "~/images/oce.png";
         }
 
         if (appUser != null)

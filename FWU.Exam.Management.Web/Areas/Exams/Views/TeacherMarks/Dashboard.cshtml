@@ -1,0 +1,110 @@
+@model TeacherDashboardDto
+
+@{
+    ViewData["Title"] = "Teacher Dashboard";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-chalkboard-teacher text-teal-600"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-800">My Subjects</h1>
+    </div>
+
+    @if (!Model.AssignedSubjects.Any())
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <i class="fas fa-book-open text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900">No Subjects Assigned</h3>
+            <p class="text-sm text-gray-500 mt-1">You have not been assigned any subjects yet. Contact your college admin.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var subject in Model.AssignedSubjects)
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">@subject.SubjectName</h3>
+                            <p class="text-xs text-gray-500 mt-0.5">@subject.SubjectCode</p>
+                        </div>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">@subject.SemesterName</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-3">@subject.ProgramName</div>
+                    <div class="flex items-center justify-between text-sm border-t border-gray-100 pt-3">
+                        <div>
+                            <span class="text-gray-500">Registered: </span>
+                            <span class="font-semibold text-gray-800">@subject.RegisteredStudentCount</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Entered: </span>
+                            <span class="font-semibold text-gray-800">@subject.MarksEnteredCount</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <a asp-action="MarksEntry" asp-route-subjectOfferingId="@subject.SubjectOfferingId" asp-route-examScheduleId="0"
+                           data-action="standard" data-subject-offering-id="@subject.SubjectOfferingId" data-exam-schedule-id="0"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">
+                            <i class="fas fa-list"></i> Standard
+                        </a>
+                        <a asp-action="Import" asp-route-subjectOfferingId="@subject.SubjectOfferingId" asp-route-examScheduleId="0"
+                           data-action="import" data-subject-offering-id="@subject.SubjectOfferingId" data-exam-schedule-id="0"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-upload"></i> Import Excel
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function navigateWithSchedule(action, subjectOfferingId, examScheduleId) {
+            if (examScheduleId === '0') {
+                var url = '@Url.Action("GetAssignedSchedules", "TeacherMarks")' + '?subjectOfferingId=' + subjectOfferingId;
+                fetch(url)
+                    .then(function(r) { return r.json(); })
+                    .then(function(schedules) {
+                        if (schedules.length === 0) {
+                            alert('No exam schedules available for this subject.');
+                            return;
+                        }
+                        if (schedules.length === 1) {
+                            window.location.href = action + '?subjectOfferingId=' + subjectOfferingId + '&examScheduleId=' + schedules[0].value;
+                        } else {
+                            var msg = schedules.map(function(s) { return s.value + ' - ' + s.text; }).join('\n');
+                            var scheduleId = prompt('Available Exam Schedules:\n' + msg + '\n\nEnter Exam Schedule ID:');
+                            if (scheduleId && parseInt(scheduleId) > 0) {
+                                window.location.href = action + '?subjectOfferingId=' + subjectOfferingId + '&examScheduleId=' + scheduleId;
+                            }
+                        }
+                    });
+            } else {
+                window.location.href = action + '?subjectOfferingId=' + subjectOfferingId + '&examScheduleId=' + examScheduleId;
+            }
+        }
+
+        document.querySelectorAll('a[data-action="standard"]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                navigateWithSchedule('@Url.Action("MarksEntry", "TeacherMarks")',
+                    this.getAttribute('data-subject-offering-id'),
+                    this.getAttribute('data-exam-schedule-id'));
+            });
+        });
+
+        document.querySelectorAll('a[data-action="import"]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                navigateWithSchedule('@Url.Action("Import", "TeacherMarks")',
+                    this.getAttribute('data-subject-offering-id'),
+                    this.getAttribute('data-exam-schedule-id'));
+            });
+        });
+    </script>
+}

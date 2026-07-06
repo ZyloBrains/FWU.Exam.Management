@@ -144,7 +144,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<IResultRecordService, ResultRecordService>();
         builder.Services.AddScoped<IExamCenterService, ExamCenterService>();
         builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
+        builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
         builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
+        builder.Services.AddScoped<ITeacherSubjectAssignmentService, TeacherSubjectAssignmentService>();
+        builder.Services.AddScoped<ITeacherMarksService, TeacherMarksService>();
+        builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -197,6 +201,10 @@ public partial class EntryPoint
 
             // Full test data (clears and re-seeds transactional + reference data)
             await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
+
+            // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
+            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
 
             // Location data (seeded after WorkflowTestDataSeeder which clears it)
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);

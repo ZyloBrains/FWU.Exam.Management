@@ -642,7 +642,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.AcademicYearId = academicYearId;
 
         var selectLists = await service.GetSelectListsAsync();
-        ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "Name", programId);
+        ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "ProgramName", programId);
         ViewBag.AcademicYearIdList = new SelectList(selectLists.AcademicYears, "Id", "Name", academicYearId);
 
         return View(items);
@@ -894,7 +894,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)
     {
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", model?.ProgramId);
+        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "ProgramName", model?.ProgramId);
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", model?.AcademicYearId);
     }
 
@@ -905,7 +905,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.Districts = new SelectList(selectLists.Districts, "Id", "Name");
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name");
         ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name");
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name");
+        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "ProgramName");
         ViewBag.GenderId = new SelectList(selectLists.Genders, "Id", "Name");
         ViewBag.PreviousLevelId = new SelectList(selectLists.PreviousLevels, "Id", "Name");
         ViewBag.CitizenshipDistrictId = new SelectList(selectLists.Districts, "Id", "Name");
