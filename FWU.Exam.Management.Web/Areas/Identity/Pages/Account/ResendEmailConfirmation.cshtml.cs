@@ -53,27 +53,42 @@ public class ResendEmailConfirmationModel(UserManager<AppUser> userManager, IEma
             return Page();
         }
 
-        var user = await userManager.FindByEmailAsync(Input.Email);
-        if (user == null)
+        try
         {
-            ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
+            var user = await userManager.FindByEmailAsync(Input.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "No account found with this email address.");
+                return Page();
+            }
+
+            if (await userManager.IsEmailConfirmedAsync(user))
+            {
+                ModelState.AddModelError(string.Empty, "Email is already confirmed.");
+                return Page();
+            }
+
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Page(
+                "/Account/ConfirmEmail",
+                pageHandler: null,
+                values: new { userId = userId, code = code },
+                protocol: Request.Scheme);
+
+            await emailSender.SendEmailAsync(
+                Input.Email,
+                "Confirm your email",
+                EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+
+            TempData["StatusMessage"] = "Verification email sent. Please check your email.";
+            return RedirectToPage();
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"An error occurred while sending the verification email. Please try again. ({ex.Message})");
             return Page();
         }
-
-        var userId = await userManager.GetUserIdAsync(user);
-        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = Url.Page(
-            "/Account/ConfirmEmail",
-            pageHandler: null,
-            values: new { userId = userId, code = code },
-            protocol: Request.Scheme);
-        await emailSender.SendEmailAsync(
-            Input.Email,
-            "Confirm your email",
-            EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
-
-        ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
-        return Page();
     }
 }

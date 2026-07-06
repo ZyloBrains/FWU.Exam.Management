@@ -113,12 +113,18 @@ public class EmailModel(
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                 protocol: Request.Scheme);
-            await emailSender.SendEmailAsync(
-                Input.NewEmail,
-                "Confirm your email",
-                EmailTemplateHelper.ChangeEmail(Input.NewEmail, callbackUrl));
-
-            StatusMessage = "Confirmation link to change email sent. Please check your email.";
+            try
+            {
+                await emailSender.SendEmailAsync(
+                    Input.NewEmail,
+                    "Confirm your email",
+                    EmailTemplateHelper.ChangeEmail(Input.NewEmail, callbackUrl));
+                StatusMessage = "Confirmation link to change email sent. Please check your email.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to send confirmation email. Please try again. ({ex.Message})";
+            }
             return RedirectToPage();
         }
 
@@ -149,12 +155,18 @@ public class EmailModel(
             pageHandler: null,
             values: new { area = "Identity", userId = userId, code = code },
             protocol: Request.Scheme);
-        await emailSender.SendEmailAsync(
-            email,
-            "Confirm your email",
-            EmailTemplateHelper.ConfirmEmail(email, callbackUrl));
-
-        StatusMessage = "Verification email sent. Please check your email.";
+        try
+        {
+            await emailSender.SendEmailAsync(
+                email,
+                "Confirm your email",
+                EmailTemplateHelper.ConfirmEmail(email, callbackUrl));
+            StatusMessage = "Verification email sent. Please check your email.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to send verification email. Please try again. ({ex.Message})";
+        }
         return RedirectToPage();
     }
 }

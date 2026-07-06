@@ -138,8 +138,15 @@ public class RegisterModel : PageModel
                     values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
                     protocol: Request.Scheme);
 
-                await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                    EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+                try
+                {
+                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                        EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send confirmation email to {Email}", Input.Email);
+                }
 
                 if (_userManager.Options.SignIn.RequireConfirmedAccount)
                 {

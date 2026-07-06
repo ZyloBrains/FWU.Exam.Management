@@ -170,8 +170,15 @@ public class ExternalLoginModel : PageModel
                         values: new { area = "Identity", userId = userId, code = code },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+                    try
+                    {
+                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                            EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to send confirmation email to {Email}", Input.Email);
+                    }
 
                     // If account confirmation is required, we need to show the link if we don't have a real email sender
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
