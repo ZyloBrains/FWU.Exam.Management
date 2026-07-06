@@ -135,7 +135,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                         if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
                         {
                             return tenantCode != null
-                                ? Redirect($"/tenant/{tenantCode}/FacultyDashboard/{faculty.OfficeCode}")
+                                ? Redirect($"/tenant/{tenantCode}/faculty/{faculty.OfficeCode}")
                                 : RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
                         }
                     }

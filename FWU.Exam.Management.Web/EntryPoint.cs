@@ -92,6 +92,11 @@ public partial class EntryPoint
         });
 
         builder.Services.AddControllersWithViews();
+
+        builder.Services.AddAntiforgery(options =>
+        {
+            options.Cookie.Path = "/";
+        });
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
         builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
