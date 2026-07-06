@@ -8,9 +8,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ExamSubjectResultService(AppDbContext context) : IExamSubjectResultService
 {
-    public async Task<(List<ExamSubjectResult> Items, int TotalCount)> GetExamSubjectResultsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null, int? examRegistrationId = null)
+    public async Task<(List<ExamSubjectResult> Items, int TotalCount)> GetExamSubjectResultsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null, int? examRegistrationId = null, int? facultyId = null)
     {
-        var query = BuildQuery(search, sort, sortDir, examScheduleId, examRegistrationId);
+        var query = BuildQuery(search, sort, sortDir, examScheduleId, examRegistrationId, facultyId);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -44,9 +44,9 @@ public class ExamSubjectResultService(AppDbContext context) : IExamSubjectResult
         return (items, totalCount);
     }
 
-    public async Task<List<ExamSubjectResult>> GetFilteredItemsAsync(string? search, int? examScheduleId = null)
+    public async Task<List<ExamSubjectResult>> GetFilteredItemsAsync(string? search, int? examScheduleId = null, int? facultyId = null)
     {
-        var query = BuildQuery(search, "Id", "asc", examScheduleId, null);
+        var query = BuildQuery(search, "Id", "asc", examScheduleId, null, facultyId);
         return await query
             .Select(e => new ExamSubjectResult
             {
@@ -124,9 +124,12 @@ public class ExamSubjectResultService(AppDbContext context) : IExamSubjectResult
         };
     }
 
-    private IQueryable<ExamSubjectResult> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null, int? examRegistrationId = null)
+    private IQueryable<ExamSubjectResult> BuildQuery(string? search, string sort, string sortDir, int? examScheduleId = null, int? examRegistrationId = null, int? facultyId = null)
     {
         var query = context.ExamSubjectResults.AsNoTracking();
+
+        if (facultyId.HasValue)
+            query = query.Where(e => e.SubjectOffering != null && e.SubjectOffering.Program != null && e.SubjectOffering.Program.Department != null && e.SubjectOffering.Program.Department.FacultyId == facultyId.Value);
 
         if (examScheduleId.HasValue)
             query = query.Where(e => e.ExamScheduleId == examScheduleId.Value);

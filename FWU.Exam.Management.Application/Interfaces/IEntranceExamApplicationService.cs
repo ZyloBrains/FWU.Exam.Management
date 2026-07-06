@@ -13,7 +13,7 @@ public interface IEntranceExamApplicationService
 {
     Task<int> SubmitApplicationAsync(EntranceExamApplication application, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber);
     Task<EntranceExamApplication?> GetApplicationByIdAsync(int id);
-    Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize);
+    Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize, int? collegeId = null, int? facultyId = null);
     Task ReviewApplicationAsync(int id, ApplicationStatus status, string? remarks);
     Task DeleteApplicationAsync(int id);
     Task<bool> ApplicationExistsAsync(int id);

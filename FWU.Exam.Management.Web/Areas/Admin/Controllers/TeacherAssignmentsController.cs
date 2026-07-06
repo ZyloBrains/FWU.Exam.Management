@@ -17,9 +17,16 @@ public class TeacherAssignmentsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
+    private async Task<int?> GetCurrentUserFacultyIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.FacultyId;
+    }
+
     public async Task<IActionResult> Index()
     {
-        var items = await assignmentService.GetAssignmentsAsync();
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var items = await assignmentService.GetAssignmentsAsync(facultyId: facultyId);
         var teacherIds = items.Select(i => i.TeacherUserId).Distinct().ToList();
         var teachers = await context.Users
             .Where(u => teacherIds.Contains(u.Id))

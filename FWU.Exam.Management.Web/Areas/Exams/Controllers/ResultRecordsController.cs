@@ -20,8 +20,19 @@ public class ResultRecordsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
+    private async Task<(int? collegeId, int? facultyId)> ResolveScopeAsync(int? collegeId, int? facultyId)
+    {
+        if (collegeId.HasValue || facultyId.HasValue) return (collegeId, facultyId);
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return (null, null);
+        if (User.IsInRole(Role.CollegeAdmin)) return (user.CollegeId, null);
+        if (User.IsInRole(Role.FacultyAdmin)) return (null, user.FacultyId);
+        return (null, null);
+    }
+
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? collegeId = null, int? facultyId = null)
     {
+        (collegeId, facultyId) = await ResolveScopeAsync(collegeId, facultyId);
         var (items, totalCount) = await resultRecordService.GetResultRecordsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
 
         ViewBag.TotalCount = totalCount;
@@ -52,6 +63,7 @@ public class ResultRecordsController(
 
     public async Task<IActionResult> ExportToCsv(string? search = null, int? collegeId = null, int? facultyId = null)
     {
+        (collegeId, facultyId) = await ResolveScopeAsync(collegeId, facultyId);
         var items = await resultRecordService.GetFilteredItemsAsync(search, collegeId, facultyId);
 
         var sb = new StringBuilder();
@@ -68,6 +80,7 @@ public class ResultRecordsController(
 
     public async Task<IActionResult> ExportToPdf(string? search = null, int? collegeId = null, int? facultyId = null)
     {
+        (collegeId, facultyId) = await ResolveScopeAsync(collegeId, facultyId);
         var items = await resultRecordService.GetFilteredItemsAsync(search, collegeId, facultyId);
         return View("PrintPdf", items);
     }

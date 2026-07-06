@@ -7,7 +7,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class TeacherSubjectAssignmentService(AppDbContext context) : ITeacherSubjectAssignmentService
 {
-    public async Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null, int? collegeId = null)
+    public async Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null, int? collegeId = null, int? facultyId = null)
     {
         var query = context.TeacherSubjectAssignments
             .AsNoTracking()
@@ -30,6 +30,11 @@ public class TeacherSubjectAssignmentService(AppDbContext context) : ITeacherSub
                 .Select(u => u.Id)
                 .ToListAsync();
             query = query.Where(tsa => teacherIds.Contains(tsa.TeacherUserId));
+        }
+
+        if (facultyId.HasValue)
+        {
+            query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.Department != null && tsa.SubjectOffering.Program.Department.FacultyId == facultyId.Value);
         }
 
         return await query.ToListAsync();

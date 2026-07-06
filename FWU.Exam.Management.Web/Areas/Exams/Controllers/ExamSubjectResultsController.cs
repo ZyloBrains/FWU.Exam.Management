@@ -21,9 +21,16 @@ public class ExamSubjectResultsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
+    private async Task<int?> GetCurrentUserFacultyIdAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        return user?.FacultyId;
+    }
+
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? examRegistrationId = null)
     {
-        var (items, totalCount) = await examSubjectResultService.GetExamSubjectResultsAsync(page, pageSize, search, sort, sortDir, examScheduleId, examRegistrationId);
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        var (items, totalCount) = await examSubjectResultService.GetExamSubjectResultsAsync(page, pageSize, search, sort, sortDir, examScheduleId, examRegistrationId, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;

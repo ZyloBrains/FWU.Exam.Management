@@ -86,13 +86,19 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .FirstOrDefaultAsync(a => a.ApplicationVoucherId == voucherId);
     }
 
-    public async Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize)
+    public async Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize, int? collegeId = null, int? facultyId = null)
     {
         var query = context.EntranceExamApplications
             .Include(a => a.AcademicYear)
             .Include(a => a.College)
             .Include(a => a.Program)
             .AsNoTracking();
+
+        if (collegeId.HasValue)
+            query = query.Where(a => a.CollegeId == collegeId.Value);
+
+        if (facultyId.HasValue)
+            query = query.Where(a => a.Program != null && a.Program.Department != null && a.Program.Department.FacultyId == facultyId.Value);
 
         if (!string.IsNullOrWhiteSpace(search))
         {

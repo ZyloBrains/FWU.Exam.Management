@@ -630,7 +630,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
             statusFilter = parsedStatus;
 
-        var (items, totalCount) = await service.GetPagedApplicationsAsync(search, statusFilter, programId, academicYearId, page, pageSize);
+        var (collegeId, facultyId) = await GetEntranceScopeAsync();
+        var (items, totalCount) = await service.GetPagedApplicationsAsync(search, statusFilter, programId, academicYearId, page, pageSize, collegeId, facultyId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;

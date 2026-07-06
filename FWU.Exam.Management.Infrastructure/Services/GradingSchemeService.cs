@@ -8,9 +8,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
 {
-    public async Task<(List<GradingScheme> Items, int TotalCount)> GetGradingSchemesAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<GradingScheme> Items, int TotalCount)> GetGradingSchemesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search, sort, sortDir);
+        var query = BuildQuery(search, sort, sortDir, facultyId);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -33,9 +33,9 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         return (items, totalCount);
     }
 
-    public async Task<List<GradingScheme>> GetFilteredItemsAsync(string? search)
+    public async Task<List<GradingScheme>> GetFilteredItemsAsync(string? search, int? facultyId = null)
     {
-        var query = BuildQuery(search, "Id", "asc");
+        var query = BuildQuery(search, "Id", "asc", facultyId);
         return await query
             .Select(e => new GradingScheme
             {
@@ -141,9 +141,12 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         return await context.GradingSchemes.AnyAsync(e => e.Id == id);
     }
 
-    public GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null)
+    public GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null, int? facultyId = null)
     {
-        var programs = context.Programs.AsNoTracking().ToList();
+        var programsQuery = context.Programs.AsNoTracking();
+        if (facultyId.HasValue)
+            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        var programs = programsQuery.ToList();
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
 
         return new GradingSchemeSelectListsDto
@@ -153,9 +156,12 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         };
     }
 
-    private IQueryable<GradingScheme> BuildQuery(string? search, string sort, string sortDir)
+    private IQueryable<GradingScheme> BuildQuery(string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.GradingSchemes.AsNoTracking();
+
+        if (facultyId.HasValue)
+            query = query.Where(e => e.Program != null && e.Program.Department != null && e.Program.Department.FacultyId == facultyId.Value);
 
         if (!string.IsNullOrEmpty(search))
         {
