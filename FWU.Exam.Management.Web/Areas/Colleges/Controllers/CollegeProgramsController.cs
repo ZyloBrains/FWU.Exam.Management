@@ -4,9 +4,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
-using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using System.Text;
@@ -22,7 +20,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 {
     public async Task<IActionResult> Index(string search = null, string sort = "collegename", string sortDir = "asc")
     {
-        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir, null);
+        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.Search = search;
@@ -42,8 +40,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? userContext.FacultyId : null;
-        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("College Code,College Name,Program Code,Program Name,Affiliation Date,Number of Students,Remarks,Status");
@@ -67,8 +64,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? userContext.FacultyId : null;
-        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -83,8 +79,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? userContext.FacultyId : null;
-        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("College Programs");

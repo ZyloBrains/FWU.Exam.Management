@@ -21,17 +21,12 @@ public class SubjectCatalogService : ISubjectCatalogService
         _userContext = userContext;
     }
 
-    public async Task<(List<SubjectCatalog> Items, int TotalCount)> GetSubjectCatalogsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<SubjectCatalog> Items, int TotalCount)> GetSubjectCatalogsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = _context.SubjectCatalogs
             .Include(s => s.SubjectType)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
-
-        if (_userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.Department != null && so.Program.Department.FacultyId == facultyId.Value));
-        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -55,17 +50,12 @@ public class SubjectCatalogService : ISubjectCatalogService
         return (items, totalCount);
     }
 
-    public async Task<List<SubjectCatalog>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<List<SubjectCatalog>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = _context.SubjectCatalogs
             .Include(s => s.SubjectType)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
-
-        if (_userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.Department != null && so.Program.Department.FacultyId == facultyId.Value));
-        }
 
         if (!string.IsNullOrEmpty(search))
         {

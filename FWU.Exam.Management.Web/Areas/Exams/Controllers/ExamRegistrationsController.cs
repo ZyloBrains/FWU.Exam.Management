@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -20,30 +21,12 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examregistration.view")]
 public class ExamRegistrationsController(
     IExamRegistrationService examRegistrationService,
-    UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
-    private async Task<(int? collegeId, int? facultyId, int? departmentId)> GetScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId, null);
-
-        if (User.IsInRole(Role.DepartmentAdmin))
-            return (user.CollegeId, null, user.DepartmentId);
-
-        return (null, null, null);
-    }
-
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
-        var (collegeId, facultyId, _) = await GetScopeAsync();
-        var (items, totalCount) = await examRegistrationService.GetExamRegistrationsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, examScheduleId);
+        var (items, totalCount) = await examRegistrationService.GetExamRegistrationsAsync(page, pageSize, search, sort, sortDir, examScheduleId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -62,8 +45,7 @@ public class ExamRegistrationsController(
     [RequirePermission("examregistration.create")]
     public async Task<IActionResult> Create()
     {
-        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
-        var selectLists = examRegistrationService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
+        var selectLists = examRegistrationService.GetSelectListData();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -73,17 +55,12 @@ public class ExamRegistrationsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("ExamScheduleId,CollegeId,AcademicYearId,ExamCenterId,ProgramsId,ExamRollNumber,FeeEnclosed,AttendancePercentage,RegistrationDate,Status,Remarks,IsActive")] ExamRegistration examRegistration)
     {
-        var (collegeId, facultyId, _) = await GetScopeAsync();
-        if (collegeId.HasValue)
-            examRegistration.CollegeId = collegeId.Value;
-
         if (ModelState.IsValid)
         {
             await examRegistrationService.CreateExamRegistrationAsync(examRegistration);
             return RedirectToAction(nameof(Index));
         }
-        var (createCollegeId, createFacultyId, createDepartmentId) = await GetScopeAsync();
-        var selectLists = examRegistrationService.GetSelectListData(examRegistration, createCollegeId, createFacultyId, createDepartmentId);
+        var selectLists = examRegistrationService.GetSelectListData(examRegistration);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -96,8 +73,7 @@ public class ExamRegistrationsController(
         var examRegistration = await examRegistrationService.GetExamRegistrationByIdAsync(id.Value);
         if (examRegistration == null) return NotFound();
 
-        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
-        var selectLists = examRegistrationService.GetSelectListData(examRegistration, collegeId, facultyId, departmentId);
+        var selectLists = examRegistrationService.GetSelectListData(examRegistration);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -108,10 +84,6 @@ public class ExamRegistrationsController(
     public async Task<IActionResult> Edit(int id, [Bind("Id,ExamScheduleId,CollegeId,AcademicYearId,ExamCenterId,ProgramsId,ExamRollNumber,FeeEnclosed,AttendancePercentage,RegistrationDate,Status,Remarks,IsActive,Sgpa")] ExamRegistration examRegistration)
     {
         if (id != examRegistration.Id) return NotFound();
-
-        var (collegeId, facultyId, departmentId) = await GetScopeAsync();
-        if (collegeId.HasValue)
-            examRegistration.CollegeId = collegeId.Value;
 
         if (ModelState.IsValid)
         {
@@ -127,7 +99,7 @@ public class ExamRegistrationsController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examRegistrationService.GetSelectListData(examRegistration, collegeId, facultyId, departmentId);
+        var selectLists = examRegistrationService.GetSelectListData(examRegistration);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -182,8 +154,7 @@ public class ExamRegistrationsController(
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
-        var (collegeId, facultyId, _) = await GetScopeAsync();
-        var items = await examRegistrationService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examRegistrationService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Exam Schedule,College,Roll Number,Status,Registration Date,Fee,Is Active");
@@ -199,8 +170,7 @@ public class ExamRegistrationsController(
 
     public async Task<IActionResult> ExportToPdf(string? search = null)
     {
-        var (collegeId, facultyId, _) = await GetScopeAsync();
-        var items = await examRegistrationService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examRegistrationService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 

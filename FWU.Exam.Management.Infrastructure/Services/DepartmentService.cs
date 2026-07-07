@@ -9,7 +9,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class DepartmentService(AppDbContext context, IUserContext userContext) : IDepartmentService
 {
-    public async Task<(List<Department> Items, int TotalCount)> GetDepartmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<Department> Items, int TotalCount)> GetDepartmentsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.Departments.AsNoTracking();
         query = query.ApplyScope(userContext);
@@ -21,11 +21,6 @@ public class DepartmentService(AppDbContext context, IUserContext userContext) :
                 d.DepartmentName.Contains(search) ||
                 (d.ShortName != null && d.ShortName.Contains(search)) ||
                 (d.Remarks != null && d.Remarks.Contains(search)));
-        }
-
-        if (userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(d => d.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"
@@ -41,7 +36,7 @@ public class DepartmentService(AppDbContext context, IUserContext userContext) :
         return (items, totalCount);
     }
 
-    public async Task<List<Department>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<List<Department>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.Departments.AsNoTracking();
         query = query.ApplyScope(userContext);
@@ -53,11 +48,6 @@ public class DepartmentService(AppDbContext context, IUserContext userContext) :
                 d.DepartmentName.Contains(search) ||
                 (d.ShortName != null && d.ShortName.Contains(search)) ||
                 (d.Remarks != null && d.Remarks.Contains(search)));
-        }
-
-        if (userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(d => d.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"

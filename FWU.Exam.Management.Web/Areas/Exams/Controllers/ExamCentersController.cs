@@ -1,9 +1,10 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -14,43 +15,12 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examcenters.view")]
 public class ExamCentersController(
     IExamCenterService examCenterService,
-    AppDbContext context,
-    UserManager<AppUser> userManager) : Controller
+    IUserContext userContext,
+    AppDbContext context) : Controller
 {
-    private async Task<int?> GetCurrentUserCollegeIdAsync()
+    private async Task<List<ExamSchedule>> GetFilteredExamSchedulesAsync()
     {
-        var user = await userManager.GetUserAsync(User);
-        return user?.CollegeId;
-    }
-
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.FacultyId;
-    }
-
-    private async Task<int?> GetCurrentUserDepartmentIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.DepartmentId;
-    }
-
-    private async Task<List<ExamSchedule>> GetFilteredExamSchedulesAsync(int? collegeId, int? facultyId, int? departmentId = null)
-    {
-        var query = context.ExamSchedules.AsNoTracking();
-        if (collegeId.HasValue)
-        {
-            var collegeProgramIds = await context.CollegePrograms.AsNoTracking()
-                .Where(cp => cp.CollegeId == collegeId.Value)
-                .Select(cp => cp.ProgramId)
-                .ToListAsync();
-            query = query.Where(es => es.Program != null && collegeProgramIds.Contains(es.Program.Id));
-        }
-        if (facultyId.HasValue)
-            query = query.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
-        if (departmentId.HasValue)
-            query = query.Where(es => es.Program != null && es.Program.DepartmentId == departmentId.Value);
-        return await query.ToListAsync();
+        return await context.ExamSchedules.AsNoTracking().ApplyScope(userContext).ToListAsync();
     }
 
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
@@ -79,10 +49,7 @@ public class ExamCentersController(
     [RequirePermission("examcenters.create")]
     public async Task<IActionResult> Create()
     {
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var examSchedules = await GetFilteredExamSchedulesAsync(collegeId, facultyId, departmentId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
@@ -112,9 +79,7 @@ public class ExamCentersController(
             return RedirectToAction(nameof(Index));
         }
 
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var examSchedules = await GetFilteredExamSchedulesAsync(collegeId, facultyId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
@@ -136,10 +101,7 @@ public class ExamCentersController(
         var examCenter = await examCenterService.GetExamCenterByIdAsync(id.Value);
         if (examCenter == null) return NotFound();
 
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var examSchedules = await GetFilteredExamSchedulesAsync(collegeId, facultyId, departmentId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
@@ -183,10 +145,7 @@ public class ExamCentersController(
             return RedirectToAction(nameof(Index));
         }
 
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var examSchedules = await GetFilteredExamSchedulesAsync(collegeId, facultyId, departmentId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()

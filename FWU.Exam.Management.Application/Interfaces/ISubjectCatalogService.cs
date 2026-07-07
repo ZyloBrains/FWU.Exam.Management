@@ -6,8 +6,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface ISubjectCatalogService
 {
-    Task<(List<SubjectCatalog> Items, int TotalCount)> GetSubjectCatalogsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null);
-    Task<List<SubjectCatalog>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null);
+    Task<(List<SubjectCatalog> Items, int TotalCount)> GetSubjectCatalogsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<List<SubjectCatalog>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<SubjectCatalog?> GetSubjectCatalogByIdAsync(int id);
     Task CreateSubjectCatalogAsync(SubjectCatalog subjectCatalog);
     Task UpdateSubjectCatalogAsync(SubjectCatalog subjectCatalog);

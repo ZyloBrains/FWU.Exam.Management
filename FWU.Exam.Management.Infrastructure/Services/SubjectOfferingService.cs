@@ -23,7 +23,7 @@ public class SubjectOfferingService : ISubjectOfferingService
         _userContext = userContext;
     }
 
-    public async Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = _context.SubjectOfferings
             .Include(s => s.SubjectCatalog)
@@ -31,11 +31,6 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.Semester)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
-
-        if (_userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(s => s.Program != null && s.Program.Department != null && s.Program.Department.FacultyId == facultyId.Value);
-        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -58,7 +53,7 @@ public class SubjectOfferingService : ISubjectOfferingService
         return (items, totalCount);
     }
 
-    public async Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = _context.SubjectOfferings
             .Include(s => s.SubjectCatalog)
@@ -66,11 +61,6 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.Semester)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
-
-        if (_userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(s => s.Program != null && s.Program.Department != null && s.Program.Department.FacultyId == facultyId.Value);
-        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -138,7 +128,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
     }
 
-    public async Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null, int? facultyId = null)
+    public async Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null)
     {
         var subjectCatalogs = await _context.SubjectCatalogs
             .Where(s => s.IsActive)
@@ -146,16 +136,9 @@ public class SubjectOfferingService : ISubjectOfferingService
             .AsNoTracking()
             .ToListAsync();
 
-        var programsQuery = _context.Programs
+        var programs = await _context.Programs
             .Where(p => p.IsActive)
-            .ApplyScope(_userContext);
-
-        if (_userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
-        }
-
-        var programs = await programsQuery
+            .ApplyScope(_userContext)
             .OrderBy(p => p.ProgramName)
             .AsNoTracking()
             .ToListAsync();

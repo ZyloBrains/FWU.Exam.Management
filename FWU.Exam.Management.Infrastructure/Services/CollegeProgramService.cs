@@ -13,7 +13,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class CollegeProgramService(AppDbContext context, IUserContext userContext) : ICollegeProgramService
 {
-    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search);
         query = query.ApplyScope(userContext);
@@ -32,9 +32,9 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
         return (items, totalCount);
     }
 
-    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        return await GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir, facultyId);
+        return await GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
     }
 
     public async Task<CollegeProgram?> GetCollegeProgramByIdAsync(int id)

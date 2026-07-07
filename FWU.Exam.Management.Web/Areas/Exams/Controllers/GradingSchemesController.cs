@@ -3,11 +3,11 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,19 +18,12 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("gradingschemes.view")]
 public class GradingSchemesController(
     IGradingSchemeService gradingSchemeService,
-    UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.FacultyId;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (items, totalCount) = await gradingSchemeService.GetGradingSchemesAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await gradingSchemeService.GetGradingSchemesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -46,8 +39,7 @@ public class GradingSchemesController(
     [RequirePermission("gradingschemes.create")]
     public async Task<IActionResult> Create()
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = gradingSchemeService.GetSelectListData(facultyId: facultyId);
+        var selectLists = gradingSchemeService.GetSelectListData();
         PopulateDropdowns(selectLists);
         var model = new GradingScheme { IsActive = true };
         model.GradeDefinitions = GetDefaultGradeDefinitions();
@@ -68,8 +60,7 @@ public class GradingSchemesController(
             await gradingSchemeService.CreateGradingSchemeAsync(gradingScheme);
             return RedirectToAction(nameof(Index));
         }
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = gradingSchemeService.GetSelectListData(facultyId: facultyId);
+        var selectLists = gradingSchemeService.GetSelectListData();
         PopulateDropdowns(selectLists, gradingScheme);
         gradingScheme.GradeDefinitions ??= GetDefaultGradeDefinitions();
         return View(gradingScheme);
@@ -83,8 +74,7 @@ public class GradingSchemesController(
         var gradingScheme = await gradingSchemeService.GetGradingSchemeByIdAsync(id.Value);
         if (gradingScheme == null) return NotFound();
 
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = gradingSchemeService.GetSelectListData(facultyId: facultyId);
+        var selectLists = gradingSchemeService.GetSelectListData();
         PopulateDropdowns(selectLists, gradingScheme);
         return View(gradingScheme);
     }
@@ -114,8 +104,7 @@ public class GradingSchemesController(
             }
             return RedirectToAction(nameof(Index));
         }
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var selectLists = gradingSchemeService.GetSelectListData(facultyId: facultyId);
+        var selectLists = gradingSchemeService.GetSelectListData();
         PopulateDropdowns(selectLists, gradingScheme);
         return View(gradingScheme);
     }
@@ -152,8 +141,7 @@ public class GradingSchemesController(
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await gradingSchemeService.GetFilteredItemsAsync(search, facultyId);
+        var items = await gradingSchemeService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Name,Program,Academic Year,Description,IsActive");
@@ -169,8 +157,7 @@ public class GradingSchemesController(
 
     public async Task<IActionResult> ExportToPdf(string? search = null)
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await gradingSchemeService.GetFilteredItemsAsync(search, facultyId);
+        var items = await gradingSchemeService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 

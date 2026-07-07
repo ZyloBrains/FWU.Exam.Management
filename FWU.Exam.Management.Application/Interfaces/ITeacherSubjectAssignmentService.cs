@@ -4,7 +4,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface ITeacherSubjectAssignmentService
 {
-    Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null, int? collegeId = null, int? facultyId = null);
+    Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null);
     Task<TeacherSubjectAssignment?> GetByIdAsync(int id);
     Task CreateAsync(TeacherSubjectAssignment assignment);
     Task UpdateAsync(TeacherSubjectAssignment assignment);

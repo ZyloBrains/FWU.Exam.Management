@@ -1,16 +1,17 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
+public class GradingSchemeService(AppDbContext context, IUserContext userContext) : IGradingSchemeService
 {
-    public async Task<(List<GradingScheme> Items, int TotalCount)> GetGradingSchemesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<GradingScheme> Items, int TotalCount)> GetGradingSchemesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = BuildQuery(search, sort, sortDir, facultyId);
+        var query = BuildQuery(search, sort, sortDir);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -33,9 +34,9 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         return (items, totalCount);
     }
 
-    public async Task<List<GradingScheme>> GetFilteredItemsAsync(string? search, int? facultyId = null)
+    public async Task<List<GradingScheme>> GetFilteredItemsAsync(string? search)
     {
-        var query = BuildQuery(search, "Id", "asc", facultyId);
+        var query = BuildQuery(search, "Id", "asc");
         return await query
             .Select(e => new GradingScheme
             {
@@ -141,11 +142,14 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         return await context.GradingSchemes.AnyAsync(e => e.Id == id);
     }
 
-    public GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null, int? facultyId = null)
+    public GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null)
     {
         var programsQuery = context.Programs.AsNoTracking();
-        if (facultyId.HasValue)
-            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == userContext.FacultyId.Value);
+        }
         var programs = programsQuery.ToList();
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
 
@@ -156,12 +160,15 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         };
     }
 
-    private IQueryable<GradingScheme> BuildQuery(string? search, string sort, string sortDir, int? facultyId = null)
+    private IQueryable<GradingScheme> BuildQuery(string? search, string sort, string sortDir)
     {
         var query = context.GradingSchemes.AsNoTracking();
 
-        if (facultyId.HasValue)
-            query = query.Where(e => e.Program != null && e.Program.Department != null && e.Program.Department.FacultyId == facultyId.Value);
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                query = query.Where(e => e.Program != null && e.Program.Department != null && e.Program.Department.FacultyId == userContext.FacultyId.Value);
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

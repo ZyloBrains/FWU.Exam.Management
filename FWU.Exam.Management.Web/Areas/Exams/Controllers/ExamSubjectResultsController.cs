@@ -3,11 +3,10 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,31 +17,12 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examsubjectresults.view")]
 public class ExamSubjectResultsController(
     IExamSubjectResultService examSubjectResultService,
-    UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.FacultyId;
-    }
-
-    private async Task<int?> GetCurrentUserCollegeIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.CollegeId;
-    }
-
-    private async Task<int?> GetCurrentUserDepartmentIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.DepartmentId;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? examRegistrationId = null)
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (items, totalCount) = await examSubjectResultService.GetExamSubjectResultsAsync(page, pageSize, search, sort, sortDir, examScheduleId, examRegistrationId, facultyId);
+        var (items, totalCount) = await examSubjectResultService.GetExamSubjectResultsAsync(page, pageSize, search, sort, sortDir, examScheduleId, examRegistrationId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -63,10 +43,7 @@ public class ExamSubjectResultsController(
     [RequirePermission("examsubjectresults.create")]
     public async Task<IActionResult> Create()
     {
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
+        var selectLists = examSubjectResultService.GetSelectListData();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -81,10 +58,7 @@ public class ExamSubjectResultsController(
             await examSubjectResultService.CreateExamSubjectResultAsync(examSubjectResult);
             return RedirectToAction(nameof(Index));
         }
-        int? createCollegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? createFacultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? createDepartmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(collegeId: createCollegeId, facultyId: createFacultyId, departmentId: createDepartmentId);
+        var selectLists = examSubjectResultService.GetSelectListData();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -97,10 +71,7 @@ public class ExamSubjectResultsController(
         var examSubjectResult = await examSubjectResultService.GetExamSubjectResultByIdAsync(id.Value);
         if (examSubjectResult == null) return NotFound();
 
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
+        var selectLists = examSubjectResultService.GetSelectListData();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -126,10 +97,7 @@ public class ExamSubjectResultsController(
             }
             return RedirectToAction(nameof(Index));
         }
-        int? collegeId = User.IsInRole(Role.CollegeAdmin) || User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserCollegeIdAsync() : null;
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        int? departmentId = User.IsInRole(Role.DepartmentAdmin) ? await GetCurrentUserDepartmentIdAsync() : null;
-        var selectLists = examSubjectResultService.GetSelectListData(collegeId: collegeId, facultyId: facultyId, departmentId: departmentId);
+        var selectLists = examSubjectResultService.GetSelectListData();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }

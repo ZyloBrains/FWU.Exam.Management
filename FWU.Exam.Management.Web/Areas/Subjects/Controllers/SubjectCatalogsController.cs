@@ -2,8 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
-using FWU.Exam.Management.Infrastructure.Data.Models;
-using Microsoft.AspNetCore.Identity;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,24 +17,15 @@ namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 public class SubjectCatalogsController : Controller
 {
     private readonly ISubjectCatalogService _subjectCatalogService;
-    private readonly UserManager<AppUser> _userManager;
 
-    public SubjectCatalogsController(ISubjectCatalogService subjectCatalogService, UserManager<AppUser> userManager)
+    public SubjectCatalogsController(ISubjectCatalogService subjectCatalogService)
     {
         _subjectCatalogService = subjectCatalogService;
-        _userManager = userManager;
-    }
-
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        return user?.FacultyId;
     }
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "SubjectName", string sortDir = "asc", int pageSize = 10)
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -204,8 +194,7 @@ public class SubjectCatalogsController : Controller
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("Code,Subject Name,Short Name,Credit Hours,Type,Status");
@@ -228,8 +217,7 @@ public class SubjectCatalogsController : Controller
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Subject Catalogs");
@@ -267,8 +255,7 @@ public class SubjectCatalogsController : Controller
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;

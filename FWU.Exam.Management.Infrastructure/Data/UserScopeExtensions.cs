@@ -152,6 +152,46 @@ public static class UserScopeExtensions
         return query.Where(cp => false);
     }
 
+    public static IQueryable<AdmitCard> ApplyScope(this IQueryable<AdmitCard> query, IUserContext user)
+    {
+        if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return query.Where(ac => ac.ExamRegistration != null &&
+                ((ac.ExamRegistration.College != null && ac.ExamRegistration.College.Faculties!.Any(f => f.Id == user.FacultyId.Value)) ||
+                 (ac.ExamRegistration.Program != null && ac.ExamRegistration.Program.Department != null && ac.ExamRegistration.Program.Department.FacultyId == user.FacultyId.Value)));
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+            return query.Where(ac => ac.ExamRegistration != null && ac.ExamRegistration.CollegeId == user.CollegeId.Value);
+        if (user.IsDepartmentAdmin && user.DepartmentId.HasValue)
+            return query.Where(ac => ac.ExamRegistration != null && ac.ExamRegistration.Program != null && ac.ExamRegistration.Program.DepartmentId == user.DepartmentId.Value);
+        return query.Where(ac => false);
+    }
+
+    public static IQueryable<ResultRecord> ApplyScope(this IQueryable<ResultRecord> query, IUserContext user)
+    {
+        if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return query.Where(rr => rr.College != null && rr.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+            return query.Where(rr => rr.CollegeId == user.CollegeId.Value);
+        if (user.IsDepartmentAdmin && user.DepartmentId.HasValue)
+            return query.Where(rr => rr.Program != null && rr.Program.DepartmentId == user.DepartmentId.Value);
+        return query.Where(rr => false);
+    }
+
+    public static IQueryable<RetotalRequest> ApplyScope(this IQueryable<RetotalRequest> query, IUserContext user)
+    {
+        if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return query.Where(rr => rr.ExamRegistration != null &&
+                ((rr.ExamRegistration.College != null && rr.ExamRegistration.College.Faculties!.Any(f => f.Id == user.FacultyId.Value)) ||
+                 (rr.ExamRegistration.Program != null && rr.ExamRegistration.Program.Department != null && rr.ExamRegistration.Program.Department.FacultyId == user.FacultyId.Value)));
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+            return query.Where(rr => rr.ExamRegistration != null && rr.ExamRegistration.CollegeId == user.CollegeId.Value);
+        if (user.IsDepartmentAdmin && user.DepartmentId.HasValue)
+            return query.Where(rr => rr.ExamRegistration != null && rr.ExamRegistration.Program != null && rr.ExamRegistration.Program.DepartmentId == user.DepartmentId.Value);
+        return query.Where(rr => false);
+    }
+
     public static IQueryable<AppUser> ApplyScope(this IQueryable<AppUser> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;

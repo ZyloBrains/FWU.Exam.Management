@@ -1,13 +1,14 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Teachers;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class TeacherSubjectAssignmentService(AppDbContext context) : ITeacherSubjectAssignmentService
+public class TeacherSubjectAssignmentService(AppDbContext context, IUserContext userContext) : ITeacherSubjectAssignmentService
 {
-    public async Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null, int? collegeId = null, int? facultyId = null)
+    public async Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null)
     {
         var query = context.TeacherSubjectAssignments
             .AsNoTracking()
@@ -23,18 +24,24 @@ public class TeacherSubjectAssignmentService(AppDbContext context) : ITeacherSub
         if (!string.IsNullOrEmpty(teacherUserId))
             query = query.Where(tsa => tsa.TeacherUserId == teacherUserId);
 
-        if (collegeId.HasValue)
+        if (!userContext.IsSuperAdmin)
         {
-            var teacherIds = await context.Users
-                .Where(u => u.CollegeId == collegeId)
-                .Select(u => u.Id)
-                .ToListAsync();
-            query = query.Where(tsa => teacherIds.Contains(tsa.TeacherUserId));
-        }
-
-        if (facultyId.HasValue)
-        {
-            query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.Department != null && tsa.SubjectOffering.Program.Department.FacultyId == facultyId.Value);
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            {
+                var teacherIds = await context.Users
+                    .Where(u => u.CollegeId == userContext.CollegeId.Value)
+                    .Select(u => u.Id)
+                    .ToListAsync();
+                query = query.Where(tsa => teacherIds.Contains(tsa.TeacherUserId));
+            }
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            {
+                query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.Department != null && tsa.SubjectOffering.Program.Department.FacultyId == userContext.FacultyId.Value);
+            }
+            else if (userContext.IsDepartmentAdmin && userContext.DepartmentId.HasValue)
+            {
+                query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.DepartmentId == userContext.DepartmentId.Value);
+            }
         }
 
         return await query.ToListAsync();

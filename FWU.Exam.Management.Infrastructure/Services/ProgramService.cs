@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class ProgramService(AppDbContext context, IUserContext userContext) : IProgramService
 {
-    public async Task<(List<Program> Items, int TotalCount)> GetProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<Program> Items, int TotalCount)> GetProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.Programs
             .Include(p => p.Board)
@@ -31,11 +31,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
                 (p.Level != null && p.Level.LevelName.Contains(search)) ||
                 (p.Department != null && p.Department.DepartmentCode.Contains(search)) ||
                 (p.Board != null && p.Board.BoardName.Contains(search)));
-        }
-
-        if (userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"
@@ -51,7 +46,7 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
         return (items, totalCount);
     }
 
-    public async Task<List<Program>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<List<Program>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.Programs
             .Include(p => p.Board)
@@ -70,11 +65,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
                 (p.Level != null && p.Level.LevelName.Contains(search)) ||
                 (p.Department != null && p.Department.DepartmentCode.Contains(search)) ||
                 (p.Board != null && p.Board.BoardName.Contains(search)));
-        }
-
-        if (userContext.IsSuperAdmin && facultyId.HasValue)
-        {
-            query = query.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
         }
 
         query = sortDir.ToLower() == "desc"
@@ -120,12 +110,13 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
         return await context.Programs.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<Board> Boards, List<Department> Departments, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? departmentId = null, int? levelId = null, int? facultyId = null)
+    public async Task<(List<Board> Boards, List<Department> Departments, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? departmentId = null, int? levelId = null)
     {
         var boards = await context.Boards.AsNoTracking().ToListAsync();
-        var departments = facultyId.HasValue
-            ? await context.Departments.Where(d => d.FacultyId == facultyId.Value).AsNoTracking().ToListAsync()
-            : await context.Departments.AsNoTracking().ToListAsync();
+        var departmentsQuery = context.Departments.AsNoTracking();
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            departmentsQuery = departmentsQuery.Where(d => d.FacultyId == userContext.FacultyId.Value);
+        var departments = await departmentsQuery.ToListAsync();
         var levels = await context.Levels.AsNoTracking().ToListAsync();
 
         return (boards, departments, levels);

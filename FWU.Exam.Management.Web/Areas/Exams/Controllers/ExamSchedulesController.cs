@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,26 +23,11 @@ public class ExamSchedulesController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -64,8 +50,7 @@ public class ExamSchedulesController(
 
     public async Task<IActionResult> ExportToCsv(string search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Start Date (AD),End Date (AD),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
@@ -98,16 +83,14 @@ public class ExamSchedulesController(
 
     public async Task<IActionResult> ExportToPdf(string search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(string search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("ExamSchedules");
@@ -166,8 +149,7 @@ public class ExamSchedulesController(
     [RequirePermission("examschedules.create")]
     public async Task<IActionResult> Create()
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -177,18 +159,12 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        if (collegeId.HasValue)
-            examSchedule.CollegeId = collegeId;
-        else if (facultyId.HasValue)
-            examSchedule.CollegeId = null;
-
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -201,8 +177,7 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -213,10 +188,6 @@ public class ExamSchedulesController(
     public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
-
-        var (collegeId, facultyId) = await GetScopeAsync();
-        if (collegeId.HasValue)
-            examSchedule.CollegeId = collegeId;
 
         if (ModelState.IsValid)
         {
@@ -235,7 +206,7 @@ public class ExamSchedulesController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }

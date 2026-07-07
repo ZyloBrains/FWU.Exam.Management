@@ -5,8 +5,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IRetotalRequestService
 {
-    Task<(List<RetotalRequest> Items, int TotalCount)> GetRetotalRequestsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null);
-    Task<List<RetotalRequest>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null);
+    Task<(List<RetotalRequest> Items, int TotalCount)> GetRetotalRequestsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<List<RetotalRequest>> GetFilteredItemsAsync(string? search);
     Task<RetotalRequest?> GetRetotalRequestByIdAsync(int id);
     Task CreateRetotalRequestAsync(RetotalRequest retotalRequest);
     Task UpdateRetotalRequestAsync(RetotalRequest retotalRequest);

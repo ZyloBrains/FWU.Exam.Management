@@ -7,8 +7,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface ICollegeProgramService
 {
-    Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null);
-    Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null);
+    Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<(List<CollegeProgram> Items, int TotalCount)> GetFilteredItemsForExportAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<CollegeProgram?> GetCollegeProgramByIdAsync(int id);
     Task CreateCollegeProgramAsync(CollegeProgram collegeProgram);
     Task CreateCollegeProgramsAsync(List<CollegeProgram> collegePrograms);

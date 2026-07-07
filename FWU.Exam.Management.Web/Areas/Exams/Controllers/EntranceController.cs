@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Web.Helpers;
@@ -15,7 +16,7 @@ using Microsoft.AspNetCore.Identity;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, ILogger<EntranceController> logger) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, IUserContext userContext, ILogger<EntranceController> logger) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -630,8 +631,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
             statusFilter = parsedStatus;
 
-        var (collegeId, facultyId) = await GetEntranceScopeAsync();
-        var (items, totalCount) = await service.GetPagedApplicationsAsync(search, statusFilter, programId, academicYearId, page, pageSize, collegeId, facultyId);
+        var (items, totalCount) = await service.GetPagedApplicationsAsync(search, statusFilter, programId, academicYearId, page, pageSize);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -767,8 +767,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
-        var (collegeId, facultyId) = await GetEntranceScopeAsync();
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, "Entrance");
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, "Entrance");
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -784,8 +783,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [RequirePermission("examschedules.create")]
     public async Task<IActionResult> CreateSchedule()
     {
-        var (_, facultyId) = await GetEntranceScopeAsync();
-        var selectLists = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateScheduleDropdowns(selectLists);
         return View("ScheduleForm", new ExamSchedule
         {
@@ -803,8 +801,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
-        var (_, facultyId) = await GetEntranceScopeAsync();
-        var sl = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var sl = examScheduleService.GetSelectListData();
 
         if (ModelState.IsValid)
         {
@@ -827,8 +824,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var schedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (schedule == null) return NotFound();
 
-        var (_, facultyId) = await GetEntranceScopeAsync();
-        var selectLists = examScheduleService.GetSelectListData(examSchedule: schedule, facultyId: facultyId);
+        var selectLists = examScheduleService.GetSelectListData();
         PopulateScheduleDropdowns(selectLists, schedule);
         return View("ScheduleForm", schedule);
     }
@@ -842,8 +838,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
-        var (_, facultyId) = await GetEntranceScopeAsync();
-        var sl = examScheduleService.GetSelectListData(facultyId: facultyId);
+        var sl = examScheduleService.GetSelectListData();
 
         if (ModelState.IsValid)
         {
@@ -881,20 +876,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             return Json(new { success = false, message = ex.Message });
         }
-    }
-
-    private async Task<(int? collegeId, int? facultyId)> GetEntranceScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
     }
 
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)

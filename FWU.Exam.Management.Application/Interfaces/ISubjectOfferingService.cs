@@ -8,8 +8,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface ISubjectOfferingService
 {
-    Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null);
-    Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null);
+    Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<SubjectOffering?> GetSubjectOfferingByIdAsync(int id);
     Task CreateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task CreateSubjectOfferingsAsync(List<SubjectOffering> subjectOfferings);
@@ -17,5 +17,5 @@ public interface ISubjectOfferingService
     Task DeleteSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);
     Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId);
-    Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null, int? facultyId = null);
+    Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null);
 }

@@ -13,12 +13,10 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class CollegeService(AppDbContext context, IUserContext userContext) : ICollegeService
 {
-    public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search);
         query = query.ApplyScope(userContext);
-        if (userContext.IsSuperAdmin && facultyId.HasValue)
-            query = query.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value));
 
         var totalCount = await query.CountAsync();
 
@@ -34,12 +32,10 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         return (items, totalCount);
     }
 
-    public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir, int? facultyId = null)
+    public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search);
         query = query.ApplyScope(userContext);
-        if (userContext.IsSuperAdmin && facultyId.HasValue)
-            query = query.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value));
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))

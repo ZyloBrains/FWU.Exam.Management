@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -13,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, ISmsService smsService) : IEntranceExamApplicationService
+public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext, IEmailService emailService, ISmsService smsService) : IEntranceExamApplicationService
 {
     private const string EntranceExamTypeCode = "4";
 
@@ -86,7 +87,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .FirstOrDefaultAsync(a => a.ApplicationVoucherId == voucherId);
     }
 
-    public async Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize, int? collegeId = null, int? facultyId = null)
+    public async Task<(List<EntranceExamApplicationListDto> Data, int TotalCount)> GetPagedApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId, int page, int pageSize)
     {
         var query = context.EntranceExamApplications
             .Include(a => a.AcademicYear)
@@ -94,11 +95,13 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Include(a => a.Program)
             .AsNoTracking();
 
-        if (collegeId.HasValue)
-            query = query.Where(a => a.CollegeId == collegeId.Value);
-
-        if (facultyId.HasValue)
-            query = query.Where(a => a.Program != null && a.Program.Department != null && a.Program.Department.FacultyId == facultyId.Value);
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+                query = query.Where(a => a.CollegeId == userContext.CollegeId.Value);
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                query = query.Where(a => a.Program != null && a.Program.Department != null && a.Program.Department.FacultyId == userContext.FacultyId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
