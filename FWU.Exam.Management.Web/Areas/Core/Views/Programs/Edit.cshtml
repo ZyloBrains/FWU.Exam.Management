@@ -57,21 +57,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label asp-for="LevelId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="LevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.LevelId">
+                        <select asp-for="LevelId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.LevelId">
                             <option value="">-- Select Level --</option>
                         </select>
                         <span asp-validation-for="LevelId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="DepartmentId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="DepartmentId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.DepartmentId">
+                        <select asp-for="DepartmentId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.DepartmentId">
                             <option value="">-- Select Department --</option>
                         </select>
                         <span asp-validation-for="DepartmentId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="BoardId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="BoardId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.BoardId">
+                        <select asp-for="BoardId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.BoardId">
                             <option value="">-- Select Board --</option>
                         </select>
                         <span asp-validation-for="BoardId" class="text-xs text-red-500 mt-1 block"></span>
@@ -186,6 +186,6 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
-        $(function () { $('select').select2({ width: '100%' }); });
+        $(function () { $('.select2').select2(); });
     </script>
 }

@@ -24,32 +24,32 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label asp-for="TeacherUserId" class="text-sm font-medium text-gray-700 block mb-1">Teacher <span class="text-red-500">*</span></label>
-                    <select asp-for="TeacherUserId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.TeacherUserId">
+                    <select asp-for="TeacherUserId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.TeacherUserId">
                         <option value="">-- Select Teacher --</option>
                     </select>
                     <span asp-validation-for="TeacherUserId" class="text-sm text-red-600"></span>
                 </div>
                 <div>
                     <label asp-for="ExamScheduleId" class="text-sm font-medium text-gray-700 block mb-1">Exam Schedule (Optional)</label>
-                    <select asp-for="ExamScheduleId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ExamScheduleId">
+                    <select asp-for="ExamScheduleId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ExamScheduleId">
                         <option value="">-- All Schedules --</option>
                     </select>
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 block mb-1">Program <span class="text-red-500">*</span></label>
-                    <select id="ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ProgramId">
+                    <select id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ProgramId">
                         <option value="">-- Select Program --</option>
                     </select>
                 </div>
                 <div>
                     <label class="text-sm font-medium text-gray-700 block mb-1">Semester <span class="text-red-500">*</span></label>
-                    <select id="SemesterId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.SemesterId">
+                    <select id="SemesterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.SemesterId">
                         <option value="">-- Select Semester --</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">
                     <label asp-for="SubjectOfferingId" class="text-sm font-medium text-gray-700 block mb-1">Subject <span class="text-red-500">*</span></label>
-                    <select asp-for="SubjectOfferingId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500">
+                    <select asp-for="SubjectOfferingId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500">
                         <option value="">-- Select Program and Semester first --</option>
                     </select>
                     <span asp-validation-for="SubjectOfferingId" class="text-sm text-red-600"></span>
@@ -102,7 +102,7 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         $(function () {
-            $('select').not('#SubjectOfferingId').select2({ width: '100%' });
+            $('.select2').select2({ width: '100%' });
         });
 
         document.getElementById('ProgramId').addEventListener('change', loadSubjects);
@@ -128,6 +128,7 @@
                         opt.textContent = s.name;
                         subjectSelect.appendChild(opt);
                     });
+                    $(subjectSelect).select2({ width: '100%' });
                 });
         }
     </script>

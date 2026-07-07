@@ -27,7 +27,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label asp-for="ProvinceId" class="text-sm font-medium text-gray-700 block mb-1">Province</label>
-                    <select asp-for="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.ProvinceId">
+                    <select asp-for="ProvinceId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.ProvinceId">
                         <option value="">-- Select Province --</option>
                     </select>
                     <span asp-validation-for="ProvinceId" class="text-xs text-red-500 mt-1 block"></span>
@@ -58,7 +58,22 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            outline: 2px solid transparent; outline-offset: 2px;
+            border-color: #14b8a6;
+        }
+    </style>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(function () { $('.select2').select2(); });
+    </script>
 }

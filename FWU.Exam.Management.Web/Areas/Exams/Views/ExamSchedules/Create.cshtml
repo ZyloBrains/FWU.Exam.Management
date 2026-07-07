@@ -46,28 +46,28 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label asp-for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="AcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
                             <option value="">-- Select Academic Year --</option>
                         </select>
                         <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
+                        <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="ExamTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ExamTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ExamTypeId">
+                        <select asp-for="ExamTypeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ExamTypeId">
                             <option value="">-- Select Exam Type --</option>
                         </select>
                         <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="SemesterId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="SemesterId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                        <select asp-for="SemesterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
                             <option value="">-- Select Semester --</option>
                         </select>
                         <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
@@ -213,7 +213,7 @@
 
     <script>
         $(function () {
-            $('select').select2({ width: '100%' });
+            $('.select2').select2();
         });
 
         var convertTimer;

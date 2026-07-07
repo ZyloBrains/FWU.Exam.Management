@@ -40,7 +40,7 @@
                 </div>
                 <div>
                     <label asp-for="ExamScheduleId" class="text-sm font-medium text-gray-700">Exam Schedule <span class="text-red-500">*</span></label>
-                    <select asp-for="ExamScheduleId" asp-items="@ViewData["ExamScheduleId"] as SelectList" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <select asp-for="ExamScheduleId" asp-items="@ViewData["ExamScheduleId"] as SelectList" class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
                         <option value="">-- Select Schedule --</option>
                     </select>
                     <span asp-validation-for="ExamScheduleId" class="text-xs text-red-500 mt-1 block"></span>

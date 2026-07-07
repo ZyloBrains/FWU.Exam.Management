@@ -26,31 +26,31 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label asp-for="ExamScheduleId" class="text-sm font-medium text-gray-700 block mb-1">Exam Schedule <span class="text-red-500">*</span></label>
-                        <select asp-for="ExamScheduleId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.ExamScheduleId">
+                        <select asp-for="ExamScheduleId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.ExamScheduleId">
                             <option value="">-- Select Schedule --</option>
                         </select>
                     </div>
                     <div>
                         <label asp-for="CollegeId" class="text-sm font-medium text-gray-700 block mb-1">College <span class="text-red-500">*</span></label>
-                        <select asp-for="CollegeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.CollegeId">
+                        <select asp-for="CollegeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.CollegeId">
                             <option value="">-- Select College --</option>
                         </select>
                     </div>
                     <div>
                         <label asp-for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1">Academic Year</label>
-                        <select asp-for="AcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.AcademicYearId">
                             <option value="">-- Select --</option>
                         </select>
                     </div>
                     <div>
                         <label asp-for="ProgramsId" class="text-sm font-medium text-gray-700 block mb-1">Program</label>
-                        <select asp-for="ProgramsId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.ProgramsId">
+                        <select asp-for="ProgramsId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.ProgramsId">
                             <option value="">-- Select --</option>
                         </select>
                     </div>
                     <div>
                         <label asp-for="ExamCenterId" class="text-sm font-medium text-gray-700 block mb-1">Exam Center</label>
-                        <select asp-for="ExamCenterId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.ExamCenterId">
+                        <select asp-for="ExamCenterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="ViewBag.ExamCenterId">
                             <option value="">-- Select --</option>
                         </select>
                     </div>
@@ -72,7 +72,7 @@
                     </div>
                     <div>
                         <label asp-for="Status" class="text-sm font-medium text-gray-700 block mb-1">Status</label>
-                        <select asp-for="Status" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.RegistrationStatus>()"></select>
+                        <select asp-for="Status" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.RegistrationStatus>()"></select>
                     </div>
                     <div>
                         <label asp-for="Remarks" class="text-sm font-medium text-gray-700 block mb-1"></label>

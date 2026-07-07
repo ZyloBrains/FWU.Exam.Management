@@ -56,17 +56,17 @@
                        placeholder="Search name, email, phone..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
-            <select name="status" class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="status" class="select2 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Status</option>
                 <option value="Submitted" selected="@(currentStatus == "Submitted")">Submitted</option>
                 <option value="UnderReview" selected="@(currentStatus == "UnderReview")">Under Review</option>
                 <option value="Approved" selected="@(currentStatus == "Approved")">Approved</option>
                 <option value="Rejected" selected="@(currentStatus == "Rejected")">Rejected</option>
             </select>
-            <select name="programId" asp-items="ViewBag.ProgramIdList" class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="programId" asp-items="ViewBag.ProgramIdList" class="select2 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Programs</option>
             </select>
-            <select name="academicYearId" asp-items="ViewBag.AcademicYearIdList" class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="academicYearId" asp-items="ViewBag.AcademicYearIdList" class="select2 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Academic Years</option>
             </select>
             <div class="flex gap-2">
@@ -265,5 +265,5 @@
         }
     </style>
 
-    <script>$(function () { $('select[name="programId"], select[name="academicYearId"]').select2({ width: '100%' }); });</script>
+    <script>$(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: '100%' }); });</script>
 }

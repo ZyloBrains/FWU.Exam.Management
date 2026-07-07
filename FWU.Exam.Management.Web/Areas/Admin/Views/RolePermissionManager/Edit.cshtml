@@ -35,19 +35,19 @@
                                class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
                     </div>
                 </div>
-                <select id="groupFilter" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
+                <select id="groupFilter" class="select2 border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
                     <option value="">All Groups</option>
                     @foreach (var group in Model.Groups)
                     {
                         <option value="@group.GroupName">@group.GroupDisplayName</option>
                     }
                 </select>
-                <select id="statusFilter" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
+                <select id="statusFilter" class="select2 border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
                     <option value="">All Status</option>
                     <option value="assigned">Assigned</option>
                     <option value="unassigned">Unassigned</option>
                 </select>
-                <select id="sortOrder" class="border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
+                <select id="sortOrder" class="select2 border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
                     <option value="">Default Order</option>
                     <option value="name-asc">Name A-Z</option>
                     <option value="name-desc">Name Z-A</option>
@@ -156,7 +156,7 @@
 
     <script>
         $(document).ready(function () {
-            $('.select2').select2();
+            $('.select2').select2({ minimumResultsForSearch: -1 });
         });
     </script>
 

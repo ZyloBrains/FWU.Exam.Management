@@ -35,7 +35,7 @@
                 </div>
                 <div>
                     <label asp-for="IsActive" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="IsActive" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                    <select asp-for="IsActive" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                         <option value="true" selected="@(Model.IsActive)">Active</option>
                         <option value="false" selected="@(!Model.IsActive)">Inactive</option>
                     </select>

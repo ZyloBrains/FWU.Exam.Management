@@ -33,14 +33,14 @@
                     </div>
                     <div>
                         <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.ProgramId">
+                        <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.ProgramId">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="AcademicYearId" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.AcademicYearId">
+                        <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.AcademicYearId">
                             <option value="">-- Select Academic Year --</option>
                         </select>
                         <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
@@ -135,5 +135,5 @@
     </style>
 
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script>$(function () { $('select').select2({ width: '100%' }); });</script>
+    <script>$(function () { $('.select2').select2({ width: '100%' }); });</script>
 }

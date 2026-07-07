@@ -30,14 +30,14 @@
                 </div>
                 <div>
                     <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1">Program</label>
-                    <select asp-for="ProgramId" asp-items="ViewBag.ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                    <select asp-for="ProgramId" asp-items="ViewBag.ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                         <option value="">-- Select Program --</option>
                     </select>
                     <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="EffectiveAcademicYearId" class="text-sm font-medium text-gray-700 block mb-1">Effective Academic Year</label>
-                    <select asp-for="EffectiveAcademicYearId" asp-items="ViewBag.EffectiveAcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                    <select asp-for="EffectiveAcademicYearId" asp-items="ViewBag.EffectiveAcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                         <option value="">-- Select Academic Year --</option>
                     </select>
                     <span asp-validation-for="EffectiveAcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
