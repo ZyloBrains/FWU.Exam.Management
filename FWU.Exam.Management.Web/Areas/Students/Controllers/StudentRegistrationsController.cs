@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -42,29 +42,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return new List<int>();
     }
 
-    private async Task<int?> GetUserDepartmentIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.DepartmentId;
-    }
-
-    public async Task<IActionResult> Index(int? departmentId = null)
+    public async Task<IActionResult> Index()
     {
         var collegeIds = await GetUserCollegeIdsAsync();
-        var userDeptId = await GetUserDepartmentIdAsync();
-
-        if (User.IsInRole(Role.DepartmentAdmin) && userDeptId.HasValue)
-        {
-            departmentId = userDeptId.Value;
-        }
-
-        if (departmentId.HasValue)
-        {
-            var deptRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
-            deptRegistrations = deptRegistrations.Where(r => r.DepartmentId == departmentId.Value).ToList();
-            return View(deptRegistrations);
-        }
-
         var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
         return View(studentRegistrations);
     }
@@ -90,7 +70,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("LevelId,DepartmentId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Create([Bind("LevelId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId")] StudentRegistration studentRegistration)
     {
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
@@ -128,7 +108,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,DepartmentId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId")] StudentRegistration studentRegistration)
     {
         if (id != studentRegistration.Id) return NotFound();
 
@@ -184,14 +164,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10)
     {
         var collegeIds = await GetUserCollegeIdsAsync();
-        var userDeptId = await GetUserDepartmentIdAsync();
         var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize, collegeIds.Count > 0 ? collegeIds : null);
-
-        if (User.IsInRole(Role.DepartmentAdmin) && userDeptId.HasValue)
-        {
-            data = data.Where(d => d.DepartmentId == userDeptId.Value).ToList();
-            totalCount = data.Count;
-        }
 
         return Json(new { data, totalCount });
     }
@@ -256,12 +229,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                         .ToListAsync();
                     var collegeMap = BuildLookup(collegeLookup, c => c.Name, c => c.Code, c => c.Id);
 
-                    var departmentLookup = await context.Departments!
-                        .Where(d => d.IsActive)
-                        .Select(d => new { d.Id, d.DepartmentName, d.DepartmentCode })
-                        .ToListAsync();
-                    var departmentMap = BuildLookup(departmentLookup, d => d.DepartmentName, d => d.DepartmentCode, d => d.Id);
-
                     var facultyLookup = await context.Faculties!
                         .Select(f => new { f.Id, f.Name, f.OfficeCode })
                         .ToListAsync();
@@ -303,7 +270,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                                 AcademicYearId = ResolveId(worksheet.Cell(row, 8).GetString(), ayMap),
                                 LevelId = ResolveId(worksheet.Cell(row, 9).GetString(), levelMap),
                                 CollegeId = ResolveId(worksheet.Cell(row, 10).GetString(), collegeMap),
-                                DepartmentId = ResolveId(worksheet.Cell(row, 11).GetString(), departmentMap),
                                 GenderId = ResolveId(worksheet.Cell(row, 12).GetString(), genderMap),
                                 StudentCategoryId = ResolveId(worksheet.Cell(row, 13).GetString(), categoryMap),
                                 FacultyId = ResolveNullableId(worksheet.Cell(row, 15).GetString(), facultyMap),
@@ -312,9 +278,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                             };
 
                             if (registration.AcademicYearId == 0 || registration.LevelId == 0 ||
-                                registration.CollegeId == 0 || registration.DepartmentId == 0)
+                                registration.CollegeId == 0)
                             {
-                                errors.Add($"Row {row}: Missing required IDs (AcademicYear, Level, College, or Department)");
+                                errors.Add($"Row {row}: Missing required IDs (AcademicYear, Level, or College)");
                                 continue;
                             }
 
@@ -477,44 +443,43 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             worksheet.Cell(1, 8).Value = "AcademicYearId";
             worksheet.Cell(1, 9).Value = "LevelId";
             worksheet.Cell(1, 10).Value = "CollegeId";
-            worksheet.Cell(1, 11).Value = "DepartmentId";
-            worksheet.Cell(1, 12).Value = "GenderId";
-            worksheet.Cell(1, 13).Value = "StudentCategoryId";
-            worksheet.Cell(1, 14).Value = "Active";
-            worksheet.Cell(1, 15).Value = "FacultyId";
-            worksheet.Cell(1, 16).Value = "ProgramId";
-            worksheet.Cell(1, 17).Value = "PermanentLocalLevelId";
-            worksheet.Cell(1, 18).Value = "PermanentWardNumber";
-            worksheet.Cell(1, 19).Value = "PermanentToleStreet";
-            worksheet.Cell(1, 20).Value = "PermanentHouseNumber";
-            worksheet.Cell(1, 21).Value = "FatherFirstName";
-            worksheet.Cell(1, 22).Value = "FatherLastName";
-            worksheet.Cell(1, 23).Value = "FatherOccupation";
-            worksheet.Cell(1, 24).Value = "FatherPhone";
-            worksheet.Cell(1, 25).Value = "MotherFirstName";
-            worksheet.Cell(1, 26).Value = "MotherLastName";
-            worksheet.Cell(1, 27).Value = "MotherOccupation";
-            worksheet.Cell(1, 28).Value = "MotherPhone";
-            worksheet.Cell(1, 29).Value = "PreviousLevelId_1";
-            worksheet.Cell(1, 30).Value = "BoardId_1";
-            worksheet.Cell(1, 31).Value = "InstituteName_1";
-            worksheet.Cell(1, 32).Value = "PassedYear_1";
-            worksheet.Cell(1, 33).Value = "Percentage_1";
-            worksheet.Cell(1, 34).Value = "ExamRollNumber_1";
-            worksheet.Cell(1, 35).Value = "PreviousLevelId_2";
-            worksheet.Cell(1, 36).Value = "BoardId_2";
-            worksheet.Cell(1, 37).Value = "InstituteName_2";
-            worksheet.Cell(1, 38).Value = "PassedYear_2";
-            worksheet.Cell(1, 39).Value = "Percentage_2";
-            worksheet.Cell(1, 40).Value = "ExamRollNumber_2";
-            worksheet.Cell(1, 41).Value = "PreviousLevelId_3";
-            worksheet.Cell(1, 42).Value = "BoardId_3";
-            worksheet.Cell(1, 43).Value = "InstituteName_3";
-            worksheet.Cell(1, 44).Value = "PassedYear_3";
-            worksheet.Cell(1, 45).Value = "Percentage_3";
-            worksheet.Cell(1, 46).Value = "ExamRollNumber_3";
+            worksheet.Cell(1, 11).Value = "GenderId";
+            worksheet.Cell(1, 12).Value = "StudentCategoryId";
+            worksheet.Cell(1, 13).Value = "Active";
+            worksheet.Cell(1, 14).Value = "FacultyId";
+            worksheet.Cell(1, 15).Value = "ProgramId";
+            worksheet.Cell(1, 16).Value = "PermanentLocalLevelId";
+            worksheet.Cell(1, 17).Value = "PermanentWardNumber";
+            worksheet.Cell(1, 18).Value = "PermanentToleStreet";
+            worksheet.Cell(1, 19).Value = "PermanentHouseNumber";
+            worksheet.Cell(1, 20).Value = "FatherFirstName";
+            worksheet.Cell(1, 21).Value = "FatherLastName";
+            worksheet.Cell(1, 22).Value = "FatherOccupation";
+            worksheet.Cell(1, 23).Value = "FatherPhone";
+            worksheet.Cell(1, 24).Value = "MotherFirstName";
+            worksheet.Cell(1, 25).Value = "MotherLastName";
+            worksheet.Cell(1, 26).Value = "MotherOccupation";
+            worksheet.Cell(1, 27).Value = "MotherPhone";
+            worksheet.Cell(1, 28).Value = "PreviousLevelId_1";
+            worksheet.Cell(1, 29).Value = "BoardId_1";
+            worksheet.Cell(1, 30).Value = "InstituteName_1";
+            worksheet.Cell(1, 31).Value = "PassedYear_1";
+            worksheet.Cell(1, 32).Value = "Percentage_1";
+            worksheet.Cell(1, 33).Value = "ExamRollNumber_1";
+            worksheet.Cell(1, 34).Value = "PreviousLevelId_2";
+            worksheet.Cell(1, 35).Value = "BoardId_2";
+            worksheet.Cell(1, 36).Value = "InstituteName_2";
+            worksheet.Cell(1, 37).Value = "PassedYear_2";
+            worksheet.Cell(1, 38).Value = "Percentage_2";
+            worksheet.Cell(1, 39).Value = "ExamRollNumber_2";
+            worksheet.Cell(1, 40).Value = "PreviousLevelId_3";
+            worksheet.Cell(1, 41).Value = "BoardId_3";
+            worksheet.Cell(1, 42).Value = "InstituteName_3";
+            worksheet.Cell(1, 43).Value = "PassedYear_3";
+            worksheet.Cell(1, 44).Value = "Percentage_3";
+            worksheet.Cell(1, 45).Value = "ExamRollNumber_3";
 
-            for (int col = 1; col <= 46; col++)
+            for (int col = 1; col <= 45; col++)
             {
                 var cell = worksheet.Cell(1, col);
                 cell.Style.Font.Bold = true;
@@ -537,46 +502,45 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                 worksheet.Cell(row, 8).Value = reg.AcademicYearId;
                 worksheet.Cell(row, 9).Value = reg.LevelId;
                 worksheet.Cell(row, 10).Value = reg.CollegeId;
-                worksheet.Cell(row, 11).Value = reg.DepartmentId;
-                worksheet.Cell(row, 12).Value = reg.GenderId;
-                worksheet.Cell(row, 13).Value = reg.StudentCategoryId;
-                worksheet.Cell(row, 14).Value = reg.IsActive ? "Yes" : "No";
-                worksheet.Cell(row, 15).Value = reg.FacultyId;
-                worksheet.Cell(row, 16).Value = reg.ProgramId;
-                worksheet.Cell(row, 17).Value = reg.PermanentAddress?.LocalLevelId;
-                worksheet.Cell(row, 18).Value = reg.PermanentAddress?.WardNumber;
-                worksheet.Cell(row, 19).Value = reg.PermanentAddress?.ToleStreet;
-                worksheet.Cell(row, 20).Value = reg.PermanentAddress?.HouseNumber;
-                // Guardian cols 21-28 (import reads separate First/Last cols, entity stores combined — export combined versions)
-                worksheet.Cell(row, 21).Value = guardian?.FatherName;
-                worksheet.Cell(row, 22).Value = (string?)null;
-                worksheet.Cell(row, 23).Value = guardian?.FatherProfession;
-                worksheet.Cell(row, 24).Value = guardian?.FatherContactNumber;
-                worksheet.Cell(row, 25).Value = guardian?.MotherName;
-                worksheet.Cell(row, 26).Value = (string?)null;
-                worksheet.Cell(row, 27).Value = guardian?.MotherProfession;
-                worksheet.Cell(row, 28).Value = guardian?.MotherContactNumber;
-                // Qualification 1 cols 29-34
-                worksheet.Cell(row, 29).Value = (quals != null && quals.Count > 0) ? quals[0].PreviousLevelId.ToString() : null;
-                worksheet.Cell(row, 30).Value = (quals != null && quals.Count > 0) ? quals[0].BoardId.ToString() : null;
-                worksheet.Cell(row, 31).Value = (quals != null && quals.Count > 0) ? quals[0].InstituteName : null;
-                worksheet.Cell(row, 32).Value = (quals != null && quals.Count > 0) ? quals[0].PassedYear : null;
-                worksheet.Cell(row, 33).Value = (quals != null && quals.Count > 0) ? quals[0].Percentage?.ToString() : null;
-                worksheet.Cell(row, 34).Value = (quals != null && quals.Count > 0) ? quals[0].ExamRollNumber : null;
-                // Qualification 2 cols 35-40
-                worksheet.Cell(row, 35).Value = (quals != null && quals.Count > 1) ? quals[1].PreviousLevelId.ToString() : null;
-                worksheet.Cell(row, 36).Value = (quals != null && quals.Count > 1) ? quals[1].BoardId.ToString() : null;
-                worksheet.Cell(row, 37).Value = (quals != null && quals.Count > 1) ? quals[1].InstituteName : null;
-                worksheet.Cell(row, 38).Value = (quals != null && quals.Count > 1) ? quals[1].PassedYear : null;
-                worksheet.Cell(row, 39).Value = (quals != null && quals.Count > 1) ? quals[1].Percentage?.ToString() : null;
-                worksheet.Cell(row, 40).Value = (quals != null && quals.Count > 1) ? quals[1].ExamRollNumber : null;
-                // Qualification 3 cols 41-46
-                worksheet.Cell(row, 41).Value = (quals != null && quals.Count > 2) ? quals[2].PreviousLevelId.ToString() : null;
-                worksheet.Cell(row, 42).Value = (quals != null && quals.Count > 2) ? quals[2].BoardId.ToString() : null;
-                worksheet.Cell(row, 43).Value = (quals != null && quals.Count > 2) ? quals[2].InstituteName : null;
-                worksheet.Cell(row, 44).Value = (quals != null && quals.Count > 2) ? quals[2].PassedYear : null;
-                worksheet.Cell(row, 45).Value = (quals != null && quals.Count > 2) ? quals[2].Percentage?.ToString() : null;
-                worksheet.Cell(row, 46).Value = (quals != null && quals.Count > 2) ? quals[2].ExamRollNumber : null;
+                worksheet.Cell(row, 11).Value = reg.GenderId;
+                worksheet.Cell(row, 12).Value = reg.StudentCategoryId;
+                worksheet.Cell(row, 13).Value = reg.IsActive ? "Yes" : "No";
+                worksheet.Cell(row, 14).Value = reg.FacultyId;
+                worksheet.Cell(row, 15).Value = reg.ProgramId;
+                worksheet.Cell(row, 16).Value = reg.PermanentAddress?.LocalLevelId;
+                worksheet.Cell(row, 17).Value = reg.PermanentAddress?.WardNumber;
+                worksheet.Cell(row, 18).Value = reg.PermanentAddress?.ToleStreet;
+                worksheet.Cell(row, 19).Value = reg.PermanentAddress?.HouseNumber;
+                // Guardian cols 20-27 (import reads separate First/Last cols, entity stores combined — export combined versions)
+                worksheet.Cell(row, 20).Value = guardian?.FatherName;
+                worksheet.Cell(row, 21).Value = (string?)null;
+                worksheet.Cell(row, 22).Value = guardian?.FatherProfession;
+                worksheet.Cell(row, 23).Value = guardian?.FatherContactNumber;
+                worksheet.Cell(row, 24).Value = guardian?.MotherName;
+                worksheet.Cell(row, 25).Value = (string?)null;
+                worksheet.Cell(row, 26).Value = guardian?.MotherProfession;
+                worksheet.Cell(row, 27).Value = guardian?.MotherContactNumber;
+                // Qualification 1 cols 28-33
+                worksheet.Cell(row, 28).Value = (quals != null && quals.Count > 0) ? quals[0].PreviousLevelId.ToString() : null;
+                worksheet.Cell(row, 29).Value = (quals != null && quals.Count > 0) ? quals[0].BoardId.ToString() : null;
+                worksheet.Cell(row, 30).Value = (quals != null && quals.Count > 0) ? quals[0].InstituteName : null;
+                worksheet.Cell(row, 31).Value = (quals != null && quals.Count > 0) ? quals[0].PassedYear : null;
+                worksheet.Cell(row, 32).Value = (quals != null && quals.Count > 0) ? quals[0].Percentage?.ToString() : null;
+                worksheet.Cell(row, 33).Value = (quals != null && quals.Count > 0) ? quals[0].ExamRollNumber : null;
+                // Qualification 2 cols 34-39
+                worksheet.Cell(row, 34).Value = (quals != null && quals.Count > 1) ? quals[1].PreviousLevelId.ToString() : null;
+                worksheet.Cell(row, 35).Value = (quals != null && quals.Count > 1) ? quals[1].BoardId.ToString() : null;
+                worksheet.Cell(row, 36).Value = (quals != null && quals.Count > 1) ? quals[1].InstituteName : null;
+                worksheet.Cell(row, 37).Value = (quals != null && quals.Count > 1) ? quals[1].PassedYear : null;
+                worksheet.Cell(row, 38).Value = (quals != null && quals.Count > 1) ? quals[1].Percentage?.ToString() : null;
+                worksheet.Cell(row, 39).Value = (quals != null && quals.Count > 1) ? quals[1].ExamRollNumber : null;
+                // Qualification 3 cols 40-45
+                worksheet.Cell(row, 40).Value = (quals != null && quals.Count > 2) ? quals[2].PreviousLevelId.ToString() : null;
+                worksheet.Cell(row, 41).Value = (quals != null && quals.Count > 2) ? quals[2].BoardId.ToString() : null;
+                worksheet.Cell(row, 42).Value = (quals != null && quals.Count > 2) ? quals[2].InstituteName : null;
+                worksheet.Cell(row, 43).Value = (quals != null && quals.Count > 2) ? quals[2].PassedYear : null;
+                worksheet.Cell(row, 44).Value = (quals != null && quals.Count > 2) ? quals[2].Percentage?.ToString() : null;
+                worksheet.Cell(row, 45).Value = (quals != null && quals.Count > 2) ? quals[2].ExamRollNumber : null;
                 row++;
             }
 
@@ -726,7 +690,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);
         ViewBag.LevelId = new SelectList(selectLists.Levels, "Id", "Name", studentRegistration?.LevelId);
-        ViewBag.DepartmentId = new SelectList(selectLists.Departments, "Id", "Name", studentRegistration?.DepartmentId);
         ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name", studentRegistration?.CollegeId);
         ViewBag.FacultyId = new SelectList(selectLists.Faculties, "Id", "Name", studentRegistration?.FacultyId);
         ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", studentRegistration?.ProgramId);
@@ -757,16 +720,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetDepartmentsByCollege(int collegeId)
+    public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? levelId = null)
     {
-        var departments = await studentRegistrationService.GetDepartmentsByCollegeAsync(collegeId);
-        return Json(departments);
-    }
-
-    [HttpGet]
-    public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? levelId = null, int? departmentId = null)
-    {
-        var programs = await studentRegistrationService.GetProgramsByCollegeAsync(collegeId, levelId, departmentId);
+        var programs = await studentRegistrationService.GetProgramsByCollegeAsync(collegeId, levelId);
         return Json(programs);
     }
 

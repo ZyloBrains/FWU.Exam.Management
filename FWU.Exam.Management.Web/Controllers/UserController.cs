@@ -47,16 +47,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
                 u.FacultyId == currentUser.FacultyId ||
                 (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
         }
-        else if (User.IsInRole(Role.DepartmentAdmin) && currentUser.FacultyId != null)
-        {
-            var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
-                .Select(c => (int?)c.Id)
-                .ToListAsync();
-            filteredQuery = usersQuery.Where(u =>
-                u.FacultyId == currentUser.FacultyId ||
-                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
-        }
         else
         {
             filteredQuery = usersQuery.Where(u => u.Id == currentUser.Id);
@@ -104,7 +94,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
-        ViewBag.Departments = new SelectList(await context.Departments.ToListAsync(), "Id", "DepartmentName");
         return View(new CreateUserViewModel());
     }
 
@@ -132,11 +121,8 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             if (model.SelectedRole is Role.FacultyAdmin)
                 user.FacultyId = model.FacultyId;
 
-            if (model.SelectedRole is Role.CollegeAdmin or Role.DepartmentAdmin or Role.Teacher or Role.Student)
+            if (model.SelectedRole is Role.CollegeAdmin or Role.Teacher or Role.Student)
                 user.CollegeId = model.CollegeId;
-
-            if (model.SelectedRole is Role.DepartmentAdmin)
-                user.DepartmentId = model.DepartmentId;
 
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
@@ -156,7 +142,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -179,14 +164,12 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             Email = user.Email ?? string.Empty,
             FullName = user.FullName,
             FacultyId = user.FacultyId,
-            CollegeId = user.CollegeId,
-            DepartmentId = user.DepartmentId
+            CollegeId = user.CollegeId
         };
 
         ViewBag.PrimaryRole = primaryRole;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -207,7 +190,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             user.FullName = model.FullName;
             user.FacultyId = model.FacultyId;
             user.CollegeId = model.CollegeId;
-            user.DepartmentId = model.DepartmentId;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -221,7 +203,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 

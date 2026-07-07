@@ -46,7 +46,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamType>? ExamTypes { get; set; }
     public DbSet<AdmitCard>? AdmitCards { get; set; }
     public DbSet<RetotalRequest>? RetotalRequests { get; set; }
-    public DbSet<Department>? Departments { get; set; }
     public DbSet<FiscalYear>? FiscalYears { get; set; }
     public DbSet<Gender>? Genders { get; set; }
     public DbSet<IndexGroup>? IndexGroups { get; set; }
@@ -289,12 +288,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(sr => sr.Level)
             .WithMany(l => l.StudentRegistrations)
             .HasForeignKey(sr => sr.LevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.Department)
-            .WithMany(d => d.StudentRegistrations)
-            .HasForeignKey(sr => sr.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
@@ -705,12 +698,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(u => u.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<AppUser>()
-            .HasOne(u => u.Department)
-            .WithMany()
-            .HasForeignKey(u => u.DepartmentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<College>()
             .HasOne(c => c.CollegeProfile)
             .WithOne(cp => cp.College)
@@ -858,16 +845,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasIndex(f => f.OfficeCode)
             .IsUnique()
             .HasFilter("[OfficeCode] IS NOT NULL");
-
-        builder.Entity<Department>()
-            .HasIndex(d => d.DepartmentCode)
-            .IsUnique();
-
-        builder.Entity<Department>()
-            .HasOne(d => d.Faculty)
-            .WithMany(f => f.Departments)
-            .HasForeignKey(d => d.FacultyId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Program>()
             .HasIndex(p => p.ProgramCode)

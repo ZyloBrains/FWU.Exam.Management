@@ -20,8 +20,7 @@ public interface IStudentRegistrationService
     Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId);
     Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId);
     Task<List<SelectOption>> GetFacultiesByLevelAsync(int levelId);
-    Task<List<SelectOption>> GetDepartmentsByCollegeAsync(int collegeId);
-    Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null, int? departmentId = null);
+    Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null);
     List<Province> GetProvinces();
     Task SaveQualificationsAsync(int studentRegistrationId, List<StudentQualification> qualifications);
     Task<List<StudentQualification>> GetQualificationsByRegistrationAsync(int studentRegistrationId);

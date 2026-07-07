@@ -20,7 +20,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.Faculty)
             .Include(s => s.Program)
             .Include(s => s.College)
@@ -46,7 +45,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.Faculty)
             .Include(s => s.Program)
             .Include(s => s.College)
@@ -186,7 +184,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.Faculty)
             .Include(s => s.Program)
             .Include(s => s.College)
@@ -230,7 +227,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 Category = s.StudentCategory != null ? s.StudentCategory.StudentCategoryName : "-",
                 ContactNumber = s.ContactNumber ?? "-",
                 Email = s.Email ?? "-",
-                DepartmentId = s.DepartmentId,
                 Status = s.IsActive ? "Active" : "Inactive"
             })
             .ToListAsync();
@@ -262,7 +258,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var departments = await context.Departments.Where(d => d.DepartmentName != null).AsNoTracking().ToListAsync();
         var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
@@ -277,7 +272,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             Levels = levels.Select(l => new SelectOption { Id = l.Id, Name = l.LevelName }).ToList(),
-            Departments = departments.Select(d => new SelectOption { Id = d.Id, Name = d.DepartmentName }).ToList(),
             Colleges = colleges.Select(c => new SelectOption { Id = c.Id, Name = c.Name }).ToList(),
             Genders = genders.Select(g => new SelectOption { Id = g.Id, Name = g.GenderName }).ToList(),
             StudentCategories = studentCategories.Select(sc => new SelectOption { Id = sc.Id, Name = sc.StudentCategoryName }).ToList(),
@@ -325,24 +319,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
-    public async Task<List<SelectOption>> GetDepartmentsByCollegeAsync(int collegeId)
-    {
-        var departmentIds = await context.CollegePrograms
-            .Where(cp => cp.CollegeId == collegeId)
-            .Join(context.Programs, cp => cp.ProgramId, p => p.Id, (cp, p) => p.DepartmentId)
-            .Distinct()
-            .ToListAsync();
-
-        if (departmentIds.Count == 0) return [];
-
-        return await context.Departments
-            .Where(d => departmentIds.Contains(d.Id))
-            .Select(d => new SelectOption { Id = d.Id, Name = d.DepartmentName })
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
-    public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null, int? departmentId = null)
+    public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null)
     {
         var query = context.CollegePrograms
             .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
@@ -351,9 +328,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
         if (levelId.HasValue)
             query = query.Where(cp => cp.Program!.LevelId == levelId.Value);
-
-        if (departmentId.HasValue)
-            query = query.Where(cp => cp.Program!.DepartmentId == departmentId.Value);
 
         return await query
             .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })

@@ -263,7 +263,6 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                     CollegeId = application.CollegeId,
                     ProgramId = application.ProgramId,
                     LevelId = application.Program?.LevelId ?? 0,
-                    DepartmentId = application.Program?.DepartmentId ?? 0,
                     FirstName = application.FirstName,
                     MiddleName = application.MiddleName,
                     LastName = application.LastName!,

@@ -14,7 +14,7 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
 public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -34,9 +34,6 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         }
 
         if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
-            return [user.CollegeId.Value];
-
-        if (User.IsInRole(Role.DepartmentAdmin) && user.CollegeId != null)
             return [user.CollegeId.Value];
 
         return [];

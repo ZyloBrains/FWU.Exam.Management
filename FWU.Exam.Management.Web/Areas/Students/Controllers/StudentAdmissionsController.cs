@@ -38,11 +38,6 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             return new List<int> { user.CollegeId.Value };
         }
 
-        if (User.IsInRole(Role.DepartmentAdmin) && user.CollegeId != null)
-        {
-            return new List<int> { user.CollegeId.Value };
-        }
-
         return new List<int>();
     }
 

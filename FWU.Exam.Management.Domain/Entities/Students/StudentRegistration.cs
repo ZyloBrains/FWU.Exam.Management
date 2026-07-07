@@ -18,10 +18,6 @@ public class StudentRegistration : ITenantScoped
     public int LevelId { get; set; }
 
     [Range(1, int.MaxValue)]
-    [Display(Name = "Department")]
-    public int DepartmentId { get; set; }
-
-    [Range(1, int.MaxValue)]
     [Display(Name = "College")]
     public int CollegeId { get; set; }
 
@@ -122,7 +118,6 @@ public class StudentRegistration : ITenantScoped
     public virtual AcademicYear? AcademicYear { get; set; }
 
     public virtual Level? Level { get; set; }
-    public virtual Department? Department { get; set; }
     public virtual Faculty? Faculty { get; set; }
     public virtual College? College { get; set; }
     public virtual Program? Program { get; set; }

@@ -55,16 +55,6 @@
                             </div>
 
                             <div>
-                                <label asp-for="DepartmentId" class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-                                <select asp-for="DepartmentId"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
-                                        asp-items="ViewBag.DepartmentId">
-                                    <option value="">Select Department</option>
-                                </select>
-                                <span asp-validation-for="DepartmentId" class="text-red-600 text-xs"></span>
-                            </div>
-
-                            <div>
                                 <label asp-for="ProgramId" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
                                 <select asp-for="ProgramId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.ProgramId">
                                     <option value="">Select Program</option>
@@ -332,7 +322,6 @@
         function loadPrograms() {
             var collegeId = $("#CollegeId").val();
             var levelId = $("#LevelId").val();
-            var departmentId = $("#DepartmentId").val();
 
             $("#ProgramId").html('<option>Loading...</option>');
 
@@ -344,7 +333,7 @@
             }
 
             $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
-                { collegeId: collegeId, levelId: levelId || null, departmentId: departmentId || null },
+                { collegeId: collegeId, levelId: levelId || null },
                 function (data) {
                     var programDropdown = $("#ProgramId");
                     programDropdown.empty();
@@ -426,7 +415,6 @@
 
                 $("#FacultyId").html('<option>Loading...</option>');
                 $("#CollegeId").html('<option value="">Select College</option>');
-                $("#DepartmentId").html('<option value="">Select Department</option>');
                 $("#ProgramId").html('<option value="">Select Program</option>');
 
                 if (!levelId) {
@@ -453,7 +441,6 @@
                 var facultyId = $(this).val();
 
                 $("#CollegeId").html('<option>Loading...</option>');
-                $("#DepartmentId").html('<option value="">Select Department</option>');
                 $("#ProgramId").html('<option value="">Select Program</option>');
 
                 if (!facultyId) {
@@ -475,35 +462,17 @@
                 });
             });
 
-            // College -> Department + Program
+            // College -> Program
             $("#CollegeId").change(function () {
                 var collegeId = $(this).val();
 
-                $("#DepartmentId").html('<option>Loading...</option>');
                 $("#ProgramId").html('<option>Loading...</option>');
 
                 if (!collegeId) {
-                    $("#DepartmentId").empty().append('<option value="">Select Department</option>');
                     $("#ProgramId").empty().append('<option value="">Select Program</option>');
                     return;
                 }
 
-                $.get(tenantUrl("/Students/StudentRegistrations/GetDepartmentsByCollege"),
-                    { collegeId: collegeId },
-                    function (data) {
-                        var deptDropdown = $("#DepartmentId");
-                        deptDropdown.empty();
-                        deptDropdown.append('<option value="">Select Department</option>');
-                        $.each(data, function (index, item) {
-                            deptDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                });
-
-                loadPrograms();
-            });
-
-            // Department -> Program
-            $("#DepartmentId").change(function () {
                 loadPrograms();
             });
 
