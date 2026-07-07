@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Identity;
 using FWU.Exam.Management.Web.Helpers;
+using Microsoft.Data.SqlClient;
 
 using Microsoft.AspNetCore.Authorization;
 
@@ -258,50 +259,102 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                     {
                         try
                         {
+                            var rawAy = worksheet.Cell(row, 8).GetString();
+                            var rawLevel = worksheet.Cell(row, 9).GetString();
+                            var rawCollege = worksheet.Cell(row, 10).GetString();
+                            var ayId = ResolveId(rawAy, ayMap);
+                            var levelId = ResolveId(rawLevel, levelMap);
+                            var collegeId = ResolveId(rawCollege, collegeMap);
+
+                            if (ayId == 0)
+                            {
+                                errors.Add($"Row {row}: AcademicYear '{rawAy}' not found. Available: {string.Join(", ", ayMap.Keys)}");
+                                continue;
+                            }
+                            if (levelId == 0)
+                            {
+                                errors.Add($"Row {row}: Level '{rawLevel}' not found. Available: {string.Join(", ", levelMap.Keys)}");
+                                continue;
+                            }
+                            if (collegeId == 0)
+                            {
+                                errors.Add($"Row {row}: College '{rawCollege}' not found. Available: {string.Join(", ", collegeMap.Keys)}");
+                                continue;
+                            }
+
+                            var rawEmail = worksheet.Cell(row, 4).GetString();
+                            if (string.IsNullOrWhiteSpace(rawEmail))
+                            {
+                                var regNum = worksheet.Cell(row, 7).GetString();
+                                var firstName = worksheet.Cell(row, 1).GetString();
+                                var lastName = worksheet.Cell(row, 2).GetString();
+                                if (!string.IsNullOrWhiteSpace(regNum))
+                                    rawEmail = $"{regNum}@fwu.edu.np";
+                                else if (!string.IsNullOrWhiteSpace(firstName))
+                                    rawEmail = $"{firstName}.{lastName}@fwu.edu.np".ToLowerInvariant();
+                                else
+                                    rawEmail = $"student@fwu.edu.np";
+                            }
+
+                            // Ensure generated email is unique by appending a suffix if needed
+                            var finalEmail = rawEmail;
+                            var suffix = 1;
+                            while (await context.StudentRegistrations.AnyAsync(s => s.Email == finalEmail))
+                            {
+                                var atIndex = rawEmail.IndexOf('@');
+                                finalEmail = atIndex > 0 ? $"{rawEmail[..atIndex]}{suffix}{rawEmail[atIndex..]}" : $"{rawEmail}{suffix}";
+                                suffix++;
+                            }
+
                             var registration = new StudentRegistration
                             {
                                 FirstName = worksheet.Cell(row, 1).GetString(),
                                 LastName = worksheet.Cell(row, 2).GetString(),
                                 MiddleName = worksheet.Cell(row, 3).GetString(),
-                                Email = worksheet.Cell(row, 4).GetString(),
+                                Email = finalEmail,
                                 ContactNumber = worksheet.Cell(row, 5).GetString(),
                                 DateOfBirthBS = worksheet.Cell(row, 6).GetString(),
                                 RegistrationNumber = worksheet.Cell(row, 7).GetString(),
-                                AcademicYearId = ResolveId(worksheet.Cell(row, 8).GetString(), ayMap),
-                                LevelId = ResolveId(worksheet.Cell(row, 9).GetString(), levelMap),
-                                CollegeId = ResolveId(worksheet.Cell(row, 10).GetString(), collegeMap),
-                                GenderId = ResolveId(worksheet.Cell(row, 12).GetString(), genderMap),
-                                StudentCategoryId = ResolveId(worksheet.Cell(row, 13).GetString(), categoryMap),
-                                FacultyId = ResolveNullableId(worksheet.Cell(row, 15).GetString(), facultyMap),
-                                ProgramId = int.TryParse(worksheet.Cell(row, 16).GetString(), out var progId) ? progId : null,
-                                IsActive = worksheet.Cell(row, 14).GetString() is string activeStr && bool.TryParse(activeStr, out var isActive) ? isActive : true
+                                AcademicYearId = ayId,
+                                LevelId = levelId,
+                                CollegeId = collegeId,
+                                GenderId = ResolveId(worksheet.Cell(row, 11).GetString(), genderMap),
+                                StudentCategoryId = ResolveId(worksheet.Cell(row, 12).GetString(), categoryMap),
+                                IsActive = worksheet.Cell(row, 13).GetString() is string activeStr && bool.TryParse(activeStr, out var isActive) ? isActive : true,
+                                FacultyId = ResolveNullableId(worksheet.Cell(row, 14).GetString(), facultyMap),
+                                ProgramId = int.TryParse(worksheet.Cell(row, 15).GetString(), out var progId) ? progId : null
                             };
 
-                            if (registration.AcademicYearId == 0 || registration.LevelId == 0 ||
-                                registration.CollegeId == 0)
+                            if (registration.GenderId == 0)
                             {
-                                errors.Add($"Row {row}: Missing required IDs (AcademicYear, Level, or College)");
+                                errors.Add($"Row {row}: Gender not found. Use: Male, Female, or Other");
                                 continue;
                             }
 
-                            // Address columns 17-20
-                            var permanentLocalLevelId = worksheet.Cell(row, 17).GetString();
-                            var permanentWardNumber = worksheet.Cell(row, 18).GetString();
-                            var permanentToleStreet = worksheet.Cell(row, 19).GetString();
-                            var permanentHouseNumber = worksheet.Cell(row, 20).GetString();
+                            if (registration.StudentCategoryId == 0)
+                            {
+                                errors.Add($"Row {row}: StudentCategory not found. Check your category name.");
+                                continue;
+                            }
+
+                            // Address columns 16-19
+                            var permanentLocalLevelId = worksheet.Cell(row, 16).GetString();
+                            var permanentWardNumber = worksheet.Cell(row, 17).GetString();
+                            var permanentToleStreet = worksheet.Cell(row, 18).GetString();
+                            var permanentHouseNumber = worksheet.Cell(row, 19).GetString();
 
                             var registrationId = await studentRegistrationService.CreateStudentRegistrationAsync(
                                 registration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
 
-                            // Guardian columns 21-28
-                            var fatherFirstName = worksheet.Cell(row, 21).GetString();
-                            var fatherLastName = worksheet.Cell(row, 22).GetString();
-                            var fatherOccupation = worksheet.Cell(row, 23).GetString();
-                            var fatherPhone = worksheet.Cell(row, 24).GetString();
-                            var motherFirstName = worksheet.Cell(row, 25).GetString();
-                            var motherLastName = worksheet.Cell(row, 26).GetString();
-                            var motherOccupation = worksheet.Cell(row, 27).GetString();
-                            var motherPhone = worksheet.Cell(row, 28).GetString();
+                            // Guardian columns 20-27
+                            var fatherFirstName = worksheet.Cell(row, 20).GetString();
+                            var fatherLastName = worksheet.Cell(row, 21).GetString();
+                            var fatherOccupation = worksheet.Cell(row, 22).GetString();
+                            var fatherPhone = worksheet.Cell(row, 23).GetString();
+                            var motherFirstName = worksheet.Cell(row, 24).GetString();
+                            var motherLastName = worksheet.Cell(row, 25).GetString();
+                            var motherOccupation = worksheet.Cell(row, 26).GetString();
+                            var motherPhone = worksheet.Cell(row, 27).GetString();
 
                             if (!string.IsNullOrWhiteSpace(fatherFirstName) || !string.IsNullOrWhiteSpace(motherFirstName))
                             {
@@ -319,16 +372,24 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                                 await studentRegistrationService.SaveGuardiansAsync(registrationId, guardian);
                             }
 
-                            // Qualification columns — 3 sets
+                            // Qualification columns — 3 sets (export starts at col 28)
                             var qualifications = new List<StudentQualification>();
-                            AddQualificationFromRow(worksheet, row, 29, qualifications);
-                            AddQualificationFromRow(worksheet, row, 35, qualifications);
-                            AddQualificationFromRow(worksheet, row, 41, qualifications);
+                            AddQualificationFromRow(worksheet, row, 28, qualifications);
+                            AddQualificationFromRow(worksheet, row, 34, qualifications);
+                            AddQualificationFromRow(worksheet, row, 40, qualifications);
 
                             if (qualifications.Count > 0)
                                 await studentRegistrationService.SaveQualificationsAsync(registrationId, qualifications);
 
                             successCount++;
+                        }
+                        catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 547)
+                        {
+                            errors.Add($"Row {row}: Foreign key error — one of the referenced IDs (College, Level, Gender, etc.) does not match existing records.");
+                        }
+                        catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 2601)
+                        {
+                            errors.Add($"Row {row}: Duplicate value (Email or RegistrationNumber already exists).");
                         }
                         catch (Exception ex)
                         {
@@ -349,6 +410,11 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                     return RedirectToAction(nameof(Index));
                 }
             }
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 547)
+        {
+            TempData["ErrorMessage"] = "A foreign key constraint was violated. Check that all referenced values (College, Level, Gender, etc.) exist in the system.";
+            return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
@@ -374,19 +440,19 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     private static int ResolveId(string cellValue, Dictionary<string, int> lookup)
     {
-        if (int.TryParse(cellValue, out var id))
-            return id;
         if (!string.IsNullOrWhiteSpace(cellValue) && lookup.TryGetValue(cellValue.Trim(), out var resolvedId))
             return resolvedId;
+        if (int.TryParse(cellValue, out var id) && lookup.ContainsValue(id))
+            return id;
         return 0;
     }
 
     private static int? ResolveNullableId(string cellValue, Dictionary<string, int> lookup)
     {
-        if (int.TryParse(cellValue, out var id))
-            return id;
         if (!string.IsNullOrWhiteSpace(cellValue) && lookup.TryGetValue(cellValue.Trim(), out var resolvedId))
             return resolvedId;
+        if (int.TryParse(cellValue, out var id) && lookup.ContainsValue(id))
+            return id;
         return null;
     }
 
