@@ -68,6 +68,22 @@
                     }
                 </div>
             </div>
+            <!-- Active Status -->
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</p>
+                <div class="flex items-center gap-1">
+                    @if (Model.IsActive)
+                    {
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        <span class="text-gray-800 font-medium">Active</span>
+                    }
+                    else
+                    {
+                        <i class="fas fa-times-circle text-gray-400"></i>
+                        <span class="text-gray-800 font-medium">Inactive</span>
+                    }
+                </div>
+            </div>
         </div>
 
         <!-- Warning Note -->

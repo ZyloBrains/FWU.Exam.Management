@@ -26,6 +26,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
+            .Include(s => s.PermanentAddress)
+            .Include(s => s.StudentGuardians)
+            .Include(s => s.StudentQualifications)
             .AsNoTracking();
 
         if (collegeIds != null && collegeIds.Count > 0)
@@ -75,6 +78,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 studentRegistration.PermanentAddressId = permanentAddress.Id;
             }
 
+            studentRegistration.IsActive = true;
             context.StudentRegistrations.Add(studentRegistration);
             await context.SaveChangesAsync();
 

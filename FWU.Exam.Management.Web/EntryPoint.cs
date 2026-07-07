@@ -236,6 +236,7 @@ public partial class EntryPoint
             await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
 
             // Admin / test users (depends on roles, colleges, faculties being seeded)
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);

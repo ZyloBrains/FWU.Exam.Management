@@ -63,6 +63,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                 "port" => s => s.Port,
                 "username" => s => s.UserName,
                 "enablessl" => s => s.EnableSsl,
+                "isactive" => s => s.IsActive,
                 _ => s => s.Host
             };
         }
@@ -116,7 +117,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             var sb = new StringBuilder();
 
             // CSV header
-            sb.AppendLine("Host,From Email,Port,Username,Enable SSL");
+            sb.AppendLine("Host,From Email,Port,Username,Enable SSL,Is Active");
 
             foreach (var s in items)
             {
@@ -127,7 +128,8 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                               $"{EscapeCsv(s.From)}," +
                               $"{s.Port}," +
                               $"{EscapeCsv(s.UserName)}," +
-                              $"{(s.EnableSsl ? "Yes" : "No")}");
+                              $"{(s.EnableSsl ? "Yes" : "No")}," +
+                              $"{(s.IsActive ? "Yes" : "No")}");
             }
 
             var fileName = $"SMTPConfigurations_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
@@ -158,7 +160,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             using var workbook = new XLWorkbook();
             var worksheet = workbook.Worksheets.Add("SMTP Configurations");
 
-            var headers = new[] { "Host", "From Email", "Port", "Username", "Enable SSL" };
+            var headers = new[] { "Host", "From Email", "Port", "Username", "Enable SSL", "Is Active" };
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = worksheet.Cell(1, i + 1);
@@ -175,6 +177,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                 worksheet.Cell(row, 3).Value = s.Port;
                 worksheet.Cell(row, 4).Value = s.UserName;
                 worksheet.Cell(row, 5).Value = s.EnableSsl ? "Yes" : "No";
+                worksheet.Cell(row, 6).Value = s.IsActive ? "Yes" : "No";
                 row++;
             }
 
@@ -216,7 +219,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         [RequirePermission("smtp.create")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Host,From,Port,UserName,Password,EnableSsl")] SmtpConfiguration smtpConfiguration)
+        public async Task<IActionResult> Create([Bind("Id,Host,From,Port,UserName,Password,EnableSsl,IsActive")] SmtpConfiguration smtpConfiguration)
         {
             if (ModelState.IsValid)
             {
@@ -248,7 +251,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         [RequirePermission("smtp.edit")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Host,From,Port,UserName,Password,EnableSsl")] SmtpConfiguration smtpConfiguration)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Host,From,Port,UserName,Password,EnableSsl,IsActive")] SmtpConfiguration smtpConfiguration)
         {
             if (id != smtpConfiguration.Id)
             {

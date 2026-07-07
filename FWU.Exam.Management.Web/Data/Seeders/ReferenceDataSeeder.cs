@@ -514,4 +514,23 @@ public static class ReferenceDataSeeder
         context.ConnectIpsPaymentConfigurations.Add(connectIpsConfig);
         await context.SaveChangesAsync();
     }
+
+    public static async Task SeedSmsConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.SmsConfigurations.AnyAsync())
+            return;
+
+        var smsConfig = new SmsConfiguration
+        {
+            ApiUrl = "https://message.gumpnow.com/api/v1/sms/send/",
+            ApiKey = "change-me",
+            Mode = "prod",
+            Tags = "entrance",
+            IsActive = true
+        };
+        context.SmsConfigurations.Add(smsConfig);
+        await context.SaveChangesAsync();
+    }
 }
