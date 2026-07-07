@@ -56,7 +56,7 @@ public class RetotalRequestsController(
     [RequirePermission("retotaling.approve")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Approve(int id, string? retotalledGradeLetter, decimal? retotalledMarks, string? adminRemarks)
+    public async Task<IActionResult> Approve(int id, string? retotalledGradeLetter, float? retotalledMarks, string? adminRemarks)
     {
         var user = await userManager.GetUserAsync(User);
         await retotalRequestService.ApproveRetotalRequestAsync(id, retotalledGradeLetter, retotalledMarks, adminRemarks, user?.UserName ?? "system");

@@ -102,10 +102,10 @@ public class MarksheetSubjectViewModel
     public int ExamSubjectResultId { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }
-    public string? TheoryMarks { get; set; }
-    public string? PracticalMarks { get; set; }
-    public string? InternalMarks { get; set; }
-    public string? TotalMarks { get; set; }
+    public float? TheoryMarks { get; set; }
+    public float? PracticalMarks { get; set; }
+    public float? InternalMarks { get; set; }
+    public float? TotalMarks { get; set; }
     public string? Grade { get; set; }
     public string? GradePoint { get; set; }
     public bool IsPassed { get; set; }

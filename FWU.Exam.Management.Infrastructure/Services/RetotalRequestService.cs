@@ -131,7 +131,7 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
         }
     }
 
-    public async Task ApproveRetotalRequestAsync(int id, string? retotalledGradeLetter, decimal? retotalledMarks, string? adminRemarks, string reviewedBy)
+    public async Task ApproveRetotalRequestAsync(int id, string? retotalledGradeLetter, float? retotalledMarks, string? adminRemarks, string reviewedBy)
     {
         var request = await context.RetotalRequests.FindAsync(id);
         if (request != null && request.Status == RetotalStatus.UnderReview)

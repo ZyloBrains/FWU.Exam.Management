@@ -26,29 +26,29 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
     [Display(Name = "Exam Schedule")]
     public int? ExamScheduleId { get; set; }
 
-    [MaxLength(3)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks Theory")]
-    public string? ObtainedMarksTheory { get; set; }
+    public float? ObtainedMarksTheory { get; set; }
 
-    [MaxLength(3)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks Theory Confirm")]
-    public string? ObtainedMarksTheoryConfirm { get; set; }
+    public float? ObtainedMarksTheoryConfirm { get; set; }
 
-    [MaxLength(3)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks Practical")]
-    public string? ObtainedMarksPractical { get; set; }
+    public float? ObtainedMarksPractical { get; set; }
 
-    [MaxLength(3)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks Practical Confirm")]
-    public string? ObtainedMarksPracticalConfirm { get; set; }
+    public float? ObtainedMarksPracticalConfirm { get; set; }
 
-    [Range(0, double.MaxValue)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks Theory Internal")]
-    public decimal? ObtainedMarksTheoryInternal { get; set; }
+    public float? ObtainedMarksTheoryInternal { get; set; }
 
-    [Range(0, double.MaxValue)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks Practical Internal")]
-    public decimal? ObtainedMarksPracticalInternal { get; set; }
+    public float? ObtainedMarksPracticalInternal { get; set; }
 
     [MaxLength(3)]
     [Display(Name = "Grade Letter")]
@@ -78,9 +78,9 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
     [Display(Name = "Is Submitted")]
     public bool IsSubmitted { get; set; }
 
-    [Range(0, double.MaxValue)]
+    [Range(0, float.MaxValue)]
     [Display(Name = "Obtained Marks")]
-    public decimal? ObtainedMarks { get; set; }
+    public float? ObtainedMarks { get; set; }
 
     public DateTime? ExamSubmittedDateTime { get; set; }
 

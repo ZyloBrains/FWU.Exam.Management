@@ -154,12 +154,12 @@
                             @if (Model.HasTheory)
                             {
                                 <td class="excel-cell excel-cell-input">
-                                    <input type="text" name="Students[@i].TheoryMarks" value="@s.TheoryMarks" maxlength="3"
+                                    <input type="number" name="Students[@i].TheoryMarks" value="@s.TheoryMarks" step="0.01"
                                            class="excel-input" data-row="@rowNum" data-col="theory" autocomplete="off"
                                            @@input="calculate(@i)" @@keydown="onKeyDown" @@focus="onCellFocus" />
                                 </td>
                                 <td class="excel-cell excel-cell-input">
-                                    <input type="text" name="Students[@i].TheoryConfirm" value="@s.TheoryConfirm" maxlength="3"
+                                    <input type="number" name="Students[@i].TheoryConfirm" value="@s.TheoryConfirm" step="0.01"
                                            class="excel-input" data-row="@rowNum" data-col="theoryConfirm" autocomplete="off"
                                            @@keydown="onKeyDown" @@focus="onCellFocus" />
                                 </td>
@@ -172,12 +172,12 @@
                             @if (Model.HasPractical)
                             {
                                 <td class="excel-cell excel-cell-input">
-                                    <input type="text" name="Students[@i].PracticalMarks" value="@s.PracticalMarks" maxlength="3"
+                                    <input type="number" name="Students[@i].PracticalMarks" value="@s.PracticalMarks" step="0.01"
                                            class="excel-input" data-row="@rowNum" data-col="practical" autocomplete="off"
                                            @@input="calculate(@i)" @@keydown="onKeyDown" @@focus="onCellFocus" />
                                 </td>
                                 <td class="excel-cell excel-cell-input">
-                                    <input type="text" name="Students[@i].PracticalConfirm" value="@s.PracticalConfirm" maxlength="3"
+                                    <input type="number" name="Students[@i].PracticalConfirm" value="@s.PracticalConfirm" step="0.01"
                                            class="excel-input" data-row="@rowNum" data-col="practicalConfirm" autocomplete="off"
                                            @@keydown="onKeyDown" @@focus="onCellFocus" />
                                 </td>
