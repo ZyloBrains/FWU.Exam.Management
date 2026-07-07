@@ -54,8 +54,6 @@
                     <div>
                         <label asp-for="SelectedRole" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="SelectedRole"
-                                x-init="role = $el.value"
-                                x-on:change="role = $el.value"
                                 class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
                             <option value="">-- Select Role --</option>
                             @foreach (var r in ViewBag.RolesList)
@@ -116,23 +114,27 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         function initSelect2() {
-            $('.select2').each(function () {
-                var $el = $(this);
-                if ($el.is(':visible')) {
-                    if (!$el.data('select2')) {
-                        $el.select2({width:'resolve'});
+            document.querySelectorAll('.select2').forEach(function (el) {
+                var isVisible = el.offsetParent !== null;
+                if (isVisible) {
+                    if (!$(el).data('select2')) {
+                        $(el).select2({width:'resolve'});
                     }
                 } else {
-                    if ($el.data('select2')) {
-                        $el.select2('destroy');
+                    if ($(el).data('select2')) {
+                        $(el).select2('destroy');
                     }
                 }
             });
         }
-        document.addEventListener('alpine:initialized', function () {
+        document.addEventListener('DOMContentLoaded', function () {
             initSelect2();
-            $('#SelectedRole').on('change', function () {
-                setTimeout(initSelect2, 250);
+            document.getElementById('SelectedRole').addEventListener('change', function () {
+                var el = document.querySelector('[x-data]');
+                if (el && window.Alpine) {
+                    Alpine.$data(el).role = this.value;
+                }
+                setTimeout(initSelect2, 500);
             });
         });
     </script>
