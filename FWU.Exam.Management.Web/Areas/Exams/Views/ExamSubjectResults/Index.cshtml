@@ -87,8 +87,8 @@
                         <td class="px-4 py-3 font-medium text-gray-800">Reg #@item.ExamRegistrationId</td>
                         <td class="px-4 py-3 text-gray-600">@item.SubjectOffering?.SubjectCatalog?.SubjectName</td>
                         <td class="px-4 py-3 text-gray-600">@item.ExamType?.Name</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.ObtainedMarksTheory ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.ObtainedMarksPractical ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.ObtainedMarksTheory?.ToString("N2") ?? "-")</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.ObtainedMarksPractical?.ToString("N2") ?? "-")</td>
                         <td class="px-4 py-3 font-semibold">@(item.GradeLetter ?? "-")</td>
                         <td class="px-4 py-3">
                             @if (item.IsSubmitted)
@@ -148,8 +148,8 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                     <div class="text-gray-500">Grade</div><div class="text-gray-800 font-semibold">@(item.GradeLetter ?? "-")</div>
-                    <div class="text-gray-500">Theory</div><div class="text-gray-800">@(item.ObtainedMarksTheory ?? "-")</div>
-                    <div class="text-gray-500">Practical</div><div class="text-gray-800">@(item.ObtainedMarksPractical ?? "-")</div>
+                    <div class="text-gray-500">Theory</div><div class="text-gray-800">@(item.ObtainedMarksTheory?.ToString("N2") ?? "-")</div>
+                    <div class="text-gray-500">Practical</div><div class="text-gray-800">@(item.ObtainedMarksPractical?.ToString("N2") ?? "-")</div>
                 </div>
                 <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
                     <a asp-action="MarksEntryExcel" asp-controller="TeacherMarks" asp-area="Exams"

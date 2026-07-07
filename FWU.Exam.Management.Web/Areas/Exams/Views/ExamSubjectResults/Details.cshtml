@@ -39,19 +39,19 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Theory Marks</p>
-                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheory ?? "-")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheory?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Theory (Confirm)</p>
-                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheoryConfirm ?? "-")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheoryConfirm?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Practical Marks</p>
-                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPractical ?? "-")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPractical?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Practical (Confirm)</p>
-                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPracticalConfirm ?? "-")</p>
+                    <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPracticalConfirm?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-600">Theory Internal</p>

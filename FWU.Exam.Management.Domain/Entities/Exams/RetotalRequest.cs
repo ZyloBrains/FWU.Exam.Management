@@ -24,9 +24,9 @@ public class RetotalRequest : ITenantScoped
     public RetotalStatus Status { get; set; }
 
     public string? OriginalGradeLetter { get; set; }
-    public decimal? OriginalObtainedMarks { get; set; }
+    public float? OriginalObtainedMarks { get; set; }
     public string? RetotalledGradeLetter { get; set; }
-    public decimal? RetotalledObtainedMarks { get; set; }
+    public float? RetotalledObtainedMarks { get; set; }
 
     public string? ReviewedByUsername { get; set; }
     public DateTime? ReviewedDate { get; set; }

@@ -7,7 +7,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class GradeCalculationService(AppDbContext context) : IGradeCalculationService
 {
-    public GradeResult CalculateGrade(decimal totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null)
+    public GradeResult CalculateGrade(float totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null)
     {
         if (gradingScheme == null)
         {
@@ -16,20 +16,21 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
                 .FirstOrDefault(gs => gs.ProgramId == subjectOffering.ProgramId && gs.IsActive);
         }
 
-        var theoryFull = (decimal)subjectOffering.TheoryFullMarks;
-        var practicalFull = subjectOffering.PracticalFullMarks.HasValue ? (decimal)subjectOffering.PracticalFullMarks.Value : 0m;
-        var internalTheoryFull = subjectOffering.InternalTheoryFullMarks.HasValue ? (decimal)subjectOffering.InternalTheoryFullMarks.Value : 0m;
-        var internalPracticalFull = subjectOffering.InternalPracticalFullMarks.HasValue ? (decimal)subjectOffering.InternalPracticalFullMarks.Value : 0m;
+        var theoryFull = subjectOffering.TheoryFullMarks;
+        var practicalFull = subjectOffering.PracticalFullMarks ?? 0f;
+        var internalTheoryFull = subjectOffering.InternalTheoryFullMarks ?? 0f;
+        var internalPracticalFull = subjectOffering.InternalPracticalFullMarks ?? 0f;
         var totalFullMarks = theoryFull + practicalFull + internalTheoryFull + internalPracticalFull;
 
         if (totalFullMarks == 0) totalFullMarks = 1;
 
-        var percentage = (totalMarks / totalFullMarks) * 100m;
+        var percentage = (totalMarks / totalFullMarks) * 100f;
 
         if (gradingScheme?.GradeDefinitions != null && gradingScheme.GradeDefinitions.Count != 0)
         {
+            var percentageDecimal = (decimal)percentage;
             var matched = gradingScheme.GradeDefinitions
-                .Where(gd => percentage >= gd.MinPercentage && percentage <= gd.MaxPercentage)
+                .Where(gd => percentageDecimal >= gd.MinPercentage && percentageDecimal <= gd.MaxPercentage)
                 .OrderBy(gd => gd.DisplayOrder)
                 .FirstOrDefault();
 
@@ -54,23 +55,23 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         };
     }
 
-    public bool IsStudentPassing(decimal? theoryMarks, decimal? practicalMarks, SubjectOffering offering)
+    public bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering)
     {
-        if (offering.HasTheory && theoryMarks.HasValue && theoryMarks.Value < (decimal)offering.TheoryPassMarks)
+        if (offering.HasTheory && theoryMarks.HasValue && theoryMarks.Value < offering.TheoryPassMarks)
             return false;
 
         if (offering.HasPractical && practicalMarks.HasValue && offering.PracticalPassMarks.HasValue
-            && practicalMarks.Value < (decimal)offering.PracticalPassMarks.Value)
+            && practicalMarks.Value < offering.PracticalPassMarks.Value)
             return false;
 
         return true;
     }
 
-    public decimal CalculateTotalMarks(string? theory, string? practical, decimal? theoryInternal, decimal? practicalInternal)
+    public float CalculateTotalMarks(float? theory, float? practical, float? theoryInternal, float? practicalInternal)
     {
-        decimal total = 0;
-        if (decimal.TryParse(theory, out var t)) total += t;
-        if (decimal.TryParse(practical, out var p)) total += p;
+        float total = 0;
+        if (theory.HasValue) total += theory.Value;
+        if (practical.HasValue) total += practical.Value;
         if (theoryInternal.HasValue) total += theoryInternal.Value;
         if (practicalInternal.HasValue) total += practicalInternal.Value;
         return total;

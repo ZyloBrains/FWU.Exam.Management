@@ -96,12 +96,12 @@
                             @if (Model.HasTheory)
                             {
                                 <td class="px-3 py-2">
-                                    <input type="text" name="Students[@i].TheoryMarks" value="@s.TheoryMarks" maxlength="3"
+                                    <input type="number" name="Students[@i].TheoryMarks" value="@s.TheoryMarks" step="0.01"
                                            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-teal-500"
                                            @@input="calculate(@i)" />
                                 </td>
                                 <td class="px-3 py-2">
-                                    <input type="text" name="Students[@i].TheoryConfirm" value="@s.TheoryConfirm" maxlength="3"
+                                    <input type="number" name="Students[@i].TheoryConfirm" value="@s.TheoryConfirm" step="0.01"
                                            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-teal-500" />
                                 </td>
                             }
@@ -113,12 +113,12 @@
                             @if (Model.HasPractical)
                             {
                                 <td class="px-3 py-2">
-                                    <input type="text" name="Students[@i].PracticalMarks" value="@s.PracticalMarks" maxlength="3"
+                                    <input type="number" name="Students[@i].PracticalMarks" value="@s.PracticalMarks" step="0.01"
                                            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-teal-500"
                                            @@input="calculate(@i)" />
                                 </td>
                                 <td class="px-3 py-2">
-                                    <input type="text" name="Students[@i].PracticalConfirm" value="@s.PracticalConfirm" maxlength="3"
+                                    <input type="number" name="Students[@i].PracticalConfirm" value="@s.PracticalConfirm" step="0.01"
                                            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm text-center focus:ring-2 focus:ring-teal-500" />
                                 </td>
                             }

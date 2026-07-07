@@ -38,13 +38,13 @@ public class StudentMarksRowDto
     public string StudentName { get; set; } = string.Empty;
     public string SymbolNumber { get; set; } = string.Empty;
     public string RegistrationNumber { get; set; } = string.Empty;
-    public string? TheoryMarks { get; set; }
-    public string? TheoryConfirm { get; set; }
-    public string? PracticalMarks { get; set; }
-    public string? PracticalConfirm { get; set; }
-    public decimal? TheoryInternal { get; set; }
-    public decimal? PracticalInternal { get; set; }
-    public decimal? TotalMarks { get; set; }
+    public float? TheoryMarks { get; set; }
+    public float? TheoryConfirm { get; set; }
+    public float? PracticalMarks { get; set; }
+    public float? PracticalConfirm { get; set; }
+    public float? TheoryInternal { get; set; }
+    public float? PracticalInternal { get; set; }
+    public float? TotalMarks { get; set; }
     public string? GradeLetter { get; set; }
     public bool IsPass { get; set; }
     public bool IsSubmitted { get; set; }
