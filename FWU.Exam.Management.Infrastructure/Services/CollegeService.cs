@@ -4,16 +4,21 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeService(AppDbContext context) : ICollegeService
+public class CollegeService(AppDbContext context, IUserContext userContext) : ICollegeService
 {
     public async Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search, facultyId);
+        var query = BuildQuery(search);
+        query = query.ApplyScope(userContext);
+        if (userContext.IsSuperAdmin && facultyId.HasValue)
+            query = query.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value));
 
         var totalCount = await query.CountAsync();
 
@@ -31,7 +36,10 @@ public class CollegeService(AppDbContext context) : ICollegeService
 
     public async Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search, facultyId);
+        var query = BuildQuery(search);
+        query = query.ApplyScope(userContext);
+        if (userContext.IsSuperAdmin && facultyId.HasValue)
+            query = query.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value));
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -154,7 +162,7 @@ public class CollegeService(AppDbContext context) : ICollegeService
         return await context.CollegeTypes.AsNoTracking().ToListAsync();
     }
 
-    private IQueryable<College> BuildQuery(string? search, int? facultyId = null)
+    private IQueryable<College> BuildQuery(string? search)
     {
         var query = context.Colleges
             .Include(c => c.CollegeType)
@@ -162,11 +170,6 @@ public class CollegeService(AppDbContext context) : ICollegeService
             .ThenInclude(a => a.LocalLevel)
             .ThenInclude(ll => ll.District)
             .AsNoTracking();
-
-        if (facultyId.HasValue)
-        {
-            query = query.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value));
-        }
 
         if (!string.IsNullOrEmpty(search))
         {

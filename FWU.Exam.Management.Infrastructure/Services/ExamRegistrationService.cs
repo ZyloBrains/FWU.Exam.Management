@@ -2,34 +2,32 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ExamRegistrationService(AppDbContext context) : IExamRegistrationService
+public class ExamRegistrationService(AppDbContext context, IUserContext userContext) : IExamRegistrationService
 {
-    private IQueryable<ExamRegistration> ApplyScope(IQueryable<ExamRegistration> query, int? collegeId, int? facultyId)
-    {
-        if (collegeId.HasValue)
-            return query.Where(e => e.CollegeId == collegeId.Value);
-
-        if (facultyId.HasValue)
-        {
-            var collegeIds = context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
-                .Select(c => c.Id)
-                .ToList();
-
-            return query.Where(e => collegeIds.Contains(e.CollegeId));
-        }
-
-        return query;
-    }
-
     public async Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, int? examScheduleId = null)
     {
-        var query = ApplyScope(BuildQuery(search, sort, sortDir, examScheduleId), collegeId, facultyId);
+        var query = BuildQuery(search, sort, sortDir, examScheduleId);
+        query = query.ApplyScope(userContext);
+        if (userContext.IsSuperAdmin)
+        {
+            if (collegeId.HasValue)
+                query = query.Where(e => e.CollegeId == collegeId.Value);
+            else if (facultyId.HasValue)
+            {
+                var facultyCollegeIds = context.Colleges
+                    .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
+                    .Select(c => c.Id)
+                    .ToList();
+                query = query.Where(e => facultyCollegeIds.Contains(e.CollegeId));
+            }
+        }
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -66,7 +64,21 @@ public class ExamRegistrationService(AppDbContext context) : IExamRegistrationSe
 
     public async Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
     {
-        var query = ApplyScope(BuildQuery(search, "Id", "asc", null), collegeId, facultyId);
+        var query = BuildQuery(search, "Id", "asc", null);
+        query = query.ApplyScope(userContext);
+        if (userContext.IsSuperAdmin)
+        {
+            if (collegeId.HasValue)
+                query = query.Where(e => e.CollegeId == collegeId.Value);
+            else if (facultyId.HasValue)
+            {
+                var facultyCollegeIds = context.Colleges
+                    .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
+                    .Select(c => c.Id)
+                    .ToList();
+                query = query.Where(e => facultyCollegeIds.Contains(e.CollegeId));
+            }
+        }
         return await query
             .Select(e => new ExamRegistration
             {
@@ -163,33 +175,36 @@ public class ExamRegistrationService(AppDbContext context) : IExamRegistrationSe
 
     public ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null, int? collegeId = null, int? facultyId = null, int? departmentId = null)
     {
-        var examSchedulesQuery = context.ExamSchedules.AsNoTracking();
-        if (facultyId.HasValue)
+        var examSchedulesQuery = context.ExamSchedules.AsNoTracking().ApplyScope(userContext);
+        if (userContext.IsSuperAdmin && facultyId.HasValue)
             examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == facultyId.Value);
-        if (departmentId.HasValue)
+        if (userContext.IsSuperAdmin && departmentId.HasValue)
             examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.DepartmentId == departmentId.Value);
         var examSchedules = examSchedulesQuery.ToList();
 
-        var collegesQuery = context.Colleges.AsNoTracking();
-        if (collegeId.HasValue)
+        var collegesQuery = context.Colleges.AsNoTracking().ApplyScope(userContext);
+        if (userContext.IsSuperAdmin && collegeId.HasValue)
             collegesQuery = collegesQuery.Where(c => c.Id == collegeId.Value);
         var colleges = collegesQuery.ToList();
 
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
 
-        var programsQuery = context.Programs.AsNoTracking();
-        if (collegeId.HasValue)
+        var programsQuery = context.Programs.AsNoTracking().ApplyScope(userContext);
+        if (userContext.IsSuperAdmin)
         {
-            var collegeProgramIds = context.CollegePrograms.AsNoTracking()
-                .Where(cp => cp.CollegeId == collegeId.Value)
-                .Select(cp => cp.ProgramId)
-                .ToList();
-            programsQuery = programsQuery.Where(p => collegeProgramIds.Contains(p.Id));
+            if (collegeId.HasValue)
+            {
+                var collegeProgramIds = context.CollegePrograms.AsNoTracking()
+                    .Where(cp => cp.CollegeId == collegeId.Value)
+                    .Select(cp => cp.ProgramId)
+                    .ToList();
+                programsQuery = programsQuery.Where(p => collegeProgramIds.Contains(p.Id));
+            }
+            if (facultyId.HasValue)
+                programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
+            if (departmentId.HasValue)
+                programsQuery = programsQuery.Where(p => p.DepartmentId == departmentId.Value);
         }
-        if (facultyId.HasValue)
-            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
-        if (departmentId.HasValue)
-            programsQuery = programsQuery.Where(p => p.DepartmentId == departmentId.Value);
         var programs = programsQuery.ToList();
 
         var examCentersQuery = context.ExamCenters.AsNoTracking();

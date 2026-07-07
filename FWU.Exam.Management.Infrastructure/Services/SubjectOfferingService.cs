@@ -5,7 +5,9 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
@@ -13,10 +15,12 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class SubjectOfferingService : ISubjectOfferingService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
 
-    public SubjectOfferingService(AppDbContext context)
+    public SubjectOfferingService(AppDbContext context, IUserContext userContext)
     {
         _context = context;
+        _userContext = userContext;
     }
 
     public async Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
@@ -26,8 +30,9 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.Program)
             .Include(s => s.Semester)
             .AsNoTracking();
+        query = query.ApplyScope(_userContext);
 
-        if (facultyId.HasValue)
+        if (_userContext.IsSuperAdmin && facultyId.HasValue)
         {
             query = query.Where(s => s.Program != null && s.Program.Department != null && s.Program.Department.FacultyId == facultyId.Value);
         }
@@ -60,8 +65,9 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.Program)
             .Include(s => s.Semester)
             .AsNoTracking();
+        query = query.ApplyScope(_userContext);
 
-        if (facultyId.HasValue)
+        if (_userContext.IsSuperAdmin && facultyId.HasValue)
         {
             query = query.Where(s => s.Program != null && s.Program.Department != null && s.Program.Department.FacultyId == facultyId.Value);
         }
@@ -141,9 +147,10 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
 
         var programsQuery = _context.Programs
-            .Where(p => p.IsActive);
+            .Where(p => p.IsActive)
+            .ApplyScope(_userContext);
 
-        if (facultyId.HasValue)
+        if (_userContext.IsSuperAdmin && facultyId.HasValue)
         {
             programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == facultyId.Value);
         }

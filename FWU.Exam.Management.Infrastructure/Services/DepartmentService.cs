@@ -1,15 +1,18 @@
 using System.Linq.Expressions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class DepartmentService(AppDbContext context) : IDepartmentService
+public class DepartmentService(AppDbContext context, IUserContext userContext) : IDepartmentService
 {
     public async Task<(List<Department> Items, int TotalCount)> GetDepartmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.Departments.AsNoTracking();
+        query = query.ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -20,7 +23,7 @@ public class DepartmentService(AppDbContext context) : IDepartmentService
                 (d.Remarks != null && d.Remarks.Contains(search)));
         }
 
-        if (facultyId.HasValue)
+        if (userContext.IsSuperAdmin && facultyId.HasValue)
         {
             query = query.Where(d => d.FacultyId == facultyId.Value);
         }
@@ -41,6 +44,7 @@ public class DepartmentService(AppDbContext context) : IDepartmentService
     public async Task<List<Department>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
         var query = context.Departments.AsNoTracking();
+        query = query.ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -51,7 +55,7 @@ public class DepartmentService(AppDbContext context) : IDepartmentService
                 (d.Remarks != null && d.Remarks.Contains(search)));
         }
 
-        if (facultyId.HasValue)
+        if (userContext.IsSuperAdmin && facultyId.HasValue)
         {
             query = query.Where(d => d.FacultyId == facultyId.Value);
         }

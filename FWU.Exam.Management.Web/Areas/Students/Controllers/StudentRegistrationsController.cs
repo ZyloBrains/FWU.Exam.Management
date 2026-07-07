@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -16,56 +17,23 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
 [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
-public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper) : Controller
+public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext) : Controller
 {
-    private async Task<List<int>> GetUserCollegeIdsAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return new List<int>();
-
-        if (User.IsInRole(Role.SuperAdmin))
-            return new List<int>();
-
-        if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
-        {
-            return await context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
-                .Select(c => c.Id)
-                .ToListAsync();
-        }
-
-        if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
-        {
-            return new List<int> { user.CollegeId.Value };
-        }
-
-        return new List<int>();
-    }
-
-    private async Task<int?> GetUserDepartmentIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.DepartmentId;
-    }
-
     public async Task<IActionResult> Index(int? departmentId = null)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        var userDeptId = await GetUserDepartmentIdAsync();
-
-        if (User.IsInRole(Role.DepartmentAdmin) && userDeptId.HasValue)
+        if (userContext.IsDepartmentAdmin && userContext.DepartmentId.HasValue)
         {
-            departmentId = userDeptId.Value;
+            departmentId = userContext.DepartmentId.Value;
         }
 
         if (departmentId.HasValue)
         {
-            var deptRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
+            var deptRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync();
             deptRegistrations = deptRegistrations.Where(r => r.DepartmentId == departmentId.Value).ToList();
             return View(deptRegistrations);
         }
 
-        var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
+        var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync();
         return View(studentRegistrations);
     }
 
@@ -183,8 +151,8 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     [HttpGet]
     public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        var userDeptId = await GetUserDepartmentIdAsync();
+        var collegeIds = userContext.FacultyCollegeIds.ToList();
+        var userDeptId = userContext.DepartmentId;
         var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize, collegeIds.Count > 0 ? collegeIds : null);
 
         if (User.IsInRole(Role.DepartmentAdmin) && userDeptId.HasValue)
@@ -304,7 +272,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(string searchTerm = "")
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
+        var collegeIds = userContext.FacultyCollegeIds.ToList();
         var data = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
 
         using (var workbook = new XLWorkbook())

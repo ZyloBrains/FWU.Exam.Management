@@ -4,16 +4,19 @@ using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeProgramService(AppDbContext context) : ICollegeProgramService
+public class CollegeProgramService(AppDbContext context, IUserContext userContext) : ICollegeProgramService
 {
     public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
     {
-        var query = BuildQuery(search, facultyId);
+        var query = BuildQuery(search);
+        query = query.ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
 
@@ -84,27 +87,20 @@ public class CollegeProgramService(AppDbContext context) : ICollegeProgramServic
         return await context.CollegePrograms.AnyAsync(cp => cp.Id == id);
     }
 
-    public async Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync(int? facultyId = null)
+    public async Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync()
     {
-        var colleges = facultyId.HasValue
-            ? await context.Colleges.Where(c => c.Faculties.Any(f => f.Id == facultyId.Value)).AsNoTracking().ToListAsync()
-            : await context.Colleges.AsNoTracking().ToListAsync();
-        var programs = await context.Programs.AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync();
+        var programs = await context.Programs.ApplyScope(userContext).AsNoTracking().ToListAsync();
 
         return (colleges, programs);
     }
 
-    private IQueryable<CollegeProgram> BuildQuery(string? search, int? facultyId = null)
+    private IQueryable<CollegeProgram> BuildQuery(string? search)
     {
         var query = context.CollegePrograms
             .Include(cp => cp.College)
             .Include(cp => cp.Program)
             .AsNoTracking();
-
-        if (facultyId.HasValue)
-        {
-            query = query.Where(cp => cp.College.Faculties.Any(f => f.Id == facultyId.Value));
-        }
 
         if (!string.IsNullOrEmpty(search))
         {

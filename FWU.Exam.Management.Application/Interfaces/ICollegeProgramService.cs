@@ -16,5 +16,5 @@ public interface ICollegeProgramService
     Task UpdateCollegeProgramAsync(CollegeProgram collegeProgram);
     Task DeleteCollegeProgramAsync(int id);
     Task<bool> CollegeProgramExistsAsync(int id);
-    Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync(int? facultyId = null);
+    Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync();
 }

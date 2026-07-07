@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -17,23 +18,11 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("collegeprograms.view")]
-public class CollegeProgramsController(ICollegeProgramService collegeProgramService, UserManager<AppUser> userManager) : Controller
+public class CollegeProgramsController(ICollegeProgramService collegeProgramService, IUserContext userContext) : Controller
 {
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.FacultyId;
-    }
-
     public async Task<IActionResult> Index(string search = null, string sort = "collegename", string sortDir = "asc")
     {
-        int? facultyId = null;
-        if (User.IsInRole(Role.FacultyAdmin))
-        {
-            facultyId = await GetCurrentUserFacultyIdAsync();
-        }
-
-        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir, facultyId);
+        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir, null);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.Search = search;
@@ -53,7 +42,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? userContext.FacultyId : null;
         var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         var sb = new StringBuilder();
@@ -78,7 +67,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? userContext.FacultyId : null;
         var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         ViewBag.CurrentPage = page;
@@ -94,7 +83,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
+        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? userContext.FacultyId : null;
         var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir, facultyId);
 
         using var workbook = new XLWorkbook();
@@ -150,8 +139,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     [RequirePermission("collegeprograms.create")]
     public async Task<IActionResult> Create()
     {
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync(facultyId);
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name");
 
         var programsData = programs.Select(p => new
@@ -215,8 +203,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
             return RedirectToAction(nameof(Index));
         }
 
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync(facultyId);
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", model.CollegeId);
 
         var programsData = programs.Select(p => new
@@ -244,8 +231,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         {
             return NotFound();
         }
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync(facultyId);
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeProgram.CollegeId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", collegeProgram.ProgramId);
         return View(collegeProgram);
@@ -280,8 +266,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
             }
             return RedirectToAction(nameof(Index));
         }
-        int? facultyId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync(facultyId);
+        var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
         ViewData["CollegeId"] = new SelectList(colleges, "Id", "Name", collegeProgram.CollegeId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", collegeProgram.ProgramId);
         return View(collegeProgram);

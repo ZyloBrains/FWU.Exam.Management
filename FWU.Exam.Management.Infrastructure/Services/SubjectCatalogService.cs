@@ -3,7 +3,9 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
@@ -11,10 +13,12 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class SubjectCatalogService : ISubjectCatalogService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
 
-    public SubjectCatalogService(AppDbContext context)
+    public SubjectCatalogService(AppDbContext context, IUserContext userContext)
     {
         _context = context;
+        _userContext = userContext;
     }
 
     public async Task<(List<SubjectCatalog> Items, int TotalCount)> GetSubjectCatalogsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? facultyId = null)
@@ -22,8 +26,9 @@ public class SubjectCatalogService : ISubjectCatalogService
         var query = _context.SubjectCatalogs
             .Include(s => s.SubjectType)
             .AsNoTracking();
+        query = query.ApplyScope(_userContext);
 
-        if (facultyId.HasValue)
+        if (_userContext.IsSuperAdmin && facultyId.HasValue)
         {
             query = query.Where(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.Department != null && so.Program.Department.FacultyId == facultyId.Value));
         }
@@ -55,8 +60,9 @@ public class SubjectCatalogService : ISubjectCatalogService
         var query = _context.SubjectCatalogs
             .Include(s => s.SubjectType)
             .AsNoTracking();
+        query = query.ApplyScope(_userContext);
 
-        if (facultyId.HasValue)
+        if (_userContext.IsSuperAdmin && facultyId.HasValue)
         {
             query = query.Where(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.Department != null && so.Program.Department.FacultyId == facultyId.Value));
         }

@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
@@ -8,61 +9,23 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
 
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("users.view")]
-public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
+public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context, IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index()
     {
-        var currentUser = await userManager.GetUserAsync(User);
-        if (currentUser == null) return Challenge();
-
-        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
-
-        var usersQuery = userManager.Users
+        IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
             .Include(u => u.College);
+        usersQuery = usersQuery.ApplyScope(userContext);
 
-        IQueryable<AppUser> filteredQuery;
-
-        if (isSuperAdmin)
-        {
-            filteredQuery = usersQuery;
-        }
-        else if (User.IsInRole(Role.CollegeAdmin) && currentUser.CollegeId != null)
-        {
-            filteredQuery = usersQuery.Where(u => u.CollegeId == currentUser.CollegeId);
-        }
-        else if (User.IsInRole(Role.FacultyAdmin) && currentUser.FacultyId != null)
-        {
-            var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
-                .Select(c => (int?)c.Id)
-                .ToListAsync();
-            filteredQuery = usersQuery.Where(u =>
-                u.FacultyId == currentUser.FacultyId ||
-                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
-        }
-        else if (User.IsInRole(Role.DepartmentAdmin) && currentUser.FacultyId != null)
-        {
-            var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
-                .Select(c => (int?)c.Id)
-                .ToListAsync();
-            filteredQuery = usersQuery.Where(u =>
-                u.FacultyId == currentUser.FacultyId ||
-                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
-        }
-        else
-        {
-            filteredQuery = usersQuery.Where(u => u.Id == currentUser.Id);
-        }
-
-        var users = await filteredQuery.ToListAsync();
+        var users = await usersQuery.ToListAsync();
         var model = new List<UserListItemViewModel>();
         foreach (var user in users)
         {
@@ -102,9 +65,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
-        ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
-        ViewBag.Departments = new SelectList(await context.Departments.ToListAsync(), "Id", "DepartmentName");
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).ToListAsync(), "Id", "Name");
+        ViewBag.Departments = new SelectList(await context.Departments.ApplyScope(userContext).ToListAsync(), "Id", "DepartmentName");
         return View(new CreateUserViewModel());
     }
 
@@ -154,9 +117,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Departments = new SelectList(await context.Departments.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -184,9 +147,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         };
 
         ViewBag.PrimaryRole = primaryRole;
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Departments = new SelectList(await context.Departments.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -205,9 +168,12 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             user.Email = model.Email;
             user.UserName = model.Email;
             user.FullName = model.FullName;
-            user.FacultyId = model.FacultyId;
-            user.CollegeId = model.CollegeId;
-            user.DepartmentId = model.DepartmentId;
+            if (userContext.IsSuperAdmin)
+            {
+                user.FacultyId = model.FacultyId;
+                user.CollegeId = model.CollegeId;
+                user.DepartmentId = model.DepartmentId;
+            }
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -219,9 +185,9 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
         var roles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(id));
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Departments = new SelectList(await context.Departments.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
