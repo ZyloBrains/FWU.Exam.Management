@@ -92,6 +92,11 @@ public partial class EntryPoint
         });
 
         builder.Services.AddControllersWithViews();
+
+        builder.Services.AddAntiforgery(options =>
+        {
+            options.Cookie.Path = "/";
+        });
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
         builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
@@ -151,6 +156,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         var app = builder.Build();
 
+        EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -172,6 +179,7 @@ public partial class EntryPoint
 
         app.UseAuthorization();
 
+        app.UseStaticFiles();
         app.MapStaticAssets();
 
         app.MapControllerRoute(

@@ -5,8 +5,8 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Web.Helpers;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("tenants.view")]
-public class TenantsController(AppDbContext context, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, IEmailService emailService) : Controller
+public class TenantsController(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService) : Controller
 {
     private readonly AppDbContext _context = context;
     private readonly UserManager<AppUser> _userManager = userManager;
@@ -63,7 +63,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
     [RequirePermission("tenants.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? logoFile)
+    public async Task<IActionResult> Create(TenantCreateViewModel viewModel)
     {
         viewModel.FacultyList = await GetAvailableFacultiesAsync();
 
@@ -75,11 +75,6 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         if (ModelState.IsValid)
         {
             var tenant = viewModel.Tenant;
-
-            if (logoFile != null)
-            {
-                tenant.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
-            }
 
             _context.Add(tenant);
             await _context.SaveChangesAsync();
@@ -113,17 +108,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
                 {
                     if (!string.IsNullOrWhiteSpace(viewModel.AdminEmail))
                     {
-                        var emailBody = $@"
-                            <h3>Dear {viewModel.AdminFullName},</h3>
-                            <p>Your tenant account has been created successfully.</p>
-                            <p><strong>Tenant Details:</strong></p>
-                            <ul>
-                                <li><strong>Tenant:</strong> {tenant.Name}</li>
-                                <li><strong>Office Code:</strong> {tenant.OfficeCode}</li>
-                            </ul>
-                            <p><strong>Login:</strong> Please use your email address {viewModel.AdminEmail} to log in. If you have not set your password yet, use the 'Forgot Password' option on the login page to set your password.</p>
-                            <br/>
-                            <p>Regards,<br/>Far-Western University</p>";
+                        var emailBody = EmailTemplateHelper.TenantAccountCreated(viewModel.AdminFullName, tenant.Name, tenant.OfficeCode, viewModel.AdminEmail);
                         await emailService.SendEmailAsync(viewModel.AdminEmail, "Tenant Account Created - Login Instructions", emailBody);
                     }
                 }
@@ -177,7 +162,7 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
     [RequirePermission("tenants.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? logoFile)
+    public async Task<IActionResult> Edit(int id, Tenant tenant)
     {
         if (id != tenant.Id) return NotFound();
 
@@ -185,11 +170,6 @@ public class TenantsController(AppDbContext context, IFileUploadHelper fileUploa
         {
             try
             {
-                if (logoFile != null)
-                {
-                    tenant.LogoPath = await fileUploadHelper.UploadAsync(logoFile);
-                }
-
                 _context.Update(tenant);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Tenant updated successfully!";

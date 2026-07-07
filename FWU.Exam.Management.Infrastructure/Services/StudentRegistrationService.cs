@@ -564,24 +564,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var emailBody = $@"
-                    <h3>Dear {fullName},</h3>
-                    <p>Your student registration has been created successfully.</p>
-                    <p><strong>Registration Details:</strong></p>
-                    <ul>
-                        <li><strong>Registration No:</strong> {studentRegistration.RegistrationNumber}</li>
-                        <li><strong>College:</strong> {college}</li>
-                        <li><strong>Program:</strong> {program}</li>
-                        <li><strong>Full Name:</strong> {fullName}</li>
-                    </ul>
-                    <p><strong>Login Credentials:</strong></p>
-                    <ul>
-                        <li><strong>Username (Email):</strong> {studentRegistration.Email}</li>
-                        <li><strong>Password:</strong> {password}</li>
-                    </ul>
-                    <p>Please change your password after first login.</p>
-                    <br/>
-                    <p>Regards,<br/>Far-Western University</p>";
+                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, studentRegistration.RegistrationNumber, college, program, studentRegistration.Email, password);
                 await emailService.SendEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
             }
             catch (Exception ex)

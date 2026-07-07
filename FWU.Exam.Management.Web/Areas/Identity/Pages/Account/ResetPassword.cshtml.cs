@@ -86,23 +86,32 @@ public class ResetPasswordModel(UserManager<AppUser> userManager) : PageModel
             return Page();
         }
 
-        var user = await userManager.FindByEmailAsync(Input.Email);
-        if (user == null)
+        try
         {
-            // Don't reveal that the user does not exist
-            return RedirectToPage("./ResetPasswordConfirmation");
-        }
+            var user = await userManager.FindByEmailAsync(Input.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "No account found with this email address.");
+                return Page();
+            }
 
-        var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
-        if (result.Succeeded)
-        {
-            return RedirectToPage("./ResetPasswordConfirmation");
-        }
+            var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
+            if (result.Succeeded)
+            {
+                TempData["StatusMessage"] = "Your password has been reset successfully. Please log in with your new password.";
+                return RedirectToPage("./Login");
+            }
 
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(string.Empty, error.Description);
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return Page();
         }
-        return Page();
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"An error occurred while resetting your password. Please try again. ({ex.Message})");
+            return Page();
+        }
     }
 }

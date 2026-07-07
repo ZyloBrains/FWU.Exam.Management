@@ -5,6 +5,8 @@
 using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Enums;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -102,6 +104,12 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
                     await signInManager.SignInAsync(user, Input.RememberMe);
 
+                    var tenantCode = await ResolveUserTenantCodeAsync(user);
+                    if (tenantCode != null)
+                    {
+                        SetTenantCookie(tenantCode);
+                    }
+
                     var claims = await userManager.GetClaimsAsync(user);
                     var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
                     if (mustChangePassword)
@@ -116,7 +124,9 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
                     if (await userManager.IsInRoleAsync(user, "Student"))
                     {
-                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                        return tenantCode != null
+                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                            : RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
 
                     if (user.FacultyId != null)
@@ -124,24 +134,32 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                         var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
                         if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
                         {
-                            return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
+                            return tenantCode != null
+                                ? Redirect($"/tenant/{tenantCode}/faculty/{faculty.OfficeCode}")
+                                : RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
                         }
                     }
 
                     var roles = await userManager.GetRolesAsync(user);
                     if (roles.Contains("SuperAdmin") || roles.Contains("SystemAdmin"))
                     {
-                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                        return tenantCode != null
+                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                            : RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
 
                     if (roles.Contains("FacultyAdmin"))
                     {
-                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                        return tenantCode != null
+                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                            : RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
 
                     if (roles.Contains("CollegeAdmin") || roles.Contains("Admin"))
                     {
-                        return RedirectToAction("Index", "Dashboard", new { area = "" });
+                        return tenantCode != null
+                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                            : RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
 
                     return LocalRedirect(returnUrl);
@@ -163,5 +181,46 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         }
 
         return Page();
+    }
+
+    private async Task<string?> ResolveUserTenantCodeAsync(AppUser user)
+    {
+        if (user.FacultyId != null)
+        {
+            var faculty = await context.Faculties
+                .AsNoTracking()
+                .Include(f => f.Tenant)
+                .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
+
+            return faculty?.Tenant?.OfficeCode;
+        }
+
+        if (user.CollegeId != null)
+        {
+            var college = await context.Colleges
+                .AsNoTracking()
+                .Include(c => c.Tenant)
+                .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
+
+            return college?.Tenant?.OfficeCode;
+        }
+
+        var centralTenant = await context.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TenantType == TenantType.Central && t.IsActive);
+
+        return centralTenant?.OfficeCode;
+    }
+
+    private void SetTenantCookie(string tenantCode)
+    {
+        HttpContext.Response.Cookies.Append("tenant_code", tenantCode, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = HttpContext.Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            IsEssential = true,
+            MaxAge = TimeSpan.FromHours(24)
+        });
     }
 }
