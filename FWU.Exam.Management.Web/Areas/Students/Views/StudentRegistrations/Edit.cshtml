@@ -370,7 +370,7 @@
             $('#FacultyId').select2('destroy');
             if (!levelId) {
                 $("#FacultyId").empty().append('<option value="">Select Faculty</option>');
-                $('#FacultyId').select2();
+                $('#FacultyId').select2({width:'resolve'});
                 if (callback) callback();
                 return;
             }
@@ -385,7 +385,7 @@
                         var selected = selectedFacultyId && item.id == selectedFacultyId ? 'selected' : '';
                         dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
                     });
-                    $('#FacultyId').select2();
+                    $('#FacultyId').select2({width:'resolve'});
                     if (callback) callback();
             });
         }
@@ -394,7 +394,7 @@
             $('#CollegeId').select2('destroy');
             if (!facultyId) {
                 $("#CollegeId").empty().append('<option value="">Select College</option>');
-                $('#CollegeId').select2();
+                $('#CollegeId').select2({width:'resolve'});
                 if (callback) callback();
                 return;
             }
@@ -409,7 +409,7 @@
                         var selected = selectedCollegeId && item.id == selectedCollegeId ? 'selected' : '';
                         dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
                     });
-                    $('#CollegeId').select2();
+                    $('#CollegeId').select2({width:'resolve'});
                     if (callback) callback();
             });
         }
@@ -418,7 +418,7 @@
             $('#DepartmentId').select2('destroy');
             if (!collegeId) {
                 $("#DepartmentId").empty().append('<option value="">Select Department</option>');
-                $('#DepartmentId').select2();
+                $('#DepartmentId').select2({width:'resolve'});
                 if (callback) callback();
                 return;
             }
@@ -433,7 +433,7 @@
                         var selected = selectedDepartmentId && item.id == selectedDepartmentId ? 'selected' : '';
                         dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
                     });
-                    $('#DepartmentId').select2();
+                    $('#DepartmentId').select2({width:'resolve'});
                     if (callback) callback();
             });
         }
@@ -445,7 +445,7 @@
             $('#ProgramId').select2('destroy');
             if (!collegeId) {
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                $('#ProgramId').select2();
+                $('#ProgramId').select2({width:'resolve'});
                 return;
             }
 
@@ -459,12 +459,12 @@
                         var selected = selectedProgramId && item.id == selectedProgramId ? 'selected' : '';
                         dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
                     });
-                    $('#ProgramId').select2();
+                    $('#ProgramId').select2({width:'resolve'});
             });
         }
 
         $(function () {
-            $('.select2').select2();
+            $('.select2').select2({ width: 'resolve' });
             loadExistingQualifications();
 
             var convertTimer;
@@ -504,7 +504,7 @@
                     $.each(data, function (index, item) {
                         dropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
-                    $('#LocalLevelId').select2();
+                    $('#LocalLevelId').select2({width:'resolve'});
                 });
             });
 

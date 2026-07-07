@@ -114,12 +114,12 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         document.addEventListener('alpine:initialized', function () {
-            $('.select2:visible').select2();
+            $('.select2:visible').select2({width:'resolve'});
             $('#SelectedRole').on('change', function () {
                 setTimeout(function () {
                     $('.select2:visible').each(function () {
                         if (!$(this).data('select2')) {
-                            $(this).select2();
+                            $(this).select2({width:'resolve'});
                         }
                     });
                 }, 150);

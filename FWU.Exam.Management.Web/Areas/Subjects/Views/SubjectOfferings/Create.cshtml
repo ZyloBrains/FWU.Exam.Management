@@ -301,7 +301,7 @@
     <script>
         document.addEventListener('alpine:init', function () {
             document.querySelectorAll('.select2').forEach(function (el) {
-                $(el).select2();
+                $(el).select2({width:'resolve'});
             });
         });
     </script>

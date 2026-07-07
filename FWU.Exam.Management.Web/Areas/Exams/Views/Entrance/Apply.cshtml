@@ -247,7 +247,7 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         $(function () {
-            $('.select2').select2();
+            $('.select2').select2({ width: 'resolve' });
 
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();

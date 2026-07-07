@@ -327,7 +327,7 @@
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 32px; }
     </style>
     <script>
-        $(function () { $('.select2').select2({ minimumResultsForSearch: -1 }); });
+        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
     </script>
     @Html.AntiForgeryToken()
     <script>

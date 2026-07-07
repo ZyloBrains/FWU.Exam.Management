@@ -365,12 +365,12 @@
                     $.each(data, function (index, item) {
                         programDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
-                    $('#ProgramId').select2();
+                    $('#ProgramId').select2({width:'resolve'});
             });
         }
 
         $(function () {
-            $('.select2').select2();
+            $('.select2').select2({ width: 'resolve' });
 
             var convertTimer;
             $("#DateOfBirthBS").on("input", function () {
@@ -415,7 +415,7 @@
                         $.each(data, function (index, item) {
                             districtDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
-                        $('#DistrictId').select2();
+                        $('#DistrictId').select2({width:'resolve'});
                 });
             });
 
@@ -435,7 +435,7 @@
                         $.each(data, function (index, item) {
                             localDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
-                        $('#LocalLevelId').select2();
+                        $('#LocalLevelId').select2({width:'resolve'});
                 });
             });
 
@@ -456,7 +456,7 @@
                     var facultyDropdown = $("#FacultyId");
                     facultyDropdown.empty();
                     facultyDropdown.append('<option value="">Select Faculty</option>');
-                    $('#FacultyId').select2();
+                    $('#FacultyId').select2({width:'resolve'});
                     return;
                 }
 
@@ -469,7 +469,7 @@
                         $.each(data, function (index, item) {
                             facultyDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
-                        $('#FacultyId').select2();
+                        $('#FacultyId').select2({width:'resolve'});
                 });
             });
 
@@ -488,7 +488,7 @@
                     var collegeDropdown = $("#CollegeId");
                     collegeDropdown.empty();
                     collegeDropdown.append('<option value="">Select College</option>');
-                    $('#CollegeId').select2();
+                    $('#CollegeId').select2({width:'resolve'});
                     return;
                 }
 
@@ -501,7 +501,7 @@
                         $.each(data, function (index, item) {
                             collegeDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
-                        $('#CollegeId').select2();
+                        $('#CollegeId').select2({width:'resolve'});
                 });
             });
 
@@ -529,7 +529,7 @@
                         $.each(data, function (index, item) {
                             deptDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
-                        $('#DepartmentId').select2();
+                        $('#DepartmentId').select2({width:'resolve'});
                 });
 
                 loadPrograms();
