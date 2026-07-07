@@ -28,7 +28,7 @@
                     <label asp-for="CollegeId" class="text-sm font-medium text-gray-700 block mb-1">College</label>
                     <select asp-for="CollegeId" asp-items="ViewBag.CollegeId"
                             x-on:change="initExistingPrograms()"
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                            class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                         <option value="">-- Select College --</option>
                     </select>
                     <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
@@ -203,9 +203,7 @@
     <script>
         document.addEventListener('alpine:init', function () {
             document.querySelectorAll('.select2').forEach(function (el) {
-                if (el.id !== 'CollegeId') {
-                    $(el).select2();
-                }
+                $(el).select2();
             });
         });
     </script>

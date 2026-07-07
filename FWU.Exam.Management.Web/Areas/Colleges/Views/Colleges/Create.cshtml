@@ -71,19 +71,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                     <div>
                         <label class="text-sm font-medium text-gray-700">Province <span class="text-red-500">*</span></label>
-                        <select asp-items="@ViewBag.Provinces" id="ProvinceId" name="ProvinceId" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition">
+                        <select asp-items="@ViewBag.Provinces" id="ProvinceId" name="ProvinceId" class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition">
                             <option value="">-- Select Province --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">District <span class="text-red-500">*</span></label>
-                        <select id="DistrictId" name="DistrictId" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition">
+                        <select id="DistrictId" name="DistrictId" class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition">
                             <option value="">-- Select District --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Local Level <span class="text-red-500">*</span></label>
-                        <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition">
+                        <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition">
                             <option value="">-- Select Local Level --</option>
                         </select>
                     </div>
@@ -172,7 +172,7 @@
                     </div>
                     <div>
                         <label asp-for="CollegeTypeId" class="text-sm font-medium text-gray-700"></label>
-                        <select asp-for="CollegeTypeId" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition" asp-items="ViewBag.CollegeTypeId">
+                        <select asp-for="CollegeTypeId" class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition" asp-items="ViewBag.CollegeTypeId">
                             <option value="">-- Select College Type --</option>
                         </select>
                         <span asp-validation-for="CollegeTypeId" class="text-xs text-red-500 mt-1 block"></span>
@@ -244,7 +244,7 @@
 
     <script>
         $(document).ready(function () {
-            $('.select2:not(#ProvinceId):not(#DistrictId):not(#LocalLevelId)').select2();
+            $('.select2').select2();
         });
     </script>
 
@@ -272,6 +272,7 @@
                         $.each(data, function (index, item) {
                             districtDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
+                        districtDropdown.select2('destroy').select2();
                 });
             });
 
@@ -292,6 +293,7 @@
                         $.each(data, function (index, item) {
                             localDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
+                        localDropdown.select2('destroy').select2();
                 });
             });
 

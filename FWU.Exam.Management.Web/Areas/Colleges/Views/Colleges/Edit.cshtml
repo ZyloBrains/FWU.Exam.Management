@@ -67,19 +67,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="text-sm font-medium text-gray-700">Province <span class="text-red-500">*</span></label>
-                        <select id="ProvinceId" name="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
+                        <select id="ProvinceId" name="ProvinceId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
                             <option value="">-- Select Province --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">District <span class="text-red-500">*</span></label>
-                        <select id="DistrictId" name="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="DistrictId" name="DistrictId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select District --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Local Level <span class="text-red-500">*</span></label>
-                        <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select Local Level --</option>
                         </select>
                     </div>
@@ -171,7 +171,7 @@
                     </div>
                     <div>
                         <label asp-for="CollegeTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="CollegeTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeTypeId">
+                        <select asp-for="CollegeTypeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeTypeId">
                             <option value="">-- Select College Type --</option>
                         </select>
                         <span asp-validation-for="CollegeTypeId" class="text-xs text-red-500 mt-1 block"></span>
@@ -243,7 +243,7 @@
 
     <script>
         $(document).ready(function () {
-            $('.select2:not(#ProvinceId):not(#DistrictId):not(#LocalLevelId)').select2();
+            $('.select2').select2();
         });
     </script>
 
@@ -273,6 +273,7 @@
                         $.each(data, function (index, item) {
                             districtDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
+                        districtDropdown.select2('destroy').select2();
 
                         if (selectedDistrictId && $("#DistrictId option[value=" + selectedDistrictId + "]").length) {
                             $("#DistrictId").val(selectedDistrictId);
@@ -297,6 +298,7 @@
                         $.each(data, function (index, item) {
                             localDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
+                        localDropdown.select2('destroy').select2();
 
                         if (selectedLocalLevelId && $("#LocalLevelId option[value=" + selectedLocalLevelId + "]").length) {
                             $("#LocalLevelId").val(selectedLocalLevelId);
