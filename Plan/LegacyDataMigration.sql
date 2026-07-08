@@ -1,16 +1,13 @@
 -- ============================================================================
 -- Legacy Exam Data Migration Script
--- Source: dbo.CivilEngineering, dbo.ComputerEngineering, dbo.CPM
+-- Source: [FWUExams.Legacy].dbo.CivilEngineering, [FWUExams.Legacy].dbo.ComputerEngineering, [FWUExams.Legacy].dbo.CPM
 -- Target: FUExamsDb normalized schema
 -- TenantId: 1 (OCE)
 -- ============================================================================
 
 SET NOCOUNT ON;
-SET XACT_ABORT ON;
+SET XACT_ABORT OFF;
 SET QUOTED_IDENTIFIER ON;
-
-BEGIN TRY
-BEGIN TRANSACTION;
 
 -- ============================================================================
 -- STEP 0: Create temp ID mapping tables
@@ -75,16 +72,38 @@ CREATE TABLE #ExamRegMap (
 -- STEP 1: Create Reference/Lookup Data
 -- ============================================================================
 
+-- 0. Tenant (required for FK)
+IF NOT EXISTS (SELECT 1 FROM Tenants WHERE Id = 1)
+BEGIN
+    SET IDENTITY_INSERT Tenants ON;
+    INSERT INTO Tenants (Id, Name, OfficeCode, ContactNumber, Address, Email, TenantType, IsActive)
+    VALUES (1, 'OCE', 'OCE', 'N/A', 'N/A', 'N/A', 1, 1);
+    SET IDENTITY_INSERT Tenants OFF;
+    PRINT 'Created Tenant: OCE (Id=1)';
+END
+
 -- 1a. Engineering Faculty (if not exists)
-IF NOT EXISTS (SELECT 1 FROM Faculties WHERE FacultyCode = 'ENG')
+IF NOT EXISTS (SELECT 1 FROM Faculties WHERE OfficeCode = 'ENG')
 BEGIN
     SET IDENTITY_INSERT Faculties ON;
-    INSERT INTO Faculties (Id, FacultyCode, FacultyName, ShortName, Remarks, IsActive)
-    VALUES (100, 'ENG', 'Faculty of Engineering', 'ENG', 'Migrated from legacy data', 1);
+    INSERT INTO Faculties (Id, OfficeCode, Name, ContactNumber, Address, Email, TenantId)
+    VALUES (100, 'ENG', 'Faculty of Engineering', 'N/A', 'N/A', 'N/A', 1);
     SET IDENTITY_INSERT Faculties OFF;
     PRINT 'Created Faculty: ENG (Id=100)';
 END
-DECLARE @EngineeringFacultyId INT = (SELECT Id FROM Faculties WHERE FacultyCode = 'ENG');
+DECLARE @EngineeringFacultyId INT = (SELECT Id FROM Faculties WHERE OfficeCode = 'ENG');
+
+-- 1a2. Engineering Department (linked to Engineering Faculty)
+DECLARE @EngineeringDeptId INT;
+IF NOT EXISTS (SELECT 1 FROM Departments WHERE DepartmentCode = 'ENG')
+BEGIN
+    SET IDENTITY_INSERT Departments ON;
+    INSERT INTO Departments (Id, DepartmentCode, DepartmentName, ShortName, FacultyId, IsActive)
+    VALUES (100, 'ENG', 'Engineering Department', 'ENG', @EngineeringFacultyId, 1);
+    SET IDENTITY_INSERT Departments OFF;
+    PRINT 'Created Department: ENG (Id=100)';
+END
+SET @EngineeringDeptId = (SELECT Id FROM Departments WHERE DepartmentCode = 'ENG');
 
 -- 1b. Academic Years (create all years 2014-2025 from source data)
 DECLARE @AYYear INT = 2014;
@@ -93,8 +112,8 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM AcademicYears WHERE AcademicYearCode = CAST(@AYYear AS VARCHAR))
     BEGIN
         SET IDENTITY_INSERT AcademicYears ON;
-        INSERT INTO AcademicYears (Id, AcademicYearCode, AcademicYearCodeNepali, AcademicYearName, AcademicYearNameNepali, IsRunning, IsActive, TenantId)
-        VALUES (@AYYear, CAST(@AYYear AS VARCHAR), CAST(@AYYear AS VARCHAR), CAST(@AYYear AS VARCHAR), CAST(@AYYear AS VARCHAR), 0, 1, 1);
+        INSERT INTO AcademicYears (Id, AcademicYearCode, AcademicYearCodeNepali, AcademicYearName, AcademicYearNameNepali, IsRunning, IsActive)
+        VALUES (@AYYear, CAST(@AYYear AS VARCHAR), CAST(@AYYear AS VARCHAR), CAST(@AYYear AS VARCHAR), CAST(@AYYear AS VARCHAR), 0, 1);
         SET IDENTITY_INSERT AcademicYears OFF;
         PRINT 'Created AcademicYear: ' + CAST(@AYYear AS VARCHAR);
     END
@@ -119,13 +138,23 @@ END
 ELSE
     SET @CollegeId = (SELECT Id FROM Colleges WHERE Code = 'SCH001');
 
--- 1d. Programs
+-- 1d. Levels (Bachelor and Master)
+IF NOT EXISTS (SELECT 1 FROM Levels WHERE Id = 1)
+BEGIN
+    SET IDENTITY_INSERT Levels ON;
+    INSERT INTO Levels (Id, LevelCode, LevelName, IsActive) VALUES (1, 'UG', 'Undergraduate', 1);
+    INSERT INTO Levels (Id, LevelCode, LevelName, IsActive) VALUES (2, 'PG', 'Graduate', 2);
+    SET IDENTITY_INSERT Levels OFF;
+    PRINT 'Created Levels: Undergraduate (1), Graduate (2)';
+END
+
+-- 1e. Programs
 DECLARE @ProgCivilId INT, @ProgCompId INT, @ProgCPMId INT;
 
 IF NOT EXISTS (SELECT 1 FROM Programs WHERE ProgramCode = 'L092')
 BEGIN
-    INSERT INTO Programs (LevelId, FacultyId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
-    VALUES (1, @EngineeringFacultyId, 'L092', 'Bachelor''s Degree in Civil Engineering', 'BE Civil', 4, 0, 1);
+    INSERT INTO Programs (LevelId, DepartmentId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
+    VALUES (1, @EngineeringDeptId, 'L092', 'Bachelor''s Degree in Civil Engineering', 'BE Civil', 4, 0, 1);
     SET @ProgCivilId = SCOPE_IDENTITY();
     PRINT 'Created Program: L092 (Id=' + CAST(@ProgCivilId AS VARCHAR) + ')';
 END
@@ -135,8 +164,8 @@ INSERT INTO #ProgramMap (SourceCode, NewId) VALUES ('L092', @ProgCivilId);
 
 IF NOT EXISTS (SELECT 1 FROM Programs WHERE ProgramCode = 'L117')
 BEGIN
-    INSERT INTO Programs (LevelId, FacultyId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
-    VALUES (1, @EngineeringFacultyId, 'L117', 'Bachelor''s Degree in Computer Engineering', 'BE Computer', 4, 0, 1);
+    INSERT INTO Programs (LevelId, DepartmentId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
+    VALUES (1, @EngineeringDeptId, 'L117', 'Bachelor''s Degree in Computer Engineering', 'BE Computer', 4, 0, 1);
     SET @ProgCompId = SCOPE_IDENTITY();
     PRINT 'Created Program: L117 (Id=' + CAST(@ProgCompId AS VARCHAR) + ')';
 END
@@ -146,8 +175,8 @@ INSERT INTO #ProgramMap (SourceCode, NewId) VALUES ('L117', @ProgCompId);
 
 IF NOT EXISTS (SELECT 1 FROM Programs WHERE ProgramCode = 'L131')
 BEGIN
-    INSERT INTO Programs (LevelId, FacultyId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
-    VALUES (2, @EngineeringFacultyId, 'L131', 'Master of Science (M.Sc.) in Construction Project Management', 'M.Sc. CPM', 2, 0, 1);
+    INSERT INTO Programs (LevelId, DepartmentId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
+    VALUES (2, @EngineeringDeptId, 'L131', 'Master of Science (M.Sc.) in Construction Project Management', 'M.Sc. CPM', 2, 0, 1);
     SET @ProgCPMId = SCOPE_IDENTITY();
     PRINT 'Created Program: L131 (Id=' + CAST(@ProgCPMId AS VARCHAR) + ')';
 END
@@ -190,66 +219,61 @@ BEGIN
 END
 SET @SubjectTypeCompId = (SELECT Id FROM SubjectTypes WHERE Code = 'COMP');
 
+-- 1g0. Genders (if empty)
+IF NOT EXISTS (SELECT 1 FROM Genders)
+BEGIN
+    SET IDENTITY_INSERT Genders ON;
+    INSERT INTO Genders (Id, GenderName, IsActive) VALUES (1, 'Male', 1);
+    INSERT INTO Genders (Id, GenderName, IsActive) VALUES (2, 'Female', 1);
+    INSERT INTO Genders (Id, GenderName, IsActive) VALUES (3, 'Other', 1);
+    SET IDENTITY_INSERT Genders OFF;
+    PRINT 'Created Genders: Male(1), Female(2), Other(3)';
+END
+
 -- 1g. StudentCategory (Regular)
 IF NOT EXISTS (SELECT 1 FROM StudentCategories WHERE StudentCategoryName = 'Regular')
 BEGIN
     SET IDENTITY_INSERT StudentCategories ON;
-    INSERT INTO StudentCategories (Id, StudentCategoryName, IsActive, TenantId)
-    VALUES (1, 'Regular', 1, 1);
+    INSERT INTO StudentCategories (Id, StudentCategoryName, IsActive)
+    VALUES (1, 'Regular', 1);
     SET IDENTITY_INSERT StudentCategories OFF;
     PRINT 'Created StudentCategory: Regular (Id=1)';
 END
 
--- 1h. Semesters - Create dynamically for all academic years
--- L092 needs SEM1-SEM6 for AY 2014-2025
--- L117 needs CESEM1-CESEM2 for AY 2021-2025
--- L131 needs CPMSEM1-CPMSEM2 for AY 2023-2025
-DECLARE @SemAyId INT, @SemAyYear NVARCHAR(10);
-DECLARE sem_ay_cursor CURSOR FOR SELECT NewId, SourceYear FROM #AcademicYearMap ORDER BY SourceYear;
-OPEN sem_ay_cursor;
-FETCH NEXT FROM sem_ay_cursor INTO @SemAyId, @SemAyYear;
+-- 1h. Semesters - global (unique Code), create one set per program type
+-- L092 uses SEM1-SEM6 (linked to AY 2014)
+INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId) VALUES
+(1, 1, 'Semester 1', 'SEM1', '2014-01-01', '2014-06-30', @AY2014Id),
+(2, 1, 'Semester 2', 'SEM2', '2014-07-01', '2014-12-31', @AY2014Id),
+(3, 2, 'Semester 3', 'SEM3', '2015-01-01', '2015-06-30', @AY2014Id),
+(4, 2, 'Semester 4', 'SEM4', '2015-07-01', '2015-12-31', @AY2014Id),
+(5, 3, 'Semester 5', 'SEM5', '2016-01-01', '2016-06-30', @AY2014Id),
+(6, 3, 'Semester 6', 'SEM6', '2016-07-01', '2016-12-31', @AY2014Id);
+PRINT 'Created 6 Semesters for L092 (SEM1-SEM6)';
 
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    -- Create SEM1-SEM6 for L092 years (2014-2025)
-    IF NOT EXISTS (SELECT 1 FROM Semesters WHERE Code = 'SEM1' AND AcademicYearId = @SemAyId)
-    BEGIN
-        DECLARE @SemYear INT = CAST(@SemAyYear AS INT);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (1, 1, 'Semester 1', 'SEM1', CAST(@SemYear AS VARCHAR)+'-01-01', CAST(@SemYear AS VARCHAR)+'-06-30', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (2, 1, 'Semester 2', 'SEM2', CAST(@SemYear AS VARCHAR)+'-07-01', CAST(@SemYear AS VARCHAR)+'-12-31', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (3, 2, 'Semester 3', 'SEM3', CAST(@SemYear+1 AS VARCHAR)+'-01-01', CAST(@SemYear+1 AS VARCHAR)+'-06-30', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (4, 2, 'Semester 4', 'SEM4', CAST(@SemYear+1 AS VARCHAR)+'-07-01', CAST(@SemYear+1 AS VARCHAR)+'-12-31', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (5, 3, 'Semester 5', 'SEM5', CAST(@SemYear+2 AS VARCHAR)+'-01-01', CAST(@SemYear+2 AS VARCHAR)+'-06-30', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (6, 3, 'Semester 6', 'SEM6', CAST(@SemYear+2 AS VARCHAR)+'-07-01', CAST(@SemYear+2 AS VARCHAR)+'-12-31', @SemAyId, 1);
-    END
-    -- Create CESEM1-CESEM2 for L117 years (2021-2025)
-    IF NOT EXISTS (SELECT 1 FROM Semesters WHERE Code = 'CESEM1' AND AcademicYearId = @SemAyId)
-    BEGIN
-        DECLARE @SemYearCE INT = CAST(@SemAyYear AS INT);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (1, 1, 'CE Semester 1', 'CESEM1', CAST(@SemYearCE AS VARCHAR)+'-01-01', CAST(@SemYearCE AS VARCHAR)+'-06-30', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (2, 1, 'CE Semester 2', 'CESEM2', CAST(@SemYearCE AS VARCHAR)+'-07-01', CAST(@SemYearCE AS VARCHAR)+'-12-31', @SemAyId, 1);
-    END
-    -- Create CPMSEM1-CPMSEM2 for L131 years (2023-2025)
-    IF NOT EXISTS (SELECT 1 FROM Semesters WHERE Code = 'CPMSEM1' AND AcademicYearId = @SemAyId)
-    BEGIN
-        DECLARE @SemYearCPM INT = CAST(@SemAyYear AS INT);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (1, 1, 'CPM Semester 1', 'CPMSEM1', CAST(@SemYearCPM AS VARCHAR)+'-01-01', CAST(@SemYearCPM AS VARCHAR)+'-06-30', @SemAyId, 1);
-        INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId, TenantId)
-        VALUES (2, 1, 'CPM Semester 2', 'CPMSEM2', CAST(@SemYearCPM AS VARCHAR)+'-07-01', CAST(@SemYearCPM AS VARCHAR)+'-12-31', @SemAyId, 1);
-    END
-    FETCH NEXT FROM sem_ay_cursor INTO @SemAyId, @SemAyYear;
-END
-CLOSE sem_ay_cursor;
-DEALLOCATE sem_ay_cursor;
+-- L117 uses CESEM1-CESEM2 (linked to AY 2021)
+INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId) VALUES
+(1, 1, 'CE Semester 1', 'CESEM1', '2021-01-01', '2021-06-30', @AY2021Id),
+(2, 1, 'CE Semester 2', 'CESEM2', '2021-07-01', '2021-12-31', @AY2021Id);
+PRINT 'Created 2 Semesters for L117 (CESEM1-CESEM2)';
+
+-- L131 uses CPMSEM1-CPMSEM2 (linked to AY 2023)
+INSERT INTO Semesters (Number, Year, Name, Code, StartDate, EndDate, AcademicYearId) VALUES
+(1, 1, 'CPM Semester 1', 'CPMSEM1', '2023-01-01', '2023-06-30', @AY2023Id),
+(2, 1, 'CPM Semester 2', 'CPMSEM2', '2023-07-01', '2023-12-31', @AY2023Id);
+PRINT 'Created 2 Semesters for L131 (CPMSEM1-CPMSEM2)';
+
+-- Resolve semester IDs
+DECLARE @SemCiv1 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM1');
+DECLARE @SemCiv2 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM2');
+DECLARE @SemCiv3 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM3');
+DECLARE @SemCiv4 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM4');
+DECLARE @SemCiv5 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM5');
+DECLARE @SemCiv6 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM6');
+DECLARE @SemCE1 INT = (SELECT Id FROM Semesters WHERE Code = 'CESEM1');
+DECLARE @SemCE2 INT = (SELECT Id FROM Semesters WHERE Code = 'CESEM2');
+DECLARE @SemCPM1 INT = (SELECT Id FROM Semesters WHERE Code = 'CPMSEM1');
+DECLARE @SemCPM2 INT = (SELECT Id FROM Semesters WHERE Code = 'CPMSEM2');
 PRINT 'Step 1h complete: Semesters created for all AYs.';
 
 PRINT 'Step 1 complete: Reference data created.';
@@ -265,11 +289,11 @@ SELECT DISTINCT
     CreditHour
 INTO #DistinctSubjects
 FROM (
-    SELECT SubjectCode, SubjectName, CreditHour FROM dbo.CivilEngineering
+    SELECT SubjectCode, SubjectName, CreditHour FROM [FWUExams.Legacy].dbo.CivilEngineering
     UNION
-    SELECT SubjectCode, SubjectName, CreditHour FROM dbo.ComputerEngineering
+    SELECT SubjectCode, SubjectName, CreditHour FROM [FWUExams.Legacy].dbo.ComputerEngineering
     UNION
-    SELECT SubjectCode, SubjectName, CreditHour FROM dbo.CPM
+    SELECT SubjectCode, SubjectName, CreditHour FROM [FWUExams.Legacy].dbo.CPM
 ) AS AllSubjects
 WHERE SubjectCode IS NOT NULL AND SubjectCode <> 'NULL';
 
@@ -283,8 +307,8 @@ WHILE @@FETCH_STATUS = 0
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM SubjectCatalogs WHERE SubjectCode = @SubCode)
     BEGIN
-        INSERT INTO SubjectCatalogs (SubjectCode, SubjectName, CreditHours, SubjectTypeId, IsActive, TenantId)
-        VALUES (@SubCode, @SubName, CASE WHEN @CreditH > 0 THEN @CreditH ELSE NULL END, @SubjectTypeCompId, 1, 1);
+        INSERT INTO SubjectCatalogs (SubjectCode, SubjectName, CreditHours, SubjectTypeId, IsActive)
+        VALUES (@SubCode, @SubName, CASE WHEN @CreditH > 0 THEN @CreditH ELSE NULL END, @SubjectTypeCompId, 1);
         DECLARE @NewSubId INT = SCOPE_IDENTITY();
         INSERT INTO #SubjectCatalogMap (SourceCode, SourceName, NewId) VALUES (@SubCode, @SubName, @NewSubId);
     END
@@ -314,13 +338,6 @@ DECLARE @SoSubjectCatalogId INT, @SoProgramId INT, @SoSemesterId INT;
 DECLARE @TheoryFM FLOAT, @TheoryPM FLOAT, @PracFM FLOAT, @PracPM FLOAT, @IntFM FLOAT, @IntPM FLOAT;
 DECLARE @DisplayOrd INT;
 
-DECLARE @SemCiv1 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM1' AND AcademicYearId = @AY2014Id);
-DECLARE @SemCiv2 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM2' AND AcademicYearId = @AY2014Id);
-DECLARE @SemCiv3 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM3' AND AcademicYearId = @AY2014Id);
-DECLARE @SemCiv4 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM4' AND AcademicYearId = @AY2014Id);
-DECLARE @SemCiv5 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM5' AND AcademicYearId = @AY2014Id);
-DECLARE @SemCiv6 INT = (SELECT Id FROM Semesters WHERE Code = 'SEM6' AND AcademicYearId = @AY2014Id);
-
 DECLARE so_civ_cursor CURSOR FOR
     SELECT DISTINCT
         scm.NewId AS SubjectCatalogId,
@@ -341,7 +358,7 @@ DECLARE so_civ_cursor CURSOR FOR
         MAX(CAST(InternalFullMark AS FLOAT)) AS IntFM,
         MAX(CAST(InternalPassMark AS FLOAT)) AS IntPM,
         MAX(CAST(DisplayOrder AS INT)) AS DisplayOrd
-    FROM dbo.CivilEngineering ce
+    FROM [FWUExams.Legacy].dbo.CivilEngineering ce
     INNER JOIN #SubjectCatalogMap scm ON LTRIM(RTRIM(ce.SubjectCode)) = scm.SourceCode
     GROUP BY scm.NewId,
         CASE
@@ -391,7 +408,7 @@ DECLARE so_comp_cursor CURSOR FOR
     SELECT DISTINCT
         scm.NewId AS SubjectCatalogId,
         @ProgCompId AS ProgramId,
-        (SELECT Id FROM Semesters WHERE Code = 'CESEM1' AND AcademicYearId = @AY2021Id) AS SemesterId,
+        @SemCE1 AS SemesterId,
         MAX(CAST(TotalFM AS FLOAT)),
         MAX(CAST(TotalPM AS FLOAT)),
         MAX(CAST(TheoryFullMark AS FLOAT)),
@@ -399,7 +416,7 @@ DECLARE so_comp_cursor CURSOR FOR
         MAX(CAST(InternalFullMark AS FLOAT)),
         MAX(CAST(InternalPassMark AS FLOAT)),
         MAX(CAST(DisplayOrder AS INT))
-    FROM dbo.ComputerEngineering ce
+    FROM [FWUExams.Legacy].dbo.ComputerEngineering ce
     INNER JOIN #SubjectCatalogMap scm ON LTRIM(RTRIM(ce.SubjectCode)) = scm.SourceCode
     GROUP BY scm.NewId;
 
@@ -439,7 +456,7 @@ DECLARE so_cpm_cursor CURSOR FOR
     SELECT DISTINCT
         scm.NewId AS SubjectCatalogId,
         @ProgCPMId AS ProgramId,
-        (SELECT Id FROM Semesters WHERE Code = 'CPMSEM1' AND AcademicYearId = @AY2023Id) AS SemesterId,
+        @SemCPM1 AS SemesterId,
         MAX(CAST(TotalFM AS FLOAT)),
         MAX(CAST(TotalPM AS FLOAT)),
         MAX(CAST(TheoryFullMark AS FLOAT)),
@@ -447,7 +464,7 @@ DECLARE so_cpm_cursor CURSOR FOR
         MAX(CAST(InternalFullMark AS FLOAT)),
         MAX(CAST(InternalPassMark AS FLOAT)),
         MAX(CAST(DisplayOrder AS INT))
-    FROM dbo.CPM cpm
+    FROM [FWUExams.Legacy].dbo.CPM cpm
     INNER JOIN #SubjectCatalogMap scm ON LTRIM(RTRIM(cpm.SubjectCode)) = scm.SourceCode
     GROUP BY scm.NewId;
 
@@ -490,6 +507,7 @@ PRINT 'Step 3 complete: SubjectOfferings created. Count=' + CAST(@Cnt3 AS VARCHA
 -- ============================================================================
 
 -- Create ExamSchedules for all Program + AcademicYear + Semester combos
+-- Semesters are global, so cross join with all AYs
 DECLARE es_cursor CURSOR FOR
     SELECT DISTINCT
         pm.NewId AS ProgramId,
@@ -498,7 +516,7 @@ DECLARE es_cursor CURSOR FOR
         pm.SourceCode + ' ' + ay.SourceYear + ' Sem' + CAST(s.Number AS VARCHAR) AS EsName
     FROM #ProgramMap pm
     INNER JOIN #AcademicYearMap ay ON 1=1
-    INNER JOIN Semesters s ON s.AcademicYearId = ay.NewId
+    INNER JOIN Semesters s ON 1=1
     WHERE (pm.SourceCode = 'L092' AND s.Code IN ('SEM1','SEM2','SEM3','SEM4','SEM5','SEM6'))
        OR (pm.SourceCode = 'L117' AND s.Code IN ('CESEM1','CESEM2'))
        OR (pm.SourceCode = 'L131' AND s.Code IN ('CPMSEM1','CPMSEM2'));
@@ -586,11 +604,11 @@ SELECT DISTINCT
     CASE WHEN IsCompleted = 0 THEN 1 ELSE 0 END AS IsActive
 INTO #DistinctStudents
 FROM (
-    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, CollegeID, LevelId, FacultyId, AcademicYearName, FullNameNepali, IsCompleted FROM dbo.CivilEngineering
+    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, CollegeID, LevelId, FacultyId, AcademicYearName, FullNameNepali, IsCompleted FROM [FWUExams.Legacy].dbo.CivilEngineering
     UNION
-    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, CollegeID, LevelId, FacultyId, AcademicYearName, FullNameNepali, IsCompleted FROM dbo.ComputerEngineering
+    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, CollegeID, LevelId, FacultyId, AcademicYearName, FullNameNepali, IsCompleted FROM [FWUExams.Legacy].dbo.ComputerEngineering
     UNION
-    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, CollegeID, LevelId, FacultyId, AcademicYearName, FullNameNepali, IsCompleted FROM dbo.CPM
+    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, CollegeID, LevelId, FacultyId, AcademicYearName, FullNameNepali, IsCompleted FROM [FWUExams.Legacy].dbo.CPM
 ) AS AllStudents
 WHERE RegistrationNo IS NOT NULL AND RegistrationNo <> 'NULL';
 
@@ -627,10 +645,10 @@ BEGIN
             SET @DobAdFormatted = CONVERT(NVARCHAR(50), TRY_CONVERT(DATE, @SrDobAD), 121);
         END
 
-        INSERT INTO StudentRegistrations (LevelId, CollegeId, FacultyId, RegistrationNumber, FirstName, MiddleName, LastName,
+        INSERT INTO StudentRegistrations (LevelId, DepartmentId, CollegeId, RegistrationNumber, FirstName, MiddleName, LastName,
             ContactNumber, Email, DateOfBirthBS, DateOfBirthAD, GenderId, StudentCategoryId, AcademicYearId,
             IsActive, NepaliName, TenantId)
-        VALUES (@SrLevelId, @CollegeId, @EngineeringFacultyId, @SrRegNo, @SrFirstName,             NULLIF(@SrMiddleName, 'NULL'),
+        VALUES (@SrLevelId, @EngineeringDeptId, @CollegeId, @SrRegNo, @SrFirstName, NULLIF(@SrMiddleName, 'NULL'),
             ISNULL(NULLIF(@SrLastName, 'NULL'), 'N/A'), NULLIF(@SrContact, 'NULL'), NULLIF(@SrEmail, 'NULL'),
             ISNULL(CONVERT(NVARCHAR(10), TRY_CONVERT(DATE, @SrDobBS), 103), 'N/A'),
             @DobAdFormatted,
@@ -671,11 +689,11 @@ SELECT DISTINCT
     ProgramCode
 INTO #DistinctExamRegs
 FROM (
-    SELECT CAST(ExamRegistrationID AS INT) AS ExamRegistrationID, RegistrationNo, CAST(ExamRollNo AS NVARCHAR(50)) AS ExamRollNo, ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, CAST(SGPA AS NVARCHAR(50)) AS SGPA, GradeLetter, ProgramCode FROM dbo.CivilEngineering
+    SELECT CAST(ExamRegistrationID AS INT) AS ExamRegistrationID, RegistrationNo, CAST(ExamRollNo AS NVARCHAR(50)) AS ExamRollNo, ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, CAST(SGPA AS NVARCHAR(50)) AS SGPA, GradeLetter, ProgramCode FROM [FWUExams.Legacy].dbo.CivilEngineering
     UNION
-    SELECT CAST(ExamRegistrationID AS INT) AS ExamRegistrationID, RegistrationNo, CAST(ExamRollNo AS NVARCHAR(50)) AS ExamRollNo, ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, CAST(SGPA AS NVARCHAR(50)) AS SGPA, GradeLetter, ProgramCode FROM dbo.ComputerEngineering
+    SELECT CAST(ExamRegistrationID AS INT) AS ExamRegistrationID, RegistrationNo, CAST(ExamRollNo AS NVARCHAR(50)) AS ExamRollNo, ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, CAST(SGPA AS NVARCHAR(50)) AS SGPA, GradeLetter, ProgramCode FROM [FWUExams.Legacy].dbo.ComputerEngineering
     UNION
-    SELECT CAST(ExamRegistrationID AS INT) AS ExamRegistrationID, RegistrationNo, CAST(ExamRollNo AS NVARCHAR(50)) AS ExamRollNo, CAST(ExamRollNoCoding AS NVARCHAR(50)) AS ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, CAST(SGPA AS NVARCHAR(50)) AS SGPA, GradeLetter, ProgramCode FROM dbo.CPM
+    SELECT CAST(ExamRegistrationID AS INT) AS ExamRegistrationID, RegistrationNo, CAST(ExamRollNo AS NVARCHAR(50)) AS ExamRollNo, CAST(ExamRollNoCoding AS NVARCHAR(50)) AS ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, CAST(SGPA AS NVARCHAR(50)) AS SGPA, GradeLetter, ProgramCode FROM [FWUExams.Legacy].dbo.CPM
 ) AS AllExamRegs
 WHERE ExamRegistrationID IS NOT NULL;
 
@@ -750,11 +768,11 @@ SELECT
     CASE WHEN ce.GradeLetter IS NOT NULL AND ce.GradeLetter <> 'NULL' THEN LTRIM(RTRIM(ce.GradeLetter)) ELSE NULL END AS GradeLetter,
     CASE WHEN ce.Rem IS NOT NULL AND ce.Rem <> 'NULL' THEN LTRIM(RTRIM(ce.Rem)) ELSE NULL END AS Remarks,
     1 AS IsActive,
-    CASE WHEN ce.IsResultConfirm = 1 THEN 1 ELSE 0 END AS IsSubmitted,
+    CASE WHEN TRY_CAST(LTRIM(RTRIM(ce.IsResultConfirm)) AS INT) = 1 THEN 1 ELSE 0 END AS IsSubmitted,
     1 AS TenantId,
     GETDATE() AS CreatedDate
-FROM dbo.CivilEngineering ce
-INNER JOIN ExamRegistrations er ON ce.ExamRegistrationID = er.Id
+FROM [FWUExams.Legacy].dbo.CivilEngineering ce
+INNER JOIN ExamRegistrations er ON TRY_CAST(ce.ExamRegistrationID AS INT) = er.Id
 INNER JOIN #SubjectCatalogMap scm ON LTRIM(RTRIM(ce.SubjectCode)) = scm.SourceCode
 INNER JOIN #SubjectOfferingMap som ON som.SubjectCatalogId = scm.NewId AND som.ProgramId = @ProgCivilId
     AND som.SemesterId = CASE
@@ -766,7 +784,7 @@ INNER JOIN #SubjectOfferingMap som ON som.SubjectCatalogId = scm.NewId AND som.P
         WHEN ce.Year = 'III' AND ce.Part = 'II' THEN @SemCiv6
         ELSE @SemCiv1
     END
-INNER JOIN #AcademicYearMap ay_src ON ay_src.SourceYear = LEFT(ce.AcademicYearName, CHARINDEX('.', ce.AcademicYearName + '.') - 1)
+INNER JOIN #AcademicYearMap ay_src ON ay_src.SourceYear = LEFT(CAST(ce.AcademicYearName AS NVARCHAR(50)), CHARINDEX('.', CAST(ce.AcademicYearName AS NVARCHAR(50)) + '.') - 1)
 LEFT JOIN #ExamScheduleMap esm ON esm.ProgramId = @ProgCivilId AND esm.AcademicYearId = ay_src.NewId
     AND esm.SemesterId = som.SemesterId;
 
@@ -789,17 +807,17 @@ SELECT
     CASE WHEN ce.GradeLetter IS NOT NULL AND ce.GradeLetter <> 'NULL' THEN LTRIM(RTRIM(ce.GradeLetter)) ELSE NULL END AS GradeLetter,
     CASE WHEN ce.Rem IS NOT NULL AND ce.Rem <> 'NULL' THEN LTRIM(RTRIM(ce.Rem)) ELSE NULL END AS Remarks,
     1 AS IsActive,
-    CASE WHEN ce.IsResultConfirm = 1 THEN 1 ELSE 0 END AS IsSubmitted,
+    CASE WHEN TRY_CAST(LTRIM(RTRIM(ce.IsResultConfirm)) AS INT) = 1 THEN 1 ELSE 0 END AS IsSubmitted,
     1 AS TenantId,
     GETDATE() AS CreatedDate
-FROM dbo.ComputerEngineering ce
+FROM [FWUExams.Legacy].dbo.ComputerEngineering ce
 INNER JOIN ExamRegistrations er ON ce.ExamRegistrationID = er.Id
 INNER JOIN #SubjectCatalogMap scm ON LTRIM(RTRIM(ce.SubjectCode)) = scm.SourceCode
 INNER JOIN #SubjectOfferingMap som ON som.SubjectCatalogId = scm.NewId AND som.ProgramId = @ProgCompId
-    AND som.SemesterId = (SELECT Id FROM Semesters WHERE Code = 'CESEM1' AND AcademicYearId = @AY2021Id)
-INNER JOIN #AcademicYearMap ay_src ON ay_src.SourceYear = LEFT(ce.AcademicYearName, CHARINDEX('.', ce.AcademicYearName + '.') - 1)
+    AND som.SemesterId = @SemCE1
+INNER JOIN #AcademicYearMap ay_src ON ay_src.SourceYear = LEFT(CAST(ce.AcademicYearName AS NVARCHAR(50)), CHARINDEX('.', CAST(ce.AcademicYearName AS NVARCHAR(50)) + '.') - 1)
 LEFT JOIN #ExamScheduleMap esm ON esm.ProgramId = @ProgCompId AND esm.AcademicYearId = ay_src.NewId
-    AND esm.SemesterId = (SELECT Id FROM Semesters WHERE Code = 'CESEM1' AND AcademicYearId = ay_src.NewId);
+    AND esm.SemesterId = @SemCE1;
 
 PRINT 'Step 8b: ExamSubjectResults for ComputerEngineering inserted. Rows=' + CAST(@@ROWCOUNT AS VARCHAR);
 
@@ -812,27 +830,27 @@ SELECT
     CASE WHEN cpm.ExamTypeName = 'Partial' THEN @ExamTypePartialId ELSE @ExamTypeRegularId END AS ExamTypeId,
     som.NewId AS SubjectOfferingId,
     esm.NewId AS ExamScheduleId,
-    CASE WHEN cpm.ObtainedMarks IS NOT NULL THEN CAST(cpm.ObtainedMarks AS FLOAT) ELSE NULL END AS ObtainedMarksTheory,
-    CASE WHEN cpm.PracticalMarks IS NOT NULL THEN CAST(cpm.PracticalMarks AS FLOAT) ELSE NULL END AS ObtainedMarksPractical,
-    CASE WHEN cpm.InternalMarks IS NOT NULL THEN CAST(cpm.InternalMarks AS FLOAT) ELSE NULL END AS ObtainedMarksTheoryInternal,
-    CASE WHEN cpm.InternalMarksFinal IS NOT NULL THEN CAST(cpm.InternalMarksFinal AS FLOAT) ELSE NULL END AS ObtainedMarksPracticalInternal,
-    CASE WHEN cpm.TotalOM IS NOT NULL THEN CAST(cpm.TotalOM AS FLOAT) ELSE NULL END AS ObtainedMarks,
+    CASE WHEN cpm.ObtainedMarks IS NOT NULL AND ISNUMERIC(cpm.ObtainedMarks) = 1 THEN CAST(cpm.ObtainedMarks AS FLOAT) ELSE NULL END AS ObtainedMarksTheory,
+    CASE WHEN cpm.PracticalMarks IS NOT NULL AND ISNUMERIC(cpm.PracticalMarks) = 1 THEN CAST(cpm.PracticalMarks AS FLOAT) ELSE NULL END AS ObtainedMarksPractical,
+    CASE WHEN cpm.InternalMarks IS NOT NULL AND ISNUMERIC(cpm.InternalMarks) = 1 THEN CAST(cpm.InternalMarks AS FLOAT) ELSE NULL END AS ObtainedMarksTheoryInternal,
+    CASE WHEN cpm.InternalMarksFinal IS NOT NULL AND ISNUMERIC(cpm.InternalMarksFinal) = 1 THEN CAST(cpm.InternalMarksFinal AS FLOAT) ELSE NULL END AS ObtainedMarksPracticalInternal,
+    CASE WHEN cpm.TotalOM IS NOT NULL AND ISNUMERIC(cpm.TotalOM) = 1 THEN CAST(cpm.TotalOM AS FLOAT) ELSE NULL END AS ObtainedMarks,
     CASE WHEN cpm.GradeLetter IS NOT NULL AND cpm.GradeLetter <> 'NULL' THEN LTRIM(RTRIM(cpm.GradeLetter)) ELSE NULL END AS GradeLetter,
     CASE WHEN cpm.Rem IS NOT NULL AND cpm.Rem <> 'NULL' THEN LTRIM(RTRIM(cpm.Rem)) ELSE NULL END AS Remarks,
     1 AS IsActive,
-    CASE WHEN cpm.IsResultConfirm = 1 THEN 1 ELSE 0 END AS IsSubmitted,
+    CASE WHEN TRY_CAST(LTRIM(RTRIM(cpm.IsResultConfirm)) AS INT) = 1 THEN 1 ELSE 0 END AS IsSubmitted,
     1 AS TenantId,
     GETDATE() AS CreatedDate
-FROM dbo.CPM cpm
+FROM [FWUExams.Legacy].dbo.CPM cpm
 INNER JOIN ExamRegistrations er ON cpm.ExamRegistrationID = er.Id
 INNER JOIN #SubjectCatalogMap scm ON LTRIM(RTRIM(cpm.SubjectCode)) = scm.SourceCode
 INNER JOIN #SubjectOfferingMap som ON som.SubjectCatalogId = scm.NewId AND som.ProgramId = @ProgCPMId
     AND som.SemesterId = CASE
-        WHEN cpm.Year = 'I' AND cpm.Part = 'I' THEN (SELECT Id FROM Semesters WHERE Code = 'CPMSEM1' AND AcademicYearId = @AY2023Id)
-        WHEN cpm.Year = 'I' AND cpm.Part = 'II' THEN (SELECT Id FROM Semesters WHERE Code = 'CPMSEM2' AND AcademicYearId = @AY2023Id)
-        ELSE (SELECT Id FROM Semesters WHERE Code = 'CPMSEM1' AND AcademicYearId = @AY2023Id)
+        WHEN cpm.Year = 'I' AND cpm.Part = 'I' THEN @SemCPM1
+        WHEN cpm.Year = 'I' AND cpm.Part = 'II' THEN @SemCPM2
+        ELSE @SemCPM1
     END
-INNER JOIN #AcademicYearMap ay_src ON ay_src.SourceYear = LEFT(cpm.AcademicYearName, CHARINDEX('.', cpm.AcademicYearName + '.') - 1)
+INNER JOIN #AcademicYearMap ay_src ON ay_src.SourceYear = LEFT(CAST(cpm.AcademicYearName AS NVARCHAR(50)), CHARINDEX('.', CAST(cpm.AcademicYearName AS NVARCHAR(50)) + '.') - 1)
 LEFT JOIN #ExamScheduleMap esm ON esm.ProgramId = @ProgCPMId AND esm.AcademicYearId = ay_src.NewId
     AND esm.SemesterId = som.SemesterId;
 
@@ -848,7 +866,7 @@ PRINT '========== MIGRATION COMPLETE ==========';
 SELECT 'AcademicYears' AS TableName, COUNT(*) AS cnt FROM AcademicYears WHERE AcademicYearCode IN ('2014','2021','2023')
 UNION ALL SELECT 'Colleges', COUNT(*) FROM Colleges WHERE Code = 'SCH001'
 UNION ALL SELECT 'Programs', COUNT(*) FROM Programs WHERE ProgramCode IN ('L092','L117','L131')
-UNION ALL SELECT 'SubjectCatalogs', COUNT(*) FROM SubjectCatalogs WHERE TenantId = 1
+UNION ALL SELECT 'SubjectCatalogs', COUNT(*) FROM SubjectCatalogs
 UNION ALL SELECT 'SubjectOfferings', COUNT(*) FROM SubjectOfferings WHERE TenantId = 1
 UNION ALL SELECT 'Semesters', COUNT(*) FROM Semesters WHERE AcademicYearId IN (@AY2014Id, @AY2021Id, @AY2023Id)
 UNION ALL SELECT 'ExamSchedules', COUNT(*) FROM ExamSchedules WHERE AcademicYearId IN (@AY2014Id, @AY2021Id, @AY2023Id)
@@ -881,14 +899,4 @@ DROP TABLE #DistinctSubjects;
 DROP TABLE #DistinctStudents;
 DROP TABLE #DistinctExamRegs;
 
-COMMIT TRANSACTION;
-PRINT 'Transaction committed successfully.';
-
-END TRY
-BEGIN CATCH
-    IF @@TRANCOUNT > 0
-        ROLLBACK TRANSACTION;
-
-    PRINT 'ERROR: ' + ERROR_MESSAGE();
-    THROW;
-END CATCH;
+PRINT 'Migration completed successfully.';
