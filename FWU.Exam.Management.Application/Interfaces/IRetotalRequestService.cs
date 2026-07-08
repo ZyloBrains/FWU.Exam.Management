@@ -12,7 +12,7 @@ public interface IRetotalRequestService
     Task UpdateRetotalRequestAsync(RetotalRequest retotalRequest);
     Task DeleteRetotalRequestAsync(int id);
     Task<bool> RetotalRequestExistsAsync(int id);
-    Task ApproveRetotalRequestAsync(int id, string? retotalledGradeLetter, decimal? retotalledMarks, string? adminRemarks, string reviewedBy);
+    Task ApproveRetotalRequestAsync(int id, string? retotalledGradeLetter, float? retotalledMarks, string? adminRemarks, string reviewedBy);
     Task RejectRetotalRequestAsync(int id, string? adminRemarks, string reviewedBy);
     Task MarkUnderReviewAsync(int id, string reviewedBy);
     RetotalRequestSelectListsDto GetSelectListData(RetotalRequest? retotalRequest = null);

@@ -405,23 +405,27 @@ public class TeacherMarksService(
                                              && esr.SubjectOfferingId == subjectOfferingId
                                              && esr.ExamScheduleId == examScheduleId);
 
-                decimal? theoryInternal = string.IsNullOrEmpty(theoryInternalStr) ? null : decimal.Parse(theoryInternalStr, CultureInfo.InvariantCulture);
-                decimal? practicalInternal = string.IsNullOrEmpty(practicalInternalStr) ? null : decimal.Parse(practicalInternalStr, CultureInfo.InvariantCulture);
+                float? theoryMarks = float.TryParse(theoryStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var tVal) ? tVal : null;
+                float? theoryConfirmMarks = float.TryParse(theoryConfirmStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var tcVal) ? tcVal : null;
+                float? practicalMarks = float.TryParse(practicalStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var pVal) ? pVal : null;
+                float? practicalConfirmMarks = float.TryParse(practicalConfirmStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var pcVal) ? pcVal : null;
+                float? theoryInternal = float.TryParse(theoryInternalStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var tiVal) ? tiVal : null;
+                float? practicalInternal = float.TryParse(practicalInternalStr, NumberStyles.Float, CultureInfo.InvariantCulture, out var piVal) ? piVal : null;
 
                 if (existing != null)
                 {
-                    existing.ObtainedMarksTheory = string.IsNullOrEmpty(theoryStr) ? null : theoryStr;
-                    existing.ObtainedMarksTheoryConfirm = string.IsNullOrEmpty(theoryConfirmStr) ? null : theoryConfirmStr;
-                    existing.ObtainedMarksPractical = string.IsNullOrEmpty(practicalStr) ? null : practicalStr;
-                    existing.ObtainedMarksPracticalConfirm = string.IsNullOrEmpty(practicalConfirmStr) ? null : practicalConfirmStr;
+                    existing.ObtainedMarksTheory = theoryMarks;
+                    existing.ObtainedMarksTheoryConfirm = theoryConfirmMarks;
+                    existing.ObtainedMarksPractical = practicalMarks;
+                    existing.ObtainedMarksPracticalConfirm = practicalConfirmMarks;
                     existing.ObtainedMarksTheoryInternal = theoryInternal;
                     existing.ObtainedMarksPracticalInternal = practicalInternal;
-                    existing.ObtainedMarks = gradeCalculationService.CalculateTotalMarks(theoryStr, practicalStr, theoryInternal, practicalInternal);
+                    existing.ObtainedMarks = gradeCalculationService.CalculateTotalMarks(theoryMarks, practicalMarks, theoryInternal, practicalInternal);
                     existing.GradeLetter = gradeCalculationService.CalculateGrade(existing.ObtainedMarks.Value, subjectOffering).GradeLetter;
                 }
                 else
                 {
-                    var totalMarks = gradeCalculationService.CalculateTotalMarks(theoryStr, practicalStr, theoryInternal, practicalInternal);
+                    var totalMarks = gradeCalculationService.CalculateTotalMarks(theoryMarks, practicalMarks, theoryInternal, practicalInternal);
                     var examTypeId = await context.ExamSchedules
                         .Where(es => es.Id == examScheduleId)
                         .Select(es => es.ExamTypeId)
@@ -434,10 +438,10 @@ public class TeacherMarksService(
                         ExamTypeId = examTypeId,
                         SubjectOfferingId = subjectOfferingId,
                         ExamScheduleId = examScheduleId,
-                        ObtainedMarksTheory = string.IsNullOrEmpty(theoryStr) ? null : theoryStr,
-                        ObtainedMarksTheoryConfirm = string.IsNullOrEmpty(theoryConfirmStr) ? null : theoryConfirmStr,
-                        ObtainedMarksPractical = string.IsNullOrEmpty(practicalStr) ? null : practicalStr,
-                        ObtainedMarksPracticalConfirm = string.IsNullOrEmpty(practicalConfirmStr) ? null : practicalConfirmStr,
+                        ObtainedMarksTheory = theoryMarks,
+                        ObtainedMarksTheoryConfirm = theoryConfirmMarks,
+                        ObtainedMarksPractical = practicalMarks,
+                        ObtainedMarksPracticalConfirm = practicalConfirmMarks,
                         ObtainedMarksTheoryInternal = theoryInternal,
                         ObtainedMarksPracticalInternal = practicalInternal,
                         ObtainedMarks = totalMarks,
@@ -592,10 +596,10 @@ public class TeacherMarksService(
             ws.Cell(row, 2).Value = name ?? "";
             ws.Cell(row, 3).Value = er.ExamRollNumber ?? "";
             ws.Cell(row, 4).Value = regNo ?? "";
-            ws.Cell(row, 5).Value = result?.ObtainedMarksTheory ?? "";
-            ws.Cell(row, 6).Value = result?.ObtainedMarksTheoryConfirm ?? "";
-            ws.Cell(row, 7).Value = result?.ObtainedMarksPractical ?? "";
-            ws.Cell(row, 8).Value = result?.ObtainedMarksPracticalConfirm ?? "";
+            ws.Cell(row, 5).Value = result?.ObtainedMarksTheory ?? 0;
+            ws.Cell(row, 6).Value = result?.ObtainedMarksTheoryConfirm ?? 0;
+            ws.Cell(row, 7).Value = result?.ObtainedMarksPractical ?? 0;
+            ws.Cell(row, 8).Value = result?.ObtainedMarksPracticalConfirm ?? 0;
             ws.Cell(row, 9).Value = result?.ObtainedMarksTheoryInternal?.ToString() ?? "";
             ws.Cell(row, 10).Value = result?.ObtainedMarksPracticalInternal?.ToString() ?? "";
             ws.Cell(row, 11).Value = result?.ObtainedMarks?.ToString() ?? "";
@@ -604,9 +608,7 @@ public class TeacherMarksService(
                 ws.Cell(row, 13).Value = "";
             else
             {
-                decimal? theoryMarks = decimal.TryParse(result.ObtainedMarksTheory, out var t) ? t : null;
-                decimal? practicalMarks = decimal.TryParse(result.ObtainedMarksPractical, out var p) ? p : null;
-                ws.Cell(row, 13).Value = gradeCalculationService.IsStudentPassing(theoryMarks, practicalMarks, subjectOffering) ? "Pass" : "Fail";
+                ws.Cell(row, 13).Value = gradeCalculationService.IsStudentPassing(result.ObtainedMarksTheory, result.ObtainedMarksPractical, subjectOffering) ? "Pass" : "Fail";
             }
             ws.Cell(row, 14).Value = result?.IsSubmitted == true ? "Yes" : "No";
 

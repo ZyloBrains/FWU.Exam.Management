@@ -1449,33 +1449,26 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<DateTime?>("LastStatusSyncDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("ObtainedMarks")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<float?>("ObtainedMarks")
+                        .HasColumnType("real");
 
-                    b.Property<string>("ObtainedMarksPractical")
-                        .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                    b.Property<float?>("ObtainedMarksPractical")
+                        .HasColumnType("real");
 
-                    b.Property<string>("ObtainedMarksPracticalConfirm")
-                        .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                    b.Property<float?>("ObtainedMarksPracticalConfirm")
+                        .HasColumnType("real");
 
-                    b.Property<decimal?>("ObtainedMarksPracticalInternal")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<float?>("ObtainedMarksPracticalInternal")
+                        .HasColumnType("real");
 
-                    b.Property<string>("ObtainedMarksTheory")
-                        .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                    b.Property<float?>("ObtainedMarksTheory")
+                        .HasColumnType("real");
 
-                    b.Property<string>("ObtainedMarksTheoryConfirm")
-                        .HasMaxLength(3)
-                        .HasColumnType("nvarchar(3)");
+                    b.Property<float?>("ObtainedMarksTheoryConfirm")
+                        .HasColumnType("real");
 
-                    b.Property<decimal?>("ObtainedMarksTheoryInternal")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<float?>("ObtainedMarksTheoryInternal")
+                        .HasColumnType("real");
 
                     b.Property<string>("Remarks")
                         .HasMaxLength(255)
@@ -1571,8 +1564,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<string>("OriginalGradeLetter")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("OriginalObtainedMarks")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<float?>("OriginalObtainedMarks")
+                        .HasColumnType("real");
 
                     b.Property<string>("Reason")
                         .HasColumnType("nvarchar(max)");
@@ -1583,8 +1576,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<string>("RetotalledGradeLetter")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("RetotalledObtainedMarks")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<float?>("RetotalledObtainedMarks")
+                        .HasColumnType("real");
 
                     b.Property<string>("ReviewedByUsername")
                         .HasColumnType("nvarchar(max)");

@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -112,12 +113,18 @@ public class EmailModel(
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                 protocol: Request.Scheme);
-            await emailSender.SendEmailAsync(
-                Input.NewEmail,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-            StatusMessage = "Confirmation link to change email sent. Please check your email.";
+            try
+            {
+                await emailSender.SendEmailAsync(
+                    Input.NewEmail,
+                    "Confirm your email",
+                    EmailTemplateHelper.ChangeEmail(Input.NewEmail, callbackUrl));
+                StatusMessage = "Confirmation link to change email sent. Please check your email.";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to send confirmation email. Please try again. ({ex.Message})";
+            }
             return RedirectToPage();
         }
 
@@ -148,12 +155,18 @@ public class EmailModel(
             pageHandler: null,
             values: new { area = "Identity", userId = userId, code = code },
             protocol: Request.Scheme);
-        await emailSender.SendEmailAsync(
-            email,
-            "Confirm your email",
-            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-        StatusMessage = "Verification email sent. Please check your email.";
+        try
+        {
+            await emailSender.SendEmailAsync(
+                email,
+                "Confirm your email",
+                EmailTemplateHelper.ConfirmEmail(email, callbackUrl));
+            StatusMessage = "Verification email sent. Please check your email.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to send verification email. Please try again. ({ex.Message})";
+        }
         return RedirectToPage();
     }
 }

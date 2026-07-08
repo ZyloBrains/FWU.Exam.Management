@@ -492,19 +492,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         {
             if (!string.IsNullOrWhiteSpace(application.Email))
             {
-                var emailBody = $@"
-                    <h3>Dear {fullName},</h3>
-                    <p>Your entrance exam application has been submitted successfully.</p>
-                    <p><strong>Details:</strong></p>
-                    <ul>
-                        <li><strong>College:</strong> {college}</li>
-                        <li><strong>Program:</strong> {program}</li>
-                        <li><strong>Application ID:</strong> {application.Id}</li>
-                        <li><strong>Date:</strong> {application.CreatedAt:yyyy-MM-dd}</li>
-                    </ul>
-                    <p>You will be notified once your application is reviewed.</p>
-                    <br/>
-                    <p>Regards,<br/>Far-Western University</p>";
+                var emailBody = EmailTemplateHelper.EntranceApplicationSubmitted(fullName, college, program, application.Id, application.CreatedAt.ToString("yyyy-MM-dd"));
                 await emailService.SendEmailAsync(application.Email, "Entrance Exam Application Submitted", emailBody);
             }
         }
@@ -617,6 +605,15 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
         await context.SaveChangesAsync();
         return existing.Id;
+    }
+
+    public async Task<List<SelectOption>> GetCollegesByProgramAsync(int programId)
+    {
+        return await context.CollegePrograms
+            .Where(cp => cp.ProgramId == programId && cp.College.IsActive)
+            .Select(cp => new SelectOption { Id = cp.College.Id, Name = cp.College.Name })
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     public async Task<List<SelectOption>> GetDistrictsAsync()
@@ -783,6 +780,12 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         await context.SaveChangesAsync();
 
         return voucher;
+    }
+
+    public async Task<string?> GetPaymentTypeNameByIdAsync(int paymentTypeId)
+    {
+        var pt = await context.Set<PaymentType>().AsNoTracking().FirstOrDefaultAsync(p => p.Id == paymentTypeId);
+        return pt?.PaymentTypeName;
     }
 
     public async Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId)

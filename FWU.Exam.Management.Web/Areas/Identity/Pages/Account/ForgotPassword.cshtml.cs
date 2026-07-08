@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -41,17 +42,26 @@ public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender 
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
+        try
         {
             var user = await userManager.FindByEmailAsync(Input.Email);
-            if (user == null || !(await userManager.IsEmailConfirmedAsync(user)))
+            if (user == null)
             {
-                // Don't reveal that the user does not exist or is not confirmed
-                return RedirectToPage("./ForgotPasswordConfirmation");
+                ModelState.AddModelError(string.Empty, "No account found with this email address.");
+                return Page();
             }
 
-            // For more information on how to enable account confirmation and password reset please
-            // visit https://go.microsoft.com/fwlink/?LinkID=532713
+            if (!(await userManager.IsEmailConfirmedAsync(user)))
+            {
+                ModelState.AddModelError(string.Empty, "Email is not confirmed. Please confirm your email before resetting your password.");
+                return Page();
+            }
+
             var code = await userManager.GeneratePasswordResetTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             var callbackUrl = Url.Page(
@@ -63,11 +73,15 @@ public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender 
             await emailSender.SendEmailAsync(
                 Input.Email,
                 "Reset Password",
-                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                EmailTemplateHelper.ResetPassword(Input.Email, callbackUrl));
 
+            TempData["StatusMessage"] = "Password reset link has been sent to your email.";
             return RedirectToPage("./ForgotPasswordConfirmation");
         }
-
-        return Page();
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"An error occurred while sending the reset email. Please try again. ({ex.Message})");
+            return Page();
+        }
     }
 }

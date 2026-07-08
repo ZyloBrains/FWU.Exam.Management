@@ -102,9 +102,9 @@
                                 <tr class="hover:bg-gray-50 transition-colors @rowBg">
                                     <td class="px-4 py-3 text-gray-800 font-medium">@subject.SubjectName</td>
                                     <td class="px-4 py-3 text-center text-gray-500 font-mono text-xs">@subject.SubjectCode</td>
-                                    <td class="px-4 py-3 text-center text-gray-800">@subject.TheoryMarks</td>
-                                    <td class="px-4 py-3 text-center text-gray-800">@subject.PracticalMarks</td>
-                                    <td class="px-4 py-3 text-center text-gray-800 font-medium">@subject.TotalMarks</td>
+                                    <td class="px-4 py-3 text-center text-gray-800">@(subject.TheoryMarks?.ToString("N2") ?? "-")</td>
+                                    <td class="px-4 py-3 text-center text-gray-800">@(subject.PracticalMarks?.ToString("N2") ?? "-")</td>
+                                    <td class="px-4 py-3 text-center text-gray-800 font-medium">@(subject.TotalMarks?.ToString("N2") ?? "-")</td>
                                     <td class="px-4 py-3 text-center">
                                         @if (subject.Status == "Pending")
                                         {
@@ -200,19 +200,19 @@
                             <p class="text-[10px] text-gray-400 font-mono mb-1">@subject.SubjectCode</p>
                             <div class="flex items-center gap-4 text-xs text-gray-500">
                                 <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">T:</span> @subject.TheoryMarks
+                                    <span class="font-medium text-gray-700">T:</span> @(subject.TheoryMarks?.ToString("N2") ?? "-")
                                 </span>
                                 <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">P:</span> @subject.PracticalMarks
+                                    <span class="font-medium text-gray-700">P:</span> @(subject.PracticalMarks?.ToString("N2") ?? "-")
                                 </span>
-                                @if (!string.IsNullOrEmpty(subject.InternalMarks))
+                                @if (subject.InternalMarks.HasValue)
                                 {
                                     <span class="flex items-center gap-1">
-                                        <span class="font-medium text-gray-700">I:</span> @subject.InternalMarks
+                                        <span class="font-medium text-gray-700">I:</span> @(subject.InternalMarks?.ToString("N2") ?? "-")
                                     </span>
                                 }
                                 <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">Total:</span> @subject.TotalMarks
+                                    <span class="font-medium text-gray-700">Total:</span> @(subject.TotalMarks?.ToString("N2") ?? "-")
                                 </span>
                                 <span class="flex items-center gap-1">
                                     <span class="font-medium text-gray-700">Grade:</span>

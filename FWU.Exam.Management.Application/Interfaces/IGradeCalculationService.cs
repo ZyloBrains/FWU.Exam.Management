@@ -5,7 +5,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IGradeCalculationService
 {
-    GradeResult CalculateGrade(decimal totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null);
-    bool IsStudentPassing(decimal? theoryMarks, decimal? practicalMarks, SubjectOffering offering);
-    decimal CalculateTotalMarks(string? theory, string? practical, decimal? theoryInternal, decimal? practicalInternal);
+    GradeResult CalculateGrade(float totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null);
+    bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering);
+    float CalculateTotalMarks(float? theory, float? practical, float? theoryInternal, float? practicalInternal);
 }

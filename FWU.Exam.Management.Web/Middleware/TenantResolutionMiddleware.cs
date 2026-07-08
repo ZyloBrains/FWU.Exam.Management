@@ -51,14 +51,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
-        // 3. Tenant select page — always accessible without tenant
-        if (IsTenantSelectPath(path))
-        {
-            await next(context);
-            return;
-        }
-
-        // 4. Check for tenant cookie
+        // 3. Check for tenant cookie
         var cookieTenantCode = context.Request.Cookies["tenant_code"];
 
         // 5. If user has a tenant cookie, enforce tenant in URL
@@ -84,7 +77,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             else
             {
                 context.Response.Cookies.Delete("tenant_code");
-                context.Response.Redirect("/TenantSelect/Index");
+                context.Response.Redirect("/Identity/Account/Login");
                 return;
             }
         }
@@ -96,8 +89,8 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
-        // 7. No tenant, not a public path — redirect to tenant selection
-        context.Response.Redirect("/TenantSelect/Index");
+        // 7. No tenant, not a public path — redirect to login
+        context.Response.Redirect("/Identity/Account/Login");
     }
 
     private static void SetTenantCookie(HttpContext context, string tenantCode)
@@ -151,19 +144,6 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     private static bool IsStaticFile(string path)
     {
         return _staticExtensions.Any(e => path.EndsWith(e, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static bool IsTenantSelectPath(string path)
-    {
-        var lower = path.TrimEnd('/').ToLowerInvariant();
-
-        if (lower is "" or "/" or "/tenantselect" or "/tenantselect/index")
-            return true;
-
-        if (lower.StartsWith("/identity/account/"))
-            return true;
-
-        return false;
     }
 
     private static bool IsIdentityPath(string path)

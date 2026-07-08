@@ -751,8 +751,8 @@ public class StudentDashboardController(
                     SubjectCode = esr.SubjectOffering?.SubjectCatalog?.SubjectCode,
                     TheoryMarks = esr.ObtainedMarksTheory,
                     PracticalMarks = esr.ObtainedMarksPractical,
-                    InternalMarks = esr.ObtainedMarksTheoryInternal?.ToString(),
-                    TotalMarks = esr.ObtainedMarks?.ToString(),
+                    InternalMarks = esr.ObtainedMarksTheoryInternal,
+                    TotalMarks = esr.ObtainedMarks,
                     Grade = gradeLetter,
                     IsPassed = hasGrade && !isFailed,
                     Status = !hasGrade ? "Pending"
