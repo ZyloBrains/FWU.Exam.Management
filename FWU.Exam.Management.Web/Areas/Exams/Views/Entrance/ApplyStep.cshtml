@@ -655,7 +655,7 @@
                 // Re-init Select2 in the now-visible step (was hidden when Select2 first initialized)
                 $next.find('.select2').each(function () {
                     var $el = $(this);
-                    if ($el.data('select2')) $el.select2('destroy');
+                    $el.select2('destroy');
                     $el.select2({
                         width: '100%',
                         placeholder: function () { return $(this).find('option:first').text(); },
@@ -895,20 +895,6 @@
             }
 
             // ===== PROVINCE/DISTRICT/LOCALLEVEL CASCADING (Select2) =====
-            function reinitSelect2($el) {
-                $el.each(function () {
-                    var $this = $(this);
-                    if ($this.data('select2')) {
-                        $this.select2('destroy');
-                    }
-                    $this.select2({
-                        width: '100%',
-                        placeholder: function () { return $(this).find('option:first').text(); },
-                        allowClear: false
-                    });
-                });
-            }
-
             function loadProvinces(callback) {
                 $.get(tenantUrl("/Exams/Entrance/GetProvinces"), function (data) {
                     var ps = $("#ProvinceId");
@@ -917,46 +903,54 @@
                     $.each(data, function (i, item) {
                         ps.append('<option value="' + item.id + '">' + item.name + '</option>');
                     });
-                    reinitSelect2(ps);
+                    ps.select2({width:'resolve'});
                     if (callback) callback();
                 });
             }
 
             function loadDistricts(provinceId, callback) {
-                var $dd = $("#DistrictId");
-                var $ll = $("#LocalLevelId");
-                if ($dd.data('select2')) $dd.select2('destroy');
-                $dd.html('<option>Loading...</option>');
-                if ($ll.data('select2')) $ll.select2('destroy');
-                $ll.html('<option>Select Local Level</option>');
+                $('#DistrictId').select2('destroy');
+                $('#LocalLevelId').select2('destroy');
+
+                if (!provinceId) {
+                    $("#DistrictId").empty().append('<option value="">Select District</option>');
+                    $('#DistrictId').select2({width:'resolve'});
+                    if (callback) callback();
+                    return;
+                }
+
                 $.get(tenantUrl("/Exams/Entrance/GetDistrictsByProvince"),
                     { provinceId: provinceId },
                     function (data) {
-                        var dd = $dd;
-                        dd.empty();
-                        dd.append('<option value="">Select District</option>');
+                        var dd = $("#DistrictId");
+                        dd.empty().append('<option value="">Select District</option>');
                         $.each(data, function (i, item) {
                             dd.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
-                        reinitSelect2(dd);
+                        dd.select2({width:'resolve'});
                         if (callback) callback();
                     });
             }
 
             function loadLocalLevels(districtId, callback) {
-                var $ll = $("#LocalLevelId");
-                if ($ll.data('select2')) $ll.select2('destroy');
-                $ll.html('<option>Loading...</option>');
+                $('#LocalLevelId').select2('destroy');
+
+                if (!districtId) {
+                    $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                    $('#LocalLevelId').select2({width:'resolve'});
+                    if (callback) callback();
+                    return;
+                }
+
                 $.get(tenantUrl("/Exams/Entrance/GetLocalLevelsByDistrict"),
                     { districtId: districtId },
                     function (data) {
-                        var ll = $ll;
-                        ll.empty();
-                        ll.append('<option value="">Select Local Level</option>');
+                        var ll = $("#LocalLevelId");
+                        ll.empty().append('<option value="">Select Local Level</option>');
                         $.each(data, function (i, item) {
                             ll.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
-                        reinitSelect2(ll);
+                        ll.select2({width:'resolve'});
                         if (callback) callback();
                     });
             }
@@ -999,14 +993,12 @@
                 if (provinceId) {
                     loadDistricts(provinceId);
                 } else {
-                    var $dd = $("#DistrictId");
-                    var $ll = $("#LocalLevelId");
-                    if ($dd.data('select2')) $dd.select2('destroy');
-                    $dd.html('<option value="">Select District</option>');
-                    if ($ll.data('select2')) $ll.select2('destroy');
-                    $ll.html('<option value="">Select Local Level</option>');
-                    reinitSelect2($dd);
-                    reinitSelect2($ll);
+                    $('#DistrictId').select2('destroy');
+                    $('#LocalLevelId').select2('destroy');
+                    $("#DistrictId").empty().append('<option value="">Select District</option>');
+                    $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                    $('#DistrictId').select2({width:'resolve'});
+                    $('#LocalLevelId').select2({width:'resolve'});
                 }
             });
 
@@ -1015,10 +1007,9 @@
                 if (districtId) {
                     loadLocalLevels(districtId);
                 } else {
-                    var $ll = $("#LocalLevelId");
-                    if ($ll.data('select2')) $ll.select2('destroy');
-                    $ll.html('<option value="">Select Local Level</option>');
-                    reinitSelect2($ll);
+                    $('#LocalLevelId').select2('destroy');
+                    $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                    $('#LocalLevelId').select2({width:'resolve'});
                 }
             });
 

@@ -246,47 +246,62 @@
     </style>
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        function reinitSelect2($el) {
-            if ($el.data('select2')) $el.select2('destroy');
-            $el.select2({width:'resolve'});
+        function loadDistricts(provinceId, callback) {
+            $('#DistrictId').select2('destroy');
+            $('#LocalLevelId').select2('destroy');
+
+            if (!provinceId) {
+                $("#DistrictId").empty().append('<option value="">Select District</option>');
+                $('#DistrictId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Exams/Entrance/GetDistrictsByProvince"),
+                { provinceId: provinceId },
+                function (data) {
+                    var dd = $("#DistrictId");
+                    dd.empty().append('<option value="">Select District</option>');
+                    $.each(data, function (i, item) {
+                        dd.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                    dd.select2({width:'resolve'});
+                    if (callback) callback();
+            });
+        }
+
+        function loadLocalLevels(districtId, callback) {
+            $('#LocalLevelId').select2('destroy');
+
+            if (!districtId) {
+                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                $('#LocalLevelId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Exams/Entrance/GetLocalLevelsByDistrict"),
+                { districtId: districtId },
+                function (data) {
+                    var ll = $("#LocalLevelId");
+                    ll.empty().append('<option value="">Select Local Level</option>');
+                    $.each(data, function (i, item) {
+                        ll.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                    ll.select2({width:'resolve'});
+                    if (callback) callback();
+            });
         }
 
         $(function () {
             $('.select2').select2({ width: 'resolve' });
 
             $("#ProvinceId").change(function () {
-                var provinceId = $(this).val();
-                var $dd = $("#DistrictId");
-                var $ll = $("#LocalLevelId");
-                if ($dd.data('select2')) $dd.select2('destroy');
-                if ($ll.data('select2')) $ll.select2('destroy');
-                $dd.html('<option value="">Loading...</option>');
-                $ll.html('<option value="">Select Local Level</option>');
-                $.get(tenantUrl("/Exams/Entrance/GetDistrictsByProvince"),
-                    { provinceId: provinceId },
-                    function (data) {
-                        $dd.empty().append('<option value="">Select District</option>');
-                        $.each(data, function (i, item) {
-                            $dd.append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-                        reinitSelect2($dd);
-                    });
+                loadDistricts($(this).val());
             });
 
             $("#DistrictId").change(function () {
-                var districtId = $(this).val();
-                var $ll = $("#LocalLevelId");
-                if ($ll.data('select2')) $ll.select2('destroy');
-                $ll.html('<option value="">Loading...</option>');
-                $.get(tenantUrl("/Exams/Entrance/GetLocalLevelsByDistrict"),
-                    { districtId: districtId },
-                    function (data) {
-                        $ll.empty().append('<option value="">Select Local Level</option>');
-                        $.each(data, function (i, item) {
-                            $ll.append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-                        reinitSelect2($ll);
-                    });
+                loadLocalLevels($(this).val());
             });
 
             // Check schedule status when program/college/academic year changes

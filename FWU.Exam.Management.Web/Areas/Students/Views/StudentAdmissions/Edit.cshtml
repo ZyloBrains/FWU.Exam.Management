@@ -98,7 +98,13 @@
 
             $("#CollegeId").change(function () {
                 var collegeId = $(this).val();
-                $("#ProgramsId").html('<option value="">Loading...</option>');
+                $('#ProgramsId').select2('destroy');
+
+                if (!collegeId) {
+                    $("#ProgramsId").empty().append('<option value="">Select Program</option>');
+                    $('#ProgramsId').select2({width:'resolve'});
+                    return;
+                }
 
                 $.get(tenantUrl("/Students/StudentAdmissions/GetCollegePrograms"), { collegeId: collegeId }, function (data) {
                     var programDropdown = $("#ProgramsId");
@@ -107,7 +113,7 @@
                     $.each(data, function (index, item) {
                         programDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
                     });
-                    $('#ProgramsId').select2('destroy').select2();
+                    programDropdown.select2({width:'resolve'});
                 });
             });
         });

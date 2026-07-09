@@ -470,22 +470,13 @@
             });
         }
 
-        function reinitSelect2($el) {
-            if ($el.data('select2')) $el.select2('destroy');
-            $el.select2({width:'resolve'});
-        }
-
         function loadDistricts(provinceId, selectedDistrictId, callback) {
-            var $dd = $("#DistrictId");
-            var $ll = $("#LocalLevelId");
-            if ($dd.data('select2')) $dd.select2('destroy');
-            if ($ll.data('select2')) $ll.select2('destroy');
-            $dd.html('<option value="">Loading...</option>');
-            $ll.html('<option value="">Select Local Level</option>');
+            $('#DistrictId').select2('destroy');
+            $('#LocalLevelId').select2('destroy');
 
             if (!provinceId) {
-                $dd.empty().append('<option value="">Select District</option>');
-                reinitSelect2($dd);
+                $("#DistrictId").empty().append('<option value="">Select District</option>');
+                $('#DistrictId').select2({width:'resolve'});
                 if (callback) callback();
                 return;
             }
@@ -493,24 +484,23 @@
             $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"),
                 { provinceId: provinceId },
                 function (data) {
-                    $dd.empty().append('<option value="">Select District</option>');
+                    var dd = $("#DistrictId");
+                    dd.empty().append('<option value="">Select District</option>');
                     $.each(data, function (i, item) {
                         var sel = selectedDistrictId && item.id == selectedDistrictId ? ' selected' : '';
-                        $dd.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
+                        dd.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
                     });
-                    reinitSelect2($dd);
+                    dd.select2({width:'resolve'});
                     if (callback) callback();
             });
         }
 
         function loadLocalLevels(districtId, selectedLocalLevelId, callback) {
-            var $ll = $("#LocalLevelId");
-            if ($ll.data('select2')) $ll.select2('destroy');
-            $ll.html('<option value="">Loading...</option>');
+            $('#LocalLevelId').select2('destroy');
 
             if (!districtId) {
-                $ll.empty().append('<option value="">Select Local Level</option>');
-                reinitSelect2($ll);
+                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                $('#LocalLevelId').select2({width:'resolve'});
                 if (callback) callback();
                 return;
             }
@@ -518,12 +508,13 @@
             $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"),
                 { districtId: districtId },
                 function (data) {
-                    $ll.empty().append('<option value="">Select Local Level</option>');
+                    var ll = $("#LocalLevelId");
+                    ll.empty().append('<option value="">Select Local Level</option>');
                     $.each(data, function (i, item) {
                         var sel = selectedLocalLevelId && item.id == selectedLocalLevelId ? ' selected' : '';
-                        $ll.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
+                        ll.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
                     });
-                    reinitSelect2($ll);
+                    ll.select2({width:'resolve'});
                     if (callback) callback();
             });
         }
@@ -562,42 +553,33 @@
             // Level -> Faculty + clear downstream
             $("#LevelId").change(function () {
                 var levelId = $(this).val();
-                var $fac = $("#FacultyId");
-                var $col = $("#CollegeId");
-                var $dept = $("#DepartmentId");
-                var $prog = $("#ProgramId");
-                if ($fac.data('select2')) $fac.select2('destroy');
-                if ($col.data('select2')) $col.select2('destroy');
-                if ($dept.data('select2')) $dept.select2('destroy');
-                if ($prog.data('select2')) $prog.select2('destroy');
-                $col.empty().append('<option value="">Select College</option>');
-                $dept.empty().append('<option value="">Select Department</option>');
-                $prog.empty().append('<option value="">Select Program</option>');
+                $("#FacultyId").select2('destroy');
+                $("#CollegeId").select2('destroy');
+                $("#DepartmentId").select2('destroy');
+                $("#ProgramId").select2('destroy');
+                $("#CollegeId").empty().append('<option value="">Select College</option>');
+                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 loadFaculties(levelId, null);
             });
 
             // Faculty -> College + clear downstream
             $("#FacultyId").change(function () {
                 var facultyId = $(this).val();
-                var $col = $("#CollegeId");
-                var $dept = $("#DepartmentId");
-                var $prog = $("#ProgramId");
-                if ($col.data('select2')) $col.select2('destroy');
-                if ($dept.data('select2')) $dept.select2('destroy');
-                if ($prog.data('select2')) $prog.select2('destroy');
-                $dept.empty().append('<option value="">Select Department</option>');
-                $prog.empty().append('<option value="">Select Program</option>');
+                $("#CollegeId").select2('destroy');
+                $("#DepartmentId").select2('destroy');
+                $("#ProgramId").select2('destroy');
+                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 loadColleges(facultyId, null);
             });
 
             // College -> Department + Program + clear downstream
             $("#CollegeId").change(function () {
                 var collegeId = $(this).val();
-                var $dept = $("#DepartmentId");
-                var $prog = $("#ProgramId");
-                if ($dept.data('select2')) $dept.select2('destroy');
-                if ($prog.data('select2')) $prog.select2('destroy');
-                $prog.empty().append('<option value="">Select Program</option>');
+                $("#DepartmentId").select2('destroy');
+                $("#ProgramId").select2('destroy');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 loadDepartments(collegeId, null);
                 loadPrograms(collegeId, null);
             });
