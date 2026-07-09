@@ -251,6 +251,11 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
+        function reinitSelect2($el) {
+            if ($el.data('select2')) $el.select2('destroy');
+            $el.select2({width:'resolve'});
+        }
+
         $(function () {
             var selectedProvinceId = '@(Model.Address?.LocalLevel?.District?.ProvinceId)';
             var selectedDistrictId = '@(Model.Address?.LocalLevel?.DistrictId)';
@@ -259,25 +264,24 @@
             // Province -> District
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
-
-                $("#DistrictId").html('<option>Loading...</option>');
-                $("#LocalLevelId").html('<option>Select Local Level</option>');
+                var $dd = $("#DistrictId");
+                var $ll = $("#LocalLevelId");
+                if ($dd.data('select2')) $dd.select2('destroy');
+                if ($ll.data('select2')) $ll.select2('destroy');
+                $dd.html('<option value="">Loading...</option>');
+                $ll.html('<option value="">Select Local Level</option>');
 
                 $.get(tenantUrl("/Colleges/Colleges/GetDistrictsByProvince"),
                     { provinceId: provinceId },
                     function (data) {
-                        var districtDropdown = $("#DistrictId");
-                        districtDropdown.empty();
-                        districtDropdown.append('<option value="">Select District</option>');
-
-                        $.each(data, function (index, item) {
-                            districtDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        $dd.empty().append('<option value="">Select District</option>');
+                        $.each(data, function (i, item) {
+                            $dd.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
-                        districtDropdown.select2('destroy').select2();
+                        reinitSelect2($dd);
 
-                        if (selectedDistrictId && $("#DistrictId option[value=" + selectedDistrictId + "]").length) {
-                            $("#DistrictId").val(selectedDistrictId);
-                            $("#DistrictId").trigger("change");
+                        if (selectedDistrictId && $("option[value=" + selectedDistrictId + "]", $dd).length) {
+                            $dd.val(selectedDistrictId).trigger("change");
                         }
                 });
             });
@@ -285,31 +289,28 @@
             // District -> LocalLevel
             $("#DistrictId").change(function () {
                 var districtId = $(this).val();
-
-                $("#LocalLevelId").html('<option>Loading...</option>');
+                var $ll = $("#LocalLevelId");
+                if ($ll.data('select2')) $ll.select2('destroy');
+                $ll.html('<option value="">Loading...</option>');
 
                 $.get(tenantUrl("/Colleges/Colleges/GetLocalLevelsByDistrict"),
                     { districtId: districtId },
                     function (data) {
-                        var localDropdown = $("#LocalLevelId");
-                        localDropdown.empty();
-                        localDropdown.append('<option value="">Select Local Level</option>');
-
-                        $.each(data, function (index, item) {
-                            localDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                        $ll.empty().append('<option value="">Select Local Level</option>');
+                        $.each(data, function (i, item) {
+                            $ll.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
-                        localDropdown.select2('destroy').select2();
+                        reinitSelect2($ll);
 
-                        if (selectedLocalLevelId && $("#LocalLevelId option[value=" + selectedLocalLevelId + "]").length) {
-                            $("#LocalLevelId").val(selectedLocalLevelId);
+                        if (selectedLocalLevelId && $("option[value=" + selectedLocalLevelId + "]", $ll).length) {
+                            $ll.val(selectedLocalLevelId);
                         }
                 });
             });
 
             // Trigger pre-selection on load
-            if (selectedProvinceId && $("#ProvinceId option[value=" + selectedProvinceId + "]").length) {
-                $("#ProvinceId").val(selectedProvinceId);
-                $("#ProvinceId").trigger("change");
+            if (selectedProvinceId && $("option[value=" + selectedProvinceId + "]", "#ProvinceId").length) {
+                $("#ProvinceId").val(selectedProvinceId).trigger("change");
             }
         });
     </script>
