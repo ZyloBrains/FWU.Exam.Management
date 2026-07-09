@@ -179,7 +179,6 @@ public partial class EntryPoint
 
         app.UseAuthorization();
 
-        app.UseStaticFiles();
         app.MapStaticAssets();
 
         app.MapControllerRoute(

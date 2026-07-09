@@ -11,43 +11,27 @@
     var selectedProgram = ViewBag.SelectedProgram as string ?? "";
     var selectedCollege = ViewBag.SelectedCollege as string ?? "";
     var selectedAcademicYear = ViewBag.SelectedAcademicYear as string ?? "";
-    var voucherStudentName = ViewBag.VoucherStudentName as string ?? "";
-    var voucherContactNumber = ViewBag.VoucherContactNumber as string ?? "";
 }
 
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8">
     <div class="max-w-4xl mx-auto px-4">
 
-        <!-- Header -->
+        <!-- Header with Progress -->
         <div class="text-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Entrance Application Form</h1>
             <p class="text-gray-500 text-sm mt-1">Fill in your details to apply for the entrance examination</p>
         </div>
 
-        <!-- Program & Voucher Info Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-5 py-4 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-graduation-cap text-teal-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Applied Program</p>
-                        <p class="text-sm font-semibold text-gray-800">@selectedProgram</p>
-                        <p class="text-xs text-gray-500">@selectedCollege — @selectedAcademicYear</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3 md:justify-end">
-                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-check-circle text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Payment Verified</p>
-                        <p class="text-sm font-semibold text-gray-800">रू @entranceFee.ToString("N2")</p>
-                        <p class="text-xs text-gray-500">Voucher: @voucherNumber</p>
-                    </div>
+        <!-- Voucher Info Banner -->
+        <div class="bg-gradient-to-r from-teal-600 to-cyan-600 rounded-xl px-5 py-3 mb-6 text-white shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-check-circle text-xl"></i>
+                <div>
+                    <p class="text-sm font-medium">Payment Verified</p>
+                    <p class="text-xs text-teal-100">Voucher: @voucherNumber | Fee: रू @entranceFee.ToString("N2")</p>
                 </div>
             </div>
+            <span class="bg-white/20 text-white text-xs font-medium px-3 py-1 rounded-full">Verified</span>
         </div>
 
         <!-- Status Banners -->
@@ -75,34 +59,53 @@
                 </div>
             </div>
         }
+        else if (!string.IsNullOrEmpty(selectedProgram))
+        {
+            <div class="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-graduation-cap text-blue-600 text-xl"></i>
+                    <div>
+                        <p class="text-sm font-medium text-blue-800">Applying for</p>
+                        <p class="text-xs text-blue-600">@selectedProgram — @selectedCollege (@selectedAcademicYear)</p>
+                    </div>
+                </div>
+            </div>
+        }
 
-        <!-- Step Progress Indicator (4 steps) -->
+        <!-- Step Progress Indicator -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 mb-6">
             <div class="flex items-center justify-between" id="stepProgress">
                 <div class="flex items-center">
                     <div class="step-indicator active" data-step="1">
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white bg-teal-600">1</div>
-                        <span class="text-xs mt-1 font-medium text-teal-600">Personal</span>
+                        <span class="text-xs mt-1 font-medium text-teal-600">Program</span>
                     </div>
                     <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="1"></div>
                 </div>
                 <div class="flex items-center">
                     <div class="step-indicator" data-step="2">
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">2</div>
-                        <span class="text-xs mt-1 font-medium text-gray-400">Address & Guardian</span>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Personal</span>
                     </div>
                     <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="2"></div>
                 </div>
                 <div class="flex items-center">
                     <div class="step-indicator" data-step="3">
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">3</div>
-                        <span class="text-xs mt-1 font-medium text-gray-400">Qualification</span>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Address & Guardian</span>
                     </div>
                     <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="3"></div>
                 </div>
                 <div class="flex items-center">
                     <div class="step-indicator" data-step="4">
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">4</div>
+                        <span class="text-xs mt-1 font-medium text-gray-400">Qualification</span>
+                    </div>
+                    <div class="w-12 h-0.5 mx-2 bg-gray-200 step-line" data-step="4"></div>
+                </div>
+                <div class="flex items-center">
+                    <div class="step-indicator" data-step="5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-gray-400 bg-gray-200">5</div>
                         <span class="text-xs mt-1 font-medium text-gray-400">Documents & Submit</span>
                     </div>
                 </div>
@@ -111,53 +114,71 @@
 
         <!-- Form -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <form asp-action="ApplyStep" method="post" enctype="multipart/form-data" id="entranceForm" data-voucher-name="@voucherStudentName" data-voucher-contact="@voucherContactNumber">
+            <form asp-action="ApplyStep" method="post" enctype="multipart/form-data" id="entranceForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="voucherId" value="@voucherId" />
-                <input type="hidden" name="AcademicYearId" value="@Model.AcademicYearId" />
-                <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
-                @if (ViewData.ModelState.ErrorCount > 0)
-                {
-                    <div class="bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 mb-4 text-sm">
-                        <strong class="block mb-1">Please fix the following errors:</strong>
-                        <div asp-validation-summary="All"></div>
-                    </div>
-                }
-                else if (TempData["ErrorMessage"] is string errMsg)
-                {
-                    <div class="bg-red-50 border border-red-300 text-red-800 rounded-lg px-4 py-3 mb-4 text-sm">
-                        @errMsg
-                    </div>
-                }
+                <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm mb-4"></div>
 
-                <!-- College Selection (visible before steps) -->
-                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                    <label asp-for="CollegeId" class="block text-sm font-medium text-gray-700 mb-1">Choose College *</label>
-                    <select asp-for="CollegeId" asp-items="ViewBag.CollegeId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
-                        <option value="">Select College</option>
-                    </select>
-                    <span asp-validation-for="CollegeId" class="text-red-600 text-xs"></span>
-                </div>
-
-                <!-- ===== STEP 1: Personal Information ===== -->
+                <!-- ===== STEP 1: Program Selection ===== -->
                 <div class="step-content" id="step1">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
-                        <h2 class="text-lg font-semibold text-white">Step 1: Personal Information</h2>
+                        <h2 class="text-lg font-semibold text-white">Step 1: Program Selection</h2>
+                        <p class="text-teal-100 text-sm">Select the program you wish to apply for</p>
+                    </div>
+                    <div class="px-6 py-6 space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                                <div class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
+                                    @(selectedAcademicYear)
+                                </div>
+                                <input type="hidden" name="AcademicYearId" value="@Model.AcademicYearId" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
+                                <div class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700">
+                                    @(selectedCollege)
+                                </div>
+                                <input type="hidden" name="CollegeId" value="@Model.CollegeId" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                                <div class="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 program-display-text">
+                                    @(selectedProgram)
+                                </div>
+                                <input type="hidden" name="ProgramId" value="@Model.ProgramId" />
+                            </div>
+                        </div>
+                        <div id="scheduleWarning" class="hidden text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <span id="scheduleWarningText">The entrance application form is not currently open for this program.</span>
+                        </div>
+                        <div id="feeInfo" class="hidden text-sm text-teal-700 bg-teal-50 border border-teal-200 rounded-lg px-4 py-3">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Entrance Fee: रू <span id="feeAmount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== STEP 2: Personal Information ===== -->
+                <div class="step-content hidden" id="step2">
+                    <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
+                        <h2 class="text-lg font-semibold text-white">Step 2: Personal Information</h2>
                         <p class="text-teal-100 text-sm">Your personal details as per citizenship</p>
                     </div>
                     <div class="px-6 py-6 space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1.5">Full Name (In BLOCK LETTER) *</label>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div class="relative">
-                                    <input asp-for="FirstName" placeholder="First Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase validate-field" data-required="true" />
+                                <div>
+                                    <input asp-for="FirstName" placeholder="First Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase" />
                                     <span asp-validation-for="FirstName" class="text-red-600 text-xs"></span>
                                 </div>
                                 <div>
                                     <input asp-for="MiddleName" placeholder="Middle Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase" />
                                 </div>
-                                <div class="relative">
-                                    <input asp-for="LastName" placeholder="Last Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase validate-field" data-required="true" />
+                                <div>
+                                    <input asp-for="LastName" placeholder="Last Name" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 uppercase" />
                                     <span asp-validation-for="LastName" class="text-red-600 text-xs"></span>
                                 </div>
                             </div>
@@ -167,23 +188,23 @@
                                 <label asp-for="NepaliName" class="block text-sm font-medium text-gray-700 mb-1">Name (Nepali)</label>
                                 <input asp-for="NepaliName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>
-                            <div class="relative">
+                            <div>
                                 <label asp-for="GenderId" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
-                                <select asp-for="GenderId" asp-items="ViewBag.GenderId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
+                                <select asp-for="GenderId" asp-items="ViewBag.GenderId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                     <option value="">Select Gender</option>
                                 </select>
                                 <span asp-validation-for="GenderId" class="text-red-600 text-xs"></span>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="relative">
+                            <div>
                                 <label asp-for="DateOfBirthBS" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (BS) *</label>
-                                <input asp-for="DateOfBirthBS" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field bs-date" data-required="true" data-target="DateOfBirthAD" />
+                                <input asp-for="DateOfBirthBS" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 <span asp-validation-for="DateOfBirthBS" class="text-red-600 text-xs"></span>
                             </div>
                             <div>
-                                <label asp-for="DateOfBirthAD" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (AD) <span class="text-gray-400 font-normal">(auto)</span></label>
-                                <input asp-for="DateOfBirthAD" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 bg-gray-50 ad-date" readonly />
+                                <label asp-for="DateOfBirthAD" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth (AD)</label>
+                                <input asp-for="DateOfBirthAD" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,34 +234,33 @@
                                     <label asp-for="CitizenshipNo" class="block text-sm font-medium text-gray-700 mb-1">Citizenship No</label>
                                     <input asp-for="CitizenshipNo" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
-                                <div class="relative">
-                                    <label asp-for="CitizenshipDistrictId" class="block text-sm font-medium text-gray-700 mb-1">Citizenship Issued District *</label>
-                                    <select asp-for="CitizenshipDistrictId" asp-items="ViewBag.CitizenshipDistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
+                                <div>
+                                    <label asp-for="CitizenshipDistrictId" class="block text-sm font-medium text-gray-700 mb-1">Citizenship Issued District</label>
+                                    <select asp-for="CitizenshipDistrictId" asp-items="ViewBag.CitizenshipDistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select District</option>
                                     </select>
-                                    <span asp-validation-for="CitizenshipDistrictId" class="text-red-600 text-xs"></span>
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                                 <div>
                                     <label asp-for="CitizenshipIssueDateBs" class="block text-sm font-medium text-gray-700 mb-1">Issue Date (BS)</label>
-                                    <input asp-for="CitizenshipIssueDateBs" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 bs-date" data-target="CitizenshipIssueDateAd" />
+                                    <input asp-for="CitizenshipIssueDateBs" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
                                 <div>
-                                    <label asp-for="CitizenshipIssueDateAd" class="block text-sm font-medium text-gray-700 mb-1">Issue Date (AD) <span class="text-gray-400 font-normal">(auto)</span></label>
-                                    <input asp-for="CitizenshipIssueDateAd" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 bg-gray-50 ad-date" readonly />
+                                    <label asp-for="CitizenshipIssueDateAd" class="block text-sm font-medium text-gray-700 mb-1">Issue Date (AD)</label>
+                                    <input asp-for="CitizenshipIssueDateAd" placeholder="YYYY-MM-DD" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="relative">
+                            <div>
                                 <label asp-for="Email" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                                <input asp-for="Email" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" data-type="email" />
+                                <input asp-for="Email" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 <span asp-validation-for="Email" class="text-red-600 text-xs"></span>
                             </div>
-                            <div class="relative">
+                            <div>
                                 <label asp-for="ContactNumber" class="block text-sm font-medium text-gray-700 mb-1">Mobile No *</label>
-                                <input asp-for="ContactNumber" placeholder="98XXXXXXXX" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" data-type="phone" />
+                                <input asp-for="ContactNumber" placeholder="98XXXXXXXX" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 <span asp-validation-for="ContactNumber" class="text-red-600 text-xs"></span>
                             </div>
                         </div>
@@ -253,10 +273,10 @@
                     </div>
                 </div>
 
-                <!-- ===== STEP 2: Address & Guardian ===== -->
-                <div class="step-content hidden" id="step2">
+                <!-- ===== STEP 3: Address & Guardian ===== -->
+                <div class="step-content hidden" id="step3">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
-                        <h2 class="text-lg font-semibold text-white">Step 2: Address & Guardian Information</h2>
+                        <h2 class="text-lg font-semibold text-white">Step 3: Address & Guardian Information</h2>
                         <p class="text-teal-100 text-sm">Your permanent address and guardian details</p>
                     </div>
                     <div class="px-6 py-6 space-y-5">
@@ -270,27 +290,27 @@
                                  data-local-level-id="@(Model.PermanentAddress?.LocalLevelId ?? 0)">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="relative">
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
-                                    <select id="ProvinceId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true">
+                                    <select id="ProvinceId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                                         <option value="">Select Province</option>
                                     </select>
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">District *</label>
-                                    <select id="DistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true">
+                                    <select id="DistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                                         <option value="">Select District</option>
                                     </select>
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Local Level / Municipality *</label>
-                                    <select id="LocalLevelId" name="LocalLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true">
+                                    <select id="LocalLevelId" name="LocalLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                                         <option value="">Select Local Level</option>
                                     </select>
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Ward No *</label>
-                                    <input id="WardNumber" name="WardNumber" value="@(Model.PermanentAddress?.WardNumber.HasValue == true ? Model.PermanentAddress.WardNumber.Value.ToString() : "")" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true" />
+                                    <input id="WardNumber" name="WardNumber" value="@(Model.PermanentAddress?.WardNumber.HasValue == true ? Model.PermanentAddress.WardNumber.Value.ToString() : "")" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Tole / Street</label>
@@ -316,15 +336,14 @@
                         <div class="border-t border-gray-100 pt-4">
                             <h3 class="text-sm font-semibold text-gray-700 mb-3">Guardian Information</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="relative">
+                                <div>
                                     <label asp-for="FatherName" class="block text-sm font-medium text-gray-700 mb-1">Father's Name *</label>
-                                    <input asp-for="FatherName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" />
+                                    <input asp-for="FatherName" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                     <span asp-validation-for="FatherName" class="text-red-600 text-xs"></span>
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label asp-for="FatherContact" class="block text-sm font-medium text-gray-700 mb-1">Father's Phone *</label>
-                                    <input asp-for="FatherContact" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" data-type="phone" />
-                                    <span asp-validation-for="FatherContact" class="text-red-600 text-xs"></span>
+                                    <input asp-for="FatherContact" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
@@ -355,10 +374,10 @@
                     </div>
                 </div>
 
-                <!-- ===== STEP 3: Academic Qualification ===== -->
-                <div class="step-content hidden" id="step3">
+                <!-- ===== STEP 4: Academic Qualification ===== -->
+                <div class="step-content hidden" id="step4">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
-                        <h2 class="text-lg font-semibold text-white">Step 3: Academic Qualifications</h2>
+                        <h2 class="text-lg font-semibold text-white">Step 4: Academic Qualifications</h2>
                         <p class="text-teal-100 text-sm">Your previous academic records</p>
                     </div>
                     <div class="px-6 py-6 space-y-6">
@@ -367,15 +386,15 @@
                         <div class="bg-gray-50 rounded-lg p-4">
                             <h3 class="text-sm font-semibold text-gray-700 mb-3">Highest Qualification</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="relative">
+                                <div>
                                     <label asp-for="PreviousLevelId" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination *</label>
-                                    <select asp-for="PreviousLevelId" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
+                                    <select asp-for="PreviousLevelId" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select Level</option>
                                     </select>
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label asp-for="PreviousSchoolCollege" class="block text-sm font-medium text-gray-700 mb-1">Institution / Board *</label>
-                                    <input asp-for="PreviousSchoolCollege" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" />
+                                    <input asp-for="PreviousSchoolCollege" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
@@ -383,19 +402,19 @@
                                     <label asp-for="PreviousSymbolNumber" class="block text-sm font-medium text-gray-700 mb-1">Symbol No</label>
                                     <input asp-for="PreviousSymbolNumber" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label asp-for="PreviousPassedYear" class="block text-sm font-medium text-gray-700 mb-1">Passed Year *</label>
-                                    <input asp-for="PreviousPassedYear" placeholder="e.g. 2080" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" />
+                                    <input asp-for="PreviousPassedYear" placeholder="e.g. 2080" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
-                                <div class="relative">
+                                <div>
                                     <label asp-for="PreviousGPA" class="block text-sm font-medium text-gray-700 mb-1">Percentage / CGPA *</label>
-                                    <input asp-for="PreviousGPA" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true" />
+                                    <input asp-for="PreviousGPA" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
                                 <div>
                                     <label asp-for="PreviousDivision" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
                                     <select asp-for="PreviousDivision" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
-                                        <option value="Dist">Distinction</option>
+                                        <option value="Distinction">Distinction</option>
                                         <option value="First">First Division</option>
                                         <option value="Second">Second Division</option>
                                         <option value="Third">Third Division</option>
@@ -442,7 +461,7 @@
                                     <label asp-for="PreviousDivision2" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
                                     <select asp-for="PreviousDivision2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
-                                        <option value="Dist">Distinction</option>
+                                        <option value="Distinction">Distinction</option>
                                         <option value="First">First Division</option>
                                         <option value="Second">Second Division</option>
                                         <option value="Third">Third Division</option>
@@ -489,7 +508,7 @@
                                     <label asp-for="PreviousDivision3" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
                                     <select asp-for="PreviousDivision3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
-                                        <option value="Dist">Distinction</option>
+                                        <option value="Distinction">Distinction</option>
                                         <option value="First">First Division</option>
                                         <option value="Second">Second Division</option>
                                         <option value="Third">Third Division</option>
@@ -500,14 +519,15 @@
                     </div>
                 </div>
 
-                <!-- ===== STEP 4: Documents & Submit ===== -->
-                <div class="step-content hidden" id="step4">
+                <!-- ===== STEP 5: Documents & Submit ===== -->
+                <div class="step-content hidden" id="step5">
                     <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
-                        <h2 class="text-lg font-semibold text-white">Step 4: Documents & Review</h2>
+                        <h2 class="text-lg font-semibold text-white">Step 5: Documents & Review</h2>
                         <p class="text-teal-100 text-sm">Upload required documents and review your application</p>
                     </div>
                     <div class="px-6 py-6 space-y-5">
 
+                        <!-- Documents Section -->
                         <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
                             <i class="fas fa-info-circle mr-1"></i>
                             Documents: Applicants should make a single copy of self-attested documents like Transcript, Character Certificate, Transfer Certificate (Bachelors and Masters) and Citizenship.
@@ -536,7 +556,17 @@
                                     <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing documents kept. Upload new to replace.</p>
                                 }
                             </div>
-
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Bank Voucher</label>
+                                <input type="file" name="VoucherFile" accept=".pdf,.jpg,.jpeg,.doc,.docx" id="VoucherFile"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" />
+                                <p class="text-xs text-gray-400 mt-1">File name should be Student Name with Symbol No. Format: .pdf, .jpg, .doc (max 5MB)</p>
+                                <p id="VoucherFileError" class="text-xs text-red-500 mt-1 hidden"></p>
+                                @if (!string.IsNullOrEmpty(Model.VoucherPath))
+                                {
+                                    <p class="text-xs text-teal-600 mt-1"><i class="fas fa-check-circle"></i> Existing voucher kept. Upload new to replace.</p>
+                                }
+                            </div>
                         </div>
 
                         <!-- Review Summary -->
@@ -580,50 +610,6 @@
     </div>
 </div>
 
-@section Styles {
-    <style>
-        .step-content {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-        .step-content.hidden {
-            display: none;
-        }
-        .step-content.fade-in {
-            animation: fadeSlideIn 0.35s ease forwards;
-        }
-        @@keyframes fadeSlideIn {
-            0% { opacity: 0; transform: translateX(20px); }
-            100% { opacity: 1; transform: translateX(0); }
-        }
-        .field-valid {
-            border-color: #10b981 !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 16px;
-            padding-right: 32px;
-        }
-        .field-invalid {
-            border-color: #ef4444 !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='15' y1='9' x2='9' y2='15'%3E%3C/line%3E%3Cline x1='9' y1='9' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 16px;
-            padding-right: 32px;
-        }
-        .select2-container--default .select2-selection--single {
-            border-color: #d1d5db;
-            border-radius: 0.5rem;
-            height: 42px;
-            padding: 6px 12px;
-            font-size: 0.875rem;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 40px;
-        }
-    </style>
-}
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -631,9 +617,7 @@
     <script>
         $(function () {
             var currentStep = 1;
-            var totalSteps = 4;
-            var form = $('#entranceForm');
-            var storageKey = 'applystep_' + $('input[name="voucherId"]').val();
+            var totalSteps = 5;
 
             // Get existing address data for pre-population
             var addrData = $('#existingAddressData');
@@ -641,19 +625,19 @@
             var existingDistrictId = addrData.length ? parseInt(addrData.data('district-id')) : 0;
             var existingLocalLevelId = addrData.length ? parseInt(addrData.data('local-level-id')) : 0;
 
-            // ===== STEP TRANSITIONS =====
             function updateStep(step) {
-                $('.step-content').addClass('hidden').removeClass('fade-in');
                 currentStep = step;
-                var $next = $('#step' + step);
-                $next.removeClass('hidden');
-                setTimeout(function () { $next.addClass('fade-in'); }, 10);
+                $('.step-content').addClass('hidden');
+                $('#step' + step).removeClass('hidden');
 
                 $('.step-indicator').each(function () {
                     var s = parseInt($(this).data('step'));
                     var circle = $(this).find('div:first');
                     var label = $(this).find('span');
-                    if (s <= step) {
+                    if (s < step) {
+                        circle.removeClass('bg-teal-600 bg-gray-200').addClass('bg-teal-600');
+                        label.removeClass('text-teal-600 text-gray-400').addClass('text-teal-600');
+                    } else if (s === step) {
                         circle.removeClass('bg-teal-600 bg-gray-200').addClass('bg-teal-600');
                         label.removeClass('text-teal-600 text-gray-400').addClass('text-teal-600');
                     } else {
@@ -674,124 +658,48 @@
                 $('#prevBtn').toggleClass('hidden', step === 1);
                 $('#nextBtn').toggleClass('hidden', step === totalSteps);
                 $('#submitBtn').toggleClass('hidden', step !== totalSteps);
-
-                if (step === totalSteps) updateReviewSummary();
             }
-
-            // ===== AUTO-FILL FROM VOUCHER DATA =====
-            (function autoFill() {
-                var name = form.data('voucher-name') || '';
-                var contact = form.data('voucher-contact') || '';
-                if (name) {
-                    var parts = name.trim().split(/\s+/);
-                    if (parts.length >= 1) $('#FirstName').val(parts[0].toUpperCase());
-                    if (parts.length === 2) $('#LastName').val(parts[1].toUpperCase());
-                    else if (parts.length >= 3) {
-                        $('#MiddleName').val(parts.slice(1, -1).join(' ').toUpperCase());
-                        $('#LastName').val(parts[parts.length - 1].toUpperCase());
-                    }
-                }
-                if (contact) $('#ContactNumber').val(contact);
-            })();
-
-            // ===== BS↔AD DATE CONVERSION (via NepaliCalendarHelper on server) =====
-            var convertTimer;
-            $('.bs-date').on('input', function () {
-                var bs = $(this).val().trim();
-                var targetId = $(this).data('target');
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Exams/Entrance/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $('#' + targetId).val(data.adDate);
-                        });
-                    }, 300);
-                }
-            });
-
-            // ===== INLINE FIELD VALIDATION =====
-            function validateSingleField($el) {
-                var val = $el.val() ? $el.val().toString().trim() : '';
-                var required = $el.data('required') === true || $el.data('required') === 'true';
-                var type = $el.data('type') || '';
-                var valid = true;
-
-                $el.removeClass('field-valid field-invalid');
-
-                if (required && !val) valid = false;
-                else if (type === 'email' && val && !/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val)) valid = false;
-                else if (type === 'phone' && val && !/^(\+?\d{7,15})$/.test(val.replace(/[\s-]/g, ''))) valid = false;
-
-                if (val || !valid) {
-                    $el.addClass(valid ? 'field-valid' : 'field-invalid');
-                }
-                // Sync validation state with Select2 container (if applicable)
-                var $s2 = $el.next('.select2-container').find('.select2-selection');
-                if ($s2.length) {
-                    $s2.removeClass('field-valid field-invalid');
-                    if ($el.hasClass('field-invalid')) $s2.addClass('field-invalid');
-                    else if ($el.hasClass('field-valid')) $s2.addClass('field-valid');
-                }
-                return valid;
-            }
-
-            $('.validate-field').on('blur', function () {
-                validateSingleField($(this));
-            });
 
             function validateStep(step) {
-                var $step = $('#step' + step);
-                var $reqFields = $step.find('.validate-field');
-                var allOk = true;
-                var firstInvalid = null;
-
-                $reqFields.each(function () {
-                    var $el = $(this);
-                    validateSingleField($el);
-                    if ($el.hasClass('field-invalid')) {
-                        allOk = false;
-                        if (!firstInvalid) firstInvalid = $el;
+                if (step === 2) {
+                    var fn = $('#FirstName').val();
+                    var ln = $('#LastName').val();
+                    var g = $('#GenderId').val();
+                    var dob = $('#DateOfBirthBS').val();
+                    var em = $('#Email').val();
+                    var mob = $('#ContactNumber').val();
+                    if (!fn || !ln || !g || !dob || !em || !mob) {
+                        alert('Please fill in all required fields (First Name, Last Name, Gender, Date of Birth, Email, Mobile No).');
+                        return false;
                     }
-                });
-
-                if (!allOk && firstInvalid) {
-                    firstInvalid.focus();
-                    return false;
+                }
+                if (step === 3) {
+                    if (!$('#WardNumber').val()) {
+                        alert('Please enter Ward Number.');
+                        return false;
+                    }
                 }
                 return true;
             }
 
-            // ===== localStorage AUTO-SAVE =====
-            function saveToStorage() {
-                var data = {};
-                form.find('input, select, textarea').not('[type="file"], [type="hidden"], [type="submit"]').each(function () {
-                    var $el = $(this);
-                    if ($el.attr('name')) data[$el.attr('name')] = $el.val();
-                });
-                try { localStorage.setItem(storageKey, JSON.stringify(data)); } catch (e) {}
+            function updateReviewSummary() {
+                var progText = $('.program-display-text').length
+                    ? $('.program-display-text').text()
+                    : ($('input[name="ProgramId"]').val() || '-');
+                var html = '<table class="w-full text-sm">';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Name:</td><td class="py-1 text-gray-800">' +
+                    ($('#FirstName').val() || '') + ' ' + ($('#MiddleName').val() || '') + ' ' + ($('#LastName').val() || '') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Email:</td><td class="py-1 text-gray-800">' + ($('#Email').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Mobile:</td><td class="py-1 text-gray-800">' + ($('#ContactNumber').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Gender:</td><td class="py-1 text-gray-800">' + ($('#GenderId option:selected').text() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Date of Birth (BS):</td><td class="py-1 text-gray-800">' + ($('#DateOfBirthBS').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Father\'s Name:</td><td class="py-1 text-gray-800">' + ($('#FatherName').val() || '-') + '</td></tr>';
+                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Program:</td><td class="py-1 text-gray-800">' + progText + '</td></tr>';
+                html += '</table>';
+                $('#reviewSummary').html(html);
             }
 
-            function restoreFromStorage() {
-                try {
-                    var raw = localStorage.getItem(storageKey);
-                    if (!raw) return;
-                    var data = JSON.parse(raw);
-                    $.each(data, function (name, val) {
-                        var $el = form.find('[name="' + name + '"]');
-                        if ($el.length && !$el.val()) $el.val(val);
-                    });
-                } catch (e) {}
-            }
-
-            form.on('change input', 'input, select, textarea', saveToStorage);
-            restoreFromStorage();
-
-            // Clear storage on successful form submit
-            form.on('submit', function () {
-                try { localStorage.removeItem(storageKey); } catch (e) {}
-            });
-
-            // ===== FILE VALIDATION =====
+            // File validation
             function validateFile(input, allowedExts, maxSizeMB, errorEl) {
                 if (!input.files.length) return true;
                 var file = input.files[0];
@@ -814,9 +722,13 @@
             $('#DocumentsFile').change(function () {
                 validateFile(this, ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError');
             });
-            // ===== NAVIGATION =====
+            $('#VoucherFile').change(function () {
+                validateFile(this, ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError');
+            });
+
             $('#nextBtn').click(function () {
                 if (!validateStep(currentStep)) return;
+                if (currentStep === 4) updateReviewSummary();
                 if (currentStep < totalSteps) updateStep(currentStep + 1);
             });
 
@@ -830,14 +742,7 @@
                     alert('Please agree to the declaration before submitting.');
                     return;
                 }
-                // Validate all steps before submitting
-                for (var s = 1; s <= totalSteps; s++) {
-                    if (!validateStep(s)) {
-                        e.preventDefault();
-                        updateStep(s);
-                        return;
-                    }
-                }
+                // Validate files before submit
                 var ok = true;
                 if ($('#PhotoFile')[0].files.length) {
                     ok = validateFile($('#PhotoFile')[0], ['.jpg', '.jpeg', '.png'], 5, '#PhotoFileError') && ok;
@@ -845,39 +750,16 @@
                 if ($('#DocumentsFile')[0].files.length) {
                     ok = validateFile($('#DocumentsFile')[0], ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'], 5, '#DocumentsFileError') && ok;
                 }
+                if ($('#VoucherFile')[0].files.length) {
+                    ok = validateFile($('#VoucherFile')[0], ['.pdf', '.jpg', '.jpeg', '.doc', '.docx'], 5, '#VoucherFileError') && ok;
+                }
                 if (!ok) {
                     e.preventDefault();
                     alert('Please fix file upload errors before submitting.');
                 }
             });
 
-            // On page load after a failed POST, navigate to the step with the first error
-            var $firstError = $('.field-validation-error, .text-red-600').first();
-            if ($firstError.length) {
-                var $errorStep = $firstError.closest('.step-content');
-                if ($errorStep.length) {
-                    var stepNum = parseInt($errorStep.attr('id').replace('step', ''));
-                    if (stepNum) updateStep(stepNum);
-                }
-                $('html, body').animate({ scrollTop: $firstError.offset().top - 100 }, 300);
-            }
-
-            // ===== REVIEW SUMMARY =====
-            function updateReviewSummary() {
-                var html = '<table class="w-full text-sm">';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Name:</td><td class="py-1 text-gray-800">' +
-                    ($('#FirstName').val() || '') + ' ' + ($('#MiddleName').val() || '') + ' ' + ($('#LastName').val() || '') + '</td></tr>';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Email:</td><td class="py-1 text-gray-800">' + ($('#Email').val() || '-') + '</td></tr>';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Mobile:</td><td class="py-1 text-gray-800">' + ($('#ContactNumber').val() || '-') + '</td></tr>';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Gender:</td><td class="py-1 text-gray-800">' + ($('#GenderId option:selected').text() || '-') + '</td></tr>';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">DOB (BS):</td><td class="py-1 text-gray-800">' + ($('#DateOfBirthBS').val() || '-') + '</td></tr>';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Father\'s Name:</td><td class="py-1 text-gray-800">' + ($('#FatherName').val() || '-') + '</td></tr>';
-                html += '<tr><td class="py-1 pr-4 text-gray-500 font-medium">Program:</td><td class="py-1 text-gray-800">' + ($('.program-display-text').length ? $('.program-display-text').text() : ($('input[name="ProgramId"]').val() || '-')) + '</td></tr>';
-                html += '</table>';
-                $('#reviewSummary').html(html);
-            }
-
-            // ===== PROVINCE/DISTRICT/LOCALLEVEL CASCADING (Select2) =====
+            // Province/District/LocalLevel cascading
             function loadProvinces(callback) {
                 $.get(tenantUrl("/Exams/Entrance/GetProvinces"), function (data) {
                     var ps = $("#ProvinceId");
@@ -925,30 +807,22 @@
             function initAddressCascading() {
                 loadProvinces(function () {
                     if (existingProvinceId) {
-                        $("#ProvinceId").val(existingProvinceId).trigger('change');
+                        $("#ProvinceId").val(existingProvinceId);
                         loadDistricts(existingProvinceId, function () {
                             if (existingDistrictId) {
-                                $("#DistrictId").val(existingDistrictId).trigger('change');
+                                $("#DistrictId").val(existingDistrictId);
                                 loadLocalLevels(existingDistrictId, function () {
                                     if (existingLocalLevelId) {
-                                        $("#LocalLevelId").val(existingLocalLevelId).trigger('change');
+                                        $("#LocalLevelId").val(existingLocalLevelId);
                                     }
                                 });
                             }
                         });
                     }
-                    // Init Select2 after data loaded
-                    $('#ProvinceId, #DistrictId, #LocalLevelId, #CitizenshipDistrictId').select2({
-                        width: '100%',
-                        placeholder: function () { return $(this).find('option:first').text(); },
-                        allowClear: false
-                    }).on('change', function () {
-                        validateSingleField($(this));
-                    });
                 });
             }
 
-            $("#ProvinceId").on('change', function () {
+            $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
                 if (provinceId) {
                     loadDistricts(provinceId);
@@ -958,7 +832,7 @@
                 }
             });
 
-            $("#DistrictId").on('change', function () {
+            $("#DistrictId").change(function () {
                 var districtId = $(this).val();
                 if (districtId) {
                     loadLocalLevels(districtId);
@@ -967,12 +841,41 @@
                 }
             });
 
-            // ===== INIT =====
-            initAddressCascading();
-            // Only default to step 1 if no server-side validation errors (e.g. initial GET)
-            if ($('.field-validation-error, .text-red-600').length === 0) {
-                updateStep(1);
+            // Check schedule status on page load using hidden input values
+            function checkFormStatus() {
+                var programId = $('input[name="ProgramId"]').val();
+                var collegeId = $('input[name="CollegeId"]').val();
+                var academicYearId = $('input[name="AcademicYearId"]').val();
+
+                if (programId && collegeId && academicYearId) {
+                    $.get(tenantUrl("/Exams/Entrance/CheckFormStatus"),
+                        {
+                            programId: programId,
+                            collegeId: collegeId,
+                            academicYearId: academicYearId
+                        },
+                        function (result) {
+                            if (result.isOpen) {
+                                $("#scheduleWarning").addClass("hidden");
+                                if (result.fee) {
+                                    $("#feeAmount").text(parseFloat(result.fee).toFixed(2));
+                                    $("#feeInfo").removeClass("hidden");
+                                }
+                            } else {
+                                $("#scheduleWarningText").text("The entrance application form is not currently open for this program.");
+                                $("#scheduleWarning").removeClass("hidden");
+                                $("#feeInfo").addClass("hidden");
+                            }
+                        });
+                } else {
+                    $("#scheduleWarning").addClass("hidden");
+                    $("#feeInfo").addClass("hidden");
+                }
             }
+
+            // Init
+            checkFormStatus();
+            initAddressCascading();
         });
     </script>
 }
