@@ -652,6 +652,18 @@
                 currentStep = step;
                 var $next = $('#step' + step);
                 $next.removeClass('hidden');
+                // Re-init Select2 in the now-visible step (was hidden when Select2 first initialized)
+                $next.find('.select2').each(function () {
+                    var $el = $(this);
+                    if ($el.data('select2')) $el.select2('destroy');
+                    $el.select2({
+                        width: '100%',
+                        placeholder: function () { return $(this).find('option:first').text(); },
+                        allowClear: false
+                    }).on('change', function () {
+                        if (typeof validateSingleField === 'function') validateSingleField($(this));
+                    });
+                });
                 setTimeout(function () { $next.addClass('fade-in'); }, 10);
 
                 $('.step-indicator').each(function () {
@@ -965,8 +977,9 @@
                             }
                         });
                     }
-                    // Init Select2 for all non-cascade selects
-                    $('.select2').each(function () {
+                    // Init Select2 for visible non-cascade selects only
+                    // (hidden step selects get initialized when their step is shown via updateStep)
+                    $('.select2:visible').each(function () {
                         var $el = $(this);
                         if (!$el.data('select2')) {
                             $el.select2({

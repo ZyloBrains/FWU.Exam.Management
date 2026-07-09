@@ -2,10 +2,7 @@
 @model LogoutModel
 @{
     ViewData["Title"] = "Log out";
-    var tenantCode = HttpContext.Items["TenantCode"] as string;
-    var loginUrl = !string.IsNullOrEmpty(tenantCode)
-        ? $"/tenant/{tenantCode}/Identity/Account/Login"
-        : "/Identity/Account/Login";
+    var loginUrl = "/Identity/Account/Login";
 }
 
 <div class="space-y-6">

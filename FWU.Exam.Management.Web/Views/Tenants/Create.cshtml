@@ -128,14 +128,31 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
+        function reinitSelect2($el) {
+            if ($el.data('select2')) $el.select2('destroy');
+            $el.select2({width:'resolve'});
+        }
+
         $(function () {
             $('.select2').select2({ width: 'resolve' });
+
+            function toggleFacultyField(show) {
+                var $field = $('#FacultyField');
+                var $faculty = $('#SelectedFacultyId');
+                if (show) {
+                    $field.show();
+                    reinitSelect2($faculty);
+                } else {
+                    $field.hide();
+                }
+            }
+
             $('#TenantTypeSelect').on('change', function() {
-                var facultyField = $('#FacultyField');
-                facultyField.toggle(this.value === '0');
+                toggleFacultyField(this.value === '0');
             });
+
             if ($('#TenantTypeSelect').val() === '0') {
-                $('#FacultyField').show();
+                toggleFacultyField(true);
             }
         });
     </script>
