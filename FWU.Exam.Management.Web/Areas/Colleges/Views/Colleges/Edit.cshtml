@@ -241,12 +241,6 @@
         }
     </style>
 
-    <script>
-        $(document).ready(function () {
-            $('.select2').select2({ width: 'resolve' });
-        });
-    </script>
-
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
@@ -254,6 +248,9 @@
         function loadDistricts(provinceId, selectedDistrictId, callback) {
             $('#DistrictId').select2('destroy');
             $('#LocalLevelId').select2('destroy');
+            $("#DistrictId").empty().append('<option value="">Loading...</option>');
+            $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+            $('#LocalLevelId').select2({width:'resolve'});
 
             if (!provinceId) {
                 $("#DistrictId").empty().append('<option value="">Select District</option>');
@@ -300,33 +297,32 @@
                     ll.select2({width:'resolve'});
 
                     if (selectedLocalLevelId && ll.find('option[value="' + selectedLocalLevelId + '"]').length) {
-                        ll.val(selectedLocalLevelId);
+                        ll.val(selectedLocalLevelId).trigger('change');
                     }
                     if (callback) callback();
             });
         }
 
         $(function () {
+            $('.select2').select2({ width: 'resolve' });
+
             var selectedProvinceId = '@(Model.Address?.LocalLevel?.District?.ProvinceId)';
             var selectedDistrictId = '@(Model.Address?.LocalLevel?.DistrictId)';
             var selectedLocalLevelId = '@(Model.Address?.LocalLevelId)';
 
-            // Province -> District
             $("#ProvinceId").change(function () {
                 loadDistricts($(this).val(), null);
             });
 
-            // District -> LocalLevel
             $("#DistrictId").change(function () {
                 loadLocalLevels($(this).val(), null);
             });
 
-            // Trigger pre-selection on load
             if (selectedProvinceId && $("#ProvinceId option[value='" + selectedProvinceId + "']").length) {
-                $("#ProvinceId").val(selectedProvinceId).trigger('change');
-            } else {
-                loadDistricts(selectedDistrictId, selectedDistrictId, function () {
-                    loadLocalLevels(selectedDistrictId, selectedLocalLevelId);
+                loadDistricts(selectedProvinceId, selectedDistrictId, function () {
+                    if (selectedDistrictId) {
+                        loadLocalLevels(selectedDistrictId, selectedLocalLevelId);
+                    }
                 });
             }
         });

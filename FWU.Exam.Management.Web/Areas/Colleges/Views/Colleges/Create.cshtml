@@ -242,12 +242,6 @@
         }
     </style>
 
-    <script>
-        $(document).ready(function () {
-            $('.select2').select2({ width: 'resolve' });
-        });
-    </script>
-
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
@@ -255,6 +249,9 @@
         function loadDistricts(provinceId, callback) {
             $('#DistrictId').select2('destroy');
             $('#LocalLevelId').select2('destroy');
+            $("#DistrictId").empty().append('<option value="">Loading...</option>');
+            $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+            $('#LocalLevelId').select2({width:'resolve'});
 
             if (!provinceId) {
                 $("#DistrictId").empty().append('<option value="">Select District</option>');
@@ -300,17 +297,15 @@
         }
 
         $(function () {
+            $('.select2').select2({ width: 'resolve' });
 
-            // Province -> District
             $("#ProvinceId").change(function () {
                 loadDistricts($(this).val());
             });
 
-            // District -> LocalLevel
             $("#DistrictId").change(function () {
                 loadLocalLevels($(this).val());
             });
-
         });
     </script>
 

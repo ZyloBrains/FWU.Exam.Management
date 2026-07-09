@@ -560,6 +560,10 @@
                 $("#CollegeId").empty().append('<option value="">Select College</option>');
                 $("#DepartmentId").empty().append('<option value="">Select Department</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $('#FacultyId').select2({width:'resolve'});
+                $('#CollegeId').select2({width:'resolve'});
+                $('#DepartmentId').select2({width:'resolve'});
+                $('#ProgramId').select2({width:'resolve'});
                 loadFaculties(levelId, null);
             });
 
@@ -571,6 +575,9 @@
                 $("#ProgramId").select2('destroy');
                 $("#DepartmentId").empty().append('<option value="">Select Department</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $('#CollegeId').select2({width:'resolve'});
+                $('#DepartmentId').select2({width:'resolve'});
+                $('#ProgramId').select2({width:'resolve'});
                 loadColleges(facultyId, null);
             });
 
@@ -580,6 +587,8 @@
                 $("#DepartmentId").select2('destroy');
                 $("#ProgramId").select2('destroy');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $('#DepartmentId').select2({width:'resolve'});
+                $('#ProgramId').select2({width:'resolve'});
                 loadDepartments(collegeId, null);
                 loadPrograms(collegeId, null);
             });

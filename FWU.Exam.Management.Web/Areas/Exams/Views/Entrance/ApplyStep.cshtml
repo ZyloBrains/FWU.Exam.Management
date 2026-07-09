@@ -959,13 +959,11 @@
             function initAddressCascading() {
                 loadProvinces(function () {
                     if (existingProvinceId) {
-                        $("#ProvinceId").val(existingProvinceId).trigger('change');
                         loadDistricts(existingProvinceId, function () {
                             if (existingDistrictId) {
-                                $("#DistrictId").val(existingDistrictId).trigger('change');
                                 loadLocalLevels(existingDistrictId, function () {
                                     if (existingLocalLevelId) {
-                                        $("#LocalLevelId").val(existingLocalLevelId).trigger('change');
+                                        $("#LocalLevelId").val(existingLocalLevelId);
                                     }
                                 });
                             }
