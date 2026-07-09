@@ -51,6 +51,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
+            .Include(s => s.PermanentAddress)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -133,6 +134,13 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 }
             }
 
+            if (existingRegistration != null && !string.IsNullOrEmpty(existingRegistration.RegistrationNumber))
+            {
+                studentRegistration.RegistrationNumber = existingRegistration.RegistrationNumber;
+                studentRegistration.IsRegistrationNumberGenerated = existingRegistration.IsRegistrationNumberGenerated;
+                studentRegistration.StudentRegistrationIndex = existingRegistration.StudentRegistrationIndex;
+            }
+
             context.StudentRegistrations.Update(studentRegistration);
             await context.SaveChangesAsync();
 
@@ -172,6 +180,39 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             context.StudentRegistrations.Remove(studentRegistration);
             await context.SaveChangesAsync();
         }
+    }
+
+    public async Task<string?> GenerateRegistrationNumberAsync(int studentRegistrationId)
+    {
+        var student = await context.StudentRegistrations
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Level)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
+            .FirstOrDefaultAsync(s => s.Id == studentRegistrationId);
+
+        if (student == null) return null;
+        if (student.IsRegistrationNumberGenerated == true) return student.RegistrationNumber;
+        if (!string.IsNullOrEmpty(student.RegistrationNumber))
+        {
+            student.IsRegistrationNumberGenerated = true;
+            await context.SaveChangesAsync();
+            return student.RegistrationNumber;
+        }
+
+        var maxIndex = await context.StudentRegistrations
+            .Where(s => s.AcademicYearId == student.AcademicYearId && s.StudentRegistrationIndex != null)
+            .MaxAsync(s => (int?)s.StudentRegistrationIndex) ?? 0;
+
+        var newIndex = maxIndex + 1;
+        student.StudentRegistrationIndex = newIndex;
+
+        student.RegistrationNumber = $"{student.Faculty?.OfficeCode ?? "00"}-{student.AcademicYear?.AcademicYearCode ?? "0"}-{student.LevelId}-{student.ProgramId}-{newIndex:D4}";
+
+        student.IsRegistrationNumberGenerated = true;
+        await context.SaveChangesAsync();
+
+        return student.RegistrationNumber;
     }
 
     public async Task<bool> StudentRegistrationExistsAsync(int id)

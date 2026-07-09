@@ -111,6 +111,8 @@ public class StudentRegistration : ITenantScoped
     [Display(Name = "Is Registration Number Generated")]
     public bool? IsRegistrationNumberGenerated { get; set; }
 
+    [Display(Name = "Registration Index")]
+    public int? StudentRegistrationIndex { get; set; }
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Academic Year")]

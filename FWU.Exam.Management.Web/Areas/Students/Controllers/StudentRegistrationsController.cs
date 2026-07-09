@@ -102,6 +102,22 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id.Value);
         ViewBag.Guardian = await studentRegistrationService.GetGuardianByRegistrationAsync(id.Value);
 
+        if (studentRegistration.PermanentAddress?.LocalLevelId != null)
+        {
+            var localLevel = await context.LocalLevels
+                .Include(ll => ll.District)
+                .FirstOrDefaultAsync(ll => ll.Id == studentRegistration.PermanentAddress.LocalLevelId);
+            if (localLevel?.District != null)
+            {
+                ViewBag.ExistingProvinceId = localLevel.District.ProvinceId;
+                ViewBag.ExistingDistrictId = localLevel.District.Id;
+                ViewBag.ExistingLocalLevelId = localLevel.Id;
+                ViewBag.ExistingWardNumber = studentRegistration.PermanentAddress.WardNumber;
+                ViewBag.ExistingToleStreet = studentRegistration.PermanentAddress.ToleStreet;
+                ViewBag.ExistingHouseNumber = studentRegistration.PermanentAddress.HouseNumber;
+            }
+        }
+
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
         PopulateSelectLists(selectLists, studentRegistration);
         return View(studentRegistration);
@@ -285,13 +301,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                             var rawEmail = worksheet.Cell(row, 4).GetString();
                             if (string.IsNullOrWhiteSpace(rawEmail))
                             {
-                                var regNum = worksheet.Cell(row, 7).GetString();
                                 var firstName = worksheet.Cell(row, 1).GetString();
                                 var lastName = worksheet.Cell(row, 2).GetString();
-                                if (!string.IsNullOrWhiteSpace(regNum))
-                                    rawEmail = $"{regNum}@fwu.edu.np";
-                                else if (!string.IsNullOrWhiteSpace(firstName))
+                                var regNum = worksheet.Cell(row, 7).GetString();
+                                if (!string.IsNullOrWhiteSpace(firstName))
                                     rawEmail = $"{firstName}.{lastName}@fwu.edu.np".ToLowerInvariant();
+                                else if (!string.IsNullOrWhiteSpace(regNum))
+                                    rawEmail = $"{regNum}@fwu.edu.np";
                                 else
                                     rawEmail = $"student@fwu.edu.np";
                             }
@@ -799,6 +815,23 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             await studentRegistrationService.DeleteStudentRegistrationAsync(id);
             return Json(new { success = true, message = "Student registration deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GenerateRegistrationNumber(int id)
+    {
+        try
+        {
+            var regNumber = await studentRegistrationService.GenerateRegistrationNumberAsync(id);
+            if (regNumber == null)
+                return Json(new { success = false, message = "Student not found." });
+
+            return Json(new { success = true, registrationNumber = regNumber });
         }
         catch (Exception ex)
         {

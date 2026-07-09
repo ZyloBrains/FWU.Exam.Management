@@ -88,12 +88,6 @@
                             </div>
 
                             <div>
-                                <label asp-for="RegistrationNumber" class="block text-sm text-gray-600 mb-1">College Roll No</label>
-                                <input asp-for="RegistrationNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
-                                <span asp-validation-for="RegistrationNumber" class="text-red-600 text-xs"></span>
-                            </div>
-
-                            <div>
                                 <label asp-for="EthnicityId" class="block text-sm text-gray-600 mb-1">Ethnicity</label>
                                 <select asp-for="EthnicityId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.EthnicityId"></select>
                             </div>
@@ -341,6 +335,7 @@
                     $.each(data, function (index, item) {
                         programDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
+                    programDropdown.trigger('change');
             });
         }
 
@@ -388,6 +383,7 @@
                         $.each(data, function (index, item) {
                             districtDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
+                        districtDropdown.trigger('change');
                 });
             });
 
@@ -406,6 +402,7 @@
                         $.each(data, function (index, item) {
                             localDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
+                        localDropdown.trigger('change');
                 });
             });
 
@@ -433,6 +430,7 @@
                         $.each(data, function (index, item) {
                             facultyDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
+                        facultyDropdown.trigger('change');
                 });
             });
 
@@ -459,6 +457,7 @@
                         $.each(data, function (index, item) {
                             collegeDropdown.append(`<option value="${item.id}">${item.name}</option>`);
                         });
+                        collegeDropdown.trigger('change');
                 });
             });
 
@@ -501,6 +500,13 @@
                     }, 300);
                 }
             });
+        });
+
+        // Init Select2 on all dropdowns
+        $('#AcademicYearId, #LevelId, #FacultyId, #CollegeId, #ProgramId, #GenderId, #EthnicityId, #StudentCategoryId').select2({
+            width: '100%',
+            placeholder: function () { return $(this).find('option:first').text(); },
+            allowClear: false
         });
     </script>
 
