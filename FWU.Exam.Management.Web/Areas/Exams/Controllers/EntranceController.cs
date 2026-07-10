@@ -659,7 +659,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             return RedirectToAction(nameof(ManageSchedule));
         }
 
-        PopulateScheduleDropdowns(sl, model);flict 
+        PopulateScheduleDropdowns(sl, model);
  
         return View("ScheduleForm", model);
     }
