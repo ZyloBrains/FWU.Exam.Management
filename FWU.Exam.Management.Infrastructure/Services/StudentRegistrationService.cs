@@ -356,7 +356,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             query = query.Where(cp => cp.Program!.DepartmentId == departmentId.Value);
 
         return await query
-            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
+            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName, DepartmentId = cp.Program.DepartmentId })
             .AsNoTracking()
             .ToListAsync();
     }

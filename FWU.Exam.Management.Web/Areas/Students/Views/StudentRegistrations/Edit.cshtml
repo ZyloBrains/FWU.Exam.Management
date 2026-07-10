@@ -50,15 +50,7 @@
                                 <select asp-for="CollegeId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.CollegeId"></select>
                             </div>
 
-                            <div>
-                                <label asp-for="DepartmentId" class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-                                <select asp-for="DepartmentId"
-                                        class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
-                                        asp-items="ViewBag.DepartmentId">
-                                    <option value="">Select Department</option>
-                                </select>
-                                <span asp-validation-for="DepartmentId" class="text-red-600 text-xs"></span>
-                            </div>
+                            <input type="hidden" asp-for="DepartmentId" id="DepartmentId" />
 
                             <div>
                                 <label asp-for="ProgramId" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
@@ -421,33 +413,8 @@
             });
         }
 
-        function loadDepartments(collegeId, selectedDepartmentId, callback) {
-            $('#DepartmentId').select2('destroy');
-            if (!collegeId) {
-                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
-                $('#DepartmentId').select2({width:'resolve'});
-                if (callback) callback();
-                return;
-            }
-
-            $.get(tenantUrl("/Students/StudentRegistrations/GetDepartmentsByCollege"),
-                { collegeId: collegeId },
-                function (data) {
-                    var dropdown = $("#DepartmentId");
-                    dropdown.empty();
-                    dropdown.append('<option value="">Select Department</option>');
-                    $.each(data, function (index, item) {
-                        var selected = selectedDepartmentId && item.id == selectedDepartmentId ? 'selected' : '';
-                        dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
-                    });
-                    $('#DepartmentId').select2({width:'resolve'});
-                    if (callback) callback();
-            });
-        }
-
         function loadPrograms(collegeId, selectedProgramId) {
             var levelId = $("#LevelId").val();
-            var departmentId = $("#DepartmentId").val();
 
             $('#ProgramId').select2('destroy');
             if (!collegeId) {
@@ -457,14 +424,14 @@
             }
 
             $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
-                { collegeId: collegeId, levelId: levelId || null, departmentId: departmentId || null },
+                { collegeId: collegeId, levelId: levelId || null },
                 function (data) {
                     var dropdown = $("#ProgramId");
                     dropdown.empty();
                     dropdown.append('<option value="">Select Program</option>');
                     $.each(data, function (index, item) {
                         var selected = selectedProgramId && item.id == selectedProgramId ? 'selected' : '';
-                        dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
+                        dropdown.append(`<option value="${item.id}" data-department-id="${item.departmentId}" ${selected}>${item.name}</option>`);
                     });
                     $('#ProgramId').select2({width:'resolve'});
             });
@@ -555,14 +522,11 @@
                 var levelId = $(this).val();
                 $("#FacultyId").select2('destroy');
                 $("#CollegeId").select2('destroy');
-                $("#DepartmentId").select2('destroy');
                 $("#ProgramId").select2('destroy');
                 $("#CollegeId").empty().append('<option value="">Select College</option>');
-                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 $('#FacultyId').select2({width:'resolve'});
                 $('#CollegeId').select2({width:'resolve'});
-                $('#DepartmentId').select2({width:'resolve'});
                 $('#ProgramId').select2({width:'resolve'});
                 loadFaculties(levelId, null);
             });
@@ -571,39 +535,36 @@
             $("#FacultyId").change(function () {
                 var facultyId = $(this).val();
                 $("#CollegeId").select2('destroy');
-                $("#DepartmentId").select2('destroy');
                 $("#ProgramId").select2('destroy');
-                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 $('#CollegeId').select2({width:'resolve'});
-                $('#DepartmentId').select2({width:'resolve'});
                 $('#ProgramId').select2({width:'resolve'});
                 loadColleges(facultyId, null);
             });
 
-            // College -> Department + Program + clear downstream
+            // College -> Program
             $("#CollegeId").change(function () {
                 var collegeId = $(this).val();
-                $("#DepartmentId").select2('destroy');
                 $("#ProgramId").select2('destroy');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                $('#DepartmentId').select2({width:'resolve'});
                 $('#ProgramId').select2({width:'resolve'});
-                loadDepartments(collegeId, null);
                 loadPrograms(collegeId, null);
             });
 
-            // Department -> Program
-            $("#DepartmentId").change(function () {
-                var collegeId = $("#CollegeId").val();
-                loadPrograms(collegeId, null);
+            // Program -> auto-set DepartmentId
+            $("#ProgramId").change(function () {
+                var deptId = $(this).find('option:selected').data('department-id');
+                if (deptId) {
+                    $("#DepartmentId").val(deptId);
+                } else {
+                    $("#DepartmentId").val('');
+                }
             });
 
             // On page load, cascade initial values
             var initLevelId = $("#LevelId").val();
             var initFacultyId = $("#FacultyId").val();
             var initCollegeId = $("#CollegeId").val();
-            var initDeptId = $("#DepartmentId").val();
             var initProgramId = $("#ProgramId").val();
             var initProvinceId = $("#ProvinceId").val();
             var initDistrictId = $("#DistrictId").val();
@@ -620,9 +581,7 @@
                     if (initFacultyId) {
                         loadColleges(initFacultyId, initCollegeId, function () {
                             if (initCollegeId) {
-                                loadDepartments(initCollegeId, initDeptId, function () {
-                                    loadPrograms(initCollegeId, initProgramId);
-                                });
+                                loadPrograms(initCollegeId, initProgramId);
                             }
                         });
                     }
