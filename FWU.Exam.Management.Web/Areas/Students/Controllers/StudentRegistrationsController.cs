@@ -268,6 +268,22 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                         .DistinctBy(c => c.StudentCategoryName!.Trim().ToLowerInvariant())
                         .ToDictionary(c => c.StudentCategoryName!.Trim(), c => c.Id, StringComparer.OrdinalIgnoreCase);
 
+                    // Address lookup: "ProvinceName > DistrictName > LocalLevelName" -> LocalLevelId
+                    var localLevelLookup = await context.LocalLevels!
+                        .Include(ll => ll.District!)
+                            .ThenInclude(d => d.Province)
+                        .Where(ll => ll.IsActive)
+                        .Select(ll => new
+                        {
+                            ll.Id,
+                            Key = ll.District!.Province!.ProvinceName + " > " + ll.District.DistrictName + " > " + ll.LocalLevelName
+                        })
+                        .ToListAsync();
+                    var localLevelMap = localLevelLookup
+                        .Where(x => !string.IsNullOrEmpty(x.Key))
+                        .DistinctBy(x => x.Key!.Trim().ToLowerInvariant())
+                        .ToDictionary(x => x.Key!.Trim(), x => x.Id, StringComparer.OrdinalIgnoreCase);
+
                     int successCount = 0;
                     var errors = new List<string>();
 
@@ -353,8 +369,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                                 continue;
                             }
 
-                            // Address columns 16-19
-                            var permanentLocalLevelId = worksheet.Cell(row, 16).GetString();
+                            // Address columns 16-19 (col 16 = "ProvinceName > DistrictName > LocalLevelName")
+                            var rawAddress = worksheet.Cell(row, 16).GetString();
+                            var permanentLocalLevelId = ResolveId(rawAddress, localLevelMap).ToString();
                             var permanentWardNumber = worksheet.Cell(row, 17).GetString();
                             var permanentToleStreet = worksheet.Cell(row, 18).GetString();
                             var permanentHouseNumber = worksheet.Cell(row, 19).GetString();
@@ -530,7 +547,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             worksheet.Cell(1, 13).Value = "Active";
             worksheet.Cell(1, 14).Value = "FacultyId";
             worksheet.Cell(1, 15).Value = "ProgramId";
-            worksheet.Cell(1, 16).Value = "PermanentLocalLevelId";
+            worksheet.Cell(1, 16).Value = "PermanentAddress";
             worksheet.Cell(1, 17).Value = "PermanentWardNumber";
             worksheet.Cell(1, 18).Value = "PermanentToleStreet";
             worksheet.Cell(1, 19).Value = "PermanentHouseNumber";
@@ -589,7 +606,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                 worksheet.Cell(row, 13).Value = reg.IsActive ? "Yes" : "No";
                 worksheet.Cell(row, 14).Value = reg.FacultyId;
                 worksheet.Cell(row, 15).Value = reg.ProgramId;
-                worksheet.Cell(row, 16).Value = reg.PermanentAddress?.LocalLevelId;
+                var addr = reg.PermanentAddress;
+                worksheet.Cell(row, 16).Value = addr?.LocalLevel != null
+                    ? $"{addr.LocalLevel.District?.Province?.ProvinceName} > {addr.LocalLevel.District?.DistrictName} > {addr.LocalLevel.LocalLevelName}"
+                    : null;
                 worksheet.Cell(row, 17).Value = reg.PermanentAddress?.WardNumber;
                 worksheet.Cell(row, 18).Value = reg.PermanentAddress?.ToleStreet;
                 worksheet.Cell(row, 19).Value = reg.PermanentAddress?.HouseNumber;

@@ -26,6 +26,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .Include(s => s.PermanentAddress)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
+                .ThenInclude(d => d.Province)
             .Include(s => s.StudentGuardians)
             .Include(s => s.StudentQualifications)
             .AsNoTracking();
