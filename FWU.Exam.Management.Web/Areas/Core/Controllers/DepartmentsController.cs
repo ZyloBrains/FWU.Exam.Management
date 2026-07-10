@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("departments.view")]
-public class DepartmentsController(IDepartmentService departmentService) : Controller
+public class DepartmentsController(IDepartmentService departmentService, IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DepartmentName", string sortDir = "asc", int pageSize = 10)
     {

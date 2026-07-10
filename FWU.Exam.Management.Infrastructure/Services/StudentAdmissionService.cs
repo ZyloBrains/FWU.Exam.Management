@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -9,11 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager) : IStudentAdmissionService
+public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext) : IStudentAdmissionService
 {
-    public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null)
+    public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = BuildQuery(search, collegeId);
+        var query = BuildQuery(search);
 
         var totalCount = await query.CountAsync();
 
@@ -29,9 +30,9 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
         return (items, totalCount);
     }
 
-    public async Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null)
+    public async Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        var query = BuildQuery(search, collegeId);
+        var query = BuildQuery(search);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -143,16 +144,17 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
         return user?.Id;
     }
 
-    private IQueryable<StudentAdmission> BuildQuery(string? search, int? collegeId = null)
+    private IQueryable<StudentAdmission> BuildQuery(string? search)
     {
         var query = context.StudentAdmissions
             .Include(sa => sa.College)
             .Include(sa => sa.Program)
             .AsNoTracking();
 
-        if (collegeId.HasValue)
+        if (!userContext.IsSuperAdmin)
         {
-            query = query.Where(sa => sa.CollegeId == collegeId.Value);
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+                query = query.Where(sa => sa.CollegeId == userContext.CollegeId.Value);
         }
 
         if (!string.IsNullOrEmpty(search))

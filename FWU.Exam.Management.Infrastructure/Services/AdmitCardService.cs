@@ -1,34 +1,18 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class AdmitCardService(AppDbContext context) : IAdmitCardService
+public class AdmitCardService(AppDbContext context, IUserContext userContext) : IAdmitCardService
 {
-    private IQueryable<AdmitCard> ApplyScope(IQueryable<AdmitCard> query, int? collegeId, int? facultyId)
+    public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null)
     {
-        if (collegeId.HasValue)
-            return query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == collegeId.Value);
-
-        if (facultyId.HasValue)
-        {
-            var collegeIds = context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
-                .Select(c => c.Id)
-                .ToList();
-
-            return query.Where(e => e.ExamRegistration != null && collegeIds.Contains(e.ExamRegistration.CollegeId));
-        }
-
-        return query;
-    }
-
-    public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, int? examScheduleId = null)
-    {
-        var query = ApplyScope(BuildQuery(search, sort, sortDir, examScheduleId), collegeId, facultyId);
+        var query = BuildQuery(search, sort, sortDir, examScheduleId).ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -54,9 +38,9 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
         return (items, totalCount);
     }
 
-    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
+    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search)
     {
-        var query = ApplyScope(BuildQuery(search, "Id", "asc", null), collegeId, facultyId);
+        var query = BuildQuery(search, "Id", "asc", null).ApplyScope(userContext);
         return await query
             .Select(e => new AdmitCard
             {

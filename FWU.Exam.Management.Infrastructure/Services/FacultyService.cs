@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class FacultyService(
     AppDbContext context,
     UserManager<AppUser> userManager,
-    ILogger<FacultyService> logger) : IFacultyService
+    ILogger<FacultyService> logger,
+    IUserContext userContext) : IFacultyService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -19,6 +22,7 @@ public class FacultyService(
     {
         return await context.Faculties
             .AsNoTracking()
+            .ApplyScope(userContext)
             .OrderBy(f => f.Name)
             .ToListAsync();
     }

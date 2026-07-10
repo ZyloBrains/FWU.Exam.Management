@@ -3,11 +3,10 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +17,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examsubjectresults.view")]
 public class ExamSubjectResultsController(
     IExamSubjectResultService examSubjectResultService,
-    UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? examRegistrationId = null)
@@ -42,7 +41,7 @@ public class ExamSubjectResultsController(
     }
 
     [RequirePermission("examsubjectresults.create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
         var selectLists = examSubjectResultService.GetSelectListData();
         PopulateDropdowns(selectLists);

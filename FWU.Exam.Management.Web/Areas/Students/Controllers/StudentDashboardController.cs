@@ -300,13 +300,13 @@ public class StudentDashboardController(
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
@@ -417,13 +417,13 @@ public class StudentDashboardController(
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
         var scheme = Request.Scheme;

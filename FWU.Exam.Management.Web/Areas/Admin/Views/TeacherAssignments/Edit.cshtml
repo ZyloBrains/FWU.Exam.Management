@@ -25,20 +25,20 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label asp-for="TeacherUserId" class="text-sm font-medium text-gray-700 block mb-1">Teacher <span class="text-red-500">*</span></label>
-                    <select asp-for="TeacherUserId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.TeacherUserId">
+                    <select asp-for="TeacherUserId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.TeacherUserId">
                         <option value="">-- Select Teacher --</option>
                     </select>
                     <span asp-validation-for="TeacherUserId" class="text-sm text-red-600"></span>
                 </div>
                 <div>
                     <label asp-for="ExamScheduleId" class="text-sm font-medium text-gray-700 block mb-1">Exam Schedule (Optional)</label>
-                    <select asp-for="ExamScheduleId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ExamScheduleId">
+                    <select asp-for="ExamScheduleId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ExamScheduleId">
                         <option value="">-- All Schedules --</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">
                     <label asp-for="SubjectOfferingId" class="text-sm font-medium text-gray-700 block mb-1">Subject <span class="text-red-500">*</span></label>
-                    <select asp-for="SubjectOfferingId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500">
+                    <select asp-for="SubjectOfferingId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500">
                         <option value="">-- Select Subject --</option>
                     </select>
                     <span asp-validation-for="SubjectOfferingId" class="text-sm text-red-600"></span>
@@ -60,5 +60,38 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.25rem;
+            padding: 0;
+            color: #374151;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #14b8a6;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(20,184,166,0.2);
+        }
+    </style>
+
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        $(function () {
+            $('.select2').select2({ width: 'resolve' });
+        });
+    </script>
 }

@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Teachers;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
@@ -15,6 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Admin.Controllers;
 public class TeacherAssignmentsController(
     ITeacherSubjectAssignmentService assignmentService,
     UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index()
@@ -104,7 +106,11 @@ public class TeacherAssignmentsController(
         var teachers = await userManager.GetUsersInRoleAsync("Teacher");
         ViewBag.TeacherUserId = new SelectList(teachers.Select(t => new { t.Id, Name = t.FullName ?? t.Email }), "Id", "Name", model?.TeacherUserId);
 
-        ViewBag.ProgramId = new SelectList(await context.Programs.AsNoTracking().ToListAsync(), "Id", "ProgramName");
+        var programsQuery = context.Programs.AsNoTracking();
+        if (userContext.FacultyId.HasValue)
+            programsQuery = programsQuery.Where(p => p.Department != null && p.Department.FacultyId == userContext.FacultyId.Value);
+        ViewBag.ProgramId = new SelectList(await programsQuery.ToListAsync(), "Id", "ProgramName");
+
         ViewBag.SemesterId = new SelectList(await context.Semesters.AsNoTracking().ToListAsync(), "Id", "Name");
 
         if (model?.SubjectOfferingId > 0)
@@ -120,8 +126,9 @@ public class TeacherAssignmentsController(
             }
         }
 
-        ViewBag.ExamScheduleId = new SelectList(
-            await context.ExamSchedules.AsNoTracking().Where(es => es.IsActive).ToListAsync(),
-            "Id", "ExamScheduleName", model?.ExamScheduleId);
+        var examSchedulesQuery = context.ExamSchedules.AsNoTracking().Where(es => es.IsActive);
+        if (userContext.FacultyId.HasValue)
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.Department != null && es.Program.Department.FacultyId == userContext.FacultyId.Value);
+        ViewBag.ExamScheduleId = new SelectList(await examSchedulesQuery.ToListAsync(), "Id", "ExamScheduleName", model?.ExamScheduleId);
     }
 }

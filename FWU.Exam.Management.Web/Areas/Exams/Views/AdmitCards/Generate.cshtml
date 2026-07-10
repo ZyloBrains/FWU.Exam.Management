@@ -26,7 +26,7 @@
         <form method="get" asp-action="Generate" asp-area="Exams" class="flex flex-col sm:flex-row gap-4 items-end">
             <div class="flex-1 w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Select Exam Schedule</label>
-                <select name="examScheduleId" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select name="examScheduleId" class="select2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Select Schedule --</option>
                     @if (ViewData["ExamScheduleId"] is SelectList scheduleList)
                     {
@@ -87,3 +87,16 @@
         }
     }
 </div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+    </style>
+    <script>
+        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
+    </script>
+}

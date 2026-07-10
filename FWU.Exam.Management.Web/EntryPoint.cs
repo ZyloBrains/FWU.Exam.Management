@@ -26,6 +26,7 @@ public partial class EntryPoint
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
         builder.Services.AddScoped<ITenantContext, TenantContext>();
+        builder.Services.AddScoped<IUserContext, UserContext>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
 
@@ -179,6 +180,9 @@ public partial class EntryPoint
 
         app.UseAuthorization();
 
+        app.UseMiddleware<UserContextMiddleware>();
+
+        app.UseStaticFiles();
         app.MapStaticAssets();
 
         app.MapControllerRoute(

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Web.Helpers;
@@ -15,7 +16,7 @@ using Microsoft.AspNetCore.Identity;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, IUserContext userContext, ILogger<EntranceController> logger) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -576,8 +577,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
-        var (collegeId, facultyId) = await GetEntranceScopeAsync();
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, "Entrance");
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, "Entrance");
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -591,7 +591,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [RequirePermission("examschedules.create")]
-    public IActionResult CreateSchedule()
+    public async Task<IActionResult> CreateSchedule()
     {
         var selectLists = examScheduleService.GetSelectListData();
         PopulateScheduleDropdowns(selectLists);
@@ -659,7 +659,8 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             return RedirectToAction(nameof(ManageSchedule));
         }
 
-        PopulateScheduleDropdowns(sl, model);
+        PopulateScheduleDropdowns(sl, model);flict 
+ 
         return View("ScheduleForm", model);
     }
 
@@ -688,23 +689,9 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         }
     }
 
-    private async Task<(int? collegeId, int? facultyId)> GetEntranceScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
-    }
-
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)
     {
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "ProgramName", model?.ProgramId);
+        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", model?.ProgramId);
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", model?.AcademicYearId);
     }
 

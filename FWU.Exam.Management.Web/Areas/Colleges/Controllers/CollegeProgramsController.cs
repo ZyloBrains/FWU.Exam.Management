@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
@@ -15,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("collegeprograms.view")]
-public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
+public class CollegeProgramsController(ICollegeProgramService collegeProgramService, IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index(string search = null, string sort = "collegename", string sortDir = "asc")
     {

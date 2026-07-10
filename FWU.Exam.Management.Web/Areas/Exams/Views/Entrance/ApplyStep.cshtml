@@ -158,6 +158,15 @@
                             Entrance Fee: रू <span id="feeAmount">0</span>
                         </div>
                     </div>
+                }
+
+                <!-- College Selection (visible before steps) -->
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                    <label asp-for="CollegeId" class="block text-sm font-medium text-gray-700 mb-1">Choose College *</label>
+                    <select asp-for="CollegeId" asp-items="ViewBag.CollegeId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
+                        <option value="">Select College</option>
+                    </select>
+                    <span asp-validation-for="CollegeId" class="text-red-600 text-xs"></span>
                 </div>
 
                 <!-- ===== STEP 2: Personal Information ===== -->
@@ -190,7 +199,7 @@
                             </div>
                             <div>
                                 <label asp-for="GenderId" class="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
-                                <select asp-for="GenderId" asp-items="ViewBag.GenderId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                <select asp-for="GenderId" asp-items="ViewBag.GenderId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
                                     <option value="">Select Gender</option>
                                 </select>
                                 <span asp-validation-for="GenderId" class="text-red-600 text-xs"></span>
@@ -210,7 +219,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label asp-for="BloodGroup" class="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-                                <select asp-for="BloodGroup" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                <select asp-for="BloodGroup" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                     <option value="">Select Blood Group</option>
                                     <option value="A+">A+</option>
                                     <option value="A-">A-</option>
@@ -234,9 +243,9 @@
                                     <label asp-for="CitizenshipNo" class="block text-sm font-medium text-gray-700 mb-1">Citizenship No</label>
                                     <input asp-for="CitizenshipNo" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                                 </div>
-                                <div>
-                                    <label asp-for="CitizenshipDistrictId" class="block text-sm font-medium text-gray-700 mb-1">Citizenship Issued District</label>
-                                    <select asp-for="CitizenshipDistrictId" asp-items="ViewBag.CitizenshipDistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                <div class="relative">
+                                    <label asp-for="CitizenshipDistrictId" class="block text-sm font-medium text-gray-700 mb-1">Citizenship Issued District *</label>
+                                    <select asp-for="CitizenshipDistrictId" asp-items="ViewBag.CitizenshipDistrictId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
                                         <option value="">Select District</option>
                                     </select>
                                 </div>
@@ -292,19 +301,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Province *</label>
-                                    <select id="ProvinceId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <select id="ProvinceId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true">
                                         <option value="">Select Province</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">District *</label>
-                                    <select id="DistrictId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <select id="DistrictId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true">
                                         <option value="">Select District</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Local Level / Municipality *</label>
-                                    <select id="LocalLevelId" name="LocalLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 validate-field" data-required="true">
                                         <option value="">Select Local Level</option>
                                     </select>
                                 </div>
@@ -388,7 +397,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label asp-for="PreviousLevelId" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination *</label>
-                                    <select asp-for="PreviousLevelId" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <select asp-for="PreviousLevelId" asp-items="ViewBag.PreviousLevelId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 validate-field" data-required="true">
                                         <option value="">Select Level</option>
                                     </select>
                                 </div>
@@ -412,7 +421,7 @@
                                 </div>
                                 <div>
                                     <label asp-for="PreviousDivision" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
-                                    <select asp-for="PreviousDivision" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <select asp-for="PreviousDivision" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
                                         <option value="Distinction">Distinction</option>
                                         <option value="First">First Division</option>
@@ -429,7 +438,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label asp-for="PreviousLevel2Id" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination</label>
-                                    <select asp-for="PreviousLevel2Id" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <select asp-for="PreviousLevel2Id" asp-items="ViewBag.PreviousLevelId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select Level</option>
                                     </select>
                                 </div>
@@ -459,7 +468,7 @@
                                 </div>
                                 <div>
                                     <label asp-for="PreviousDivision2" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
-                                    <select asp-for="PreviousDivision2" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <select asp-for="PreviousDivision2" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
                                         <option value="Distinction">Distinction</option>
                                         <option value="First">First Division</option>
@@ -476,7 +485,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label asp-for="PreviousLevel3Id" class="block text-sm font-medium text-gray-700 mb-1">Level / Examination</label>
-                                    <select asp-for="PreviousLevel3Id" asp-items="ViewBag.PreviousLevelId" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <select asp-for="PreviousLevel3Id" asp-items="ViewBag.PreviousLevelId" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select Level</option>
                                     </select>
                                 </div>
@@ -506,7 +515,7 @@
                                 </div>
                                 <div>
                                     <label asp-for="PreviousDivision3" class="block text-sm font-medium text-gray-700 mb-1">Division</label>
-                                    <select asp-for="PreviousDivision3" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <select asp-for="PreviousDivision3" class="select2 w-full px-3 py-2.5 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                         <option value="">Select</option>
                                         <option value="Distinction">Distinction</option>
                                         <option value="First">First Division</option>
@@ -610,6 +619,55 @@
     </div>
 </div>
 
+@section Styles {
+    <style>
+        .step-content {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .step-content.hidden {
+            display: none;
+        }
+        .step-content.fade-in {
+            animation: fadeSlideIn 0.35s ease forwards;
+        }
+        @@keyframes fadeSlideIn {
+            0% { opacity: 0; transform: translateX(20px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+        .field-valid {
+            border-color: #10b981 !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 32px;
+        }
+        .field-invalid {
+            border-color: #ef4444 !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='15' y1='9' x2='9' y2='15'%3E%3C/line%3E%3Cline x1='9' y1='9' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 32px;
+        }
+        .select2-container--default .select2-selection--single {
+            border-color: #d1d5db;
+            border-radius: 0.5rem;
+            height: 42px;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #14b8a6 !important;
+            box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+        }
+    </style>
+}
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -627,8 +685,21 @@
 
             function updateStep(step) {
                 currentStep = step;
-                $('.step-content').addClass('hidden');
-                $('#step' + step).removeClass('hidden');
+                var $next = $('#step' + step);
+                $next.removeClass('hidden');
+                // Re-init Select2 in the now-visible step (was hidden when Select2 first initialized)
+                $next.find('.select2').each(function () {
+                    var $el = $(this);
+                    $el.select2('destroy');
+                    $el.select2({
+                        width: '100%',
+                        placeholder: function () { return $(this).find('option:first').text(); },
+                        allowClear: false
+                    }).on('change', function () {
+                        if (typeof validateSingleField === 'function') validateSingleField($(this));
+                    });
+                });
+                setTimeout(function () { $next.addClass('fade-in'); }, 10);
 
                 $('.step-indicator').each(function () {
                     var s = parseInt($(this).data('step'));
@@ -768,37 +839,54 @@
                     $.each(data, function (i, item) {
                         ps.append('<option value="' + item.id + '">' + item.name + '</option>');
                     });
+                    ps.select2({width:'resolve'});
                     if (callback) callback();
                 });
             }
 
             function loadDistricts(provinceId, callback) {
-                $("#DistrictId").html('<option>Loading...</option>');
-                $("#LocalLevelId").html('<option>Select Local Level</option>');
+                $('#DistrictId').select2('destroy');
+                $('#LocalLevelId').select2('destroy');
+
+                if (!provinceId) {
+                    $("#DistrictId").empty().append('<option value="">Select District</option>');
+                    $('#DistrictId').select2({width:'resolve'});
+                    if (callback) callback();
+                    return;
+                }
+
                 $.get(tenantUrl("/Exams/Entrance/GetDistrictsByProvince"),
                     { provinceId: provinceId },
                     function (data) {
                         var dd = $("#DistrictId");
-                        dd.empty();
-                        dd.append('<option value="">Select District</option>');
+                        dd.empty().append('<option value="">Select District</option>');
                         $.each(data, function (i, item) {
                             dd.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
+                        dd.select2({width:'resolve'});
                         if (callback) callback();
                     });
             }
 
             function loadLocalLevels(districtId, callback) {
-                $("#LocalLevelId").html('<option>Loading...</option>');
+                $('#LocalLevelId').select2('destroy');
+
+                if (!districtId) {
+                    $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                    $('#LocalLevelId').select2({width:'resolve'});
+                    if (callback) callback();
+                    return;
+                }
+
                 $.get(tenantUrl("/Exams/Entrance/GetLocalLevelsByDistrict"),
                     { districtId: districtId },
                     function (data) {
                         var ll = $("#LocalLevelId");
-                        ll.empty();
-                        ll.append('<option value="">Select Local Level</option>');
+                        ll.empty().append('<option value="">Select Local Level</option>');
                         $.each(data, function (i, item) {
                             ll.append('<option value="' + item.id + '">' + item.name + '</option>');
                         });
+                        ll.select2({width:'resolve'});
                         if (callback) callback();
                     });
             }
@@ -807,10 +895,8 @@
             function initAddressCascading() {
                 loadProvinces(function () {
                     if (existingProvinceId) {
-                        $("#ProvinceId").val(existingProvinceId);
                         loadDistricts(existingProvinceId, function () {
                             if (existingDistrictId) {
-                                $("#DistrictId").val(existingDistrictId);
                                 loadLocalLevels(existingDistrictId, function () {
                                     if (existingLocalLevelId) {
                                         $("#LocalLevelId").val(existingLocalLevelId);
@@ -819,6 +905,20 @@
                             }
                         });
                     }
+                    // Init Select2 for visible non-cascade selects only
+                    // (hidden step selects get initialized when their step is shown via updateStep)
+                    $('.select2:visible').each(function () {
+                        var $el = $(this);
+                        if (!$el.data('select2')) {
+                            $el.select2({
+                                width: '100%',
+                                placeholder: function () { return $(this).find('option:first').text(); },
+                                allowClear: false
+                            }).on('change', function () {
+                                validateSingleField($(this));
+                            });
+                        }
+                    });
                 });
             }
 
@@ -827,8 +927,12 @@
                 if (provinceId) {
                     loadDistricts(provinceId);
                 } else {
-                    $("#DistrictId").html('<option value="">Select District</option>');
-                    $("#LocalLevelId").html('<option value="">Select Local Level</option>');
+                    $('#DistrictId').select2('destroy');
+                    $('#LocalLevelId').select2('destroy');
+                    $("#DistrictId").empty().append('<option value="">Select District</option>');
+                    $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                    $('#DistrictId').select2({width:'resolve'});
+                    $('#LocalLevelId').select2({width:'resolve'});
                 }
             });
 
@@ -837,7 +941,9 @@
                 if (districtId) {
                     loadLocalLevels(districtId);
                 } else {
-                    $("#LocalLevelId").html('<option value="">Select Local Level</option>');
+                    $('#LocalLevelId').select2('destroy');
+                    $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                    $('#LocalLevelId').select2({width:'resolve'});
                 }
             });
 
