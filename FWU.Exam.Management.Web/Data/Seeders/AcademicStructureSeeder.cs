@@ -13,8 +13,8 @@ public static class AcademicStructureSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
         // ----- Programs (fill missing ones) -----
-        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-        var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "MA");
+        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
+        var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "2");
 
         if (bachelorLevel != null)
         {

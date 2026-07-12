@@ -17,6 +17,10 @@ public class Level
     [Display(Name = "Level Name")]
     public string? LevelName { get; set; }
 
+    [MaxLength(50)]
+    [Display(Name = "Level Name Nepali")]
+    public string? LevelNameNepali { get; set; }
+
     [Display(Name = "Level Display Order")]
     public int? LevelDisplayOrder { get; set; }
 

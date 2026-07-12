@@ -1833,6 +1833,10 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("LevelNameNepali")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("Remarks")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");

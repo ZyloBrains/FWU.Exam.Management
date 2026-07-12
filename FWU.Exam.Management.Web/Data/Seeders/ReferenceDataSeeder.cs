@@ -67,14 +67,14 @@ public static class ReferenceDataSeeder
         };
         await context.PreviousLevels.AddRangeAsync(previousLevels);
 
-        // Levels
+        // Levels (seeded from CSV via LevelCsvSeeder)
         var levels = new[]
         {
-            new Level { LevelCode = "BL", LevelName = "Bachelor", IsActive = true },
-            new Level { LevelCode = "MA", LevelName = "Master", IsActive = true },
+            await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1")
+                ?? throw new Exception("Bachelor level not found. Ensure LevelCsvSeeder runs first."),
+            await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "2")
+                ?? throw new Exception("Master level not found. Ensure LevelCsvSeeder runs first."),
         };
-        await context.Levels.AddRangeAsync(levels);
-        await context.SaveChangesAsync();
 
         // Programs
         var programs = new[]
@@ -235,7 +235,7 @@ public static class ReferenceDataSeeder
         var foeEdu = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "EDU");
         var foeHss = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-HSS");
 
-        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
+        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
 
         if (!await context.Programs.AnyAsync(p => p.ProgramCode == "BECT") && bachelorLevel != null)
         {

@@ -204,6 +204,12 @@ public partial class EntryPoint
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
 
+            // Academic years from CSV (runs in all environments, skips if already seeded)
+            await FWU.Exam.Management.Web.Data.Seeder.AcademicYearCsvSeeder.SeedAsync(scope.ServiceProvider);
+
+            // Levels from CSV (runs in all environments)
+            await FWU.Exam.Management.Web.Data.Seeder.LevelCsvSeeder.SeedAsync(scope.ServiceProvider);
+
             if (app.Environment.IsDevelopment())
             {
                 // Base system data

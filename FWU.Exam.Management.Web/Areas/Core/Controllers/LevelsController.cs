@@ -43,12 +43,13 @@ public class LevelsController(ILevelService levelService) : Controller
         var items = await levelService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Level Code,Level Name,Display Order,Remarks,Is Running,Status");
+        sb.AppendLine("Level Code,Level Name,Level Name (Nepali),Display Order,Remarks,Is Running,Status");
 
         foreach (var l in items)
         {
             sb.AppendLine($"{EscapeCsv(l.LevelCode)}," +
                            $"{EscapeCsv(l.LevelName)}," +
+                           $"{EscapeCsv(l.LevelNameNepali)}," +
                            $"{l.LevelDisplayOrder}," +
                            $"{EscapeCsv(l.Remarks)}," +
                            $"{(l.IsRunning == true ? "Yes" : "No")}," +
@@ -82,7 +83,7 @@ public class LevelsController(ILevelService levelService) : Controller
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Levels");
 
-        var headers = new[] { "Level Code", "Level Name", "Display Order", "Remarks", "Is Running", "Status" };
+        var headers = new[] { "Level Code", "Level Name", "Level Name (Nepali)", "Display Order", "Remarks", "Is Running", "Status" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -96,10 +97,11 @@ public class LevelsController(ILevelService levelService) : Controller
         {
             worksheet.Cell(row, 1).Value = l.LevelCode;
             worksheet.Cell(row, 2).Value = l.LevelName;
-            worksheet.Cell(row, 3).Value = l.LevelDisplayOrder;
-            worksheet.Cell(row, 4).Value = l.Remarks;
-            worksheet.Cell(row, 5).Value = l.IsRunning == true ? "Yes" : "No";
-            worksheet.Cell(row, 6).Value = l.IsActive ? "Active" : "Inactive";
+            worksheet.Cell(row, 3).Value = l.LevelNameNepali;
+            worksheet.Cell(row, 4).Value = l.LevelDisplayOrder;
+            worksheet.Cell(row, 5).Value = l.Remarks;
+            worksheet.Cell(row, 6).Value = l.IsRunning == true ? "Yes" : "No";
+            worksheet.Cell(row, 7).Value = l.IsActive ? "Active" : "Inactive";
             row++;
         }
 
@@ -131,7 +133,7 @@ public class LevelsController(ILevelService levelService) : Controller
     [RequirePermission("levels.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,LevelCode,LevelName,LevelDisplayOrder,Remarks,IsRunning,IsActive")] Level level)
+    public async Task<IActionResult> Create([Bind("Id,LevelCode,LevelName,LevelNameNepali,LevelDisplayOrder,Remarks,IsRunning,IsActive")] Level level)
     {
         if (ModelState.IsValid)
         {
@@ -155,7 +157,7 @@ public class LevelsController(ILevelService levelService) : Controller
     [RequirePermission("levels.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelCode,LevelName,LevelDisplayOrder,Remarks,IsRunning,IsActive")] Level level)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelCode,LevelName,LevelNameNepali,LevelDisplayOrder,Remarks,IsRunning,IsActive")] Level level)
     {
         if (id != level.Id) return NotFound();
 

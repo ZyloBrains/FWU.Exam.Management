@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260712101721_MakeEstablishedDateNullable")]
-    partial class MakeEstablishedDateNullable
+    [Migration("20260712120000_AddLevelNameNepali")]
+    partial class AddLevelNameNepali
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

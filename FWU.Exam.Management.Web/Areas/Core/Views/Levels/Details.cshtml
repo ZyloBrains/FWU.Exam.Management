@@ -41,6 +41,10 @@
                 <p class="text-sm font-medium text-gray-600">Level Name</p>
                 <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.LevelName)</p>
             </div>
+            <div class="md:col-span-2">
+                <p class="text-sm font-medium text-gray-600">Level Name (Nepali)</p>
+                <p class="mt-1 text-gray-800">@(Model.LevelNameNepali ?? "-")</p>
+            </div>
             <div>
                 <p class="text-sm font-medium text-gray-600">Currently Running</p>
                 <div class="mt-1">

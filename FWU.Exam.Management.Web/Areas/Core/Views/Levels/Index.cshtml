@@ -144,6 +144,7 @@
                 <tr>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Level Code</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Level Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Level Name (Nepali)</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Display Order</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Remarks</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Running</th>
@@ -157,6 +158,7 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 font-medium text-gray-800">@item.LevelCode</td>
                         <td class="px-4 py-3 text-gray-800">@item.LevelName</td>
+                        <td class="px-4 py-3 text-gray-800">@(item.LevelNameNepali ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@item.LevelDisplayOrder</td>
                         <td class="px-4 py-3 text-gray-600">@(item.Remarks ?? "-")</td>
                         <td class="px-4 py-3">
@@ -242,6 +244,8 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
+                    <div class="text-gray-500">Name (Nepali)</div>
+                    <div class="text-gray-800">@(item.LevelNameNepali ?? "-")</div>
                     <div class="text-gray-500">Display Order</div>
                     <div class="text-gray-800">@item.LevelDisplayOrder</div>
                     <div class="text-gray-500">Remarks</div>

@@ -16,43 +16,34 @@ public static class DemoDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        // Academic Years
-        if (!await context.AcademicYears.AnyAsync())
+        // Academic Years — imported via CSV, no seeding
+        var runningYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
+        if (runningYear == null)
+            throw new Exception("No running AcademicYear found. Import AcademicYears via CSV before running seeders.");
+
+        // Batch
+        if (!await context.Batches.AnyAsync())
         {
-            var academicYears = new[]
+            await context.Batches.AddRangeAsync(new[]
             {
-                new AcademicYear { AcademicYearCode = "2080", AcademicYearName = "2080/2081", AcademicYearNameNepali = "२०८०/२०८१", IsRunning = false, IsActive = true },
-                new AcademicYear { AcademicYearCode = "2081", AcademicYearName = "2081/2082", AcademicYearNameNepali = "२०८१/२०८२", IsRunning = true, IsActive = true },
-            };
-            await context.AcademicYears.AddRangeAsync(academicYears);
-            await context.SaveChangesAsync();
-
-            var runningYear = academicYears[1];
-
-            // Batch
-            if (!await context.Batches.AnyAsync())
-            {
-                await context.Batches.AddRangeAsync(new[]
-                {
-                    new Batch { AcademicYearId = runningYear.Id, BatchName = "2081 Batch", IsActive = true },
-                });
-            }
-
-            // Semesters
-            if (!await context.Semesters.AnyAsync())
-            {
-                var semesters = new[]
-                {
-                    new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id },
-                    new Semester { Number = 2, Year = 1, Name = "Second Semester", Code = "SEM2", StartDate = new DateTime(2025, 2, 1), EndDate = new DateTime(2025, 6, 30), AcademicYearId = runningYear.Id },
-                    new Semester { Number = 3, Year = 2, Name = "Third Semester", Code = "SEM3", StartDate = new DateTime(2025, 9, 1), EndDate = new DateTime(2026, 1, 30), AcademicYearId = runningYear.Id },
-                    new Semester { Number = 4, Year = 2, Name = "Fourth Semester", Code = "SEM4", StartDate = new DateTime(2026, 2, 1), EndDate = new DateTime(2026, 6, 30), AcademicYearId = runningYear.Id },
-                };
-                await context.Semesters.AddRangeAsync(semesters);
-            }
-
-            await context.SaveChangesAsync();
+                new Batch { AcademicYearId = runningYear.Id, BatchName = "2081 Batch", IsActive = true },
+            });
         }
+
+        // Semesters
+        if (!await context.Semesters.AnyAsync())
+        {
+            var semesters = new[]
+            {
+                new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id },
+                new Semester { Number = 2, Year = 1, Name = "Second Semester", Code = "SEM2", StartDate = new DateTime(2025, 2, 1), EndDate = new DateTime(2025, 6, 30), AcademicYearId = runningYear.Id },
+                new Semester { Number = 3, Year = 2, Name = "Third Semester", Code = "SEM3", StartDate = new DateTime(2025, 9, 1), EndDate = new DateTime(2026, 1, 30), AcademicYearId = runningYear.Id },
+                new Semester { Number = 4, Year = 2, Name = "Fourth Semester", Code = "SEM4", StartDate = new DateTime(2026, 2, 1), EndDate = new DateTime(2026, 6, 30), AcademicYearId = runningYear.Id },
+            };
+            await context.Semesters.AddRangeAsync(semesters);
+        }
+
+        await context.SaveChangesAsync();
 
         // Fiscal Year
         if (!await context.FiscalYears.AnyAsync())
@@ -302,7 +293,7 @@ public static class DemoDataSeeder
         var demoUser = await context.Users.FirstOrDefaultAsync(u => u.Email == demoStudentEmail);
         var collegeCoc = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "COC");
         var collegeSom = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "SOM");
-        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
+        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
         var faculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
         var genderMale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Male");
         var genderFemale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Female");

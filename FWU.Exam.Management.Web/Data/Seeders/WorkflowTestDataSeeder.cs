@@ -55,16 +55,12 @@ public static class WorkflowTestDataSeeder
         var genderFemale = genders[1];
 
         // ===================================================================
-        // 3. LEVELS
+        // 3. LEVELS (seeded from CSV via LevelCsvSeeder)
         // ===================================================================
-        var levels = new[]
-        {
-            new Level { LevelCode = "BL", LevelName = "Bachelor", IsActive = true },
-            new Level { LevelCode = "MA", LevelName = "Master", IsActive = true },
-        };
-        await context.Levels.AddRangeAsync(levels);
-        await context.SaveChangesAsync();
-        var bachelorLevel = levels[0];
+        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1")
+            ?? throw new Exception("Bachelor level not found. Ensure LevelCsvSeeder runs before WorkflowTestDataSeeder.");
+        var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "2")
+            ?? throw new Exception("Master level not found. Ensure LevelCsvSeeder runs before WorkflowTestDataSeeder.");
 
         // ===================================================================
         // 5. PROGRAMS
@@ -160,18 +156,11 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
 
         // ===================================================================
-        // 9. ACADEMIC YEAR
+        // 9. ACADEMIC YEAR (imported via CSV — no seeding)
         // ===================================================================
-        var runningYear = new AcademicYear
-        {
-            AcademicYearCode = "2081",
-            AcademicYearName = "2081/2082",
-            AcademicYearNameNepali = "२०८१/२०८२",
-            IsRunning = true,
-            IsActive = true
-        };
-        await context.AcademicYears.AddAsync(runningYear);
-        await context.SaveChangesAsync();
+        var runningYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
+        if (runningYear == null)
+            throw new Exception("No running AcademicYear found. Import AcademicYears via CSV before running seeders.");
 
         // ===================================================================
         // 10. SEMESTERS
@@ -651,8 +640,6 @@ public static class WorkflowTestDataSeeder
             "Faculties",
             "Programs",
             "Departments",
-            "Levels",
-            "AcademicYears",
             "Batches",
             "Semesters",
             "SubjectTypes",

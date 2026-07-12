@@ -31,4 +31,13 @@
     <ProjectReference Include="..\FWU.Exam.Management.Api\FWU.Exam.Management.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\Seeders\academic-years.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Seeders\levels.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

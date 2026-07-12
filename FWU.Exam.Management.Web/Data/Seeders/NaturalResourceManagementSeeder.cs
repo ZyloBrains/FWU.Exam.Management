@@ -12,8 +12,8 @@ public static class NaturalResourceManagementSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
         var nrmFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "NRM");
-        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-        var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "MA");
+        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
+        var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "2");
 
         // Programs
         if (bachelorLevel != null)

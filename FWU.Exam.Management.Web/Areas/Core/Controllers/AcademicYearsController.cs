@@ -236,4 +236,169 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         try { await academicYearService.DeleteAcademicYearAsync(id); return Json(new { success = true, message = "Academic year deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ImportCsv(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No file uploaded.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var ext = Path.GetExtension(file.FileName);
+        if (!string.Equals(ext, ".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["ErrorMessage"] = "Please upload a .csv file.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            using var reader = new StreamReader(file.OpenReadStream());
+            var headerLine = await reader.ReadLineAsync();
+            if (string.IsNullOrWhiteSpace(headerLine))
+            {
+                TempData["ErrorMessage"] = "CSV file is empty.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Parse header to find column indices (flexible column order)
+            var headers = ParseCsvLine(headerLine).Select(h => h.Trim()).ToArray();
+            int idxCode       = Array.FindIndex(headers, h => h.Equals("AcademicYearCode", StringComparison.OrdinalIgnoreCase));
+            int idxName       = Array.FindIndex(headers, h => h.Equals("AcademicYearName", StringComparison.OrdinalIgnoreCase));
+            int idxCodeNepali = Array.FindIndex(headers, h => h.Equals("AcademicYearCodeNepali", StringComparison.OrdinalIgnoreCase));
+            int idxNameNepali = Array.FindIndex(headers, h => h.Equals("AcademicYearNameNepali", StringComparison.OrdinalIgnoreCase));
+            int idxRunning    = Array.FindIndex(headers, h => h.Equals("IsRunning", StringComparison.OrdinalIgnoreCase));
+            int idxActive     = Array.FindIndex(headers, h => h.Equals("IsActive", StringComparison.OrdinalIgnoreCase));
+
+            if (idxCode < 0 || idxName < 0)
+            {
+                TempData["ErrorMessage"] = "CSV must contain 'AcademicYearCode' and 'AcademicYearName' columns.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var existingCodes = (await academicYearService.GetAllAcademicYearsAsync(1, int.MaxValue, null))
+                .Items.Select(a => a.AcademicYearCode?.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var created = 0;
+            var skipped = 0;
+            var errors = new List<string>();
+            int lineNum = 1;
+
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                lineNum++;
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var parts = ParseCsvLine(line);
+                if (parts.Length < headers.Length)
+                {
+                    errors.Add($"Line {lineNum}: expected {headers.Length} columns, got {parts.Length}");
+                    continue;
+                }
+
+                var code   = SafeGet(parts, idxCode)?.Trim() ?? "";
+                var name   = SafeGet(parts, idxName)?.Trim() ?? "";
+                var codeNe = SafeGet(parts, idxCodeNepali)?.Trim();
+                var nameNe = SafeGet(parts, idxNameNepali)?.Trim();
+                var runStr = SafeGet(parts, idxRunning)?.Trim() ?? "0";
+                var actStr = SafeGet(parts, idxActive)?.Trim() ?? "1";
+
+                if (string.IsNullOrEmpty(code))
+                {
+                    errors.Add($"Line {lineNum}: AcademicYearCode is required");
+                    continue;
+                }
+                if (string.IsNullOrEmpty(name))
+                {
+                    errors.Add($"Line {lineNum}: AcademicYearName is required");
+                    continue;
+                }
+
+                if (existingCodes.Contains(code))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                var ay = new AcademicYear
+                {
+                    AcademicYearCode = code,
+                    AcademicYearCodeNepali = string.IsNullOrEmpty(codeNe) ? null : codeNe,
+                    AcademicYearName = name,
+                    AcademicYearNameNepali = string.IsNullOrEmpty(nameNe) ? null : nameNe,
+                    IsRunning = runStr == "1" || runStr.Equals("true", StringComparison.OrdinalIgnoreCase) || runStr.Equals("yes", StringComparison.OrdinalIgnoreCase),
+                    IsActive  = actStr == "1" || actStr.Equals("true", StringComparison.OrdinalIgnoreCase) || actStr.Equals("yes", StringComparison.OrdinalIgnoreCase),
+                };
+
+                await academicYearService.CreateAcademicYearAsync(ay);
+                existingCodes.Add(code);
+                created++;
+            }
+
+            var msg = $"Imported {created} record(s).";
+            if (skipped > 0) msg += $" Skipped {skipped} duplicate(s).";
+            if (errors.Count > 0) msg += $" {errors.Count} error(s): {string.Join("; ", errors.Take(5))}";
+            TempData["SuccessMessage"] = msg;
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"Import failed: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    private static string? SafeGet(string[] parts, int index)
+    {
+        return index >= 0 && index < parts.Length ? parts[index] : null;
+    }
+
+    private static string[] ParseCsvLine(string line)
+    {
+        var result = new List<string>();
+        bool inQuotes = false;
+        var current = new System.Text.StringBuilder();
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            char c = line[i];
+            if (inQuotes)
+            {
+                if (c == '"' && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    current.Append('"');
+                    i++;
+                }
+                else if (c == '"')
+                {
+                    inQuotes = false;
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+            else
+            {
+                if (c == '"')
+                {
+                    inQuotes = true;
+                }
+                else if (c == ',')
+                {
+                    result.Add(current.ToString());
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+        }
+        result.Add(current.ToString());
+        return result.ToArray();
+    }
 }

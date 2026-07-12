@@ -19,6 +19,7 @@ public class LevelService(AppDbContext context) : ILevelService
             query = query.Where(l =>
                 l.LevelCode.Contains(search) ||
                 l.LevelName.Contains(search) ||
+                (l.LevelNameNepali != null && l.LevelNameNepali.Contains(search)) ||
                 (l.Remarks != null && l.Remarks.Contains(search)));
         }
 
@@ -44,6 +45,7 @@ public class LevelService(AppDbContext context) : ILevelService
             query = query.Where(l =>
                 l.LevelCode.Contains(search) ||
                 l.LevelName.Contains(search) ||
+                (l.LevelNameNepali != null && l.LevelNameNepali.Contains(search)) ||
                 (l.Remarks != null && l.Remarks.Contains(search)));
         }
 
@@ -92,6 +94,7 @@ public class LevelService(AppDbContext context) : ILevelService
         {
             "levelcode" => l => l.LevelCode,
             "levelname" => l => l.LevelName,
+            "levelnamenepali" => l => l.LevelNameNepali,
             "leveldisplayorder" => l => l.LevelDisplayOrder,
             "remarks" => l => l.Remarks,
             "isrunning" => l => l.IsRunning,
