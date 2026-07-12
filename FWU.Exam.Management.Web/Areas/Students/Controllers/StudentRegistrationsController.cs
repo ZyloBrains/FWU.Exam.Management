@@ -624,14 +624,14 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                 worksheet.Cell(row, 5).Value = reg.ContactNumber;
                 worksheet.Cell(row, 6).Value = reg.DateOfBirthBS;
                 worksheet.Cell(row, 7).Value = reg.RegistrationNumber;
-                worksheet.Cell(row, 8).Value = reg.AcademicYear?.AcademicYearCode ?? reg.AcademicYearId.ToString();
-                worksheet.Cell(row, 9).Value = reg.Level?.LevelName ?? reg.LevelId.ToString();
-                worksheet.Cell(row, 10).Value = reg.College?.Name ?? reg.CollegeId.ToString();
-                worksheet.Cell(row, 11).Value = reg.Gender?.GenderName ?? reg.GenderId.ToString();
-                worksheet.Cell(row, 12).Value = reg.StudentCategory?.StudentCategoryName ?? reg.StudentCategoryId.ToString();
+                worksheet.Cell(row, 8).Value = reg.AcademicYearId;
+                worksheet.Cell(row, 9).Value = reg.LevelId;
+                worksheet.Cell(row, 10).Value = reg.CollegeId;
+                worksheet.Cell(row, 11).Value = reg.GenderId;
+                worksheet.Cell(row, 12).Value = reg.StudentCategoryId;
                 worksheet.Cell(row, 13).Value = reg.IsActive ? "Yes" : "No";
-                worksheet.Cell(row, 14).Value = reg.Faculty?.Name ?? reg.FacultyId?.ToString();
-                worksheet.Cell(row, 15).Value = reg.Program?.ProgramName ?? reg.ProgramId?.ToString();
+                worksheet.Cell(row, 14).Value = reg.FacultyId;
+                worksheet.Cell(row, 15).Value = reg.ProgramId;
                 var addr = reg.PermanentAddress;
                 worksheet.Cell(row, 16).Value = addr?.LocalLevel != null
                     ? $"{addr.LocalLevel.District?.Province?.ProvinceName} > {addr.LocalLevel.District?.DistrictName} > {addr.LocalLevel.LocalLevelName}"
@@ -649,22 +649,22 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                 worksheet.Cell(row, 26).Value = guardian?.MotherProfession;
                 worksheet.Cell(row, 27).Value = guardian?.MotherContactNumber;
                 // Qualification 1 cols 28-33
-                worksheet.Cell(row, 28).Value = (quals != null && quals.Count > 0) ? quals[0].PreviousLevel?.PreviousLevelName : null;
-                worksheet.Cell(row, 29).Value = (quals != null && quals.Count > 0) ? quals[0].Board?.BoardName : null;
+                worksheet.Cell(row, 28).Value = (quals != null && quals.Count > 0) ? quals[0].PreviousLevelId : 0;
+                worksheet.Cell(row, 29).Value = (quals != null && quals.Count > 0) ? quals[0].BoardId : 0;
                 worksheet.Cell(row, 30).Value = (quals != null && quals.Count > 0) ? quals[0].InstituteName : null;
                 worksheet.Cell(row, 31).Value = (quals != null && quals.Count > 0) ? quals[0].PassedYear : null;
                 worksheet.Cell(row, 32).Value = (quals != null && quals.Count > 0) ? quals[0].Percentage?.ToString() : null;
                 worksheet.Cell(row, 33).Value = (quals != null && quals.Count > 0) ? quals[0].ExamRollNumber : null;
                 // Qualification 2 cols 34-39
-                worksheet.Cell(row, 34).Value = (quals != null && quals.Count > 1) ? quals[1].PreviousLevel?.PreviousLevelName : null;
-                worksheet.Cell(row, 35).Value = (quals != null && quals.Count > 1) ? quals[1].Board?.BoardName : null;
+                worksheet.Cell(row, 34).Value = (quals != null && quals.Count > 1) ? quals[1].PreviousLevelId : 0;
+                worksheet.Cell(row, 35).Value = (quals != null && quals.Count > 1) ? quals[1].BoardId : 0;
                 worksheet.Cell(row, 36).Value = (quals != null && quals.Count > 1) ? quals[1].InstituteName : null;
                 worksheet.Cell(row, 37).Value = (quals != null && quals.Count > 1) ? quals[1].PassedYear : null;
                 worksheet.Cell(row, 38).Value = (quals != null && quals.Count > 1) ? quals[1].Percentage?.ToString() : null;
                 worksheet.Cell(row, 39).Value = (quals != null && quals.Count > 1) ? quals[1].ExamRollNumber : null;
                 // Qualification 3 cols 40-45
-                worksheet.Cell(row, 40).Value = (quals != null && quals.Count > 2) ? quals[2].PreviousLevel?.PreviousLevelName : null;
-                worksheet.Cell(row, 41).Value = (quals != null && quals.Count > 2) ? quals[2].Board?.BoardName : null;
+                worksheet.Cell(row, 40).Value = (quals != null && quals.Count > 2) ? quals[2].PreviousLevelId : 0;
+                worksheet.Cell(row, 41).Value = (quals != null && quals.Count > 2) ? quals[2].BoardId : 0;
                 worksheet.Cell(row, 42).Value = (quals != null && quals.Count > 2) ? quals[2].InstituteName : null;
                 worksheet.Cell(row, 43).Value = (quals != null && quals.Count > 2) ? quals[2].PassedYear : null;
                 worksheet.Cell(row, 44).Value = (quals != null && quals.Count > 2) ? quals[2].Percentage?.ToString() : null;
