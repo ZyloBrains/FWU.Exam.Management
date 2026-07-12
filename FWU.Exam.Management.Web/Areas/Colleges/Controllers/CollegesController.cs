@@ -74,7 +74,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
                           $"{c.AllocatedAmount}," +
                           $"{EscapeCsv(c.Address?.ToleStreet)}," +
                           $"{c.DisplayOrder}," +
-                          $"{c.EstablishedDate.ToString("yyyy-MM-dd")}," +
+                          $"{c.EstablishedDate?.ToString("yyyy-MM-dd")}," +
                           $"{c.ClosedDate?.ToString("yyyy-MM-dd")}");
         }
 
@@ -130,7 +130,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
             worksheet.Cell(row, 20).Value = c.AllocatedAmount?.ToString() ?? "";
             worksheet.Cell(row, 21).Value = c.Address?.ToleStreet ?? "";
             worksheet.Cell(row, 22).Value = c.DisplayOrder?.ToString() ?? "";
-            worksheet.Cell(row, 23).Value = c.EstablishedDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 23).Value = c.EstablishedDate?.ToString("yyyy-MM-dd") ?? "";
             worksheet.Cell(row, 24).Value = c.ClosedDate?.ToString("yyyy-MM-dd") ?? "";
             row++;
         }

@@ -55,7 +55,7 @@
             <!-- Establishment Date -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Established Date</p>
-                <p class="text-gray-800 font-medium">@(Model.EstablishedDate.ToString("yyyy-MM-dd"))</p>
+                <p class="text-gray-800 font-medium">@(Model.EstablishedDate?.ToString("yyyy-MM-dd"))</p>
             </div>
             <!-- Closed Date -->
             <div>

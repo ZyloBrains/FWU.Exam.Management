@@ -193,7 +193,7 @@
                     <td>@(string.IsNullOrEmpty(item.Fax) ? "�" : item.Fax)</td>
                     <td>@(item.CollegeType?.Code ?? "�")</td>
                     <td>@(item.Address?.ToleStreet ?? "�")</td>
-                    <td>@(item.EstablishedDate.ToString("yyyy-MM-dd"))</td>
+                    <td>@(item.EstablishedDate?.ToString("yyyy-MM-dd"))</td>
                     <td>@(item.ClosedDate?.ToString("yyyy-MM-dd") ?? "�")</td>
                     <td style="text-align: right;">@(item.AllocatedAmount.HasValue ? item.AllocatedAmount.Value.ToString("N2") : "�")</td>
                     <td style="text-align: center;">@item.DisplayOrder</td>
