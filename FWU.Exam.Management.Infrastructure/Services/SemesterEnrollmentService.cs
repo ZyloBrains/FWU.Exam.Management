@@ -1,17 +1,18 @@
 using System.Linq.Expressions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class SemesterEnrollmentService(AppDbContext context) : ISemesterEnrollmentService
+public class SemesterEnrollmentService(AppDbContext context, IUserContext userContext) : ISemesterEnrollmentService
 {
-    public async Task<(List<SemesterEnrollment> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null)
+    public async Task<(List<SemesterEnrollment> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null)
     {
-        var query = BuildQuery(search, admissionId, collegeId);
+        var query = BuildQuery(search, admissionId);
         var totalCount = await query.CountAsync();
 
         query = sortDir.ToLower() == "desc"
@@ -26,9 +27,9 @@ public class SemesterEnrollmentService(AppDbContext context) : ISemesterEnrollme
         return (items, totalCount);
     }
 
-    public async Task<List<SemesterEnrollment>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null)
+    public async Task<List<SemesterEnrollment>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null)
     {
-        var query = BuildQuery(search, admissionId, collegeId);
+        var query = BuildQuery(search, admissionId);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -84,7 +85,7 @@ public class SemesterEnrollmentService(AppDbContext context) : ISemesterEnrollme
         return await context.SemesterEnrollments.AnyAsync(se => se.Id == id);
     }
 
-    public async Task<List<StudentAdmission>> GetActiveAdmissionsAsync(int? collegeId = null)
+    public async Task<List<StudentAdmission>> GetActiveAdmissionsAsync()
     {
         var query = context.StudentAdmissions
             .Include(sa => sa.College)
@@ -92,8 +93,11 @@ public class SemesterEnrollmentService(AppDbContext context) : ISemesterEnrollme
             .AsNoTracking()
             .Where(sa => sa.IsActive);
 
-        if (collegeId.HasValue)
-            query = query.Where(sa => sa.CollegeId == collegeId.Value);
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+                query = query.Where(sa => sa.CollegeId == userContext.CollegeId.Value);
+        }
 
         return await query.ToListAsync();
     }
@@ -109,7 +113,7 @@ public class SemesterEnrollmentService(AppDbContext context) : ISemesterEnrollme
             .ToListAsync();
     }
 
-    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null)
+    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null)
     {
         var query = context.SemesterEnrollments
             .Include(se => se.StudentAdmission)
@@ -122,8 +126,11 @@ public class SemesterEnrollmentService(AppDbContext context) : ISemesterEnrollme
         if (admissionId.HasValue)
             query = query.Where(se => se.StudentAdmissionId == admissionId.Value);
 
-        if (collegeId.HasValue)
-            query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.CollegeId == collegeId.Value);
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+                query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.CollegeId == userContext.CollegeId.Value);
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

@@ -5,13 +5,15 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IEmailService emailService, ISmsService smsService) : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IEmailService emailService, ISmsService smsService, IUserContext userContext) : IStudentRegistrationService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -31,9 +33,13 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 .ThenInclude(d => d.Province)
             .Include(s => s.StudentGuardians)
             .Include(s => s.StudentQualifications)
+                .ThenInclude(q => q.Board)
+            .Include(s => s.StudentQualifications)
+                .ThenInclude(q => q.PreviousLevel)
             .AsNoTracking();
+        query = query.ApplyScope(userContext);
 
-        if (collegeIds != null && collegeIds.Count > 0)
+        if (userContext.IsSuperAdmin && collegeIds != null && collegeIds.Count > 0)
         {
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
         }
@@ -234,8 +240,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .AsNoTracking();
+        query = query.ApplyScope(userContext);
 
-        if (collegeIds != null && collegeIds.Count > 0)
+        if (userContext.IsSuperAdmin && collegeIds != null && collegeIds.Count > 0)
         {
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
         }

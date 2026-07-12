@@ -2,17 +2,38 @@ using System.Linq.Expressions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class BillTitleService(AppDbContext context) : IBillTitleService
+public class BillTitleService(AppDbContext context, IUserContext userContext) : IBillTitleService
 {
     public async Task<(List<BillTitle> Items, int TotalCount)> GetBillTitlesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
             .Include(bt => bt.ExamSchedule)
             .Include(bt => bt.Program);
+
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            {
+                var collegeProgramIds = context.CollegePrograms
+                    .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
+                    .Select(cp => cp.ProgramId)
+                    .Distinct();
+                query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
+            }
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            {
+                var collegeProgramIds = context.CollegePrograms
+                    .Where(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value))
+                    .Select(cp => cp.ProgramId)
+                    .Distinct();
+                query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
+            }
+        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -39,6 +60,26 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         IQueryable<BillTitle> query = context.Set<BillTitle>().AsNoTracking()
             .Include(bt => bt.ExamSchedule)
             .Include(bt => bt.Program);
+
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            {
+                var collegeProgramIds = context.CollegePrograms
+                    .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
+                    .Select(cp => cp.ProgramId)
+                    .Distinct();
+                query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
+            }
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            {
+                var collegeProgramIds = context.CollegePrograms
+                    .Where(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value))
+                    .Select(cp => cp.ProgramId)
+                    .Distinct();
+                query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
+            }
+        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -89,34 +130,34 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
         return await context.Set<BillTitle>().AnyAsync(bt => bt.Id == id);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesAsync(int? collegeId = null, int? facultyId = null)
+    public async Task<List<ExamSchedule>> GetExamSchedulesAsync()
     {
         IQueryable<ExamSchedule> query = context.ExamSchedules.AsNoTracking();
 
-        if (collegeId.HasValue)
+        if (!userContext.IsSuperAdmin)
         {
-            var programIds = context.CollegePrograms!
-                .Where(cp => cp.CollegeId == collegeId.Value)
-                .Select(cp => cp.ProgramId)
-                .Distinct()
-                .ToList();
-
-            query = query.Where(e => programIds.Contains(e.ProgramId));
-        }
-        else if (facultyId.HasValue)
-        {
-            var collegeIds = context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
-                .Select(c => c.Id)
-                .ToList();
-
-            var programIds = context.CollegePrograms!
-                .Where(cp => collegeIds.Contains(cp.CollegeId))
-                .Select(cp => cp.ProgramId)
-                .Distinct()
-                .ToList();
-
-            query = query.Where(e => programIds.Contains(e.ProgramId));
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            {
+                var programIds = context.CollegePrograms!
+                    .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
+                    .Select(cp => cp.ProgramId)
+                    .Distinct()
+                    .ToList();
+                query = query.Where(e => programIds.Contains(e.ProgramId));
+            }
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            {
+                var collegeIds = context.Colleges
+                    .Where(c => c.Faculties.Any(f => f.Id == userContext.FacultyId.Value))
+                    .Select(c => c.Id)
+                    .ToList();
+                var programIds = context.CollegePrograms!
+                    .Where(cp => collegeIds.Contains(cp.CollegeId))
+                    .Select(cp => cp.ProgramId)
+                    .Distinct()
+                    .ToList();
+                query = query.Where(e => programIds.Contains(e.ProgramId));
+            }
         }
 
         return await query.ToListAsync();
@@ -124,7 +165,23 @@ public class BillTitleService(AppDbContext context) : IBillTitleService
 
     public async Task<List<Domain.Entities.Program>> GetProgramsAsync()
     {
-        return await context.Programs.AsNoTracking().ToListAsync();
+        var query = context.Programs.AsNoTracking();
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            {
+                var collegeProgramIds = await context.CollegePrograms.AsNoTracking()
+                    .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
+                    .Select(cp => cp.ProgramId)
+                    .ToListAsync();
+                query = query.Where(p => collegeProgramIds.Contains(p.Id));
+            }
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            {
+                query = query.Where(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+            }
+        }
+        return await query.ToListAsync();
     }
 
     private static Expression<Func<BillTitle, object>> GetSortProperty(string sort)

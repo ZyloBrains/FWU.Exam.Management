@@ -3,12 +3,11 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -19,23 +18,11 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("colleges.view")]
-public class CollegesController(ICollegeService collegeService, UserManager<AppUser> userManager, AppDbContext context) : Controller
+public class CollegesController(ICollegeService collegeService, IUserContext userContext, AppDbContext context) : Controller
 {
-    private async Task<int?> GetCurrentUserFacultyIdAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return user?.FacultyId;
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
     {
-        int? orgId = null;
-        if (User.IsInRole(Role.FacultyAdmin))
-        {
-            orgId = await GetCurrentUserFacultyIdAsync();
-        }
-
-        var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir, orgId);
+        var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -58,8 +45,7 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     public async Task<IActionResult> ExportToCsv(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("College Code,College Name,College Name (Nepali),Short Name,District,Municipality/VDC,Ward No.,House No.,Website,Email,Phone 1,Phone 2,Principal Name,Principal Contact,Fax,Remarks,Is Exam Center Only,Is Active,College Type,Allocated Amount,Area,Display Order,Established Date,Closed Date");
@@ -98,16 +84,14 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
 
     public async Task<IActionResult> ExportToPdf(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
-        int? orgId = User.IsInRole(Role.FacultyAdmin) ? await GetCurrentUserFacultyIdAsync() : null;
-        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir, orgId);
+        var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Colleges");
@@ -192,15 +176,11 @@ public class CollegesController(ICollegeService collegeService, UserManager<AppU
         {
             try
             {
-                if (User.IsInRole(Role.FacultyAdmin))
+                if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
                 {
-                    var facultyId = await GetCurrentUserFacultyIdAsync();
-                    if (facultyId.HasValue)
-                    {
-                        var faculty = new Faculty { Id = facultyId.Value };
-                        context.Faculties.Attach(faculty);
-                        college.Faculties = new List<Faculty> { faculty };
-                    }
+                    var faculty = new Faculty { Id = userContext.FacultyId.Value };
+                    context.Faculties.Attach(faculty);
+                    college.Faculties = new List<Faculty> { faculty };
                 }
                 await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
                 TempData["SuccessMessage"] = "College created successfully!";

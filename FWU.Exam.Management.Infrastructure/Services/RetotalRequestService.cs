@@ -2,34 +2,18 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class RetotalRequestService(AppDbContext context) : IRetotalRequestService
+public class RetotalRequestService(AppDbContext context, IUserContext userContext) : IRetotalRequestService
 {
-    private IQueryable<RetotalRequest> ApplyScope(IQueryable<RetotalRequest> query, int? collegeId, int? facultyId)
+    public async Task<(List<RetotalRequest> Items, int TotalCount)> GetRetotalRequestsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        if (collegeId.HasValue)
-            return query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == collegeId.Value);
-
-        if (facultyId.HasValue)
-        {
-            var collegeIds = context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
-                .Select(c => c.Id)
-                .ToList();
-
-            return query.Where(e => e.ExamRegistration != null && collegeIds.Contains(e.ExamRegistration.CollegeId));
-        }
-
-        return query;
-    }
-
-    public async Task<(List<RetotalRequest> Items, int TotalCount)> GetRetotalRequestsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null)
-    {
-        var query = ApplyScope(BuildQuery(search, sort, sortDir), collegeId, facultyId);
+        var query = BuildQuery(search, sort, sortDir).ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -63,9 +47,9 @@ public class RetotalRequestService(AppDbContext context) : IRetotalRequestServic
         return (items, totalCount);
     }
 
-    public async Task<List<RetotalRequest>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
+    public async Task<List<RetotalRequest>> GetFilteredItemsAsync(string? search)
     {
-        var query = ApplyScope(BuildQuery(search, "Id", "asc"), collegeId, facultyId);
+        var query = BuildQuery(search, "Id", "asc").ApplyScope(userContext);
         return await query
             .Select(e => new RetotalRequest
             {

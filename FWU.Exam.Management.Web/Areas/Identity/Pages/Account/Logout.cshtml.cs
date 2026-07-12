@@ -12,15 +12,9 @@ namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
 public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutModel> logger) : PageModel
 {
-    public IActionResult OnGet()
-    {
-        return RedirectToPage("/Account/Login", new { area = "Identity" });
-    }
-
     public async Task<IActionResult> OnPost(string returnUrl = null)
     {
         await signInManager.SignOutAsync();
-        HttpContext.Response.Cookies.Delete("tenant_code");
         logger.LogInformation("User logged out.");
         if (returnUrl != null)
         {
@@ -28,7 +22,9 @@ public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutMod
         }
         else
         {
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
+            // This needs to be a redirect so that the browser performs a new
+            // request and the identity for the user gets updated.
+            return RedirectToPage();
         }
     }
 }

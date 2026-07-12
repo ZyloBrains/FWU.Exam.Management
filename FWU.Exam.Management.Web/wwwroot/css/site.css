@@ -410,3 +410,6 @@ body {
   .excel-cell-name { min-width: 100px; max-width: 140px; }
   .excel-name-box { width: 34px; }
 }
+
+/* Select2 width fix - match parent width without overflow */
+.select2-container { max-width: 100%; box-sizing: border-box; }

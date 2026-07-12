@@ -53,7 +53,7 @@
                         <div>
                             <label asp-for="FacultyId" class="text-sm font-medium text-gray-700"></label>
                             <select asp-for="FacultyId" asp-items="ViewBag.Faculties"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                    class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                                 <option value="">-- Select Faculty --</option>
                             </select>
                             <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
@@ -66,7 +66,7 @@
                         <div>
                             <label asp-for="CollegeId" class="text-sm font-medium text-gray-700"></label>
                             <select asp-for="CollegeId" asp-items="ViewBag.Colleges"
-                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                    class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
                                 <option value="">-- Select College --</option>
                             </select>
                             <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
@@ -89,7 +89,19 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            outline: 2px solid transparent; outline-offset: 2px;
+        }
+    </style>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        $(function () { $('.select2').select2({width:'resolve'}); });
+    </script>
 }

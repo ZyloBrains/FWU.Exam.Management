@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,7 +23,7 @@ public class ResultRecordsController(
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? collegeId = null, int? facultyId = null)
     {
-        var (items, totalCount) = await resultRecordService.GetResultRecordsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
+        var (items, totalCount) = await resultRecordService.GetResultRecordsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -50,9 +51,9 @@ public class ResultRecordsController(
         return View(resultRecord);
     }
 
-    public async Task<IActionResult> ExportToCsv(string? search = null, int? collegeId = null, int? facultyId = null)
+    public async Task<IActionResult> ExportToCsv(string? search = null)
     {
-        var items = await resultRecordService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await resultRecordService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,StudentName,SymbolNumber,RegistrationNumber,Year,Part,GPA,Result");
@@ -66,9 +67,9 @@ public class ResultRecordsController(
         return File(csvBytes, "text/csv", "ResultRecords.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(string? search = null, int? collegeId = null, int? facultyId = null)
+    public async Task<IActionResult> ExportToPdf(string? search = null)
     {
-        var items = await resultRecordService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await resultRecordService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 

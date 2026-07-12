@@ -2,6 +2,7 @@ using System.Text;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
@@ -19,24 +20,9 @@ public class AdmitCardsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
-    }
-
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var (items, totalCount) = await admitCardService.GetAdmitCardsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, examScheduleId);
+        var (items, totalCount) = await admitCardService.GetAdmitCardsAsync(page, pageSize, search, sort, sortDir, examScheduleId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -152,8 +138,7 @@ public class AdmitCardsController(
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await admitCardService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await admitCardService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Admit Card Number,Exam Schedule,Generated Date,Downloaded,Is Active");

@@ -2,12 +2,13 @@ using System.Linq.Expressions;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ExamCenterService(AppDbContext context) : IExamCenterService
+public class ExamCenterService(AppDbContext context, IUserContext userContext) : IExamCenterService
 {
     public async Task<(List<ExamCenter> Items, int TotalCount)> GetExamCentersAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
@@ -171,6 +172,16 @@ public class ExamCenterService(AppDbContext context) : IExamCenterService
             .Include(ec => ec.ExamCenterColleges)
                 .ThenInclude(ecc => ecc.College)
             .Where(ec => ec.IsActive);
+
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                query = query.Where(ec => ec.College != null && ec.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value));
+            else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+                query = query.Where(ec => ec.CollegeId == userContext.CollegeId.Value);
+            else
+                query = query.Where(ec => false);
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

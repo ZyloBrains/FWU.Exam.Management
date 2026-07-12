@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
@@ -8,51 +9,23 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
 
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("users.view")]
-public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
+public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context, IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index()
     {
-        var currentUser = await userManager.GetUserAsync(User);
-        if (currentUser == null) return Challenge();
-
-        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
-
-        var usersQuery = userManager.Users
+        IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
             .Include(u => u.College);
+        usersQuery = usersQuery.ApplyScope(userContext);
 
-        IQueryable<AppUser> filteredQuery;
-
-        if (isSuperAdmin)
-        {
-            filteredQuery = usersQuery;
-        }
-        else if (User.IsInRole(Role.CollegeAdmin) && currentUser.CollegeId != null)
-        {
-            filteredQuery = usersQuery.Where(u => u.CollegeId == currentUser.CollegeId);
-        }
-        else if (User.IsInRole(Role.FacultyAdmin) && currentUser.FacultyId != null)
-        {
-            var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
-                .Select(c => (int?)c.Id)
-                .ToListAsync();
-            filteredQuery = usersQuery.Where(u =>
-                u.FacultyId == currentUser.FacultyId ||
-                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
-        }
-        else
-        {
-            filteredQuery = usersQuery.Where(u => u.Id == currentUser.Id);
-        }
-
-        var users = await filteredQuery.ToListAsync();
+        var users = await usersQuery.ToListAsync();
         var model = new List<UserListItemViewModel>();
         foreach (var user in users)
         {

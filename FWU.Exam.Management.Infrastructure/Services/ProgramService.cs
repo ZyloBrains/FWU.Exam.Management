@@ -3,12 +3,14 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ProgramService(AppDbContext context) : IProgramService
+public class ProgramService(AppDbContext context, IUserContext userContext) : IProgramService
 {
     public async Task<(List<Program> Items, int TotalCount)> GetProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
@@ -16,6 +18,7 @@ public class ProgramService(AppDbContext context) : IProgramService
             .Include(p => p.Board)
             .Include(p => p.Level)
             .AsNoTracking();
+        query = query.ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -47,6 +50,7 @@ public class ProgramService(AppDbContext context) : IProgramService
             .Include(p => p.Board)
             .Include(p => p.Level)
             .AsNoTracking();
+        query = query.ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
         {

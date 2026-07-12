@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentDashboardService(AppDbContext context) : IStudentDashboardService
+public class StudentDashboardService(AppDbContext context, IUserContext userContext) : IStudentDashboardService
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
@@ -339,7 +340,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         return upper is "F" or "NG";
     }
 
-    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
+    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -361,7 +362,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             FullName = fullName ?? "",
             Email = email,
             MobileNumber = mobileNumber,
-            CollegeId = collegeId,
+            CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
             PaymentTypeId = paymentType?.Id ?? 0,
@@ -387,7 +388,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         return log.Id;
     }
 
-    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
+    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -409,7 +410,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             FullName = fullName ?? "",
             Email = email,
             MobileNumber = mobileNumber,
-            CollegeId = collegeId,
+            CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}",
             PaymentTypeId = paymentType?.Id ?? 0,

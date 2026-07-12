@@ -67,19 +67,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="text-sm font-medium text-gray-700">Province <span class="text-red-500">*</span></label>
-                        <select id="ProvinceId" name="ProvinceId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
+                        <select id="ProvinceId" name="ProvinceId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="@ViewBag.Provinces">
                             <option value="">-- Select Province --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">District <span class="text-red-500">*</span></label>
-                        <select id="DistrictId" name="DistrictId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="DistrictId" name="DistrictId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select District --</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700">Local Level <span class="text-red-500">*</span></label>
-                        <select id="LocalLevelId" name="LocalLevelId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select Local Level --</option>
                         </select>
                     </div>
@@ -171,7 +171,7 @@
                     </div>
                     <div>
                         <label asp-for="CollegeTypeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="CollegeTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeTypeId">
+                        <select asp-for="CollegeTypeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeTypeId">
                             <option value="">-- Select College Type --</option>
                         </select>
                         <span asp-validation-for="CollegeTypeId" class="text-xs text-red-500 mt-1 block"></span>
@@ -213,67 +213,117 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.25rem;
+            padding: 0;
+            color: #374151;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #3b82f6;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        }
+    </style>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
+        function loadDistricts(provinceId, selectedDistrictId, callback) {
+            $('#DistrictId').select2('destroy');
+            $('#LocalLevelId').select2('destroy');
+            $("#DistrictId").empty().append('<option value="">Loading...</option>');
+            $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+            $('#LocalLevelId').select2({width:'resolve'});
+
+            if (!provinceId) {
+                $("#DistrictId").empty().append('<option value="">Select District</option>');
+                $('#DistrictId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Colleges/Colleges/GetDistrictsByProvince"),
+                { provinceId: provinceId },
+                function (data) {
+                    var dd = $("#DistrictId");
+                    dd.empty().append('<option value="">Select District</option>');
+                    $.each(data, function (i, item) {
+                        dd.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                    dd.select2({width:'resolve'});
+
+                    if (selectedDistrictId && dd.find('option[value="' + selectedDistrictId + '"]').length) {
+                        dd.val(selectedDistrictId).trigger('change');
+                    }
+                    if (callback) callback();
+            });
+        }
+
+        function loadLocalLevels(districtId, selectedLocalLevelId, callback) {
+            $('#LocalLevelId').select2('destroy');
+
+            if (!districtId) {
+                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                $('#LocalLevelId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Colleges/Colleges/GetLocalLevelsByDistrict"),
+                { districtId: districtId },
+                function (data) {
+                    var ll = $("#LocalLevelId");
+                    ll.empty().append('<option value="">Select Local Level</option>');
+                    $.each(data, function (i, item) {
+                        ll.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    });
+                    ll.select2({width:'resolve'});
+
+                    if (selectedLocalLevelId && ll.find('option[value="' + selectedLocalLevelId + '"]').length) {
+                        ll.val(selectedLocalLevelId).trigger('change');
+                    }
+                    if (callback) callback();
+            });
+        }
+
         $(function () {
+            $('.select2').select2({ width: 'resolve' });
+
             var selectedProvinceId = '@(Model.Address?.LocalLevel?.District?.ProvinceId)';
             var selectedDistrictId = '@(Model.Address?.LocalLevel?.DistrictId)';
             var selectedLocalLevelId = '@(Model.Address?.LocalLevelId)';
 
-            // Province -> District
             $("#ProvinceId").change(function () {
-                var provinceId = $(this).val();
-
-                $("#DistrictId").html('<option>Loading...</option>');
-                $("#LocalLevelId").html('<option>Select Local Level</option>');
-
-                $.get(tenantUrl("/Colleges/Colleges/GetDistrictsByProvince"),
-                    { provinceId: provinceId },
-                    function (data) {
-                        var districtDropdown = $("#DistrictId");
-                        districtDropdown.empty();
-                        districtDropdown.append('<option value="">Select District</option>');
-
-                        $.each(data, function (index, item) {
-                            districtDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-
-                        if (selectedDistrictId && $("#DistrictId option[value=" + selectedDistrictId + "]").length) {
-                            $("#DistrictId").val(selectedDistrictId);
-                            $("#DistrictId").trigger("change");
-                        }
-                });
+                loadDistricts($(this).val(), null);
             });
 
-            // District -> LocalLevel
             $("#DistrictId").change(function () {
-                var districtId = $(this).val();
-
-                $("#LocalLevelId").html('<option>Loading...</option>');
-
-                $.get(tenantUrl("/Colleges/Colleges/GetLocalLevelsByDistrict"),
-                    { districtId: districtId },
-                    function (data) {
-                        var localDropdown = $("#LocalLevelId");
-                        localDropdown.empty();
-                        localDropdown.append('<option value="">Select Local Level</option>');
-
-                        $.each(data, function (index, item) {
-                            localDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
-                        });
-
-                        if (selectedLocalLevelId && $("#LocalLevelId option[value=" + selectedLocalLevelId + "]").length) {
-                            $("#LocalLevelId").val(selectedLocalLevelId);
-                        }
-                });
+                loadLocalLevels($(this).val(), null);
             });
 
-            // Trigger pre-selection on load
-            if (selectedProvinceId && $("#ProvinceId option[value=" + selectedProvinceId + "]").length) {
-                $("#ProvinceId").val(selectedProvinceId);
-                $("#ProvinceId").trigger("change");
+            if (selectedProvinceId && $("#ProvinceId option[value='" + selectedProvinceId + "']").length) {
+                loadDistricts(selectedProvinceId, selectedDistrictId, function () {
+                    if (selectedDistrictId) {
+                        loadLocalLevels(selectedDistrictId, selectedLocalLevelId);
+                    }
+                });
             }
         });
     </script>

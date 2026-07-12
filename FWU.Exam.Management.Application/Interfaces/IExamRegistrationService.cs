@@ -7,8 +7,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IExamRegistrationService
 {
-    Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, int? examScheduleId = null);
-    Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null);
+    Task<(List<ExamRegistration> Items, int TotalCount)> GetExamRegistrationsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null);
+    Task<List<ExamRegistration>> GetFilteredItemsAsync(string? search);
     Task<ExamRegistration?> GetExamRegistrationByIdAsync(int id);
     Task CreateExamRegistrationAsync(ExamRegistration examRegistration);
     Task UpdateExamRegistrationAsync(ExamRegistration examRegistration);

@@ -26,6 +26,7 @@ public partial class EntryPoint
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
         builder.Services.AddScoped<ITenantContext, TenantContext>();
+        builder.Services.AddScoped<IUserContext, UserContext>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
 
@@ -178,6 +179,8 @@ public partial class EntryPoint
 
         app.UseAuthorization();
 
+        app.UseMiddleware<UserContextMiddleware>();
+
         app.UseStaticFiles();
         app.MapStaticAssets();
 
@@ -201,34 +204,36 @@ public partial class EntryPoint
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.SetTenant(1, "SEED", TenantType.Central);
 
-            // Base system data
-            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            if (app.Environment.IsDevelopment())
+            {
+                // Base system data
+                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
 
-            // Full test data (clears and re-seeds transactional + reference data)
-            await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
+                // Full test data (clears and re-seeds transactional + reference data)
+                await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
 
-            // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
-            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
+                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
 
-            // Location data (seeded after WorkflowTestDataSeeder which clears it)
-            await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+                // Location data (seeded after WorkflowTestDataSeeder which clears it)
+                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
 
-            // Additional reference data (skips if already present)
-            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+                // Additional reference data (skips if already present)
+                await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
 
-            // Academic structure extensions
-            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+                // Academic structure extensions
+                await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+                await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
 
-            // Demo data
-            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+                // Demo data
+                await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
 
-            // Grading schemes
-            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+                // Grading schemes
+                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
 
             // Payment gateways
             await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
@@ -237,8 +242,17 @@ public partial class EntryPoint
             await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
             await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
 
-            // Admin / test users (depends on roles, colleges, faculties being seeded)
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+                // Admin / test users (depends on roles, colleges, faculties being seeded)
+                await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+            }
+            else
+            {
+                // Production: only essential system data
+                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            }
         }
 
         app.Run();
