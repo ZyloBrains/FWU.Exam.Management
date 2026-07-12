@@ -31,7 +31,6 @@ public class College : ITenantScoped
     [Display(Name = "Short Name")]
     public string? ShortName { get; set; }
 
-    [Required]
     [Display(Name = "Established Date")]
     public DateTime? EstablishedDate { get; set; }
 
