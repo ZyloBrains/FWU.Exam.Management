@@ -66,6 +66,15 @@
                 </div>
             </div>
 
+            <!-- Section: Status -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
+                <div class="flex items-center gap-2">
+                    <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
+                    <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
                 <button type="submit" class="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-md">

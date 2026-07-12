@@ -15,9 +15,30 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
-public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, IUserContext userContext, AppDbContext context) : Controller
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
 {
+    private async Task<List<int>> GetUserCollegeIdsAsync()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return [];
+
+        if (User.IsInRole(Role.SuperAdmin))
+            return [];
+
+        if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
+        {
+            return await context.Colleges
+                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
+                .Select(c => c.Id)
+                .ToListAsync();
+        }
+
+        if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
+            return [user.CollegeId.Value];
+
+        return [];
+    }
 
     public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int pageSize = 10, int? admissionId = null)
     {

@@ -41,7 +41,6 @@ public class UserContextMiddleware(RequestDelegate next)
                         userId: user.Id,
                         facultyId: user.FacultyId,
                         collegeId: user.CollegeId,
-                        departmentId: user.DepartmentId,
                         facultyCollegeIds: facultyCollegeIds,
                         roles: (IReadOnlyList<string>)roles);
                 }

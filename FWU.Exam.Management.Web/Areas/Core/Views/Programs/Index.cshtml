@@ -123,10 +123,6 @@
                class="px-3 py-1.5 rounded-full @(currentSort == "level" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
             Level @(currentSort == "level" ? (currentSortDir == "asc" ? "?" : "?") : "")
         </a>
-        <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="faculty" asp-route-sortDir="@(currentSort == "faculty" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort == "faculty" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
-            Department @(currentSort == "faculty" ? (currentSortDir == "asc" ? "?" : "?") : "")
-        </a>
         <a asp-action="Index" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="duration" asp-route-sortDir="@(currentSort == "duration" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "duration" ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600") hover:bg-cyan-50">
             Duration @(currentSort == "duration" ? (currentSortDir == "asc" ? "?" : "?") : "")
@@ -153,7 +149,6 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program Code</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program Name</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Level</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Department</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Board</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Duration</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Seats</th>
@@ -174,7 +169,6 @@
                             }
                         </td>
                         <td class="px-4 py-3 text-gray-600">@item.Level?.LevelName</td>
-                        <td class="px-4 py-3 text-gray-600">@item.Department?.DepartmentCode</td>
                         <td class="px-4 py-3 text-gray-600">@item.Board?.BoardName</td>
                         <td class="px-4 py-3 text-gray-600">@item.Duration</td>
                         <td class="px-4 py-3 text-right">
@@ -261,8 +255,6 @@
                     <div class="text-gray-800">@(string.IsNullOrEmpty(item.RollNumberPrefix) ? "ï¿½" : item.RollNumberPrefix)</div>
                     <div class="text-gray-500">Level</div>
                     <div class="text-gray-800">@item.Level?.LevelName</div>
-                    <div class="text-gray-500">Department</div>
-                    <div class="text-gray-800">@item.Department?.DepartmentCode</div>
                     <div class="text-gray-500">Board</div>
                     <div class="text-gray-800">@item.Board?.BoardName</div>
                     <div class="text-gray-500">Duration</div>

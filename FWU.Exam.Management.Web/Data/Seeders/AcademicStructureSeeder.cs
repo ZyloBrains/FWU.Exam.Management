@@ -12,102 +12,30 @@ public static class AcademicStructureSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        // ----- Departments (fill missing ones not created by existing seeders) -----
-        if (!await context.Departments.AnyAsync(d => d.DepartmentCode == "LAW"))
-        {
-            context.Departments.Add(new Department { DepartmentCode = "LAW", DepartmentName = "Law", ShortName = "LAW", IsActive = true });
-        }
-        if (!await context.Departments.AnyAsync(d => d.DepartmentCode == "AGR"))
-        {
-            context.Departments.Add(new Department { DepartmentCode = "AGR", DepartmentName = "Agriculture", ShortName = "AGR", IsActive = true });
-        }
-        if (!await context.Departments.AnyAsync(d => d.DepartmentCode == "HSC"))
-        {
-            context.Departments.Add(new Department { DepartmentCode = "HSC", DepartmentName = "Health Sciences", ShortName = "HSC", IsActive = true });
-        }
-        await context.SaveChangesAsync();
-
         // ----- Programs (fill missing ones) -----
         var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
         var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "MA");
-        var deptMgmt = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "MGMT");
-        var deptSci = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "SCI");
-        var deptEngg = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "ENGG");
-        var deptEdu = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "EDU");
-        var deptHum = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "HUM");
-        var deptLaw = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "LAW");
-        var deptAgr = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "AGR");
-        var deptHsc = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "HSC");
 
         if (bachelorLevel != null)
         {
-            // Management programs
-            if (deptMgmt != null)
-            {
-                await AddProgramIfMissing(context, "BPA", "Bachelor of Public Administration", "BPA", bachelorLevel.Id, deptMgmt.Id, 4, "BPA");
-            }
-
-            // Science & Technology programs
-            if (deptSci != null)
-            {
-                await AddProgramIfMissing(context, "BSC", "Bachelor of Science (General)", "B.Sc.", bachelorLevel.Id, deptSci.Id, 4, "BSC");
-                await AddProgramIfMissing(context, "BMT", "Bachelor of Medical Lab Technology", "BMLT", bachelorLevel.Id, deptSci.Id, 4, "BMLT");
-            }
-
-            // Engineering programs
-            if (deptEngg != null)
-            {
-                await AddProgramIfMissing(context, "BEEE", "Bachelor of Engineering in Electrical & Electronics", "BE Electrical", bachelorLevel.Id, deptEngg.Id, 4, "BEEE");
-            }
-
-            // Education programs
-            if (deptEdu != null)
-            {
-                await AddProgramIfMissing(context, "BED", "Bachelor of Education", "B.Ed.", bachelorLevel.Id, deptEdu.Id, 4, "BED");
-            }
-
-            // Humanities programs
-            if (deptHum != null)
-            {
-                await AddProgramIfMissing(context, "BA", "Bachelor of Arts", "BA", bachelorLevel.Id, deptHum.Id, 4, "BA");
-                await AddProgramIfMissing(context, "BSW", "Bachelor of Social Work", "BSW", bachelorLevel.Id, deptHum.Id, 4, "BSW");
-            }
-
-            // Law programs
-            if (deptLaw != null)
-            {
-                await AddProgramIfMissing(context, "LLB", "Bachelor of Laws", "LLB", bachelorLevel.Id, deptLaw.Id, 5, "LLB");
-            }
-
-            // Agriculture programs
-            if (deptAgr != null)
-            {
-                await AddProgramIfMissing(context, "BSCAG", "Bachelor of Science in Agriculture", "B.Sc. Ag.", bachelorLevel.Id, deptAgr.Id, 4, "AG");
-            }
-
-            // Health Sciences programs
-            if (deptHsc != null)
-            {
-                await AddProgramIfMissing(context, "BPH", "Bachelor of Public Health", "BPH", bachelorLevel.Id, deptHsc.Id, 4, "BPH");
-                await AddProgramIfMissing(context, "BN", "Bachelor of Nursing", "BN", bachelorLevel.Id, deptHsc.Id, 4, "BN");
-            }
+            await AddProgramIfMissing(context, "BPA", "Bachelor of Public Administration", "BPA", bachelorLevel.Id, 4, "BPA");
+            await AddProgramIfMissing(context, "BSC", "Bachelor of Science (General)", "B.Sc.", bachelorLevel.Id, 4, "BSC");
+            await AddProgramIfMissing(context, "BMT", "Bachelor of Medical Lab Technology", "BMLT", bachelorLevel.Id, 4, "BMLT");
+            await AddProgramIfMissing(context, "BEEE", "Bachelor of Engineering in Electrical & Electronics", "BE Electrical", bachelorLevel.Id, 4, "BEEE");
+            await AddProgramIfMissing(context, "BED", "Bachelor of Education", "B.Ed.", bachelorLevel.Id, 4, "BED");
+            await AddProgramIfMissing(context, "BA", "Bachelor of Arts", "BA", bachelorLevel.Id, 4, "BA");
+            await AddProgramIfMissing(context, "BSW", "Bachelor of Social Work", "BSW", bachelorLevel.Id, 4, "BSW");
+            await AddProgramIfMissing(context, "LLB", "Bachelor of Laws", "LLB", bachelorLevel.Id, 5, "LLB");
+            await AddProgramIfMissing(context, "BSCAG", "Bachelor of Science in Agriculture", "B.Sc. Ag.", bachelorLevel.Id, 4, "AG");
+            await AddProgramIfMissing(context, "BPH", "Bachelor of Public Health", "BPH", bachelorLevel.Id, 4, "BPH");
+            await AddProgramIfMissing(context, "BN", "Bachelor of Nursing", "BN", bachelorLevel.Id, 4, "BN");
         }
 
-        // Master level programs
         if (masterLevel != null)
         {
-            if (deptMgmt != null)
-            {
-                await AddProgramIfMissing(context, "MBA", "Master of Business Administration", "MBA", masterLevel.Id, deptMgmt.Id, 2, "MBA");
-            }
-            if (deptSci != null)
-            {
-                await AddProgramIfMissing(context, "MSCSIT", "Master of Science in Computer Science and Information Technology", "M.Sc. CSIT", masterLevel.Id, deptSci.Id, 2, "MSCSIT");
-            }
-            if (deptEdu != null)
-            {
-                await AddProgramIfMissing(context, "MED", "Master of Education", "M.Ed.", masterLevel.Id, deptEdu.Id, 2, "MED");
-            }
+            await AddProgramIfMissing(context, "MBA", "Master of Business Administration", "MBA", masterLevel.Id, 2, "MBA");
+            await AddProgramIfMissing(context, "MSCSIT", "Master of Science in Computer Science and Information Technology", "M.Sc. CSIT", masterLevel.Id, 2, "MSCSIT");
+            await AddProgramIfMissing(context, "MED", "Master of Education", "M.Ed.", masterLevel.Id, 2, "MED");
         }
 
         await context.SaveChangesAsync();
@@ -121,25 +49,6 @@ public static class AcademicStructureSeeder
         if (!hscFacultyExists)
         {
             context.Faculties.Add(new Faculty { Name = "Faculty of Health Sciences", OfficeCode = "HSC", ContactNumber = "099-520729", Address = "Mahendranagar, Kanchanpur", Email = "health@fwu.edu.np" });
-        }
-        await context.SaveChangesAsync();
-
-        // ----- Assign departments to faculties -----
-        var foeMgt = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-MGT");
-        var foeHss = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-HSS");
-        var foeLaw = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FOL");
-        var foeAgr = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "AGR");
-        var foeHsc = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "HSC");
-        var foeNrm = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "NRM");
-        var deptFoeMap = new[] {
-            ("LAW", foeLaw), ("AGR", foeAgr), ("HSC", foeHsc), ("NRM", foeNrm),
-            ("MGMT", foeMgt), ("HUM", foeHss), ("EDU", foeMgt)
-        };
-        foreach (var (code, faculty) in deptFoeMap)
-        {
-            var dept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == code);
-            if (dept != null && faculty != null && dept.FacultyId == null)
-                dept.FacultyId = faculty.Id;
         }
         await context.SaveChangesAsync();
 
@@ -175,7 +84,7 @@ public static class AcademicStructureSeeder
         await context.SaveChangesAsync();
     }
 
-    private static async Task AddProgramIfMissing(AppDbContext context, string code, string name, string shortName, int levelId, int departmentId, int duration, string prefix)
+    private static async Task AddProgramIfMissing(AppDbContext context, string code, string name, string shortName, int levelId, int duration, string prefix)
     {
         var exists = await context.Programs.AnyAsync(p => p.ProgramCode == code);
         if (!exists)
@@ -186,7 +95,6 @@ public static class AcademicStructureSeeder
                 ProgramName = name,
                 ShortName = shortName,
                 LevelId = levelId,
-                DepartmentId = departmentId,
                 Duration = duration,
                 IsActive = true,
                 RollNumberPrefix = prefix,

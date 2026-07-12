@@ -138,6 +138,14 @@
             <span class="summary-label">SSL Disabled:</span>
             <span class="summary-value">@Model.Count(x => !x.EnableSsl)</span>
         </span>
+        <span class="summary-item">
+            <span class="summary-label">Active:</span>
+            <span class="summary-value">@Model.Count(x => x.IsActive)</span>
+        </span>
+        <span class="summary-item">
+            <span class="summary-label">Inactive:</span>
+            <span class="summary-value">@Model.Count(x => !x.IsActive)</span>
+        </span>
     </div>
 
     <table>
@@ -148,6 +156,7 @@
                 <th>Port</th>
                 <th>Username</th>
                 <th>SSL</th>
+                <th>Active</th>
             </tr>
         </thead>
         <tbody>
@@ -168,6 +177,16 @@
                             <span class="ssl-disabled">? Disabled</span>
                         }
                     </td>
+                    <td>
+                        @if (item.IsActive)
+                        {
+                            <span class="ssl-enabled">? Active</span>
+                        }
+                        else
+                        {
+                            <span class="ssl-disabled">? Inactive</span>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -182,7 +201,7 @@
 
     <div class="footer">
         <p>This is a system-generated report from Examination Management System.</p>
-        <p>© @DateTime.Now.Year - All Rights Reserved</p>
+        <p>ï¿½ @DateTime.Now.Year - All Rights Reserved</p>
     </div>
 
     <script>

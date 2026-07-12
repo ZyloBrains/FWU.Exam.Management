@@ -15,38 +15,14 @@ public static class NaturalResourceManagementSeeder
         var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
         var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "MA");
 
-        // Department
-        Department? nrmDept;
-        if (!await context.Departments.AnyAsync(d => d.DepartmentCode == "NRM"))
-        {
-            nrmDept = new Department
-            {
-                DepartmentCode = "NRM",
-                DepartmentName = "Natural Resource Management",
-                ShortName = "NRM",
-                IsActive = true,
-            };
-            context.Departments.Add(nrmDept);
-            await context.SaveChangesAsync();
-        }
-        else
-        {
-            nrmDept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "NRM");
-        }
-        if (nrmDept != null && nrmFaculty != null && nrmDept.FacultyId == null)
-        {
-            nrmDept.FacultyId = nrmFaculty.Id;
-            await context.SaveChangesAsync();
-        }
-
         // Programs
-        if (bachelorLevel != null && nrmDept != null)
+        if (bachelorLevel != null)
         {
-            await AddProgramIfMissing(context, "BScNRM", "Bachelor of Science in Natural Resource Management", "B.Sc. NRM", bachelorLevel.Id, nrmDept.Id, 4, "NRM");
+            await AddProgramIfMissing(context, "BScNRM", "Bachelor of Science in Natural Resource Management", "B.Sc. NRM", bachelorLevel.Id, 4, "NRM");
         }
-        if (masterLevel != null && nrmDept != null)
+        if (masterLevel != null)
         {
-            await AddProgramIfMissing(context, "MScNRM", "Master of Science in Natural Resource Management", "M.Sc. NRM", masterLevel.Id, nrmDept.Id, 2, "MNRM");
+            await AddProgramIfMissing(context, "MScNRM", "Master of Science in Natural Resource Management", "M.Sc. NRM", masterLevel.Id, 2, "MNRM");
         }
         await context.SaveChangesAsync();
 
@@ -96,7 +72,7 @@ public static class NaturalResourceManagementSeeder
         }
     }
 
-    private static async Task AddProgramIfMissing(AppDbContext context, string code, string name, string shortName, int levelId, int departmentId, int duration, string prefix)
+    private static async Task AddProgramIfMissing(AppDbContext context, string code, string name, string shortName, int levelId, int duration, string prefix)
     {
         var exists = await context.Programs.AnyAsync(p => p.ProgramCode == code);
         if (!exists)
@@ -107,7 +83,6 @@ public static class NaturalResourceManagementSeeder
                 ProgramName = name,
                 ShortName = shortName,
                 LevelId = levelId,
-                DepartmentId = departmentId,
                 Duration = duration,
                 IsActive = true,
                 RollNumberPrefix = prefix,

@@ -100,7 +100,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
                 query = query.Where(a => a.CollegeId == userContext.CollegeId.Value);
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(a => a.Program != null && a.Program.Department != null && a.Program.Department.FacultyId == userContext.FacultyId.Value);
+                query = query.Where(a => a.Program != null && a.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
         }
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -272,7 +272,6 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                     CollegeId = application.CollegeId,
                     ProgramId = application.ProgramId,
                     LevelId = application.Program?.LevelId ?? 0,
-                    DepartmentId = application.Program?.DepartmentId ?? 0,
                     FirstName = application.FirstName,
                     MiddleName = application.MiddleName,
                     LastName = application.LastName!,

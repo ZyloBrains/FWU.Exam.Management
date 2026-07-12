@@ -6,7 +6,6 @@ public class StudentRegistrationSelectListsDto
 {
     public List<SelectOption> AcademicYears { get; set; } = [];
     public List<SelectOption> Levels { get; set; } = [];
-    public List<SelectOption> Departments { get; set; } = [];
     public List<SelectOption> Colleges { get; set; } = [];
     public List<SelectOption> Genders { get; set; } = [];
     public List<SelectOption> StudentCategories { get; set; } = [];

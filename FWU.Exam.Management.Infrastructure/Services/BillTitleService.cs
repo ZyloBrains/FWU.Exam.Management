@@ -27,10 +27,11 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
             {
-                var facultyDeptIds = context.Departments
-                    .Where(d => d.FacultyId == userContext.FacultyId.Value)
-                    .Select(d => d.Id);
-                query = query.Where(bt => bt.ProgramsId != null && context.Programs.Any(p => p.Id == bt.ProgramsId && facultyDeptIds.Contains(p.DepartmentId)));
+                var collegeProgramIds = context.CollegePrograms
+                    .Where(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value))
+                    .Select(cp => cp.ProgramId)
+                    .Distinct();
+                query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
             }
         }
 
@@ -72,10 +73,11 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
             {
-                var facultyDeptIds = context.Departments
-                    .Where(d => d.FacultyId == userContext.FacultyId.Value)
-                    .Select(d => d.Id);
-                query = query.Where(bt => bt.ProgramsId != null && context.Programs.Any(p => p.Id == bt.ProgramsId && facultyDeptIds.Contains(p.DepartmentId)));
+                var collegeProgramIds = context.CollegePrograms
+                    .Where(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value))
+                    .Select(cp => cp.ProgramId)
+                    .Distinct();
+                query = query.Where(bt => bt.ProgramsId != null && collegeProgramIds.Contains(bt.ProgramsId.Value));
             }
         }
 
@@ -156,15 +158,6 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
                     .ToList();
                 query = query.Where(e => programIds.Contains(e.ProgramId));
             }
-            else if (userContext.IsDepartmentAdmin && userContext.DepartmentId.HasValue)
-            {
-                var programIds = context.Programs
-                    .Where(p => p.DepartmentId == userContext.DepartmentId.Value)
-                    .Select(p => p.Id)
-                    .Distinct()
-                    .ToList();
-                query = query.Where(e => programIds.Contains(e.ProgramId));
-            }
         }
 
         return await query.ToListAsync();
@@ -184,9 +177,9 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
                 query = query.Where(p => collegeProgramIds.Contains(p.Id));
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(p => p.Department != null && p.Department.FacultyId == userContext.FacultyId.Value);
-            else if (userContext.IsDepartmentAdmin && userContext.DepartmentId.HasValue)
-                query = query.Where(p => p.DepartmentId == userContext.DepartmentId.Value);
+            {
+                query = query.Where(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+            }
         }
         return await query.ToListAsync();
     }

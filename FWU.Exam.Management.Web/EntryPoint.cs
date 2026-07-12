@@ -103,7 +103,6 @@ public partial class EntryPoint
         builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
         builder.Services.AddScoped<ICollegeService, CollegeService>();
         builder.Services.AddScoped<IFacultyService, FacultyService>();
-        builder.Services.AddScoped<IDepartmentService, DepartmentService>();
         builder.Services.AddScoped<IDashboardService, DashboardService>();
         builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
         builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
@@ -236,11 +235,12 @@ public partial class EntryPoint
                 // Grading schemes
                 await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
 
-                // Payment gateways
-                await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            // Payment gateways
+            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
 
                 // Admin / test users (depends on roles, colleges, faculties being seeded)
                 await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);

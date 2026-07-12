@@ -36,11 +36,7 @@ public class TeacherSubjectAssignmentService(AppDbContext context, IUserContext 
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
             {
-                query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.Department != null && tsa.SubjectOffering.Program.Department.FacultyId == userContext.FacultyId.Value);
-            }
-            else if (userContext.IsDepartmentAdmin && userContext.DepartmentId.HasValue)
-            {
-                query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.DepartmentId == userContext.DepartmentId.Value);
+                query = query.Where(tsa => tsa.SubjectOffering != null && tsa.SubjectOffering.Program != null && tsa.SubjectOffering.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
             }
         }
 

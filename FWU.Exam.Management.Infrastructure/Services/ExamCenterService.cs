@@ -179,8 +179,6 @@ public class ExamCenterService(AppDbContext context, IUserContext userContext) :
                 query = query.Where(ec => ec.College != null && ec.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value));
             else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
                 query = query.Where(ec => ec.CollegeId == userContext.CollegeId.Value);
-            else if (userContext.IsDepartmentAdmin && userContext.DepartmentId.HasValue)
-                query = query.Where(ec => ec.College != null && ec.College.CollegePrograms!.Any(cp => cp.Program!.DepartmentId == userContext.DepartmentId.Value));
             else
                 query = query.Where(ec => false);
         }

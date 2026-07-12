@@ -491,7 +491,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
@@ -553,7 +553,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConvertToAdmission(int id)
     {

@@ -15,10 +15,6 @@ public class Program
     [Display(Name = "Level Id")]
     public int LevelId { get; set; }
 
-    [Range(1, int.MaxValue)]
-    [Display(Name = "Department Id")]
-    public int DepartmentId { get; set; }
-
     [Display(Name = "Board Id")]
     public int? BoardId { get; set; }
 
@@ -61,8 +57,6 @@ public class Program
     public string? RollNumberPrefix { get; set; }
 
     public virtual Level? Level { get; set; }
-
-    public virtual Department? Department { get; set; }
 
     public virtual Board? Board { get; set; }
 

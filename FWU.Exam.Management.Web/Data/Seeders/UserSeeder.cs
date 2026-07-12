@@ -24,7 +24,6 @@ public static class UserSeeder
         ("faculty@admin.com", "Faculty Admin (SOE)", Role.FacultyAdmin, "SOE", null),
         ("college@gmail.com", "College Admin (COC)", Role.CollegeAdmin, null, "COC"),
         ("campuschief@gmail.com", "College Admin (SOM)", Role.CollegeAdmin, null, "SOM"),
-        ("department@gmail.com", "Department Admin (SOE)", Role.DepartmentAdmin, "SOE", null),
         ("student@gmail.com", "Test Student (COC)", Role.Student, null, "COC"),
         ("student2@gmail.com", "Test Student (SOM)", Role.Student, null, "SOM"),
     ];

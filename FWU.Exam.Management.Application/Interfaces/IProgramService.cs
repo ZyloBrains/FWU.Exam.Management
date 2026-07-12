@@ -13,5 +13,5 @@ public interface IProgramService
     Task UpdateProgramAsync(Program program);
     Task DeleteProgramAsync(int id);
     Task<bool> ProgramExistsAsync(int id);
-    Task<(List<Board> Boards, List<Department> Departments, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? departmentId = null, int? levelId = null);
+    Task<(List<Board> Boards, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? levelId = null);
 }

@@ -45,7 +45,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
         var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Program Code,Program Name,Short Name,Level,Faculty,Board,Program Period Type,Duration,Grand Total Marks,Has Multiple Intakes,Number of Seats,Scholarship Seats,Roll Number Prefix,Remarks,Status");
+        sb.AppendLine("Program Code,Program Name,Short Name,Level,Board,Program Period Type,Duration,Grand Total Marks,Has Multiple Intakes,Number of Seats,Scholarship Seats,Roll Number Prefix,Remarks,Status");
 
         foreach (var p in items)
         {
@@ -53,7 +53,6 @@ public class ProgramsController(IProgramService programService, IUserContext use
                            $"{EscapeCsv(p.ProgramName)}," +
                            $"{EscapeCsv(p.ShortName)}," +
                            $"{EscapeCsv(p.Level?.LevelName)}," +
-                            $"{EscapeCsv(p.Department?.DepartmentCode)}," +
                            $"{EscapeCsv(p.Board?.BoardName)}," +
                            $"{p.Duration}," +
                            $"{p.GrandTotalMarks}," +
@@ -92,7 +91,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Programs");
 
-        var headers = new[] { "Program Code", "Program Name", "Short Name", "Level", "Faculty", "Board", "Program Period Type", "Duration", "Grand Total Marks", "Has Multiple Intakes", "Number of Seats", "Scholarship Seats", "Roll Number Prefix", "Remarks", "Status" };
+        var headers = new[] { "Program Code", "Program Name", "Short Name", "Level", "Board", "Program Period Type", "Duration", "Grand Total Marks", "Has Multiple Intakes", "Number of Seats", "Scholarship Seats", "Roll Number Prefix", "Remarks", "Status" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -108,8 +107,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
             worksheet.Cell(row, 2).Value = p.ProgramName;
             worksheet.Cell(row, 3).Value = p.ShortName;
             worksheet.Cell(row, 4).Value = p.Level?.LevelName;
-            worksheet.Cell(row, 5).Value = p.Department?.DepartmentCode;
-            worksheet.Cell(row, 6).Value = p.Board?.BoardName;
+            worksheet.Cell(row, 5).Value = p.Board?.BoardName;
             worksheet.Cell(row, 7).Value = "";
             worksheet.Cell(row, 8).Value = p.Duration;
             worksheet.Cell(row, 9).Value = p.GrandTotalMarks;
@@ -144,9 +142,8 @@ public class ProgramsController(IProgramService programService, IUserContext use
     [RequirePermission("programs.create")]
     public async Task<IActionResult> Create()
     {
-        var (boards, departments, levels) = await programService.GetSelectListsAsync();
+        var (boards, levels) = await programService.GetSelectListsAsync();
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName");
-        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode");
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName");
         return View();
     }
@@ -154,7 +151,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
     [RequirePermission("programs.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
+    public async Task<IActionResult> Create([Bind("Id,LevelId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
     {
         if (ModelState.IsValid)
         {
@@ -162,9 +159,8 @@ public class ProgramsController(IProgramService programService, IUserContext use
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
+        var (boards, levels) = await programService.GetSelectListsAsync(program.BoardId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
@@ -177,9 +173,8 @@ public class ProgramsController(IProgramService programService, IUserContext use
         var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
-        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
+        var (boards, levels) = await programService.GetSelectListsAsync(program.BoardId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }
@@ -187,7 +182,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
     [RequirePermission("programs.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,DepartmentId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,BoardId,ProgramCode,ProgramName,ShortName,Duration,GrandTotalMarks,HasMultipleIntakes,NumberOfSeats,ScholarshipSeats,Remarks,IsActive,RollNumberPrefix")] Program program)
     {
         if (id != program.Id) return NotFound();
 
@@ -206,9 +201,8 @@ public class ProgramsController(IProgramService programService, IUserContext use
             return RedirectToAction(nameof(Index));
         }
 
-        var (boards, departments, levels) = await programService.GetSelectListsAsync(program.BoardId, program.DepartmentId, program.LevelId);
+        var (boards, levels) = await programService.GetSelectListsAsync(program.BoardId, program.LevelId);
         ViewData["BoardId"] = new SelectList(boards, "Id", "BoardName", program.BoardId);
-        ViewData["DepartmentId"] = new SelectList(departments, "Id", "DepartmentCode", program.DepartmentId);
         ViewData["LevelId"] = new SelectList(levels, "Id", "LevelName", program.LevelId);
         return View(program);
     }

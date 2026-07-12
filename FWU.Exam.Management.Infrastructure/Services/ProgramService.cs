@@ -16,7 +16,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
     {
         var query = context.Programs
             .Include(p => p.Board)
-            .Include(p => p.Department)
             .Include(p => p.Level)
             .AsNoTracking();
         query = query.ApplyScope(userContext);
@@ -29,7 +28,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
                 p.ShortName.Contains(search) ||
                 (p.Remarks != null && p.Remarks.Contains(search)) ||
                 (p.Level != null && p.Level.LevelName.Contains(search)) ||
-                (p.Department != null && p.Department.DepartmentCode.Contains(search)) ||
                 (p.Board != null && p.Board.BoardName.Contains(search)));
         }
 
@@ -50,7 +48,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
     {
         var query = context.Programs
             .Include(p => p.Board)
-            .Include(p => p.Department)
             .Include(p => p.Level)
             .AsNoTracking();
         query = query.ApplyScope(userContext);
@@ -63,7 +60,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
                 p.ShortName.Contains(search) ||
                 (p.Remarks != null && p.Remarks.Contains(search)) ||
                 (p.Level != null && p.Level.LevelName.Contains(search)) ||
-                (p.Department != null && p.Department.DepartmentCode.Contains(search)) ||
                 (p.Board != null && p.Board.BoardName.Contains(search)));
         }
 
@@ -78,7 +74,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
     {
         return await context.Programs
             .Include(p => p.Board)
-            .Include(p => p.Department)
             .Include(p => p.Level)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
@@ -110,16 +105,12 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
         return await context.Programs.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<Board> Boards, List<Department> Departments, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? departmentId = null, int? levelId = null)
+    public async Task<(List<Board> Boards, List<Level> Levels)> GetSelectListsAsync(int? boardId = null, int? levelId = null)
     {
         var boards = await context.Boards.AsNoTracking().ToListAsync();
-        var departmentsQuery = context.Departments.AsNoTracking();
-        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-            departmentsQuery = departmentsQuery.Where(d => d.FacultyId == userContext.FacultyId.Value);
-        var departments = await departmentsQuery.ToListAsync();
         var levels = await context.Levels.AsNoTracking().ToListAsync();
 
-        return (boards, departments, levels);
+        return (boards, levels);
     }
 
     private static Expression<Func<Program, object>> GetSortProperty(string sort)
@@ -130,7 +121,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
             "programname" => p => p.ProgramName,
             "shortname" => p => p.ShortName,
             "level" => p => p.Level.LevelName,
-            "faculty" => p => p.Department.DepartmentCode,
             "board" => p => p.Board.BoardName,
             "duration" => p => p.Duration,
             "grandtotalmarks" => p => p.GrandTotalMarks,

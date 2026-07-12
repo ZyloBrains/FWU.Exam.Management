@@ -64,14 +64,14 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
             .ToListAsync();
 
         var totalRoles = await roleManager.Roles.CountAsync();
-        var totalPrograms = await context.Programs.ApplyScope(userContext).CountAsync(p => p.Department != null && p.Department.FacultyId == facultyId);
+        var totalPrograms = await context.Programs.ApplyScope(userContext).CountAsync(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties.Any(f => f.Id == facultyId)));
         var totalExamSchedules = await context.ExamSchedules.ApplyScope(userContext).CountAsync(es => es.CollegeId != null && collegeIds.Contains(es.CollegeId.Value));
-        var totalSubjects = await context.SubjectCatalogs.ApplyScope(userContext).CountAsync(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.Department != null && so.Program.Department.FacultyId == facultyId));
+        var totalSubjects = await context.SubjectCatalogs.ApplyScope(userContext).CountAsync(s => s.SubjectOfferings != null && s.SubjectOfferings.Any(so => so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties.Any(f => f.Id == facultyId))));
         var totalAcademicYears = await context.AcademicYears.CountAsync();
         var totalBanks = await context.Banks.CountAsync();
         var totalBoards = await context.Boards.CountAsync();
         var totalBatches = await context.Batches.CountAsync();
-        var activePrograms = await context.Programs.ApplyScope(userContext).CountAsync(p => p.Department != null && p.Department.FacultyId == facultyId && p.IsActive);
+        var activePrograms = await context.Programs.ApplyScope(userContext).CountAsync(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties.Any(f => f.Id == facultyId)) && p.IsActive);
         var activeExamSchedules = await context.ExamSchedules.ApplyScope(userContext).CountAsync(es => es.CollegeId != null && collegeIds.Contains(es.CollegeId.Value) && es.IsActive);
         var totalColleges = await context.Colleges.ApplyScope(userContext).CountAsync(c => c.Faculties.Any(f => f.Id == facultyId));
         var activeColleges = await context.Colleges.ApplyScope(userContext).CountAsync(c => c.Faculties.Any(f => f.Id == facultyId) && c.IsActive);

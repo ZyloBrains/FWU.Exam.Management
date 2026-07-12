@@ -19,7 +19,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
@@ -62,11 +61,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (student.LevelId != 0)
         {
             query = query.Where(es => es.LevelId == null || es.LevelId == student.LevelId);
-        }
-
-        if (student.DepartmentId != 0)
-        {
-            query = query.Where(es => es.Program != null && es.Program.DepartmentId == student.DepartmentId);
         }
 
         return await query.ToListAsync();

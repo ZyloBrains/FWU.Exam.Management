@@ -31,7 +31,6 @@ public static class Permissions
     public const string GroupCollegePrograms = "collegeprograms";
     public const string GroupNotices = "notices";
     public const string GroupBoards = "boards";
-    public const string GroupDepartments = "departments";
     public const string GroupLevels = "levels";
     public const string GroupSmtp = "smtp";
     public const string GroupSms = "sms";
@@ -226,12 +225,6 @@ public static class Permissions
     public const string BoardsCreate = "boards.create";
     public const string BoardsEdit = "boards.edit";
     public const string BoardsDelete = "boards.delete";
-
-    // Departments
-    public const string DepartmentsView = "departments.view";
-    public const string DepartmentsCreate = "departments.create";
-    public const string DepartmentsEdit = "departments.edit";
-    public const string DepartmentsDelete = "departments.delete";
 
     // Levels
     public const string LevelsView = "levels.view";
@@ -486,11 +479,6 @@ public static class Permissions
         (BoardsEdit, "Edit Boards", GroupBoards, "Edit existing boards"),
         (BoardsDelete, "Delete Boards", GroupBoards, "Delete boards"),
 
-        (DepartmentsView, "View Departments", GroupDepartments, "View department list"),
-        (DepartmentsCreate, "Create Departments", GroupDepartments, "Create new departments"),
-        (DepartmentsEdit, "Edit Departments", GroupDepartments, "Edit existing departments"),
-        (DepartmentsDelete, "Delete Departments", GroupDepartments, "Delete departments"),
-
         (LevelsView, "View Levels", GroupLevels, "View level list"),
         (LevelsCreate, "Create Levels", GroupLevels, "Create new levels"),
         (LevelsEdit, "Edit Levels", GroupLevels, "Edit existing levels"),
@@ -638,7 +626,6 @@ public static class Permissions
 
             NoticesView, NoticesCreate, NoticesEdit, NoticesDelete,
             BoardsView, BoardsCreate, BoardsEdit, BoardsDelete,
-            DepartmentsView, DepartmentsCreate, DepartmentsEdit, DepartmentsDelete,
 
             SmsView, SmsCreate, SmsEdit, SmsDelete,
         ],
@@ -677,33 +664,6 @@ public static class Permissions
             BanksView, BanksCreate, BanksEdit,
             PaymentTypesView, PaymentTypesCreate, PaymentTypesEdit, PaymentTypesDelete,
             BillTitlesView, BillTitlesCreate, BillTitlesEdit, BillTitlesDelete,
-        ],
-
-        ["DepartmentAdmin"] =
-        [
-            DashboardView,
-
-            SubjectsView,
-            SubjectTypesView,
-            SubjectOfferingsView,
-            SemestersView,
-            AcademicYearsView,
-
-            ExamSchedulesView,
-
-            GradingSchemesView,
-            ExamRegistrationView,
-            ExamSubjectResultsView,
-            ResultRecordsView,
-            AdmitCardsView,
-            RetotalingView,
-
-            StudentsView, StudentsCreate, StudentsEdit,
-            StudentAdmissionsView,
-
-            NoticesView,
-            DepartmentsView,
-            LevelsView,
         ],
 
         ["Teacher"] =

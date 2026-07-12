@@ -33,7 +33,7 @@ public class College : ITenantScoped
 
     [Required]
     [Display(Name = "Established Date")]
-    public DateTime EstablishedDate { get; set; }
+    public DateTime? EstablishedDate { get; set; }
 
     [Display(Name = "Closed Date")]
     public DateTime? ClosedDate { get; set; }

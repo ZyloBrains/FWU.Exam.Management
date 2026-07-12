@@ -76,17 +76,6 @@ public static class ReferenceDataSeeder
         await context.Levels.AddRangeAsync(levels);
         await context.SaveChangesAsync();
 
-        // Departments
-        var departments = new[]
-        {
-            new Department { DepartmentCode = "MGMT", DepartmentName = "Management", ShortName = "MGT", IsActive = true },
-            new Department { DepartmentCode = "SCI", DepartmentName = "Science", ShortName = "SCI", IsActive = true },
-            new Department { DepartmentCode = "EDU", DepartmentName = "Education", ShortName = "EDU", IsActive = true },
-            new Department { DepartmentCode = "HUM", DepartmentName = "Humanities", ShortName = "HUM", IsActive = true },
-        };
-        await context.Departments.AddRangeAsync(departments);
-        await context.SaveChangesAsync();
-
         // Programs
         var programs = new[]
         {
@@ -96,7 +85,6 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Business Administration",
                 ShortName = "BBA",
                 LevelId = levels[0].Id,
-                DepartmentId = departments[0].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -106,7 +94,6 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Business Studies",
                 ShortName = "BBS",
                 LevelId = levels[0].Id,
-                DepartmentId = departments[0].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -116,7 +103,6 @@ public static class ReferenceDataSeeder
                 ProgramName = "Bachelor of Computer Application",
                 ShortName = "BCA",
                 LevelId = levels[0].Id,
-                DepartmentId = departments[1].Id,
                 Duration = 4,
                 IsActive = true,
             },
@@ -249,56 +235,25 @@ public static class ReferenceDataSeeder
         var foeEdu = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "EDU");
         var foeHss = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FO-HSS");
 
-        // Link departments to their faculties
-        var deptMgt = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "MGMT");
-        if (deptMgt != null && foeMgt != null) deptMgt.FacultyId = foeMgt.Id;
-
-        var deptSci = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "SCI");
-        if (deptSci != null && fst != null) deptSci.FacultyId = fst.Id;
-
-        var deptEdu = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "EDU");
-        if (deptEdu != null && foeEdu != null) deptEdu.FacultyId = foeEdu.Id;
-
-        var deptHum = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "HUM");
-        if (deptHum != null && foeHss != null) deptHum.FacultyId = foeHss.Id;
-
-        await context.SaveChangesAsync();
-
-        Department? enggDept;
-        if (!await context.Departments.AnyAsync(d => d.DepartmentCode == "ENGG"))
-        {
-            enggDept = new Department { DepartmentCode = "ENGG", DepartmentName = "Engineering", ShortName = "ENG", IsActive = true, FacultyId = foe?.Id };
-            context.Departments.Add(enggDept);
-            await context.SaveChangesAsync();
-        }
-        else
-        {
-            enggDept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "ENGG");
-            if (enggDept != null && foe != null && enggDept.FacultyId == null)
-                enggDept.FacultyId = foe.Id;
-            await context.SaveChangesAsync();
-        }
-
         var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
 
-        if (!await context.Programs.AnyAsync(p => p.ProgramCode == "BECT") && enggDept != null && bachelorLevel != null)
+        if (!await context.Programs.AnyAsync(p => p.ProgramCode == "BECT") && bachelorLevel != null)
         {
             context.Programs.AddRange(new[]
             {
-                new Program { ProgramCode = "BECT", ProgramName = "Bachelor of Engineering in Civil", ShortName = "BE Civil", LevelId = bachelorLevel.Id, DepartmentId = enggDept.Id, Duration = 4, IsActive = true },
-                new Program { ProgramCode = "BECP", ProgramName = "Bachelor of Engineering in Computer", ShortName = "BE Computer", LevelId = bachelorLevel.Id, DepartmentId = enggDept.Id, Duration = 4, IsActive = true },
-                new Program { ProgramCode = "BARC", ProgramName = "Bachelor of Architecture", ShortName = "B.Arch", LevelId = bachelorLevel.Id, DepartmentId = enggDept.Id, Duration = 5, IsActive = true },
+                new Program { ProgramCode = "BECT", ProgramName = "Bachelor of Engineering in Civil", ShortName = "BE Civil", LevelId = bachelorLevel.Id, Duration = 4, IsActive = true },
+                new Program { ProgramCode = "BECP", ProgramName = "Bachelor of Engineering in Computer", ShortName = "BE Computer", LevelId = bachelorLevel.Id, Duration = 4, IsActive = true },
+                new Program { ProgramCode = "BARC", ProgramName = "Bachelor of Architecture", ShortName = "B.Arch", LevelId = bachelorLevel.Id, Duration = 5, IsActive = true },
             });
             await context.SaveChangesAsync();
         }
 
-        var sciDept = await context.Departments.FirstOrDefaultAsync(d => d.DepartmentCode == "SCI");
-        if (!await context.Programs.AnyAsync(p => p.ProgramCode == "BSCSIT") && sciDept != null && bachelorLevel != null)
+        if (!await context.Programs.AnyAsync(p => p.ProgramCode == "BSCSIT") && bachelorLevel != null)
         {
             context.Programs.AddRange(new[]
             {
-                new Program { ProgramCode = "BSCSIT", ProgramName = "Bachelor of Science in Computer Science and Information Technology", ShortName = "B.Sc. CSIT", LevelId = bachelorLevel.Id, DepartmentId = sciDept.Id, Duration = 4, IsActive = true },
-                new Program { ProgramCode = "BIT", ProgramName = "Bachelor of Information Technology", ShortName = "BIT", LevelId = bachelorLevel.Id, DepartmentId = sciDept.Id, Duration = 4, IsActive = true },
+                new Program { ProgramCode = "BSCSIT", ProgramName = "Bachelor of Science in Computer Science and Information Technology", ShortName = "B.Sc. CSIT", LevelId = bachelorLevel.Id, Duration = 4, IsActive = true },
+                new Program { ProgramCode = "BIT", ProgramName = "Bachelor of Information Technology", ShortName = "BIT", LevelId = bachelorLevel.Id, Duration = 4, IsActive = true },
             });
             await context.SaveChangesAsync();
         }
@@ -489,6 +444,25 @@ public static class ReferenceDataSeeder
             TransactionCurrency = "NPR",
         };
         context.ConnectIpsPaymentConfigurations.Add(connectIpsConfig);
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedSmsConfigurationAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.SmsConfigurations.AnyAsync())
+            return;
+
+        var smsConfig = new SmsConfiguration
+        {
+            ApiUrl = "https://message.gumpnow.com/api/v1/sms/send/",
+            ApiKey = "change-me",
+            Mode = "prod",
+            Tags = "entrance",
+            IsActive = true
+        };
+        context.SmsConfigurations.Add(smsConfig);
         await context.SaveChangesAsync();
     }
 }
