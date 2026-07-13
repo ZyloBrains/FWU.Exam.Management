@@ -3,22 +3,24 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class SemesterService(AppDbContext context) : ISemesterService
 {
-    public async Task<(List<Semester> Items, int TotalCount)> GetSemestersAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<Semester> Items, int TotalCount)> GetSemestersAsync(int page, int pageSize, string? search, string sort, string sortDir, IUserContext userContext)
     {
-        var query = context.Semesters.AsNoTracking();
+        var query = context.Semesters.AsNoTracking().ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(s =>
-                s.Name.Contains(search) ||
-                s.Code.Contains(search) ||
-                s.Remark.Contains(search));
+                s.Name!.Contains(search) ||
+                s.Code!.Contains(search) ||
+                s.Remark!.Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"
@@ -34,16 +36,16 @@ public class SemesterService(AppDbContext context) : ISemesterService
         return (items, totalCount);
     }
 
-    public async Task<List<Semester>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<List<Semester>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, IUserContext userContext)
     {
-        var query = context.Semesters.AsNoTracking();
+        var query = context.Semesters.AsNoTracking().ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(s =>
-                s.Name.Contains(search) ||
-                s.Code.Contains(search) ||
-                s.Remark.Contains(search));
+                s.Name!.Contains(search) ||
+                s.Code!.Contains(search) ||
+                s.Remark!.Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"
@@ -51,6 +53,16 @@ public class SemesterService(AppDbContext context) : ISemesterService
             : query.OrderBy(GetSortProperty(sort));
 
         return await query.ToListAsync();
+    }
+
+    public async Task<List<Semester>> GetSemestersByFacultyAsync(int? facultyId)
+    {
+        if (facultyId == null) return new List<Semester>();
+        return await context.Semesters
+            .AsNoTracking()
+            .Where(s => s.FacultyId == facultyId.Value)
+            .OrderBy(s => s.Number)
+            .ToListAsync();
     }
 
     public async Task<Semester?> GetSemesterByIdAsync(int id)

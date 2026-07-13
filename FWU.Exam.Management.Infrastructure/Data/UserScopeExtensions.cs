@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -17,6 +18,14 @@ public static class UserScopeExtensions
         if (user.FacultyId.HasValue)
             return query.Where(f => f.Id == user.FacultyId.Value);
         return query.Where(f => false);
+    }
+
+    public static IQueryable<Semester> ApplyScope(this IQueryable<Semester> query, IUserContext user)
+    {
+        if (user.IsSuperAdmin) return query;
+        if (user.FacultyId.HasValue)
+            return query.Where(s => s.FacultyId == user.FacultyId.Value);
+        return query.Where(s => false);
     }
 
     public static IQueryable<College> ApplyScope(this IQueryable<College> query, IUserContext user)

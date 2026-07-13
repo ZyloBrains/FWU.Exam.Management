@@ -56,6 +56,10 @@
                 <p class="text-sm font-medium text-gray-600">Academic Year</p>
                 <p class="mt-1 text-gray-800">@(Model.AcademicYear?.AcademicYearName ?? "-")</p>
             </div>
+            <div>
+                <p class="text-sm font-medium text-gray-600">Faculty</p>
+                <p class="mt-1 text-gray-800">@(Model.Faculty?.Name ?? "-")</p>
+            </div>
             <div class="md:col-span-2">
                 <p class="text-sm font-medium text-gray-600">Remark</p>
                 <p class="mt-1 text-gray-800">@(Model.Remark ?? "-")</p>

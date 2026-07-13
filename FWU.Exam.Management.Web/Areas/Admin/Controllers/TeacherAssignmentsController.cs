@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Teachers;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -111,7 +112,7 @@ public class TeacherAssignmentsController(
             programsQuery = programsQuery.Where(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
         ViewBag.ProgramId = new SelectList(await programsQuery.ToListAsync(), "Id", "ProgramName");
 
-        ViewBag.SemesterId = new SelectList(await context.Semesters.AsNoTracking().ToListAsync(), "Id", "Name");
+        ViewBag.SemesterId = new SelectList(await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync(), "Id", "Name");
 
         if (model?.SubjectOfferingId > 0)
         {
