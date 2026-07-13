@@ -93,18 +93,6 @@ BEGIN
 END
 DECLARE @EngineeringFacultyId INT = (SELECT Id FROM Faculties WHERE OfficeCode = 'ENG');
 
--- 1a2. Engineering Department (linked to Engineering Faculty)
-DECLARE @EngineeringDeptId INT;
-IF NOT EXISTS (SELECT 1 FROM Departments WHERE DepartmentCode = 'ENG')
-BEGIN
-    SET IDENTITY_INSERT Departments ON;
-    INSERT INTO Departments (Id, DepartmentCode, DepartmentName, ShortName, FacultyId, IsActive)
-    VALUES (100, 'ENG', 'Engineering Department', 'ENG', @EngineeringFacultyId, 1);
-    SET IDENTITY_INSERT Departments OFF;
-    PRINT 'Created Department: ENG (Id=100)';
-END
-SET @EngineeringDeptId = (SELECT Id FROM Departments WHERE DepartmentCode = 'ENG');
-
 -- 1b. Academic Years (create all years 2014-2025 from source data)
 DECLARE @AYYear INT = 2014;
 WHILE @AYYear <= 2025
@@ -153,8 +141,8 @@ DECLARE @ProgCivilId INT, @ProgCompId INT, @ProgCPMId INT;
 
 IF NOT EXISTS (SELECT 1 FROM Programs WHERE ProgramCode = 'L092')
 BEGIN
-    INSERT INTO Programs (LevelId, DepartmentId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
-    VALUES (1, @EngineeringDeptId, 'L092', 'Bachelor''s Degree in Civil Engineering', 'BE Civil', 4, 0, 1);
+    INSERT INTO Programs (LevelId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
+    VALUES (1, 'L092', 'Bachelor''s Degree in Civil Engineering', 'BE Civil', 4, 0, 1);
     SET @ProgCivilId = SCOPE_IDENTITY();
     PRINT 'Created Program: L092 (Id=' + CAST(@ProgCivilId AS VARCHAR) + ')';
 END
@@ -164,8 +152,8 @@ INSERT INTO #ProgramMap (SourceCode, NewId) VALUES ('L092', @ProgCivilId);
 
 IF NOT EXISTS (SELECT 1 FROM Programs WHERE ProgramCode = 'L117')
 BEGIN
-    INSERT INTO Programs (LevelId, DepartmentId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
-    VALUES (1, @EngineeringDeptId, 'L117', 'Bachelor''s Degree in Computer Engineering', 'BE Computer', 4, 0, 1);
+    INSERT INTO Programs (LevelId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
+    VALUES (1, 'L117', 'Bachelor''s Degree in Computer Engineering', 'BE Computer', 4, 0, 1);
     SET @ProgCompId = SCOPE_IDENTITY();
     PRINT 'Created Program: L117 (Id=' + CAST(@ProgCompId AS VARCHAR) + ')';
 END
@@ -175,8 +163,8 @@ INSERT INTO #ProgramMap (SourceCode, NewId) VALUES ('L117', @ProgCompId);
 
 IF NOT EXISTS (SELECT 1 FROM Programs WHERE ProgramCode = 'L131')
 BEGIN
-    INSERT INTO Programs (LevelId, DepartmentId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
-    VALUES (2, @EngineeringDeptId, 'L131', 'Master of Science (M.Sc.) in Construction Project Management', 'M.Sc. CPM', 2, 0, 1);
+    INSERT INTO Programs (LevelId, ProgramCode, ProgramName, ShortName, Duration, HasMultipleIntakes, IsActive)
+    VALUES (2, 'L131', 'Master of Science (M.Sc.) in Construction Project Management', 'M.Sc. CPM', 2, 0, 1);
     SET @ProgCPMId = SCOPE_IDENTITY();
     PRINT 'Created Program: L131 (Id=' + CAST(@ProgCPMId AS VARCHAR) + ')';
 END
@@ -645,10 +633,10 @@ BEGIN
             SET @DobAdFormatted = CONVERT(NVARCHAR(50), TRY_CONVERT(DATE, @SrDobAD), 121);
         END
 
-        INSERT INTO StudentRegistrations (LevelId, DepartmentId, CollegeId, RegistrationNumber, FirstName, MiddleName, LastName,
+        INSERT INTO StudentRegistrations (LevelId, CollegeId, RegistrationNumber, FirstName, MiddleName, LastName,
             ContactNumber, Email, DateOfBirthBS, DateOfBirthAD, GenderId, StudentCategoryId, AcademicYearId,
             IsActive, NepaliName, TenantId)
-        VALUES (@SrLevelId, @EngineeringDeptId, @CollegeId, @SrRegNo, @SrFirstName, NULLIF(@SrMiddleName, 'NULL'),
+        VALUES (@SrLevelId, @CollegeId, @SrRegNo, @SrFirstName, NULLIF(@SrMiddleName, 'NULL'),
             ISNULL(NULLIF(@SrLastName, 'NULL'), 'N/A'), NULLIF(@SrContact, 'NULL'), NULLIF(@SrEmail, 'NULL'),
             ISNULL(CONVERT(NVARCHAR(10), TRY_CONVERT(DATE, @SrDobBS), 103), 'N/A'),
             @DobAdFormatted,
