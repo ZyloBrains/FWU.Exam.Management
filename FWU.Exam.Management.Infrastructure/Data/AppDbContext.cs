@@ -943,7 +943,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ExamScheduleCode] IS NOT NULL");
 
         builder.Entity<Semester>()
-            .HasIndex(s => s.Code)
+            .HasOne(s => s.Faculty)
+            .WithMany()
+            .HasForeignKey(s => s.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Semester>()
+            .HasIndex(s => new { s.FacultyId, s.Code })
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL");
 

@@ -6,6 +6,7 @@ using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -16,7 +17,7 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
 [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
-public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
+public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, IUserContext userContext, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -135,7 +136,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         var admission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
         var semesters = admission != null
             ? await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId)
-            : await context.Semesters.AsNoTracking().ToListAsync();
+            : await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
         ViewBag.SemesterId = new SelectList(semesters, "Id", "Name", enrollment.SemesterId);
         ViewBag.EnrollmentStatusList = new SelectList(Enum.GetValues<StudentEnrollmentStatus>(), enrollment.EnrollmentStatus);
         ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);

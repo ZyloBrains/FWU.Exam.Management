@@ -41,12 +41,13 @@ public static class DemoDataSeeder
             // Semesters
             if (!await context.Semesters.AnyAsync())
             {
+                var soeFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
                 var semesters = new[]
                 {
-                    new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id },
-                    new Semester { Number = 2, Year = 1, Name = "Second Semester", Code = "SEM2", StartDate = new DateTime(2025, 2, 1), EndDate = new DateTime(2025, 6, 30), AcademicYearId = runningYear.Id },
-                    new Semester { Number = 3, Year = 2, Name = "Third Semester", Code = "SEM3", StartDate = new DateTime(2025, 9, 1), EndDate = new DateTime(2026, 1, 30), AcademicYearId = runningYear.Id },
-                    new Semester { Number = 4, Year = 2, Name = "Fourth Semester", Code = "SEM4", StartDate = new DateTime(2026, 2, 1), EndDate = new DateTime(2026, 6, 30), AcademicYearId = runningYear.Id },
+                    new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id, FacultyId = soeFaculty?.Id },
+                    new Semester { Number = 2, Year = 1, Name = "Second Semester", Code = "SEM2", StartDate = new DateTime(2025, 2, 1), EndDate = new DateTime(2025, 6, 30), AcademicYearId = runningYear.Id, FacultyId = soeFaculty?.Id },
+                    new Semester { Number = 3, Year = 2, Name = "Third Semester", Code = "SEM3", StartDate = new DateTime(2025, 9, 1), EndDate = new DateTime(2026, 1, 30), AcademicYearId = runningYear.Id, FacultyId = soeFaculty?.Id },
+                    new Semester { Number = 4, Year = 2, Name = "Fourth Semester", Code = "SEM4", StartDate = new DateTime(2026, 2, 1), EndDate = new DateTime(2026, 6, 30), AcademicYearId = runningYear.Id, FacultyId = soeFaculty?.Id },
                 };
                 await context.Semesters.AddRangeAsync(semesters);
             }
@@ -524,12 +525,13 @@ public static class DemoDataSeeder
             var runningYearCsit = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
             if (runningYearCsit != null && !await context.Semesters.AnyAsync(s => s.Number == 5))
             {
+                var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
                 var csitSemesters = new[]
                 {
-                    new Semester { Number = 5, Year = 3, Name = "Fifth Semester", Code = "SEM5", StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2027, 1, 30), AcademicYearId = runningYearCsit.Id },
-                    new Semester { Number = 6, Year = 3, Name = "Sixth Semester", Code = "SEM6", StartDate = new DateTime(2027, 2, 1), EndDate = new DateTime(2027, 6, 30), AcademicYearId = runningYearCsit.Id },
-                    new Semester { Number = 7, Year = 4, Name = "Seventh Semester", Code = "SEM7", StartDate = new DateTime(2027, 9, 1), EndDate = new DateTime(2028, 1, 30), AcademicYearId = runningYearCsit.Id },
-                    new Semester { Number = 8, Year = 4, Name = "Eighth Semester", Code = "SEM8", StartDate = new DateTime(2028, 2, 1), EndDate = new DateTime(2028, 6, 30), AcademicYearId = runningYearCsit.Id },
+                    new Semester { Number = 5, Year = 3, Name = "Fifth Semester", Code = "SEM5", StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2027, 1, 30), AcademicYearId = runningYearCsit.Id, FacultyId = fstFaculty?.Id },
+                    new Semester { Number = 6, Year = 3, Name = "Sixth Semester", Code = "SEM6", StartDate = new DateTime(2027, 2, 1), EndDate = new DateTime(2027, 6, 30), AcademicYearId = runningYearCsit.Id, FacultyId = fstFaculty?.Id },
+                    new Semester { Number = 7, Year = 4, Name = "Seventh Semester", Code = "SEM7", StartDate = new DateTime(2027, 9, 1), EndDate = new DateTime(2028, 1, 30), AcademicYearId = runningYearCsit.Id, FacultyId = fstFaculty?.Id },
+                    new Semester { Number = 8, Year = 4, Name = "Eighth Semester", Code = "SEM8", StartDate = new DateTime(2028, 2, 1), EndDate = new DateTime(2028, 6, 30), AcademicYearId = runningYearCsit.Id, FacultyId = fstFaculty?.Id },
                 };
                 await context.Semesters.AddRangeAsync(csitSemesters);
                 await context.SaveChangesAsync();

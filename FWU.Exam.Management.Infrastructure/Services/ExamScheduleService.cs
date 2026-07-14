@@ -187,7 +187,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var examTypes = context.ExamTypes.AsNoTracking().ToList();
         var programsQuery = context.Programs.AsNoTracking().ApplyScope(userContext);
         var programs = programsQuery.ToList();
-        var semesters = context.Semesters.AsNoTracking().ToList();
+        var semesters = context.Semesters.AsNoTracking().ApplyScope(userContext).ToList();
 
         return new ExamScheduleSelectListsDto
         {
