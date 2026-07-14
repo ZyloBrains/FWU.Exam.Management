@@ -151,8 +151,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
         builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
         builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
-        builder.Services.AddScoped<ITeacherSubjectAssignmentService, TeacherSubjectAssignmentService>();
-        builder.Services.AddScoped<ITeacherMarksService, TeacherMarksService>();
+        builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
+        builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         var app = builder.Build();
 

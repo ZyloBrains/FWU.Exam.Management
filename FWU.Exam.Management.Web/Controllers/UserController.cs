@@ -94,7 +94,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             if (model.SelectedRole is Role.FacultyAdmin)
                 user.FacultyId = model.FacultyId;
 
-            if (model.SelectedRole is Role.CollegeAdmin or Role.Teacher or Role.Student)
+            if (model.SelectedRole is Role.CollegeAdmin or Role.Student)
                 user.CollegeId = model.CollegeId;
 
             var result = await userManager.CreateAsync(user, model.Password);

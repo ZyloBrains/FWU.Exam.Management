@@ -1,11 +1,11 @@
 namespace FWU.Exam.Management.Application.DTOs;
 
-public class TeacherDashboardDto
+public class CollegeAdminDashboardDto
 {
-    public List<TeacherSubjectInfo> AssignedSubjects { get; set; } = [];
+    public List<CollegeAdminSubjectInfo> AssignedSubjects { get; set; } = [];
 }
 
-public class TeacherSubjectInfo
+public class CollegeAdminSubjectInfo
 {
     public int SubjectOfferingId { get; set; }
     public string SubjectName { get; set; } = string.Empty;

@@ -1,5 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Domain.Entities.Teachers;
+using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -14,8 +14,8 @@ namespace FWU.Exam.Management.Web.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [RequirePermission("users.edit")]
-public class TeacherAssignmentsController(
-    ITeacherSubjectAssignmentService assignmentService,
+public class CollegeAdminAssignmentsController(
+    ICollegeAdminSubjectAssignmentService assignmentService,
     UserManager<AppUser> userManager,
     IUserContext userContext,
     AppDbContext context) : Controller
@@ -23,30 +23,30 @@ public class TeacherAssignmentsController(
     public async Task<IActionResult> Index()
     {
         var items = await assignmentService.GetAssignmentsAsync();
-        var teacherIds = items.Select(i => i.TeacherUserId).Distinct().ToList();
-        var teachers = await context.Users
-            .Where(u => teacherIds.Contains(u.Id))
+        var collegeAdminIds = items.Select(i => i.CollegeAdminUserId).Distinct().ToList();
+        var collegeAdmins = await context.Users
+            .Where(u => collegeAdminIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.Email ?? u.UserName ?? u.Id);
 
-        ViewBag.TeacherNames = teachers;
+        ViewBag.CollegeAdminNames = collegeAdmins;
         return View(items);
     }
 
     public async Task<IActionResult> Create()
     {
         await PopulateDropdowns();
-        return View(new TeacherSubjectAssignment());
+        return View(new CollegeAdminSubjectAssignment());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TeacherSubjectAssignment model)
+    public async Task<IActionResult> Create(CollegeAdminSubjectAssignment model)
     {
         if (ModelState.IsValid)
         {
             model.IsActive = true;
             await assignmentService.CreateAsync(model);
-            TempData["Success"] = "Teacher assignment created successfully.";
+            TempData["Success"] = "College admin assignment created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -65,14 +65,14 @@ public class TeacherAssignmentsController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, TeacherSubjectAssignment model)
+    public async Task<IActionResult> Edit(int id, CollegeAdminSubjectAssignment model)
     {
         if (id != model.Id) return NotFound();
 
         if (ModelState.IsValid)
         {
             await assignmentService.UpdateAsync(model);
-            TempData["Success"] = "Teacher assignment updated successfully.";
+            TempData["Success"] = "College admin assignment updated successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -85,7 +85,7 @@ public class TeacherAssignmentsController(
     public async Task<IActionResult> Delete(int id)
     {
         await assignmentService.DeleteAsync(id);
-        TempData["Success"] = "Teacher assignment deleted successfully.";
+        TempData["Success"] = "College admin assignment deleted successfully.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -102,10 +102,10 @@ public class TeacherAssignmentsController(
         return Json(offerings);
     }
 
-    private async Task PopulateDropdowns(TeacherSubjectAssignment? model = null)
+    private async Task PopulateDropdowns(CollegeAdminSubjectAssignment? model = null)
     {
-        var teachers = await userManager.GetUsersInRoleAsync("Teacher");
-        ViewBag.TeacherUserId = new SelectList(teachers.Select(t => new { t.Id, Name = t.FullName ?? t.Email }), "Id", "Name", model?.TeacherUserId);
+        var collegeAdmins = await userManager.GetUsersInRoleAsync("CollegeAdmin");
+        ViewBag.CollegeAdminUserId = new SelectList(collegeAdmins.Select(t => new { t.Id, Name = t.FullName ?? t.Email }), "Id", "Name", model?.CollegeAdminUserId);
 
         var programsQuery = context.Programs.AsNoTracking();
         if (userContext.FacultyId.HasValue)
