@@ -148,7 +148,7 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                programsQuery = programsQuery.Where(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+                programsQuery = programsQuery.Where(p => p.FacultyId == userContext.FacultyId.Value);
         }
         var programs = programsQuery.ToList();
         var academicYears = context.AcademicYears.AsNoTracking().ToList();
@@ -167,7 +167,7 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(e => e.Program != null && e.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+                query = query.Where(e => e.Program != null && e.Program.FacultyId == userContext.FacultyId.Value);
         }
 
         if (!string.IsNullOrEmpty(search))

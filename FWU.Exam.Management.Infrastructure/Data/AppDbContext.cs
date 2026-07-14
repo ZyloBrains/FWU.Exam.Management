@@ -192,6 +192,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasMany(c => c.Faculties)
             .WithMany(f => f.Colleges);
 
+        builder.Entity<Program>()
+            .HasOne(p => p.Faculty)
+            .WithMany()
+            .HasForeignKey(p => p.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.PermanentAddress)
             .WithMany()

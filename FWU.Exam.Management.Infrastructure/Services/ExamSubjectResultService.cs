@@ -117,7 +117,7 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
                 examRegistrationsQuery = examRegistrationsQuery.Where(er => er.CollegeId == userContext.CollegeId.Value);
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                examRegistrationsQuery = examRegistrationsQuery.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+                examRegistrationsQuery = examRegistrationsQuery.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.FacultyId == userContext.FacultyId.Value);
         }
         var examRegistrations = examRegistrationsQuery.ToList();
 
@@ -136,7 +136,7 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
                 examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && collegeProgramIds.Contains(es.Program.Id));
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+                examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.FacultyId == userContext.FacultyId.Value);
         }
         var examSchedules = examSchedulesQuery.ToList();
 
@@ -156,7 +156,7 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(e => e.SubjectOffering != null && e.SubjectOffering.Program != null && e.SubjectOffering.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+                query = query.Where(e => e.SubjectOffering != null && e.SubjectOffering.Program != null && e.SubjectOffering.Program.FacultyId == userContext.FacultyId.Value);
             else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
                 query = query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == userContext.CollegeId.Value);
         }
