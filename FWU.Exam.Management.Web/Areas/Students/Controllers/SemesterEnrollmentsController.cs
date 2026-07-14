@@ -29,9 +29,10 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
-            return await context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
-                .Select(c => c.Id)
+            return await context.CollegePrograms
+                .Where(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId)
+                .Select(cp => cp.CollegeId)
+                .Distinct()
                 .ToListAsync();
         }
 

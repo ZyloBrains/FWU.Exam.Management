@@ -176,7 +176,7 @@ public class ExamCenterService(AppDbContext context, IUserContext userContext) :
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(ec => ec.College != null && ec.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value));
+                query = query.Where(ec => ec.College != null && ec.College.CollegePrograms!.Any(cp => cp.Program != null && cp.Program.FacultyId == userContext.FacultyId.Value));
             else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
                 query = query.Where(ec => ec.CollegeId == userContext.CollegeId.Value);
             else

@@ -18,6 +18,10 @@ public class Program
     [Display(Name = "Board Id")]
     public int? BoardId { get; set; }
 
+    [Display(Name = "Faculty")]
+    public int? FacultyId { get; set; }
+    public virtual Faculty? Faculty { get; set; }
+
     [Required, MaxLength(50)]
     [Display(Name = "Program Code")]
     public string? ProgramCode { get; set; }

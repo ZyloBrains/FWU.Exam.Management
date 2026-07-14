@@ -109,7 +109,7 @@ public class TeacherAssignmentsController(
 
         var programsQuery = context.Programs.AsNoTracking();
         if (userContext.FacultyId.HasValue)
-            programsQuery = programsQuery.Where(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+            programsQuery = programsQuery.Where(p => p.FacultyId == userContext.FacultyId.Value);
         ViewBag.ProgramId = new SelectList(await programsQuery.ToListAsync(), "Id", "ProgramName");
 
         ViewBag.SemesterId = new SelectList(await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync(), "Id", "Name");
@@ -129,7 +129,7 @@ public class TeacherAssignmentsController(
 
         var examSchedulesQuery = context.ExamSchedules.AsNoTracking().Where(es => es.IsActive);
         if (userContext.FacultyId.HasValue)
-            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == userContext.FacultyId.Value)));
+            examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.FacultyId == userContext.FacultyId.Value);
         ViewBag.ExamScheduleId = new SelectList(await examSchedulesQuery.ToListAsync(), "Id", "ExamScheduleName", model?.ExamScheduleId);
     }
 }

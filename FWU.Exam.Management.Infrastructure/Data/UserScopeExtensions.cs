@@ -32,7 +32,7 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(c => c.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+            return query.Where(c => c.CollegePrograms!.Any(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId.Value));
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(c => c.Id == user.CollegeId.Value);
         return query.Where(c => false);
@@ -42,7 +42,7 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(p => p.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == user.FacultyId.Value)));
+            return query.Where(p => p.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(p => p.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value));
         return query.Where(p => false);
@@ -53,7 +53,7 @@ public static class UserScopeExtensions
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
             return query.Where(sc => sc.SubjectOfferings!.Any(so =>
-                so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == user.FacultyId.Value))));
+                so.Program != null && so.Program.FacultyId == user.FacultyId.Value));
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sc => sc.SubjectOfferings!.Any(so =>
                 so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value)));
@@ -65,7 +65,7 @@ public static class UserScopeExtensions
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
             return query.Where(so =>
-                so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == user.FacultyId.Value)));
+                so.Program != null && so.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(so =>
                 so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value));
@@ -76,8 +76,7 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(sr =>
-                sr.College != null && sr.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+            return query.Where(sr => sr.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sr => sr.CollegeId == user.CollegeId.Value);
         return query.Where(sr => false);
@@ -88,7 +87,7 @@ public static class UserScopeExtensions
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
             return query.Where(sa =>
-                sa.College != null && sa.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+                sa.Program != null && sa.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sa => sa.CollegeId == user.CollegeId.Value);
         return query.Where(sa => false);
@@ -99,7 +98,7 @@ public static class UserScopeExtensions
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
             return query.Where(er =>
-                er.College != null && er.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+                er.Program != null && er.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(er => er.CollegeId == user.CollegeId.Value);
         return query.Where(er => false);
@@ -109,10 +108,10 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(es => es.ExamRegistrations!.Any(er =>
-                er.College != null && er.College.Faculties!.Any(f => f.Id == user.FacultyId.Value)));
+            return query.Where(es =>
+                es.Program != null && es.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
-            return query.Where(es => es.ExamRegistrations!.Any(er => er.CollegeId == user.CollegeId.Value));
+            return query.Where(es => es.CollegeId == user.CollegeId.Value);
         return query.Where(es => false);
     }
 
@@ -120,7 +119,8 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(cp => cp.College != null && cp.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+            return query.Where(cp =>
+                cp.Program != null && cp.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(cp => cp.CollegeId == user.CollegeId.Value);
         return query.Where(cp => false);
@@ -131,7 +131,7 @@ public static class UserScopeExtensions
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
             return query.Where(ac => ac.ExamRegistration != null &&
-                ac.ExamRegistration.College != null && ac.ExamRegistration.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+                ac.ExamRegistration.Program != null && ac.ExamRegistration.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(ac => ac.ExamRegistration != null && ac.ExamRegistration.CollegeId == user.CollegeId.Value);
         return query.Where(ac => false);
@@ -141,7 +141,8 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(rr => rr.College != null && rr.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+            return query.Where(rr =>
+                rr.Program != null && rr.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(rr => rr.CollegeId == user.CollegeId.Value);
         return query.Where(rr => false);
@@ -152,7 +153,7 @@ public static class UserScopeExtensions
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
             return query.Where(rr => rr.ExamRegistration != null &&
-                rr.ExamRegistration.College != null && rr.ExamRegistration.College.Faculties!.Any(f => f.Id == user.FacultyId.Value));
+                rr.ExamRegistration.Program != null && rr.ExamRegistration.Program.FacultyId == user.FacultyId.Value);
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(rr => rr.ExamRegistration != null && rr.ExamRegistration.CollegeId == user.CollegeId.Value);
         return query.Where(rr => false);

@@ -30,9 +30,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
-            return await context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
-                .Select(c => c.Id)
+            return await context.CollegePrograms
+                .Where(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId)
+                .Select(cp => cp.CollegeId)
+                .Distinct()
                 .ToListAsync();
         }
 
@@ -832,8 +833,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     [HttpGet]
     public async Task<JsonResult> GetCollegesByFaculty(int facultyId)
     {
-        var colleges = await context.Colleges
-            .Where(c => c.Faculties.Any(f => f.Id == facultyId) && c.Name != null)
+        var colleges = await context.CollegePrograms
+            .Where(cp => cp.Program != null && cp.Program.FacultyId == facultyId && cp.College != null && cp.College.Name != null)
+            .Select(cp => cp.College!)
+            .Distinct()
             .AsNoTracking()
             .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
             .ToListAsync();
