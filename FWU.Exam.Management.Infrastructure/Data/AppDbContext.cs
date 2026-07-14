@@ -116,7 +116,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
             var contextField = Expression.Field(Expression.Constant(this), nameof(_tenantContext));
             var tenantIdValue = Expression.Property(contextField, nameof(ITenantContext.TenantId));
-            var body = Expression.Equal(tenantIdProp, tenantIdValue);
+            var isCentral = Expression.Property(contextField, nameof(ITenantContext.IsCentralTenant));
+            var body = Expression.OrElse(isCentral, Expression.Equal(tenantIdProp, tenantIdValue));
             var lambda = Expression.Lambda(body, param);
             entityType.SetQueryFilter(lambda);
 
