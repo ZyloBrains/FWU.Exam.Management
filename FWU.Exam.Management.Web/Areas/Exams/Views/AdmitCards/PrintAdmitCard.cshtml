@@ -2,460 +2,138 @@
 
 @{
     Layout = null;
-    // Extended model properties expected:
-    // ExamRollNo, RegistrationNumber, Campus, Level, Program, Semester, ExamType, Year
-    // List<Subject> Subjects (Code, Name, Theory, Practical, Remarks)
-    // For the photo, you might have a property like byte[] Photo or string PhotoUrl
 }
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admit Card - @Model.AdmitCardNumber</title>
     <style>
-        /* ── Reset & Base ── */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', 'Nirmala UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #eef1f5;
             display: flex;
             justify-content: center;
-            align-items: center;
             padding: 30px 20px;
-            min-height: 100vh;
-            margin: 0;
         }
 
-        .ticket {
-            max-width: 950px;
-            width: 100%;
-            background: #ffffff;
-            border: 2px solid #1a2a4a;
-            border-radius: 12px;
-            padding: 28px 32px 24px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-        }
-
-        /* ═══ HEADER WITH LOGO LEFT & PHOTO RIGHT ═══ */
+        /* ── Header ── */
         .header-top {
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px 24px;
+            gap: 14px;
             border-bottom: 3px double #1a2a4a;
-            padding-bottom: 18px;
-            margin-bottom: 22px;
-            flex-wrap: wrap;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            min-height: 110px;
         }
 
-        .header-logo,
-        .header-photo {
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .header-logo, .header-photo {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
         }
+        .header-logo { left: 0; }
+        .header-photo { right: 0; }
 
-        .header-logo { left: 16px; }
-        .header-photo { right: 16px; }
+        .logo-box { width: 120px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo-box img { width: 100%; height: 100%; object-fit: contain; }
 
-        .header-logo .logo-box {
-            width: 180px;
-            height: 120px;
-            /* background: #f0f4fa; */
-            /* border: 2px solid #1a2a4a; */
-            /* border-radius: 12px; */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            /* box-shadow: 0 2px 6px rgba(0,0,0,0.08); */
-        }
-
-        .header-logo .logo-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            /* padding: 6px; */
-        }
-
-        .header-photo .photo-box {
-            width: 110px;
-            height: 130px;
-            background: #f8fafc;
+        .photo-box {
+            width: 90px; height: 105px;
             border: 2px solid #1a2a4a;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            font-size: 12px;
-            color: #555;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            overflow: hidden;
+            border-radius: 0;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+            background: #f8fafc; overflow: hidden;
         }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+        .photo-box svg { width: 48px; height: 48px; fill: #b0b8c5; }
+        .photo-box .photo-label { font-size: 11px; font-weight: 600; color: #1a2a4a; }
 
-        .header-photo .photo-box svg {
-            width: 60px;
-            height: 60px;
-            fill: #888;
-            margin-bottom: 2px;
-        }
+        .header-center { flex: 1; text-align: center; min-width: 220px; }
+        .header-center .univ-name { font-size: 26px; font-weight: 700; color: #1a2a4a; letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.2; }
+        .header-center .office { font-size: 15px; font-weight: 600; color: #2c3e6b; margin-top: 1px; }
+        .header-center .address { font-size: 14px; color: #444; margin-top: 1px; }
+        .header-center .card-title { font-size: 22px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 2px; margin-top: 3px; border-top: 1px solid #ccc; padding-top: 3px; display: inline-block; padding-left: 12px; padding-right: 12px; }
 
-        .header-photo .photo-box .photo-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #1a2a4a;
-        }
-
-        .header-center {
-            flex: 1;
-            text-align: center;
-            min-width: 200px;
-        }
-
-        .header-center .univ-name {
-            font-size: 26px;
-            font-weight: 700;
-            color: #1a2a4a;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            line-height: 1.2;
-        }
-
-        .header-center .office {
-            font-size: 17px;
-            font-weight: 600;
-            color: #2c3e6b;
-            margin-top: 2px;
-        }
-
-        .header-center .address {
-            font-size: 14px;
-            color: #444;
-            margin-top: 2px;
-        }
-
-        .header-center .card-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1a2a4a;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 4px;
-            border-top: 1px solid #ccc;
-            padding-top: 4px;
-            display: inline-block;
-            padding-left: 16px;
-            padding-right: 16px;
-        }
-
-        /* ── Student Info Grid ── */
+        /* ── Student Info ── */
         .student-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px 30px;
-            background: #f8fafc;
-            border: 1px solid #d0d7e2;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 24px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px;
+            background: #f8fafc; border: 1px solid #d0d7e2; border-radius: 0;
+            padding: 10px 16px; margin-bottom: 12px;
         }
-
-        .student-info .info-item {
-            display: flex;
-            padding: 4px 0;
-            border-bottom: 1px dashed #e0e6ee;
-        }
-
-        .student-info .info-item:last-child {
-            border-bottom: none;
-        }
-
-        .student-info .info-label {
-            font-weight: 600;
-            color: #1a2a4a;
-            min-width: 110px;
-            flex-shrink: 0;
-        }
-
-        .student-info .info-value {
-            color: #111;
-            font-weight: 500;
-            word-break: break-word;
-        }
+        .student-info .info-item { display: flex; padding: 2px 0; border-bottom: 1px dashed #e0e6ee; }
+        .student-info .info-item:last-child { border-bottom: none; }
+        .student-info .info-label { font-weight: 600; color: #1a2a4a; min-width: 100px; flex-shrink: 0; font-size: 14px; }
+        .student-info .info-value { color: #111; font-weight: 500; font-size: 14px; word-break: break-word; }
 
         /* ── Subject Table ── */
-        .subject-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            margin-bottom: 28px;
-            border: 1px solid #b0b8c5;
-        }
+        .subject-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 12px; border: 1px solid #b0b8c5; }
+        .subject-table th { background: #1a2a4a; color: #fff; font-weight: 600; padding: 7px 10px; text-align: center; border: 1px solid #1a2a4a; font-size: 13px; }
+        .subject-table td { padding: 6px 10px; border: 1px solid #b0b8c5; text-align: center; vertical-align: middle; }
+        .subject-table td:first-child { font-weight: 600; }
+        .subject-table .subject-name { text-align: left; padding-left: 10px; }
 
-        .subject-table th {
-            background: #1a2a4a;
-            color: #fff;
-            font-weight: 600;
-            padding: 10px 8px;
-            text-align: center;
-            border: 1px solid #1a2a4a;
-        }
-
-        .subject-table td {
-            padding: 8px 10px;
-            border: 1px solid #b0b8c5;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .subject-table td:first-child {
-            font-weight: 600;
-        }
-
-        .subject-table .subject-name {
-            text-align: left;
-            padding-left: 14px;
-        }
-
-        /* ── Rules Section ── */
-        .rules-section {
-            margin-top: 20px;
-            margin-bottom: 30px;
-            border-top: 2px solid #1a2a4a;
-            padding-top: 18px;
-        }
-
-        .rules-section .rules-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1a2a4a;
-            text-align: center;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
+        /* ── Rules ── */
+        .rules-section { margin-bottom: 10px; border-top: 2px solid #1a2a4a; padding-top: 8px; }
+        .rules-section .rules-title { font-size: 16px; font-weight: 700; color: #1a2a4a; text-align: center; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         .rules-section .rules-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 13px;
-            line-height: 1.7;
-            color: #222;
-            text-align: justify;
+            list-style: none; padding: 0; margin: 0;
+            font-size: 14px; line-height: 1.55; color: #222; text-align: justify;
+            /* Single column — no wrapping into columns */
         }
-
         .rules-section .rules-list li {
-            margin-bottom: 6px;
-            padding-left: 28px;
-            text-indent: -22px;
+            margin-bottom: 4px;
+            padding-left: 22px;
+            text-indent: -20px;
         }
-
-        .rules-section .rules-list li::before {
-            content: attr(data-num) ". ";
-            font-weight: 600;
-            color: #1a2a4a;
-            margin-right: 4px;
-        }
+        .rules-section .rules-list li::before { content: attr(data-num) ". "; font-weight: 600; color: #1a2a4a; }
+        .rules-section .note { margin-top: 6px; font-size: 13px; color: #333; border-top: 1px dashed #ccc; padding-top: 5px; }
 
         /* ── Signatures ── */
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-            padding-top: 20px;
-            border-top: 2px solid #1a2a4a;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
+        .signatures { display: flex; justify-content: space-between; margin-top: 6px; padding-top: 10px; border-top: 2px solid #1a2a4a; }
+        .signatures .sig-block { text-align: center; flex: 1; }
+        .signatures .sig-block img { max-height: 30px; object-fit: contain; }
+        .signatures .sig-line { margin-top: 30px; border-top: 1px solid #333; width: 70%; margin-left: auto; margin-right: auto; padding-top: 3px; font-size: 13px; font-weight: 500; color: #1a2a4a; }
 
-        .signatures .sig-block {
-            text-align: center;
-            flex: 1;
-            min-width: 180px;
-        }
-
-        .signatures .sig-line {
-            margin-top: 40px;
-            border-top: 1px solid #333;
-            width: 70%;
-            margin-left: auto;
-            margin-right: auto;
-            padding-top: 4px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #1a2a4a;
-        }
-
-        /* ── Print styles ── */
+        /* ── Print: scale to fit A4 ── */
+        @@page { size: A4 portrait; margin: 8mm; }
         @@media print {
-            body {
-                background: #fff !important;
-                padding: 8px !important;
-                min-height: auto !important;
-            }
-
-            .ticket {
-                border: 2px solid #1a2a4a !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-                padding: 16px 20px !important;
-                max-width: 100% !important;
-            }
-
-            .student-info {
-                background: #f8fafc !important;
+            html, body { background: #fff; }
+            body { display: block; padding: 0; }
+            .student-info, .subject-table th, .header-logo .logo-box, .header-photo .photo-box {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-            }
-
-            .subject-table th {
-                background: #1a2a4a !important;
-                color: #fff !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .header-logo .logo-box,
-            .header-photo .photo-box {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-        }
-
-        /* ── Responsive ── */
-        @@media (max-width: 700px) {
-            .ticket {
-                padding: 16px 14px;
-            }
-
-            .header-top {
-                justify-content: center;
-                gap: 10px;
-            }
-
-            .header-logo,
-            .header-photo {
-                position: static;
-                transform: none;
-            }
-
-            .header-logo {
-                order: 1;
-            }
-            .header-center {
-                order: 3;
-                flex-basis: 100%;
-                min-width: unset;
-            }
-            .header-photo {
-                order: 2;
-            }
-
-            .header-center .univ-name {
-                font-size: 20px;
-            }
-            .header-center .card-title {
-                font-size: 18px;
-            }
-
-            .header-logo .logo-box {
-                width: 70px;
-                height: 70px;
-            }
-
-            .header-photo .photo-box {
-                width: 80px;
-                height: 100px;
-            }
-            .header-photo .photo-box svg {
-                width: 40px;
-                height: 40px;
-            }
-
-            .student-info {
-                grid-template-columns: 1fr;
-                gap: 2px;
-                padding: 12px 14px;
-            }
-
-            .student-info .info-item {
-                border-bottom: 1px solid #e6eaf0;
-            }
-
-            .subject-table {
-                font-size: 12px;
-            }
-            .subject-table th,
-            .subject-table td {
-                padding: 4px 3px;
-            }
-
-            .signatures {
-                flex-direction: column;
-                align-items: center;
-            }
-            .signatures .sig-block {
-                width: 100%;
-            }
-        }
-
-        @@media (max-width: 450px) {
-            .subject-table .subject-name {
-                font-size: 11px;
-            }
-            .rules-section .rules-list {
-                font-size: 12px;
-            }
-            .header-center .univ-name {
-                font-size: 17px;
-            }
-            .header-center .office {
-                font-size: 14px;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="ticket">
+    <div>
 
-        <!-- ═══ HEADER: LOGO LEFT | TEXT CENTER | PHOTO RIGHT ═══ -->
         <div class="header-top">
-            <!-- Left: University Logo -->
             <div class="header-logo">
                 <div class="logo-box">
                     <img src="~/images/download.png" alt="Far Western University Logo" />
                 </div>
             </div>
-
-            <!-- Center: University Details & Title -->
             <div class="header-center">
                 <div class="univ-name">Far Western University</div>
                 <div class="office">Office of the Controller of Examinations</div>
                 <div class="address">Mahendranagar, Kanchanpur</div>
                 <div class="card-title">Admit Card</div>
             </div>
-
-            <!-- Right: Student Photo -->
             <div class="header-photo">
                 <div class="photo-box">
                     @if (!string.IsNullOrEmpty(Model.PhotoPath))
                     {
-                        <img src="@Model.PhotoPath" alt="Student Photo" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />
+                        <img src="@Model.PhotoPath" alt="Student Photo" />
                     }
                     else
                     {
@@ -469,9 +147,7 @@
             </div>
         </div>
 
-        <!-- ═══ STUDENT INFO (two columns) ═══ -->
         <div class="student-info">
-            <!-- Left Column -->
             <div>
                 <div class="info-item">
                     <span class="info-label">Exam Roll No</span>
@@ -503,8 +179,6 @@
                     <span class="info-value">@(Model.Program ?? Model.ExamRegistration?.Program?.ProgramName ?? "-")</span>
                 </div>
             </div>
-
-            <!-- Right Column -->
             <div>
                 <div class="info-item">
                     <span class="info-label">Regd. No</span>
@@ -529,13 +203,12 @@
             </div>
         </div>
 
-        <!-- ═══ SUBJECT TABLE ═══ -->
         <table class="subject-table">
             <thead>
                 <tr>
                     <th>S.N.</th>
                     <th>Subject Code</th>
-                    <th style="text-align:left; padding-left:14px;">Subject Name</th>
+                    <th style="text-align:left; padding-left:10px;">Subject Name</th>
                     <th>Theory</th>
                     <th>Practical</th>
                     <th>Remarks</th>
@@ -553,8 +226,8 @@
                                 <td>@sn</td>
                                 <td>@sub.Code</td>
                                 <td class="subject-name">@sub.Name</td>
-                                <td>@(sub.Theory ? "Y" : "—")</td>
-                                <td>@(sub.Practical ? "Y" : "—")</td>
+                                <td>@(sub.Theory ? "Y" : "\u2014")</td>
+                                <td>@(sub.Practical ? "Y" : "\u2014")</td>
                                 <td>@sub.Remarks</td>
                             </tr>
                             sn++;
@@ -562,7 +235,6 @@
                     }
                     else
                     {
-                        <!-- Fallback static rows from your PDF -->
                         <tr><td>1</td><td>CSIT.421</td><td class="subject-name">Parallel Computing</td><td>Y</td><td>Y</td><td></td></tr>
                         <tr><td>2</td><td>CSIT.422</td><td class="subject-name">Internship</td><td>Y</td><td>Y</td><td></td></tr>
                         <tr><td>3</td><td>CSIT.423.2</td><td class="subject-name">Advanced Database Design</td><td>Y</td><td>Y</td><td></td></tr>
@@ -573,7 +245,6 @@
             </tbody>
         </table>
 
-        <!-- ═══ RULES SECTION ═══ -->
         <div class="rules-section">
             <div class="rules-title">परीक्षार्थीले पालना गर्नुपर्ने नियमहरू</div>
             <ol class="rules-list" style="list-style:none; padding-left:0;">
@@ -581,33 +252,32 @@
                 <li data-num="२">परीक्षार्थीले परीक्षा फाराम तथा प्रवेश-पत्रमा भरेको विषयमात्र परीक्षा दिन पाउने छ। अन्यथा कुनै परीक्षार्थीको परीक्षा मिति जुध्न गएमा वा कुनै विषय छुट्न गएमा तुरुन्त प.नि.का. मा खबर गर्नुपर्ने छ।</li>
                 <li data-num="३">परीक्षार्थीले परीक्षा केन्द्रको सिटप्लान अनुसार प्रश्नपत्र वितरण हुनु १० मिनेट अगावै सिटमा बसी सम्पूर्ण नियमको पालना गरी परीक्षा दिनु पर्नेछ।</li>
                 <li data-num="४">परीक्षार्थीले परीक्षा सुरु भएको आधा घण्टापछि परीक्षाहलमा प्रवेश गर्न पाउने छैन। परीक्षा सुरु भएको एक घण्टा अगावै केन्द्राध्यक्ष, निरीक्षक वा आधिकारिक व्यक्तिको अनुमतिविना परीक्षार्थीले आफ्नो सिट तथा परीक्षाहल छाड्न पाउने छैन।</li>
-                <li data-num="५">परीक्षार्थीले व्यक्तिगत वा सामुहिक रुपमा कुनैपनि किसिमले परीक्षा विगोल्ने कार्य गर्न पाउने छैन। परीक्षार्थीले परीक्षाहलमा जाँदा परीक्षामा आवश्यक सामाग्रीहरू बाहेक निषेधित वस्तु लैजानु हुँदैन। कुनै परीक्षार्थीले निषेधित वस्तु लगेमा वा परीक्षालाई असरपर्ने गरी कसैमाथि अभद्र व्यवहार, हुलहुज्जत, हातपात, कुटपिट जस्ता अमर्यादित कार्य गर्नु हुँदैन। गरेमा परीक्षाको मर्यादा विपरीत कार्य गरेको ठहरी केन्द्राध्यक्षले त्यस्तो परीक्षार्थीलाई कारवाही गर्नुका साथै परीक्षा भवनबाट निष्काशन गर्न सक्नेछ र त्यस्तो काम गर्ने परीक्षार्थीलाई कारवाहीका निमित्त स्थानीय प्रशासनको जिम्मा लगाउन सकिनेछ। त्यस्तो परीक्षार्थीको अमर्यादित कार्यको अनुपातमा परीक्षा बोर्डले सम्बन्धित परीक्षा रद्द गर्नुका साथै निज परीक्षार्थीलाई १ वर्षदेखि ४ वर्षसम्म विश्वविद्यालयको कुनै पनि परीक्षामा सम्मिलित हुन नपाउने गरी निष्काशन गर्न सक्नेछ। त्यस्तो निष्काशनको सूचना संचार माध्यमबाट प्रसार गरिनेछ।</li>
-                <li data-num="६">परीक्षार्थीले परीक्षा भवन छाड्नुअघि आफ्नो उत्तरपुस्तिका सम्बन्धित निरीक्षकलाई बुझाउनु पर्नेछ र उत्तरपुस्तिका बुझाइसकेपछि परीक्षा केन्द्र बाहिर जानुपर्नेछ।</li>
-                <li data-num="७">रोगी, अस्वस्थ वा शारीरिक अपाङ्गता भएका परीक्षार्थीले परीक्षा सञ्चालन हुनु १ घण्टा अगावै केन्द्राध्यक्षलाई आफ्नो यथार्थ परिस्थितिबारे अनुरोध/जानकारी गराउनु पर्नेछ। कुनै परीक्षार्थी दृष्टिविहिन वा हातको कमजोरी वा कुनै कारणले लेख्न नसक्ने भएमा त्यस्तो परीक्षार्थीले सो काममा सहयोगी राख्न पाऊ भनी कारण सहित केन्द्राध्यक्षलाई अनुरोध गर्नु पर्नेछ। केन्द्राध्यक्षले स्थितिको अध्ययन गरी सम्बन्धित परीक्षार्थीभन्दा एक तह मुनिको उपाधि प्राप्त गरेको व्यक्तिलाई सहयोगी लेखकको रुपमा अनुमति दिन सक्नेछ।</li>
+                <li data-num="५">परीक्षार्थीले व्यक्तिगत वा सामुहिक रुपमा कुनैपनि किसिमले परीक्षा विगोल्ने कार्य गर्न पाउने छैन। परीक्षाहलमा जाँदा आवश्यक सामाग्रीहरू बाहेक निषेधित वस्तु लैजानु हुँदैन। अमर्यादित कार्य गरेमा निष्काशन गरिनेछ र १ वर्षदेखि ४ वर्षसम्म विश्वविद्यालयको कुनै पनि परीक्षामा सम्मिलित हुन नपाउने गरी निष्काशन गर्न सकिनेछ।</li>
+                <li data-num="६">परीक्षार्थीले परीक्षा भवन छाड्नुअघि आफ्नो उत्तरपुस्तिका सम्बन्धित निरीक्षकलाई बुझाउनु पर्नेछ।</li>
+                <li data-num="७">रोगी, अस्वस्थ वा शारीरिक अपाङ्गता भएका परीक्षार्थीले परीक्षा सञ्चालन हुनु १ घण्टा अगावै केन्द्राध्यक्षलाई जानकारी गराउनु पर्नेछ। दृष्टिविहिन वा लेख्न नसक्ने भएमा केन्द्राध्यक्षबाट सहयोगी लेखकको अनुमति लिनु पर्नेछ।</li>
                 <li data-num="८">परीक्षार्थीले तोकेको भाषा, माध्यममा उत्तर दिन पाउने छ।</li>
-                <li data-num="९">परीक्षार्थीले आफूले दिनुपर्ने परीक्षामा अरुलाई सम्मिलित गराउनु हुँदैन। त्यसो गराएको प्रमाणित भएमा परीक्षार्थीलाई परीक्षा बोर्डले ४ वर्ष सम्म विश्वविद्यालयको कुनै पनि परीक्षामा सम्मिलित हुन नपाउने गरी निष्काशन गर्ने निर्णयका साथै फौजदारी अभियोगको कारबाही चलाउन स्थानीय प्रशासनलाई जिम्मा लगाउन सक्नेछ।</li>
+                <li data-num="९">परीक्षार्थीले आफूले दिनुपर्ने परीक्षामा अरुलाई सम्मिलित गराउनु हुँदैन। प्रमाणित भएमा ४ वर्ष सम्म निष्काशन र फौजदारी अभियोगको कारबाही हुन सक्नेछ।</li>
                 <li data-num="१०">Mobile Phone, Cell Phone, Tab जस्ता विद्युतीय सामाग्रीहरू परीक्षा हलमा प्रयोग गर्न पाइने छैन।</li>
                 <li data-num="११">परीक्षा भवनमा परीक्षार्थीको आवेदन फाराम कुनै कारणवश अस्वीकृत भएमा प्रवेश-पत्र स्वतः रद्द हुनेछ।</li>
                 <li data-num="१२">प्रवेश-पत्र लिई आउँदा प्रवेश-पत्र अनिवार्य ल्याउनु पर्ने छ। प्रवेश-पत्र हराएमा तोकिएको शुल्क तिरी प्रतिलिपि लिन सकिनेछ।</li>
             </ol>
-            <p style="margin-top:12px; font-size:13px; color:#333; border-top:1px dashed #ccc; padding-top:12px;">
-                <strong>नोट :</strong> परीक्षार्थीले आफूले अध्ययन गरेको तहको पहिलो पटक परीक्षामा सम्मिलित (परीक्षा फाराम भरेको) भएको वर्षबाट दुई वर्षे शैक्षिक कार्यक्रम ६ वर्ष र चार वर्षे शैक्षिक कार्यक्रम ८ वर्षभित्र पाठ्यक्रमले तह पूरा गर्न तोकेको सम्पूर्ण आवश्यकताहरू पूरा गरी सक्नु पर्नेछ। अथवा जति वर्षको शैक्षिक कार्यक्रम हो त्यसमा चार वर्ष जोडेर हुन आउने वर्ष भित्र पाठ्यक्रमले तह पूरा गर्न तोकेको सम्पूर्ण आवश्यकताहरू पूरा गरी सक्नु पर्नेछ।
+            <p class="note">
+                <strong>नोट :</strong> परीक्षार्थीले आफूले अध्ययन गरेको तहको पहिलो पटक परीक्षामा सम्मिलित भएको वर्षबाट दुई वर्षे शैक्षिक कार्यक्रम ६ वर्ष र चार वर्षे शैक्षिक कार्यक्रम ८ वर्षभित्र पाठ्यक्रमले तह पूरा गर्न तोकेको सम्पूर्ण आवश्यकताहरू पूरा गरी सक्नु पर्नेछ।
             </p>
         </div>
 
-        <!-- ═══ SIGNATURES ═══ -->
         <div class="signatures">
             <div class="sig-block">
                 @if (!string.IsNullOrEmpty(Model.SignaturePath))
                 {
-                    <img src="@Model.SignaturePath" alt="Student Signature" style="max-height:40px;object-fit:contain;" />
+                    <img src="@Model.SignaturePath" alt="Student Signature" />
                 }
                 <div class="sig-line">Full Signature of Applicant</div>
             </div>
             <div class="sig-block">
                 @if (!string.IsNullOrEmpty(Model.ControllerSignaturePath))
                 {
-                    <img src="@Model.ControllerSignaturePath" alt="Controller Signature" style="max-height:40px;object-fit:contain;" />
+                    <img src="@Model.ControllerSignaturePath" alt="Controller Signature" />
                 }
                 <div class="sig-line">Signature of Controller</div>
             </div>
@@ -615,14 +285,11 @@
 
     </div>
 
-    <!-- Optional auto-print -->
-    <!--
     <script>
         window.onload = function () {
             window.print();
         };
     </script>
-    -->
 
 </body>
 </html>
