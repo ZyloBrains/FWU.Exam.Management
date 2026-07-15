@@ -297,8 +297,8 @@
                 }, 400);
             });
 
-            pageSizeSelect.addEventListener('change', function () {
-                pageSize = parseInt(this.value, 10);
+            $(pageSizeSelect).on('select2:select', function (e) {
+                pageSize = parseInt(e.params.data.id, 10);
                 page = 1;
                 loadData();
             });
