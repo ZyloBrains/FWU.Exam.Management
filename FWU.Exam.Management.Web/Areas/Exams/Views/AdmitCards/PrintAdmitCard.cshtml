@@ -45,9 +45,10 @@
 
         /* ═══ HEADER WITH LOGO LEFT & PHOTO RIGHT ═══ */
         .header-top {
+            position: relative;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             gap: 16px 24px;
             border-bottom: 3px double #1a2a4a;
             padding-bottom: 18px;
@@ -61,7 +62,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
         }
+
+        .header-logo { left: 16px; }
+        .header-photo { right: 16px; }
 
         .header-logo .logo-box {
             width: 180px;
@@ -338,6 +345,12 @@
             .header-top {
                 justify-content: center;
                 gap: 10px;
+            }
+
+            .header-logo,
+            .header-photo {
+                position: static;
+                transform: none;
             }
 
             .header-logo {
