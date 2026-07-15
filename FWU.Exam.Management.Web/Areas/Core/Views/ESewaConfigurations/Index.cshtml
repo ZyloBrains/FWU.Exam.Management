@@ -140,7 +140,7 @@
             <tbody class="divide-y divide-gray-100">
                 @foreach (var item in Model)
                 {
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                         <td class="px-4 py-3 font-medium text-gray-800">@item.ProductCode</td>
                         <td class="px-4 py-3 text-gray-600 max-w-[200px] truncate">@item.PostUrl</td>
                         <td class="px-4 py-3 text-gray-600 max-w-[200px] truncate">@item.SuccessUrl</td>
@@ -148,7 +148,7 @@
                         <td class="px-4 py-3 text-gray-600">@item.ServiceChargeAmount</td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                <a asp-action="Details" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
                                 @if (HasPerm("esewa.edit"))

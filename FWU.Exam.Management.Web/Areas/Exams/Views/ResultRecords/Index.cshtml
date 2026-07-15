@@ -88,7 +88,7 @@
             <tbody class="divide-y divide-gray-100">
                 @foreach (var item in Model)
                 {
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                         <td class="px-4 py-3 font-medium text-gray-800">@item.StudentName</td>
                         <td class="px-4 py-3 text-gray-600">@item.SymbolNumber</td>
                         <td class="px-4 py-3 text-gray-600">@item.RegistrationNumber</td>
@@ -98,7 +98,7 @@
                         <td class="px-4 py-3 font-semibold">@item.Gpa</td>
                         <td class="px-4 py-3">@item.Result</td>
                         <td class="px-4 py-3 text-right">
-                            <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                            <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
                                 <i class="fas fa-eye text-xs"></i>
                             </a>
                         </td>
