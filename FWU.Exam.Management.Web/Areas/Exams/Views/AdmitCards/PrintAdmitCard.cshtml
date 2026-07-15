@@ -2,10 +2,10 @@
 
 @{
     Layout = null;
-    // Expected model properties (extend your AdmitCard class accordingly):
-    // string ExamRollNo, string RegistrationNumber, string Campus,
-    // string Level, string Program, string Semester, string ExamType,
-    // string Year, List<Subject> Subjects (with Code, Name, Theory, Practical, Remarks)
+    // Extended model properties expected:
+    // ExamRollNo, RegistrationNumber, Campus, Level, Program, Semester, ExamType, Year
+    // List<Subject> Subjects (Code, Name, Theory, Practical, Remarks)
+    // For the photo, you might have a property like byte[] Photo or string PhotoUrl
 }
 
 <!DOCTYPE html>
@@ -39,51 +39,119 @@
             background: #ffffff;
             border: 2px solid #1a2a4a;
             border-radius: 12px;
-            padding: 32px 38px 28px;
+            padding: 28px 32px 24px;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
         }
 
-        /* ── Header ── */
-        .header {
-            text-align: center;
+        /* ═══ HEADER WITH LOGO LEFT & PHOTO RIGHT ═══ */
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px 24px;
             border-bottom: 3px double #1a2a4a;
-            padding-bottom: 16px;
+            padding-bottom: 18px;
             margin-bottom: 22px;
+            flex-wrap: wrap;
         }
 
-        .header .univ-name {
-            font-size: 28px;
+        .header-logo,
+        .header-photo {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-logo .logo-box {
+            width: 180px;
+            height: 120px;
+            /* background: #f0f4fa; */
+            /* border: 2px solid #1a2a4a; */
+            /* border-radius: 12px; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            /* box-shadow: 0 2px 6px rgba(0,0,0,0.08); */
+        }
+
+        .header-logo .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* padding: 6px; */
+        }
+
+        .header-photo .photo-box {
+            width: 110px;
+            height: 130px;
+            background: #f8fafc;
+            border: 2px solid #1a2a4a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 12px;
+            color: #555;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .header-photo .photo-box svg {
+            width: 60px;
+            height: 60px;
+            fill: #888;
+            margin-bottom: 2px;
+        }
+
+        .header-photo .photo-box .photo-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #1a2a4a;
+        }
+
+        .header-center {
+            flex: 1;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .header-center .univ-name {
+            font-size: 26px;
             font-weight: 700;
             color: #1a2a4a;
             letter-spacing: 1.5px;
             text-transform: uppercase;
+            line-height: 1.2;
         }
 
-        .header .office {
-            font-size: 18px;
+        .header-center .office {
+            font-size: 17px;
             font-weight: 600;
             color: #2c3e6b;
             margin-top: 2px;
         }
 
-        .header .address {
+        .header-center .address {
             font-size: 14px;
             color: #444;
             margin-top: 2px;
         }
 
-        .header .card-title {
+        .header-center .card-title {
             font-size: 22px;
             font-weight: 700;
             color: #1a2a4a;
             text-transform: uppercase;
             letter-spacing: 3px;
-            margin-top: 6px;
+            margin-top: 4px;
             border-top: 1px solid #ccc;
-            padding-top: 6px;
+            padding-top: 4px;
             display: inline-block;
-            padding-left: 20px;
-            padding-right: 20px;
+            padding-left: 16px;
+            padding-right: 16px;
         }
 
         /* ── Student Info Grid ── */
@@ -153,11 +221,6 @@
         .subject-table .subject-name {
             text-align: left;
             padding-left: 14px;
-        }
-
-        .subject-table .check-yes {
-            color: #1a7a3a;
-            font-weight: 700;
         }
 
         /* ── Rules Section ── */
@@ -242,7 +305,7 @@
                 border: 2px solid #1a2a4a !important;
                 border-radius: 0 !important;
                 box-shadow: none !important;
-                padding: 20px 24px !important;
+                padding: 16px 20px !important;
                 max-width: 100% !important;
             }
 
@@ -258,37 +321,74 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+
+            .header-logo .logo-box,
+            .header-photo .photo-box {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
 
         /* ── Responsive ── */
-        @@media (max-width: 680px) {
+        @@media (max-width: 700px) {
             .ticket {
-                padding: 18px 14px;
+                padding: 16px 14px;
+            }
+
+            .header-top {
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .header-logo {
+                order: 1;
+            }
+            .header-center {
+                order: 3;
+                flex-basis: 100%;
+                min-width: unset;
+            }
+            .header-photo {
+                order: 2;
+            }
+
+            .header-center .univ-name {
+                font-size: 20px;
+            }
+            .header-center .card-title {
+                font-size: 18px;
+            }
+
+            .header-logo .logo-box {
+                width: 70px;
+                height: 70px;
+            }
+
+            .header-photo .photo-box {
+                width: 80px;
+                height: 100px;
+            }
+            .header-photo .photo-box svg {
+                width: 40px;
+                height: 40px;
             }
 
             .student-info {
                 grid-template-columns: 1fr;
                 gap: 2px;
-                padding: 12px 16px;
+                padding: 12px 14px;
             }
 
             .student-info .info-item {
                 border-bottom: 1px solid #e6eaf0;
             }
 
-            .header .univ-name {
-                font-size: 22px;
-            }
-            .header .card-title {
-                font-size: 18px;
-            }
-
             .subject-table {
-                font-size: 13px;
+                font-size: 12px;
             }
             .subject-table th,
             .subject-table td {
-                padding: 6px 4px;
+                padding: 4px 3px;
             }
 
             .signatures {
@@ -302,10 +402,16 @@
 
         @@media (max-width: 450px) {
             .subject-table .subject-name {
-                font-size: 12px;
+                font-size: 11px;
             }
             .rules-section .rules-list {
                 font-size: 12px;
+            }
+            .header-center .univ-name {
+                font-size: 17px;
+            }
+            .header-center .office {
+                font-size: 14px;
             }
         }
     </style>
@@ -314,12 +420,34 @@
 
     <div class="ticket">
 
-        <!-- ═══ HEADER ═══ -->
-        <div class="header">
-            <div class="univ-name">Far Western University</div>
-            <div class="office">Office of the Controller of Examinations</div>
-            <div class="address">Mahendranagar, Kanchanpur</div>
-            <div class="card-title">Admit Card</div>
+        <!-- ═══ HEADER: LOGO LEFT | TEXT CENTER | PHOTO RIGHT ═══ -->
+        <div class="header-top">
+            <!-- Left: University Logo -->
+            <div class="header-logo">
+                <div class="logo-box">
+                    <img src="~/images/download.png" alt="Far Western University Logo" />
+                </div>
+            </div>
+
+            <!-- Center: University Details & Title -->
+            <div class="header-center">
+                <div class="univ-name">Far Western University</div>
+                <div class="office">Office of the Controller of Examinations</div>
+                <div class="address">Mahendranagar, Kanchanpur</div>
+                <div class="card-title">Admit Card</div>
+            </div>
+
+            <!-- Right: Student Photo -->
+            <div class="header-photo">
+                <div class="photo-box">
+                    <!-- SVG Student Silhouette -->
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="30" r="22" fill="#b0b8c5" />
+                        <path d="M12 95 Q12 60 50 60 Q88 60 88 95 Z" fill="#b0b8c5" />
+                    </svg>
+                    <span class="photo-label">Photo</span>
+                </div>
+            </div>
         </div>
 
         <!-- ═══ STUDENT INFO (two columns) ═══ -->
@@ -396,7 +524,7 @@
             </thead>
             <tbody>
                 @{
-                    var subjects = Model.Subjects ?? new List<Subject>(); // you must add `Subjects` property
+                    var subjects = Model.Subjects ?? new List<Subject>();
                     if (subjects.Any())
                     {
                         int sn = 1;
@@ -415,7 +543,7 @@
                     }
                     else
                     {
-                        <!-- Fallback static rows from your PDF example -->
+                        <!-- Fallback static rows from your PDF -->
                         <tr><td>1</td><td>CSIT.421</td><td class="subject-name">Parallel Computing</td><td>Y</td><td>Y</td><td></td></tr>
                         <tr><td>2</td><td>CSIT.422</td><td class="subject-name">Internship</td><td>Y</td><td>Y</td><td></td></tr>
                         <tr><td>3</td><td>CSIT.423.2</td><td class="subject-name">Advanced Database Design</td><td>Y</td><td>Y</td><td></td></tr>
