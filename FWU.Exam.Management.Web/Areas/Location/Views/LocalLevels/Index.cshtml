@@ -132,6 +132,7 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Local Level Name</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">District</th>
@@ -139,9 +140,14 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                @{
+                    int serial = ((int)ViewBag.CurrentPage - 1) * (int)ViewBag.PageSize;
+                }
                 @foreach (var item in Model)
                 {
+                    serial++;
                     <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                        <td class="px-4 py-3 text-gray-500 text-sm">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800">@item.LocalLevelName</td>
                         <td class="px-4 py-3 text-gray-600">
                             <span class="px-2 py-1 text-xs rounded-full @(item.LocalLevelType == LocalLevelType.RuralMunicipality ? "bg-green-100 text-green-700" : item.LocalLevelType == LocalLevelType.Municipality ? "bg-blue-100 text-blue-700" : item.LocalLevelType == LocalLevelType.SubMetropolitan ? "bg-purple-100 text-purple-700" : "bg-yellow-100 text-yellow-700")">
@@ -190,8 +196,12 @@
 
     <!-- Mobile card layout -->
     <div class="lg:hidden space-y-3">
+        @{
+            int serialM = ((int)ViewBag.CurrentPage - 1) * (int)ViewBag.PageSize;
+        }
         @foreach (var item in Model)
         {
+            serialM++;
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
@@ -199,7 +209,10 @@
                             <i class="fas fa-city text-teal-600 text-sm"></i>
                         </div>
                         <div>
-                            <h3 class="font-semibold text-gray-800 text-sm">@item.LocalLevelName</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold text-teal-600 bg-teal-100 rounded px-1.5 py-0.5">#@serialM</span>
+                                <h3 class="font-semibold text-gray-800 text-sm">@item.LocalLevelName</h3>
+                            </div>
                             <p class="text-xs text-gray-500">@(item.District?.DistrictName ?? "-")</p>
                         </div>
                     </div>

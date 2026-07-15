@@ -65,6 +65,7 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Venue Colleges</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam Schedule</th>
@@ -74,9 +75,12 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                @{ var serial = (currentPage - 1) * pageSize; }
                 @foreach (var item in Model)
                 {
+                    serial++;
                     <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                        <td class="px-4 py-3 text-gray-500">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800">@item.Code</td>
                         <td class="px-4 py-3 text-gray-600">
                             @if (item.ExamCenterVenues != null && item.ExamCenterVenues.Any())
@@ -131,15 +135,17 @@
     </div>
 
     <div class="lg:hidden space-y-3">
+        @{ var serialMobile = (currentPage - 1) * pageSize; }
         @if (Model.Any())
         {
             @foreach (var item in Model)
             {
+                serialMobile++;
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-map-marker-alt text-orange-600 text-sm"></i>
+                                <span class="text-xs font-bold text-orange-700">@serialMobile</span>
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-800 text-sm">Center @item.Code</h3>

@@ -125,6 +125,7 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">API URL</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Mode</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Tags</th>
@@ -133,9 +134,14 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                @{
+                    int serial = (ViewBag.CurrentPage - 1) * ViewBag.PageSize;
+                }
                 @foreach (var item in Model)
                 {
+                    serial++;
                     <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                        <td class="px-4 py-3 text-gray-600">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800 max-w-xs truncate">@item.ApiUrl</td>
                         <td class="px-4 py-3 text-gray-600">@item.Mode</td>
                         <td class="px-4 py-3 text-gray-600">@item.Tags</td>
@@ -182,8 +188,12 @@
     </div>
 
     <div class="lg:hidden space-y-3">
+        @{
+            int serialMobile = (ViewBag.CurrentPage - 1) * ViewBag.PageSize;
+        }
         @foreach (var item in Model)
         {
+            serialMobile++;
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
@@ -191,6 +201,7 @@
                             <i class="fas fa-sms text-purple-600 text-sm"></i>
                         </div>
                         <div>
+                            <p class="text-xs text-gray-400 mb-0.5">#@serialMobile</p>
                             <h3 class="font-semibold text-gray-800 text-sm">@item.ApiUrl</h3>
                             <p class="text-xs text-gray-500">Mode: @item.Mode</p>
                         </div>
