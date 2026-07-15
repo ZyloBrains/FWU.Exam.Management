@@ -1,16 +1,16 @@
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Domain.Entities.Teachers;
+using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class TeacherSubjectAssignmentService(AppDbContext context, IUserContext userContext) : ITeacherSubjectAssignmentService
+public class CollegeAdminSubjectAssignmentService(AppDbContext context, IUserContext userContext) : ICollegeAdminSubjectAssignmentService
 {
-    public async Task<List<TeacherSubjectAssignment>> GetAssignmentsAsync(string? teacherUserId = null)
+    public async Task<List<CollegeAdminSubjectAssignment>> GetAssignmentsAsync(string? collegeAdminUserId = null)
     {
-        var query = context.TeacherSubjectAssignments
+        var query = context.CollegeAdminSubjectAssignments
             .AsNoTracking()
             .Include(tsa => tsa.SubjectOffering)
                 .ThenInclude(so => so.SubjectCatalog)
@@ -21,18 +21,18 @@ public class TeacherSubjectAssignmentService(AppDbContext context, IUserContext 
             .Include(tsa => tsa.ExamSchedule)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(teacherUserId))
-            query = query.Where(tsa => tsa.TeacherUserId == teacherUserId);
+        if (!string.IsNullOrEmpty(collegeAdminUserId))
+            query = query.Where(tsa => tsa.CollegeAdminUserId == collegeAdminUserId);
 
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var teacherIds = await context.Users
+                var collegeAdminIds = await context.Users
                     .Where(u => u.CollegeId == userContext.CollegeId.Value)
                     .Select(u => u.Id)
                     .ToListAsync();
-                query = query.Where(tsa => teacherIds.Contains(tsa.TeacherUserId));
+                query = query.Where(tsa => collegeAdminIds.Contains(tsa.CollegeAdminUserId));
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
             {
@@ -43,23 +43,23 @@ public class TeacherSubjectAssignmentService(AppDbContext context, IUserContext 
         return await query.ToListAsync();
     }
 
-    public async Task<TeacherSubjectAssignment?> GetByIdAsync(int id)
+    public async Task<CollegeAdminSubjectAssignment?> GetByIdAsync(int id)
     {
-        return await context.TeacherSubjectAssignments
+        return await context.CollegeAdminSubjectAssignments
             .Include(tsa => tsa.SubjectOffering)
             .Include(tsa => tsa.ExamSchedule)
             .FirstOrDefaultAsync(tsa => tsa.Id == id);
     }
 
-    public async Task CreateAsync(TeacherSubjectAssignment assignment)
+    public async Task CreateAsync(CollegeAdminSubjectAssignment assignment)
     {
-        context.TeacherSubjectAssignments.Add(assignment);
+        context.CollegeAdminSubjectAssignments.Add(assignment);
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(TeacherSubjectAssignment assignment)
+    public async Task UpdateAsync(CollegeAdminSubjectAssignment assignment)
     {
-        var existing = await context.TeacherSubjectAssignments.FindAsync(assignment.Id);
+        var existing = await context.CollegeAdminSubjectAssignments.FindAsync(assignment.Id);
         if (existing != null)
         {
             assignment.TenantId = existing.TenantId;
@@ -70,36 +70,36 @@ public class TeacherSubjectAssignmentService(AppDbContext context, IUserContext 
 
     public async Task DeleteAsync(int id)
     {
-        var assignment = await context.TeacherSubjectAssignments.FindAsync(id);
+        var assignment = await context.CollegeAdminSubjectAssignments.FindAsync(id);
         if (assignment != null)
         {
-            context.TeacherSubjectAssignments.Remove(assignment);
+            context.CollegeAdminSubjectAssignments.Remove(assignment);
             await context.SaveChangesAsync();
         }
     }
 
-    public async Task<List<int>> GetAssignedSubjectOfferingIdsAsync(string teacherUserId)
+    public async Task<List<int>> GetAssignedSubjectOfferingIdsAsync(string collegeAdminUserId)
     {
-        return await context.TeacherSubjectAssignments
-            .Where(tsa => tsa.TeacherUserId == teacherUserId && tsa.IsActive)
+        return await context.CollegeAdminSubjectAssignments
+            .Where(tsa => tsa.CollegeAdminUserId == collegeAdminUserId && tsa.IsActive)
             .Select(tsa => tsa.SubjectOfferingId)
             .Distinct()
             .ToListAsync();
     }
 
-    public async Task<List<int>> GetAssignedExamScheduleIdsAsync(string teacherUserId)
+    public async Task<List<int>> GetAssignedExamScheduleIdsAsync(string collegeAdminUserId)
     {
-        return await context.TeacherSubjectAssignments
-            .Where(tsa => tsa.TeacherUserId == teacherUserId && tsa.IsActive && tsa.ExamScheduleId != null)
+        return await context.CollegeAdminSubjectAssignments
+            .Where(tsa => tsa.CollegeAdminUserId == collegeAdminUserId && tsa.IsActive && tsa.ExamScheduleId != null)
             .Select(tsa => tsa.ExamScheduleId!.Value)
             .Distinct()
             .ToListAsync();
     }
 
-    public async Task<bool> IsTeacherAssignedToSubjectAsync(string teacherUserId, int subjectOfferingId)
+    public async Task<bool> IsCollegeAdminAssignedToSubjectAsync(string collegeAdminUserId, int subjectOfferingId)
     {
-        return await context.TeacherSubjectAssignments
-            .AnyAsync(tsa => tsa.TeacherUserId == teacherUserId
+        return await context.CollegeAdminSubjectAssignments
+            .AnyAsync(tsa => tsa.CollegeAdminUserId == collegeAdminUserId
                           && tsa.SubjectOfferingId == subjectOfferingId
                           && tsa.IsActive);
     }

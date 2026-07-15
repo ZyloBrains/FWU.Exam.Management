@@ -318,7 +318,7 @@ public static class Permissions
     public const string RetotalingReject = "retotaling.reject";
     public const string RetotalingReview = "retotaling.review";
 
-    // Marks Entry (Teacher)
+    // Marks Entry (College Admin)
     public const string MarksEntryView = "marksentry.view";
     public const string MarksEntrySubmit = "marksentry.submit";
     public const string MarksEntryImport = "marksentry.import";
@@ -664,17 +664,6 @@ public static class Permissions
             BanksView, BanksCreate, BanksEdit,
             PaymentTypesView, PaymentTypesCreate, PaymentTypesEdit, PaymentTypesDelete,
             BillTitlesView, BillTitlesCreate, BillTitlesEdit, BillTitlesDelete,
-        ],
-
-        ["Teacher"] =
-        [
-            DashboardView,
-
-            SubjectsView,
-            ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
-            StudentsView,
-
-            MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
         ],
 
         ["Student"] =

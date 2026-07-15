@@ -1,13 +1,13 @@
-@model TeacherDashboardDto
+@model CollegeAdminDashboardDto
 
 @{
-    ViewData["Title"] = "Teacher Dashboard";
+    ViewData["Title"] = "College Admin Dashboard";
 }
 
 <div class="space-y-6">
     <div class="flex items-center gap-3">
         <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-chalkboard-teacher text-teal-600"></i>
+            <i class="fas fa-user-cog text-teal-600"></i>
         </div>
         <h1 class="text-2xl font-bold text-gray-800">My Subjects</h1>
     </div>
@@ -17,7 +17,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <i class="fas fa-book-open text-5xl text-gray-300 mb-4"></i>
             <h3 class="text-lg font-semibold text-gray-900">No Subjects Assigned</h3>
-            <p class="text-sm text-gray-500 mt-1">You have not been assigned any subjects yet. Contact your college admin.</p>
+            <p class="text-sm text-gray-500 mt-1">No subjects have been assigned to you yet.</p>
         </div>
     }
     else
@@ -66,7 +66,7 @@
     <script>
         function navigateWithSchedule(action, subjectOfferingId, examScheduleId) {
             if (examScheduleId === '0') {
-                var url = '@Url.Action("GetAssignedSchedules", "TeacherMarks")' + '?subjectOfferingId=' + subjectOfferingId;
+                var url = '@Url.Action("GetAssignedSchedules", "CollegeAdminMarks")' + '?subjectOfferingId=' + subjectOfferingId;
                 fetch(url)
                     .then(function(r) { return r.json(); })
                     .then(function(schedules) {
@@ -92,7 +92,7 @@
         document.querySelectorAll('a[data-action="standard"]').forEach(function(link) {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                navigateWithSchedule('@Url.Action("MarksEntry", "TeacherMarks")',
+                navigateWithSchedule('@Url.Action("MarksEntry", "CollegeAdminMarks")',
                     this.getAttribute('data-subject-offering-id'),
                     this.getAttribute('data-exam-schedule-id'));
             });
@@ -101,7 +101,7 @@
         document.querySelectorAll('a[data-action="import"]').forEach(function(link) {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                navigateWithSchedule('@Url.Action("Import", "TeacherMarks")',
+                navigateWithSchedule('@Url.Action("Import", "CollegeAdminMarks")',
                     this.getAttribute('data-subject-offering-id'),
                     this.getAttribute('data-exam-schedule-id'));
             });

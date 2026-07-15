@@ -10,14 +10,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class TeacherMarksService(
+public class CollegeAdminMarksService(
     AppDbContext context,
-    ITeacherSubjectAssignmentService assignmentService,
-    IGradeCalculationService gradeCalculationService) : ITeacherMarksService
+    ICollegeAdminSubjectAssignmentService assignmentService,
+    IGradeCalculationService gradeCalculationService) : ICollegeAdminMarksService
 {
-    public async Task<TeacherDashboardDto> GetTeacherDashboardAsync(string teacherUserId)
+    public async Task<CollegeAdminDashboardDto> GetCollegeAdminDashboardAsync(string collegeAdminUserId)
     {
-        var assignments = await assignmentService.GetAssignmentsAsync(teacherUserId);
+        var assignments = await assignmentService.GetAssignmentsAsync(collegeAdminUserId);
         var subjectOfferingIds = assignments.Select(a => a.SubjectOfferingId).Distinct().ToList();
 
         var subjectOfferings = await context.SubjectOfferings
@@ -28,7 +28,7 @@ public class TeacherMarksService(
             .Where(so => subjectOfferingIds.Contains(so.Id))
             .ToListAsync();
 
-        var result = new TeacherDashboardDto();
+        var result = new CollegeAdminDashboardDto();
 
         foreach (var so in subjectOfferings)
         {
@@ -55,7 +55,7 @@ public class TeacherMarksService(
                                 && esr.SubjectOfferingId == so.Id
                                 && esr.IsSubmitted);
 
-            result.AssignedSubjects.Add(new TeacherSubjectInfo
+            result.AssignedSubjects.Add(new CollegeAdminSubjectInfo
             {
                 SubjectOfferingId = so.Id,
                 SubjectName = so.SubjectCatalog?.SubjectName ?? "Unknown",
@@ -70,9 +70,9 @@ public class TeacherMarksService(
         return result;
     }
 
-    public async Task<MarksEntryViewModel> GetMarksEntryViewAsync(int subjectOfferingId, int examScheduleId, string teacherUserId)
+    public async Task<MarksEntryViewModel> GetMarksEntryViewAsync(int subjectOfferingId, int examScheduleId, string collegeAdminUserId)
     {
-        if (!await assignmentService.IsTeacherAssignedToSubjectAsync(teacherUserId, subjectOfferingId))
+        if (!await assignmentService.IsCollegeAdminAssignedToSubjectAsync(collegeAdminUserId, subjectOfferingId))
             throw new UnauthorizedAccessException("You are not assigned to this subject.");
 
         var subjectOffering = await context.SubjectOfferings
@@ -218,9 +218,9 @@ public class TeacherMarksService(
         return result;
     }
 
-    public async Task<BulkSaveResult> SaveMarksBulkAsync(BulkMarksSaveDto dto, string teacherUserId)
+    public async Task<BulkSaveResult> SaveMarksBulkAsync(BulkMarksSaveDto dto, string collegeAdminUserId)
     {
-        if (!await assignmentService.IsTeacherAssignedToSubjectAsync(teacherUserId, dto.SubjectOfferingId))
+        if (!await assignmentService.IsCollegeAdminAssignedToSubjectAsync(collegeAdminUserId, dto.SubjectOfferingId))
             throw new UnauthorizedAccessException("You are not assigned to this subject.");
 
         var subjectOffering = await context.SubjectOfferings
@@ -303,9 +303,9 @@ public class TeacherMarksService(
         return result;
     }
 
-    public async Task<ExcelImportResultDto> ImportMarksFromExcelAsync(Stream excelStream, int subjectOfferingId, int examScheduleId, string teacherUserId)
+    public async Task<ExcelImportResultDto> ImportMarksFromExcelAsync(Stream excelStream, int subjectOfferingId, int examScheduleId, string collegeAdminUserId)
     {
-        if (!await assignmentService.IsTeacherAssignedToSubjectAsync(teacherUserId, subjectOfferingId))
+        if (!await assignmentService.IsCollegeAdminAssignedToSubjectAsync(collegeAdminUserId, subjectOfferingId))
             throw new UnauthorizedAccessException("You are not assigned to this subject.");
 
         var subjectOffering = await context.SubjectOfferings

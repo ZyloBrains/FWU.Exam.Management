@@ -13,9 +13,9 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
 [RequirePermission("marksentry.view")]
-public class TeacherMarksController(
-    ITeacherMarksService teacherMarksService,
-    ITeacherSubjectAssignmentService assignmentService,
+public class CollegeAdminMarksController(
+    ICollegeAdminMarksService collegeAdminMarksService,
+    ICollegeAdminSubjectAssignmentService assignmentService,
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
@@ -24,7 +24,7 @@ public class TeacherMarksController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var dashboard = await teacherMarksService.GetTeacherDashboardAsync(user.Id);
+        var dashboard = await collegeAdminMarksService.GetCollegeAdminDashboardAsync(user.Id);
         return View(dashboard);
     }
 
@@ -35,7 +35,7 @@ public class TeacherMarksController(
 
         try
         {
-            var model = await teacherMarksService.GetMarksEntryViewAsync(subjectOfferingId, examScheduleId, user.Id);
+            var model = await collegeAdminMarksService.GetMarksEntryViewAsync(subjectOfferingId, examScheduleId, user.Id);
             return View(model);
         }
         catch (UnauthorizedAccessException)
@@ -58,7 +58,7 @@ public class TeacherMarksController(
 
         try
         {
-            var result = await teacherMarksService.SaveMarksBulkAsync(dto, user.Id);
+            var result = await collegeAdminMarksService.SaveMarksBulkAsync(dto, user.Id);
 
             if (result.Success)
             {
@@ -84,7 +84,7 @@ public class TeacherMarksController(
 
         try
         {
-            var model = await teacherMarksService.GetMarksEntryViewAsync(subjectOfferingId, examScheduleId, user.Id);
+            var model = await collegeAdminMarksService.GetMarksEntryViewAsync(subjectOfferingId, examScheduleId, user.Id);
             return View("MarksEntryExcel", model);
         }
         catch (UnauthorizedAccessException)
@@ -107,7 +107,7 @@ public class TeacherMarksController(
 
         try
         {
-            var result = await teacherMarksService.SaveMarksBulkAsync(dto, user.Id);
+            var result = await collegeAdminMarksService.SaveMarksBulkAsync(dto, user.Id);
 
             if (result.Success)
             {
@@ -131,7 +131,7 @@ public class TeacherMarksController(
     {
         try
         {
-            var data = await teacherMarksService.ExportMarksAsync(subjectOfferingId, examScheduleId);
+            var data = await collegeAdminMarksService.ExportMarksAsync(subjectOfferingId, examScheduleId);
             return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Marks_S{subjectOfferingId}_E{examScheduleId}.xlsx");
         }
@@ -146,7 +146,7 @@ public class TeacherMarksController(
     {
         try
         {
-            var data = await teacherMarksService.ExportMarksTemplateAsync(subjectOfferingId, examScheduleId);
+            var data = await collegeAdminMarksService.ExportMarksTemplateAsync(subjectOfferingId, examScheduleId);
             return File(data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"MarksTemplate_S{subjectOfferingId}_E{examScheduleId}.xlsx");
         }
@@ -188,7 +188,7 @@ public class TeacherMarksController(
             await excelFile.CopyToAsync(stream);
             stream.Position = 0;
 
-            var result = await teacherMarksService.ImportMarksFromExcelAsync(stream, subjectOfferingId, examScheduleId, user.Id);
+            var result = await collegeAdminMarksService.ImportMarksFromExcelAsync(stream, subjectOfferingId, examScheduleId, user.Id);
 
             if (result.ErrorCount == 0)
             {
