@@ -109,8 +109,12 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
     {
         var registration = await context.ExamRegistrations
             .Include(er => er.ExamSchedule)
+            .Include(er => er.College)
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
+
+        var studentUser = await ResolveStudentUserAsync(registration);
+        var controllerSignaturePath = await ResolveControllerSignatureAsync(registration.CollegeId);
 
         var admitCard = new AdmitCard
         {
@@ -118,6 +122,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             ExamScheduleId = registration.ExamScheduleId,
             StudentRegistrationId = null,
             AdmitCardNumber = $"AC-{registration.ExamScheduleId:D4}-{registration.Id:D6}",
+            PhotoPath = studentUser?.ProfilePath,
+            SignaturePath = studentUser?.SignaturePath,
+            ControllerSignaturePath = controllerSignaturePath,
             GeneratedDate = DateTime.UtcNow,
             IsDownloaded = false,
             IsActive = true
@@ -132,6 +139,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
     {
         var registrations = await context.ExamRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
+            .Include(er => er.College)
             .ToListAsync();
 
         var admitCards = new List<AdmitCard>();
@@ -142,12 +150,18 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
             if (existing == null)
             {
+                var studentUser = await ResolveStudentUserAsync(registration);
+                var controllerSignaturePath = await ResolveControllerSignatureAsync(registration.CollegeId);
+
                 var admitCard = new AdmitCard
                 {
                     ExamRegistrationId = registration.Id,
                     ExamScheduleId = examScheduleId,
                     StudentRegistrationId = null,
                     AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
+                    PhotoPath = studentUser?.ProfilePath,
+                    SignaturePath = studentUser?.SignaturePath,
+                    ControllerSignaturePath = controllerSignaturePath,
                     GeneratedDate = DateTime.UtcNow,
                     IsDownloaded = false,
                     IsActive = true
@@ -163,6 +177,25 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         }
 
         return admitCards;
+    }
+
+    private async Task<FWU.Exam.Management.Infrastructure.Data.Models.AppUser?> ResolveStudentUserAsync(Domain.Entities.Exams.ExamRegistration registration)
+    {
+        var studentAdmission = await context.StudentAdmissions
+            .FirstOrDefaultAsync(sa => sa.CollegeId == registration.CollegeId
+                && sa.ProgramsId == registration.ProgramsId
+                && sa.AppUserId != null);
+        if (studentAdmission?.AppUserId == null) return null;
+        return await context.Users.FindAsync(studentAdmission.AppUserId);
+    }
+
+    private async Task<string?> ResolveControllerSignatureAsync(int collegeId)
+    {
+        var college = await context.Colleges
+            .AsNoTracking()
+            .Include(c => c.Faculties)
+            .FirstOrDefaultAsync(c => c.Id == collegeId);
+        return college?.Faculties?.FirstOrDefault()?.ControllerSignaturePath;
     }
 
     public AdmitCardSelectListsDto GetSelectListData(AdmitCard? admitCard = null)

@@ -28,6 +28,9 @@ public class AdmitCard : ITenantScoped
     public string? Semester { get; set; }
     public string? ExamType { get; set; }
     public string? Year { get; set; }
+    public string? PhotoPath { get; set; }
+    public string? SignaturePath { get; set; }
+    public string? ControllerSignaturePath { get; set; }
     public DateTime GeneratedDate { get; set; }
     public bool IsDownloaded { get; set; }
     public DateTime? DownloadedDate { get; set; }
