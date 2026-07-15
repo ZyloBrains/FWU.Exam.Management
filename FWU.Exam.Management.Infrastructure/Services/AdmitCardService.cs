@@ -193,9 +193,10 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
     {
         var college = await context.Colleges
             .AsNoTracking()
-            .Include(c => c.Faculties)
             .FirstOrDefaultAsync(c => c.Id == collegeId);
-        return college?.Faculties?.FirstOrDefault()?.ControllerSignaturePath;
+        if (college == null) return null;
+        var tenant = await context.Tenants.FindAsync(college.TenantId);
+        return tenant?.ControllerSignaturePath;
     }
 
     public AdmitCardSelectListsDto GetSelectListData(AdmitCard? admitCard = null)

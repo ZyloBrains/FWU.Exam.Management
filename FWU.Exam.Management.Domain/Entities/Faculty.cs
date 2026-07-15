@@ -23,8 +23,6 @@ public class Faculty
     public string Email { get; set; } = string.Empty;
     [Display(Name = "Logo Path")]
     public string? LogoPath { get; set; }
-    [Display(Name = "Controller Signature Path")]
-    public string? ControllerSignaturePath { get; set; }
     public int? TenantId { get; set; }
     public Tenant? Tenant { get; set; }
     public virtual ICollection<College>? Colleges { get; set; }
