@@ -71,6 +71,7 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student Name</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Academic Year</th>
@@ -82,7 +83,7 @@
             </thead>
             <tbody id="registrationsBody" class="divide-y divide-gray-100">
                 <tr>
-                    <td colspan="7" class="px-4 py-20 text-center">
+                    <td colspan="8" class="px-4 py-20 text-center">
                         <div class="flex flex-col items-center justify-center">
                             <i class="fas fa-spinner fa-pulse text-2xl text-teal-600 mb-4"></i>
                             <span class="text-sm text-gray-500 font-medium">Loading registrations...</span>
@@ -145,7 +146,7 @@
             const base = window.location.pathname.replace(/\/Students\/StudentRegistrations.*/, '');
 
             const showLoading = () => {
-                tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-20 text-center">
+                tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-20 text-center">
                     <div class="flex flex-col items-center justify-center">
                         <i class="fas fa-spinner fa-pulse text-2xl text-teal-600 mb-4"></i>
                         <span class="text-sm text-gray-500 font-medium">Loading registrations...</span>
@@ -170,7 +171,7 @@
                     updatePagination();
                 } catch (error) {
                     console.error('Error fetching data:', error);
-                    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-12 text-center"><div class="flex flex-col items-center"><i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i><span class="text-sm font-medium text-red-600 mb-1">Failed to load data</span><p class="text-xs text-gray-500">Please refresh the page and try again.</p></div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-12 text-center"><div class="flex flex-col items-center"><i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i><span class="text-sm font-medium text-red-600 mb-1">Failed to load data</span><p class="text-xs text-gray-500">Please refresh the page and try again.</p></div></td></tr>';
                     mobileContainer.innerHTML = '<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center"><i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3"></i><span class="text-sm font-medium text-red-600 mb-1">Failed to load data</span><p class="text-xs text-gray-500">Please refresh the page and try again.</p></div>';
                 }
             };
@@ -184,29 +185,29 @@
 
             const renderActions = (item, isMobile) => {
                 const approveReject = (item.status === 'Pending' || !item.status) ? `
-                    <button onclick="window.updateRegStatus(${item.id}, 'Approved')" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100' : 'p-1.5 text-green-600 hover:bg-green-50 rounded-md'}" title="Approve">
+                    <button onclick="event.stopPropagation(); window.updateRegStatus(${item.id}, 'Approved')" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100' : 'p-1.5 text-green-600 hover:bg-green-50 rounded-md'}" title="Approve">
                         <i class="fas fa-check text-xs"></i>${isMobile ? ' Approve' : ''}
                     </button>
-                    <button onclick="window.updateRegStatus(${item.id}, 'Rejected')" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100' : 'p-1.5 text-red-600 hover:bg-red-50 rounded-md'}" title="Reject">
+                    <button onclick="event.stopPropagation(); window.updateRegStatus(${item.id}, 'Rejected')" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100' : 'p-1.5 text-red-600 hover:bg-red-50 rounded-md'}" title="Reject">
                         <i class="fas fa-times text-xs"></i>${isMobile ? ' Reject' : ''}
                     </button>
                 ` : '';
                 return `
                     ${approveReject}
-                    <a href="${base}/Students/StudentRegistrations/Details/${item.id}" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100' : 'p-1.5 text-blue-600 hover:bg-blue-50 rounded-md'}" title="Details">
+                    <a href="${base}/Students/StudentRegistrations/Details/${item.id}" onclick="event.stopPropagation()" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100' : 'p-1.5 text-blue-600 hover:bg-blue-50 rounded-md'}" title="Details">
                         <i class="fas fa-eye text-xs"></i>${isMobile ? ' Details' : ''}
                     </a>
-                    <a href="${base}/Students/StudentRegistrations/Edit/${item.id}" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100' : 'p-1.5 text-amber-600 hover:bg-amber-50 rounded-md'}" title="Edit">
+                    <a href="${base}/Students/StudentRegistrations/Edit/${item.id}" onclick="event.stopPropagation()" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100' : 'p-1.5 text-amber-600 hover:bg-amber-50 rounded-md'}" title="Edit">
                         <i class="fas fa-edit text-xs"></i>${isMobile ? ' Edit' : ''}
                     </a>
-                    <a href="javascript:void(0)" onclick="window.deleteStudentRegistration(${item.id})" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100' : 'p-1.5 text-red-600 hover:bg-red-50 rounded-md'}" title="Delete">
+                    <a href="javascript:void(0)" onclick="event.stopPropagation(); window.deleteStudentRegistration(${item.id})" class="${isMobile ? 'flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100' : 'p-1.5 text-red-600 hover:bg-red-50 rounded-md'}" title="Delete">
                         <i class="fas fa-trash text-xs"></i>${isMobile ? ' Delete' : ''}
                     </a>
                 `;
             };
 
             const renderEmpty = () => `
-                <tr><td colspan="7" class="px-4 py-20 text-center">
+                <tr><td colspan="8" class="px-4 py-20 text-center">
                     <div class="flex flex-col items-center justify-center">
                         <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
                         <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
@@ -228,8 +229,9 @@
                     return;
                 }
 
-                tbody.innerHTML = items.map(item => `
-                    <tr class="hover:bg-gray-50 transition-colors">
+                tbody.innerHTML = items.map((item, index) => `
+                    <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="window.location.href='${base}/Students/StudentRegistrations/Details/${item.id}'">
+                        <td class="px-4 py-3 text-sm text-gray-500">${(page - 1) * pageSize + index + 1}</td>
                         <td class="px-4 py-3">
                             <span class="font-mono text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded">${item.registrationNumber || '-'}</span>
                         </td>
@@ -249,10 +251,11 @@
                     </tr>
                 `).join('');
 
-                mobileContainer.innerHTML = items.map(item => `
+                mobileContainer.innerHTML = items.map((item, index) => `
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-3">
+                                <span class="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded">${(page - 1) * pageSize + index + 1}</span>
                                 <div>
                                     <h3 class="font-semibold text-gray-800 text-sm">${item.fullName || '-'}</h3>
                                     <p class="text-xs text-gray-500">${item.registrationNumber || '-'}</p>
@@ -294,11 +297,19 @@
                 searchTimeout = setTimeout(() => {
                     page = 1;
                     loadData();
-                }, 400);
+                }, 600);
             });
 
-            pageSizeSelect.addEventListener('change', function () {
-                pageSize = parseInt(this.value, 10);
+            searchBox.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    page = 1;
+                    loadData();
+                }
+            });
+
+            $(pageSizeSelect).on('select2:select', function (e) {
+                pageSize = parseInt(e.params.data.id, 10);
                 page = 1;
                 loadData();
             });

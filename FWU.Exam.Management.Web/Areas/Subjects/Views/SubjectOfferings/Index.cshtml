@@ -179,7 +179,7 @@
                             <tbody class="divide-y divide-gray-50">
                                 @foreach (var item in semesterGroup.Offerings)
                                 {
-                                    <tr class="hover:bg-gray-50/50 transition-colors">
+                                    <tr class="hover:bg-gray-50/50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                                         <td class="px-5 py-2.5 text-xs text-gray-400">@item.DisplayOrder</td>
                                         <td class="px-4 py-2.5">
                                             <div class="text-sm font-medium text-gray-800">@(item.SubjectCatalog?.SubjectName ?? "-")</div>
@@ -230,7 +230,7 @@
                                         </td>
                                         <td class="px-4 py-2.5 text-right">
                                             <div class="flex items-center justify-end gap-1">
-                                                <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                                <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                                     <i class="fas fa-eye text-xs"></i>
                                                 </a>
                                                 @if (HasPerm("subjectofferings.edit"))
