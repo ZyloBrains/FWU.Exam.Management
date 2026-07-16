@@ -6,36 +6,6 @@
 
 <div class="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
-    <!-- ═══ PAGE HEADER ═══ -->
-    <header class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-900 shadow-2xl shadow-indigo-900/20">
-        <div class="absolute inset-0 bg-grid-white/[0.04] [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
-        <div class="absolute -top-24 -right-24 w-80 h-80 bg-indigo-400/15 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-violet-400/10 rounded-full blur-3xl"></div>
-
-        <div class="relative px-5 py-7 sm:px-8 sm:py-9 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <div class="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/20 shrink-0">
-                    <i class="fas fa-file-alt text-white text-xl sm:text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Marksheet</h1>
-                    <p class="mt-0.5 text-indigo-200/80 text-sm sm:text-base flex items-center gap-2">
-                        <i class="fas fa-graduation-cap text-indigo-300/60 text-xs"></i>
-                        View your academic performance
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2.5">
-                <a asp-action="MarksheetPrint"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 backdrop-blur-xl text-white text-sm font-semibold border border-white/15 shadow-lg hover:bg-white/25 transition-all duration-200 active:scale-[0.97]">
-                    <i class="fas fa-print text-indigo-200/80 text-sm"></i>
-                    <span class="hidden sm:inline">Print</span>
-                </a>
-            </div>
-        </div>
-    </header>
-
     <!-- ═══ EMPTY STATE ═══ -->
     @if (Model.Count == 0)
     {
@@ -86,6 +56,10 @@
                         }
                     </div>
                 </div>
+                <a asp-action="MarksheetPrint" asp-route-examScheduleId="@marksheet.ExamScheduleId"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200/60 hover:bg-slate-200 transition-all active:scale-[0.97] shrink-0">
+                    <i class="fas fa-print text-[11px]"></i> Print
+                </a>
             </div>
 
             @if (marksheet.Subjects.Count > 0)
