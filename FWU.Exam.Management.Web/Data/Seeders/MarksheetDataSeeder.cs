@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
@@ -62,6 +63,17 @@ public static class MarksheetDataSeeder
         var studentReg = await context.StudentRegistrations.FirstOrDefaultAsync(sr => sr.Email == "student@gmail.com");
         if (studentReg == null)
         {
+            // Create Permanent Address
+            var address = new Address
+            {
+                LocalLevelId = 1,
+                FullAddress = "Kathmandu, Nepal",
+                ToleStreet = "Baneshwor",
+                AddressType = AddressType.Permanent
+            };
+            context.Addresses.Add(address);
+            await context.SaveChangesAsync();
+
             studentReg = new StudentRegistration
             {
                 FirstName = "Hari Krishna",
@@ -71,6 +83,11 @@ public static class MarksheetDataSeeder
                 DateOfBirthBS = "2059-01-15",
                 DateOfBirthAD = "2002-04-28",
                 ContactNumber = "9841234580",
+                NepaliName = "हरि कृष्ण गौतम",
+                BloodGroup = "A+",
+                Nationality = "Nepali",
+                Religion = "Hindu",
+                PermanentAddressId = address.Id,
                 GenderId = genderMale.Id,
                 CollegeId = csitCollege.Id,
                 FacultyId = fstFaculty?.Id,
@@ -94,8 +111,26 @@ public static class MarksheetDataSeeder
                 studentReg.FacultyId = fstFaculty?.Id;
                 studentReg.LevelId = level.Id;
                 studentReg.ProgramId = csitProgram.Id;
-                await context.SaveChangesAsync();
             }
+            // Update profile fields on existing record
+            studentReg.NepaliName = "हरि कृष्ण गौतम";
+            studentReg.BloodGroup = "A+";
+            studentReg.Nationality = "Nepali";
+            studentReg.Religion = "Hindu";
+            if (studentReg.PermanentAddressId == null)
+            {
+                var address = new Address
+                {
+                    LocalLevelId = 1,
+                    FullAddress = "Kathmandu, Nepal",
+                    ToleStreet = "Baneshwor",
+                    AddressType = AddressType.Permanent
+                };
+                context.Addresses.Add(address);
+                await context.SaveChangesAsync();
+                studentReg.PermanentAddressId = address.Id;
+            }
+            await context.SaveChangesAsync();
         }
 
         // 3. Create Student Admission (linked to existing Identity user)
