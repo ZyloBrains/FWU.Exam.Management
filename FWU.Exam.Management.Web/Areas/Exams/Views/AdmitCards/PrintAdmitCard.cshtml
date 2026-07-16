@@ -30,7 +30,7 @@
             border-bottom: 3px double #1a2a4a;
             padding-bottom: 10px;
             margin-bottom: 12px;
-            min-height: 110px;
+            min-height: 120px; /* increased to fit larger logo */
         }
 
         .header-logo, .header-photo {
@@ -41,68 +41,199 @@
         .header-logo { left: 0; }
         .header-photo { right: 0; }
 
-        .logo-box { width: 120px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .logo-box img { width: 100%; height: 100%; object-fit: contain; }
+        .logo-box {
+            width: 150px;   /* larger */
+            height: 100px;  /* larger */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
 
         .photo-box {
-            width: 90px; height: 105px;
+            width: 90px;
+            height: 105px;
             border: 2px solid #1a2a4a;
             border-radius: 0;
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
-            background: #f8fafc; overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: #f8fafc;
+            overflow: hidden;
         }
         .photo-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
         .photo-box svg { width: 48px; height: 48px; fill: #b0b8c5; }
         .photo-box .photo-label { font-size: 11px; font-weight: 600; color: #1a2a4a; }
 
-        .header-center { flex: 1; text-align: center; min-width: 220px; }
-        .header-center .univ-name { font-size: 26px; font-weight: 700; color: #1a2a4a; letter-spacing: 1.5px; text-transform: uppercase; line-height: 1.2; }
+        .header-center {
+            flex: 1;
+            text-align: center;
+            min-width: 220px;
+            padding: 0 10px; /* avoid overlap with absolute positioned elements */
+        }
+        .header-center .univ-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a2a4a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
         .header-center .office { font-size: 15px; font-weight: 600; color: #2c3e6b; margin-top: 1px; }
         .header-center .address { font-size: 14px; color: #444; margin-top: 1px; }
-        .header-center .card-title { font-size: 22px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 2px; margin-top: 3px; border-top: 1px solid #ccc; padding-top: 3px; display: inline-block; padding-left: 12px; padding-right: 12px; }
+        .header-center .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a2a4a;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 3px;
+            border-top: 1px solid #ccc;
+            padding-top: 3px;
+            display: inline-block;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
 
         /* ── Student Info ── */
         .student-info {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px;
-            background: #f8fafc; border: 1px solid #d0d7e2; border-radius: 0;
-            padding: 10px 16px; margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px 24px;
+            background: #f8fafc;
+            border: 1px solid #d0d7e2;
+            border-radius: 0;
+            padding: 8px 14px; /* reduced padding */
+            margin-bottom: 10px;
         }
-        .student-info .info-item { display: flex; padding: 2px 0; border-bottom: 1px dashed #e0e6ee; }
+        .student-info .info-item {
+            display: flex;
+            padding: 2px 0;
+            border-bottom: 1px dashed #e0e6ee;
+        }
         .student-info .info-item:last-child { border-bottom: none; }
-        .student-info .info-label { font-weight: 600; color: #1a2a4a; min-width: 100px; flex-shrink: 0; font-size: 14px; }
-        .student-info .info-value { color: #111; font-weight: 500; font-size: 14px; word-break: break-word; }
+        .student-info .info-label {
+            font-weight: 600;
+            color: #1a2a4a;
+            min-width: 100px;
+            flex-shrink: 0;
+            font-size: 13px; /* slightly smaller */
+        }
+        .student-info .info-value {
+            color: #111;
+            font-weight: 500;
+            font-size: 13px;
+            word-break: break-word;
+        }
 
         /* ── Subject Table ── */
-        .subject-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 12px; border: 1px solid #b0b8c5; }
-        .subject-table th { background: #1a2a4a; color: #fff; font-weight: 600; padding: 7px 10px; text-align: center; border: 1px solid #1a2a4a; font-size: 13px; }
-        .subject-table td { padding: 6px 10px; border: 1px solid #b0b8c5; text-align: center; vertical-align: middle; }
+        .subject-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px; /* reduced */
+            margin-bottom: 10px;
+            border: 1px solid #b0b8c5;
+        }
+        .subject-table th {
+            background: #1a2a4a;
+            color: #fff;
+            font-weight: 600;
+            padding: 5px 8px; /* reduced */
+            text-align: center;
+            border: 1px solid #1a2a4a;
+            font-size: 12px;
+        }
+        .subject-table td {
+            padding: 4px 8px; /* reduced */
+            border: 1px solid #b0b8c5;
+            text-align: center;
+            vertical-align: middle;
+        }
         .subject-table td:first-child { font-weight: 600; }
         .subject-table .subject-name { text-align: left; padding-left: 10px; }
 
         /* ── Rules ── */
-        .rules-section { margin-bottom: 10px; border-top: 2px solid #1a2a4a; padding-top: 8px; }
-        .rules-section .rules-title { font-size: 16px; font-weight: 700; color: #1a2a4a; text-align: center; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rules-section {
+            margin-bottom: 8px; /* reduced */
+            border-top: 2px solid #1a2a4a;
+            padding-top: 6px; /* reduced */
+        }
+        .rules-section .rules-title {
+            font-size: 15px; /* slightly smaller */
+            font-weight: 700;
+            color: #1a2a4a;
+            text-align: center;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .rules-section .rules-list {
-            list-style: none; padding: 0; margin: 0;
-            font-size: 14px; line-height: 1.55; color: #222; text-align: justify;
-            /* Single column — no wrapping into columns */
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 12.5px; /* reduced */
+            line-height: 1.5; /* slightly tighter */
+            color: #222;
+            text-align: justify;
         }
         .rules-section .rules-list li {
-            margin-bottom: 4px;
-            padding-left: 22px;
-            text-indent: -20px;
+            margin-bottom: 2px; /* reduced */
+            padding-left: 20px;
+            text-indent: -18px;
         }
-        .rules-section .rules-list li::before { content: attr(data-num) ". "; font-weight: 600; color: #1a2a4a; }
-        .rules-section .note { margin-top: 6px; font-size: 13px; color: #333; border-top: 1px dashed #ccc; padding-top: 5px; }
+        .rules-section .rules-list li::before {
+            content: attr(data-num) ". ";
+            font-weight: 600;
+            color: #1a2a4a;
+        }
+        .rules-section .note {
+            margin-top: 4px;
+            font-size: 12px; /* reduced */
+            color: #333;
+            border-top: 1px dashed #ccc;
+            padding-top: 4px;
+        }
 
         /* ── Signatures ── */
-        .signatures { display: flex; justify-content: space-between; margin-top: 6px; padding-top: 10px; border-top: 2px solid #1a2a4a; }
-        .signatures .sig-block { text-align: center; flex: 1; }
-        .signatures .sig-block img { max-height: 30px; object-fit: contain; }
-        .signatures .sig-line { margin-top: 30px; border-top: 1px solid #333; width: 70%; margin-left: auto; margin-right: auto; padding-top: 3px; font-size: 13px; font-weight: 500; color: #1a2a4a; }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding-top: 8px;
+            border-top: 2px solid #1a2a4a;
+            page-break-inside: avoid; /* keep together */
+        }
+        .signatures .sig-block {
+            text-align: center;
+            flex: 1;
+        }
+        .signatures .sig-block img {
+            max-height: 30px;
+            object-fit: contain;
+        }
+        .signatures .sig-line {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            width: 70%;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 3px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a2a4a;
+        }
 
         /* ── Print: scale to fit A4 ── */
-        @@page { size: A4 portrait; margin: 8mm; }
+        @@page {
+            size: A4 portrait;
+            margin: 7mm; /* slightly reduced */
+        }
         @@media print {
             html, body { background: #fff; }
             body { display: block; padding: 0; }
@@ -110,6 +241,8 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
+            /* Ensure everything stays on one page */
+            .signatures { page-break-inside: avoid; }
         }
     </style>
 </head>
