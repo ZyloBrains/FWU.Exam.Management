@@ -689,6 +689,9 @@ public class StudentDashboardController(
             }
         }
 
+        ViewBag.StudentRegistration = registration;
+        ViewBag.SymbolNumber = allExamRegistrations.FirstOrDefault()?.SymbolNumber;
+
         return View(allMarksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
     }
 
