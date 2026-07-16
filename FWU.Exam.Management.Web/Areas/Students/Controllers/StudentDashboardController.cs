@@ -565,7 +565,7 @@ public class StudentDashboardController(
             await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds);
         }
 
-        public async Task<IActionResult> Marksheet()
+    public async Task<IActionResult> MarksheetPrint(int? examScheduleId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -586,6 +586,8 @@ public class StudentDashboardController(
             var scheduleId = rr.ExamScheduleId;
             if (scheduleId == null) continue;
 
+            if (examScheduleId.HasValue && scheduleId.Value != examScheduleId.Value) continue;
+
             var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value);
 
             marksheets.Add(new MarksheetViewModel
@@ -603,9 +605,10 @@ public class StudentDashboardController(
             });
         }
 
-        // Also include exam registrations that have no result records yet (pending)
         foreach (var er in examRegistrations)
         {
+            if (examScheduleId.HasValue && er.ExamScheduleId != examScheduleId.Value) continue;
+
             if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
                 var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId);
@@ -621,7 +624,72 @@ public class StudentDashboardController(
             }
         }
 
-        return View(marksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
+        var sorted = marksheets.OrderByDescending(m => m.ExamScheduleId).ToList();
+
+        ViewBag.StudentRegistration = registration;
+        ViewBag.SymbolNumber = sorted.Count > 0 ? examRegistrations.FirstOrDefault(er => er.ExamScheduleId == sorted.First().ExamScheduleId)?.SymbolNumber : null;
+
+        return View(sorted);
+    }
+
+    public async Task<IActionResult> Marksheet()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+
+        // Show all marksheets for logged-in student
+        if (registration?.RegistrationNumber == null)
+        {
+            return View(new List<MarksheetViewModel>());
+        }
+
+        var allResultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
+        var allExamRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
+
+        var allMarksheets = new List<MarksheetViewModel>();
+
+        foreach (var rr in allResultRecords)
+        {
+            var scheduleId = rr.ExamScheduleId;
+            if (scheduleId == null) continue;
+
+            var subjects = GetMarksheetSubjects(allExamRegistrations, scheduleId.Value);
+
+            allMarksheets.Add(new MarksheetViewModel
+            {
+                RegistrationNumber = rr.RegistrationNumber,
+                StudentName = rr.StudentName,
+                Program = rr.Program?.ProgramName,
+                ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
+                AcademicYear = rr.AcademicYear?.AcademicYearName,
+                College = rr.College?.Name,
+                TotalGpa = rr.Gpa,
+                Result = rr.Result,
+                ExamScheduleId = scheduleId.Value,
+                Subjects = subjects
+            });
+        }
+
+        foreach (var er in allExamRegistrations)
+        {
+            if (!allMarksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
+            {
+                var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId);
+                allMarksheets.Add(new MarksheetViewModel
+                {
+                    RegistrationNumber = registration.RegistrationNumber,
+                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    ExamSchedule = er.ExamSchedule?.ExamScheduleName,
+                    ExamScheduleId = er.ExamScheduleId,
+                    Result = "Pending",
+                    Subjects = subjects
+                });
+            }
+        }
+
+        return View(allMarksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
     }
 
     public async Task<IActionResult> RetotalRequests()

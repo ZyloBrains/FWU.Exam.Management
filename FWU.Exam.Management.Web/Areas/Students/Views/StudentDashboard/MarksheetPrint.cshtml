@@ -1,0 +1,435 @@
+@model List<FWU.Exam.Management.Web.ViewModels.MarksheetViewModel>
+@{
+    Layout = null;
+    var registration = ViewBag.StudentRegistration as FWU.Exam.Management.Domain.Entities.Students.StudentRegistration;
+    var symbolNumber = ViewBag.SymbolNumber as string;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Academic Record - @(registration != null ? $"{registration.FirstName} {registration.LastName}" : "Student")</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'Nirmala UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef1f5;
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+
+        .print-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: #fff;
+            padding: 20mm 15mm;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            border-bottom: 3px double #1a2a4a;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .header-logo {
+            flex-shrink: 0;
+        }
+
+        .logo-box {
+            width: 120px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .header-center {
+            flex: 1;
+            text-align: center;
+        }
+        .header-center .univ-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a2a4a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        .header-center .office {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2c3e6b;
+            margin-top: 2px;
+        }
+        .header-center .address {
+            font-size: 13px;
+            color: #555;
+            margin-top: 1px;
+        }
+        .header-center .doc-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a2a4a;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 6px;
+            border-top: 1px solid #ccc;
+            padding-top: 6px;
+            display: inline-block;
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        /* Student Info */
+        .student-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 30px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 13px;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 6px;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+            min-width: 110px;
+        }
+        .info-value {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        /* Marks Table */
+        .marks-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            margin-bottom: 10px;
+        }
+
+        .marks-table thead th {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 7px 8px;
+            font-weight: 600;
+            color: #374151;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .marks-table thead th:first-child,
+        .marks-table thead th:nth-child(2) {
+            text-align: left;
+        }
+
+        .marks-table tbody td {
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            color: #111827;
+        }
+
+        .marks-table tbody td:first-child {
+            text-align: left;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .marks-table tbody td:nth-child(2) {
+            text-align: left;
+        }
+
+        .marks-table tbody td:not(:first-child):not(:nth-child(2)) {
+            text-align: center;
+        }
+
+        .marks-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .marks-table tbody tr.total-row {
+            font-weight: 700;
+            background: #f9fafb;
+        }
+
+        .marks-table tbody tr.result-row {
+            font-weight: 700;
+            background: #f0fdf4;
+        }
+
+        .marks-table tbody tr.result-row.fail {
+            background: #fef2f2;
+        }
+
+        .result-pass { color: #16a34a; }
+        .result-fail { color: #dc2626; }
+        .result-pending { color: #d97706; }
+
+        /* Footer */
+        .footer {
+            margin-top: 16px;
+            font-size: 11px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+        }
+
+        .footer .note {
+            font-style: italic;
+            margin-top: 4px;
+        }
+
+        /* Print Button */
+        .print-btn-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .print-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 28px;
+            background: #0d9488;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .print-btn:hover {
+            background: #0f766e;
+        }
+        .print-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 16px;
+            padding: 10px 20px;
+            background: #6b7280;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .back-link:hover {
+            background: #4b5563;
+        }
+
+        /* Print Styles */
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .print-page {
+                box-shadow: none;
+                padding: 10mm 12mm;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="print-btn-wrapper no-print">
+            <button class="print-btn" onclick="window.print()">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+            </button>
+            <a asp-action="Marksheet" class="back-link">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Marksheet
+            </a>
+        </div>
+
+        <div class="print-page">
+            <!-- Header -->
+            <div class="header-top">
+                <div class="header-logo">
+                    <div class="logo-box">
+                        <img src="~/images/download.png" alt="Far Western University Logo" />
+                    </div>
+                </div>
+                <div class="header-center">
+                    <div class="univ-name">Far Western University</div>
+                    <div class="office">Office of the Controller of Examinations</div>
+                    <div class="address">Mahendranagar, Kanchanpur</div>
+                    <div class="doc-title">Academic Record</div>
+                </div>
+                <div class="header-logo">
+                    <div class="logo-box">
+                        <img src="~/images/download.png" alt="Far Western University Logo" />
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Count == 0)
+            {
+                <div style="text-align:center; padding:60px 20px; color:#6b7280;">
+                    <p style="font-size:16px; font-weight:600;">No marksheets available</p>
+                    <p style="font-size:13px; margin-top:6px;">Your academic records will appear here once results are published.</p>
+                </div>
+            }
+
+            @foreach (var marksheet in Model)
+            {
+                <!-- Student Info -->
+                <div class="student-info">
+                    <div class="info-row">
+                        <span class="info-label">Name:</span>
+                        <span class="info-value">@(marksheet.StudentName ?? "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">RollNo:</span>
+                        <span class="info-value">@(symbolNumber ?? "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Campus:</span>
+                        <span class="info-value">@(marksheet.College ?? "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Regd No:</span>
+                        <span class="info-value">@(marksheet.RegistrationNumber ?? "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Program:</span>
+                        <span class="info-value">@(marksheet.Program ?? "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Exam Schedule:</span>
+                        <span class="info-value">@(marksheet.ExamSchedule ?? "-")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Academic Year:</span>
+                        <span class="info-value">@(marksheet.AcademicYear ?? "-")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">SGPA:</span>
+                            <span class="info-value">@marksheet.TotalGpa</span>
+                        </div>
+                    }
+                </div>
+
+                @if (marksheet.Subjects.Count > 0)
+                {
+                    <!-- Marks Table -->
+                    <table class="marks-table">
+                        <thead>
+                            <tr>
+                                <th>Course Code</th>
+                                <th>Course Title</th>
+                                <th colspan="3">Obtained Marks</th>
+                                <th>Total Obtained Marks</th>
+                                <th>Remarks</th>
+                            </tr>
+                            <tr>
+                                <th colspan="2"></th>
+                                <th>IR</th>
+                                <th>PR</th>
+                                <th>TH</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var subject in marksheet.Subjects)
+                            {
+                                <tr>
+                                    <td>@(subject.SubjectCode ?? "-")</td>
+                                    <td>@(subject.SubjectName ?? "-")</td>
+                                    <td>@(subject.InternalMarks?.ToString("N2") ?? "")</td>
+                                    <td>@(subject.PracticalMarks?.ToString("N2") ?? "")</td>
+                                    <td>@(subject.TheoryMarks?.ToString("N2") ?? "")</td>
+                                    <td>@(subject.TotalMarks?.ToString("N2") ?? "0")</td>
+                                    <td>@(subject.Grade ?? "")</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td colspan="5" style="text-align:right;">Total</td>
+                                <td>@(marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2"))</td>
+                                <td></td>
+                            </tr>
+                            <tr class="result-row @(marksheet.Result == "Fail" ? "fail" : "")">
+                                <td colspan="5" style="text-align:right;">Result:</td>
+                                <td colspan="2">
+                                    @if (marksheet.Result == "Pass")
+                                    {
+                                        <span class="result-pass">Pass</span>
+                                    }
+                                    else if (marksheet.Result == "Fail")
+                                    {
+                                        <span class="result-fail">Fail</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="result-pending">Pending</span>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div style="text-align:center; padding:20px; color:#9ca3af; font-size:13px;">
+                        No subject records for this exam.
+                    </div>
+                }
+
+                <!-- Footer -->
+                <div class="footer">
+                    <div>Date: @DateTime.Now.ToString("MMMM dd, yyyy")</div>
+                    <div class="note">Note: This Mark Sheet is for general idea of mark(s) you secured. This is not for official use. If any mistakes appear; record at Administration ledger will be referred.</div>
+                </div>
+
+                @if (Model.Last() != marksheet)
+                {
+                    <div style="page-break-after: always;"></div>
+                }
+            }
+        </div>
+    </div>
+</body>
+</html>

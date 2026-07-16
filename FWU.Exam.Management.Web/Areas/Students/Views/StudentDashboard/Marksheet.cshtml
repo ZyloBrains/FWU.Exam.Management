@@ -4,258 +4,374 @@
     ViewData["Title"] = "Marksheet";
 }
 
-<div class="min-h-screen space-y-5 sm:space-y-6">
-    <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-700 via-teal-800 to-slate-900">
-        <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
-        <div class="absolute top-0 right-0 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl"></div>
-        <div class="relative px-5 py-8 sm:px-10 sm:py-10">
+<div class="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+
+    <!-- ═══ PAGE HEADER ═══ -->
+    <header class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-900 shadow-2xl shadow-indigo-900/20">
+        <div class="absolute inset-0 bg-grid-white/[0.04] [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
+        <div class="absolute -top-24 -right-24 w-80 h-80 bg-indigo-400/15 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-violet-400/10 rounded-full blur-3xl"></div>
+
+        <div class="relative px-5 py-7 sm:px-8 sm:py-9 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20 shrink-0">
-                    <svg class="h-7 w-7 sm:h-8 sm:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
+                <div class="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-white/10 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/20 shrink-0">
+                    <i class="fas fa-file-alt text-white text-xl sm:text-2xl"></i>
                 </div>
                 <div>
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Marksheet</h1>
-                    <p class="mt-1 text-emerald-200/80 text-sm sm:text-base">View your academic results</p>
+                    <p class="mt-0.5 text-indigo-200/80 text-sm sm:text-base flex items-center gap-2">
+                        <i class="fas fa-graduation-cap text-indigo-300/60 text-xs"></i>
+                        View your academic performance
+                    </p>
                 </div>
             </div>
-        </div>
-    </div>
 
+            <div class="flex items-center gap-2.5">
+                <a asp-action="MarksheetPrint"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 backdrop-blur-xl text-white text-sm font-semibold border border-white/15 shadow-lg hover:bg-white/25 transition-all duration-200 active:scale-[0.97]">
+                    <i class="fas fa-print text-indigo-200/80 text-sm"></i>
+                    <span class="hidden sm:inline">Print</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ EMPTY STATE ═══ -->
     @if (Model.Count == 0)
     {
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/60 shadow-lg overflow-hidden">
             <div class="text-center py-16 sm:py-20 px-6">
-                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <svg class="h-10 w-10 sm:h-12 sm:w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
+                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <i class="fas fa-file-alt text-indigo-300 text-3xl sm:text-4xl"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">No Marksheets Available</h3>
-                <p class="text-gray-500 max-w-sm mx-auto text-sm">Your marksheets will appear here once results are published.</p>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">No Marksheets Yet</h3>
+                <p class="text-slate-500 max-w-sm mx-auto text-sm">Your marksheets will appear here once results are published.</p>
             </div>
         </div>
     }
 
+    <!-- ═══ MARKSHEET CARDS ═══ -->
     @foreach (var marksheet in Model)
     {
         var allPassed = marksheet.Subjects.All(s => s.Status == "Pass");
         var anyFailed = marksheet.Subjects.Any(s => s.Status == "Fail");
         var anyPending = marksheet.Subjects.Any(s => s.Status == "Pending");
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="min-w-0">
-                        <h3 class="text-sm sm:text-lg font-bold text-gray-900 truncate">@marksheet.ExamSchedule</h3>
-                        <p class="text-xs sm:text-sm text-gray-500 mt-0.5 truncate">@marksheet.Program</p>
+        // Determine overall result badge
+        string resultBadgeClass = "bg-slate-100 text-slate-700 border-slate-200/60";
+        string resultIcon = "fa-clock";
+        if (marksheet.Result == "Pass") { resultBadgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200/60"; resultIcon = "fa-check-circle"; }
+        else if (marksheet.Result == "Fail") { resultBadgeClass = "bg-red-50 text-red-700 border-red-200/60"; resultIcon = "fa-times-circle"; }
+
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/70 shadow-xl shadow-slate-200/50 overflow-hidden card-hover">
+
+            <!-- card header -->
+            <div class="px-5 sm:px-7 py-4 border-b border-slate-100/80 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <div class="flex items-center flex-wrap gap-2.5">
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800">@marksheet.ExamSchedule</h2>
+                        @if (!string.IsNullOrEmpty(marksheet.Result))
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold border @resultBadgeClass">
+                                <i class="fas @resultIcon text-[10px]"></i> @marksheet.Result
+                            </span>
+                        }
                     </div>
-                    <div class="shrink-0 text-right">
-                        <p class="text-[10px] sm:text-xs text-gray-500">@marksheet.AcademicYear</p>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">@marksheet.College</p>
+                    <div class="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs sm:text-sm text-slate-500">
+                        <span><i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>@marksheet.AcademicYear</span>
+                        <span><i class="far fa-building text-slate-400 mr-1.5"></i>@marksheet.Program</span>
+                        @if (!string.IsNullOrEmpty(marksheet.College))
+                        {
+                            <span><i class="fas fa-university text-slate-400 mr-1.5"></i>@marksheet.College</span>
+                        }
                     </div>
                 </div>
             </div>
 
             @if (marksheet.Subjects.Count > 0)
             {
-                <!-- Subject summary chips -->
-                <div class="px-4 sm:px-6 py-3 bg-gray-50/80 border-b border-gray-100 flex flex-wrap items-center gap-2">
-                    <span class="text-xs font-semibold text-gray-600">Status:</span>
-                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                        <i class="fas fa-check-circle text-[10px]"></i> @marksheet.TotalPassed Passed
-                    </span>
-                    @if (marksheet.TotalFailed > 0)
-                    {
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                            <i class="fas fa-times-circle text-[10px]"></i> @marksheet.TotalFailed Failed
-                        </span>
-                    }
-                    @if (marksheet.TotalPending > 0)
-                    {
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-                            <i class="fas fa-clock text-[10px]"></i> @marksheet.TotalPending Pending
-                        </span>
-                    }
+                <!-- summary stats -->
+                <div class="px-5 sm:px-7 py-4 bg-slate-50/60 border-b border-slate-100/60">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <!-- Passed -->
+                        <div class="bg-white rounded-xl border border-slate-200/60 px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm hover:scale-[1.02] transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                    <i class="fas fa-check-circle text-emerald-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xl font-extrabold text-slate-800 leading-none">@marksheet.TotalPassed</p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Passed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Failed -->
+                        <div class="bg-white rounded-xl border border-slate-200/60 px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm hover:scale-[1.02] transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                                    <i class="fas fa-times-circle text-red-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xl font-extrabold text-slate-800 leading-none">@marksheet.TotalFailed</p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Failed</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pending -->
+                        <div class="bg-white rounded-xl border border-slate-200/60 px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm hover:scale-[1.02] transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                                    <i class="fas fa-clock text-amber-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xl font-extrabold text-slate-800 leading-none">@marksheet.TotalPending</p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- SGPA -->
+                        <div class="bg-white rounded-xl border border-slate-200/60 px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm hover:scale-[1.02] transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                                    <i class="fas fa-star text-indigo-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xl font-extrabold text-slate-800 leading-none">@(string.IsNullOrEmpty(marksheet.TotalGpa) ? "—" : marksheet.TotalGpa)</p>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">SGPA</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Desktop table -->
+                <!-- Desktop Table -->
                 <div class="hidden sm:block overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Code</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Total</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Grade</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Action</th>
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200/60">
+                                <th class="text-left px-5 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">Subject</th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">Code</th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                                        Internal
+                                    </span>
+                                </th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                        Theory
+                                    </span>
+                                </th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+                                        Practical
+                                    </span>
+                                </th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">Total</th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">Grade</th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">Status</th>
+                                <th class="text-center px-4 py-3.5 font-semibold text-slate-600 text-xs uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
+                        <tbody class="divide-y divide-slate-100/80">
+                            @{
+                                int rowIdx = 0;
+                            }
                             @foreach (var subject in marksheet.Subjects)
                             {
-                                var rowBg = subject.Status == "Fail" ? "bg-red-50/40" : subject.Status == "Pending" ? "bg-amber-50/30" : "";
-                                <tr class="hover:bg-gray-50 transition-colors @rowBg">
-                                    <td class="px-4 py-3 text-gray-800 font-medium">@subject.SubjectName</td>
-                                    <td class="px-4 py-3 text-center text-gray-500 font-mono text-xs">@subject.SubjectCode</td>
-                                    <td class="px-4 py-3 text-center text-gray-800">@(subject.TheoryMarks?.ToString("N2") ?? "-")</td>
-                                    <td class="px-4 py-3 text-center text-gray-800">@(subject.PracticalMarks?.ToString("N2") ?? "-")</td>
-                                    <td class="px-4 py-3 text-center text-gray-800 font-medium">@(subject.TotalMarks?.ToString("N2") ?? "-")</td>
-                                    <td class="px-4 py-3 text-center">
+                                var borderClass = subject.Status == "Fail" ? "border-l-4 border-l-red-400" :
+                                                   subject.Status == "Pending" ? "border-l-4 border-l-amber-400" : "";
+                                var gradeColor = subject.Grade switch
+                                {
+                                    "A+" or "A" => "bg-emerald-100 text-emerald-700 border-emerald-200/50",
+                                    "B+" or "B" => "bg-blue-100 text-blue-700 border-blue-200/50",
+                                    "C+" or "C" => "bg-yellow-100 text-yellow-700 border-yellow-200/50",
+                                    "D" => "bg-orange-100 text-orange-700 border-orange-200/50",
+                                    "F" => "bg-red-100 text-red-700 border-red-200/50",
+                                    _ => "bg-gray-100 text-gray-700 border-gray-200/50"
+                                };
+                                var statusBadgeClass = subject.Status == "Pass" ? "bg-emerald-50 text-emerald-700 border-emerald-200/40" :
+                                                       subject.Status == "Fail" ? "bg-red-50 text-red-700 border-red-200/40" :
+                                                       "bg-amber-50 text-amber-700 border-amber-200/40";
+                                var statusDotClass = subject.Status == "Pass" ? "pass" :
+                                                      subject.Status == "Fail" ? "fail" : "pending";
+                                <tr class="hover:bg-indigo-50/30 transition-colors @borderClass row-enter" style="animation-delay: @(rowIdx * 50)ms">
+                                    <td class="px-5 py-3.5 font-medium text-slate-800">@subject.SubjectName</td>
+                                    <td class="px-4 py-3.5 text-center font-mono text-xs text-slate-400">@subject.SubjectCode</td>
+                                    <td class="px-4 py-3.5 text-center text-purple-600 font-medium">@(subject.InternalMarks?.ToString("N2") ?? "—")</td>
+                                    <td class="px-4 py-3.5 text-center text-blue-600 font-medium">@(subject.TheoryMarks?.ToString("N2") ?? "—")</td>
+                                    <td class="px-4 py-3.5 text-center text-teal-600 font-medium">@(subject.PracticalMarks?.ToString("N2") ?? "—")</td>
+                                    <td class="px-4 py-3.5 text-center font-semibold text-slate-800">@(subject.TotalMarks?.ToString("N2") ?? "—")</td>
+                                    <td class="px-4 py-3.5 text-center">
                                         @if (subject.Status == "Pending")
                                         {
-                                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">-</span>
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200/50">—</span>
                                         }
                                         else
                                         {
-                                            var gradeColor = subject.Grade == "A+" || subject.Grade == "A" ? "bg-emerald-100 text-emerald-700" :
-                                            subject.Grade == "B+" || subject.Grade == "B" ? "bg-blue-100 text-blue-700" :
-                                            subject.Grade == "C+" || subject.Grade == "C" ? "bg-yellow-100 text-yellow-700" :
-                                            subject.Grade == "D" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700";
-                                            <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold @gradeColor">@subject.Grade</span>
+                                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold border @gradeColor">@subject.Grade</span>
                                         }
                                     </td>
-                                    <td class="px-4 py-3 text-center">
-                                        @if (subject.Status == "Pass")
-                                        {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-                                                <i class="fas fa-check-circle text-[10px]"></i> Pass
-                                            </span>
-                                        }
-                                        else if (subject.Status == "Fail")
-                                        {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                                                <i class="fas fa-times-circle text-[10px]"></i> Fail
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-                                                <i class="fas fa-clock text-[10px]"></i> Pending
-                                            </span>
-                                        }
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border @statusBadgeClass">
+                                            <span class="status-dot @statusDotClass"></span> @subject.Status
+                                        </span>
                                     </td>
-                                    <td class="px-4 py-3 text-center">
+                                    <td class="px-4 py-3.5 text-center">
                                         @if (subject.Status == "Fail" && subject.ExamSubjectResultId > 0)
                                         {
                                             <a asp-action="RequestRetotal" asp-area="Students" asp-route-examSubjectResultId="@subject.ExamSubjectResultId"
-                                               class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
-                                               title="Request re-evaluation">
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg border border-amber-200/50 hover:bg-amber-100 transition-all active:scale-[0.97]">
                                                 <i class="fas fa-redo-alt text-[10px]"></i> Retotal
                                             </a>
                                         }
+                                        else
+                                        {
+                                            <span class="text-slate-400 text-xs">—</span>
+                                        }
                                     </td>
                                 </tr>
+                                rowIdx++;
                             }
+                            <!-- Total Row -->
+                            <tr class="bg-slate-50/80 border-t-2 border-slate-200/60">
+                                <td colspan="5" class="px-5 py-3.5 text-right font-bold text-slate-700 text-sm">Total</td>
+                                <td class="px-4 py-3.5 text-center font-bold text-slate-800">@marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2")</td>
+                                <td colspan="3"></td>
+                            </tr>
                         </tbody>
-                        @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
-                        {
-                            <tfoot class="bg-gray-50 border-t-2 border-gray-200">
-                                <tr>
-                                    <td colspan="4" class="px-4 py-3 text-right font-semibold text-gray-700">SGPA:</td>
-                                    <td class="px-4 py-3 text-center font-bold text-gray-800">@marksheet.TotalGpa</td>
-                                    <td class="px-4 py-3 text-center" colspan="3">
-                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
-                                            <i class="fas @(marksheet.Result == "Pass" ? "fa-check-circle" : marksheet.Result == "Fail" ? "fa-times-circle" : "fa-clock") text-[10px]"></i>
-                                            @marksheet.Result
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        }
                     </table>
                 </div>
 
-                <!-- Mobile card list -->
-                <div class="sm:hidden divide-y divide-gray-50">
+                <!-- Mobile Card List -->
+                <div class="sm:hidden divide-y divide-slate-100/80">
+                    @{
+                        int mobileIdx = 0;
+                    }
                     @foreach (var subject in marksheet.Subjects)
                     {
-                        var cardBg = subject.Status == "Fail" ? "bg-red-50/30" : subject.Status == "Pending" ? "bg-amber-50/20" : "";
-                        <div class="px-4 py-3 @cardBg">
-                            <div class="flex items-center justify-between mb-1">
-                                <p class="text-sm font-semibold text-gray-900 truncate flex-1">@subject.SubjectName</p>
-                                @if (subject.Status == "Pass")
-                                {
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 shrink-0 ml-2">
-                                        <i class="fas fa-check-circle text-[10px]"></i> Pass
+                        var borderClass = subject.Status == "Fail" ? "border-l-4 border-l-red-400 bg-red-50/20" :
+                                           subject.Status == "Pending" ? "border-l-4 border-l-amber-400 bg-amber-50/20" : "";
+                        var statusBadgeClass = subject.Status == "Pass" ? "bg-emerald-50 text-emerald-700 border-emerald-200/40" :
+                                               subject.Status == "Fail" ? "bg-red-50 text-red-700 border-red-200/40" :
+                                               "bg-amber-50 text-amber-700 border-amber-200/40";
+                        var statusDotClass = subject.Status == "Pass" ? "pass" :
+                                              subject.Status == "Fail" ? "fail" : "pending";
+                        var gradeColor = subject.Grade == "F" ? "text-red-700" : "text-slate-800";
+                        <div class="px-4 py-3.5 @borderClass row-enter" style="animation-delay: @(mobileIdx * 60)ms">
+                            <div class="flex items-start justify-between mb-1.5">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-semibold text-slate-800 truncate">@subject.SubjectName</p>
+                                    <p class="text-[10px] text-slate-400 font-mono mt-0.5">@subject.SubjectCode</p>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0 ml-2">
+                                    @if (subject.Status != "Pending")
+                                    {
+                                        <span class="text-xs font-bold @gradeColor">@subject.Grade</span>
+                                    }
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border @statusBadgeClass">
+                                        <span class="status-dot @statusDotClass !w-1.5 !h-1.5"></span> @subject.Status
                                     </span>
-                                }
-                                else if (subject.Status == "Fail")
-                                {
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 shrink-0 ml-2">
-                                        <i class="fas fa-times-circle text-[10px]"></i> Fail
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 shrink-0 ml-2">
-                                        <i class="fas fa-clock text-[10px]"></i> Pending
-                                    </span>
-                                }
+                                </div>
                             </div>
-                            <p class="text-[10px] text-gray-400 font-mono mb-1">@subject.SubjectCode</p>
-                            <div class="flex items-center gap-4 text-xs text-gray-500">
-                                <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">T:</span> @(subject.TheoryMarks?.ToString("N2") ?? "-")
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                                    <span class="text-slate-400">IR</span>
+                                    <span class="font-medium text-purple-600">@(subject.InternalMarks?.ToString("N2") ?? "—")</span>
                                 </span>
-                                <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">P:</span> @(subject.PracticalMarks?.ToString("N2") ?? "-")
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                    <span class="text-slate-400">TH</span>
+                                    <span class="font-medium text-blue-600">@(subject.TheoryMarks?.ToString("N2") ?? "—")</span>
                                 </span>
-                                @if (subject.InternalMarks.HasValue)
-                                {
-                                    <span class="flex items-center gap-1">
-                                        <span class="font-medium text-gray-700">I:</span> @(subject.InternalMarks?.ToString("N2") ?? "-")
-                                    </span>
-                                }
-                                <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">Total:</span> @(subject.TotalMarks?.ToString("N2") ?? "-")
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+                                    <span class="text-slate-400">PR</span>
+                                    <span class="font-medium text-teal-600">@(subject.PracticalMarks?.ToString("N2") ?? "—")</span>
                                 </span>
-                                <span class="flex items-center gap-1">
-                                    <span class="font-medium text-gray-700">Grade:</span>
-                                    @if (subject.Status == "Pending")
-                                    {
-                                        <span class="text-gray-400">-</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="font-semibold @(subject.Grade == "F" ? "text-red-600" : "text-gray-800")">@subject.Grade</span>
-                                    }
+                                <span class="inline-flex items-center gap-1 text-slate-400">
+                                    <i class="fas fa-equals text-[8px]"></i>
+                                    <span class="font-semibold text-slate-800">@(subject.TotalMarks?.ToString("N2") ?? "—")</span>
                                 </span>
-                                @if (subject.Status == "Fail" && subject.ExamSubjectResultId > 0)
-                                {
+                            </div>
+                            @if (subject.Status == "Fail" && subject.ExamSubjectResultId > 0)
+                            {
+                                <div class="mt-2">
                                     <a asp-action="RequestRetotal" asp-area="Students" asp-route-examSubjectResultId="@subject.ExamSubjectResultId"
-                                       class="ml-auto inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors">
-                                        <i class="fas fa-redo-alt text-[10px]"></i> Retotal
+                                       class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-amber-700 bg-amber-50 rounded-lg border border-amber-200/50 hover:bg-amber-100 transition-all active:scale-[0.97]">
+                                        <i class="fas fa-redo-alt text-[9px]"></i> Retotal
                                     </a>
-                                }
-                            </div>
+                                </div>
+                            }
                         </div>
+                        mobileIdx++;
                     }
-                    @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
-                    {
-                        <div class="px-4 py-3 bg-gray-50/80 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs font-semibold text-gray-700">SGPA: <span class="text-gray-900">@marksheet.TotalGpa</span></span>
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold @(marksheet.Result == "Pass" ? "bg-emerald-100 text-emerald-700" : marksheet.Result == "Fail" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700")">
-                                    <i class="fas @(marksheet.Result == "Pass" ? "fa-check-circle" : marksheet.Result == "Fail" ? "fa-times-circle" : "fa-clock") text-[10px]"></i>
-                                    @marksheet.Result
-                                </span>
-                            </div>
+                    <!-- Mobile Total -->
+                    <div class="px-4 py-3 bg-slate-50/80">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-bold text-slate-700">Total Marks</span>
+                            <span class="font-bold text-slate-800">@marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2")</span>
                         </div>
-                    }
+                    </div>
                 </div>
             }
             else
             {
-                <div class="px-4 sm:px-6 py-8 text-center text-gray-400 text-sm">
-                    <i class="fas fa-inbox text-2xl mb-2 block"></i>
+                <div class="px-5 sm:px-7 py-8 text-center text-slate-400 text-sm">
+                    <i class="fas fa-inbox text-2xl mb-2 block text-slate-300"></i>
                     No subject records for this exam.
                 </div>
             }
+
+            <!-- card footer -->
+            <div class="px-5 sm:px-7 py-3.5 border-t border-slate-100/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 bg-slate-50/30">
+                <span><i class="far fa-calendar-check mr-1.5 text-slate-300"></i>Published: @DateTime.Now.ToString("dd MMM yyyy")</span>
+                <span><i class="far fa-credit-card mr-1.5 text-slate-300"></i>Ref: @($"MAR-{DateTime.Now:yyyy}-{marksheet.ExamSchedule?.GetHashCode():X4}")</span>
+            </div>
         </div>
     }
 </div>
+
+<style>
+    .card-hover {
+        transition: transform 0.25s ease, box-shadow 0.30s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px -12px rgba(0, 20, 40, 0.18);
+    }
+    .status-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-right: 4px;
+    }
+    .status-dot.pass {
+        background: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+    .status-dot.fail {
+        background: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+    }
+    .status-dot.pending {
+        background: #f59e0b;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+        animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @@keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(0.85); }
+    }
+    .row-enter {
+        animation: fadeSlideUp 0.35s ease both;
+    }
+    @@keyframes fadeSlideUp {
+        0% { opacity: 0; transform: translateY(8px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+</style>

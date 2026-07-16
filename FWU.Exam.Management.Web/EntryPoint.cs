@@ -244,6 +244,9 @@ public partial class EntryPoint
 
                 // Admin / test users (depends on roles, colleges, faculties being seeded)
                 await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+
+                // Marksheet seed data (depends on users being created first)
+                await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
             }
             else
             {
