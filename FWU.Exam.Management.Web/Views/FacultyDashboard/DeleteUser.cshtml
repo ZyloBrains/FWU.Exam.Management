@@ -6,29 +6,40 @@
 }
 
 <nav aria-label="breadcrumb" class="mb-3">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode">@faculty.Name</a></li>
-        <li class="breadcrumb-item"><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode">Users</a></li>
-        <li class="breadcrumb-item active">Delete User</li>
+    <ol class="flex flex-wrap items-center gap-1.5 text-sm text-gray-500">
+        <li><a asp-controller="FacultyDashboard" asp-action="Index" asp-route-officeCode="@faculty.OfficeCode" class="hover:text-blue-600">@faculty.Name</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li><a asp-controller="FacultyDashboard" asp-action="Users" asp-route-officeCode="@faculty.OfficeCode" class="hover:text-blue-600">Users</a></li>
+        <li><span class="mx-1">/</span></li>
+        <li class="text-gray-800 font-medium">Delete User</li>
     </ol>
 </nav>
 
-<h1 class="h3 mb-3">Delete User</h1>
-<p class="text-danger">Are you sure you want to delete this user?</p>
+<h1 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Delete User</h1>
+<p class="text-sm text-red-600 mb-4">Are you sure you want to delete this user?</p>
 
-<dl class="row mb-4">
-    <dt class="col-sm-2">Email</dt>
-    <dd class="col-sm-10">@Model.Email</dd>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 max-w-lg">
+    <div class="space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+            <span class="text-xs font-semibold text-gray-500 uppercase sm:w-24 shrink-0">Email</span>
+            <span class="text-sm text-gray-900">@Model.Email</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+            <span class="text-xs font-semibold text-gray-500 uppercase sm:w-24 shrink-0">Faculty</span>
+            <span class="text-sm text-gray-900">@faculty.Name</span>
+        </div>
+    </div>
 
-    <dt class="col-sm-2">Faculty</dt>
-    <dd class="col-sm-10">@faculty.Name</dd>
-</dl>
-
-<form asp-controller="FacultyDashboard" asp-action="DeleteUserConfirmed"
-      asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@Model.Id"
-      method="post">
-    <input type="submit" value="Delete" class="btn btn-danger" />
-    <a asp-controller="FacultyDashboard" asp-action="Users"
-       asp-route-officeCode="@faculty.OfficeCode"
-       class="btn btn-outline-secondary">Cancel</a>
-</form>
+    <form asp-controller="FacultyDashboard" asp-action="DeleteUserConfirmed"
+          asp-route-officeCode="@faculty.OfficeCode" asp-route-userId="@Model.Id"
+          method="post" class="flex items-center gap-3 mt-6 pt-4 border-t border-gray-100">
+        <button type="submit" class="px-6 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+            Delete
+        </button>
+        <a asp-controller="FacultyDashboard" asp-action="Users"
+           asp-route-officeCode="@faculty.OfficeCode"
+           class="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+            Cancel
+        </a>
+    </form>
+</div>
