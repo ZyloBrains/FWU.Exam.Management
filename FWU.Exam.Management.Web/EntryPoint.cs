@@ -16,253 +16,326 @@ using FWU.Exam.Management.Infrastructure.Interceptor;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Middleware;
 
+using Serilog;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+
 public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .CreateLogger();
 
-        // Add services to the container.
-        builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
-        builder.Services.AddScoped<ITenantContext, TenantContext>();
-        builder.Services.AddScoped<IUserContext, UserContext>();
-        builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
-        builder.Services.AddScoped<TenantSaveChangesInterceptor>();
-        builder.Services.AddScoped<AuditLogInterceptor>();
-
-        builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        try
         {
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            options.UseSqlServer(connectionString);
-            options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
-            options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
-            options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
-        });
+            var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddDefaultIdentity<AppUser>(options =>
-        {
-            options.SignIn.RequireConfirmedAccount = true;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequireDigit = true;
-            options.Password.RequireNonAlphanumeric = true;
-            options.Password.RequiredLength = 6;
-            options.Password.RequiredUniqueChars = 1;
-        })
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            builder.Host.UseSerilog();
 
-        builder.Services.ConfigureApplicationCookie(options =>
-        {
-            options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
+            // Add services to the container.
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<IAuditUserProvider, HttpContextAuditUserProvider>();
+            builder.Services.AddScoped<ITenantContext, TenantContext>();
+            builder.Services.AddScoped<IUserContext, UserContext>();
+            builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
+            builder.Services.AddScoped<TenantSaveChangesInterceptor>();
+            builder.Services.AddScoped<AuditLogInterceptor>();
+
+            builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             {
-                OnRedirectToLogin = ctx =>
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                options.UseSqlServer(connectionString);
+                options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
+                options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
+                options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
+            });
+
+            builder.Services.AddDefaultIdentity<AppUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireDigit = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequiredLength = 8;
+                options.Password.RequiredUniqueChars = 1;
+            })
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>();
+
+            var isDevelopment = builder.Environment.IsDevelopment();
+
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = isDevelopment ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.ExpireTimeSpan = TimeSpan.FromDays(14);
+                options.SlidingExpiration = true;
+
+                options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
                 {
-                    var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
-                    var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
-
-                    if (!string.IsNullOrEmpty(tenantCode))
+                    OnRedirectToLogin = ctx =>
                     {
-                        var loginPath = $"/tenant/{tenantCode}/Identity/Account/Login";
-                        ctx.Response.Redirect($"{loginPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                    }
-                    else
-                    {
-                        ctx.Response.Redirect(ctx.RedirectUri);
-                    }
+                        var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
+                        var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
 
-                    return Task.CompletedTask;
-                },
-                OnRedirectToAccessDenied = ctx =>
+                        if (!string.IsNullOrEmpty(tenantCode))
+                        {
+                            var loginPath = $"/tenant/{tenantCode}/Identity/Account/Login";
+                            ctx.Response.Redirect($"{loginPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
+                        }
+                        else
+                        {
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                        }
+
+                        return Task.CompletedTask;
+                    },
+                    OnRedirectToAccessDenied = ctx =>
+                    {
+                        var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
+                        var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
+
+                        if (!string.IsNullOrEmpty(tenantCode))
+                        {
+                            var accessDeniedPath = $"/tenant/{tenantCode}/Identity/Account/AccessDenied";
+                            ctx.Response.Redirect($"{accessDeniedPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
+                        }
+                        else
+                        {
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            builder.Services.AddControllersWithViews();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
                 {
-                    var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
-                    var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
+                    Title = "FWU Examination Management API",
+                    Version = "v1",
+                    Description = "API for FWU Examination Management System"
+                });
+            });
 
-                    if (!string.IsNullOrEmpty(tenantCode))
-                    {
-                        var accessDeniedPath = $"/tenant/{tenantCode}/Identity/Account/AccessDenied";
-                        ctx.Response.Redirect($"{accessDeniedPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                    }
-                    else
-                    {
-                        ctx.Response.Redirect(ctx.RedirectUri);
-                    }
+            builder.Services.AddAntiforgery(options =>
+            {
+                options.Cookie.Path = "/";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = isDevelopment ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+            });
 
-                    return Task.CompletedTask;
-                }
-            };
-        });
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-        builder.Services.AddControllersWithViews();
+                options.AddFixedWindowLimiter("fixed", limiterOptions =>
+                {
+                    limiterOptions.PermitLimit = 100;
+                    limiterOptions.Window = TimeSpan.FromMinutes(1);
+                    limiterOptions.QueueLimit = 0;
+                });
 
-        builder.Services.AddAntiforgery(options =>
-        {
-            options.Cookie.Path = "/";
-        });
-        builder.Services.AddScoped<IBoardService, BoardService>();
-        builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
-        builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
-        builder.Services.AddScoped<ICollegeService, CollegeService>();
-        builder.Services.AddScoped<IFacultyService, FacultyService>();
-        builder.Services.AddScoped<IDashboardService, DashboardService>();
-        builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
-        builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
-        builder.Services.AddScoped<IProgramService, ProgramService>();
-        builder.Services.AddScoped<ILevelService, LevelService>();
-        builder.Services.AddScoped<INoticeService, NoticeService>();
-        builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
-        builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
-        builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
-        builder.Services.AddScoped<IDistrictService, DistrictService>();
-        builder.Services.AddScoped<IProvinceService, ProvinceService>();
-        builder.Services.AddScoped<ILocalLevelService, LocalLevelService>();
-        builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
-        builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
-        builder.Services.AddScoped<IFacultyResolver, FacultyResolver>();
-        builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
-        builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
-        builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
-        builder.Services.AddScoped<IStudentCategoryService, StudentCategoryService>();
-        builder.Services.AddScoped<ISemesterService, SemesterService>();
-        builder.Services.AddScoped<IBankService, BankService>();
-        builder.Services.AddScoped<IPaymentTypeService, PaymentTypeService>();
-        builder.Services.AddScoped<IBillTitleService, BillTitleService>();
-        builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
-        builder.Services.AddScoped<IESewaService, ESewaService>();
-        builder.Services.AddHttpClient<IESewaService, ESewaService>();
-        builder.Services.AddScoped<IKhaltiService, KhaltiService>();
-        builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
-        builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
-        builder.Services.AddScoped<IPermissionService, PermissionService>();
-        builder.Services.AddMemoryCache();
-        builder.Services.AddAuthorization();
-        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-        builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
-        builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
-        builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
-        builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
-        builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
-        builder.Services.AddHttpClient<ISmsService, SmsService>();
-        builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
-        builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
-        builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();
-        builder.Services.AddScoped<IResultRecordService, ResultRecordService>();
-        builder.Services.AddScoped<IExamCenterService, ExamCenterService>();
-        builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
-        builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
-        builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
-        builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
-        builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
-        builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
-        builder.Services.AddScoped<IAuditLogService, AuditLogService>();
-        builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
-        builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
-        var app = builder.Build();
+                options.AddFixedWindowLimiter("login", limiterOptions =>
+                {
+                    limiterOptions.PermitLimit = 10;
+                    limiterOptions.Window = TimeSpan.FromMinutes(1);
+                    limiterOptions.QueueLimit = 0;
+                });
+            });
 
-        EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
+            builder.Services.AddScoped<IBoardService, BoardService>();
+            builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
+            builder.Services.AddScoped<IAcademicYearService, AcademicYearService>();
+            builder.Services.AddScoped<ICollegeService, CollegeService>();
+            builder.Services.AddScoped<IFacultyService, FacultyService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IStudentRegistrationService, StudentRegistrationService>();
+            builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
+            builder.Services.AddScoped<IProgramService, ProgramService>();
+            builder.Services.AddScoped<ILevelService, LevelService>();
+            builder.Services.AddScoped<INoticeService, NoticeService>();
+            builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
+            builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
+            builder.Services.AddScoped<IExamTypeService, ExamTypeService>();
+            builder.Services.AddScoped<IDistrictService, DistrictService>();
+            builder.Services.AddScoped<IProvinceService, ProvinceService>();
+            builder.Services.AddScoped<ILocalLevelService, LocalLevelService>();
+            builder.Services.AddScoped<IEntranceExamApplicationService, EntranceExamApplicationService>();
+            builder.Services.AddScoped<IFileUploadHelper, FileUploadHelper>();
+            builder.Services.AddScoped<IFacultyResolver, FacultyResolver>();
+            builder.Services.AddScoped<ISubjectCatalogService, SubjectCatalogService>();
+            builder.Services.AddScoped<ISubjectOfferingService, SubjectOfferingService>();
+            builder.Services.AddScoped<ICurriculumVersionService, CurriculumVersionService>();
+            builder.Services.AddScoped<IStudentCategoryService, StudentCategoryService>();
+            builder.Services.AddScoped<ISemesterService, SemesterService>();
+            builder.Services.AddScoped<IBankService, BankService>();
+            builder.Services.AddScoped<IPaymentTypeService, PaymentTypeService>();
+            builder.Services.AddScoped<IBillTitleService, BillTitleService>();
+            builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
+            builder.Services.AddScoped<IESewaService, ESewaService>();
+            builder.Services.AddHttpClient<IESewaService, ESewaService>();
+            builder.Services.AddScoped<IKhaltiService, KhaltiService>();
+            builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
+            builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
+            builder.Services.AddScoped<IPermissionService, PermissionService>();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+            builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
+            builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
+            builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
+            builder.Services.AddHttpClient<ISmsService, SmsService>();
+            builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
+            builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
+            builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();
+            builder.Services.AddScoped<IResultRecordService, ResultRecordService>();
+            builder.Services.AddScoped<IExamCenterService, ExamCenterService>();
+            builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
+            builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
+            builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
+            builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
+            builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
+            builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
+            builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
+            var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseMigrationsEndPoint();
-        }
-        else
-        {
-            app.UseExceptionHandler("/Home/Error");
-            app.UseHsts();
-        }
+            EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
 
-        app.UseHttpsRedirection();
-
-        app.UseMiddleware<TenantResolutionMiddleware>();
-
-        app.UseRouting();
-
-        app.UseFacultyResolution();
-
-        app.UseAuthorization();
-
-        app.UseMiddleware<UserContextMiddleware>();
-
-        app.UseStaticFiles();
-        app.MapStaticAssets();
-
-        app.MapControllerRoute(
-            name: "areas",
-            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
-            .WithStaticAssets();
-
-        app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller=Home}/{action=Index}/{id?}")
-            .WithStaticAssets();
-
-        app.MapRazorPages()
-           .WithStaticAssets();
-
-        using (var scope = app.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            await dbContext.Database.MigrateAsync();
-            var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
-            tenantContext.SetTenant(1, "SEED", TenantType.Central);
-
+            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                // Base system data
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-
-                // Full test data (clears and re-seeds transactional + reference data)
-                await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
-
-                // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-
-                // Location data (seeded after WorkflowTestDataSeeder which clears it)
-                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-
-                // Additional reference data (skips if already present)
-                await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
-
-                // Academic structure extensions
-                await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-                await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
-
-                // Demo data
-                await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
-
-                // Grading schemes
-                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-
-            // Payment gateways
-            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
-
-                // Admin / test users (depends on roles, colleges, faculties being seeded)
-                await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
-
-                // Marksheet seed data (depends on users being created first)
-                await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
+                app.UseMigrationsEndPoint();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
             else
             {
-                // Production: only essential system data
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
             }
-        }
 
-        app.Run();
+            app.UseHttpsRedirection();
+            app.UseMiddleware<SecurityHeadersMiddleware>();
+            app.UseRateLimiter();
+
+            app.UseMiddleware<TenantResolutionMiddleware>();
+
+            app.UseRouting();
+
+            app.UseFacultyResolution();
+
+            app.UseAuthorization();
+
+            app.UseMiddleware<UserContextMiddleware>();
+
+            app.UseStaticFiles();
+            app.MapStaticAssets();
+
+            app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
+
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
+
+            app.MapRazorPages()
+               .WithStaticAssets();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                await dbContext.Database.MigrateAsync();
+                var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+                tenantContext.SetTenant(1, "SEED", TenantType.Central);
+
+                if (app.Environment.IsDevelopment())
+                {
+                    // Base system data
+                    await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                    await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+
+                    // Full test data (clears and re-seeds transactional + reference data)
+                    await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
+
+                    // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
+                    await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+                    await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+
+                    // Location data (seeded after WorkflowTestDataSeeder which clears it)
+                    await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+
+                    // Additional reference data (skips if already present)
+                    await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+                    await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+                    await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+
+                    // Academic structure extensions
+                    await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+                    await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+
+                    // Demo data
+                    await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+
+                    // Grading schemes
+                    await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+
+                // Payment gateways
+                await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
+
+                    // Admin / test users (depends on roles, colleges, faculties being seeded)
+                    await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+
+                    // Marksheet seed data (depends on users being created first)
+                    await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
+                }
+                else
+                {
+                    // Production: only essential system data
+                    await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                    await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+                    await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+                    await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+                }
+            }
+
+            Log.Information("FWU Examination Management System starting up...");
+            app.Run();
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Application terminated unexpectedly");
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
     }
 }

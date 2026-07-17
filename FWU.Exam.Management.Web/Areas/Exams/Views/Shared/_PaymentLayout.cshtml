@@ -7,24 +7,10 @@
     <title>@(ViewData["Title"] ?? "Payment") - FWU Examination System</title>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { 'poppins': ['Poppins', 'sans-serif'] },
-                    colors: {
-                        'admin-blue': '#1d4ed8',
-                        'admin-blue-light': '#2563eb',
-                        'admin-blue-dark': '#1e40af',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
