@@ -29,6 +29,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IUserContext, UserContext>();
         builder.Services.AddScoped<AuditableSaveChangesInterceptor>();
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
+        builder.Services.AddScoped<AuditLogInterceptor>();
 
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
@@ -36,6 +37,7 @@ public partial class EntryPoint
             options.UseSqlServer(connectionString);
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
+            options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
         });
 
         builder.Services.AddDefaultIdentity<AppUser>(options =>
@@ -154,6 +156,8 @@ public partial class EntryPoint
         builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
         builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
+        builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+        builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
         var app = builder.Build();
 
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];

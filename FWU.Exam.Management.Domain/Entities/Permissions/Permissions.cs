@@ -48,6 +48,7 @@ public static class Permissions
     public const string GroupRetotaling = "retotaling";
     public const string GroupMarksEntry = "marksentry";
     public const string GroupReports = "reports";
+    public const string GroupAuditLog = "auditlog";
 
     // Helper to build permission name
     public static string N(string group, string action) => $"{group}.{action}";
@@ -302,6 +303,7 @@ public static class Permissions
     public const string ExamCentersCreate = "examcenters.create";
     public const string ExamCentersEdit = "examcenters.edit";
     public const string ExamCentersDelete = "examcenters.delete";
+    public const string ExamCentersGenerateRollNumbers = "examcenters.generaterollnumbers";
 
     // Admit Cards
     public const string AdmitCardsView = "admitcards.view";
@@ -317,6 +319,9 @@ public static class Permissions
     public const string RetotalingApprove = "retotaling.approve";
     public const string RetotalingReject = "retotaling.reject";
     public const string RetotalingReview = "retotaling.review";
+
+    // Audit Log
+    public const string AuditLogView = "auditlog.view";
 
     // Marks Entry (College Admin)
     public const string MarksEntryView = "marksentry.view";
@@ -542,6 +547,7 @@ public static class Permissions
         (ExamCentersCreate, "Create Exam Centers", GroupExamCenters, "Create new exam centers"),
         (ExamCentersEdit, "Edit Exam Centers", GroupExamCenters, "Edit existing exam centers"),
         (ExamCentersDelete, "Delete Exam Centers", GroupExamCenters, "Delete exam centers"),
+        (ExamCentersGenerateRollNumbers, "Generate Roll Numbers", GroupExamCenters, "Generate exam roll numbers for registrations"),
 
         (AdmitCardsView, "View Admit Cards", GroupAdmitCards, "View admit card list"),
         (AdmitCardsCreate, "Create Admit Cards", GroupAdmitCards, "Create new admit cards"),
@@ -575,6 +581,8 @@ public static class Permissions
         (MarksEntrySubmit, "Submit Marks", GroupMarksEntry, "Submit marks for assigned subjects"),
         (MarksEntryImport, "Import Marks", GroupMarksEntry, "Import marks from Excel for assigned subjects"),
         (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
+
+        (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
     ];
 
     // Permission set per role
@@ -611,6 +619,7 @@ public static class Permissions
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
 
             ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
+            ExamCentersGenerateRollNumbers,
 
             AdmitCardsView, AdmitCardsCreate, AdmitCardsEdit, AdmitCardsGenerate, AdmitCardsDownload,
             RetotalingView, RetotalingReview, RetotalingApprove, RetotalingReject,
@@ -628,6 +637,8 @@ public static class Permissions
             BoardsView, BoardsCreate, BoardsEdit, BoardsDelete,
 
             SmsView, SmsCreate, SmsEdit, SmsDelete,
+
+            AuditLogView,
         ],
 
         ["CollegeAdmin"] =

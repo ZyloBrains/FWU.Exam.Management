@@ -93,7 +93,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamCenterVenue>? ExamCenterVenues { get; set; }
     public DbSet<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
     public DbSet<CollegeAdminSubjectAssignment>? CollegeAdminSubjectAssignments { get; set; }
- 
+    public DbSet<AuditLog>? AuditLogs { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -987,6 +988,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.EntityName).HasMaxLength(128);
+            entity.Property(a => a.EntityId).HasMaxLength(128);
+            entity.Property(a => a.Action).HasMaxLength(32);
+            entity.Property(a => a.UserName).HasMaxLength(256);
+            entity.Property(a => a.UserId).HasMaxLength(128);
+            entity.Property(a => a.ChangesJson).HasMaxLength(4000);
+            entity.HasIndex(a => new { a.EntityName, a.EntityId });
+            entity.HasIndex(a => a.Timestamp);
         });
     }
 }

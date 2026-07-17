@@ -63,7 +63,7 @@
     var showPayments = HasPerm("banks.view") || HasPerm("paymenttypes.view") || HasPerm("billtitles.view");
     var showLocation = HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view");
     var showStudentPortal = HasPerm("student.portal.profile") || HasPerm("student.portal.examforms") || HasPerm("student.portal.marksheet") || HasPerm("student.portal.payment") || HasPerm("retotaling.view");
-    var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("sms.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view");
+    var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("sms.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view") || HasPerm("auditlog.view");
     var showReports = HasPerm("reports.collegepayments") || HasPerm("reports.subjectcount") || HasPerm("reports.examtriplicate") || HasPerm("reports.summary") ||
                       HasPerm("reports.tabulationtriplicate") || HasPerm("reports.programwisestudent") || HasPerm("reports.attendanceheet") || HasPerm("reports.marksfoil") ||
                       HasPerm("reports.bankvoucherlist");
@@ -115,7 +115,8 @@
                          IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
                          IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
                           IsActive(controllerName: "SmsConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "Notices", areaName: "Core");
+                          IsActive(controllerName: "Notices", areaName: "Core") ||
+                          IsActive(controllerName: "AuditLog", areaName: "Core");
 }
 
 <ul class="space-y-1.5 px-3 font-poppins">
@@ -344,6 +345,7 @@
             @if (HasPerm("khalti.view")) { <li><a asp-area="Core" asp-controller="KhaltiConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "KhaltiConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Khalti Configuration</span></a></li> }
             @if (HasPerm("connectips.view")) { <li><a asp-area="Core" asp-controller="ConnectIPSConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ConnectIPSConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">ConnectIPS Configuration</span></a></li> }
             @if (HasPerm("notices.view")) { <li><a asp-area="Core" asp-controller="Notices" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Notices", actionName: "Index", areaName: "Core"))"><i class="fas fa-bullhorn w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Notices</span></a></li> }
+            @if (HasPerm("auditlog.view")) { <li><a asp-area="Core" asp-controller="AuditLog" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AuditLog", actionName: "Index", areaName: "Core") || IsActive(controllerName: "AuditLog", actionName: "Details", areaName: "Core"))"><i class="fas fa-history w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Audit Log</span></a></li> }
         </ul>
     </li>
     }

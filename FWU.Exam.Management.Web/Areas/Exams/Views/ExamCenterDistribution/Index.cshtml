@@ -40,7 +40,7 @@
 
     @if (Model != null)
     {
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <div class="text-2xl font-bold text-gray-800">@Model.TotalRegistrations</div>
                 <div class="text-sm text-gray-500 mt-1">Total Registrations</div>
@@ -58,6 +58,12 @@
                     @(Model.SymbolNumbersAssigned ? "Yes" : "No")
                 </div>
                 <div class="text-sm text-gray-500 mt-1">Symbol Numbers Assigned</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-2xl font-bold @(Model.RollNumbersAssigned ? "text-green-600" : "text-red-600")">
+                    @(Model.RollNumbersAssigned ? Model.RollNumberCount.ToString() : "No")
+                </div>
+                <div class="text-sm text-gray-500 mt-1">Roll Numbers</div>
             </div>
         </div>
 
@@ -186,6 +192,66 @@
                 </form>
             </div>
         }
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Exam Roll Numbers</h3>
+                    <p class="text-sm text-gray-500 mt-1">Generate roll numbers in format: AcademicYear + Sequence (e.g., 20820001)</p>
+                </div>
+                <div class="flex gap-2">
+                    @if (!Model.RollNumbersAssigned)
+                    {
+                        <form method="post" asp-action="GenerateRollNumbers" asp-area="Exams" class="inline" onsubmit="return confirm('Generate roll numbers for all registered students?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                                <i class="fas fa-hashtag mr-1"></i> Generate Roll Numbers
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-action="ClearRollNumbers" asp-area="Exams" class="inline" onsubmit="return confirm('Clear all roll numbers? This cannot be undone.');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-undo mr-1"></i> Clear Roll Numbers
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+
+            @if (Model.RollNumbersAssigned)
+            {
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-green-800">Roll numbers have been generated for @Model.RollNumberCount students.</p>
+                            <p class="text-xs text-green-600 mt-0.5">Format: Academic Year (BS) + Sequential Number (e.g., 20820001)</p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-amber-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800">Roll numbers have not been generated yet.</p>
+                            <p class="text-xs text-amber-600 mt-0.5">Click "Generate Roll Numbers" to assign roll numbers to all @Model.TotalRegistrations registered students.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     }
 </div>
 

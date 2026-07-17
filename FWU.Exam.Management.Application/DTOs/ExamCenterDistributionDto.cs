@@ -10,6 +10,8 @@ public class ExamCenterDistributionDto
     public int AssignedCount { get; set; }
     public int UnassignedCount { get; set; }
     public bool SymbolNumbersAssigned { get; set; }
+    public bool RollNumbersAssigned { get; set; }
+    public int RollNumberCount { get; set; }
     public List<CenterDistributionInfo> Centers { get; set; } = [];
 }
 

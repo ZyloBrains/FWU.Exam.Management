@@ -12,6 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examcenters.view")]
 public class ExamCenterDistributionController(
     IExamCenterDistributionService distributionService,
+    IExamRollNumberService rollNumberService,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int? examScheduleId)
@@ -33,7 +34,10 @@ public class ExamCenterDistributionController(
                 AssignedCount = await distributionService.GetAssignedCountAsync(examScheduleId.Value),
                 UnassignedCount = await distributionService.GetUnassignedCountAsync(examScheduleId.Value),
                 SymbolNumbersAssigned = await context.ExamRegistrations
-                    .AnyAsync(er => er.ExamScheduleId == examScheduleId.Value && er.SymbolNumber != null)
+                    .AnyAsync(er => er.ExamScheduleId == examScheduleId.Value && er.SymbolNumber != null),
+                RollNumbersAssigned = await rollNumberService.HasRollNumbersAsync(examScheduleId.Value),
+                RollNumberCount = await context.ExamRegistrations
+                    .CountAsync(er => er.ExamScheduleId == examScheduleId.Value && er.ExamRollNumber != null)
             };
 
             var examCenters = await context.ExamCenters
@@ -122,6 +126,26 @@ public class ExamCenterDistributionController(
     {
         await distributionService.ResetDistributionAsync(examScheduleId);
         TempData["SuccessMessage"] = "Distribution has been reset.";
+        return RedirectToAction(nameof(Index), new { examScheduleId });
+    }
+
+    [HttpPost]
+    [RequirePermission("examcenters.generaterollnumbers")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GenerateRollNumbers(int examScheduleId)
+    {
+        var count = await rollNumberService.GenerateRollNumbersAsync(examScheduleId);
+        TempData["SuccessMessage"] = $"Roll numbers generated for {count} students!";
+        return RedirectToAction(nameof(Index), new { examScheduleId });
+    }
+
+    [HttpPost]
+    [RequirePermission("examcenters.generaterollnumbers")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ClearRollNumbers(int examScheduleId)
+    {
+        var count = await rollNumberService.ClearRollNumbersAsync(examScheduleId);
+        TempData["SuccessMessage"] = $"Roll numbers cleared for {count} students.";
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 }
