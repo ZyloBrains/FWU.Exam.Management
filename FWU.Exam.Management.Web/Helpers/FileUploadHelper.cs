@@ -7,12 +7,16 @@ public interface IFileUploadHelper
 
 public class FileUploadHelper(IWebHostEnvironment environment) : IFileUploadHelper
 {
-    private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".pdf"];
+    private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"];
+    private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
     public async Task<string?> UploadAsync(IFormFile? file, string subfolder = "images")
     {
         if (file == null || file.Length == 0)
             return null;
+
+        if (file.Length > MaxFileSizeBytes)
+            throw new InvalidOperationException($"File size exceeds the maximum allowed size of {MaxFileSizeBytes / (1024 * 1024)} MB.");
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(extension))

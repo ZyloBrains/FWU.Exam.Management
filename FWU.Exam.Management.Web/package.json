@@ -1,0 +1,14 @@
+{
+  "name": "fwu.exam.management.web",
+  "version": "1.0.0",
+  "description": "FWU Examination Management System",
+  "type": "commonjs",
+  "scripts": {
+    "tailwind:build": "npx @tailwindcss/cli -i ./wwwroot/css/tailwind-input.css -o ./wwwroot/css/tailwind.css --minify",
+    "tailwind:watch": "npx @tailwindcss/cli -i ./wwwroot/css/tailwind-input.css -o ./wwwroot/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

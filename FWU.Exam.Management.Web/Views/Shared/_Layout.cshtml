@@ -16,7 +16,7 @@
     
     <!-- Core Dependencies -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
@@ -34,23 +34,6 @@
         }
     </style>
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'poppins': ['Poppins', 'sans-serif'],
-                    },
-                    colors: {
-                        'admin-blue': '#1d4ed8',
-                        'admin-blue-light': '#2563eb',
-                        'admin-blue-dark': '#1e40af',
-                        'sidebar-blue': '#1C4CD2',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         /* AlpineJS Cloak */
         [x-cloak] { display: none !important; }
@@ -127,7 +110,7 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body class="bg-gray-50 text-gray-800 font-poppins antialiased">
+<body class="bg-gray-50 text-gray-800 font-poppins antialiased h-screen overflow-hidden">
     @{
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
@@ -212,19 +195,9 @@
                     </div>
                 </div>
 
-                <!-- Mobile: Logo + Text -->
-                <div class="flex items-center gap-3 lg:hidden">
-                    <img src="@Url.Content(sidebarLogoPath)" alt="Logo" class="h-10 w-auto object-contain rounded" />
-                    <div class="min-w-0">
-                        <h2 class="text-sm font-bold truncate text-white leading-tight">FWU OCE</h2>
-                        <p class="text-xs text-blue-200 truncate truncate">Exam System</p>
-                    </div>
-                </div>
+                <!-- Mobile: Logo -->
+                <img src="@Url.Content(sidebarLogoPath)" alt="Logo" class="lg:hidden h-20 w-auto object-contain" />
 
-                <!-- Mobile Close Button -->
-                <button x-on:click="mobileSidebarOpen = false" class="lg:hidden text-blue-200 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4 custom-scrollbar">
