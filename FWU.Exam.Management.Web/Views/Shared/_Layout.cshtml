@@ -110,7 +110,7 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
-<body class="bg-gray-50 text-gray-800 font-poppins antialiased">
+<body class="bg-gray-50 text-gray-800 font-poppins antialiased h-screen overflow-hidden">
     @{
         var appUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
         var displayName = appUser != null ? (appUser.UserName ?? appUser.Email ?? "User") : "Guest";
