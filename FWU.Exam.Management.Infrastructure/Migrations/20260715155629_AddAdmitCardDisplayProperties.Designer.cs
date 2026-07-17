@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715155629_AddAdmitCardDisplayProperties")]
+    partial class AddAdmitCardDisplayProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -575,9 +578,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<string>("Campus")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ControllerSignaturePath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("DownloadedDate")
                         .HasColumnType("datetime2");
 
@@ -605,9 +605,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<string>("Level")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhotoPath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Program")
                         .HasColumnType("nvarchar(max)");
 
@@ -615,9 +612,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Semester")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SignaturePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("StudentRegistrationId")
@@ -3836,9 +3830,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ControllerSignaturePath")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()

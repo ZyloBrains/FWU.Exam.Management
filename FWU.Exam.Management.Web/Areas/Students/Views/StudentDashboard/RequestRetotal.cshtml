@@ -8,7 +8,7 @@
 }
 
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-redo-alt text-indigo-600"></i>
@@ -18,7 +18,7 @@
                 <p class="text-sm text-gray-500 mt-0.5">Submit a retotal request for re-evaluation of your exam result.</p>
             </div>
         </div>
-        <a asp-action="RetotalRequests" asp-area="Students" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+        <a asp-action="RetotalRequests" asp-area="Students" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors self-start">
             <i class="fas fa-arrow-left"></i> Back
         </a>
     </div>
@@ -41,10 +41,10 @@
     else
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-100">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
                 <h2 class="text-lg font-semibold text-gray-800">Subject Details</h2>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-4 sm:p-6 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-500">Exam Schedule</label>
@@ -70,7 +70,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-4">Submit Request</h2>
             <form method="post" asp-action="SubmitRetotalRequest" asp-area="Students">
                 @Html.AntiForgeryToken()
@@ -82,8 +82,8 @@
                                   class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   placeholder="Explain why you believe the marks should be re-evaluated..."></textarea>
                     </div>
-                    <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                        <i class="fas fa-paper-plane mr-1"></i> Submit Request
+                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                        <i class="fas fa-paper-plane"></i> Submit Request
                     </button>
                 </div>
             </form>
