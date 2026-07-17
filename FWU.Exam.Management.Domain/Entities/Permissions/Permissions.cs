@@ -49,6 +49,7 @@ public static class Permissions
     public const string GroupMarksEntry = "marksentry";
     public const string GroupReports = "reports";
     public const string GroupAuditLog = "auditlog";
+    public const string GroupBackupRestore = "backuprestore";
 
     // Helper to build permission name
     public static string N(string group, string action) => $"{group}.{action}";
@@ -323,6 +324,9 @@ public static class Permissions
     // Audit Log
     public const string AuditLogView = "auditlog.view";
 
+    // Backup & Restore
+    public const string BackupRestoreManage = "backuprestore.manage";
+
     // Marks Entry (College Admin)
     public const string MarksEntryView = "marksentry.view";
     public const string MarksEntrySubmit = "marksentry.submit";
@@ -583,6 +587,8 @@ public static class Permissions
         (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
 
         (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
+
+        (BackupRestoreManage, "Manage Backup & Restore", GroupBackupRestore, "Backup and restore database"),
     ];
 
     // Permission set per role
@@ -639,6 +645,7 @@ public static class Permissions
             SmsView, SmsCreate, SmsEdit, SmsDelete,
 
             AuditLogView,
+            BackupRestoreManage,
         ],
 
         ["CollegeAdmin"] =
