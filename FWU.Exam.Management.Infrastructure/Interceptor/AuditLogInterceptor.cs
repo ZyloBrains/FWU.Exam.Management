@@ -32,7 +32,7 @@ public class AuditLogInterceptor(
         if (context == null) return;
 
         var entries = context.ChangeTracker.Entries()
-            .Where(e => e.Entity is not AuditLog && e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted);
+            .Where(e => e.Entity is not AuditLog && e.Entity is not Tenant && e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted);
 
         var userName = userProvider.GetCurrentUserName() ?? "System";
         var userId = userContext.UserId;

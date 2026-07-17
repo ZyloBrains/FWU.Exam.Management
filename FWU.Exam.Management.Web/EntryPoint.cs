@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
@@ -262,8 +263,31 @@ public partial class EntryPoint
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
-            app.MapRazorPages()
-               .WithStaticAssets();
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await dbContext.Database.MigrateAsync();
+
+            // Seed the central tenant first — AuditLogInterceptor stamps TenantId on
+            // every SaveChanges, so the Tenant row must exist before any other seeder runs.
+            if (!await dbContext.Tenants.AnyAsync())
+            {
+                dbContext.Tenants.Add(new Tenant
+                {
+                    Name = "Office of Controller of Examinations",
+                    OfficeCode = "OCE",
+                    ContactNumber = "01-2345678",
+                    Address = "Kathmandu, Nepal",
+                    Email = "info@oce.gov.np",
+                    TenantType = TenantType.Central,
+                    IsActive = true,
+                });
+                await dbContext.SaveChangesAsync();
+            }
+
+            var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+            var centralTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
+            tenantContext.SetTenant(centralTenant.Id, centralTenant.OfficeCode, centralTenant.TenantType);
 
             using (var scope = app.Services.CreateScope())
             {
@@ -278,8 +302,14 @@ public partial class EntryPoint
                     await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
                     await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
 
-                    // Full test data (clears and re-seeds transactional + reference data)
-                    await WorkflowTestDataSeeder.SeedWorkflowTestDataAsync(scope.ServiceProvider);
+                // WorkflowTestDataSeeder clears Tenants and re-creates with a new identity ID,
+                // so refresh the tenant context to point at the actual row.
+                var refreshedTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
+                tenantContext.SetTenant(refreshedTenant.Id, refreshedTenant.OfficeCode, refreshedTenant.TenantType);
+
+                // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
+                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
 
                     // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
                     await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
