@@ -45,11 +45,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return new List<int>();
     }
 
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        var studentRegistrations = await studentRegistrationService.GetAllStudentRegistrationsAsync(collegeIds.Count > 0 ? collegeIds : null);
-        return View(studentRegistrations);
+        return View();
     }
 
     public async Task<IActionResult> Details(int? id)

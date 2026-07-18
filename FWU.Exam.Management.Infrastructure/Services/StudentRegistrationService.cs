@@ -232,13 +232,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null)
     {
         var query = context.StudentRegistrations
-            .Include(s => s.AcademicYear)
-            .Include(s => s.Level)
-            .Include(s => s.Faculty)
-            .Include(s => s.Program)
-            .Include(s => s.College)
-            .Include(s => s.Gender)
-            .Include(s => s.StudentCategory)
             .AsNoTracking();
         query = query.ApplyScope(userContext);
 

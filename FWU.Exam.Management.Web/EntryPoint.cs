@@ -261,7 +261,17 @@ public partial class EntryPoint
                     TenantType = TenantType.Central,
                     IsActive = true,
                 });
-                await dbContext.SaveChangesAsync();
+                    dbContext.Tenants.Add(new Tenant
+                    {
+                        Name = "Engineering Office",
+                        OfficeCode = "ENG",
+                        ContactNumber = "01-2345670",
+                        Address = "Mahendranagar,Kanchanpur, Nepal",
+                        Email = "eng@fwu.edu.np",
+                        TenantType = TenantType.Central,
+                        IsActive = true,
+                    });
+                    await dbContext.SaveChangesAsync();
             }
 
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();

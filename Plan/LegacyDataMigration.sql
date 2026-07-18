@@ -2,7 +2,7 @@
 -- Legacy Exam Data Migration Script
 -- Source: [FWUExams.Legacy].dbo.CivilEngineering, [FWUExams.Legacy].dbo.ComputerEngineering, [FWUExams.Legacy].dbo.CPM
 -- Target: FUExamsDb normalized schema
--- TenantId: 1 (OCE)
+-- TenantId: 2 (Engineering)
 -- ============================================================================
 
 SET NOCOUNT ON;
@@ -73,13 +73,14 @@ CREATE TABLE #ExamRegMap (
 -- ============================================================================
 
 -- 0. Tenant (required for FK)
-IF NOT EXISTS (SELECT 1 FROM Tenants WHERE Id = 1)
+DECLARE @TenantId INT = 2;
+IF NOT EXISTS (SELECT 1 FROM Tenants WHERE Id = @TenantId)
 BEGIN
     SET IDENTITY_INSERT Tenants ON;
     INSERT INTO Tenants (Id, Name, OfficeCode, ContactNumber, Address, Email, TenantType, IsActive)
-    VALUES (1, 'OCE', 'OCE', 'N/A', 'N/A', 'N/A', 1, 1);
+    VALUES (@TenantId, 'Engineering', 'ENG', 'N/A', 'N/A', 'N/A', 1, 1);
     SET IDENTITY_INSERT Tenants OFF;
-    PRINT 'Created Tenant: OCE (Id=1)';
+    PRINT 'Created Tenant: Engineering (Id=' + CAST(@TenantId AS VARCHAR) + ')';
 END
 
 -- 1a. Engineering Faculty (if not exists)
@@ -87,7 +88,7 @@ IF NOT EXISTS (SELECT 1 FROM Faculties WHERE OfficeCode = 'ENG')
 BEGIN
     SET IDENTITY_INSERT Faculties ON;
     INSERT INTO Faculties (Id, OfficeCode, Name, ContactNumber, Address, Email, TenantId)
-    VALUES (100, 'ENG', 'Faculty of Engineering', 'N/A', 'N/A', 'N/A', 1);
+    VALUES (100, 'ENG', 'Faculty of Engineering', 'N/A', 'N/A', 'N/A', @TenantId);
     SET IDENTITY_INSERT Faculties OFF;
     PRINT 'Created Faculty: ENG (Id=100)';
 END
@@ -119,7 +120,7 @@ DECLARE @CollegeId INT;
 IF NOT EXISTS (SELECT 1 FROM Colleges WHERE Code = 'SCH001')
 BEGIN
     INSERT INTO Colleges (Code, Name, CollegeNameNepali, ShortName, EstablishedDate, Email, PrincipalName, PrincipalContactNumber, IsExamCenterOnly, IsActive, TenantId)
-    VALUES ('SCH001', 'UNIVERSITY CENTRAL CAMPUS', NULL, 'UCC', '1900-01-01', 'info@fwu.edu.np', 'N/A', 'N/A', 0, 1, 1);
+    VALUES ('SCH001', 'UNIVERSITY CENTRAL CAMPUS', NULL, 'UCC', '1900-01-01', 'info@fwu.edu.np', 'N/A', 'N/A', 0, 1, @TenantId);
     SET @CollegeId = SCOPE_IDENTITY();
     PRINT 'Created College: SCH001 (Id=' + CAST(@CollegeId AS VARCHAR) + ')';
 END
@@ -376,7 +377,7 @@ BEGIN
             ISNULL(@PracFM, 0), ISNULL(@PracPM, 0),
             CASE WHEN @PracFM > 0 THEN @TheoryFM - @PracFM - ISNULL(@IntFM, 0) ELSE 0 END,
             CASE WHEN @PracFM > 0 THEN @TheoryPM - @PracPM - ISNULL(@IntPM, 0) ELSE 0 END,
-            ISNULL(@IntFM, 0), ISNULL(@IntPM, 0), 0, 0, 1);
+            ISNULL(@IntFM, 0), ISNULL(@IntPM, 0), 0, 0, @TenantId);
         DECLARE @NewSoId INT = SCOPE_IDENTITY();
         INSERT INTO #SubjectOfferingMap (SubjectCatalogId, ProgramId, SemesterId, NewId) VALUES (@SoSubjectCatalogId, @SoProgramId, @SoSemesterId, @NewSoId);
     END
@@ -425,7 +426,7 @@ BEGIN
             ISNULL(@PracFM, 0), ISNULL(@PracPM, 0),
             CASE WHEN @PracFM > 0 THEN @TheoryFM - @PracFM - ISNULL(@IntFM, 0) ELSE 0 END,
             CASE WHEN @PracFM > 0 THEN @TheoryPM - @PracPM - ISNULL(@IntPM, 0) ELSE 0 END,
-            ISNULL(@IntFM, 0), ISNULL(@IntPM, 0), 0, 0, 1);
+            ISNULL(@IntFM, 0), ISNULL(@IntPM, 0), 0, 0, @TenantId);
         INSERT INTO #SubjectOfferingMap (SubjectCatalogId, ProgramId, SemesterId, NewId) VALUES (@SoSubjectCatalogId, @SoProgramId, @SoSemesterId, SCOPE_IDENTITY());
     END
     ELSE
@@ -473,7 +474,7 @@ BEGIN
             ISNULL(@PracFM, 0), ISNULL(@PracPM, 0),
             CASE WHEN @PracFM > 0 THEN @TheoryFM - @PracFM - ISNULL(@IntFM, 0) ELSE 0 END,
             CASE WHEN @PracFM > 0 THEN @TheoryPM - @PracPM - ISNULL(@IntPM, 0) ELSE 0 END,
-            ISNULL(@IntFM, 0), ISNULL(@IntPM, 0), 0, 0, 1);
+            ISNULL(@IntFM, 0), ISNULL(@IntPM, 0), 0, 0, @TenantId);
         INSERT INTO #SubjectOfferingMap (SubjectCatalogId, ProgramId, SemesterId, NewId) VALUES (@SoSubjectCatalogId, @SoProgramId, @SoSemesterId, SCOPE_IDENTITY());
     END
     ELSE
@@ -521,7 +522,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM ExamSchedules WHERE ProgramId = @EsProgramId AND AcademicYearId = @EsAcademicYearId AND SemesterId = @EsSemesterId)
     BEGIN
         INSERT INTO ExamSchedules (ExamScheduleName, AcademicYearId, ProgramId, SemesterId, ExamTypeId, LevelId, IsActive, StartTime, EndTime, TenantId)
-        VALUES (@EsName, @EsAcademicYearId, @EsProgramId, @EsSemesterId, @EsExamTypeId, @EsLevelId, 1, '08:00', '11:00', 1);
+        VALUES (@EsName, @EsAcademicYearId, @EsProgramId, @EsSemesterId, @EsExamTypeId, @EsLevelId, 1, '08:00', '11:00', @TenantId);
         DECLARE @EsId INT = SCOPE_IDENTITY();
         INSERT INTO #ExamScheduleMap (ProgramId, AcademicYearId, SemesterId, NewId) VALUES (@EsProgramId, @EsAcademicYearId, @EsSemesterId, @EsId);
     END
@@ -554,7 +555,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM ExamCenters WHERE ExamScheduleId = @EcExamScheduleId AND Code = 1)
     BEGIN
         INSERT INTO ExamCenters (ExamScheduleId, CollegeId, Code, Remark, IsActive, TenantId)
-        VALUES (@EcExamScheduleId, @CollegeId, 1, @EcCenterName, 1, 1);
+        VALUES (@EcExamScheduleId, @CollegeId, 1, @EcCenterName, 1, @TenantId);
         UPDATE #ExamCenterMap SET NewId = SCOPE_IDENTITY() WHERE ExamScheduleId = @EcExamScheduleId AND CenterName = @EcCenterName;
     END
     ELSE
@@ -641,7 +642,7 @@ BEGIN
             ISNULL(CONVERT(NVARCHAR(10), TRY_CONVERT(DATE, @SrDobBS), 103), 'N/A'),
             @DobAdFormatted,
             @SrGenderId, 1, @SrAyId,
-            @SrIsActive, NULLIF(@SrNepaliName, 'NULL'), 1);
+            @SrIsActive, NULLIF(@SrNepaliName, 'NULL'), @TenantId);
         DECLARE @SrNewId INT = SCOPE_IDENTITY();
         INSERT INTO #StudentRegMap (SourceStudentRegId, RegistrationNo, NewId) VALUES (0, @SrRegNo, @SrNewId);
     END
@@ -717,7 +718,7 @@ BEGIN
                 Sgpa, IsActive, ExamScheduleId, ProgramsId, TenantId, Status)
             VALUES (@ErSourceId, @ErAyId, @ErEcId, @CollegeId,
                 NULLIF(@ErRollNo, 'NULL'), CASE WHEN @ErRollNoCoding IS NOT NULL AND ISNUMERIC(@ErRollNoCoding) = 1 THEN CAST(@ErRollNoCoding AS BIGINT) ELSE NULL END,
-                NULLIF(@ErSgpa, 'NULL'), 1, @ErEsId, @ErProgId, 1, 1);
+                NULLIF(@ErSgpa, 'NULL'), 1, @ErEsId, @ErProgId, @TenantId, 1);
             SET IDENTITY_INSERT ExamRegistrations OFF;
             INSERT INTO #ExamRegMap (SourceExamRegId, NewId) VALUES (@ErSourceId, @ErSourceId);
         END
@@ -757,7 +758,7 @@ SELECT
     CASE WHEN ce.Rem IS NOT NULL AND ce.Rem <> 'NULL' THEN LTRIM(RTRIM(ce.Rem)) ELSE NULL END AS Remarks,
     1 AS IsActive,
     CASE WHEN TRY_CAST(LTRIM(RTRIM(ce.IsResultConfirm)) AS INT) = 1 THEN 1 ELSE 0 END AS IsSubmitted,
-    1 AS TenantId,
+    @TenantId AS TenantId,
     GETDATE() AS CreatedDate
 FROM [FWUExams.Legacy].dbo.CivilEngineering ce
 INNER JOIN ExamRegistrations er ON TRY_CAST(ce.ExamRegistrationID AS INT) = er.Id
@@ -796,7 +797,7 @@ SELECT
     CASE WHEN ce.Rem IS NOT NULL AND ce.Rem <> 'NULL' THEN LTRIM(RTRIM(ce.Rem)) ELSE NULL END AS Remarks,
     1 AS IsActive,
     CASE WHEN TRY_CAST(LTRIM(RTRIM(ce.IsResultConfirm)) AS INT) = 1 THEN 1 ELSE 0 END AS IsSubmitted,
-    1 AS TenantId,
+    @TenantId AS TenantId,
     GETDATE() AS CreatedDate
 FROM [FWUExams.Legacy].dbo.ComputerEngineering ce
 INNER JOIN ExamRegistrations er ON ce.ExamRegistrationID = er.Id
@@ -827,7 +828,7 @@ SELECT
     CASE WHEN cpm.Rem IS NOT NULL AND cpm.Rem <> 'NULL' THEN LTRIM(RTRIM(cpm.Rem)) ELSE NULL END AS Remarks,
     1 AS IsActive,
     CASE WHEN TRY_CAST(LTRIM(RTRIM(cpm.IsResultConfirm)) AS INT) = 1 THEN 1 ELSE 0 END AS IsSubmitted,
-    1 AS TenantId,
+    @TenantId AS TenantId,
     GETDATE() AS CreatedDate
 FROM [FWUExams.Legacy].dbo.CPM cpm
 INNER JOIN ExamRegistrations er ON cpm.ExamRegistrationID = er.Id
@@ -855,13 +856,13 @@ SELECT 'AcademicYears' AS TableName, COUNT(*) AS cnt FROM AcademicYears WHERE Ac
 UNION ALL SELECT 'Colleges', COUNT(*) FROM Colleges WHERE Code = 'SCH001'
 UNION ALL SELECT 'Programs', COUNT(*) FROM Programs WHERE ProgramCode IN ('L092','L117','L131')
 UNION ALL SELECT 'SubjectCatalogs', COUNT(*) FROM SubjectCatalogs
-UNION ALL SELECT 'SubjectOfferings', COUNT(*) FROM SubjectOfferings WHERE TenantId = 1
+UNION ALL SELECT 'SubjectOfferings', COUNT(*) FROM SubjectOfferings WHERE TenantId = @TenantId
 UNION ALL SELECT 'Semesters', COUNT(*) FROM Semesters WHERE AcademicYearId IN (@AY2014Id, @AY2021Id, @AY2023Id)
 UNION ALL SELECT 'ExamSchedules', COUNT(*) FROM ExamSchedules WHERE AcademicYearId IN (@AY2014Id, @AY2021Id, @AY2023Id)
-UNION ALL SELECT 'ExamCenters', COUNT(*) FROM ExamCenters WHERE TenantId = 1
+UNION ALL SELECT 'ExamCenters', COUNT(*) FROM ExamCenters WHERE TenantId = @TenantId
 UNION ALL SELECT 'StudentRegistrations', COUNT(*) FROM StudentRegistrations WHERE AcademicYearId IN (@AY2014Id, @AY2021Id, @AY2023Id)
 UNION ALL SELECT 'ExamRegistrations', COUNT(*) FROM ExamRegistrations WHERE AcademicYearId IN (@AY2014Id, @AY2021Id, @AY2023Id)
-UNION ALL SELECT 'ExamSubjectResults', COUNT(*) FROM ExamSubjectResults WHERE TenantId = 1;
+UNION ALL SELECT 'ExamSubjectResults', COUNT(*) FROM ExamSubjectResults WHERE TenantId = @TenantId;
 
 -- Spot check: verify a specific student
 PRINT '';
