@@ -24,18 +24,9 @@
             <p class="text-xs text-gray-400 mb-4 break-all">Attempted: @returnUrl</p>
         }
         <div class="flex items-center justify-center gap-3">
-            @if (!string.IsNullOrEmpty(tenantCode))
-            {
-                <a href="/tenant/@tenantCode/Dashboard/Index" class="inline-flex items-center gap-1.5 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                    <i class="fas fa-home mr-1"></i> Back to Dashboard
-                </a>
-            }
-            else
-            {
-                <a asp-controller="Dashboard" asp-action="Index" class="inline-flex items-center gap-1.5 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                    <i class="fas fa-home mr-1"></i> Back to Dashboard
-                </a>
-            }
+            <a asp-area="" asp-controller="Dashboard" asp-action="Index" class="inline-flex items-center gap-1.5 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <i class="fas fa-home mr-1"></i> Back to Dashboard
+            </a>
         </div>
     </div>
 </div>
