@@ -35,10 +35,10 @@
 -- ============================================================================
 
 SET NOCOUNT ON;
-SET XACT_ABORT ON;
+SET XACT_ABORT OFF;
 SET QUOTED_IDENTIFIER ON;
 
-BEGIN TRANSACTION;
+BEGIN TRY
 
 PRINT '============================================================';
 PRINT '  FUExams DataMap - Legacy to Target Migration';
@@ -49,7 +49,8 @@ PRINT '';
 -- ============================================================================
 -- Declare constants for key IDs (these match seed data if already seeded)
 -- ============================================================================
-DECLARE @TenantId INT = 1; -- OCE
+DECLARE @TenantId INT = 2; -- ENG (Engineering Office)
+DECLARE @TenantOfficeCode NVARCHAR(10) = 'ENG';
 DECLARE @CollegeId INT;
 DECLARE @EngineeringFacultyId INT;
 
@@ -133,24 +134,24 @@ PRINT 'Step 0 complete: Temp mapping tables created.';
 -- ============================================================================
 -- All of these use IF NOT EXISTS to protect seed data.
 
--- 1a. Ensure OCE Tenant
+-- 1a. Ensure ENG Tenant (Engineering Office - FWU legacy data)
 IF NOT EXISTS (SELECT 1 FROM Tenants WHERE Id = @TenantId)
 BEGIN
     SET IDENTITY_INSERT Tenants ON;
     INSERT INTO Tenants (Id, Name, OfficeCode, ContactNumber, Address, Email, IsActive)
-    VALUES (@TenantId, 'Office of Controller of Examinations', 'OCE', '01-2345678', 'Kathmandu, Nepal', 'info@oce.gov.np', 1);
+    VALUES (@TenantId, 'Engineering Office', 'ENG', '01-2345670', 'Mahendranagar, Kanchanpur, Nepal', 'eng@fwu.edu.np', 1);
     SET IDENTITY_INSERT Tenants OFF;
-    PRINT '  Created Tenant: OCE (Id=1)';
+    PRINT '  Created Tenant: ENG (Id=2)';
 END
 ELSE
-    PRINT '  Tenant OCE already exists (Id=1)';
+    PRINT '  Tenant ENG already exists (Id=2)';
 
 -- 1b. Engineering Faculty (lookup by OfficeCode, create if missing)
 IF NOT EXISTS (SELECT 1 FROM Faculties WHERE OfficeCode = 'ENG')
 BEGIN
     INSERT INTO Faculties (OfficeCode, Name, ContactNumber, Address, Email, TenantId)
     VALUES ('ENG', 'Faculty of Engineering', 'N/A', 'N/A', 'N/A', @TenantId);
-    PRINT '  Created Faculty: ENG';
+    PRINT '  Created Faculty: ENG (TenantId=2)';
 END
 ELSE
     PRINT '  Faculty ENG already exists';
@@ -675,7 +676,8 @@ PRINT 'Step 5 complete: ExamCenters created.';
 -- ============================================================================
 -- STEP 6: Create StudentRegistrations (deduplicated by RegistrationNo)
 -- ============================================================================
--- PROTECTION: Uses IF NOT EXISTS to skip already-inserted students (seed data).
+-- Uses set-based INSERT to ensure ALL distinct students are captured.
+-- PROTECTION: Uses WHERE NOT EXISTS to skip already-inserted students (seed data).
 
 SELECT DISTINCT
     LTRIM(RTRIM(RegistrationNo)) AS RegistrationNo,
@@ -703,60 +705,60 @@ FROM (
 ) AS AllStudents
 WHERE RegistrationNo IS NOT NULL AND RegistrationNo <> 'NULL';
 
-DECLARE @SrRegNo NVARCHAR(100), @SrFirstName NVARCHAR(80), @SrMiddleName NVARCHAR(30), @SrLastName NVARCHAR(30);
-DECLARE @SrContact NVARCHAR(15), @SrEmail NVARCHAR(50), @SrDobAD NVARCHAR(50), @SrDobBS NVARCHAR(10);
-DECLARE @SrGender NVARCHAR(50), @SrAyName NVARCHAR(50), @SrNepaliName NVARCHAR(100), @SrIsActive BIT;
-DECLARE @SrGenderId INT, @SrAyId INT, @SrLevelId INT;
+PRINT 'STEP 6: Distinct legacy students identified: ' + CAST(@@ROWCOUNT AS VARCHAR);
 
-DECLARE sr_cursor CURSOR FOR
-    SELECT RegistrationNo, FirstName, MiddleName, LastName, ContactNo, Email, BirthDateAD, BirthDateBS, GenderName, AcademicYearName, FullNameNepali, IsActive
-    FROM #DistinctStudents;
+-- Insert all distinct students that don't already exist, using set-based logic
+INSERT INTO StudentRegistrations (
+    LevelId, CollegeId, RegistrationNumber, FirstName, MiddleName, LastName,
+    ContactNumber, Email, DateOfBirthBS, DateOfBirthAD,
+    GenderId, StudentCategoryId, AcademicYearId,
+    IsActive, NepaliName, TenantId
+)
+SELECT
+    CASE
+        WHEN ds.AcademicYearName LIKE '2023%' THEN 2
+        ELSE 1
+    END AS LevelId,
+    @CollegeId AS CollegeId,
+    ds.RegistrationNo,
+    ds.FirstName,
+    NULLIF(ds.MiddleName, 'NULL'),
+    ISNULL(NULLIF(ds.LastName, 'NULL'), 'N/A'),
+    NULLIF(ds.ContactNo, 'NULL'),
+    NULLIF(ds.Email, 'NULL'),
+    ISNULL(CONVERT(NVARCHAR(10), TRY_CONVERT(DATE, ds.BirthDateBS), 103), 'N/A'),
+    CASE
+        WHEN ds.BirthDateAD IS NOT NULL AND ds.BirthDateAD <> 'NULL' AND ds.BirthDateAD <> ''
+        THEN CONVERT(NVARCHAR(50), TRY_CONVERT(DATE, ds.BirthDateAD), 121)
+        ELSE NULL
+    END AS DateOfBirthAD,
+    ISNULL((SELECT Id FROM Genders WHERE GenderName = ds.GenderName), 1) AS GenderId,
+    @StudentCategoryRegularId AS StudentCategoryId,
+    ISNULL((SELECT NewId FROM #AcademicYearMap WHERE SourceYear =
+        CASE WHEN ds.AcademicYearName LIKE '%.0' THEN LEFT(ds.AcademicYearName, LEN(ds.AcademicYearName) - 2) ELSE ds.AcademicYearName END
+    ), @AY2014Id) AS AcademicYearId,
+    ds.IsActive,
+    NULLIF(ds.FullNameNepali, 'NULL') AS NepaliName,
+    @TenantId AS TenantId
+FROM #DistinctStudents ds
+WHERE NOT EXISTS (
+    SELECT 1 FROM StudentRegistrations sr
+    WHERE sr.RegistrationNumber = ds.RegistrationNo
+);
 
-OPEN sr_cursor;
-FETCH NEXT FROM sr_cursor INTO @SrRegNo, @SrFirstName, @SrMiddleName, @SrLastName, @SrContact, @SrEmail, @SrDobAD, @SrDobBS, @SrGender, @SrAyName, @SrNepaliName, @SrIsActive;
+PRINT 'STEP 6: New StudentRegistrations inserted: ' + CAST(@@ROWCOUNT AS VARCHAR);
 
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    SET @SrGenderId = ISNULL((SELECT Id FROM Genders WHERE GenderName = @SrGender), 1);
-    DECLARE @SrAyNameClean NVARCHAR(10) = CASE WHEN @SrAyName LIKE '%.0' THEN LEFT(@SrAyName, LEN(@SrAyName) - 2) ELSE @SrAyName END;
-    SET @SrAyId = (SELECT NewId FROM #AcademicYearMap WHERE SourceYear = @SrAyNameClean);
-    SET @SrLevelId = CASE WHEN @SrAyNameClean = '2023' THEN 2 ELSE 1 END;
-
-    -- Only insert if registration number doesn't already exist
-    IF NOT EXISTS (SELECT 1 FROM StudentRegistrations WHERE RegistrationNumber = @SrRegNo)
-    BEGIN
-        DECLARE @DobAdFormatted NVARCHAR(50) = NULL;
-        IF @SrDobAD IS NOT NULL AND @SrDobAD <> 'NULL' AND @SrDobAD <> ''
-        BEGIN
-            SET @DobAdFormatted = CONVERT(NVARCHAR(50), TRY_CONVERT(DATE, @SrDobAD), 121);
-        END
-
-        INSERT INTO StudentRegistrations (LevelId, CollegeId, RegistrationNumber, FirstName, MiddleName, LastName,
-            ContactNumber, Email, DateOfBirthBS, DateOfBirthAD, GenderId, StudentCategoryId, AcademicYearId,
-            IsActive, NepaliName, TenantId)
-        VALUES (@SrLevelId, @CollegeId, @SrRegNo, @SrFirstName, NULLIF(@SrMiddleName, 'NULL'),
-            ISNULL(NULLIF(@SrLastName, 'NULL'), 'N/A'), NULLIF(@SrContact, 'NULL'), NULLIF(@SrEmail, 'NULL'),
-            ISNULL(CONVERT(NVARCHAR(10), TRY_CONVERT(DATE, @SrDobBS), 103), 'N/A'),
-            @DobAdFormatted,
-            @SrGenderId, @StudentCategoryRegularId, @SrAyId,
-            @SrIsActive, NULLIF(@SrNepaliName, 'NULL'), @TenantId);
-        DECLARE @SrNewId INT = SCOPE_IDENTITY();
-        INSERT INTO #StudentRegMap (RegistrationNo, NewId) VALUES (@SrRegNo, @SrNewId);
-    END
-    ELSE
-    BEGIN
-        DECLARE @SrExistingId INT = (SELECT Id FROM StudentRegistrations WHERE RegistrationNumber = @SrRegNo);
-        IF NOT EXISTS (SELECT 1 FROM #StudentRegMap WHERE RegistrationNo = @SrRegNo)
-            INSERT INTO #StudentRegMap (RegistrationNo, NewId) VALUES (@SrRegNo, @SrExistingId);
-    END
-
-    FETCH NEXT FROM sr_cursor INTO @SrRegNo, @SrFirstName, @SrMiddleName, @SrLastName, @SrContact, @SrEmail, @SrDobAD, @SrDobBS, @SrGender, @SrAyName, @SrNepaliName, @SrIsActive;
-END
-CLOSE sr_cursor;
-DEALLOCATE sr_cursor;
+-- Populate StudentRegMap with ALL distinct students (both existing and new)
+INSERT INTO #StudentRegMap (RegistrationNo, NewId)
+SELECT DISTINCT ds.RegistrationNo, sr.Id
+FROM #DistinctStudents ds
+INNER JOIN StudentRegistrations sr ON sr.RegistrationNumber = ds.RegistrationNo
+WHERE NOT EXISTS (
+    SELECT 1 FROM #StudentRegMap m WHERE m.RegistrationNo = ds.RegistrationNo
+);
 
 DECLARE @Cnt6 INT = (SELECT COUNT(DISTINCT NewId) FROM #StudentRegMap);
-PRINT 'Step 6 complete: StudentRegistrations mapped. Count=' + CAST(@Cnt6 AS VARCHAR);
+PRINT 'Step 6 complete: StudentRegistrations mapped. Total distinct=' + CAST(@Cnt6 AS VARCHAR);
 
 -- ============================================================================
 -- STEP 7: Create Batch record for legacy students
@@ -802,109 +804,67 @@ PRINT 'Step 7 complete: Legacy batches created.';
 -- The StudentRegistrationId FK on StudentAdmissions ties them together.
 -- PROTECTION: Skips if admission already exists for that student + program + college.
 
--- Civil Engineering students (AY 2014, Program L092)
-INSERT INTO #StudentAdmissionMap (RegistrationNo, AcademicYearId, SemesterId, NewId)
+-- Insert StudentAdmission records for ALL students using set-based INSERT
+INSERT INTO StudentAdmissions (
+    TenantId, ProgramsId, CollegeId, AdmissionDate, IsCompleted, IsActive,
+    HasFeeExemption, BatchId, StudentRegistrationId
+)
 SELECT DISTINCT
-    srm.RegistrationNo,
-    @AY2014Id,
-    @SemCiv1, -- Default semester
-    0
-FROM #StudentRegMap srm
-INNER JOIN #DistinctStudents ds ON ds.RegistrationNo = srm.RegistrationNo
-WHERE ds.AcademicYearName LIKE '2014%'
-  AND NOT EXISTS (
-      SELECT 1 FROM StudentAdmissions sa
-      WHERE sa.StudentRegistrationId = srm.NewId
-  );
-
--- Computer Engineering students (AY 2021, Program L117)
-INSERT INTO #StudentAdmissionMap (RegistrationNo, AcademicYearId, SemesterId, NewId)
-SELECT DISTINCT
-    srm.RegistrationNo,
-    @AY2021Id,
-    @SemCE1,
-    0
-FROM #StudentRegMap srm
-INNER JOIN #DistinctStudents ds ON ds.RegistrationNo = srm.RegistrationNo
-WHERE ds.AcademicYearName LIKE '2021%'
-  AND NOT EXISTS (
-      SELECT 1 FROM StudentAdmissions sa
-      WHERE sa.StudentRegistrationId = srm.NewId
-  );
-
--- CPM students (AY 2023, Program L131)
-INSERT INTO #StudentAdmissionMap (RegistrationNo, AcademicYearId, SemesterId, NewId)
-SELECT DISTINCT
-    srm.RegistrationNo,
-    @AY2023Id,
-    @SemCPM1,
-    0
-FROM #StudentRegMap srm
-INNER JOIN #DistinctStudents ds ON ds.RegistrationNo = srm.RegistrationNo
-WHERE ds.AcademicYearName LIKE '2023%'
-  AND NOT EXISTS (
-      SELECT 1 FROM StudentAdmissions sa
-      WHERE sa.StudentRegistrationId = srm.NewId
-  );
-
--- Now insert the actual StudentAdmission records
-DECLARE @AdmRegNo NVARCHAR(100), @AdmAyId INT, @AdmSemId INT;
-DECLARE @AdmProgId INT, @AdmBatchId INT;
-
-DECLARE adm_cursor CURSOR FOR
-    SELECT sam.RegistrationNo, sam.AcademicYearId, sam.SemesterId
-    FROM #StudentAdmissionMap sam;
-
-OPEN adm_cursor;
-FETCH NEXT FROM adm_cursor INTO @AdmRegNo, @AdmAyId, @AdmSemId;
-
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    -- Determine program and batch based on academic year
-    SET @AdmProgId = CASE @AdmAyId
-        WHEN @AY2014Id THEN @ProgCivilId
-        WHEN @AY2021Id THEN @ProgCompId
-        WHEN @AY2023Id THEN @ProgCPMId
+    @TenantId AS TenantId,
+    CASE
+        WHEN ds.AcademicYearName LIKE '2014%' THEN @ProgCivilId
+        WHEN ds.AcademicYearName LIKE '2021%' THEN @ProgCompId
+        WHEN ds.AcademicYearName LIKE '2023%' THEN @ProgCPMId
         ELSE @ProgCivilId
-    END;
-
-    SET @AdmBatchId = CASE @AdmAyId
-        WHEN @AY2014Id THEN @Batch2014Id
-        WHEN @AY2021Id THEN @Batch2021Id
-        WHEN @AY2023Id THEN @Batch2023Id
+    END AS ProgramsId,
+    @CollegeId AS CollegeId,
+    GETDATE() AS AdmissionDate,
+    1 AS IsCompleted,
+    1 AS IsActive,
+    0 AS HasFeeExemption,
+    CASE
+        WHEN ds.AcademicYearName LIKE '2014%' THEN @Batch2014Id
+        WHEN ds.AcademicYearName LIKE '2021%' THEN @Batch2021Id
+        WHEN ds.AcademicYearName LIKE '2023%' THEN @Batch2023Id
         ELSE @Batch2014Id
-    END;
+    END AS BatchId,
+    srm.NewId AS StudentRegistrationId
+FROM #StudentRegMap srm
+INNER JOIN #DistinctStudents ds ON ds.RegistrationNo = srm.RegistrationNo
+WHERE NOT EXISTS (
+    SELECT 1 FROM StudentAdmissions sa
+    WHERE sa.StudentRegistrationId = srm.NewId
+);
 
-    DECLARE @StudentRegId INT = (SELECT NewId FROM #StudentRegMap WHERE RegistrationNo = @AdmRegNo);
+PRINT 'STEP 8: New StudentAdmissions inserted: ' + CAST(@@ROWCOUNT AS VARCHAR);
 
-    IF NOT EXISTS (SELECT 1 FROM StudentAdmissions WHERE StudentRegistrationId = @StudentRegId AND ProgramsId = @AdmProgId AND CollegeId = @CollegeId)
-    BEGIN
-        INSERT INTO StudentAdmissions (
-            TenantId, ProgramsId, CollegeId, AdmissionDate, IsCompleted, IsActive,
-            HasFeeExemption, BatchId, StudentRegistrationId
-        )
-        VALUES (
-            @TenantId, @AdmProgId, @CollegeId, GETDATE(), 1, 1,
-            0, @AdmBatchId, @StudentRegId
-        );
+-- Populate StudentAdmissionMap with ALL admissions
+INSERT INTO #StudentAdmissionMap (RegistrationNo, AcademicYearId, SemesterId, NewId)
+SELECT DISTINCT
+    srm.RegistrationNo,
+    CASE
+        WHEN ds.AcademicYearName LIKE '2014%' THEN @AY2014Id
+        WHEN ds.AcademicYearName LIKE '2021%' THEN @AY2021Id
+        WHEN ds.AcademicYearName LIKE '2023%' THEN @AY2023Id
+        ELSE @AY2014Id
+    END AS AcademicYearId,
+    CASE
+        WHEN ds.AcademicYearName LIKE '2014%' THEN @SemCiv1
+        WHEN ds.AcademicYearName LIKE '2021%' THEN @SemCE1
+        WHEN ds.AcademicYearName LIKE '2023%' THEN @SemCPM1
+        ELSE @SemCiv1
+    END AS SemesterId,
+    sa.Id AS NewId
+FROM #StudentRegMap srm
+INNER JOIN #DistinctStudents ds ON ds.RegistrationNo = srm.RegistrationNo
+INNER JOIN StudentAdmissions sa ON sa.StudentRegistrationId = srm.NewId
+WHERE NOT EXISTS (
+    SELECT 1 FROM #StudentAdmissionMap m
+    WHERE m.RegistrationNo = srm.RegistrationNo
+);
 
-        UPDATE #StudentAdmissionMap
-        SET NewId = SCOPE_IDENTITY()
-        WHERE RegistrationNo = @AdmRegNo AND AcademicYearId = @AdmAyId AND SemesterId = @AdmSemId;
-    END
-    ELSE
-    BEGIN
-        UPDATE #StudentAdmissionMap
-        SET NewId = (SELECT Id FROM StudentAdmissions WHERE StudentRegistrationId = @StudentRegId AND ProgramsId = @AdmProgId AND CollegeId = @CollegeId)
-        WHERE RegistrationNo = @AdmRegNo AND AcademicYearId = @AdmAyId AND SemesterId = @AdmSemId;
-    END
-
-    FETCH NEXT FROM adm_cursor INTO @AdmRegNo, @AdmAyId, @AdmSemId;
-END
-CLOSE adm_cursor;
-DEALLOCATE adm_cursor;
-
-DECLARE @Cnt8 INT = (SELECT COUNT(DISTINCT NewId) FROM #StudentAdmissionMap WHERE NewId > 0);
+DECLARE @Cnt8 INT = (SELECT COUNT(DISTINCT NewId) FROM #StudentAdmissionMap);
+PRINT 'Step 8 complete: StudentAdmissions mapped. Count=' + CAST(@Cnt8 AS VARCHAR);
 PRINT 'Step 8 complete: StudentAdmissions created. Count=' + CAST(@Cnt8 AS VARCHAR);
 
 -- ============================================================================
@@ -971,44 +931,42 @@ WHERE sam.NewId > 0
       WHERE se.StudentAdmissionId = sam.NewId
   );
 
--- Insert SemesterEnrollment records
-DECLARE @EnrollAdmId INT, @EnrollSemId INT;
+-- Insert all SemesterEnrollment records in one set-based statement
+INSERT INTO SemesterEnrollments (
+    StudentAdmissionId, SemesterId, EnrollmentStatus, EnrollmentType,
+    PaymentStatus, EnrolledDate, TotalCredits, GradePoints, TotalFee, PaidAmount,
+    Deficiency, ResultStatus, TenantId
+)
+SELECT DISTINCT
+    sem.StudentAdmissionId,
+    sem.SemesterId,
+    0 AS EnrollmentStatus,      -- Enrolled
+    0 AS EnrollmentType,         -- Regular
+    0 AS PaymentStatus,          -- Pending
+    GETDATE() AS EnrolledDate,
+    0 AS TotalCredits,
+    0 AS GradePoints,
+    0 AS TotalFee,
+    0 AS PaidAmount,
+    0 AS Deficiency,             -- Not deficient
+    0 AS ResultStatus,           -- Unknown
+    @TenantId AS TenantId
+FROM #SemesterEnrollmentMap sem
+WHERE NOT EXISTS (
+    SELECT 1 FROM SemesterEnrollments se
+    WHERE se.StudentAdmissionId = sem.StudentAdmissionId
+      AND se.SemesterId = sem.SemesterId
+);
 
-DECLARE enr_cursor CURSOR FOR
-    SELECT StudentAdmissionId, SemesterId FROM #SemesterEnrollmentMap WHERE NewId = 0;
-OPEN enr_cursor;
-FETCH NEXT FROM enr_cursor INTO @EnrollAdmId, @EnrollSemId;
+PRINT 'STEP 9: New SemesterEnrollments inserted: ' + CAST(@@ROWCOUNT AS VARCHAR);
 
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM SemesterEnrollments WHERE StudentAdmissionId = @EnrollAdmId AND SemesterId = @EnrollSemId)
-    BEGIN
-        INSERT INTO SemesterEnrollments (
-            StudentAdmissionId, SemesterId, EnrollmentStatus, EnrollmentType,
-            PaymentStatus, EnrolledDate, TotalCredits, GradePoints, TotalFee, PaidAmount,
-            Deficiency, ResultStatus, TenantId
-        )
-        VALUES (
-            @EnrollAdmId, @EnrollSemId, 0 /* Enrolled */, 0 /* Regular */,
-            0 /* Pending */, GETDATE(), 0, 0, 0, 0,
-            0 /* Not deficient */, 0 /* Unknown */, @TenantId
-        );
-
-        UPDATE #SemesterEnrollmentMap
-        SET NewId = SCOPE_IDENTITY()
-        WHERE StudentAdmissionId = @EnrollAdmId AND SemesterId = @EnrollSemId;
-    END
-    ELSE
-    BEGIN
-        UPDATE #SemesterEnrollmentMap
-        SET NewId = (SELECT Id FROM SemesterEnrollments WHERE StudentAdmissionId = @EnrollAdmId AND SemesterId = @EnrollSemId)
-        WHERE StudentAdmissionId = @EnrollAdmId AND SemesterId = @EnrollSemId;
-    END
-
-    FETCH NEXT FROM enr_cursor INTO @EnrollAdmId, @EnrollSemId;
-END
-CLOSE enr_cursor;
-DEALLOCATE enr_cursor;
+-- Populate SemesterEnrollmentMap with all enrollment IDs
+UPDATE sem
+SET sem.NewId = se.Id
+FROM #SemesterEnrollmentMap sem
+INNER JOIN SemesterEnrollments se ON se.StudentAdmissionId = sem.StudentAdmissionId
+    AND se.SemesterId = sem.SemesterId
+WHERE sem.NewId = 0;
 
 DECLARE @Cnt9 INT = (SELECT COUNT(DISTINCT NewId) FROM #SemesterEnrollmentMap WHERE NewId > 0);
 PRINT 'Step 9 complete: SemesterEnrollments created. Count=' + CAST(@Cnt9 AS VARCHAR);
@@ -1049,7 +1007,7 @@ PRINT 'Step 11 skipped: StudentQualifications - no legacy data available. Enter 
 -- ============================================================================
 -- STEP 12: Create ExamRegistrations (deduplicated by ExamRegistrationID)
 -- ============================================================================
--- PROTECTION: Uses identity insert with IF NOT EXISTS.
+-- Uses set-based INSERT with IDENTITY_INSERT. PROTECTION: WHERE NOT EXISTS.
 
 SELECT DISTINCT
     CAST(ExamRegistrationID AS INT) AS SourceExamRegId,
@@ -1072,67 +1030,63 @@ FROM (
 ) AS AllExamRegs
 WHERE ExamRegistrationID IS NOT NULL;
 
-DECLARE @ErSourceId INT, @ErRegNo NVARCHAR(100), @ErRollNo NVARCHAR(50), @ErRollNoCoding NVARCHAR(50);
-DECLARE @ErAyName NVARCHAR(50), @ErExamType NVARCHAR(50), @ErCenterName NVARCHAR(200);
-DECLARE @ErSgpa NVARCHAR(50), @ErGrade NVARCHAR(50), @ErProgCode NVARCHAR(50);
-DECLARE @ErStudentRegId INT, @ErAyId INT, @ErExamTypeId INT, @ErProgId INT, @ErEsId INT, @ErEcId INT;
-DECLARE @ErEnrollmentId INT;
+PRINT 'STEP 12: Distinct exam registrations identified: ' + CAST(@@ROWCOUNT AS VARCHAR);
 
-DECLARE er_cursor CURSOR FOR
-    SELECT SourceExamRegId, RegistrationNo, ExamRollNo, ExamRollNoCoding, AcademicYearName, ExamTypeName, ExamCenterName, SGPA, GradeLetter, ProgramCode
-    FROM #DistinctExamRegs;
+-- Insert all new exam registrations
+SET IDENTITY_INSERT ExamRegistrations ON;
 
-OPEN er_cursor;
-FETCH NEXT FROM er_cursor INTO @ErSourceId, @ErRegNo, @ErRollNo, @ErRollNoCoding, @ErAyName, @ErExamType, @ErCenterName, @ErSgpa, @ErGrade, @ErProgCode;
+INSERT INTO ExamRegistrations (
+    Id, AcademicYearId, ExamCenterId, CollegeId, ExamRollNumber,
+    Sgpa, IsActive, ExamScheduleId, ProgramsId, TenantId, Status,
+    SemesterEnrollmentId
+)
+SELECT
+    der.SourceExamRegId,
+    ISNULL(ay.NewId, @AY2014Id) AS AcademicYearId,
+    ec.NewId AS ExamCenterId,
+    @CollegeId AS CollegeId,
+    NULLIF(der.ExamRollNo, 'NULL') AS ExamRollNumber,
+    NULLIF(der.SGPA, 'NULL') AS Sgpa,
+    1 AS IsActive,
+    esm.NewId AS ExamScheduleId,
+    pm.NewId AS ProgramsId,
+    @TenantId AS TenantId,
+    1 AS Status,
+    sem.NewId AS SemesterEnrollmentId
+FROM #DistinctExamRegs der
+INNER JOIN #StudentRegMap srm ON srm.RegistrationNo = der.RegistrationNo
+LEFT JOIN #AcademicYearMap ay ON ay.SourceYear =
+    CASE WHEN der.AcademicYearName LIKE '%.0' THEN LEFT(der.AcademicYearName, LEN(der.AcademicYearName) - 2) ELSE der.AcademicYearName END
+LEFT JOIN #ProgramMap pm ON pm.SourceCode = der.ProgramCode
+LEFT JOIN #ExamScheduleMap esm ON esm.ProgramId = pm.NewId AND esm.AcademicYearId = ay.NewId
+LEFT JOIN #ExamCenterMap ec ON ec.ExamScheduleId = esm.NewId
+LEFT JOIN #StudentAdmissionMap adm ON adm.RegistrationNo = der.RegistrationNo
+LEFT JOIN #SemesterEnrollmentMap sem ON sem.StudentAdmissionId = adm.NewId
+WHERE NOT EXISTS (
+    SELECT 1 FROM ExamRegistrations er WHERE er.Id = der.SourceExamRegId
+);
 
-WHILE @@FETCH_STATUS = 0
-BEGIN
-    SET @ErStudentRegId = (SELECT TOP 1 NewId FROM #StudentRegMap WHERE RegistrationNo = @ErRegNo);
-    DECLARE @ErAyNameClean NVARCHAR(10) = CASE WHEN @ErAyName LIKE '%.0' THEN LEFT(@ErAyName, LEN(@ErAyName) - 2) ELSE @ErAyName END;
-    SET @ErAyId = (SELECT NewId FROM #AcademicYearMap WHERE SourceYear = @ErAyNameClean);
-    SET @ErExamTypeId = CASE WHEN @ErExamType = 'Partial' THEN @ExamTypePartialId ELSE @ExamTypeRegularId END;
-    SET @ErProgId = (SELECT NewId FROM #ProgramMap WHERE SourceCode = @ErProgCode);
-    SET @ErEsId = (SELECT TOP 1 NewId FROM #ExamScheduleMap WHERE ProgramId = @ErProgId AND AcademicYearId = @ErAyId);
-    SET @ErEcId = (SELECT TOP 1 NewId FROM #ExamCenterMap WHERE ExamScheduleId = @ErEsId);
+SET IDENTITY_INSERT ExamRegistrations OFF;
 
-    -- Find SemesterEnrollmentId for this student's schedule
-    DECLARE @ErAdmId INT = (SELECT TOP 1 NewId FROM #StudentAdmissionMap WHERE RegistrationNo = @ErRegNo);
-    SET @ErEnrollmentId = (SELECT TOP 1 NewId FROM #SemesterEnrollmentMap WHERE StudentAdmissionId = @ErAdmId);
+PRINT 'STEP 12: New ExamRegistrations inserted: ' + CAST(@@ROWCOUNT AS VARCHAR);
 
-    IF @ErStudentRegId IS NOT NULL AND @ErAyId IS NOT NULL AND @ErProgId IS NOT NULL
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM ExamRegistrations WHERE Id = @ErSourceId)
-        BEGIN
-            SET IDENTITY_INSERT ExamRegistrations ON;
-            INSERT INTO ExamRegistrations (
-                Id, AcademicYearId, ExamCenterId, CollegeId, ExamRollNumber,
-                Sgpa, IsActive, ExamScheduleId, ProgramsId, TenantId, Status,
-                SemesterEnrollmentId
-            )
-            VALUES (
-                @ErSourceId, @ErAyId, @ErEcId, @CollegeId, NULLIF(@ErRollNo, 'NULL'),
-                NULLIF(@ErSgpa, 'NULL'), 1, @ErEsId, @ErProgId, @TenantId, 1,
-                @ErEnrollmentId
-            );
-            SET IDENTITY_INSERT ExamRegistrations OFF;
-            INSERT INTO #ExamRegMap (SourceExamRegId, NewId) VALUES (@ErSourceId, @ErSourceId);
-        END
-        ELSE
-        BEGIN
-            -- Update existing exam registration with SemesterEnrollmentId if null
-            UPDATE ExamRegistrations
-            SET SemesterEnrollmentId = COALESCE(SemesterEnrollmentId, @ErEnrollmentId)
-            WHERE Id = @ErSourceId AND SemesterEnrollmentId IS NULL;
+-- Populate ExamRegMap with ALL exam registrations
+INSERT INTO #ExamRegMap (SourceExamRegId, NewId)
+SELECT der.SourceExamRegId, er.Id
+FROM #DistinctExamRegs der
+INNER JOIN ExamRegistrations er ON er.Id = der.SourceExamRegId
+WHERE NOT EXISTS (
+    SELECT 1 FROM #ExamRegMap m WHERE m.SourceExamRegId = der.SourceExamRegId
+);
 
-            IF NOT EXISTS (SELECT 1 FROM #ExamRegMap WHERE SourceExamRegId = @ErSourceId)
-                INSERT INTO #ExamRegMap (SourceExamRegId, NewId) VALUES (@ErSourceId, @ErSourceId);
-        END
-    END
-
-    FETCH NEXT FROM er_cursor INTO @ErSourceId, @ErRegNo, @ErRollNo, @ErRollNoCoding, @ErAyName, @ErExamType, @ErCenterName, @ErSgpa, @ErGrade, @ErProgCode;
-END
-CLOSE er_cursor;
-DEALLOCATE er_cursor;
+-- Update SemesterEnrollmentId for any existing registrations that don't have it
+UPDATE er
+SET er.SemesterEnrollmentId = sem.NewId
+FROM ExamRegistrations er
+INNER JOIN #DistinctExamRegs der ON der.SourceExamRegId = er.Id
+LEFT JOIN #StudentAdmissionMap adm ON adm.RegistrationNo = der.RegistrationNo
+LEFT JOIN #SemesterEnrollmentMap sem ON sem.StudentAdmissionId = adm.NewId
+WHERE er.SemesterEnrollmentId IS NULL AND sem.NewId IS NOT NULL;
 
 DECLARE @Cnt12 INT = (SELECT COUNT(*) FROM #ExamRegMap);
 PRINT 'Step 12 complete: ExamRegistrations mapped. Count=' + CAST(@Cnt12 AS VARCHAR);
@@ -1342,22 +1296,22 @@ LEFT JOIN SemesterEnrollments se ON se.Id = sem.NewId
 LEFT JOIN StudentGuardians sg ON sg.StudentRegistrationId = sr.Id;
 
 -- ============================================================================
--- CLEANUP
+-- CLEANUP (drop temp tables, ignores errors if tables don't exist)
 -- ============================================================================
 
-DROP TABLE #AcademicYearMap;
-DROP TABLE #ProgramMap;
-DROP TABLE #SubjectCatalogMap;
-DROP TABLE #SubjectOfferingMap;
-DROP TABLE #ExamScheduleMap;
-DROP TABLE #ExamCenterMap;
-DROP TABLE #StudentRegMap;
-DROP TABLE #ExamRegMap;
-DROP TABLE #StudentAdmissionMap;
-DROP TABLE #SemesterEnrollmentMap;
-DROP TABLE #DistinctSubjects;
-DROP TABLE #DistinctStudents;
-DROP TABLE #DistinctExamRegs;
+IF OBJECT_ID('tempdb..#AcademicYearMap') IS NOT NULL DROP TABLE #AcademicYearMap;
+IF OBJECT_ID('tempdb..#ProgramMap') IS NOT NULL DROP TABLE #ProgramMap;
+IF OBJECT_ID('tempdb..#SubjectCatalogMap') IS NOT NULL DROP TABLE #SubjectCatalogMap;
+IF OBJECT_ID('tempdb..#SubjectOfferingMap') IS NOT NULL DROP TABLE #SubjectOfferingMap;
+IF OBJECT_ID('tempdb..#ExamScheduleMap') IS NOT NULL DROP TABLE #ExamScheduleMap;
+IF OBJECT_ID('tempdb..#ExamCenterMap') IS NOT NULL DROP TABLE #ExamCenterMap;
+IF OBJECT_ID('tempdb..#StudentRegMap') IS NOT NULL DROP TABLE #StudentRegMap;
+IF OBJECT_ID('tempdb..#ExamRegMap') IS NOT NULL DROP TABLE #ExamRegMap;
+IF OBJECT_ID('tempdb..#StudentAdmissionMap') IS NOT NULL DROP TABLE #StudentAdmissionMap;
+IF OBJECT_ID('tempdb..#SemesterEnrollmentMap') IS NOT NULL DROP TABLE #SemesterEnrollmentMap;
+IF OBJECT_ID('tempdb..#DistinctSubjects') IS NOT NULL DROP TABLE #DistinctSubjects;
+IF OBJECT_ID('tempdb..#DistinctStudents') IS NOT NULL DROP TABLE #DistinctStudents;
+IF OBJECT_ID('tempdb..#DistinctExamRegs') IS NOT NULL DROP TABLE #DistinctExamRegs;
 
 PRINT '';
 PRINT '============================================================';
@@ -1365,5 +1319,11 @@ PRINT '  Migration completed successfully!';
 PRINT '  Finished: ' + CONVERT(NVARCHAR(30), GETDATE(), 120);
 PRINT '============================================================';
 
-COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    PRINT 'ERROR: ' + ERROR_MESSAGE();
+    PRINT 'Line: ' + CAST(ERROR_LINE() AS NVARCHAR(10));
+    PRINT 'Severity: ' + CAST(ERROR_SEVERITY() AS NVARCHAR(10));
+    PRINT 'State: ' + CAST(ERROR_STATE() AS NVARCHAR(10));
+END CATCH;
 GO
