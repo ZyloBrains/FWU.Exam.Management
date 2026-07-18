@@ -15,5 +15,5 @@ public interface IRetotalRequestService
     Task ApproveRetotalRequestAsync(int id, string? retotalledGradeLetter, float? retotalledMarks, string? adminRemarks, string reviewedBy);
     Task RejectRetotalRequestAsync(int id, string? adminRemarks, string reviewedBy);
     Task MarkUnderReviewAsync(int id, string reviewedBy);
-    RetotalRequestSelectListsDto GetSelectListData(RetotalRequest? retotalRequest = null);
+    Task<RetotalRequestSelectListsDto> GetSelectListDataAsync(RetotalRequest? retotalRequest = null);
 }

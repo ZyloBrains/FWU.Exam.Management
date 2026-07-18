@@ -209,9 +209,9 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .ToListAsync();
     }
 
-    public List<Province> GetProvinces()
+    public async Task<List<Province>> GetProvincesAsync()
     {
-        return context.Provinces.AsNoTracking().ToList();
+        return await context.Provinces.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<EntranceExamApplication>> GetAllApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId)

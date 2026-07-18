@@ -262,7 +262,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         }
 
         var selectLists = await service.GetStepFormSelectListsAsync();
-        PopulateStepSelectLists(selectLists);
+        await PopulateStepSelectListsAsync(selectLists);
 
         var schedule = voucher.ExamSchedule;
         ViewBag.VoucherId = voucherId;
@@ -335,7 +335,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             return RedirectToAction(nameof(Confirmation), new { id });
         }
 
-        PopulateStepSelectLists(selectLists);
+        await PopulateStepSelectListsAsync(selectLists);
         ViewBag.VoucherId = voucherId;
 
         var schedule = (await service.GetVoucherByIdAsync(voucherId))?.ExamSchedule;
@@ -426,9 +426,9 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
     [HttpGet]
     [AllowAnonymous]
-    public JsonResult GetProvinces()
+    public async Task<JsonResult> GetProvinces()
     {
-        var provinces = service.GetProvinces();
+        var provinces = await service.GetProvincesAsync();
         return Json(provinces.Select(p => new { id = p.Id, name = p.ProvinceName }));
     }
 
@@ -593,7 +593,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [RequirePermission("examschedules.create")]
     public async Task<IActionResult> CreateSchedule()
     {
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateScheduleDropdowns(selectLists);
         return View("ScheduleForm", new ExamSchedule
         {
@@ -611,7 +611,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
-        var sl = examScheduleService.GetSelectListData();
+        var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
@@ -634,7 +634,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var schedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (schedule == null) return NotFound();
 
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateScheduleDropdowns(selectLists, schedule);
         return View("ScheduleForm", schedule);
     }
@@ -648,7 +648,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
-        var sl = examScheduleService.GetSelectListData();
+        var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
@@ -695,9 +695,9 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", model?.AcademicYearId);
     }
 
-    private void PopulateStepSelectLists(EntranceExamApplicationSelectListsDto selectLists)
+    private async Task PopulateStepSelectListsAsync(EntranceExamApplicationSelectListsDto selectLists)
     {
-        var provinces = service.GetProvinces();
+        var provinces = await service.GetProvincesAsync();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
         ViewBag.Districts = new SelectList(selectLists.Districts, "Id", "Name");
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name");

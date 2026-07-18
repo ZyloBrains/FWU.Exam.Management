@@ -45,7 +45,7 @@ public class ExamRegistrationsController(
     [RequirePermission("examregistration.create")]
     public async Task<IActionResult> Create()
     {
-        var selectLists = examRegistrationService.GetSelectListData();
+        var selectLists = await examRegistrationService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -60,7 +60,7 @@ public class ExamRegistrationsController(
             await examRegistrationService.CreateExamRegistrationAsync(examRegistration);
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examRegistrationService.GetSelectListData(examRegistration);
+        var selectLists = await examRegistrationService.GetSelectListDataAsync(examRegistration);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -73,7 +73,7 @@ public class ExamRegistrationsController(
         var examRegistration = await examRegistrationService.GetExamRegistrationByIdAsync(id.Value);
         if (examRegistration == null) return NotFound();
 
-        var selectLists = examRegistrationService.GetSelectListData(examRegistration);
+        var selectLists = await examRegistrationService.GetSelectListDataAsync(examRegistration);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }
@@ -99,7 +99,7 @@ public class ExamRegistrationsController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examRegistrationService.GetSelectListData(examRegistration);
+        var selectLists = await examRegistrationService.GetSelectListDataAsync(examRegistration);
         PopulateDropdowns(selectLists, examRegistration);
         return View(examRegistration);
     }

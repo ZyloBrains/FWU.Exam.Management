@@ -109,7 +109,7 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
         return await context.ExamSubjectResults.AnyAsync(e => e.Id == id);
     }
 
-    public ExamSubjectResultSelectListsDto GetSelectListData(ExamSubjectResult? examSubjectResult = null)
+    public async Task<ExamSubjectResultSelectListsDto> GetSelectListDataAsync(ExamSubjectResult? examSubjectResult = null)
     {
         var examRegistrationsQuery = context.ExamRegistrations.AsNoTracking();
         if (!userContext.IsSuperAdmin)
@@ -119,26 +119,26 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
                 examRegistrationsQuery = examRegistrationsQuery.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.FacultyId == userContext.FacultyId.Value);
         }
-        var examRegistrations = examRegistrationsQuery.ToList();
+        var examRegistrations = await examRegistrationsQuery.ToListAsync();
 
-        var subjectOfferings = context.SubjectOfferings.AsNoTracking().ToList();
-        var examTypes = context.ExamTypes.AsNoTracking().ToList();
+        var subjectOfferings = await context.SubjectOfferings.AsNoTracking().ToListAsync();
+        var examTypes = await context.ExamTypes.AsNoTracking().ToListAsync();
 
         var examSchedulesQuery = context.ExamSchedules.AsNoTracking();
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var collegeProgramIds = context.CollegePrograms.AsNoTracking()
+                var collegeProgramIds = await context.CollegePrograms.AsNoTracking()
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
-                    .ToList();
+                    .ToListAsync();
                 examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && collegeProgramIds.Contains(es.Program.Id));
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
                 examSchedulesQuery = examSchedulesQuery.Where(es => es.Program != null && es.Program.FacultyId == userContext.FacultyId.Value);
         }
-        var examSchedules = examSchedulesQuery.ToList();
+        var examSchedules = await examSchedulesQuery.ToListAsync();
 
         return new ExamSubjectResultSelectListsDto
         {

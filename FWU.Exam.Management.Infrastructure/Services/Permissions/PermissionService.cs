@@ -20,17 +20,17 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
         return permissions.Contains(permission);
     }
 
-    public Task<List<string>> GetUserPermissionsAsync(string userId)
+    public async Task<List<string>> GetUserPermissionsAsync(string userId)
     {
         var cacheKey = UserCacheKey(userId);
         if (cache.TryGetValue(cacheKey, out List<string>? cached) && cached != null)
-            return Task.FromResult(cached);
+            return cached;
 
         var lockObj = _locks.GetOrAdd(cacheKey, _ => new object());
         lock (lockObj)
         {
             if (cache.TryGetValue(cacheKey, out cached) && cached != null)
-                return Task.FromResult(cached);
+                return cached;
 
             var roleIds = context.UserRoles
                 .Where(ur => ur.UserId == userId)
@@ -45,9 +45,8 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
                 .Distinct()
                 .ToList();
 
-            var result = permissionNames;
-            cache.Set(cacheKey, result, CacheDuration);
-            return Task.FromResult(result);
+            cache.Set(cacheKey, permissionNames, CacheDuration);
+            return permissionNames;
         }
     }
 

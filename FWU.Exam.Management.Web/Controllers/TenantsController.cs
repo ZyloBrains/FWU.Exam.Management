@@ -8,6 +8,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
+using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -18,10 +19,11 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("tenants.view")]
-public class TenantsController(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService) : Controller
+public class TenantsController(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, IFileUploadHelper fileUploadHelper) : Controller
 {
     private readonly AppDbContext _context = context;
     private readonly UserManager<AppUser> _userManager = userManager;
+    private readonly IFileUploadHelper _fileUploadHelper = fileUploadHelper;
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
@@ -237,6 +239,42 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
             ["Exam Schedules"] = await _context.ExamSchedules.CountAsync(e => e.TenantId == tenantId),
         };
     }
+    [RequirePermission("tenants.edit")]
+    public async Task<IActionResult> ControllerSignature(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
+        if (tenant == null) return NotFound();
+
+        return View(tenant);
+    }
+
+    [RequirePermission("tenants.edit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ControllerSignature(int id, IFormFile? signature)
+    {
+        var tenant = await _context.Tenants.FindAsync(id);
+        if (tenant == null) return NotFound();
+
+        if (signature != null && signature.Length > 0)
+        {
+            var signaturePath = await _fileUploadHelper.UploadAsync(signature, "uploads/controller-signatures");
+            if (signaturePath != null)
+                tenant.ControllerSignaturePath = signaturePath;
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Controller signature updated successfully.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Please select a file to upload.";
+        }
+
+        return RedirectToAction(nameof(ControllerSignature), new { id });
+    }
+
         [RequirePermission("tenants.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
