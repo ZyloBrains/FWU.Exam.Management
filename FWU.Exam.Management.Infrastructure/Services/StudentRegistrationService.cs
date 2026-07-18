@@ -61,6 +61,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
+                .ThenInclude(d => d.Province)
+            .Include(s => s.CurrentAddress)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
