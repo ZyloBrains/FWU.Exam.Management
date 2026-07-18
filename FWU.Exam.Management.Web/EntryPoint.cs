@@ -298,6 +298,8 @@ public partial class EntryPoint
 
                 await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
 
+                await AcademicYearSeeder.SeedAcademicYearsAsync(scope.ServiceProvider);
+
                 await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
 
                 await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
