@@ -25,21 +25,21 @@ public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
-            .MinimumLevel.Information()
-            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
-            .Enrich.FromLogContext()
-            .CreateLogger();
+        // Log.Logger = new LoggerConfiguration()
+        //     .WriteTo.Console()
+        //     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
+        //     .MinimumLevel.Information()
+        //     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+        //     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+        //     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+        //     .Enrich.FromLogContext()
+        //     .CreateLogger();
 
         try
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Host.UseSerilog();
+            // builder.Host.UseSerilog();
 
             // Add services to the container.
             builder.Services.AddHttpContextAccessor();
@@ -86,36 +86,14 @@ public partial class EntryPoint
                 {
                     OnRedirectToLogin = ctx =>
                     {
-                        var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
                         var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
-
-                        if (!string.IsNullOrEmpty(tenantCode))
-                        {
-                            var loginPath = $"/tenant/{tenantCode}/Identity/Account/Login";
-                            ctx.Response.Redirect($"{loginPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                        }
-                        else
-                        {
-                            ctx.Response.Redirect(ctx.RedirectUri);
-                        }
-
+                        ctx.Response.Redirect($"/Identity/Account/Login?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
                         return Task.CompletedTask;
                     },
                     OnRedirectToAccessDenied = ctx =>
                     {
-                        var tenantCode = ctx.HttpContext.Items["TenantCode"] as string;
                         var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
-
-                        if (!string.IsNullOrEmpty(tenantCode))
-                        {
-                            var accessDeniedPath = $"/tenant/{tenantCode}/Identity/Account/AccessDenied";
-                            ctx.Response.Redirect($"{accessDeniedPath}?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                        }
-                        else
-                        {
-                            ctx.Response.Redirect(ctx.RedirectUri);
-                        }
-
+                        ctx.Response.Redirect($"/Identity/Account/AccessDenied?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
                         return Task.CompletedTask;
                     }
                 };
@@ -246,6 +224,7 @@ public partial class EntryPoint
 
             app.UseFacultyResolution();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseMiddleware<UserContextMiddleware>();
@@ -263,13 +242,13 @@ public partial class EntryPoint
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
+            app.MapRazorPages();
+
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
 
-            // Seed the central tenant first — AuditLogInterceptor stamps TenantId on
-            // every SaveChanges, so the Tenant row must exist before any other seeder runs.
             if (!await dbContext.Tenants.AnyAsync())
             {
                 dbContext.Tenants.Add(new Tenant
@@ -289,83 +268,61 @@ public partial class EntryPoint
             var centralTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
             tenantContext.SetTenant(centralTenant.Id, centralTenant.OfficeCode, centralTenant.TenantType);
 
-            using (var scope = app.Services.CreateScope())
+            tenantContext.SetTenant(1, "SEED", TenantType.Central);
+
+            if (app.Environment.IsDevelopment())
             {
-                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                await dbContext.Database.MigrateAsync();
-                var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
-                tenantContext.SetTenant(1, "SEED", TenantType.Central);
+                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
 
-                if (app.Environment.IsDevelopment())
-                {
-                    // Base system data
-                    await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                    await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-
-                // WorkflowTestDataSeeder clears Tenants and re-creates with a new identity ID,
-                // so refresh the tenant context to point at the actual row.
                 var refreshedTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
                 tenantContext.SetTenant(refreshedTenant.Id, refreshedTenant.OfficeCode, refreshedTenant.TenantType);
 
-                // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
                 await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
                 await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
 
-                    // Re-seed roles and permissions after WorkflowTestDataSeeder clears them
-                    await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                    await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
 
-                    // Location data (seeded after WorkflowTestDataSeeder which clears it)
-                    await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+                await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
 
-                    // Additional reference data (skips if already present)
-                    await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-                    await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-                    await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+                await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+                await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
 
-                    // Academic structure extensions
-                    await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-                    await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+                await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
 
-                    // Demo data
-                    await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
 
-                    // Grading schemes
-                    await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-
-                // Payment gateways
                 await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
                 await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
                 await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
                 await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
                 await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
 
-                    // Admin / test users (depends on roles, colleges, faculties being seeded)
-                    await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+                await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
 
-                    // Marksheet seed data (depends on users being created first)
-                    await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
-                }
-                else
-                {
-                    // Production: only essential system data
-                    await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                    await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                    await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-                    await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-                }
+                await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
             }
+            else
+            {
+                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            }
+        }
 
-            Log.Information("FWU Examination Management System starting up...");
+            //             // Log.Information("FWU Examination Management System starting up...");
             app.Run();
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "Application terminated unexpectedly");
+            //             // Log.Fatal(ex, "Application terminated unexpectedly");
         }
         finally
         {
-            Log.CloseAndFlush();
+            // Log.CloseAndFlush();
         }
     }
 }

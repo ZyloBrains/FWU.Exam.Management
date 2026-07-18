@@ -14,12 +14,6 @@ public class HomeController : Controller
             return RedirectToAction("Index", "Dashboard");
         }
 
-        var tenantCode = HttpContext.Items["TenantCode"] as string;
-        if (!string.IsNullOrEmpty(tenantCode))
-        {
-            return Redirect($"/tenant/{tenantCode}/Identity/Account/Login");
-        }
-
         return Redirect("/Identity/Account/Login");
     }
 

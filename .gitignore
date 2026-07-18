@@ -372,7 +372,6 @@ FWU.Exam.Management.Web/tailwindcss.exe
 
 # Uploaded files (user content)
 /FWU.Exam.Management.Web/wwwroot/faculty/
-/FWU.Exam.Management.Web/wwwroot/images/
 /FWU.Exam.Management.Web/wwwroot/uploads/
 /FWU.Exam.Management.Web/wwwroot/css/tailwind.css
 
