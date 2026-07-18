@@ -203,6 +203,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
                 TempData["OrgOfficeCode"] = faculty.OfficeCode;
             }
 
+            TempData["SuccessMessage"] = "Faculty created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -244,6 +245,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Faculty updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -266,15 +268,38 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        var (canDelete, blockingEntities) = await facultyService.CheckDeleteDependenciesAsync(id);
+        if (!canDelete)
+        {
+            TempData["ErrorMessage"] = $"Cannot delete this Faculty. It is referenced by: {string.Join(", ", blockingEntities)}. Please remove or reassign these records first.";
+            return RedirectToAction(nameof(Index));
+        }
+
         await facultyService.DeleteFacultyAsync(id);
+        TempData["SuccessMessage"] = "Faculty deleted successfully!";
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("faculties.delete")]
+
+    [RequirePermission("faculties.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await facultyService.DeleteFacultyAsync(id); return Json(new { success = true, message = "Faculty deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        var (canDelete, blockingEntities) = await facultyService.CheckDeleteDependenciesAsync(id);
+        if (!canDelete)
+        {
+            return Json(new { success = false, message = $"Cannot delete this Faculty. It is referenced by: {string.Join(", ", blockingEntities)}. Please remove or reassign these records first." });
+        }
+
+        try
+        {
+            await facultyService.DeleteFacultyAsync(id);
+            return Json(new { success = true, message = "Faculty deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 
 }

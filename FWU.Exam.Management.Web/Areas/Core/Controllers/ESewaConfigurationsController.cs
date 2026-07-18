@@ -196,6 +196,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         {
             context.Add(eSewaConfiguration);
             await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "eSewa configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(eSewaConfiguration);
@@ -231,6 +232,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "eSewa configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(eSewaConfiguration);
@@ -253,14 +255,28 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var eSewaConfiguration = await context.ESewaConfigurations.FindAsync(id);
-        if (eSewaConfiguration != null)
+        try
         {
-            context.ESewaConfigurations.Remove(eSewaConfiguration);
-        }
+            var eSewaConfiguration = await context.ESewaConfigurations.FindAsync(id);
+            if (eSewaConfiguration != null)
+            {
+                context.ESewaConfigurations.Remove(eSewaConfiguration);
+            }
 
-        await context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+            await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "eSewa configuration deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private bool ESewaConfigurationExists(int id)

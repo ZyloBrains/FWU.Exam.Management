@@ -306,6 +306,7 @@ public class SubjectOfferingsController : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Subject offering updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
@@ -331,8 +332,22 @@ public class SubjectOfferingsController : Controller
     [RequirePermission("subjectofferings.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
+            TempData["SuccessMessage"] = "Subject offering deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("subjectofferings.delete")]
     [HttpPost]

@@ -50,7 +50,10 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
 
         var result = await roleManager.CreateAsync(new IdentityRole(roleName.Trim()));
         if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = "Role created successfully!";
             return RedirectToAction(nameof(Index));
+        }
 
         foreach (var error in result.Errors)
             ModelState.AddModelError(string.Empty, error.Description);
@@ -91,7 +94,10 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
         role.Name = roleName.Trim();
         var result = await roleManager.UpdateAsync(role);
         if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = "Role updated successfully!";
             return RedirectToAction(nameof(Index));
+        }
 
         foreach (var error in result.Errors)
             ModelState.AddModelError(string.Empty, error.Description);
@@ -119,11 +125,25 @@ public class RoleController(RoleManager<IdentityRole> roleManager) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
     {
-        var role = await roleManager.FindByIdAsync(id);
-        if (role != null)
-            await roleManager.DeleteAsync(role);
+        try
+        {
+            var role = await roleManager.FindByIdAsync(id);
+            if (role != null)
+                await roleManager.DeleteAsync(role);
 
-        return RedirectToAction(nameof(Index));
+            TempData["SuccessMessage"] = "Role deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("roles.delete")]
     [HttpPost]

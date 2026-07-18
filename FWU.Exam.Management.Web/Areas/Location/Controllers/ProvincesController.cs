@@ -145,6 +145,7 @@ public class ProvincesController(IProvinceService provinceService) : Controller
         if (ModelState.IsValid)
         {
             await provinceService.CreateProvinceAsync(province);
+            TempData["SuccessMessage"] = "Province created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(province);
@@ -195,6 +196,7 @@ public class ProvincesController(IProvinceService provinceService) : Controller
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "Province updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(province);
@@ -224,8 +226,22 @@ public class ProvincesController(IProvinceService provinceService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await provinceService.DeleteProvinceAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await provinceService.DeleteProvinceAsync(id);
+            TempData["SuccessMessage"] = "Province deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("provinces.delete")]
     [HttpPost]

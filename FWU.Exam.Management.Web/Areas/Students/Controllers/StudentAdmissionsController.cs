@@ -216,9 +216,22 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     [RequirePermission("studentadmissions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await admissionService.DeleteAdmissionAsync(id);
-        TempData["SuccessMessage"] = "Student admission deleted successfully!";
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await admissionService.DeleteAdmissionAsync(id);
+            TempData["SuccessMessage"] = "Student admission deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private string EscapeCsv(string field)

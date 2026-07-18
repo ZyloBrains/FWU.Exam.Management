@@ -58,6 +58,7 @@ public class GradingSchemesController(
                 gradePoints, remarks, isPasses, displayOrders);
 
             await gradingSchemeService.CreateGradingSchemeAsync(gradingScheme);
+            TempData["SuccessMessage"] = "Grading scheme created successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await gradingSchemeService.GetSelectListDataAsync();
@@ -102,6 +103,7 @@ public class GradingSchemesController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Grading scheme updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await gradingSchemeService.GetSelectListDataAsync();
@@ -125,8 +127,22 @@ public class GradingSchemesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await gradingSchemeService.DeleteGradingSchemeAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await gradingSchemeService.DeleteGradingSchemeAsync(id);
+            TempData["SuccessMessage"] = "Grading scheme deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     public async Task<IActionResult> Details(int? id)

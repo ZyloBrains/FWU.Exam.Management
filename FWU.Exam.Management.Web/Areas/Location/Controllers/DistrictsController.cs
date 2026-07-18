@@ -142,6 +142,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
         if (ModelState.IsValid)
         {
             await districtService.CreateDistrictAsync(district);
+            TempData["SuccessMessage"] = "District created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -198,6 +199,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "District updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -230,8 +232,22 @@ public class DistrictsController(IDistrictService districtService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await districtService.DeleteDistrictAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await districtService.DeleteDistrictAsync(id);
+            TempData["SuccessMessage"] = "District deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("districts.delete")]
     [HttpPost]

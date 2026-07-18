@@ -106,8 +106,21 @@ public class AdmitCardsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await admitCardService.DeleteAdmitCardAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await admitCardService.DeleteAdmitCardAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("admitcards.delete")]

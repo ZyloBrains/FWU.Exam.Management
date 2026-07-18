@@ -151,6 +151,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
         if (ModelState.IsValid)
         {
             await localLevelService.CreateLocalLevelAsync(localLevel);
+            TempData["SuccessMessage"] = "Local level created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -207,6 +208,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "Local level updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -239,8 +241,22 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await localLevelService.DeleteLocalLevelAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await localLevelService.DeleteLocalLevelAsync(id);
+            TempData["SuccessMessage"] = "Local level deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("locallevels.delete")]
     [HttpPost]

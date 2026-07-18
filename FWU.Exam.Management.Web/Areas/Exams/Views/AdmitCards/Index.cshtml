@@ -18,6 +18,13 @@
                 <i class="fas fa-ticket-alt text-indigo-600"></i>
             </div>
             <div>
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
+            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+        </div>
+    }
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Admit Cards</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Manage admit cards for exams.</p>
             </div>
@@ -122,7 +129,7 @@
                                 <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Download">
                                     <i class="fas fa-download text-xs"></i>
                                 </a>
-                                <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
                                     <i class="fas fa-trash text-xs"></i>
                                 </a>
                             </div>
@@ -183,7 +190,7 @@
                         <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
                             <i class="fas fa-download mr-1"></i> Download
                         </a>
-                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             <i class="fas fa-trash mr-1"></i> Delete
                         </a>
                     </div>

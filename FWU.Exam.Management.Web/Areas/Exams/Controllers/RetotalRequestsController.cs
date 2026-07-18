@@ -89,8 +89,22 @@ public class RetotalRequestsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await retotalRequestService.DeleteRetotalRequestAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await retotalRequestService.DeleteRetotalRequestAsync(id);
+            TempData["SuccessMessage"] = "Retotal request deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("retotaling.view")]

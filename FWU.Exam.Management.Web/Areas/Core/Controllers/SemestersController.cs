@@ -141,6 +141,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         if (ModelState.IsValid)
         {
             await semesterService.CreateSemesterAsync(semester);
+            TempData["SuccessMessage"] = "Semester created successfully!";
             return RedirectToAction(nameof(Index));
         }
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName", semester.AcademicYearId);
@@ -180,6 +181,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Semester updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName", semester.AcademicYearId);
@@ -203,8 +205,22 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await semesterService.DeleteSemesterAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await semesterService.DeleteSemesterAsync(id);
+            TempData["SuccessMessage"] = "Semester deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private async Task<List<Domain.Entities.AcademicYear>> GetAcademicYearsAsync()

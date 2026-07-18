@@ -162,6 +162,7 @@ public class ExamSchedulesController(
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
+            TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync();
@@ -204,6 +205,7 @@ public class ExamSchedulesController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync();
@@ -227,8 +229,22 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examScheduleService.DeleteExamScheduleAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)

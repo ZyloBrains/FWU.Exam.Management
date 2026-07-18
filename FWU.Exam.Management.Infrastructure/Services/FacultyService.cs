@@ -98,6 +98,25 @@ public class FacultyService(
         }
     }
 
+    public async Task<(bool canDelete, List<string> blockingEntities)> CheckDeleteDependenciesAsync(int id)
+    {
+        var reasons = new List<string>();
+
+        var programs = await context.Programs.CountAsync(p => p.FacultyId == id);
+        if (programs > 0) reasons.Add($"{programs} Program(s)");
+
+        var semesters = await context.Semesters.CountAsync(s => s.FacultyId == id);
+        if (semesters > 0) reasons.Add($"{semesters} Semester(s)");
+
+        var users = await context.Users.CountAsync(u => u.FacultyId == id);
+        if (users > 0) reasons.Add($"{users} User account(s)");
+
+        var registrations = await context.StudentRegistrations.CountAsync(r => r.FacultyId == id);
+        if (registrations > 0) reasons.Add($"{registrations} Student Registration(s)");
+
+        return (reasons.Count == 0, reasons);
+    }
+
     public async Task<bool> FacultyExistsAsync(int id)
     {
         return await context.Faculties.AnyAsync(f => f.Id == id);

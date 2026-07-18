@@ -146,6 +146,7 @@ public class BoardsController(IBoardService boardService) : Controller
         if (ModelState.IsValid)
         {
             await boardService.CreateBoardAsync(board);
+            TempData["SuccessMessage"] = "Board created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(board);
@@ -196,6 +197,7 @@ public class BoardsController(IBoardService boardService) : Controller
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "Board updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(board);
@@ -225,8 +227,22 @@ public class BoardsController(IBoardService boardService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await boardService.DeleteBoardAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await boardService.DeleteBoardAsync(id);
+            TempData["SuccessMessage"] = "Board deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("boards.delete")]
     [HttpPost]

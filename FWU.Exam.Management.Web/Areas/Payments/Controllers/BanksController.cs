@@ -132,6 +132,7 @@ public class BanksController(IBankService bankService) : Controller
         if (ModelState.IsValid)
         {
             await bankService.CreateBankAsync(bank);
+            TempData["SuccessMessage"] = "Bank created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(bank);
@@ -167,6 +168,7 @@ public class BanksController(IBankService bankService) : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Bank updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(bank);
@@ -188,8 +190,22 @@ public class BanksController(IBankService bankService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await bankService.DeleteBankAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await bankService.DeleteBankAsync(id);
+            TempData["SuccessMessage"] = "Bank deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("banks.delete")]
     [HttpPost]

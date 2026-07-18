@@ -131,6 +131,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
         if (ModelState.IsValid)
         {
             await examTypeService.CreateExamTypeAsync(examType);
+            TempData["SuccessMessage"] = "Exam type created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(examType);
@@ -166,6 +167,7 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam type updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(examType);
@@ -187,8 +189,22 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examTypeService.DeleteExamTypeAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examTypeService.DeleteExamTypeAsync(id);
+            TempData["SuccessMessage"] = "Exam type deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("examtypes.delete")]
     [HttpPost]

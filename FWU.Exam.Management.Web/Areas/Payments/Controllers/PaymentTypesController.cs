@@ -130,6 +130,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         if (ModelState.IsValid)
         {
             await paymentTypeService.CreatePaymentTypeAsync(paymentType);
+            TempData["SuccessMessage"] = "Payment type created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(paymentType);
@@ -165,6 +166,7 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Payment type updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(paymentType);
@@ -186,8 +188,22 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await paymentTypeService.DeletePaymentTypeAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await paymentTypeService.DeletePaymentTypeAsync(id);
+            TempData["SuccessMessage"] = "Payment type deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("paymenttypes.delete")]
     [HttpPost]

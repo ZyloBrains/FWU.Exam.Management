@@ -58,6 +58,7 @@ public class ExamRegistrationsController(
         if (ModelState.IsValid)
         {
             await examRegistrationService.CreateExamRegistrationAsync(examRegistration);
+            TempData["SuccessMessage"] = "Exam registration created successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await examRegistrationService.GetSelectListDataAsync(examRegistration);
@@ -97,6 +98,7 @@ public class ExamRegistrationsController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam registration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await examRegistrationService.GetSelectListDataAsync(examRegistration);
@@ -120,8 +122,22 @@ public class ExamRegistrationsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examRegistrationService.DeleteExamRegistrationAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examRegistrationService.DeleteExamRegistrationAsync(id);
+            TempData["SuccessMessage"] = "Exam registration deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("examregistration.verify")]
@@ -130,6 +146,7 @@ public class ExamRegistrationsController(
     public async Task<IActionResult> Verify(int id)
     {
         await examRegistrationService.VerifyExamRegistrationAsync(id);
+        TempData["SuccessMessage"] = "Exam registration verified successfully!";
         return RedirectToAction(nameof(Index));
     }
 
@@ -139,6 +156,7 @@ public class ExamRegistrationsController(
     public async Task<IActionResult> Approve(int id)
     {
         await examRegistrationService.ApproveExamRegistrationAsync(id);
+        TempData["SuccessMessage"] = "Exam registration approved successfully!";
         return RedirectToAction(nameof(Index));
     }
 

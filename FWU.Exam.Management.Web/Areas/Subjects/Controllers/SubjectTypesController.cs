@@ -141,6 +141,7 @@ public class SubjectTypesController : Controller
         if (ModelState.IsValid)
         {
             await _subjectTypeService.CreateSubjectTypeAsync(subjectType);
+            TempData["SuccessMessage"] = "Subject type created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(subjectType);
@@ -176,6 +177,7 @@ public class SubjectTypesController : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Subject type updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(subjectType);
@@ -197,8 +199,22 @@ public class SubjectTypesController : Controller
     [RequirePermission("subjecttypes.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _subjectTypeService.DeleteSubjectTypeAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await _subjectTypeService.DeleteSubjectTypeAsync(id);
+            TempData["SuccessMessage"] = "Subject type deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("subjecttypes.delete")]
     [HttpPost]

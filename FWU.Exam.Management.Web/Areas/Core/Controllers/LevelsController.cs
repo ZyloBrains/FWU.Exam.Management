@@ -136,6 +136,7 @@ public class LevelsController(ILevelService levelService) : Controller
         if (ModelState.IsValid)
         {
             await levelService.CreateLevelAsync(level);
+            TempData["SuccessMessage"] = "Level created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(level);
@@ -171,6 +172,7 @@ public class LevelsController(ILevelService levelService) : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Level updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(level);
@@ -192,8 +194,22 @@ public class LevelsController(ILevelService levelService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await levelService.DeleteLevelAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await levelService.DeleteLevelAsync(id);
+            TempData["SuccessMessage"] = "Level deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("levels.delete")]
     [HttpPost]
