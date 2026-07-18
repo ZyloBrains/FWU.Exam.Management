@@ -49,8 +49,8 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
     public class InputModel
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Display(Name = "Email or Registration Number")]
+        public string EmailOrRegNumber { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
@@ -85,14 +85,13 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (ModelState.IsValid)
         {
-            var user = await userManager.Users
-                .FirstOrDefaultAsync(u => u.Email == Input.Email);
+            var user = await ResolveUserAsync(Input.EmailOrRegNumber);
 
             if (user != null)
             {
                 if (!user.IsActive)
                 {
-                    logger.LogWarning("Login attempt by inactive user {Email}", Input.Email);
+                    logger.LogWarning("Login attempt by inactive user {Input}", Input.EmailOrRegNumber);
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }
@@ -222,5 +221,31 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
             IsEssential = true,
             MaxAge = TimeSpan.FromHours(24)
         });
+    }
+
+    private async Task<AppUser?> ResolveUserAsync(string emailOrRegNumber)
+    {
+        if (string.IsNullOrWhiteSpace(emailOrRegNumber))
+            return null;
+
+        var input = emailOrRegNumber.Trim();
+
+        if (input.Contains('@'))
+        {
+            return await userManager.Users
+                .FirstOrDefaultAsync(u => u.Email == input);
+        }
+
+        var studentEmail = await context.StudentRegistrations
+            .AsNoTracking()
+            .Where(s => s.RegistrationNumber == input && s.Email != null)
+            .Select(s => s.Email)
+            .FirstOrDefaultAsync();
+
+        if (studentEmail == null)
+            return null;
+
+        return await userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == studentEmail);
     }
 }

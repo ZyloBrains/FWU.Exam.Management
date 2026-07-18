@@ -61,6 +61,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
+                .ThenInclude(d => d.Province)
+            .Include(s => s.CurrentAddress)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -484,14 +488,16 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             if (string.IsNullOrWhiteSpace(password))
                 throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {studentRegistration.Email}");
 
-            var result = await userManager.CreateAsync(user, password);
-
-            if (!result.Succeeded)
+            var createResult = await userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
             {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
                 logger.LogError("Failed to create AppUser for student {Email}: {Errors}", studentRegistration.Email, errors);
                 throw new InvalidOperationException($"Failed to create user account for {studentRegistration.Email}: {errors}");
             }
+
+            SetPasswordHashDirectly(user, password);
+            await userManager.UpdateAsync(user);
 
             if (!await userManager.IsInRoleAsync(user, "Student"))
                 await userManager.AddToRoleAsync(user, "Student");
@@ -568,18 +574,18 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             var passwordValid = await userManager.CheckPasswordAsync(user, password);
             if (!passwordValid)
             {
-                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-                var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
-                if (!resetResult.Succeeded)
-                {
-                    var errors = string.Join("; ", resetResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to reset password for student {Email}: {Errors}", studentRegistration.Email, errors);
-                    throw new InvalidOperationException($"Failed to reset user password for {studentRegistration.Email}: {errors}");
-                }
+                SetPasswordHashDirectly(user, password);
+                await userManager.UpdateAsync(user);
             }
 
             return false;
         }
+    }
+
+    private static void SetPasswordHashDirectly(AppUser user, string password)
+    {
+        var hasher = new PasswordHasher<AppUser>();
+        user.PasswordHash = hasher.HashPassword(user, password);
     }
 
     private async Task SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, bool isNewUser)

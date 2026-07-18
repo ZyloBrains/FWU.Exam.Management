@@ -325,29 +325,26 @@
             if (data.boardId) row.querySelector('[name="Qualifications.BoardId"]').value = data.boardId;
         }
 
-        function loadPrograms() {
-            var collegeId = $("#CollegeId").val();
+        function loadPrograms(collegeId, callback) {
             var levelId = $("#LevelId").val();
 
-            $("#ProgramId").html('<option>Loading...</option>');
-
             if (!collegeId) {
-                var programDropdown = $("#ProgramId");
-                programDropdown.empty();
-                programDropdown.append('<option value="">Select Program</option>');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                if (callback) callback();
                 return;
             }
 
             $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
                 { collegeId: collegeId, levelId: levelId || null },
                 function (data) {
-                    var dropdown = $("#FacultyId");
+                    var dropdown = $("#ProgramId");
                     dropdown.empty();
-                    dropdown.append('<option value="">Select Faculty</option>');
+                    dropdown.append('<option value="">Select Program</option>');
                     $.each(data, function (index, item) {
                         dropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
-                    programDropdown.trigger('change');
+                    dropdown.trigger('change');
+                    if (callback) callback();
             });
         }
 
@@ -360,140 +357,109 @@
                 return;
             }
 
+            $.get(tenantUrl("/Students/StudentRegistrations/GetCollegesByFaculty"),
+                { facultyId: facultyId },
+                function (data) {
+                    var dropdown = $("#CollegeId");
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select College</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    dropdown.trigger('change');
+                    if (callback) callback();
+            });
+        }
+
+        function loadFaculties(levelId, callback) {
+            $('#FacultyId').select2('destroy');
+            if (!levelId) {
+                $("#FacultyId").empty().append('<option value="">Select Faculty</option>');
+                $('#FacultyId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Students/StudentRegistrations/GetFacultiesByLevel"),
+                { levelId: levelId },
+                function (data) {
+                    var dropdown = $("#FacultyId");
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Faculty</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    dropdown.trigger('change');
+                    if (callback) callback();
+            });
+        }
+
+        $(function () {
+            $('.select2').select2({ width: 'resolve' });
+
+            var convertTimer;
+            $("#DateOfBirthBS").on("input", function () {
+                var val = $(this).val().trim();
+                if (val.length < 10) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: val }, function (data) {
+                        if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
+                    });
+                }, 300);
+            });
+
             $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
+                var val = $(this).val().trim();
+                if (val.length < 8) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: val }, function (data) {
+                        if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
+                    });
+                }, 300);
             });
 
             // Province -> District
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
-
                 $("#DistrictId").html('<option>Loading...</option>');
-                $("#LocalLevelId").html('<option>Select Local Level</option>');
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"),
-                    { provinceId: provinceId },
-                    function (data) {
-                        let districtDropdown = $("#DistrictId");
-                        districtDropdown.empty();
-                        districtDropdown.append('<option value="">Select District</option>');
-                        $.each(data, function (index, item) {
-                            districtDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        districtDropdown.trigger('change');
+                $("#LocalLevelId").html('<option value="">Select Local Level</option>');
+                $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"), { provinceId: provinceId }, function (data) {
+                    var dropdown = $("#DistrictId");
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select District</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    dropdown.trigger('change');
                 });
             });
 
-        function loadPrograms(collegeId, callback) {
-            var levelId = $("#LevelId").val();
-
-            $('#ProgramId').select2('destroy');
-            if (!collegeId) {
-                $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                $('#ProgramId').select2({width:'resolve'});
-                if (callback) callback();
-                return;
-            }
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"),
-                    { districtId: districtId },
-                    function (data) {
-                        let localDropdown = $("#LocalLevelId");
-                        localDropdown.empty();
-                        localDropdown.append('<option value="">Select Local Level</option>');
-                        $.each(data, function (index, item) {
-                            localDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        localDropdown.trigger('change');
+            // District -> LocalLevel
+            $("#DistrictId").change(function () {
+                var districtId = $(this).val();
+                $("#LocalLevelId").html('<option value="">Loading...</option>');
+                $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
+                    var dropdown = $("#LocalLevelId");
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Local Level</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    dropdown.trigger('change');
                 });
-            });
-
-            // Level -> Faculty
-            $("#LevelId").change(function () {
-                var levelId = $(this).val();
-
-                $("#FacultyId").html('<option>Loading...</option>');
-                $("#CollegeId").html('<option value="">Select College</option>');
-                $("#ProgramId").html('<option value="">Select Program</option>');
-
-            if (!provinceId) {
-                $("#DistrictId").empty().append('<option value="">Select District</option>');
-                $('#DistrictId').select2({width:'resolve'});
-                if (callback) callback();
-                return;
-            }
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetFacultiesByLevel"),
-                    { levelId: levelId },
-                    function (data) {
-                        var facultyDropdown = $("#FacultyId");
-                        facultyDropdown.empty();
-                        facultyDropdown.append('<option value="">Select Faculty</option>');
-                        $.each(data, function (index, item) {
-                            facultyDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        facultyDropdown.trigger('change');
-                });
-            });
-
-            // Faculty -> College
-            $("#FacultyId").change(function () {
-                var facultyId = $(this).val();
-
-                $("#CollegeId").html('<option>Loading...</option>');
-                $("#ProgramId").html('<option value="">Select Program</option>');
-
-        function loadLocalLevels(districtId, callback) {
-            $('#LocalLevelId').select2('destroy');
-            if (!districtId) {
-                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
-                $('#LocalLevelId').select2({width:'resolve'});
-                if (callback) callback();
-                return;
-            }
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetCollegesByFaculty"),
-                    { facultyId: facultyId },
-                    function (data) {
-                        var collegeDropdown = $("#CollegeId");
-                        collegeDropdown.empty();
-                        collegeDropdown.append('<option value="">Select College</option>');
-                        $.each(data, function (index, item) {
-                            collegeDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                        collegeDropdown.trigger('change');
-                });
-            });
-
-            // College -> Program
-            $("#CollegeId").change(function () {
-                var collegeId = $(this).val();
-
-                $("#ProgramId").html('<option>Loading...</option>');
-
-                if (!collegeId) {
-                    $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                    return;
-                }
-
-                loadPrograms();
             });
 
             // Level -> Faculty + clear downstream
             $("#LevelId").change(function () {
                 var levelId = $(this).val();
+                $("#FacultyId").select2('destroy');
                 $("#CollegeId").select2('destroy');
                 $("#ProgramId").select2('destroy');
                 $("#CollegeId").empty().append('<option value="">Select College</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $('#FacultyId').select2({width:'resolve'});
                 $('#CollegeId').select2({width:'resolve'});
                 $('#ProgramId').select2({width:'resolve'});
                 loadFaculties(levelId);
@@ -502,8 +468,11 @@
             // Faculty -> College + clear downstream
             $("#FacultyId").change(function () {
                 var facultyId = $(this).val();
+                $("#CollegeId").select2('destroy');
                 $("#ProgramId").select2('destroy');
+                $("#CollegeId").empty().append('<option value="">Select College</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $('#CollegeId').select2({width:'resolve'});
                 $('#ProgramId').select2({width:'resolve'});
                 loadColleges(facultyId);
             });
@@ -516,20 +485,10 @@
                 $('#ProgramId').select2({width:'resolve'});
                 loadPrograms(collegeId);
             });
-
-            // Program -> auto-set DepartmentId
-            $("#ProgramId").change(function () {
-                var deptId = $(this).find('option:selected').data('department-id');
-                if (deptId) {
-                    $("#DepartmentId").val(deptId);
-                } else {
-                    $("#DepartmentId").val('');
-                }
-            });
         });
 
         // Init Select2 on all dropdowns
-        $('#AcademicYearId, #LevelId, #FacultyId, #CollegeId, #ProgramId, #GenderId, #EthnicityId, #StudentCategoryId').select2({
+        $('#AcademicYearId, #LevelId, #FacultyId, #CollegeId, #ProgramId, #GenderId, #EthnicityId, #StudentCategoryId, #ProvinceId, #DistrictId, #LocalLevelId').select2({
             width: '100%',
             placeholder: function () { return $(this).find('option:first').text(); },
             allowClear: false
