@@ -67,7 +67,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     public async Task<IActionResult> Create()
     {
         var selectLists = await studentRegistrationService.GetSelectListDataAsync();
-        PopulateSelectLists(selectLists, null);
+        await PopulateSelectListsAsync(selectLists, null);
         return View(new StudentRegistration());
     }
 
@@ -90,7 +90,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         }
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync();
-        PopulateSelectLists(selectLists, studentRegistration);
+        await PopulateSelectListsAsync(selectLists, studentRegistration);
         return View(studentRegistration);
     }
 
@@ -121,7 +121,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         }
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
-        PopulateSelectLists(selectLists, studentRegistration);
+        await PopulateSelectListsAsync(selectLists, studentRegistration);
         return View(studentRegistration);
     }
 
@@ -156,7 +156,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id);
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
-        PopulateSelectLists(selectLists, studentRegistration);
+        await PopulateSelectListsAsync(selectLists, studentRegistration);
         return View(studentRegistration);
     }
 
@@ -812,9 +812,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         await studentRegistrationService.SaveGuardiansAsync(registrationId, guardian);
     }
 
-    private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
+    private async Task PopulateSelectListsAsync(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces = studentRegistrationService.GetProvinces();
+        var provinces = await studentRegistrationService.GetProvincesAsync();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
 
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);

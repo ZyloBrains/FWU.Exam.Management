@@ -39,7 +39,7 @@ public class BackupRestoreService(IConfiguration configuration) : IBackupRestore
         await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync();
 
-        var sql = $"BACKUP DATABASE [{dbName}] TO DISK = N'{filePath}' WITH FORMAT, COMPRESSION, NAME = N'{dbName} - Full Backup', STATS = 10";
+        var sql = $"BACKUP DATABASE [{dbName}] TO DISK = N'{filePath}' WITH FORMAT, NAME = N'{dbName} - Full Backup', STATS = 10";
 
         await using var command = new SqlCommand(sql, connection);
         command.CommandTimeout = 300;

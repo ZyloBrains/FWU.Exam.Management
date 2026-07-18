@@ -273,13 +273,16 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         context.ExamRegistrations!.Add(registration);
         await context.SaveChangesAsync();
 
+        var subjectOfferings = await context.SubjectOfferings!
+            .AsNoTracking()
+            .Where(so => subjectOfferingIds.Contains(so.Id))
+            .ToListAsync();
+        var subjectOfferingDict = subjectOfferings.ToDictionary(so => so.Id);
+
         foreach (var subjectOfferingId in subjectOfferingIds)
         {
-            var subjectOffering = await context.SubjectOfferings!
-                .AsNoTracking()
-                .FirstOrDefaultAsync(so => so.Id == subjectOfferingId);
-
-            if (subjectOffering == null) continue;
+            if (!subjectOfferingDict.TryGetValue(subjectOfferingId, out var subjectOffering))
+                continue;
 
             context.ExamSubjectResults!.Add(new ExamSubjectResult
             {

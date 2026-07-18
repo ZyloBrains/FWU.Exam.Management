@@ -14,5 +14,5 @@ public interface IGradingSchemeService
     Task UpdateGradingSchemeAsync(GradingScheme gradingScheme);
     Task DeleteGradingSchemeAsync(int id);
     Task<bool> GradingSchemeExistsAsync(int id);
-    GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null);
+    Task<GradingSchemeSelectListsDto> GetSelectListDataAsync(GradingScheme? gradingScheme = null);
 }

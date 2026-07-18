@@ -159,11 +159,11 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
         }
     }
 
-    public RetotalRequestSelectListsDto GetSelectListData(RetotalRequest? retotalRequest = null)
+    public async Task<RetotalRequestSelectListsDto> GetSelectListDataAsync(RetotalRequest? retotalRequest = null)
     {
-        var examSchedules = context.ExamSchedules.AsNoTracking().ToList();
-        var students = context.StudentRegistrations.AsNoTracking().ToList();
-        var subjects = context.SubjectCatalogs.AsNoTracking().ToList();
+        var examSchedules = await context.ExamSchedules.AsNoTracking().ToListAsync();
+        var students = await context.StudentRegistrations.AsNoTracking().ToListAsync();
+        var subjects = await context.SubjectCatalogs.AsNoTracking().ToListAsync();
 
         return new RetotalRequestSelectListsDto
         {

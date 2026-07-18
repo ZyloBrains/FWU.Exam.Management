@@ -39,7 +39,7 @@ public class GradingSchemesController(
     [RequirePermission("gradingschemes.create")]
     public async Task<IActionResult> Create()
     {
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         var model = new GradingScheme { IsActive = true };
         model.GradeDefinitions = GetDefaultGradeDefinitions();
@@ -60,7 +60,7 @@ public class GradingSchemesController(
             await gradingSchemeService.CreateGradingSchemeAsync(gradingScheme);
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, gradingScheme);
         gradingScheme.GradeDefinitions ??= GetDefaultGradeDefinitions();
         return View(gradingScheme);
@@ -74,7 +74,7 @@ public class GradingSchemesController(
         var gradingScheme = await gradingSchemeService.GetGradingSchemeByIdAsync(id.Value);
         if (gradingScheme == null) return NotFound();
 
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, gradingScheme);
         return View(gradingScheme);
     }
@@ -104,7 +104,7 @@ public class GradingSchemesController(
             }
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, gradingScheme);
         return View(gradingScheme);
     }

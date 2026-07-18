@@ -142,7 +142,7 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
         return await context.GradingSchemes.AnyAsync(e => e.Id == id);
     }
 
-    public GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null)
+    public async Task<GradingSchemeSelectListsDto> GetSelectListDataAsync(GradingScheme? gradingScheme = null)
     {
         var programsQuery = context.Programs.AsNoTracking();
         if (!userContext.IsSuperAdmin)
@@ -150,8 +150,8 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
             if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
                 programsQuery = programsQuery.Where(p => p.FacultyId == userContext.FacultyId.Value);
         }
-        var programs = programsQuery.ToList();
-        var academicYears = context.AcademicYears.AsNoTracking().ToList();
+        var programs = await programsQuery.ToListAsync();
+        var academicYears = await context.AcademicYears.AsNoTracking().ToListAsync();
 
         return new GradingSchemeSelectListsDto
         {

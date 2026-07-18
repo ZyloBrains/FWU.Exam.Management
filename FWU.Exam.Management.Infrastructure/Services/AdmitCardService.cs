@@ -142,32 +142,62 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             .Include(er => er.College)
             .ToListAsync();
 
+        var registrationIds = registrations.Select(r => r.Id).ToList();
+        var existingAdmitCards = await context.AdmitCards
+            .Where(ht => registrationIds.Contains(ht.ExamRegistrationId) && ht.IsActive)
+            .ToListAsync();
+        var existingRegistrationIds = new HashSet<int>(existingAdmitCards.Select(ht => ht.ExamRegistrationId));
+
+        var studentAdmissions = await context.StudentAdmissions
+            .Where(sa => registrations.Any(r => r.CollegeId == sa.CollegeId && r.ProgramsId == sa.ProgramsId) && sa.AppUserId != null)
+            .ToListAsync();
+        var admissionLookup = studentAdmissions.ToDictionary(sa => (sa.CollegeId, sa.ProgramsId), sa => sa.AppUserId);
+
+        var collegeIds = registrations.Select(r => r.CollegeId).Distinct().ToList();
+        var colleges = await context.Colleges
+            .Where(c => collegeIds.Contains(c.Id))
+            .ToListAsync();
+        var collegeTenantLookup = colleges.ToDictionary(c => c.Id, c => c.TenantId);
+        var tenantIds = colleges.Select(c => c.TenantId).Distinct().ToList();
+        var tenants = await context.Tenants.Where(t => tenantIds.Contains(t.Id)).ToListAsync();
+        var tenantSignatureLookup = tenants.ToDictionary(t => t.Id, t => t.ControllerSignaturePath);
+
         var admitCards = new List<AdmitCard>();
         foreach (var registration in registrations)
         {
-            var existing = await context.AdmitCards
-                .FirstOrDefaultAsync(ht => ht.ExamRegistrationId == registration.Id && ht.IsActive);
+            if (existingRegistrationIds.Contains(registration.Id))
+                continue;
 
-            if (existing == null)
+            string? controllerSignaturePath = null;
+            if (collegeTenantLookup.TryGetValue(registration.CollegeId, out var tenantId) &&
+                tenantSignatureLookup.TryGetValue(tenantId, out var sig))
             {
-                var studentUser = await ResolveStudentUserAsync(registration);
-                var controllerSignaturePath = await ResolveControllerSignatureAsync(registration.CollegeId);
-
-                var admitCard = new AdmitCard
-                {
-                    ExamRegistrationId = registration.Id,
-                    ExamScheduleId = examScheduleId,
-                    StudentRegistrationId = null,
-                    AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
-                    PhotoPath = studentUser?.ProfilePath,
-                    SignaturePath = studentUser?.SignaturePath,
-                    ControllerSignaturePath = controllerSignaturePath,
-                    GeneratedDate = DateTime.UtcNow,
-                    IsDownloaded = false,
-                    IsActive = true
-                };
-                admitCards.Add(admitCard);
+                controllerSignaturePath = sig;
             }
+
+            string? photoPath = null;
+            string? signaturePath = null;
+            if (registration.ProgramsId.HasValue && admissionLookup.TryGetValue((registration.CollegeId, registration.ProgramsId.Value), out var appUserId) && appUserId != null)
+            {
+                var studentUser = await context.Users.FindAsync(appUserId);
+                photoPath = studentUser?.ProfilePath;
+                signaturePath = studentUser?.SignaturePath;
+            }
+
+            var admitCard = new AdmitCard
+            {
+                ExamRegistrationId = registration.Id,
+                ExamScheduleId = examScheduleId,
+                StudentRegistrationId = null,
+                AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
+                PhotoPath = photoPath,
+                SignaturePath = signaturePath,
+                ControllerSignaturePath = controllerSignaturePath,
+                GeneratedDate = DateTime.UtcNow,
+                IsDownloaded = false,
+                IsActive = true
+            };
+            admitCards.Add(admitCard);
         }
 
         if (admitCards.Count > 0)
@@ -199,11 +229,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         return tenant?.ControllerSignaturePath;
     }
 
-    public AdmitCardSelectListsDto GetSelectListData(AdmitCard? admitCard = null)
+    public async Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null)
     {
-        var examSchedules = context.ExamSchedules.AsNoTracking().ToList();
-        var examRegistrations = context.ExamRegistrations.AsNoTracking().ToList();
-        var examCenters = context.ExamCenters.AsNoTracking().ToList();
+        var examSchedules = await context.ExamSchedules.AsNoTracking().ToListAsync();
+        var examRegistrations = await context.ExamRegistrations.AsNoTracking().ToListAsync();
+        var examCenters = await context.ExamCenters.AsNoTracking().ToListAsync();
 
         return new AdmitCardSelectListsDto
         {

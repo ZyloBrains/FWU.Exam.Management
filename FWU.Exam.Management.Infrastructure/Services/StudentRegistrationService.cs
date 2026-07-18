@@ -390,10 +390,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
-    public List<Province> GetProvinces()
+    public async Task<List<Province>> GetProvincesAsync()
     {
-        var provinces =  context.Provinces.AsNoTracking().ToList();
-        return provinces;
+        return await context.Provinces.AsNoTracking().ToListAsync();
     }
 
     public async Task SaveQualificationsAsync(int studentRegistrationId, List<StudentQualification> qualifications)

@@ -181,13 +181,13 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         return await context.ExamSchedules.AnyAsync(e => e.Id == id);
     }
 
-    public ExamScheduleSelectListsDto GetSelectListData(ExamSchedule? examSchedule = null)
+    public async Task<ExamScheduleSelectListsDto> GetSelectListDataAsync(ExamSchedule? examSchedule = null)
     {
-        var academicYears = context.AcademicYears.AsNoTracking().ToList();
-        var examTypes = context.ExamTypes.AsNoTracking().ToList();
+        var academicYears = await context.AcademicYears.AsNoTracking().ToListAsync();
+        var examTypes = await context.ExamTypes.AsNoTracking().ToListAsync();
         var programsQuery = context.Programs.AsNoTracking().ApplyScope(userContext);
-        var programs = programsQuery.ToList();
-        var semesters = context.Semesters.AsNoTracking().ApplyScope(userContext).ToList();
+        var programs = await programsQuery.ToListAsync();
+        var semesters = await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
 
         return new ExamScheduleSelectListsDto
         {
