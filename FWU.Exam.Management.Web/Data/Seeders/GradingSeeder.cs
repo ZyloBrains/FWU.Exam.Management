@@ -13,7 +13,7 @@ public static class GradingSeeder
         if (await context.GradingSchemes.AnyAsync())
             return;
 
-        var program = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+        var program = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L008");
         if (program == null)
             return;
 

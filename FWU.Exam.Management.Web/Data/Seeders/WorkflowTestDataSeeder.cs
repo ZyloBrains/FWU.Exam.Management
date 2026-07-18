@@ -59,8 +59,8 @@ public static class WorkflowTestDataSeeder
         // ===================================================================
         var levels = new[]
         {
-            new Level { LevelCode = "BL", LevelName = "Bachelor", IsActive = true },
-            new Level { LevelCode = "MA", LevelName = "Master", IsActive = true },
+            new Level { LevelCode = "1", LevelName = "Undergraduate", IsActive = true },
+            new Level { LevelCode = "2", LevelName = "Graduate", IsActive = true },
         };
         await context.Levels.AddRangeAsync(levels);
         await context.SaveChangesAsync();
@@ -73,7 +73,7 @@ public static class WorkflowTestDataSeeder
         {
             new Program
             {
-                ProgramCode = "BSCSIT",
+                ProgramCode = "L008",
                 ProgramName = "Bachelor of Science in Computer Science and Information Technology",
                 ShortName = "B.Sc. CSIT",
                 LevelId = bachelorLevel.Id,
@@ -83,7 +83,7 @@ public static class WorkflowTestDataSeeder
             },
             new Program
             {
-                ProgramCode = "BA",
+                ProgramCode = "L011",
                 ProgramName = "Bachelor of Arts",
                 ShortName = "BA",
                 LevelId = bachelorLevel.Id,

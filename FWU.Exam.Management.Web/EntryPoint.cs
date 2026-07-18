@@ -295,7 +295,12 @@ public partial class EntryPoint
 
                 await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
                 await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+
+                await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
+
                 await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+
+                await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
 
                 await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
                 await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
@@ -320,6 +325,7 @@ public partial class EntryPoint
                 await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
                 await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
                 await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+                await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
             }
         }
 

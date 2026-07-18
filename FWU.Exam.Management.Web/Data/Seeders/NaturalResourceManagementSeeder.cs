@@ -11,20 +11,7 @@ public static class NaturalResourceManagementSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        var nrmFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "NRM");
-        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-        var masterLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "MA");
-
-        // Programs
-        if (bachelorLevel != null)
-        {
-            await AddProgramIfMissing(context, "BScNRM", "Bachelor of Science in Natural Resource Management", "B.Sc. NRM", bachelorLevel.Id, 4, "NRM");
-        }
-        if (masterLevel != null)
-        {
-            await AddProgramIfMissing(context, "MScNRM", "Master of Science in Natural Resource Management", "M.Sc. NRM", masterLevel.Id, 2, "MNRM");
-        }
-        await context.SaveChangesAsync();
+        var nrmFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L011");
 
         // College
         College? nrmCollege;
@@ -44,49 +31,6 @@ public static class NaturalResourceManagementSeeder
                 nrmCollege.Faculties = new List<Faculty> { nrmFaculty };
                 await context.SaveChangesAsync();
             }
-        }
-        else
-        {
-            nrmCollege = await context.Colleges.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Code == "CDNRM");
-        }
-
-        // CollegeProgram links
-        if (nrmCollege != null)
-        {
-            var nrmProgramCodes = new[] { "BScNRM", "MScNRM" };
-            var nrmPrograms = await context.Programs.Where(p => nrmProgramCodes.Contains(p.ProgramCode)).ToListAsync();
-            foreach (var program in nrmPrograms)
-            {
-                if (!await context.CollegePrograms.IgnoreQueryFilters().AnyAsync(cp => cp.CollegeId == nrmCollege.Id && cp.ProgramId == program.Id))
-                {
-                    context.CollegePrograms.Add(new CollegeProgram
-                    {
-                        CollegeId = nrmCollege.Id,
-                        ProgramId = program.Id,
-                        TenantId = 1,
-                        IsActive = true,
-                    });
-                }
-            }
-            await context.SaveChangesAsync();
-        }
-    }
-
-    private static async Task AddProgramIfMissing(AppDbContext context, string code, string name, string shortName, int levelId, int duration, string prefix)
-    {
-        var exists = await context.Programs.AnyAsync(p => p.ProgramCode == code);
-        if (!exists)
-        {
-            context.Programs.Add(new Program
-            {
-                ProgramCode = code,
-                ProgramName = name,
-                ShortName = shortName,
-                LevelId = levelId,
-                Duration = duration,
-                IsActive = true,
-                RollNumberPrefix = prefix,
-            });
         }
     }
 }

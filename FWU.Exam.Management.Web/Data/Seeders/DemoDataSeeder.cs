@@ -41,7 +41,7 @@ public static class DemoDataSeeder
             // Semesters
             if (!await context.Semesters.AnyAsync())
             {
-                var soeFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
+                var soeFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L091");
                 var semesters = new[]
                 {
                     new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id, FacultyId = soeFaculty?.Id },
@@ -181,9 +181,9 @@ public static class DemoDataSeeder
             var semesters = await context.Semesters.ToListAsync();
             var subjects = await context.SubjectCatalogs.ToListAsync();
             var firstSem = semesters.FirstOrDefault();
-            var bbaProgram = programs.FirstOrDefault(p => p.ProgramCode == "BBA");
-            var bbsProgram = programs.FirstOrDefault(p => p.ProgramCode == "BBS");
-            var bcaProgram = programs.FirstOrDefault(p => p.ProgramCode == "BCA");
+            var bbaProgram = programs.FirstOrDefault(p => p.ProgramCode == "L005");
+            var bbsProgram = programs.FirstOrDefault(p => p.ProgramCode == "L113");
+            var bcaProgram = programs.FirstOrDefault(p => p.ProgramCode == "L018");
 
             if (firstSem != null)
             {
@@ -303,8 +303,8 @@ public static class DemoDataSeeder
         var demoUser = await context.Users.FirstOrDefaultAsync(u => u.Email == demoStudentEmail);
         var collegeCoc = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "COC");
         var collegeSom = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "SOM");
-        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-        var faculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
+        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
+        var faculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L091");
         var genderMale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Male");
         var genderFemale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Female");
         var category = await context.StudentCategories.FirstOrDefaultAsync(sc => sc.StudentCategoryName == "Regular");
@@ -313,9 +313,9 @@ public static class DemoDataSeeder
 
         if (collegeCoc != null && level != null && genderMale != null && category != null && academicYear != null)
         {
-            var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
-            var bbsProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBS");
-            var bcaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BCA");
+            var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L005");
+            var bbsProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L113");
+            var bcaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L018");
             var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
 
             if (bbaProgram != null)
@@ -434,14 +434,14 @@ public static class DemoDataSeeder
         }
 
         // Engineering & CSIT Demo Students
-        var facultyFoe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "ENG");
-        var facultyFst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
+        var facultyFoe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L091");
+        var facultyFst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L002");
         var engCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "ENG-SOE");
         var csitCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
 
         if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "civil.student@example.com") && engCollege != null && level != null && genderMale != null && category != null && academicYear != null)
         {
-            var beCivil = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BECT");
+            var beCivil = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L092");
             if (beCivil != null)
             {
                 context.StudentRegistrations.Add(new StudentRegistration
@@ -460,7 +460,7 @@ public static class DemoDataSeeder
 
         if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "comp.student@example.com") && engCollege != null && level != null && genderMale != null && category != null && academicYear != null)
         {
-            var beComp = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BECP");
+            var beComp = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L117");
             if (beComp != null)
             {
                 context.StudentRegistrations.Add(new StudentRegistration
@@ -479,7 +479,7 @@ public static class DemoDataSeeder
 
         if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "csit.student@example.com") && csitCollege != null && level != null && genderMale != null && category != null && academicYear != null)
         {
-            var bscCsit = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+            var bscCsit = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L008");
             if (bscCsit != null)
             {
                 context.StudentRegistrations.Add(new StudentRegistration
@@ -498,7 +498,7 @@ public static class DemoDataSeeder
 
         if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "bit.student@example.com") && csitCollege != null && level != null && genderFemale != null && category != null && academicYear != null)
         {
-            var bitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BIT");
+            var bitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L016");
             if (bitProgram != null)
             {
                 context.StudentRegistrations.Add(new StudentRegistration
@@ -518,14 +518,14 @@ public static class DemoDataSeeder
         // Demo Exam Schedules (no longer seeded)
 
         // ===== B.Sc. CSIT Subjects (Semesters 1-8) =====
-        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L008");
         if (csitProgram != null)
         {
             // Ensure semesters 5-8 exist
             var runningYearCsit = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
             if (runningYearCsit != null && !await context.Semesters.AnyAsync(s => s.Number == 5))
             {
-                var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
+                var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L002");
                 var csitSemesters = new[]
                 {
                     new Semester { Number = 5, Year = 3, Name = "Fifth Semester", Code = "SEM5", StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2027, 1, 30), AcademicYearId = runningYearCsit.Id, FacultyId = fstFaculty?.Id },
@@ -660,7 +660,7 @@ public static class DemoDataSeeder
         }
 
         // ===== BIT Subjects (Semesters 1-8) =====
-        var bitProg = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BIT");
+        var bitProg = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L016");
         if (bitProg != null)
         {
             var coreTypeBit = await context.SubjectTypes.FirstOrDefaultAsync(st => st.Code == "CORE");
