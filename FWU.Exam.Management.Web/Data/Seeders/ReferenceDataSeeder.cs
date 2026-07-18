@@ -1,5 +1,4 @@
 using FWU.Exam.Management.Domain.Entities;
-using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
@@ -78,31 +77,6 @@ public static class ReferenceDataSeeder
         await context.Levels.AddRangeAsync(levels);
         await context.SaveChangesAsync();
 
-        // Colleges
-        var org = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L091");
-        var collegeCoc = new College
-        {
-            Code = "COC",
-            Name = "College of Commerce",
-            TenantId = 1,
-            IsActive = true,
-        };
-        var collegeSom = new College
-        {
-            Code = "SOM",
-            Name = "School of Management",
-            TenantId = 1,
-            IsActive = true,
-        };
-        context.Colleges.AddRange(collegeCoc, collegeSom);
-        await context.SaveChangesAsync();
-
-        if (org != null)
-        {
-            collegeCoc.Faculties = new List<Faculty> { org };
-            collegeSom.Faculties = new List<Faculty> { org };
-            await context.SaveChangesAsync();
-        }
     }
 
     public static async Task SeedTenantsAsync(IServiceProvider serviceProvider)
@@ -125,12 +99,12 @@ public static class ReferenceDataSeeder
                 },
                 new Tenant
                 {
-                    Name = "Agriculture",
-                    OfficeCode = "AGR",
-                    ContactNumber = "01-1234567",
-                    Address = "Kathmandu, Nepal",
-                    Email = "info@agriculture.fwu.edu.np",
-                    TenantType = TenantType.Standard,
+                    Name = "Engineering Office",
+                    OfficeCode = "ENG",
+                    ContactNumber = "01-2345670",
+                    Address = "Mahendranagar,Kanchanpur, Nepal",
+                    Email = "eng@fwu.edu.np",
+                    TenantType = TenantType.Central,
                     IsActive = true,
                 },
             });
@@ -140,142 +114,6 @@ public static class ReferenceDataSeeder
 
     public static async Task SeedAdditionalReferenceDataAsync(IServiceProvider serviceProvider)
     {
-        var context = serviceProvider.GetRequiredService<AppDbContext>();
-
-        Faculty? foe, fst;
-        var engTenant = await context.Tenants.FirstOrDefaultAsync(t => t.OfficeCode == "ENG");
-        var agrTenant = await context.Tenants.FirstOrDefaultAsync(t => t.OfficeCode == "AGR");
-
-        foe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L091");
-        fst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L002");
-        var foeMgt = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L001");
-        var foeEdu = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L006");
-        var foeHss = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L003");
-
-        var bachelorLevel = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
-
-        College? engCollege, csitCollege;
-        if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "ENG-SOE"))
-        {
-            engCollege = new College { Code = "ENG-SOE", Name = "School of Engineering", TenantId = 1, IsActive = true };
-            context.Colleges.Add(engCollege);
-            await context.SaveChangesAsync();
-            if (foe != null)
-            {
-                engCollege.Faculties = new List<Faculty> { foe };
-                await context.SaveChangesAsync();
-            }
-        }
-        else
-        {
-            engCollege = await context.Colleges.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Code == "ENG-SOE");
-        }
-
-        if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == "CDC-CSIT"))
-        {
-            csitCollege = new College { Code = "CDC-CSIT", Name = "Central Department of Computer Science & IT", TenantId = 1, IsActive = true };
-            context.Colleges.Add(csitCollege);
-            await context.SaveChangesAsync();
-            if (fst != null)
-            {
-                csitCollege.Faculties = new List<Faculty> { fst };
-                await context.SaveChangesAsync();
-            }
-        }
-        else
-        {
-            csitCollege = await context.Colleges.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
-        }
-
-        if (engCollege != null)
-        {
-            var engProgramCodes = new[] { "L092", "L117", "L118" };
-            var engPrograms = await context.Programs.Where(p => engProgramCodes.Contains(p.ProgramCode)).ToListAsync();
-            foreach (var program in engPrograms)
-            {
-                if (!await context.CollegePrograms.IgnoreQueryFilters().AnyAsync(cp => cp.CollegeId == engCollege.Id && cp.ProgramId == program.Id))
-                {
-                    context.CollegePrograms.Add(new CollegeProgram { CollegeId = engCollege.Id, ProgramId = program.Id, TenantId = 1, IsActive = true });
-                }
-            }
-            await context.SaveChangesAsync();
-        }
-
-        if (csitCollege != null)
-        {
-            var csitProgramCodes = new[] { "L008", "L016" };
-            var csitPrograms = await context.Programs.Where(p => csitProgramCodes.Contains(p.ProgramCode)).ToListAsync();
-            foreach (var program in csitPrograms)
-            {
-                if (!await context.CollegePrograms.IgnoreQueryFilters().AnyAsync(cp => cp.CollegeId == csitCollege.Id && cp.ProgramId == program.Id))
-                {
-                    context.CollegePrograms.Add(new CollegeProgram { CollegeId = csitCollege.Id, ProgramId = program.Id, TenantId = 1, IsActive = true });
-                }
-            }
-            await context.SaveChangesAsync();
-        }
-
-        var oceTenantId = 1;
-
-        var mgtFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L001");
-        var eduFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L006");
-        var humFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L003");
-        var lawFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L140");
-        var agrFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L103");
-
-        var centralDepartmentDefs = new[]
-        {
-            new { Code = "CDC-CSIT", Name = "Central Department of Computer Science and Information Technology", Website = "http://cdcsit.fwu.edu.np", FacultyRef = fst },
-            new { Code = "DGS", Name = "Central Department of General Science", Website = "http://science.fwu.edu.np", FacultyRef = fst },
-            new { Code = "CDM", Name = "Central Department of Management", Website = "http://management.fwu.edu.np", FacultyRef = mgtFaculty },
-            new { Code = "CDE", Name = "Central Department of Education", Website = "http://education.fwu.edu.np", FacultyRef = eduFaculty },
-            new { Code = "CDH", Name = "Central Department of Humanities", Website = "http://humanities.fwu.edu.np", FacultyRef = humFaculty },
-            new { Code = "CDL", Name = "Central Department of Law", Website = "http://agriculture.fwu.edu.np", FacultyRef = lawFaculty },
-            new { Code = "CDA", Name = "Central Department of Agriculture", Website = "http://law.fwu.edu.np", FacultyRef = agrFaculty },
-        };
-
-        foreach (var def in centralDepartmentDefs)
-        {
-            if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == def.Code))
-            {
-                var dept = new College { Code = def.Code, Name = def.Name, TenantId = oceTenantId, IsActive = true, Website = def.Website };
-                context.Colleges.Add(dept);
-                await context.SaveChangesAsync();
-                if (def.FacultyRef != null)
-                {
-                    dept.Faculties = new List<Faculty> { def.FacultyRef };
-                    await context.SaveChangesAsync();
-                }
-            }
-        }
-
-        var campuses = new[]
-        {
-            new College { Code = "CC", Name = "Central Campus", TenantId = oceTenantId, IsActive = true, Website = "http://principal.fwu.edu.np" },
-            new College { Code = "TMC", Name = "Tikapur Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://tikapur.fwu.edu.np" },
-            new College { Code = "DMC", Name = "Darchula Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://darchula.fwu.edu.np" },
-            new College { Code = "BJC", Name = "Bajura Campus", TenantId = oceTenantId, IsActive = true, Website = "http://bajura.fwu.edu.np" },
-            new College { Code = "TVC", Name = "Triveni Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://treveni.fwu.edu.np" },
-            new College { Code = "GSMC", Name = "Ghanteshwar Seti Mahakali Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://ghanteshwar.fwu.edu.np" },
-            new College { Code = "SRC", Name = "Sitaram Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://sitaram.fwu.edu.np" },
-            new College { Code = "JNC", Name = "Janata Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://janata.fwu.edu.np" },
-            new College { Code = "JPC", Name = "Jayaprithivi Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://jayaprithivi.fwu.edu.np" },
-            new College { Code = "BMC", Name = "Badimalika Campus", TenantId = oceTenantId, IsActive = true, Website = "http://badimalika.fwu.edu.np" },
-            new College { Code = "MLC", Name = "Manilek Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://manilek.fwu.edu.np" },
-            new College { Code = "PMC", Name = "Patan Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://patan.fwu.edu.np" },
-            new College { Code = "JGC", Name = "Jagannath Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://jagannath.fwu.edu.np" },
-            new College { Code = "GWC", Name = "Gokuleshwor Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://gokuleshwar.fwu.edu.np" },
-            new College { Code = "KLC", Name = "Kailali Multiple Campus", TenantId = oceTenantId, IsActive = true, Website = "http://kailali.fwu.edu.np" },
-        };
-
-        foreach (var campus in campuses)
-        {
-            if (!await context.Colleges.IgnoreQueryFilters().AnyAsync(c => c.Code == campus.Code))
-            {
-                context.Colleges.Add(campus);
-            }
-        }
-        await context.SaveChangesAsync();
     }
 
     public static async Task SeedESewaConfigurationAsync(IServiceProvider serviceProvider)

@@ -142,29 +142,6 @@ public static class DemoDataSeeder
             await context.SaveChangesAsync();
         }
 
-        // College Programs
-        if (!await context.CollegePrograms.AnyAsync())
-        {
-            var colleges = await context.Colleges.ToListAsync();
-            var programs = await context.Programs.ToListAsync();
-            foreach (var college in colleges)
-            {
-                foreach (var program in programs)
-                {
-                    if (!await context.CollegePrograms.AnyAsync(cp => cp.CollegeId == college.Id && cp.ProgramId == program.Id))
-                    {
-                        await context.CollegePrograms.AddAsync(new CollegeProgram
-                        {
-                            CollegeId = college.Id,
-                            ProgramId = program.Id,
-                            IsActive = true,
-                        });
-                    }
-                }
-            }
-            await context.SaveChangesAsync();
-        }
-
         // Subject Offerings
         if (!await context.SubjectOfferings.AnyAsync())
         {
