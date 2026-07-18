@@ -16,7 +16,7 @@ Migrate denormalized exam result data from 3 source tables into the normalized F
 
 | Decision | Choice |
 |---|---|
-| TenantId | 1 (OCE) for all records |
+| TenantId | 2 (Engineering) for all records |
 | Level mapping | "Undergraduate" → existing Bachelor (ID=1), "Graduate" → existing Master (ID=2) |
 | College | Create new: SCH001 / UNIVERSITY CENTRAL CAMPUS |
 | Programs | Create new: L092, L117, L131 |
