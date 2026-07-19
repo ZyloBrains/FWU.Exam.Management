@@ -325,6 +325,18 @@
             return __tenantCode ? '/tenant/' + __tenantCode + path : path;
         }
     </script>
+    <script>
+        (function () {
+            var key = 'sidebar-scroll-top';
+            var nav = document.querySelector('nav.flex-1');
+            if (!nav) return;
+            var saved = sessionStorage.getItem(key);
+            if (saved) nav.scrollTop = parseInt(saved, 10);
+            nav.addEventListener('scroll', function () {
+                sessionStorage.setItem(key, nav.scrollTop);
+            });
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

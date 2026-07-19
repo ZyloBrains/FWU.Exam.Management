@@ -41,6 +41,7 @@
     // Get user and permissions
     var sideMenuUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var sideMenuTenantCode = Context.Items["TenantCode"] as string;
+    var isSuperAdmin = sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, "SuperAdmin");
 
     // Get permissions for the current user
     var sideMenuPermissions = sideMenuUser != null
@@ -130,6 +131,16 @@
                           IsActive(controllerName: "Section", actionName: "SystemConfig");
     var isReportActive = IsActive(controllerName: "Reports", areaName: "Reports") ||
                          IsActive(controllerName: "Section", actionName: "Reports");
+    var isCoreActive = IsActive(controllerName: "Programs", areaName: "Core") ||
+                       IsActive(controllerName: "AcademicYears", areaName: "Core") ||
+                       IsActive(controllerName: "Levels", areaName: "Core") ||
+                       IsActive(controllerName: "Genders", areaName: "Core") ||
+                       IsActive(controllerName: "Ethnicities", areaName: "Core") ||
+                       IsActive(controllerName: "Boards", areaName: "Core") ||
+                       IsActive(controllerName: "Countries", areaName: "Core") ||
+                       IsActive(controllerName: "Provinces", areaName: "Location") ||
+                       IsActive(controllerName: "Districts", areaName: "Location") ||
+                       IsActive(controllerName: "LocalLevels", areaName: "Location");
 }
 
 <ul class="space-y-1.5 px-3 font-poppins">
@@ -401,6 +412,38 @@
             @if (HasPerm("backuprestore.manage")) { <li><a asp-area="Core" asp-controller="BackupRestore" asp-action="Index" class="@ChildClass(IsActive(controllerName: "BackupRestore", actionName: "Index", areaName: "Core"))"><i class="fas fa-database w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Backup & Restore</span></a></li> }
         </ul>
     </li>
+    }
+
+    @if (isSuperAdmin)
+    {
+        // ----------------------------------------------------- //
+        // Core Area (SuperAdmin only)
+        // ----------------------------------------------------- //
+        <li x-data="{ open: @(isCoreActive.ToString().ToLower()) }">
+            <div class="flex items-center @(isCoreActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
+                <a href="javascript:void(0)" class="flex items-center gap-3.5 flex-1 min-w-0" @@click.prevent.stop="open = !open">
+                    <div class="flex items-center justify-center w-6"><i class="fas fa-cubes text-lg opacity-80"></i></div>
+                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Core Area</span>
+                </a>
+                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
+                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
+                </button>
+            </div>
+            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
+                :style="open ? 'max-height: 800px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                @if (HasPerm("programs.view")) { <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core"))"><i class="fas fa-stream w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Program</span></a></li> }
+                @if (HasPerm("academicyears.view")) { <li><a asp-area="Core" asp-controller="AcademicYears" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core"))"><i class="fas fa-calendar-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Academic Year</span></a></li> }
+                @if (HasPerm("levels.view")) { <li><a asp-area="Core" asp-controller="Levels" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Levels", actionName: "Index", areaName: "Core"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Level</span></a></li> }
+                @if (HasPerm("genders.view")) { <li><a asp-area="Core" asp-controller="Genders" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Genders", actionName: "Index", areaName: "Core"))"><i class="fas fa-venus-mars w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Gender</span></a></li> }
+                @if (HasPerm("ethnicities.view")) { <li><a asp-area="Core" asp-controller="Ethnicities" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Ethnicities", actionName: "Index", areaName: "Core"))"><i class="fas fa-users w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Ethnicity</span></a></li> }
+                @if (HasPerm("boards.view")) { <li><a asp-area="Core" asp-controller="Boards" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Boards", actionName: "Index", areaName: "Core"))"><i class="fas fa-landmark w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Board</span></a></li> }
+                @if (HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view")) { <li class="border-t border-white/10 my-1"></li> }
+                @if (HasPerm("provinces.view")) { <li><a asp-area="Location" asp-controller="Provinces" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Provinces", actionName: "Index", areaName: "Location"))"><i class="fas fa-map-marked-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Province</span></a></li> }
+                @if (HasPerm("districts.view")) { <li><a asp-area="Location" asp-controller="Districts" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Districts", actionName: "Index", areaName: "Location"))"><i class="fas fa-map-pin w-4 text-center opacity-70"></i><span class="whitespace-nowrap">District</span></a></li> }
+                @if (HasPerm("locallevels.view")) { <li><a asp-area="Location" asp-controller="LocalLevels" asp-action="Index" class="@ChildClass(IsActive(controllerName: "LocalLevels", actionName: "Index", areaName: "Location"))"><i class="fas fa-city w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Local Level</span></a></li> }
+                @if (HasPerm("countries.view")) { <li><a asp-area="Core" asp-controller="Countries" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Countries", actionName: "Index", areaName: "Core"))"><i class="fas fa-globe w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Country</span></a></li> }
+            </ul>
+        </li>
     }
 
     @if (showReports)
