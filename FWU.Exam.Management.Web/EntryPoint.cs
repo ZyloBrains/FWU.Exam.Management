@@ -149,6 +149,7 @@ public partial class EntryPoint
             builder.Services.AddScoped<IProgramService, ProgramService>();
             builder.Services.AddScoped<ILevelService, LevelService>();
             builder.Services.AddScoped<IGenderService, GenderService>();
+            builder.Services.AddScoped<IEthnicityService, EthnicityService>();
             builder.Services.AddScoped<INoticeService, NoticeService>();
             builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
             builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
