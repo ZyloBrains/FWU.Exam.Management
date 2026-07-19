@@ -33,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<College>? Colleges { get; set; }
     public DbSet<CollegeProgram>? CollegePrograms { get; set; }
     public DbSet<CollegeType>? CollegeTypes { get; set; }
+    public DbSet<Country>? Countries { get; set; }
     public DbSet<District>? Districts { get; set; }
     public DbSet<EntryFormat>? EntryFormats { get; set; }
     public DbSet<Ethnicity>? Ethnicities { get; set; }
@@ -901,6 +902,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasIndex(e => e.EthnicityName)
             .IsUnique()
             .HasFilter("[EthnicityName] IS NOT NULL");
+
+        builder.Entity<Country>()
+            .HasIndex(c => c.CountryName)
+            .IsUnique()
+            .HasFilter("[CountryName] IS NOT NULL");
 
         builder.Entity<Board>()
             .HasIndex(b => b.BoardName)

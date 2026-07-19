@@ -26,7 +26,7 @@
             <div class="grid grid-cols-1 gap-5">
                 <div>
                     <label asp-for="CountryId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Country</label>
-                    <select asp-for="CountryId" asp-items="ViewBag.CountryList" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <select asp-for="CountryId" class="select2-country w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                         <option value="">-- Select Country --</option>
                     </select>
                     <span asp-validation-for="CountryId" class="text-xs text-red-500 mt-1 block"></span>
@@ -93,7 +93,43 @@
 
     <script>
         $(document).ready(function () {
-            $('.select2').select2({ width: 'resolve' });
+            $('.select2-country').select2({
+                width: 'resolve',
+                placeholder: '-- Select Country --',
+                allowClear: true,
+                tags: true,
+                ajax: {
+                    url: '/Core/Boards/SearchCountries',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { q: params.term };
+                    },
+                    processResults: function (data) {
+                        return { results: data };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
+
+            $('.select2-country').on('select2:selecting', function (e) {
+                if (e.params.args.data.id === e.params.args.data.text) {
+                    var name = e.params.args.data.text;
+                    var $select = $(this);
+                    e.preventDefault();
+                    $.ajax({
+                        url: '/Core/Boards/CreateCountry',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ name: name }),
+                        success: function (result) {
+                            var option = new Option(result.text, result.id, true, true);
+                            $select.append(option).trigger('change');
+                        }
+                    });
+                }
+            });
         });
     </script>
 

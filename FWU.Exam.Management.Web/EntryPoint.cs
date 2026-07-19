@@ -174,6 +174,7 @@ public partial class EntryPoint
             builder.Services.AddScoped<IKhaltiService, KhaltiService>();
             builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
             builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
+            builder.Services.AddScoped<ICountryService, CountryService>();
             builder.Services.AddScoped<IPermissionService, PermissionService>();
             builder.Services.AddMemoryCache();
             builder.Services.AddAuthorization();
@@ -281,6 +282,16 @@ public partial class EntryPoint
             await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
             Console.WriteLine("[SEED] Grading seeded. Seeding locations...");
             await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Seeding countries...");
+            if (!await dbContext.Countries.AnyAsync())
+            {
+                dbContext.Countries.AddRange(
+                    new Country { CountryName = "Nepal", IsActive = true },
+                    new Country { CountryName = "India", IsActive = true }
+                );
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine("[SEED] Countries seeded.");
+            }
             Console.WriteLine("[SEED] All essential seeders complete.");
 
             Console.WriteLine("[SEED] Seeding super admin users...");

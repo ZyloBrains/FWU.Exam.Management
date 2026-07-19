@@ -8,6 +8,8 @@ public class Board
     public int Id { get; set; }
         public int CountryId { get; set; }
 
+    public virtual Country? Country { get; set; }
+
     [Required, MaxLength(50)]
     [Display(Name = "Board Name")]
     public string? BoardName { get; set; }
