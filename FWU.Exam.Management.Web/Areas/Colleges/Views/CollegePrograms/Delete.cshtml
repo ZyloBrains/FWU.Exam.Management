@@ -14,7 +14,7 @@
             <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-graduation-cap text-red-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Delete College Program</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Delete College Program</h1>
         </div>
     </div>
 
@@ -47,7 +47,7 @@
             <!-- Affiliation Date -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Affiliation Date</p>
-                <p class="text-gray-800 font-medium">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                <p class="text-gray-800 font-medium">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "ï¿½")</p>
             </div>
             <!-- Number of Students -->
             <div>
@@ -57,7 +57,7 @@
             <!-- Remarks -->
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</p>
-                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "—" : Model.Remarks)</p>
+                <p class="text-gray-800 font-medium">@(string.IsNullOrEmpty(Model.Remarks) ? "ï¿½" : Model.Remarks)</p>
             </div>
             <!-- Status -->
             <div>

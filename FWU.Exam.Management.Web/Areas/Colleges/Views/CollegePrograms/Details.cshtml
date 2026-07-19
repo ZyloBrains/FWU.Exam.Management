@@ -22,7 +22,7 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-graduation-cap text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">College Program Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">College Program Details</h1>
         </div>
     </div>
 
@@ -30,15 +30,15 @@
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <!-- College & Program Section -->
         <div class="mb-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">College & Program Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">College & Program Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">College</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">College</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.College.Name)</p>
                     <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.College.Code)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Program</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Program.ProgramName)</p>
                     <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.Program.ProgramCode)</p>
                 </div>
@@ -47,14 +47,14 @@
 
         <!-- Affiliation Details Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Affiliation Details</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Affiliation Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Affiliation Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Affiliation Date</p>
                     <p class="mt-1 text-gray-800">@(Model.AffiliationDate?.ToString("yyyy-MM-dd") ?? "�")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Number of Students</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Number of Students</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.NumberOfStudents.ToString("N0")</p>
                 </div>
             </div>
@@ -62,10 +62,10 @@
 
         <!-- Additional Information Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
             <div class="grid grid-cols-1 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Remarks</p>
                     <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "�" : Model.Remarks)</p>
                 </div>
             </div>
@@ -73,10 +73,10 @@
 
         <!-- Status Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
             <div class="grid grid-cols-1 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                     <div class="mt-1">
                         @if (Model.IsActive)
                         {

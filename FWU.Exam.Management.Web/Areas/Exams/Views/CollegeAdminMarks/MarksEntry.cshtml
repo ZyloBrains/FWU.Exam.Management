@@ -12,8 +12,8 @@
                 <i class="fas fa-arrow-left text-gray-600"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">@Model.SubjectName</h1>
-                <p class="text-sm text-gray-500">
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">@Model.SubjectName</h1>
+                <p class="text-xs sm:text-sm text-gray-500">
                     Theory: @Model.TheoryFullMarks marks | Pass: @Model.TheoryPassMarks
                     @if (Model.HasPractical) {
                         <span class="ml-2">Practical: @Model.PracticalFullMarks marks | Pass: @Model.PracticalPassMarks</span>
@@ -23,15 +23,15 @@
         </div>
         <div class="flex items-center gap-2">
             <a asp-action="MarksEntryExcel" asp-route-subjectOfferingId="@Model.SubjectOfferingId" asp-route-examScheduleId="@Model.ExamScheduleId"
-               class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+               class="px-4 py-2 bg-emerald-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors">
                 <i class="fas fa-table mr-1"></i> Excel View
             </a>
             <a asp-action="ExportTemplate" asp-route-subjectOfferingId="@Model.SubjectOfferingId" asp-route-examScheduleId="@Model.ExamScheduleId"
-               class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+               class="px-4 py-2 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                 <i class="fas fa-download mr-1"></i> Download Template
             </a>
             <a asp-action="Import" asp-route-subjectOfferingId="@Model.SubjectOfferingId" asp-route-examScheduleId="@Model.ExamScheduleId"
-               class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+               class="px-4 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
                 <i class="fas fa-upload mr-1"></i> Import Excel
             </a>
         </div>
@@ -162,7 +162,7 @@
         </div>
 
         <div class="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 mt-6">
-            <div class="text-sm text-gray-500">
+            <div class="text-xs sm:text-sm text-gray-500">
                 <span class="font-semibold text-gray-800">@Model.Students.Count</span> students
             </div>
             <div class="flex items-center gap-3">

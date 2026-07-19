@@ -13,78 +13,78 @@
             <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-clipboard-check text-emerald-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Result Record Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Result Record Details</h1>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-6">
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Student Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Student Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Student Name</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Student Name</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.StudentName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Symbol Number</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Symbol Number</p>
                     <p class="mt-1 text-gray-800">@Model.SymbolNumber</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Registration Number</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Registration Number</p>
                     <p class="mt-1 text-gray-800">@(Model.RegistrationNumber ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Date of Birth (BS)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Date of Birth (BS)</p>
                     <p class="mt-1 text-gray-800">@Model.DateOfBirthBs</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Sex</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Sex</p>
                     <p class="mt-1 text-gray-800">@(Model.Sex ?? "-")</p>
                 </div>
             </div>
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">College</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">College</p>
                     <p class="mt-1 text-gray-800">@Model.College?.Name</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Program</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
                     <p class="mt-1 text-gray-800">@Model.Program?.ProgramName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
                     <p class="mt-1 text-gray-800">@Model.AcademicYear?.AcademicYearName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Type</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
                     <p class="mt-1 text-gray-800">@Model.ExamType?.Name</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Year / Part</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Year / Part</p>
                     <p class="mt-1 text-gray-800">@Model.Year / @Model.Part</p>
                 </div>
             </div>
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Marks & Grades</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Marks & Grades</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Theory</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Theory</p>
                     <p class="mt-1 text-gray-800">@(Model.TheoryObtainedMarks ?? "-")</p>
                     <p class="text-xs text-gray-500">Grade: @(Model.TheoryObtainedGrade ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Internal</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Internal</p>
                     <p class="mt-1 text-gray-800">@(Model.InternalObtainedMarks ?? "-")</p>
                     <p class="text-xs text-gray-500">Grade: @(Model.InternalObtainedGrade ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Practical</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Practical</p>
                     <p class="mt-1 text-gray-800">@(Model.PracticalObtainedMarks ?? "-")</p>
                     <p class="text-xs text-gray-500">Grade: @(Model.PracticalObtainedGrade ?? "-")</p>
                 </div>
@@ -92,26 +92,26 @@
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Overall Result</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Overall Result</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Marks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Marks</p>
                     <p class="mt-1 text-gray-800 font-semibold">@(Model.TotalObtainedMarks ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Grade</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Grade</p>
                     <p class="mt-1 text-gray-800 font-semibold">@(Model.TotalObtainedGrade ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Grade Points</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Grade Points</p>
                     <p class="mt-1 text-gray-800">@(Model.TotalGradePoints ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">GPA</p>
-                    <p class="mt-1 text-2xl font-bold @(Model.Result == "Pass" ? "text-green-600" : "text-red-600")">@(Model.Gpa ?? "-")</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">GPA</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold @(Model.Result == "Pass" ? "text-green-600" : "text-red-600")">@(Model.Gpa ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Result</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Result</p>
                     <p class="mt-1">
                         @if (Model.Result == "Pass")
                         {

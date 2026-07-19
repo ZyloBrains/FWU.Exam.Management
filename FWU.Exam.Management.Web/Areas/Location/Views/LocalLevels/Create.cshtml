@@ -16,7 +16,7 @@
             <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-city text-teal-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create Local Level</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Local Level</h1>
         </div>
     </div>
 
@@ -27,14 +27,14 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="DistrictId" class="text-sm font-medium text-gray-700 block mb-1">District</label>
+                    <label asp-for="DistrictId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">District</label>
                     <select asp-for="DistrictId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" asp-items="ViewBag.DistrictId">
                         <option value="">-- Select District --</option>
                     </select>
                     <span asp-validation-for="DistrictId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="LocalLevelType" class="text-sm font-medium text-gray-700 block mb-1">Local Level Type <span class="text-red-500">*</span></label>
+                    <label asp-for="LocalLevelType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Local Level Type <span class="text-red-500">*</span></label>
                     <select asp-for="LocalLevelType" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                             asp-items="Html.GetEnumSelectList<LocalLevelType>()">
                         <option value="">-- Select Type --</option>
@@ -42,7 +42,7 @@
                     <span asp-validation-for="LocalLevelType" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label for="LocalLevelName" class="text-sm font-medium text-gray-700 block mb-1">LocalLevelName <span class="text-red-500">*</span></label>
+                    <label for="LocalLevelName" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">LocalLevelName <span class="text-red-500">*</span></label>
                     <input asp-for="LocalLevelName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Enter local level name" />
                     <span asp-validation-for="LocalLevelName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>

@@ -15,8 +15,8 @@
                 <i class="fas fa-layer-group text-indigo-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Marksheet</h1>
-                <p class="text-sm text-gray-500 mt-0.5">
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Marksheet</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
                     <span class="font-semibold text-gray-700">@totalCount</span> record@(totalCount != 1 ? "s" : "")
                 </p>
             </div>
@@ -82,7 +82,7 @@
                 </button>
                 <div class="flex items-center gap-2 shrink-0">
                     <button @@click="printScheduleId = @marksheet.ExamScheduleId; $nextTick(() => window.print())"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                         <i class="fas fa-print text-xs"></i> Print
                     </button>
                     <button @@click="expandedMarksheet = expandedMarksheet === '@msId' ? null : '@msId'"
@@ -136,11 +136,11 @@
                                     <tr class="hover:bg-gray-50/50 transition-colors @borderClass">
                                         <td class="px-5 py-2.5 text-xs text-gray-400">@rowIdx</td>
                                         <td class="px-4 py-2.5">
-                                            <div class="text-sm font-medium text-gray-800">@subject.SubjectName</div>
+                                            <div class="text-xs sm:text-sm font-medium text-gray-800">@subject.SubjectName</div>
                                             <div class="text-xs text-gray-400 font-mono">@subject.SubjectCode</div>
                                         </td>
-                                        <td class="px-4 py-2.5 text-center text-sm text-gray-700">@(subject.TheoryMarks?.ToString("N2") ?? "-")</td>
-                                        <td class="px-4 py-2.5 text-center text-sm text-gray-700">@(subject.PracticalMarks?.ToString("N2") ?? "-")</td>
+                                        <td class="px-4 py-2.5 text-center text-xs sm:text-sm text-gray-700">@(subject.TheoryMarks?.ToString("N2") ?? "-")</td>
+                                        <td class="px-4 py-2.5 text-center text-xs sm:text-sm text-gray-700">@(subject.PracticalMarks?.ToString("N2") ?? "-")</td>
                                         <td class="px-4 py-2.5 text-center text-sm font-semibold text-gray-800">@(subject.TotalMarks?.ToString("N2") ?? "-")</td>
                                         <td class="px-4 py-2.5 text-center">
                                             @if (subject.Status == "Pending")

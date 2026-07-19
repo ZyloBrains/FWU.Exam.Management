@@ -13,60 +13,60 @@
             <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-clipboard-list text-cyan-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Exam Registration Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Registration Details</h1>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-6">
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Registration Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Registration Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Schedule</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.ExamSchedule?.ExamScheduleName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">College</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">College</p>
                     <p class="mt-1 text-gray-800">@Model.College?.Name</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
                     <p class="mt-1 text-gray-800">@Model.AcademicYear?.AcademicYearName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Program</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
                     <p class="mt-1 text-gray-800">@Model.Program?.ProgramName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Center</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Center</p>
                     <p class="mt-1 text-gray-800">@(Model.ExamCenter != null ? "Center " + Model.ExamCenter.Code.ToString() : "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Roll Number</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Roll Number</p>
                     <p class="mt-1 text-gray-800">@(Model.ExamRollNumber ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Fee Enclosed</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Fee Enclosed</p>
                     <p class="mt-1 text-gray-800">@Model.FeeEnclosed?.ToString("N2")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Attendance %</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Attendance %</p>
                     <p class="mt-1 text-gray-800">@Model.AttendancePercentage?.ToString("N2")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Registration Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Registration Date</p>
                     <p class="mt-1 text-gray-800">@Model.RegistrationDate?.ToString("yyyy-MM-dd")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">SGPA</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">SGPA</p>
                     <p class="mt-1 text-gray-800">@(Model.Sgpa ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                     <p class="mt-1">@switch (Model.Status) { case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending: <span class="px-2.5 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">Pending</span> break; case FWU.Exam.Management.Domain.Enums.RegistrationStatus.CollegeVerified: <span class="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">College Verified</span> break; case FWU.Exam.Management.Domain.Enums.RegistrationStatus.AdminVerified: <span class="px-2.5 py-1 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">Admin Verified</span> break; case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered: <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Registered</span> break; case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Withheld: <span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Withheld</span> break; case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Rejected: <span class="px-2.5 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">Rejected</span> break; }</p>
                 </div>
                 <div class="md:col-span-2">
-                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Remarks</p>
                     <p class="mt-1 text-gray-800">@(Model.Remarks ?? "-")</p>
                 </div>
             </div>
@@ -75,7 +75,7 @@
         @if (Model.ExamSubjectResults != null && Model.ExamSubjectResults.Any())
         {
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Subject Results</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Subject Results</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left border-collapse">
                         <thead>

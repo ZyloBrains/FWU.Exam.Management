@@ -21,7 +21,7 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-book-open text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Program Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Program Details</h1>
         </div>
     </div>
 
@@ -29,26 +29,26 @@
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <!-- Basic Information Section -->
         <div class="mb-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Program Code</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program Code</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ProgramCode)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Short Name</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Short Name</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ShortName)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Program Name</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program Name</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ProgramName)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Roll Number Prefix</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Roll Number Prefix</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.RollNumberPrefix)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                     <div class="mt-1">
                         @if (Model.IsActive)
                         {
@@ -65,14 +65,14 @@
 
         <!-- Classification Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Classification</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Classification</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Level</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Level</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Level.LevelName)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Board</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Board</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Board.BoardName)</p>
                 </div>
             </div>
@@ -80,18 +80,18 @@
 
         <!-- Academic Details Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Duration (Years)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Duration (Years)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Duration)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Grand Total Marks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Grand Total Marks</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.GrandTotalMarks)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Has Multiple Intakes</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Has Multiple Intakes</p>
                     <p class="mt-1 text-gray-800">@(Model.HasMultipleIntakes ? "Yes" : "No")</p>
                 </div>
             </div>
@@ -99,14 +99,14 @@
 
         <!-- Seat Information Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Seat Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Seat Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Number of Seats</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Number of Seats</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.NumberOfSeats)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Scholarship Seats</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Scholarship Seats</p>
                     <p class="mt-1 text-gray-800 text-green-600 font-semibold">@Html.DisplayFor(model => model.ScholarshipSeats)</p>
                 </div>
             </div>
@@ -114,10 +114,10 @@
 
         <!-- Additional Information Section -->
         <div class="mb-6 pt-2">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
             <div class="grid grid-cols-1 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Remarks</p>
                     <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remarks) ? "�" : Model.Remarks)</p>
                 </div>
             </div>

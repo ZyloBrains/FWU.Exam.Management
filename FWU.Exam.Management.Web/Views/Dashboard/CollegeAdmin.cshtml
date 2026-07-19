@@ -12,8 +12,8 @@
                 <i class="fas fa-tachometer-alt text-green-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">College Admin Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Manage your college's programs, exams, and students</p>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">College Admin Dashboard</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Manage your college's programs, exams, and students</p>
             </div>
         </div>
         <div class="relative">
@@ -29,8 +29,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Colleges</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalColleges</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Colleges</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalColleges</p>
                     </div>
                     <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center"><i class="fas fa-school text-amber-600 text-xl"></i></div>
                 </div>
@@ -41,8 +41,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Programs</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalPrograms</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Programs</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalPrograms</p>
                     </div>
                     <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center"><i class="fas fa-graduation-cap text-indigo-600 text-xl"></i></div>
                 </div>
@@ -53,8 +53,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Students</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalStudents</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Students</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalStudents</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-user-graduate text-blue-600 text-xl"></i></div>
                 </div>
@@ -65,8 +65,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Exam Schedules</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamSchedules</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Exam Schedules</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamSchedules</p>
                     </div>
                     <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><i class="fas fa-calendar-alt text-orange-600 text-xl"></i></div>
                 </div>
@@ -79,25 +79,25 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Subjects</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalSubjects</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Subjects</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalSubjects</p></div>
                 <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center"><i class="fas fa-book text-teal-600"></i></div>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Exam Registrations</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamRegistrations</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Exam Registrations</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamRegistrations</p></div>
                 <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center"><i class="fas fa-clipboard-list text-cyan-600"></i></div>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Academic Years</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalAcademicYears</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Academic Years</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalAcademicYears</p></div>
                 <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center"><i class="fas fa-calendar text-pink-600"></i></div>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Batches</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalBatches</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Batches</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalBatches</p></div>
                 <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-gray-600"></i></div>
             </div>
         </div>
@@ -106,8 +106,8 @@
     <!-- Quick Actions -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">Quick Actions</h3>
-            <p class="text-sm text-gray-500 mt-1">Manage academic entities</p>
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800">Quick Actions</h3>
+            <p class="text-xs sm:text-sm text-gray-500 mt-1">Manage academic entities</p>
         </div>
         <div class="p-6">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">

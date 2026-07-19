@@ -12,7 +12,7 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Retotal Request Details</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Request #@Model.Id</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Request #@Model.Id</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -20,12 +20,12 @@
             {
                 <form method="post" asp-action="MarkUnderReview" asp-area="Exams" asp-route-id="@Model.Id" style="display:inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fas fa-search"></i> Mark Under Review
                     </button>
                 </form>
             }
-            <a asp-action="Index" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+            <a asp-action="Index" asp-area="Exams" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -41,11 +41,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-gray-800">Request Information</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Request Information</h2>
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Status</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Status</label>
                     <p class="mt-1">
                         @{
                             var statusColor = Model.Status switch
@@ -62,44 +62,44 @@
                     </p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Requested Date</label>
-                    <p class="mt-1 text-sm text-gray-900">@Model.RequestedDate.ToString("yyyy-MM-dd HH:mm")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Requested Date</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@Model.RequestedDate.ToString("yyyy-MM-dd HH:mm")</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Reason</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.Reason ?? "Not specified")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Reason</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.Reason ?? "Not specified")</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Fee Amount</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.FeeAmount?.ToString("N2") ?? "-")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Fee Amount</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.FeeAmount?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Fee Paid</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.FeePaid ? "Yes" : "No")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Fee Paid</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.FeePaid ? "Yes" : "No")</p>
                 </div>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-gray-800">Student & Subject</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Student & Subject</h2>
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Student Name</label>
-                    <p class="mt-1 text-sm text-gray-900">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Student Name</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">
                         @(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}" : "-")
                     </p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Subject</label>
-                    <p class="mt-1 text-sm text-gray-900">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Subject</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">
                         @(Model.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "-")
                     </p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Exam Schedule</label>
-                    <p class="mt-1 text-sm text-gray-900">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Exam Schedule</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">
                         @(Model.ExamRegistration?.ExamSchedule?.ExamScheduleName ?? "-")
                     </p>
                 </div>
@@ -108,51 +108,51 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-gray-800">Original Result</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Original Result</h2>
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Original Grade</label>
-                    <p class="mt-1 text-sm text-gray-900 font-semibold">@(Model.OriginalGradeLetter ?? "-")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Original Grade</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900 font-semibold">@(Model.OriginalGradeLetter ?? "-")</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Original Marks</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.OriginalObtainedMarks?.ToString("N2") ?? "-")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Original Marks</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.OriginalObtainedMarks?.ToString("N2") ?? "-")</p>
                 </div>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-gray-800">Re-evaluation Result</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Re-evaluation Result</h2>
             </div>
             <div class="p-6 space-y-4">
                 @if (Model.Status == FWU.Exam.Management.Domain.Enums.RetotalStatus.Approved || Model.Status == FWU.Exam.Management.Domain.Enums.RetotalStatus.Completed)
                 {
                     <div>
-                        <label class="block text-sm font-medium text-gray-500">Revised Grade</label>
-                        <p class="mt-1 text-sm text-gray-900 font-semibold">@(Model.RetotalledGradeLetter ?? "-")</p>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-500">Revised Grade</label>
+                        <p class="mt-1 text-xs sm:text-sm text-gray-900 font-semibold">@(Model.RetotalledGradeLetter ?? "-")</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-500">Revised Marks</label>
-                        <p class="mt-1 text-sm text-gray-900">@(Model.RetotalledObtainedMarks?.ToString("N2") ?? "-")</p>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-500">Revised Marks</label>
+                        <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.RetotalledObtainedMarks?.ToString("N2") ?? "-")</p>
                     </div>
                 }
                 else
                 {
-                    <p class="text-sm text-gray-500 italic">Not yet evaluated.</p>
+                    <p class="text-xs sm:text-sm text-gray-500 italic">Not yet evaluated.</p>
                 }
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Reviewed By</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.ReviewedByUsername ?? "-")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Reviewed By</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.ReviewedByUsername ?? "-")</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Reviewed Date</label>
-                    <p class="mt-1 text-sm text-gray-900">@Model.ReviewedDate?.ToString("yyyy-MM-dd HH:mm")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Reviewed Date</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@Model.ReviewedDate?.ToString("yyyy-MM-dd HH:mm")</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Admin Remarks</label>
-                    <p class="mt-1 text-sm text-gray-900">@(Model.AdminRemarks ?? "None")</p>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500">Admin Remarks</label>
+                    <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.AdminRemarks ?? "None")</p>
                 </div>
             </div>
         </div>
@@ -161,35 +161,35 @@
     @if (Model.Status == FWU.Exam.Management.Domain.Enums.RetotalStatus.UnderReview && User.IsInRole(Role.FacultyAdmin))
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Review Decision</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800 mb-4">Review Decision</h2>
             <form method="post" asp-action="Approve" asp-area="Exams" asp-route-id="@Model.Id" class="space-y-4">
                 @Html.AntiForgeryToken()
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Revised Grade Letter</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Revised Grade Letter</label>
                         <input type="text" name="retotalledGradeLetter" maxlength="3"
                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="e.g. B+" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Revised Marks</label>
+                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Revised Marks</label>
                         <input type="number" name="retotalledMarks" step="0.01"
                                class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="e.g. 75" />
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Admin Remarks</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Admin Remarks</label>
                     <textarea name="adminRemarks" rows="2" maxlength="255"
                               class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="Add remarks about the re-evaluation..."></textarea>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button type="submit" class="px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                    <button type="submit" class="px-4 py-2.5 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
                         <i class="fas fa-check"></i> Approve
                     </button>
                     <button type="submit" formaction="@Url.Action("Reject", "RetotalRequests", new { id = Model.Id })" formmethod="post"
-                            class="px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                            class="px-4 py-2.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
                         <i class="fas fa-times"></i> Reject
                     </button>
                 </div>

@@ -13,72 +13,72 @@
             <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-check-double text-teal-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Subject Result Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Subject Result Details</h1>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-6">
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Result Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Result Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Registration</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Registration</p>
                     <p class="mt-1 text-gray-800 font-semibold">Reg #@Model.ExamRegistrationId</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Subject</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Subject</p>
                     <p class="mt-1 text-gray-800">@Model.SubjectOffering?.SubjectCatalog?.SubjectName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Type</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
                     <p class="mt-1 text-gray-800">@Model.ExamType?.Name</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Schedule</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Schedule</p>
                     <p class="mt-1 text-gray-800">@Model.ExamSchedule?.ExamScheduleName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Theory Marks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Theory Marks</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheory?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Theory (Confirm)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Theory (Confirm)</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheoryConfirm?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Practical Marks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Practical Marks</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPractical?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Practical (Confirm)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Practical (Confirm)</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPracticalConfirm?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Theory Internal</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Theory Internal</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarksTheoryInternal?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Practical Internal</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Practical Internal</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarksPracticalInternal?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Total Marks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Marks</p>
                     <p class="mt-1 text-gray-800">@(Model.ObtainedMarks?.ToString("N2") ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Grade Letter</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Grade Letter</p>
                     <p class="mt-1 text-gray-800 font-semibold">@(Model.GradeLetter ?? "-")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Submitted</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Submitted</p>
                     <p class="mt-1">@if (Model.IsSubmitted) { <span class="text-green-600"><i class="fas fa-check-circle"></i> Yes</span> } else { <span class="text-gray-400"><i class="fas fa-clock"></i> No</span> }</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Active</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Active</p>
                     <p class="mt-1">@if (Model.IsActive) { <span class="text-green-600">Yes</span> } else { <span class="text-red-600">No</span> }</p>
                 </div>
                 <div class="md:col-span-2">
-                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Remarks</p>
                     <p class="mt-1 text-gray-800">@(Model.Remarks ?? "-")</p>
                 </div>
             </div>

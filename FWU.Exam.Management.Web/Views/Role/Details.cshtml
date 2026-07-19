@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-shield-alt text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Role Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Role Details</h1>
         </div>
     </div>
 
@@ -23,21 +23,21 @@
                 <i class="fas fa-shield-alt text-purple-600 text-sm"></i>
             </div>
             <div>
-                <div class="text-sm text-gray-500">Role Name</div>
+                <div class="text-xs sm:text-sm text-gray-500">Role Name</div>
                 <span class="font-semibold text-gray-800">@Model.Name</span>
             </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-1">
-            <span class="text-sm font-medium text-gray-500 sm:w-36 shrink-0">ID</span>
-            <span class="text-sm text-gray-800 font-mono">@Model.Id</span>
+            <span class="text-xs sm:text-sm font-medium text-gray-500 sm:w-36 shrink-0">ID</span>
+            <span class="text-xs sm:text-sm text-gray-800 font-mono">@Model.Id</span>
         </div>
     </div>
 
     <div class="flex items-center gap-3">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="px-5 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
             <i class="fas fa-edit mr-1"></i> Edit
         </a>
-        <a asp-action="Index" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+        <a asp-action="Index" class="px-5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
             Back to List
         </a>
     </div>

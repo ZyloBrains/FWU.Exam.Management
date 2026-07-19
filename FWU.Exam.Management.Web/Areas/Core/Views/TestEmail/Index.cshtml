@@ -17,10 +17,10 @@
     {
         <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
             <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+            <div class="text-xs sm:text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
         </div>
     }
-            <h1 class="text-2xl font-bold text-gray-800">Send Test Email</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Send Test Email</h1>
         </div>
     </div>
 
@@ -39,17 +39,17 @@
 
             <div class="grid grid-cols-1 gap-5">
                 <div>
-                    <label asp-for="ToEmail" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="ToEmail" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="ToEmail" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="recipient@example.com" />
                     <span asp-validation-for="ToEmail" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Subject" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="Subject" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="Subject" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Email subject" />
                     <span asp-validation-for="Subject" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Body" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="Body" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <textarea asp-for="Body" rows="10" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono" placeholder="HTML body content"></textarea>
                     <span asp-validation-for="Body" class="text-xs text-red-500 mt-1 block"></span>
                 </div>

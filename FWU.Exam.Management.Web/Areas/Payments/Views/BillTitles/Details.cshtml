@@ -21,30 +21,30 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-file-invoice-dollar text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Bill Title Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Bill Title Details</h1>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <p class="text-sm font-medium text-gray-600">Bill Title Name</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Bill Title Name</p>
                 <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.BillTitleName)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Category</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Category</p>
                 <p class="mt-1 text-gray-800">@(Model.Category ?? "-")</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Amount</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Amount</p>
                 <p class="mt-1 text-gray-800">@(Model.Amount?.ToString("N2") ?? "-")</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Practical Fee</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Practical Fee</p>
                 <p class="mt-1 text-gray-800">@(Model.PracticalFee?.ToString("N2") ?? "-")</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Status</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                 <p class="mt-1">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(Model.IsActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600")">
                         @(Model.IsActive ? "Active" : "Inactive")
@@ -52,15 +52,15 @@
                 </p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Applicable Date</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Applicable Date</p>
                 <p class="mt-1 text-gray-800">@(Model.ApplicableDate?.ToString("yyyy-MM-dd") ?? "-")</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Through Date</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Through Date</p>
                 <p class="mt-1 text-gray-800">@(Model.ThroughDate?.ToString("yyyy-MM-dd") ?? "-")</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Exam Schedule / Program</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule / Program</p>
                 <p class="mt-1 text-gray-800">@(Model.ExamSchedule?.ExamScheduleName ?? Model.Program?.ProgramName ?? "-")</p>
             </div>
         </div>
