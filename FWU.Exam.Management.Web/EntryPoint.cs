@@ -247,7 +247,9 @@ public partial class EntryPoint
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Console.WriteLine("[SEED] Running migrations...");
             await dbContext.Database.MigrateAsync();
+            Console.WriteLine("[SEED] Migrations complete.");
 
             if (!await dbContext.Tenants.AnyAsync())
             {
@@ -262,55 +264,63 @@ public partial class EntryPoint
                     IsActive = true,
                 });
                 await dbContext.SaveChangesAsync();
+                Console.WriteLine("[SEED] Tenant created.");
             }
 
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             var centralTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
             tenantContext.SetTenant(centralTenant.Id, centralTenant.OfficeCode, centralTenant.TenantType);
 
-            tenantContext.SetTenant(1, "SEED", TenantType.Central);
+            Console.WriteLine("[SEED] Seeding roles...");
+            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Roles seeded. Seeding permissions...");
+            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Permissions seeded. Seeding grading...");
+            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Grading seeded. Seeding locations...");
+            await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] All essential seeders complete.");
 
-            if (app.Environment.IsDevelopment())
-            {
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Seeding super admin users...");
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Super admin users seeded.");
 
-                var refreshedTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
-                tenantContext.SetTenant(refreshedTenant.Id, refreshedTenant.OfficeCode, refreshedTenant.TenantType);
-
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-
-                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-
-                await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
-
-                await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-                await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
-
-                await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
-
-                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-
-                await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
-
-                await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
-
-                await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
-            }
-            else
-            {
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-            }
+            // ===== DATA SEEDERS COMMENTED OUT FOR TESTING/PRODUCTION =====
+            // Uncomment when reference/demo data is needed.
+            //
+            // if (app.Environment.IsDevelopment())
+            // {
+            //     var refreshedTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
+            //     tenantContext.SetTenant(refreshedTenant.Id, refreshedTenant.OfficeCode, refreshedTenant.TenantType);
+            //
+            //     await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            //
+            //     await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+            //     await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+            //     await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+            //
+            //     await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            //     await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+            //
+            //     await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+            //
+            //     await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            //
+            //     await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            //     await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            //     await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            //     await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            //     await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
+            //
+            //     await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+            //
+            //     await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
+            // }
+            // else
+            // {
+            //     await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            //     await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            // }
         }
 
             //             // Log.Information("FWU Examination Management System starting up...");
@@ -318,7 +328,8 @@ public partial class EntryPoint
         }
         catch (Exception ex)
         {
-            //             // Log.Fatal(ex, "Application terminated unexpectedly");
+            Console.WriteLine($"[SEED] FATAL: {ex.Message}");
+            Console.WriteLine($"[SEED] {ex.StackTrace}");
         }
         finally
         {
