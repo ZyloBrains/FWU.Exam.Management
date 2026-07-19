@@ -7,7 +7,7 @@
 
 <div class="container mx-auto px-4 py-6">
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold">
+        <h1 class="text-xl sm:text-2xl font-bold">
             <i class="fas fa-shield-alt mr-2"></i>Permissions for <span class="text-indigo-600">@Model.RoleName</span>
         </h1>
         <a asp-action="Index" class="text-gray-600 hover:text-gray-900">
@@ -67,7 +67,7 @@
             {
                 <div class="bg-white rounded-lg shadow overflow-hidden perm-group" data-group="@group.GroupName">
                     <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-700">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-700">
                             <i class="fas fa-folder-open mr-2 text-indigo-500"></i><span class="group-name">@group.GroupDisplayName</span>
                             <span class="text-sm font-normal text-gray-400 ml-2 group-count">(@group.Permissions.Count)</span>
                         </h3>
@@ -96,7 +96,7 @@
                                            class="perm-checkbox mt-1 rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                                            data-group="@group.GroupName" />
                                     <div class="ml-3">
-                                        <span class="text-sm font-medium text-gray-700">@perm.DisplayName</span>
+                                        <span class="text-xs sm:text-sm font-medium text-gray-700">@perm.DisplayName</span>
                                         @if (!string.IsNullOrEmpty(perm.Description))
                                         {
                                             <p class="text-xs text-gray-500">@perm.Description</p>

@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Academic";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-graduation-cap text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Academic</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Student portal - profile, exams, marksheet and payments</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a asp-area="Students" asp-controller="StudentDashboard" asp-action="Profile" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <i class="fas fa-user text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Profile</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">View and edit student profile</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Students" asp-controller="StudentDashboard" asp-action="ExamForms" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-file-invoice text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Forms</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">View and submit exam forms</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Students" asp-controller="StudentDashboard" asp-action="Marksheet" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-file-alt text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Marksheet</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">View marksheet and grades</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Students" asp-controller="StudentDashboard" asp-action="PayExamFee" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <i class="fas fa-credit-card text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Payment</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Pay exam fees online</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Students" asp-controller="StudentDashboard" asp-action="RetotalRequests" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                    <i class="fas fa-redo-alt text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Re-evaluation</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Request retotaling of marks</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "Examination";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-file-alt text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Examination</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Manage exam schedules, types, registrations and more</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Schedules</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage examination schedules</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="ExamTypes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-list-alt text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Types</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage examination types</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="Entrance" asp-action="ManageSchedule" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-calendar-plus text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Entrance Schedule</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage entrance exam schedules</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="GradingSchemes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <i class="fas fa-percentage text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Grading Schemes</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage grading schemes</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                    <i class="fas fa-clipboard-list text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Registrations</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage exam registration records</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="ExamCenters" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                    <i class="fas fa-map-marker-alt text-teal-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Centers</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage examination centers</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <i class="fas fa-people-arrows text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Center Distribution</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage center distribution</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors">
+                    <i class="fas fa-ticket-alt text-pink-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Admit Cards</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Generate and manage admit cards</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Exams" asp-controller="CollegeAdminMarks" asp-action="Dashboard" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
+                    <i class="fas fa-table text-cyan-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Marks Entry</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage exam marks</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

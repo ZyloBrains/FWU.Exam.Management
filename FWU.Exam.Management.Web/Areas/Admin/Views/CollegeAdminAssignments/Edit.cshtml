@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-user-tie text-purple-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Edit College Admin Assignment</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Edit College Admin Assignment</h1>
         </div>
     </div>
 
@@ -24,20 +24,20 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="CollegeAdminUserId" class="text-sm font-medium text-gray-700 block mb-1">College Admin <span class="text-red-500">*</span></label>
+                    <label asp-for="CollegeAdminUserId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">College Admin <span class="text-red-500">*</span></label>
                     <select asp-for="CollegeAdminUserId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.CollegeAdminUserId">
                         <option value="">-- Select College Admin --</option>
                     </select>
                     <span asp-validation-for="CollegeAdminUserId" class="text-sm text-red-600"></span>
                 </div>
                 <div>
-                    <label asp-for="ExamScheduleId" class="text-sm font-medium text-gray-700 block mb-1">Exam Schedule (Optional)</label>
+                    <label asp-for="ExamScheduleId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Exam Schedule (Optional)</label>
                     <select asp-for="ExamScheduleId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500" asp-items="ViewBag.ExamScheduleId">
                         <option value="">-- All Schedules --</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="SubjectOfferingId" class="text-sm font-medium text-gray-700 block mb-1">Subject <span class="text-red-500">*</span></label>
+                    <label asp-for="SubjectOfferingId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject <span class="text-red-500">*</span></label>
                     <select asp-for="SubjectOfferingId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500">
                         <option value="">-- Select Subject --</option>
                     </select>
@@ -45,7 +45,7 @@
                 </div>
                 <div class="flex items-center gap-3 pt-4">
                     <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
-                    <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
                 </div>
             </div>
 

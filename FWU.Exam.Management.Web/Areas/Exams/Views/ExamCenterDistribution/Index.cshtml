@@ -15,11 +15,11 @@
     {
         <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
             <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+            <div class="text-xs sm:text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
         </div>
     }
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Center Distribution</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Assign students to exam centers by symbol number ranges.</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Assign students to exam centers by symbol number ranges.</p>
             </div>
         </div>
     </div>
@@ -27,7 +27,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-4 items-end">
             <div class="flex-1 w-full">
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Select Exam Schedule</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Select Exam Schedule</label>
                 <select name="examScheduleId" class="select2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Select Schedule --</option>
                     @if (ViewData["ExamScheduleId"] is SelectList scheduleList)
@@ -39,7 +39,7 @@
                     }
                 </select>
             </div>
-            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-search mr-1"></i> Load
             </button>
         </form>
@@ -49,28 +49,28 @@
     {
         <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold text-gray-800">@Model.TotalRegistrations</div>
-                <div class="text-sm text-gray-500 mt-1">Total Registrations</div>
+                <div class="text-xl sm:text-2xl font-bold text-gray-800">@Model.TotalRegistrations</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Total Registrations</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold text-green-600">@Model.AssignedCount</div>
-                <div class="text-sm text-gray-500 mt-1">Assigned to Centers</div>
+                <div class="text-xl sm:text-2xl font-bold text-green-600">@Model.AssignedCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Assigned to Centers</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold text-amber-600">@Model.UnassignedCount</div>
-                <div class="text-sm text-gray-500 mt-1">Not Yet Assigned</div>
+                <div class="text-xl sm:text-2xl font-bold text-amber-600">@Model.UnassignedCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Not Yet Assigned</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold @(Model.SymbolNumbersAssigned ? "text-green-600" : "text-red-600")">
+                <div class="text-xl sm:text-2xl font-bold @(Model.SymbolNumbersAssigned ? "text-green-600" : "text-red-600")">
                     @(Model.SymbolNumbersAssigned ? "Yes" : "No")
                 </div>
-                <div class="text-sm text-gray-500 mt-1">Symbol Numbers Assigned</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Symbol Numbers Assigned</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold @(Model.RollNumbersAssigned ? "text-green-600" : "text-red-600")">
+                <div class="text-xl sm:text-2xl font-bold @(Model.RollNumbersAssigned ? "text-green-600" : "text-red-600")">
                     @(Model.RollNumbersAssigned ? Model.RollNumberCount.ToString() : "No")
                 </div>
-                <div class="text-sm text-gray-500 mt-1">Roll Numbers</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Roll Numbers</div>
             </div>
         </div>
 
@@ -78,8 +78,8 @@
         {
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
                 <i class="fas fa-hashtag text-4xl text-blue-300 mb-4"></i>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">Assign Symbol Numbers</h3>
-                <p class="text-sm text-gray-500 mb-4">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-2">Assign Symbol Numbers</h3>
+                <p class="text-xs sm:text-sm text-gray-500 mb-4">
                     Generate symbol numbers for all @Model.TotalRegistrations registered students based on their faculty and registration number.
                 </p>
                 <form method="post" asp-action="AssignSymbolNumbers" asp-area="Exams">
@@ -95,19 +95,19 @@
         {
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Configure Symbol Number Ranges</h3>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800">Configure Symbol Number Ranges</h3>
                     <div class="flex gap-2">
                         <form method="post" asp-action="DistributeStudents" asp-area="Exams" class="inline" onsubmit="return confirm('Distribute students to centers based on the defined ranges?');">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
-                            <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
                                 <i class="fas fa-share-alt mr-1"></i> Distribute Students
                             </button>
                         </form>
                         <form method="post" asp-action="ResetDistribution" asp-area="Exams" class="inline" onsubmit="return confirm('Reset all student-to-center assignments?');">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
-                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
                                 <i class="fas fa-undo mr-1"></i> Reset
                             </button>
                         </form>
@@ -180,7 +180,7 @@
                         {
                             <div class="text-center py-8">
                                 <i class="fas fa-map-marker-alt text-3xl text-gray-300 mb-3"></i>
-                                <p class="text-sm text-gray-500">No exam centers found for this schedule. Create exam centers first.</p>
+                                <p class="text-xs sm:text-sm text-gray-500">No exam centers found for this schedule. Create exam centers first.</p>
                                 <a asp-action="Create" asp-controller="ExamCenters" asp-area="Exams" class="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-700">
                                     <i class="fas fa-plus"></i> Create Exam Center
                                 </a>
@@ -203,8 +203,8 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-800">Exam Roll Numbers</h3>
-                    <p class="text-sm text-gray-500 mt-1">Generate roll numbers in format: AcademicYear + Sequence (e.g., 20820001)</p>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800">Exam Roll Numbers</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Generate roll numbers in format: AcademicYear + Sequence (e.g., 20820001)</p>
                 </div>
                 <div class="flex gap-2">
                     @if (!Model.RollNumbersAssigned)
@@ -212,7 +212,7 @@
                         <form method="post" asp-action="GenerateRollNumbers" asp-area="Exams" class="inline" onsubmit="return confirm('Generate roll numbers for all registered students?');">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
-                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors">
                                 <i class="fas fa-hashtag mr-1"></i> Generate Roll Numbers
                             </button>
                         </form>
@@ -222,7 +222,7 @@
                         <form method="post" asp-action="ClearRollNumbers" asp-area="Exams" class="inline" onsubmit="return confirm('Clear all roll numbers? This cannot be undone.');">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
-                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
                                 <i class="fas fa-undo mr-1"></i> Clear Roll Numbers
                             </button>
                         </form>
@@ -238,7 +238,7 @@
                             <i class="fas fa-check text-green-600"></i>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-green-800">Roll numbers have been generated for @Model.RollNumberCount students.</p>
+                            <p class="text-xs sm:text-sm font-medium text-green-800">Roll numbers have been generated for @Model.RollNumberCount students.</p>
                             <p class="text-xs text-green-600 mt-0.5">Format: Academic Year (BS) + Sequential Number (e.g., 20820001)</p>
                         </div>
                     </div>
@@ -252,7 +252,7 @@
                             <i class="fas fa-exclamation-triangle text-amber-600"></i>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-amber-800">Roll numbers have not been generated yet.</p>
+                            <p class="text-xs sm:text-sm font-medium text-amber-800">Roll numbers have not been generated yet.</p>
                             <p class="text-xs text-amber-600 mt-0.5">Click "Generate Roll Numbers" to assign roll numbers to all @Model.TotalRegistrations registered students.</p>
                         </div>
                     </div>

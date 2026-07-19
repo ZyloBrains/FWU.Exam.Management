@@ -13,8 +13,8 @@
             <i class="fas fa-pen-nib text-indigo-600"></i>
         </div>
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Controller Signature</h1>
-            <p class="text-sm text-gray-500">@Model.Name (@Model.OfficeCode)</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Controller Signature</h1>
+            <p class="text-xs sm:text-sm text-gray-500">@Model.Name (@Model.OfficeCode)</p>
         </div>
     </div>
 
@@ -39,10 +39,10 @@
                         <img src="" id="signaturePreviewImg" class="w-full h-full object-contain p-2 hidden" alt="Preview" />
                     </div>
 
-                    <p class="text-sm font-medium text-gray-700">Controller of Examinations</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-700">Controller of Examinations</p>
                     <p class="text-xs text-gray-400 mt-0.5">PNG, JPG. Max 5 MB</p>
 
-                    <label class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer transition-colors shadow-sm">
+                    <label class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer transition-colors shadow-sm">
                         <i class="fas fa-upload"></i>
                         Choose File
                         <input type="file" name="signature" accept="image/*" class="hidden" onchange="previewFile(this)" />
@@ -53,7 +53,7 @@
                     <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
                         <i class="fas fa-save mr-1"></i> Save Signature
                     </button>
-                    <a asp-action="Index" class="px-6 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition">
+                    <a asp-action="Index" class="px-6 py-2 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition">
                         Cancel
                     </a>
                 </div>
