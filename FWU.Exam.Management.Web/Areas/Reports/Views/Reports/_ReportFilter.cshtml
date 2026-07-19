@@ -1,0 +1,53 @@
+@model ReportFilterViewModel
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <form asp-action="@ViewContext.RouteData.Values["action"]" method="get" class="space-y-4">
+        <input type="hidden" name="reportTitle" value="@Model.ReportTitle" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+                <label asp-for="AcademicYearId" class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select asp-for="AcademicYearId" asp-items="@(ViewBag.AcademicYearId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">-- All Academic Years --</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="ExamScheduleId" class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select asp-for="ExamScheduleId" asp-items="@(ViewBag.ExamScheduleId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">-- All Exam Schedules --</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="ProgramId" class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select asp-for="ProgramId" asp-items="@(ViewBag.ProgramId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">-- All Programs --</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="CollegeId" class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select asp-for="CollegeId" asp-items="@(ViewBag.CollegeId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">-- All Colleges --</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="SemesterId" class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select asp-for="SemesterId" asp-items="@(ViewBag.SemesterId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">-- All Semesters --</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="ExamTypeId" class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select asp-for="ExamTypeId" asp-items="@(ViewBag.ExamTypeId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">-- All Exam Types --</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                <i class="fas fa-search text-xs"></i> Generate Report
+            </button>
+            <a asp-action="Index" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                <i class="fas fa-times text-xs"></i> Clear
+            </a>
+        </div>
+    </form>
+</div>
