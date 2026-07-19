@@ -346,18 +346,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task<List<SelectOption>> GetFacultiesByLevelAsync(int levelId)
     {
-        var collegeIds = await context.Programs
-            .Where(p => p.LevelId == levelId)
-            .Join(context.CollegePrograms, p => p.Id, cp => cp.ProgramId, (p, cp) => cp.CollegeId)
-            .Distinct()
-            .ToListAsync();
-
-        if (collegeIds.Count == 0) return [];
-
-        return await context.Colleges
-            .Where(c => collegeIds.Contains(c.Id))
-            .SelectMany(c => c.Faculties)
-            .Select(f => new SelectOption { Id = f.Id, Name = f.Name })
+        return await context.Programs
+            .Where(p => p.LevelId == levelId && p.FacultyId != null)
+            .Include(p => p.Faculty)
+            .Select(p => new SelectOption { Id = p.Faculty!.Id, Name = p.Faculty.Name! })
             .Distinct()
             .AsNoTracking()
             .ToListAsync();
