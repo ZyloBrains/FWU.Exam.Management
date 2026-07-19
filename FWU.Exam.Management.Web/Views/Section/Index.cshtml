@@ -1,0 +1,44 @@
+@model List<SectionCardViewModel>
+@{
+    ViewData["Title"] = "All Sections";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-th-large text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">All Sections</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Navigate to any module in the system</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        @foreach (var section in Model)
+        {
+            <a href="@section.Url" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 @section.BgColor rounded-lg flex items-center justify-center @section.HoverBgColor transition-colors">
+                        <i class="@section.Icon @section.IconColor text-xl"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors truncate">@section.Title</h3>
+                        <p class="text-xs sm:text-sm text-gray-500 truncate">@section.Description</p>
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-16">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-lock text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-600">No sections available</h3>
+            <p class="text-sm text-gray-400 mt-1">You don't have access to any modules yet.</p>
+        </div>
+    }
+</div>
