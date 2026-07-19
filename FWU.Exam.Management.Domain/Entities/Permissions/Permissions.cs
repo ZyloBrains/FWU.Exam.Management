@@ -32,6 +32,7 @@ public static class Permissions
     public const string GroupNotices = "notices";
     public const string GroupBoards = "boards";
     public const string GroupLevels = "levels";
+    public const string GroupGenders = "genders";
     public const string GroupSmtp = "smtp";
     public const string GroupSms = "sms";
     public const string GroupESewa = "esewa";
@@ -233,6 +234,12 @@ public static class Permissions
     public const string LevelsCreate = "levels.create";
     public const string LevelsEdit = "levels.edit";
     public const string LevelsDelete = "levels.delete";
+
+    // Genders
+    public const string GendersView = "genders.view";
+    public const string GendersCreate = "genders.create";
+    public const string GendersEdit = "genders.edit";
+    public const string GendersDelete = "genders.delete";
 
     // SMTP
     public const string SmtpView = "smtp.view";
@@ -493,6 +500,11 @@ public static class Permissions
         (LevelsEdit, "Edit Levels", GroupLevels, "Edit existing levels"),
         (LevelsDelete, "Delete Levels", GroupLevels, "Delete levels"),
 
+        (GendersView, "View Genders", GroupGenders, "View gender list"),
+        (GendersCreate, "Create Genders", GroupGenders, "Create new genders"),
+        (GendersEdit, "Edit Genders", GroupGenders, "Edit existing genders"),
+        (GendersDelete, "Delete Genders", GroupGenders, "Delete genders"),
+
         (SmtpView, "View SMTP Config", GroupSmtp, "View SMTP configuration"),
         (SmtpCreate, "Create SMTP Config", GroupSmtp, "Create new SMTP configuration"),
         (SmtpEdit, "Edit SMTP Config", GroupSmtp, "Edit SMTP configuration"),
@@ -641,6 +653,7 @@ public static class Permissions
 
             NoticesView, NoticesCreate, NoticesEdit, NoticesDelete,
             BoardsView, BoardsCreate, BoardsEdit, BoardsDelete,
+            GendersView, GendersCreate, GendersEdit, GendersDelete,
 
             SmsView, SmsCreate, SmsEdit, SmsDelete,
 
