@@ -505,20 +505,18 @@
             // Province -> District
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
-                $("#DistrictId").empty().append('<option value="">Select District</option>');
-                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
                 loadDistricts(provinceId, null, function () {
                     if (window._addrPendingDistrictId) {
                         $("#DistrictId").val(window._addrPendingDistrictId).trigger('change');
                         window._addrPendingDistrictId = null;
                     }
                 });
+                loadLocalLevels(null, null, function () {});
             });
 
             // District -> LocalLevel
             $("#DistrictId").change(function () {
                 var districtId = $(this).val();
-                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
                 loadLocalLevels(districtId, null, function () {
                     if (window._addrPendingLocalLevelId) {
                         $("#LocalLevelId").val(window._addrPendingLocalLevelId).trigger('change');
