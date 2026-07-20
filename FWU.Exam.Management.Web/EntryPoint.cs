@@ -148,6 +148,8 @@ public partial class EntryPoint
             builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
             builder.Services.AddScoped<IProgramService, ProgramService>();
             builder.Services.AddScoped<ILevelService, LevelService>();
+            builder.Services.AddScoped<IGenderService, GenderService>();
+            builder.Services.AddScoped<IEthnicityService, EthnicityService>();
             builder.Services.AddScoped<INoticeService, NoticeService>();
             builder.Services.AddScoped<ICollegeTypeService, CollegeTypeService>();
             builder.Services.AddScoped<ISubjectTypeService, SubjectTypeService>();
@@ -172,6 +174,7 @@ public partial class EntryPoint
             builder.Services.AddScoped<IKhaltiService, KhaltiService>();
             builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
             builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
+            builder.Services.AddScoped<ICountryService, CountryService>();
             builder.Services.AddScoped<IPermissionService, PermissionService>();
             builder.Services.AddMemoryCache();
             builder.Services.AddAuthorization();
@@ -247,7 +250,9 @@ public partial class EntryPoint
         using (var scope = app.Services.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Console.WriteLine("[SEED] Running migrations...");
             await dbContext.Database.MigrateAsync();
+            Console.WriteLine("[SEED] Migrations complete.");
 
             if (!await dbContext.Tenants.AnyAsync())
             {
@@ -278,20 +283,25 @@ public partial class EntryPoint
             var centralTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
             tenantContext.SetTenant(centralTenant.Id, centralTenant.OfficeCode, centralTenant.TenantType);
 
-            tenantContext.SetTenant(1, "SEED", TenantType.Central);
-
-            if (app.Environment.IsDevelopment())
+            Console.WriteLine("[SEED] Seeding roles...");
+            await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Roles seeded. Seeding permissions...");
+            await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Permissions seeded. Seeding grading...");
+            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Grading seeded. Seeding locations...");
+            await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+            Console.WriteLine("[SEED] Seeding countries...");
+            if (!await dbContext.Countries.AnyAsync())
             {
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-
-                var refreshedTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
-                tenantContext.SetTenant(refreshedTenant.Id, refreshedTenant.OfficeCode, refreshedTenant.TenantType);
-
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-
-                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
+                dbContext.Countries.AddRange(
+                    new Country { CountryName = "Nepal", IsActive = true },
+                    new Country { CountryName = "India", IsActive = true }
+                );
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine("[SEED] Countries seeded.");
+            }
+            Console.WriteLine("[SEED] All essential seeders complete.");
 
                 await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
                 await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
@@ -340,7 +350,8 @@ public partial class EntryPoint
         }
         catch (Exception ex)
         {
-            //             // Log.Fatal(ex, "Application terminated unexpectedly");
+            Console.WriteLine($"[SEED] FATAL: {ex.Message}");
+            Console.WriteLine($"[SEED] {ex.StackTrace}");
         }
         finally
         {

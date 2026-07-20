@@ -208,18 +208,18 @@
                     <form id="account" method="post">
                         @Html.AntiForgeryToken()
 
-                        <!-- Email -->
+                        <!-- Email or Registration Number -->
                         <div class="mb-3">
-                            <label asp-for="Input.Email" class="form-label fw-medium small text-dark">Email</label>
-                            <input asp-for="Input.Email"
+                            <label asp-for="Input.EmailOrRegNumber" class="form-label fw-medium small text-dark">Email or Registration Number</label>
+                            <input asp-for="Input.EmailOrRegNumber"
                                    class="form-control"
-                                   type="email"
-                                   inputmode="email"
+                                   type="text"
+                                   inputmode="text"
                                    autocomplete="username"
                                    aria-required="true"
-                                   placeholder="you@example.com"
+                                   placeholder="you@example.com or SC-2021-1-1-0282"
                                    autofocus />
-                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                            <span asp-validation-for="Input.EmailOrRegNumber" class="text-danger small"></span>
                         </div>
 
                         <!-- Password -->
@@ -233,7 +233,7 @@
                                        inputmode="text"
                                        autocomplete="current-password"
                                        aria-required="true"
-                                       placeholder="Enter your password" />
+                                       placeholder="Password or Date of Birth (YYYY-MM-DD)" />
                                 <button type="button" class="password-toggle" id="toggle-password" aria-label="Toggle password visibility">
                                     <i class="bi bi-eye-slash" id="toggle-icon"></i>
                                 </button>

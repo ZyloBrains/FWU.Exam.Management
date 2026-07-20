@@ -30,6 +30,22 @@
         </div>
     }
 
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start shadow-sm" x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 5000)">
+            <svg class="h-5 w-5 text-emerald-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-sm font-medium text-emerald-800">@successMessage</div>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
+            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-xs sm:text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+        </div>
+    }
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -37,8 +53,8 @@
                 <i class="fas fa-building text-blue-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Faculties</h1>
-                <p class="text-sm text-gray-500 mt-0.5">
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Faculties</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
                     <span class="font-semibold text-gray-700">@totalCount</span> total records
                 </p>
             </div>
@@ -47,7 +63,7 @@
             <!-- Export dropdown -->
             <div class="relative">
                 <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                     <i class="fas fa-download text-xs"></i> Export
                 </button>
                 <div x-show="openExport"
@@ -58,28 +74,28 @@
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-csv text-blue-600"></i> CSV (All)
                     </a>
                     <a asp-action="ExportToPdf"
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> PDF (All)
                     </a>
                     <a asp-action="ExportToExcel"
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-excel text-green-600"></i> Excel (All)
                     </a>
                 </div>
             </div>
             @if (HasPerm("faculties.create"))
             {
-                <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Create New
                 </a>
             }
@@ -98,13 +114,13 @@
             <input type="hidden" name="sort" value="@currentSort" />
             <input type="hidden" name="sortDir" value="@currentSortDir" />
             <div class="flex gap-2">
-                <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                     Search
                 </button>
                 @if (!string.IsNullOrEmpty(currentSearch))
                 {
                     <a asp-action="Index" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                           class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                           class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-times text-xs"></i> Clear
                     </a>
                 }
@@ -174,13 +190,13 @@
                                 </a>
                                 @if (HasPerm("faculties.edit"))
                                 {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
                                 }
                                 @if (HasPerm("faculties.delete"))
                                 {
-                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -241,7 +257,7 @@
                     }
                     @if (HasPerm("faculties.delete"))
                     {
-                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }

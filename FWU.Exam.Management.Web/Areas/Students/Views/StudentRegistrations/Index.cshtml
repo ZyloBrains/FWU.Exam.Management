@@ -2,7 +2,7 @@
     ViewData["Title"] = "Student Registrations";
 }
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="{ openExport: false }">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -47,14 +47,32 @@
                            class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div class="flex items-center gap-3">
-                    <select id="pageSize" class="select2 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                    <select id="pageSize" class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
                         <option value="10">10 / page</option>
                         <option value="25">25 / page</option>
                         <option value="50">50 / page</option>
+                        <option value="9999">All</option>
                     </select>
-                    <button type="button" id="btnExportExcel" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                        <i class="fas fa-download text-xs"></i> Export
-                    </button>
+                    <div class="relative">
+                        <button x-on:click="openExport = !openExport"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
+                            <i class="fas fa-download text-xs"></i> Export
+                        </button>
+                        <div x-show="openExport"
+                             x-on:click.away="openExport = false"
+                             x-transition
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                            <a href="javascript:void(0)" onclick="exportPdf()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-file-pdf text-red-600"></i> PDF
+                            </a>
+                            <a href="javascript:void(0)" onclick="exportExcel()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-file-excel text-green-600"></i> Excel
+                            </a>
+                            <a href="javascript:void(0)" onclick="exportCsv()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-file-csv text-blue-600"></i> CSV
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <form asp-action="ImportExcel" method="post" enctype="multipart/form-data" class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-dashed border-gray-300 w-full sm:w-auto">
@@ -308,8 +326,8 @@
                 }
             });
 
-            $(pageSizeSelect).on('select2:select', function (e) {
-                pageSize = parseInt(e.params.data.id, 10);
+            $(pageSizeSelect).on('change', function () {
+                pageSize = parseInt(this.value, 10);
                 page = 1;
                 loadData();
             });
@@ -329,10 +347,20 @@
                 }
             });
 
-            document.getElementById('btnExportExcel').addEventListener('click', () => {
+            window.exportPdf = () => {
+                const query = encodeURIComponent(searchBox.value.trim());
+                window.open(`${base}/Students/StudentRegistrations/ExportToPdf?searchTerm=${query}`, '_blank');
+            };
+
+            window.exportExcel = () => {
                 const query = encodeURIComponent(searchBox.value.trim());
                 window.location.href = `${base}/Students/StudentRegistrations/ExportToExcel?searchTerm=${query}`;
-            });
+            };
+
+            window.exportCsv = () => {
+                const query = encodeURIComponent(searchBox.value.trim());
+                window.location.href = `${base}/Students/StudentRegistrations/ExportToCsv?searchTerm=${query}`;
+            };
 
             window.deleteStudentRegistration = async (id) => {
                 if (!confirm('Are you sure you want to delete this registration?')) return;
@@ -375,8 +403,5 @@
 
             loadData();
         })();
-    </script>
-    <script>
-        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
     </script>
 }

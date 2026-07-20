@@ -15,7 +15,7 @@
             <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-calendar text-pink-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Academic Year Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Academic Year Details</h1>
         </div>
     </div>
 
@@ -23,30 +23,30 @@
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <!-- Basic Information Section -->
         <div class="mb-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year Code</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year Code</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.AcademicYearCode</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year Code (Nepali)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year Code (Nepali)</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.AcademicYearCodeNepali</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year Name</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year Name</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.AcademicYearName</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year Name (Nepali)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year Name (Nepali)</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Model.AcademicYearNameNepali</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Remark</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Remark</p>
                     <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remark) ? "—" : Model.Remark)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                     <div class="mt-1 flex gap-3">
                         @if (Model.IsRunning)
                         {
@@ -71,22 +71,22 @@
 
         <!-- Audit Information Section -->
         @* <div class="mt-6 pt-4 border-t border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Audit Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Audit Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Created By</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Created By</p>
                     <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.CreatedBy) ? "—" : Model.CreatedBy)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Created Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Created Date</p>
                     <p class="mt-1 text-gray-800">@(Model.CreatedDate?.ToString("dd MMM yyyy, hh:mm tt") ?? "—")</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Modified By</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Modified By</p>
                     <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.ModifiedBy) ? "—" : Model.ModifiedBy)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Modified Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Modified Date</p>
                     <p class="mt-1 text-gray-800">@(Model.ModifiedDate?.ToString("dd MMM yyyy, hh:mm tt") ?? "—")</p>
                 </div>
             </div>

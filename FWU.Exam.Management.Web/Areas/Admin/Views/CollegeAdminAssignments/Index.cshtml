@@ -12,6 +12,13 @@
                 <i class="fas fa-user-tie text-purple-600"></i>
             </div>
             <div>
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
+            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+        </div>
+    }
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">College Admin Assignments</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Manage college admin-subject-exam assignments.</p>
             </div>
@@ -63,7 +70,7 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
+                                <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
                                     <i class="fas fa-edit text-xs"></i>
                                 </a>
                                 <form method="post" asp-action="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Delete this assignment?')" style="display:inline">

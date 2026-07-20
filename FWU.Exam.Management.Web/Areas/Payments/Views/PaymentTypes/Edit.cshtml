@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-credit-card text-amber-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Edit Payment Type</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Edit Payment Type</h1>
         </div>
     </div>
 
@@ -24,17 +24,17 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="PaymentTypeName" class="text-sm font-medium text-gray-700 block mb-1">PaymentTypeName <span class="text-red-500">*</span></label>
+                    <label asp-for="PaymentTypeName" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">PaymentTypeName <span class="text-red-500">*</span></label>
                     <input asp-for="PaymentTypeName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Enter payment type name" />
                     <span asp-validation-for="PaymentTypeName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="LogoUrl" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="LogoUrl" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="LogoUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Enter logo URL (e.g. /images/payments/esewa.svg)" />
                     <span asp-validation-for="LogoUrl" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="IsActive" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <select asp-for="IsActive" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                         <option value="true" selected="@(Model.IsActive)">Active</option>
                         <option value="false" selected="@(!Model.IsActive)">Inactive</option>

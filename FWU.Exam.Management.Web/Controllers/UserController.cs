@@ -102,6 +102,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             {
                 if (await roleManager.RoleExistsAsync(model.SelectedRole))
                     await userManager.AddToRoleAsync(user, model.SelectedRole);
+                TempData["SuccessMessage"] = "User created successfully!";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -166,7 +167,10 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "User updated successfully!";
                 return RedirectToAction(nameof(Index));
+            }
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
@@ -189,6 +193,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         user.IsActive = !user.IsActive;
         await userManager.UpdateAsync(user);
 
+        TempData["SuccessMessage"] = $"User status updated to {(user.IsActive ? "active" : "inactive")}.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -212,11 +217,25 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
     {
-        var user = await userManager.FindByIdAsync(id);
-        if (user != null)
-            await userManager.DeleteAsync(user);
+        try
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user != null)
+                await userManager.DeleteAsync(user);
 
-        return RedirectToAction(nameof(Index));
+            TempData["SuccessMessage"] = "User deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("users.assign.roles")]
@@ -269,6 +288,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (toRemove.Count > 0)
             await userManager.RemoveFromRolesAsync(user, toRemove);
 
+        TempData["SuccessMessage"] = "User roles updated successfully!";
         return RedirectToAction(nameof(Index));
     }
     [RequirePermission("users.delete")]

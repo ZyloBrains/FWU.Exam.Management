@@ -149,7 +149,7 @@ public class ExamSchedulesController(
     [RequirePermission("examschedules.create")]
     public async Task<IActionResult> Create()
     {
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -162,9 +162,10 @@ public class ExamSchedulesController(
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
+            TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -177,7 +178,7 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -204,9 +205,10 @@ public class ExamSchedulesController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -227,8 +229,22 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examScheduleService.DeleteExamScheduleAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)

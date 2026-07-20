@@ -130,6 +130,7 @@ public class NoticesController(INoticeService noticeService) : Controller
         if (ModelState.IsValid)
         {
             await noticeService.CreateNoticeAsync(notice);
+            TempData["SuccessMessage"] = "Notice created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(notice);
@@ -165,6 +166,7 @@ public class NoticesController(INoticeService noticeService) : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Notice updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(notice);
@@ -186,8 +188,22 @@ public class NoticesController(INoticeService noticeService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await noticeService.DeleteNoticeAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await noticeService.DeleteNoticeAsync(id);
+            TempData["SuccessMessage"] = "Notice deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("notices.delete")]
     [HttpPost]

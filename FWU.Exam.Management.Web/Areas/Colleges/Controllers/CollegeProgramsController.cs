@@ -259,6 +259,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "College program updated successfully.";
             return RedirectToAction(nameof(Index));
         }
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
@@ -289,8 +290,22 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     [RequirePermission("collegeprograms.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await collegeProgramService.DeleteCollegeProgramAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await collegeProgramService.DeleteCollegeProgramAsync(id);
+            TempData["SuccessMessage"] = "College program deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("collegeprograms.delete")]
     [HttpPost]

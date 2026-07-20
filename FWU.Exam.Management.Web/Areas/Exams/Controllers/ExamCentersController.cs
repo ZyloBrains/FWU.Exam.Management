@@ -76,6 +76,7 @@ public class ExamCentersController(
                 examCenter,
                 [.. venueColleges],
                 [.. sourceColleges]);
+            TempData["SuccessMessage"] = "Exam center created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -142,6 +143,7 @@ public class ExamCentersController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam center updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -176,8 +178,22 @@ public class ExamCentersController(
     [RequirePermission("examcenters.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examCenterService.DeleteExamCenterAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examCenterService.DeleteExamCenterAsync(id);
+            TempData["SuccessMessage"] = "Exam center deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("examcenters.delete")]

@@ -1,0 +1,137 @@
+@{
+    ViewData["Title"] = "System Config";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-cog text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">System Config</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Configure tenants, SMTP, SMS, payment gateways and more</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a asp-area="" asp-controller="Tenants" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <i class="fas fa-globe text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Tenants</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage tenant organizations</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="SmtpConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-envelope text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">SMTP Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure email server settings</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="SmsConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-sms text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">SMS Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure SMS gateway settings</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="TestEmail" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <i class="fas fa-paper-plane text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Send Test Email</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Test email delivery</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="ESewaConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                    <i class="fas fa-credit-card text-teal-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">eSewa Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure eSewa payment gateway</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="KhaltiConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <i class="fas fa-credit-card text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Khalti Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure Khalti payment gateway</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="ConnectIPSConfigurations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                    <i class="fas fa-credit-card text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">ConnectIPS Configuration</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Configure ConnectIPS payment gateway</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="Notices" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors">
+                    <i class="fas fa-bullhorn text-pink-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Notices</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage system notices</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="AuditLog" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
+                    <i class="fas fa-history text-cyan-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Audit Log</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">View system audit trail</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Core" asp-controller="BackupRestore" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                    <i class="fas fa-database text-indigo-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Backup & Restore</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Database backup and restore</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

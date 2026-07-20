@@ -14,7 +14,7 @@
             <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-trash text-red-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Delete Role</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Delete Role</h1>
         </div>
     </div>
 
@@ -36,10 +36,10 @@
 
     <!-- Actions -->
     <form asp-action="Delete" asp-route-id="@Model.Id" class="flex items-center gap-3">
-        <button type="submit" class="px-5 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-sm">
+        <button type="submit" class="px-5 py-2.5 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-sm">
             <i class="fas fa-trash mr-1"></i> Delete
         </button>
-        <a asp-action="Index" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+        <a asp-action="Index" class="px-5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
             Cancel
         </a>
     </form>

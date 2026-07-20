@@ -188,6 +188,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         {
             context.Add(smsConfiguration);
             await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "SMS configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(smsConfiguration);
@@ -223,6 +224,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
                 if (!SmsConfigurationExists(smsConfiguration.Id)) return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "SMS configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(smsConfiguration);
@@ -244,13 +246,27 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var smsConfiguration = await context.SmsConfigurations.FindAsync(id);
-        if (smsConfiguration != null)
+        try
         {
-            context.SmsConfigurations.Remove(smsConfiguration);
+            var smsConfiguration = await context.SmsConfigurations.FindAsync(id);
+            if (smsConfiguration != null)
+            {
+                context.SmsConfigurations.Remove(smsConfiguration);
+            }
+            await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "SMS configuration deleted successfully!";
+            return RedirectToAction(nameof(Index));
         }
-        await context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("sms.delete")]

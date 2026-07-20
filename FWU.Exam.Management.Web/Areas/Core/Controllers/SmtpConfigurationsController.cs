@@ -225,6 +225,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             {
                 context.Add(smtpConfiguration);
                 await context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "SMTP configuration created successfully!";
                 return RedirectToAction(nameof(Index));
             }
             return View(smtpConfiguration);
@@ -276,6 +277,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                         throw;
                     }
                 }
+                TempData["SuccessMessage"] = "SMTP configuration updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
             return View(smtpConfiguration);
@@ -306,14 +308,28 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var smtpConfiguration = await context.SmtpConfigurations.FindAsync(id);
-            if (smtpConfiguration != null)
+            try
             {
-                context.SmtpConfigurations.Remove(smtpConfiguration);
-            }
+                var smtpConfiguration = await context.SmtpConfigurations.FindAsync(id);
+                if (smtpConfiguration != null)
+                {
+                    context.SmtpConfigurations.Remove(smtpConfiguration);
+                }
 
-            await context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+                await context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "SMTP configuration deleted successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+            {
+                TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [RequirePermission("smtp.delete")]

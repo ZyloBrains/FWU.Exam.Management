@@ -12,7 +12,7 @@
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Application #@Model.Id</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Application #@Model.Id</h1>
                 <p class="text-sm text-gray-500">Submitted on @Model.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")</p>
             </div>
         </div>
@@ -53,7 +53,7 @@
     <!-- Program Selection -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Program Selection</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Program Selection</h2>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -76,7 +76,7 @@
     <!-- Applicant Information -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Personal Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Personal Information</h2>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -149,7 +149,7 @@
     <!-- Address -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Permanent Address</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Permanent Address</h2>
         </div>
         <div class="px-6 py-4">
             @if (Model.PermanentAddress != null)
@@ -199,7 +199,7 @@
     <!-- Guardian Information -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Guardian Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Guardian Information</h2>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -238,7 +238,7 @@
     <!-- Previous Qualifications -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Academic Qualifications</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Academic Qualifications</h2>
         </div>
         <div class="px-6 py-4 space-y-4">
             <!-- Qualification 1 -->
@@ -333,7 +333,7 @@
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Documents</h2>
             </div>
             <div class="px-6 py-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -366,7 +366,7 @@
     <!-- Review Section -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Review Actions</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Review Actions</h2>
         </div>
         <div class="px-6 py-4">
             @if (Model.Status == ApplicationStatus.Submitted || Model.Status == ApplicationStatus.UnderReview)

@@ -137,11 +137,12 @@ public class DistrictsController(IDistrictService districtService) : Controller
     [RequirePermission("districts.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,ProvinceId,DistrictName,Remarks,IsActive")] District district)
+    public async Task<IActionResult> Create([Bind("Id,ProvinceId,DistrictCode,DistrictName,Remarks,IsActive")] District district)
     {
         if (ModelState.IsValid)
         {
             await districtService.CreateDistrictAsync(district);
+            TempData["SuccessMessage"] = "District created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -174,7 +175,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     [RequirePermission("districts.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceId,DistrictName,Remarks,IsActive")] District district)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceId,DistrictCode,DistrictName,Remarks,IsActive")] District district)
     {
         if (id != district.Id)
         {
@@ -198,6 +199,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "District updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -230,8 +232,22 @@ public class DistrictsController(IDistrictService districtService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await districtService.DeleteDistrictAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await districtService.DeleteDistrictAsync(id);
+            TempData["SuccessMessage"] = "District deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("districts.delete")]
     [HttpPost]

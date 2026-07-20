@@ -17,11 +17,18 @@
                 <i class="fas fa-history text-indigo-600"></i>
             </div>
             <div>
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
+            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-xs sm:text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+        </div>
+    }
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Audit Log</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Track all changes made across the system.</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Track all changes made across the system.</p>
             </div>
         </div>
-        <div class="text-sm text-gray-500">
+        <div class="text-xs sm:text-sm text-gray-500">
             @totalCount total records
         </div>
     </div>
@@ -30,7 +37,7 @@
         <form method="get" asp-action="Index" asp-area="Core" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Entity</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Entity</label>
                     <select name="entityName" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Entities</option>
                         @foreach (var name in entityNames)
@@ -40,7 +47,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Action</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Action</label>
                     <select name="action" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">All Actions</option>
                         @foreach (var act in actions)
@@ -50,32 +57,32 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">User</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">User</label>
                     <input type="text" name="userName" value="@ViewBag.UserName" placeholder="Search user..."
                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Search</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Search</label>
                     <input type="text" name="search" value="@ViewBag.Search" placeholder="Entity, ID, user..."
                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">From Date</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">From Date</label>
                     <input type="date" name="from" value="@ViewBag.From"
                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">To Date</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">To Date</label>
                     <input type="date" name="to" value="@ViewBag.To"
                            class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div class="flex items-end gap-2">
-                    <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                         <i class="fas fa-search mr-1"></i> Filter
                     </button>
-                    <a asp-action="Index" asp-area="Core" class="px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                    <a asp-action="Index" asp-area="Core" class="px-4 py-2.5 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
                         <i class="fas fa-times mr-1"></i> Clear
                     </a>
                 </div>
@@ -163,7 +170,7 @@
                         <tr>
                             <td colspan="7" class="px-4 py-12 text-center">
                                 <i class="fas fa-history text-4xl text-gray-300 mb-3"></i>
-                                <p class="text-sm text-gray-500">No audit log entries found.</p>
+                                <p class="text-xs sm:text-sm text-gray-500">No audit log entries found.</p>
                             </td>
                         </tr>
                     }
@@ -174,7 +181,7 @@
         @if (totalPages > 1)
         {
             <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-                <div class="text-sm text-gray-500">
+                <div class="text-xs sm:text-sm text-gray-500">
                     Showing @((page - 1) * pageSize + 1) to @Math.Min(page * pageSize, totalCount) of @totalCount
                 </div>
                 <div class="flex items-center gap-1">

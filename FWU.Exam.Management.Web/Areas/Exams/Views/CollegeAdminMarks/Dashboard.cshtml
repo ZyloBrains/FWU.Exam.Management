@@ -9,14 +9,14 @@
         <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
             <i class="fas fa-user-cog text-teal-600"></i>
         </div>
-        <h1 class="text-2xl font-bold text-gray-800">My Subjects</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-800">My Subjects</h1>
     </div>
 
     @if (!Model.AssignedSubjects.Any())
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
             <i class="fas fa-book-open text-5xl text-gray-300 mb-4"></i>
-            <h3 class="text-lg font-semibold text-gray-900">No Subjects Assigned</h3>
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900">No Subjects Assigned</h3>
             <p class="text-sm text-gray-500 mt-1">No subjects have been assigned to you yet.</p>
         </div>
     }

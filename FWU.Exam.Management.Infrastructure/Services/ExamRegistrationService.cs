@@ -147,21 +147,21 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         }
     }
 
-    public ExamRegistrationSelectListsDto GetSelectListData(ExamRegistration? examRegistration = null)
+    public async Task<ExamRegistrationSelectListsDto> GetSelectListDataAsync(ExamRegistration? examRegistration = null)
     {
         var examSchedulesQuery = context.ExamSchedules.AsNoTracking().ApplyScope(userContext);
-        var examSchedules = examSchedulesQuery.ToList();
+        var examSchedules = await examSchedulesQuery.ToListAsync();
 
         var collegesQuery = context.Colleges.AsNoTracking().ApplyScope(userContext);
-        var colleges = collegesQuery.ToList();
+        var colleges = await collegesQuery.ToListAsync();
 
-        var academicYears = context.AcademicYears.AsNoTracking().ToList();
+        var academicYears = await context.AcademicYears.AsNoTracking().ToListAsync();
 
         var programsQuery = context.Programs.AsNoTracking().ApplyScope(userContext);
-        var programs = programsQuery.ToList();
+        var programs = await programsQuery.ToListAsync();
 
         var examCentersQuery = context.ExamCenters.AsNoTracking();
-        var examCenters = examCentersQuery.ToList();
+        var examCenters = await examCentersQuery.ToListAsync();
 
         return new ExamRegistrationSelectListsDto
         {

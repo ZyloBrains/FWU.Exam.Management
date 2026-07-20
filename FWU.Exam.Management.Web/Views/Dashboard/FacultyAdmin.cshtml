@@ -12,8 +12,8 @@
                 <i class="fas fa-chalkboard-teacher text-indigo-600 text-lg"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Faculty Admin Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Manage your faculty's colleges, programs, and examinations</p>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Faculty Admin Dashboard</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Manage your faculty's colleges, programs, and examinations</p>
             </div>
         </div>
     </div>
@@ -24,8 +24,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Colleges</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalColleges</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Colleges</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalColleges</p>
                     </div>
                     <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center"><i class="fas fa-school text-amber-600 text-xl"></i></div>
                 </div>
@@ -36,8 +36,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Programs</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalPrograms</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Programs</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalPrograms</p>
                     </div>
                     <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center"><i class="fas fa-graduation-cap text-indigo-600 text-xl"></i></div>
                 </div>
@@ -48,8 +48,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Students</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalStudents</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Students</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalStudents</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><i class="fas fa-user-graduate text-blue-600 text-xl"></i></div>
                 </div>
@@ -60,8 +60,8 @@
             <div class="p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Exam Schedules</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamSchedules</p>
+                        <p class="text-xs sm:text-sm font-medium text-gray-500">Exam Schedules</p>
+                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamSchedules</p>
                     </div>
                     <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><i class="fas fa-calendar-alt text-orange-600 text-xl"></i></div>
                 </div>
@@ -74,25 +74,25 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Subjects</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalSubjects</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Subjects</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalSubjects</p></div>
                 <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center"><i class="fas fa-book text-teal-600"></i></div>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Exam Registrations</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamRegistrations</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Exam Registrations</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamRegistrations</p></div>
                 <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center"><i class="fas fa-clipboard-list text-cyan-600"></i></div>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div><p class="text-sm text-gray-500">Academic Years</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalAcademicYears</p></div>
+                <div><p class="text-xs sm:text-sm text-gray-500">Academic Years</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalAcademicYears</p></div>
                 <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center"><i class="fas fa-calendar text-pink-600"></i></div>
             </div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
-                <div>                        <p class="text-sm text-gray-500">Faculties</p><p class="text-2xl font-bold text-gray-800 mt-1">@Model.TotalFaculties</p></div>
+                <div>                        <p class="text-xs sm:text-sm text-gray-500">Faculties</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalFaculties</p></div>
                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-building text-purple-600"></i></div>
             </div>
         </div>
@@ -103,8 +103,8 @@
         <!-- Quick Actions -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Quick Actions</h3>
-                <p class="text-sm text-gray-500 mt-1">Common management tasks</p>
+                <h3 class="text-base sm:text-lg font-semibold text-gray-800">Quick Actions</h3>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">Common management tasks</p>
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -119,6 +119,10 @@
                     <a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200">
                         <div class="w-12 h-12 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-user-graduate text-xl text-blue-600"></i></div>
                         <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">Students</span>
+                    </a>
+                    <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-cyan-50 hover:shadow-md transition-all duration-200">
+                        <div class="w-12 h-12 bg-cyan-100 group-hover:bg-cyan-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-clipboard-list text-xl text-cyan-600"></i></div>
+                        <span class="text-xs font-medium text-gray-700 group-hover:text-cyan-700 text-center">Exam Registrations</span>
                     </a>
                     <a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Index" class="group flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg hover:bg-orange-50 hover:shadow-md transition-all duration-200">
                         <div class="w-12 h-12 bg-orange-100 group-hover:bg-orange-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-calendar-alt text-xl text-orange-600"></i></div>
@@ -139,35 +143,35 @@
         <!-- System Summary -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">System Summary</h3>
-                <p class="text-sm text-gray-500 mt-1">At a glance overview</p>
+                <h3 class="text-base sm:text-lg font-semibold text-gray-800">System Summary</h3>
+                <p class="text-xs sm:text-sm text-gray-500 mt-1">At a glance overview</p>
             </div>
             <div class="p-6 space-y-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center"><i class="fas fa-users text-green-600 text-sm"></i></div>
-                        <span class="text-sm text-gray-600">Total Users</span>
+                        <span class="text-xs sm:text-sm text-gray-600">Total Users</span>
                     </div>
                     <span class="text-sm font-bold text-gray-800">@Model.TotalUsers</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-purple-100 rounded-full flex items-center justify-center"><i class="fas fa-user-shield text-purple-600 text-sm"></i></div>
-                        <span class="text-sm text-gray-600">Roles</span>
+                        <span class="text-xs sm:text-sm text-gray-600">Roles</span>
                     </div>
                     <span class="text-sm font-bold text-gray-800">@Model.TotalRoles</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-cyan-100 rounded-full flex items-center justify-center"><i class="fas fa-clipboard-list text-cyan-600 text-sm"></i></div>
-                        <span class="text-sm text-gray-600">Exam Registrations</span>
+                        <span class="text-xs sm:text-sm text-gray-600">Exam Registrations</span>
                     </div>
                     <span class="text-sm font-bold text-gray-800">@Model.TotalExamRegistrations</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 bg-pink-100 rounded-full flex items-center justify-center"><i class="fas fa-calendar text-pink-600 text-sm"></i></div>
-                        <span class="text-sm text-gray-600">Academic Years</span>
+                        <span class="text-xs sm:text-sm text-gray-600">Academic Years</span>
                     </div>
                     <span class="text-sm font-bold text-gray-800">@Model.TotalAcademicYears</span>
                 </div>

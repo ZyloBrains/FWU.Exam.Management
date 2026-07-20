@@ -15,23 +15,23 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Center Details</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Center: @Model.Code</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Center: @Model.Code</p>
             </div>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-800">Center Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Center Information</h2>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label class="block text-sm font-medium text-gray-500">Code</label>
-                <p class="mt-1 text-sm text-gray-900 font-medium">@Model.Code</p>
+                <label class="block text-xs sm:text-sm font-medium text-gray-500">Code</label>
+                <p class="mt-1 text-xs sm:text-sm text-gray-900 font-medium">@Model.Code</p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-500">Venue Colleges</label>
-                <p class="mt-1 text-sm text-gray-900">
+                <label class="block text-xs sm:text-sm font-medium text-gray-500">Venue Colleges</label>
+                <p class="mt-1 text-xs sm:text-sm text-gray-900">
                     @if (Model.ExamCenterVenues != null && Model.ExamCenterVenues.Any())
                     {
                         @string.Join(", ", Model.ExamCenterVenues.Select(ecv => ecv.College?.Name))
@@ -43,8 +43,8 @@
                 </p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-500">Serves Students From</label>
-                <p class="mt-1 text-sm text-gray-900">
+                <label class="block text-xs sm:text-sm font-medium text-gray-500">Serves Students From</label>
+                <p class="mt-1 text-xs sm:text-sm text-gray-900">
                     @if (Model.ExamCenterColleges != null && Model.ExamCenterColleges.Any())
                     {
                         @string.Join(", ", Model.ExamCenterColleges.Select(ecc => ecc.College?.Name))
@@ -56,15 +56,15 @@
                 </p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-500">Exam Schedule</label>
-                <p class="mt-1 text-sm text-gray-900">@(Model.ExamSchedule?.ExamScheduleName ?? "-")</p>
+                <label class="block text-xs sm:text-sm font-medium text-gray-500">Exam Schedule</label>
+                <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.ExamSchedule?.ExamScheduleName ?? "-")</p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-500">Remark</label>
-                <p class="mt-1 text-sm text-gray-900">@(Model.Remark ?? "-")</p>
+                <label class="block text-xs sm:text-sm font-medium text-gray-500">Remark</label>
+                <p class="mt-1 text-xs sm:text-sm text-gray-900">@(Model.Remark ?? "-")</p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-500">Status</label>
+                <label class="block text-xs sm:text-sm font-medium text-gray-500">Status</label>
                 <p class="mt-1">
                     @if (Model.IsActive)
                     {

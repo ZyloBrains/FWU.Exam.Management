@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-sms text-purple-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create SMS Configuration</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create SMS Configuration</h1>
         </div>
     </div>
 
@@ -22,25 +22,25 @@
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
 
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">SMS API Settings</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">SMS API Settings</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
-                        <label for="ApiUrl" class="text-sm font-medium text-gray-700 block mb-1">API URL <span class="text-red-500">*</span></label>
+                        <label for="ApiUrl" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">API URL <span class="text-red-500">*</span></label>
                         <input asp-for="ApiUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="https://message.gumpnow.com/api/v1/sms/send/" />
                         <span asp-validation-for="ApiUrl" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div class="md:col-span-2">
-                        <label for="ApiKey" class="text-sm font-medium text-gray-700 block mb-1">API Key <span class="text-red-500">*</span></label>
+                        <label for="ApiKey" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">API Key <span class="text-red-500">*</span></label>
                         <input asp-for="ApiKey" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="x-gumpnow-auth value" />
                         <span asp-validation-for="ApiKey" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label for="Mode" class="text-sm font-medium text-gray-700 block mb-1">Mode</label>
+                        <label for="Mode" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Mode</label>
                         <input asp-for="Mode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="prod" />
                         <span asp-validation-for="Mode" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label for="Tags" class="text-sm font-medium text-gray-700 block mb-1">Tags</label>
+                        <label for="Tags" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tags</label>
                         <input asp-for="Tags" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="entrance" />
                         <span asp-validation-for="Tags" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -48,10 +48,10 @@
             </div>
 
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
                 <div class="flex items-center gap-2">
                     <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
-                    <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                    <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
                 </div>
             </div>
 

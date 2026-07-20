@@ -224,6 +224,9 @@
                         <button x-on:click="mobileSidebarOpen = true" class="lg:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white">
                             <i class="fas fa-bars"></i>
                         </button>
+
+                        <!-- Mobile Page Title -->
+                        <h1 class="sm:hidden text-sm font-bold truncate text-white">@ViewData["Title"]</h1>
                         
                         <!-- Desktop Toggle -->
                         <button x-on:click="desktopCollapsed = !desktopCollapsed" class="hidden lg:block p-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white">
@@ -321,6 +324,18 @@
         function tenantUrl(path) {
             return __tenantCode ? '/tenant/' + __tenantCode + path : path;
         }
+    </script>
+    <script>
+        (function () {
+            var key = 'sidebar-scroll-top';
+            var nav = document.querySelector('nav.flex-1');
+            if (!nav) return;
+            var saved = sessionStorage.getItem(key);
+            if (saved) nav.scrollTop = parseInt(saved, 10);
+            nav.addEventListener('scroll', function () {
+                sessionStorage.setItem(key, nav.scrollTop);
+            });
+        })();
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

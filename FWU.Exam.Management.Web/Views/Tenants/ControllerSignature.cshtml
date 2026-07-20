@@ -1,0 +1,75 @@
+@model FWU.Exam.Management.Domain.Entities.Tenant
+
+@{
+    ViewData["Title"] = "Controller Signature";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-pen-nib text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Controller Signature</h1>
+            <p class="text-xs sm:text-sm text-gray-500">@Model.Name (@Model.OfficeCode)</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form method="post" asp-action="ControllerSignature" asp-route-id="@Model.Id" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="space-y-6">
+                <div class="flex flex-col items-center">
+                    <div class="w-64 h-32 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden mb-4 ring-1 ring-gray-200">
+                        @if (!string.IsNullOrEmpty(Model.ControllerSignaturePath))
+                        {
+                            <img src="@Model.ControllerSignaturePath" id="signaturePreview" alt="Controller Signature" class="w-full h-full object-contain p-2" />
+                        }
+                        else
+                        {
+                            <div id="signaturePreviewPlaceholder" class="flex flex-col items-center justify-center text-gray-300">
+                                <i class="fas fa-pen-nib text-4xl"></i>
+                                <span class="text-sm mt-2 font-medium">No Signature</span>
+                            </div>
+                        }
+                        <img src="" id="signaturePreviewImg" class="w-full h-full object-contain p-2 hidden" alt="Preview" />
+                    </div>
+
+                    <p class="text-xs sm:text-sm font-medium text-gray-700">Controller of Examinations</p>
+                    <p class="text-xs text-gray-400 mt-0.5">PNG, JPG. Max 5 MB</p>
+
+                    <label class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 cursor-pointer transition-colors shadow-sm">
+                        <i class="fas fa-upload"></i>
+                        Choose File
+                        <input type="file" name="signature" accept="image/*" class="hidden" onchange="previewFile(this)" />
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-4 pt-4 border-t">
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
+                        <i class="fas fa-save mr-1"></i> Save Signature
+                    </button>
+                    <a asp-action="Index" class="px-6 py-2 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function previewFile(input) {
+        const preview = document.getElementById('signaturePreviewImg');
+        const placeholder = document.getElementById('signaturePreviewPlaceholder');
+        if (input.files && input.files[0]) {
+            preview.src = URL.createObjectURL(input.files[0]);
+            preview.classList.remove('hidden');
+            if (placeholder) placeholder.classList.add('hidden');
+        }
+    }
+</script>

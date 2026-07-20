@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-building text-indigo-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create Tenant</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Tenant</h1>
         </div>
     </div>
 
@@ -23,37 +23,37 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="Tenant.Name" class="text-sm font-medium text-gray-700 block mb-1">Organization Name</label>
+                    <label asp-for="Tenant.Name" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Organization Name</label>
                     <input asp-for="Tenant.Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Far-Western University" />
                     <span asp-validation-for="Tenant.Name" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.OfficeCode" class="text-sm font-medium text-gray-700 block mb-1">Office Code</label>
+                    <label asp-for="Tenant.OfficeCode" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Office Code</label>
                     <input asp-for="Tenant.OfficeCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., FWU" />
                     <span asp-validation-for="Tenant.OfficeCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.Email" class="text-sm font-medium text-gray-700 block mb-1">Email</label>
+                    <label asp-for="Tenant.Email" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Email</label>
                     <input asp-for="Tenant.Email" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="admin@example.com" />
                     <span asp-validation-for="Tenant.Email" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.ContactNumber" class="text-sm font-medium text-gray-700 block mb-1">Contact Number</label>
+                    <label asp-for="Tenant.ContactNumber" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Contact Number</label>
                     <input asp-for="Tenant.ContactNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 9851234567" />
                     <span asp-validation-for="Tenant.ContactNumber" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="Tenant.Address" class="text-sm font-medium text-gray-700 block mb-1">Address</label>
+                    <label asp-for="Tenant.Address" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Address</label>
                     <input asp-for="Tenant.Address" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Mahendranagar, Kanchanpur" />
                     <span asp-validation-for="Tenant.Address" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.TenantType" class="text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
+                    <label asp-for="Tenant.TenantType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
                     <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="TenantTypeSelect"></select>
                     <span asp-validation-for="Tenant.TenantType" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div id="FacultyField" style="display:none">
-                    <label asp-for="SelectedFacultyId" class="text-sm font-medium text-gray-700 block mb-1">Faculty</label>
+                    <label asp-for="SelectedFacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Faculty</label>
                     <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Select Faculty --</option>
                     </select>
@@ -62,7 +62,7 @@
                 <div>
                     <div class="flex items-center gap-2 mt-7">
                         <input asp-for="Tenant.IsActive" type="checkbox" checked="checked" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" />
-                        <label asp-for="Tenant.IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                        <label asp-for="Tenant.IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
                     </div>
                 </div>
             </div>
@@ -72,27 +72,27 @@
                     <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
                         <i class="fas fa-user-shield text-amber-600"></i>
                     </div>
-                    <h2 class="text-lg font-semibold text-gray-800">Admin User</h2>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Admin User</h2>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">An admin user will be created for this tenant with the <span class="font-medium text-gray-700">FacultyAdmin</span> role.</p>
+                <p class="text-xs sm:text-sm text-gray-500 mb-4">An admin user will be created for this tenant with the <span class="font-medium text-gray-700">FacultyAdmin</span> role.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="AdminFullName" class="text-sm font-medium text-gray-700 block mb-1">Full Name</label>
+                        <label asp-for="AdminFullName" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Full Name</label>
                         <input asp-for="AdminFullName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., John Doe" />
                         <span asp-validation-for="AdminFullName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="AdminEmail" class="text-sm font-medium text-gray-700 block mb-1">Email (Login ID)</label>
+                        <label asp-for="AdminEmail" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Email (Login ID)</label>
                         <input asp-for="AdminEmail" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="admin@tenant.edu" />
                         <span asp-validation-for="AdminEmail" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="AdminPassword" class="text-sm font-medium text-gray-700 block mb-1">Password</label>
+                        <label asp-for="AdminPassword" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Password</label>
                         <input asp-for="AdminPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="AdminPassword" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="ConfirmAdminPassword" class="text-sm font-medium text-gray-700 block mb-1">Confirm Password</label>
+                        <label asp-for="ConfirmAdminPassword" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Confirm Password</label>
                         <input asp-for="ConfirmAdminPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="ConfirmAdminPassword" class="text-xs text-red-500 mt-1 block"></span>
                     </div>

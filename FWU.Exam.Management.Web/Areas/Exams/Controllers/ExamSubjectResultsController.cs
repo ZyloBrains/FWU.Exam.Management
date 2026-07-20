@@ -43,7 +43,7 @@ public class ExamSubjectResultsController(
     [RequirePermission("examsubjectresults.create")]
     public async Task<IActionResult> Create()
     {
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -56,9 +56,10 @@ public class ExamSubjectResultsController(
         if (ModelState.IsValid)
         {
             await examSubjectResultService.CreateExamSubjectResultAsync(examSubjectResult);
+            TempData["SuccessMessage"] = "Exam subject result created successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -71,7 +72,7 @@ public class ExamSubjectResultsController(
         var examSubjectResult = await examSubjectResultService.GetExamSubjectResultByIdAsync(id.Value);
         if (examSubjectResult == null) return NotFound();
 
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -95,9 +96,10 @@ public class ExamSubjectResultsController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam subject result updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -118,8 +120,22 @@ public class ExamSubjectResultsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examSubjectResultService.DeleteExamSubjectResultAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examSubjectResultService.DeleteExamSubjectResultAsync(id);
+            TempData["SuccessMessage"] = "Exam subject result deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     public async Task<IActionResult> Details(int? id)

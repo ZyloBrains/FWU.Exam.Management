@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Registration";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-address-card text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Registration</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Manage student registrations and admissions</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <i class="fas fa-user-plus text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Student Registrations</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage student registration records</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="" asp-controller="StudentCategories" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-layer-group text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Student Categories</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage student categories</p>
+                </div>
+            </div>
+        </a>
+
+        <a asp-area="Students" asp-controller="StudentAdmissions" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-user-graduate text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Student Admissions</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage student admissions</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>

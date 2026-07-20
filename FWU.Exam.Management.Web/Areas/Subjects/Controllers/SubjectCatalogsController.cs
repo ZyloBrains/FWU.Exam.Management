@@ -293,6 +293,7 @@ public class SubjectCatalogsController : Controller
         if (ModelState.IsValid)
         {
             await _subjectCatalogService.CreateSubjectCatalogAsync(subjectCatalog);
+            TempData["SuccessMessage"] = "Subject catalog created successfully.";
             return RedirectToAction(nameof(Index));
         }
         var subjectTypes = await _subjectCatalogService.GetSelectListsAsync(subjectCatalog.SubjectTypeId);
@@ -332,6 +333,7 @@ public class SubjectCatalogsController : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Subject catalog updated successfully.";
             return RedirectToAction(nameof(Index));
         }
         var subjectTypes = await _subjectCatalogService.GetSelectListsAsync(subjectCatalog.SubjectTypeId);
@@ -355,8 +357,22 @@ public class SubjectCatalogsController : Controller
     [RequirePermission("subjects.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _subjectCatalogService.DeleteSubjectCatalogAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await _subjectCatalogService.DeleteSubjectCatalogAsync(id);
+            TempData["SuccessMessage"] = "Subject catalog deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("subjects.delete")]
     [HttpPost]

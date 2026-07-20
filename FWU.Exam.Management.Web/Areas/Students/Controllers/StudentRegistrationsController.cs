@@ -65,7 +65,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     public async Task<IActionResult> Create()
     {
         var selectLists = await studentRegistrationService.GetSelectListDataAsync();
-        PopulateSelectLists(selectLists, null);
+        await PopulateSelectListsAsync(selectLists, null);
         return View(new StudentRegistration());
     }
 
@@ -88,7 +88,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         }
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync();
-        PopulateSelectLists(selectLists, studentRegistration);
+        await PopulateSelectListsAsync(selectLists, studentRegistration);
         return View(studentRegistration);
     }
 
@@ -119,7 +119,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         }
 
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
-        PopulateSelectLists(selectLists, studentRegistration);
+        await PopulateSelectListsAsync(selectLists, studentRegistration);
         return View(studentRegistration);
     }
 
@@ -154,7 +154,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         ViewBag.Qualifications = await studentRegistrationService.GetQualificationsByRegistrationAsync(id);
         var selectLists = await studentRegistrationService.GetSelectListDataAsync(studentRegistration);
-        PopulateSelectLists(selectLists, studentRegistration);
+        await PopulateSelectListsAsync(selectLists, studentRegistration);
         return View(studentRegistration);
     }
 
@@ -172,9 +172,22 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await studentRegistrationService.DeleteStudentRegistrationAsync(id);
-        TempData["SuccessMessage"] = "Student registration deleted successfully!";
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await studentRegistrationService.DeleteStudentRegistrationAsync(id);
+            TempData["SuccessMessage"] = "Student registration deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [HttpGet]
@@ -684,6 +697,32 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
+    public async Task<IActionResult> ExportToPdf(string searchTerm = "")
+    {
+        var collegeIds = userContext.FacultyCollegeIds.ToList();
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, 1, 99999, collegeIds.Count > 0 ? collegeIds : null);
+        ViewBag.TotalCount = totalCount;
+        ViewBag.SearchTerm = searchTerm;
+        return View("PrintPdf", data);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToCsv(string searchTerm = "")
+    {
+        var collegeIds = userContext.FacultyCollegeIds.ToList();
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, 1, 99999, collegeIds.Count > 0 ? collegeIds : null);
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Reg No,Student Name,Academic Year,Faculty,Contact,Email,Status");
+        foreach (var r in data)
+        {
+            sb.AppendLine($"\"{r.RegistrationNumber}\",\"{r.FullName}\",\"{r.AcademicYear}\",\"{r.Faculty}\",\"{r.ContactNumber}\",\"{r.Email}\",\"{r.Status}\"");
+        }
+        var csvBytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", $"StudentRegistrations_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    [HttpGet]
     public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
     {
         var districts = await studentRegistrationService.GetDistrictsByProvinceAsync(provinceId);
@@ -810,9 +849,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         await studentRegistrationService.SaveGuardiansAsync(registrationId, guardian);
     }
 
-    private void PopulateSelectLists(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
+    private async Task PopulateSelectListsAsync(StudentRegistrationSelectListsDto selectLists, StudentRegistration? studentRegistration = null)
     {
-        var provinces = studentRegistrationService.GetProvinces();
+        var provinces = await studentRegistrationService.GetProvincesAsync();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
 
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);

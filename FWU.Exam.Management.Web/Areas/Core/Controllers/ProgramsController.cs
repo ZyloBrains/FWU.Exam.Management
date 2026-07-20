@@ -156,6 +156,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
         if (ModelState.IsValid)
         {
             await programService.CreateProgramAsync(program);
+            TempData["SuccessMessage"] = "Program created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -198,6 +199,7 @@ public class ProgramsController(IProgramService programService, IUserContext use
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Program updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -223,8 +225,22 @@ public class ProgramsController(IProgramService programService, IUserContext use
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await programService.DeleteProgramAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await programService.DeleteProgramAsync(id);
+            TempData["SuccessMessage"] = "Program deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("programs.delete")]
     [HttpPost]

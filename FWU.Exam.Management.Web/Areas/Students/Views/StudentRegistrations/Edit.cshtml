@@ -207,13 +207,6 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Province *</label>
-                                <select id="ProvinceId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="@ViewBag.Provinces">
-                                    <option value="">Select Province</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">Province *</label>
                                 <select id="ProvinceId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="@ViewBag.Provinces">
                                     <option value="">Select Province</option>
                                 </select>
@@ -380,6 +373,50 @@
             }
         }
 
+        function loadDistricts(provinceId, selectedDistrictId, callback) {
+            $('#DistrictId').select2('destroy');
+            if (!provinceId) {
+                $("#DistrictId").empty().append('<option value="">Select District</option>');
+                $('#DistrictId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"), { provinceId: provinceId }, function (data) {
+                var dropdown = $("#DistrictId");
+                dropdown.empty();
+                dropdown.append('<option value="">Select District</option>');
+                $.each(data, function (index, item) {
+                    var selected = selectedDistrictId && item.id == selectedDistrictId ? ' selected' : '';
+                    dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
+                });
+                dropdown.trigger('change');
+                if (callback) callback();
+            });
+        }
+
+        function loadLocalLevels(districtId, selectedLocalLevelId, callback) {
+            $('#LocalLevelId').select2('destroy');
+            if (!districtId) {
+                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                $('#LocalLevelId').select2({width:'resolve'});
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
+                var dropdown = $("#LocalLevelId");
+                dropdown.empty();
+                dropdown.append('<option value="">Select Local Level</option>');
+                $.each(data, function (index, item) {
+                    var selected = selectedLocalLevelId && item.id == selectedLocalLevelId ? ' selected' : '';
+                    dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
+                });
+                dropdown.trigger('change');
+                if (callback) callback();
+            });
+        }
+
         var _cascadeBusy = false;
 
         function loadExistingQualifications() {
@@ -436,10 +473,12 @@
         }
 
         function loadPrograms(collegeId, selectedProgramId, callback) {
+            $('#ProgramId').select2('destroy');
             var levelId = $("#LevelId").val();
 
             if (!collegeId) {
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                $('#ProgramId').select2({width:'resolve'});
                 if (callback) callback();
                 return;
             }
@@ -447,11 +486,12 @@
             $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
                 { collegeId: collegeId, levelId: levelId || null },
                 function (data) {
-                    var ll = $("#LocalLevelId");
-                    ll.empty().append('<option value="">Select Local Level</option>');
+                    var dropdown = $("#ProgramId");
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Program</option>');
                     $.each(data, function (i, item) {
-                        var sel = selectedLocalLevelId && item.id == selectedLocalLevelId ? ' selected' : '';
-                        ll.append(`<option value="${item.id}"${sel}>${item.name}</option>`);
+                        var selected = selectedProgramId && item.id == selectedProgramId ? ' selected' : '';
+                        dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
                     });
                     dropdown.trigger('change');
                     if (callback) callback();
@@ -463,25 +503,26 @@
             loadExistingQualifications();
 
             var convertTimer;
-            $("#DateOfBirthBS, #DateOfBirthAD").on("input", function () {
+            $("#DateOfBirthBS").on("input", function () {
                 var val = $(this).val().trim();
-                if (val.length < (this.id === 'DateOfBirthBS' ? 10 : 8)) return;
+                if (val.length < 10) return;
                 clearTimeout(convertTimer);
-                var isBs = this.id === 'DateOfBirthBS';
-                var url = isBs
-                    ? tenantUrl("/Students/StudentRegistrations/ConvertBsToAd")
-                    : tenantUrl("/Students/StudentRegistrations/ConvertAdToBs");
-                var param = isBs ? { bsDate: val } : { adDate: val };
-                var targetId = isBs ? "#DateOfBirthAD" : "#DateOfBirthBS";
-                var key = isBs ? 'adDate' : 'bsDate';
                 convertTimer = setTimeout(function () {
-                    $.get(url, param, function (data) { if (data[key]) $(targetId).val(data[key]); });
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: val }, function (data) {
+                        if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
+                    });
                 }, 300);
             });
 
-            // Province -> District -> LocalLevel
-            $("#ProvinceId").change(function () {
-                loadDistricts($(this).val(), null);
+            $("#DateOfBirthAD").on("input", function () {
+                var val = $(this).val().trim();
+                if (val.length < 8) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: val }, function (data) {
+                        if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
+                    });
+                }, 300);
             });
 
             // Province -> District
@@ -517,7 +558,7 @@
                     });
                     dropdown.trigger('change');
                     if (window._addrPendingLocalLevelId) {
-                        $("#LocalLevelId").val(window._addrPendingLocalLevelId);
+                        $("#LocalLevelId").val(window._addrPendingLocalLevelId).trigger('change');
                         window._addrPendingLocalLevelId = null;
                     }
                 });
@@ -603,32 +644,6 @@
             if (ward) $('#WardNumber').val(ward);
             if (tole) $('#ToleStreet').val(tole);
             if (house) $('#HouseNumber').val(house);
-
-            // BS <-> AD auto-conversion
-            var convertTimer;
-            $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
-                }
-            });
-
-            $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
-            });
         });
 
         // Init Select2 on all dropdowns

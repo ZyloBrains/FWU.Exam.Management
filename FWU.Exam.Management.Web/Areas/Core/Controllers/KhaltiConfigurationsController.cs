@@ -202,6 +202,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         {
             context.Add(khaltiConfiguration);
             await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Khalti configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(khaltiConfiguration);
@@ -237,6 +238,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Khalti configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(khaltiConfiguration);
@@ -259,14 +261,28 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var khaltiConfiguration = await context.KhaltiConfigurations.FindAsync(id);
-        if (khaltiConfiguration != null)
+        try
         {
-            context.KhaltiConfigurations.Remove(khaltiConfiguration);
-        }
+            var khaltiConfiguration = await context.KhaltiConfigurations.FindAsync(id);
+            if (khaltiConfiguration != null)
+            {
+                context.KhaltiConfigurations.Remove(khaltiConfiguration);
+            }
 
-        await context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+            await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Khalti configuration deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private bool KhaltiConfigurationExists(int id)

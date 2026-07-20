@@ -14,5 +14,5 @@ public interface IAdmitCardService
     Task<bool> AdmitCardExistsAsync(int id);
     Task<AdmitCard> GenerateAdmitCardAsync(int examRegistrationId);
     Task<List<AdmitCard>> GenerateBulkAdmitCardsAsync(int examScheduleId);
-    AdmitCardSelectListsDto GetSelectListData(AdmitCard? admitCard = null);
+    Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null);
 }

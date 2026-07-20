@@ -138,20 +138,20 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var programIds = context.CollegePrograms!
+                var programIds = await context.CollegePrograms!
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
                     .Distinct()
-                    .ToList();
+                    .ToListAsync();
                 query = query.Where(e => programIds.Contains(e.ProgramId));
             }
             else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
             {
-                var programIds = context.Programs
+                var programIds = await context.Programs
                     .Where(p => p.FacultyId == userContext.FacultyId.Value)
                     .Select(p => p.Id)
                     .Distinct()
-                    .ToList();
+                    .ToListAsync();
                 query = query.Where(e => programIds.Contains(e.ProgramId));
             }
         }

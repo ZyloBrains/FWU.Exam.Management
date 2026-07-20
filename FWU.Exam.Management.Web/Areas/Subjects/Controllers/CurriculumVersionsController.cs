@@ -143,6 +143,7 @@ public class CurriculumVersionsController : Controller
         if (ModelState.IsValid)
         {
             await _curriculumVersionService.CreateCurriculumVersionAsync(curriculumVersion);
+            TempData["SuccessMessage"] = "Curriculum version created successfully!";
             return RedirectToAction(nameof(Index));
         }
         var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync(curriculumVersion.ProgramId, curriculumVersion.EffectiveAcademicYearId);
@@ -184,6 +185,7 @@ public class CurriculumVersionsController : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Curriculum version updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync(curriculumVersion.ProgramId, curriculumVersion.EffectiveAcademicYearId);
@@ -208,8 +210,22 @@ public class CurriculumVersionsController : Controller
     [RequirePermission("curriculumversions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
+            TempData["SuccessMessage"] = "Curriculum version deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("curriculumversions.delete")]
     [HttpPost]
