@@ -303,46 +303,37 @@ public partial class EntryPoint
             }
             Console.WriteLine("[SEED] All essential seeders complete.");
 
-                await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
 
-                await CollegeSeeder.SeedCollegesAsync(scope.ServiceProvider);
+            await CollegeSeeder.SeedCollegesAsync(scope.ServiceProvider);
 
-                await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
+            await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
 
-                await AcademicYearSeeder.SeedAcademicYearsAsync(scope.ServiceProvider);
+            await AcademicYearSeeder.SeedAcademicYearsAsync(scope.ServiceProvider);
 
-                await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
 
-                await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
+            await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
 
-                await CollegeProgramSeeder.SeedCollegeProgramsAsync(scope.ServiceProvider);
+            await CollegeProgramSeeder.SeedCollegeProgramsAsync(scope.ServiceProvider);
 
-                await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-                await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
 
-                await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
 
-                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
 
-                await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
-                await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
 
-                await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
 
-                await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
-            }
-            else
-            {
-                await PermissionSeeder.SeedAllAsync(scope.ServiceProvider);
-                await UserSeeder.SeedRolesAsync(scope.ServiceProvider);
-                await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-                await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-                await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
-            }
+            await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
         }
 
             //             // Log.Information("FWU Examination Management System starting up...");
