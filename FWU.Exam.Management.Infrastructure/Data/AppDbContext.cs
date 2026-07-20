@@ -471,7 +471,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SubjectOffering>()
-            .HasIndex(so => new { so.SubjectCatalogId, so.ProgramId })
+            .HasIndex(so => new { so.SubjectCatalogId, so.ProgramId, so.SemesterId })
             .IsUnique();
 
         builder.Entity<CurriculumVersion>()

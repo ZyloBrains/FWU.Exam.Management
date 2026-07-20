@@ -236,13 +236,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null)
     {
         var query = context.StudentRegistrations
-            .Include(s => s.AcademicYear)
-            .Include(s => s.Level)
-            .Include(s => s.Faculty)
-            .Include(s => s.Program)
-            .Include(s => s.College)
-            .Include(s => s.Gender)
-            .Include(s => s.StudentCategory)
             .AsNoTracking();
         query = query.ApplyScope(userContext);
 
@@ -357,18 +350,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task<List<SelectOption>> GetFacultiesByLevelAsync(int levelId)
     {
-        var collegeIds = await context.Programs
-            .Where(p => p.LevelId == levelId)
-            .Join(context.CollegePrograms, p => p.Id, cp => cp.ProgramId, (p, cp) => cp.CollegeId)
-            .Distinct()
-            .ToListAsync();
-
-        if (collegeIds.Count == 0) return [];
-
-        return await context.Colleges
-            .Where(c => collegeIds.Contains(c.Id))
-            .SelectMany(c => c.Faculties)
-            .Select(f => new SelectOption { Id = f.Id, Name = f.Name })
+        return await context.Programs
+            .Where(p => p.LevelId == levelId && p.FacultyId != null)
+            .Include(p => p.Faculty)
+            .Select(p => new SelectOption { Id = p.Faculty!.Id, Name = p.Faculty.Name! })
             .Distinct()
             .AsNoTracking()
             .ToListAsync();

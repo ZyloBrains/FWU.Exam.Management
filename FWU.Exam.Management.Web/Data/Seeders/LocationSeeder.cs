@@ -1026,6 +1026,141 @@ public static class LocationSeeder
 
         await context.SaveChangesAsync();
 
+        // ==================== KARNALI PROVINCE LOCAL LEVELS ====================
+
+        // 59. Western Rukum - 5 local levels
+        d = districts.First(x => x.DistrictCode == "WRU");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = " Musikot Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Triveni Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chaurjahari Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Aathbiskot Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Bhumekot Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 60. Salyan - 10 local levels
+        d = districts.First(x => x.DistrictCode == "SAL");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Salyan Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Shakha Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Khapchok Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kumakh Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Marmat Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kaira Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Tribeni Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Bangad Kupinde Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Siddha Kumakh Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chhatrakot Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 61. Dolpa - 7 local levels
+        d = districts.First(x => x.DistrictCode == "DOL2");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Dolpo Buddha Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Shey Phoksundo Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Thuli Bheri Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Tripurasundari Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Mudkechula Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kaike Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chharka Tangsong Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 62. Humla - 9 local levels
+        d = districts.First(x => x.DistrictCode == "HUM");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Simkot Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Namkha Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Mugkali Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Sarkegad Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chankheli Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Adanchuli Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Tanjakot Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kharpunath Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Tsumkot Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 63. Jumla - 9 local levels
+        d = districts.First(x => x.DistrictCode == "JUM");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Chandannath Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kanaka Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Hima Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Tila Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Khuwaphad Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Patmara Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Narharinath Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Sinja Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Guthichaur Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 64. Kalikot - 9 local levels
+        d = districts.First(x => x.DistrictCode == "KAL");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Khandachakra Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Raskot Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Sanni Triveni Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Subha Kalika Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "NarahariNath Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Palma Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Phaktash Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Tilma Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Jumla Baisi Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 65. Mugu - 6 local levels
+        d = districts.First(x => x.DistrictCode == "MUG");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Gamgadhi Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chhayanath Rara Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Sarmul Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Sathi Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chhathar Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kotankanda Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 66. Surkhet - 8 local levels
+        d = districts.First(x => x.DistrictCode == "SUR");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Birendranagar Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Gurbhakot Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Lekbesi Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Bheriganga Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Kamal Bazaar Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chaukune Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Barahatal Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Simta Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 67. Dailekh - 10 local levels
+        d = districts.First(x => x.DistrictCode == "DAI");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Dullu Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Dailekh Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Gurans Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Bhairabi Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Narayan Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Aathbisha Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Dungeshwor Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chamundabindu Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Bhagawatimai Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Thantikandh Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        // 68. Jajarkot - 8 local levels
+        d = districts.First(x => x.DistrictCode == "JAJ");
+        await context.LocalLevels.AddRangeAsync(new[] {
+            new LocalLevel { LocalLevelName = "Bheri Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Chedagad Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Nalgad Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Junichande Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Shibalaya Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Dunai Kath Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Khalanga Municipality", LocalLevelType = LocalLevelType.Municipality, DistrictId = d.Id, IsActive = true },
+            new LocalLevel { LocalLevelName = "Ghoreta Rural Municipality", LocalLevelType = LocalLevelType.RuralMunicipality, DistrictId = d.Id, IsActive = true }
+        });
+
+        await context.SaveChangesAsync();
+
         // ==================== SUDURPASHCHIM PROVINCE LOCAL LEVELS ====================
 
         // 69. Kailali - 14 local levels

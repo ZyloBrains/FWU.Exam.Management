@@ -17,18 +17,9 @@ public static class DemoDataSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
         // Academic Years
-        if (!await context.AcademicYears.AnyAsync())
+        var runningYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
+        if (runningYear != null)
         {
-            var academicYears = new[]
-            {
-                new AcademicYear { AcademicYearCode = "2080", AcademicYearName = "2080/2081", AcademicYearNameNepali = "२०८०/२०८१", IsRunning = false, IsActive = true },
-                new AcademicYear { AcademicYearCode = "2081", AcademicYearName = "2081/2082", AcademicYearNameNepali = "२०८१/२०८२", IsRunning = true, IsActive = true },
-            };
-            await context.AcademicYears.AddRangeAsync(academicYears);
-            await context.SaveChangesAsync();
-
-            var runningYear = academicYears[1];
-
             // Batch
             if (!await context.Batches.AnyAsync())
             {
@@ -41,7 +32,7 @@ public static class DemoDataSeeder
             // Semesters
             if (!await context.Semesters.AnyAsync())
             {
-                var soeFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
+                var soeFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L091");
                 var semesters = new[]
                 {
                     new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id, FacultyId = soeFaculty?.Id },
@@ -151,29 +142,6 @@ public static class DemoDataSeeder
             await context.SaveChangesAsync();
         }
 
-        // College Programs
-        if (!await context.CollegePrograms.AnyAsync())
-        {
-            var colleges = await context.Colleges.ToListAsync();
-            var programs = await context.Programs.ToListAsync();
-            foreach (var college in colleges)
-            {
-                foreach (var program in programs)
-                {
-                    if (!await context.CollegePrograms.AnyAsync(cp => cp.CollegeId == college.Id && cp.ProgramId == program.Id))
-                    {
-                        await context.CollegePrograms.AddAsync(new CollegeProgram
-                        {
-                            CollegeId = college.Id,
-                            ProgramId = program.Id,
-                            IsActive = true,
-                        });
-                    }
-                }
-            }
-            await context.SaveChangesAsync();
-        }
-
         // Subject Offerings
         if (!await context.SubjectOfferings.AnyAsync())
         {
@@ -181,9 +149,9 @@ public static class DemoDataSeeder
             var semesters = await context.Semesters.ToListAsync();
             var subjects = await context.SubjectCatalogs.ToListAsync();
             var firstSem = semesters.FirstOrDefault();
-            var bbaProgram = programs.FirstOrDefault(p => p.ProgramCode == "BBA");
-            var bbsProgram = programs.FirstOrDefault(p => p.ProgramCode == "BBS");
-            var bcaProgram = programs.FirstOrDefault(p => p.ProgramCode == "BCA");
+            var bbaProgram = programs.FirstOrDefault(p => p.ProgramCode == "L005");
+            var bbsProgram = programs.FirstOrDefault(p => p.ProgramCode == "L113");
+            var bcaProgram = programs.FirstOrDefault(p => p.ProgramCode == "L018");
 
             if (firstSem != null)
             {
@@ -298,234 +266,15 @@ public static class DemoDataSeeder
             await context.SaveChangesAsync();
         }
 
-        // Demo Student Registration
-        var demoStudentEmail = "student@gmail.com";
-        var demoUser = await context.Users.FirstOrDefaultAsync(u => u.Email == demoStudentEmail);
-        var collegeCoc = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "COC");
-        var collegeSom = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "SOM");
-        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
-        var faculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "SOE");
-        var genderMale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Male");
-        var genderFemale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Female");
-        var category = await context.StudentCategories.FirstOrDefaultAsync(sc => sc.StudentCategoryName == "Regular");
-        var ethnicity = await context.Ethnicities.FirstOrDefaultAsync(e => e.EthnicityName == "Other");
-        var academicYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
-
-        if (collegeCoc != null && level != null && genderMale != null && category != null && academicYear != null)
-        {
-            var bbaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBA");
-            var bbsProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BBS");
-            var bcaProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BCA");
-            var firstSemester = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 1 && s.Year == 1);
-
-            if (bbaProgram != null)
-            {
-                // Existing demo student (student@gmail.com)
-                if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == demoStudentEmail))
-                {
-                    var studentRegistration = new StudentRegistration
-                    {
-                        FirstName = "Test",
-                        LastName = "Student",
-                        Email = demoStudentEmail,
-                        DateOfBirthBS = "2055-03-15",
-                        DateOfBirthAD = "1998-12-30",
-                        ContactNumber = "9841234567",
-                        GenderId = genderMale.Id,
-                        CollegeId = collegeCoc.Id,
-                        FacultyId = faculty?.Id,
-                        LevelId = level.Id,
-                        ProgramId = bbaProgram?.Id,
-                        StudentCategoryId = category.Id,
-                        EthnicityId = ethnicity?.Id,
-                        AcademicYearId = academicYear.Id,
-                        IsActive = true
-                    };
-                    context.StudentRegistrations.Add(studentRegistration);
-                    await context.SaveChangesAsync();
-
-                    // Student Admission
-                    if (demoUser != null)
-                    {
-                        var admission = new StudentAdmission
-                        {
-                            ProgramsId = bbaProgram.Id,
-                            CollegeId = collegeCoc.Id,
-                            AppUserId = demoUser.Id,
-                            AdmissionDate = DateTime.UtcNow,
-                            IsActive = true
-                        };
-                        context.StudentAdmissions.Add(admission);
-                        await context.SaveChangesAsync();
-
-                        // Semester Enrollment for Semester 1
-                        if (firstSemester != null)
-                        {
-                            var enrollment = new SemesterEnrollment
-                            {
-                                StudentAdmissionId = admission.Id,
-                                SemesterId = firstSemester.Id,
-                                EnrollmentStatus = StudentEnrollmentStatus.Active,
-                                EnrollmentType = EnrollmentType.FullTime,
-                                PaymentStatus = PaymentStatus.Paid,
-                                EnrolledDate = DateTime.UtcNow,
-                                TotalCredits = 15,
-                                GradePoints = 0,
-                                TotalFee = 5000,
-                                PaidAmount = 5000
-                            };
-                            context.Set<SemesterEnrollment>().Add(enrollment);
-                            await context.SaveChangesAsync();
-                        }
-                    }
-                }
-
-                // Additional demo students for program column verification
-                var extraStudents = new List<StudentRegistration>();
-
-                if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "bbs.student@example.com") && bbsProgram != null)
-                {
-                    extraStudents.Add(new StudentRegistration
-                    {
-                        FirstName = "Sita", LastName = "Sharma", Email = "bbs.student@example.com",
-                        DateOfBirthBS = "2056-05-20", DateOfBirthAD = "1999-08-15",
-                        ContactNumber = "9841234568", GenderId = genderMale.Id,
-                        CollegeId = collegeCoc.Id, FacultyId = faculty?.Id,
-                        LevelId = level.Id, ProgramId = bbsProgram.Id,
-                        StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                        AcademicYearId = academicYear.Id, IsActive = true
-                    });
-                }
-
-                if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "bca.student@example.com") && bcaProgram != null)
-                {
-                    extraStudents.Add(new StudentRegistration
-                    {
-                        FirstName = "Ram", LastName = "Poudel", Email = "bca.student@example.com",
-                        DateOfBirthBS = "2056-07-15", DateOfBirthAD = "1999-10-10",
-                        ContactNumber = "9841234569", GenderId = genderMale.Id,
-                        CollegeId = collegeCoc.Id, FacultyId = faculty?.Id,
-                        LevelId = level.Id, ProgramId = bcaProgram.Id,
-                        StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                        AcademicYearId = academicYear.Id, IsActive = true
-                    });
-                }
-
-                if (collegeSom != null && !await context.StudentRegistrations.AnyAsync(sr => sr.Email == "som.student@example.com"))
-                {
-                    extraStudents.Add(new StudentRegistration
-                    {
-                        FirstName = "Gita", LastName = "Adhikari", Email = "som.student@example.com",
-                        DateOfBirthBS = "2055-01-10", DateOfBirthAD = "1998-04-20",
-                        ContactNumber = "9841234570", GenderId = (genderFemale ?? genderMale).Id,
-                        CollegeId = collegeSom.Id, FacultyId = faculty?.Id,
-                        LevelId = level.Id, ProgramId = bbaProgram.Id,
-                        StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                        AcademicYearId = academicYear.Id, IsActive = true
-                    });
-                }
-
-                if (extraStudents.Count > 0)
-                {
-                    context.StudentRegistrations.AddRange(extraStudents);
-                    await context.SaveChangesAsync();
-                }
-            }
-        }
-
-        // Engineering & CSIT Demo Students
-        var facultyFoe = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "ENG");
-        var facultyFst = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
-        var engCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "ENG-SOE");
-        var csitCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
-
-        if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "civil.student@example.com") && engCollege != null && level != null && genderMale != null && category != null && academicYear != null)
-        {
-            var beCivil = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BECT");
-            if (beCivil != null)
-            {
-                context.StudentRegistrations.Add(new StudentRegistration
-                {
-                    FirstName = "Krishna", LastName = "Joshi", Email = "civil.student@example.com",
-                    DateOfBirthBS = "2057-02-10", DateOfBirthAD = "2000-05-15",
-                    ContactNumber = "9841234571", GenderId = genderMale.Id,
-                        CollegeId = engCollege.Id, FacultyId = facultyFoe?.Id,
-                        LevelId = level.Id, ProgramId = beCivil.Id,
-                    StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                    AcademicYearId = academicYear!.Id, IsActive = true
-                });
-                await context.SaveChangesAsync();
-            }
-        }
-
-        if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "comp.student@example.com") && engCollege != null && level != null && genderMale != null && category != null && academicYear != null)
-        {
-            var beComp = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BECP");
-            if (beComp != null)
-            {
-                context.StudentRegistrations.Add(new StudentRegistration
-                {
-                    FirstName = "Hari", LastName = "Bhatta", Email = "comp.student@example.com",
-                    DateOfBirthBS = "2057-04-20", DateOfBirthAD = "2000-07-25",
-                    ContactNumber = "9841234572", GenderId = genderMale.Id,
-                        CollegeId = engCollege.Id, FacultyId = facultyFoe?.Id,
-                        LevelId = level.Id, ProgramId = beComp.Id,
-                    StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                    AcademicYearId = academicYear!.Id, IsActive = true
-                });
-                await context.SaveChangesAsync();
-            }
-        }
-
-        if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "csit.student@example.com") && csitCollege != null && level != null && genderMale != null && category != null && academicYear != null)
-        {
-            var bscCsit = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
-            if (bscCsit != null)
-            {
-                context.StudentRegistrations.Add(new StudentRegistration
-                {
-                    FirstName = "Mina", LastName = "Kunwar", Email = "csit.student@example.com",
-                    DateOfBirthBS = "2057-01-15", DateOfBirthAD = "2000-04-10",
-                    ContactNumber = "9841234573", GenderId = (genderFemale ?? genderMale).Id,
-                        CollegeId = csitCollege.Id, FacultyId = facultyFst?.Id,
-                        LevelId = level.Id, ProgramId = bscCsit.Id,
-                    StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                    AcademicYearId = academicYear!.Id, IsActive = true
-                });
-                await context.SaveChangesAsync();
-            }
-        }
-
-        if (!await context.StudentRegistrations.AnyAsync(sr => sr.Email == "bit.student@example.com") && csitCollege != null && level != null && genderFemale != null && category != null && academicYear != null)
-        {
-            var bitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BIT");
-            if (bitProgram != null)
-            {
-                context.StudentRegistrations.Add(new StudentRegistration
-                {
-                    FirstName = "Sarita", LastName = "Thapa", Email = "bit.student@example.com",
-                    DateOfBirthBS = "2057-06-05", DateOfBirthAD = "2000-09-18",
-                    ContactNumber = "9841234574", GenderId = genderFemale.Id,
-                        CollegeId = csitCollege.Id, FacultyId = facultyFst?.Id,
-                        LevelId = level.Id, ProgramId = bitProgram.Id,
-                    StudentCategoryId = category.Id, EthnicityId = ethnicity?.Id,
-                    AcademicYearId = academicYear!.Id, IsActive = true
-                });
-                await context.SaveChangesAsync();
-            }
-        }
-
-        // Demo Exam Schedules (no longer seeded)
-
         // ===== B.Sc. CSIT Subjects (Semesters 1-8) =====
-        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L008");
         if (csitProgram != null)
         {
             // Ensure semesters 5-8 exist
             var runningYearCsit = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
             if (runningYearCsit != null && !await context.Semesters.AnyAsync(s => s.Number == 5))
             {
-                var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
+                var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L002");
                 var csitSemesters = new[]
                 {
                     new Semester { Number = 5, Year = 3, Name = "Fifth Semester", Code = "SEM5", StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2027, 1, 30), AcademicYearId = runningYearCsit.Id, FacultyId = fstFaculty?.Id },
@@ -660,7 +409,7 @@ public static class DemoDataSeeder
         }
 
         // ===== BIT Subjects (Semesters 1-8) =====
-        var bitProg = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BIT");
+        var bitProg = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L016");
         if (bitProg != null)
         {
             var coreTypeBit = await context.SubjectTypes.FirstOrDefaultAsync(st => st.Code == "CORE");

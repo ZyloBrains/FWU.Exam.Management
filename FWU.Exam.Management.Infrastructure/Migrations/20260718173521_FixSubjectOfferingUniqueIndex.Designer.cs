@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260718173521_FixSubjectOfferingUniqueIndex")]
+    partial class FixSubjectOfferingUniqueIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -253,8 +256,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("BoardName")
                         .IsUnique()
                         .HasFilter("[BoardName] IS NOT NULL");
-
-                    b.HasIndex("CountryId");
 
                     b.ToTable("Boards");
                 });
@@ -552,31 +553,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("CollegeTypes");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Country", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CountryName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CountryName")
-                        .IsUnique()
-                        .HasFilter("[CountryName] IS NOT NULL");
-
-                    b.ToTable("Countries");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntryFormat", b =>
@@ -4370,17 +4346,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("AcademicYear");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Board", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Country", "Country")
-                        .WithMany("Boards")
-                        .HasForeignKey("CountryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Country");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.CollegeAdmins.CollegeAdminSubjectAssignment", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Infrastructure.Data.Models.AppUser", null)
@@ -5824,11 +5789,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("Colleges");
 
                     b.Navigation("ExamFees");
-                });
-
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Country", b =>
-                {
-                    b.Navigation("Boards");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.EntryFormat", b =>

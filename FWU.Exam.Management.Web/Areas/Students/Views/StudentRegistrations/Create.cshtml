@@ -334,8 +334,8 @@
                 return;
             }
 
-            $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
-                { collegeId: collegeId, levelId: levelId || null },
+            $.get(tenantUrl("/Students/StudentRegistrations/GetFacultiesByLevel"),
+                { levelId: levelId },
                 function (data) {
                     var dropdown = $("#ProgramId");
                     dropdown.empty();
@@ -349,10 +349,9 @@
         }
 
         function loadColleges(facultyId, callback) {
-            $('#CollegeId').select2('destroy');
+            var dropdown = $("#CollegeId");
             if (!facultyId) {
-                $("#CollegeId").empty().append('<option value="">Select College</option>');
-                $('#CollegeId').select2({width:'resolve'});
+                dropdown.empty().append('<option value="">Select College</option>').trigger('change');
                 if (callback) callback();
                 return;
             }

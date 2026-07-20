@@ -15,13 +15,13 @@ public static class MarksheetDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "BSCSIT");
+        var csitProgram = await context.Programs.FirstOrDefaultAsync(p => p.ProgramCode == "L008");
         var academicYear = await context.AcademicYears.FirstOrDefaultAsync(ay => ay.IsRunning);
         var regularExamType = await context.ExamTypes.FirstOrDefaultAsync(et => et.Code == "1");
         var semester8 = await context.Semesters.FirstOrDefaultAsync(s => s.Number == 8);
         var csitCollege = await context.Colleges.FirstOrDefaultAsync(c => c.Code == "CDC-CSIT");
-        var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "FST");
-        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "BL");
+        var fstFaculty = await context.Faculties.FirstOrDefaultAsync(f => f.OfficeCode == "L002");
+        var level = await context.Levels.FirstOrDefaultAsync(l => l.LevelCode == "1");
         var genderMale = await context.Genders.FirstOrDefaultAsync(g => g.GenderName == "Male");
         var category = await context.StudentCategories.FirstOrDefaultAsync(sc => sc.StudentCategoryName == "Regular");
         var ethnicity = await context.Ethnicities.FirstOrDefaultAsync(e => e.EthnicityName == "Other");

@@ -266,8 +266,17 @@ public partial class EntryPoint
                     TenantType = TenantType.Central,
                     IsActive = true,
                 });
-                await dbContext.SaveChangesAsync();
-                Console.WriteLine("[SEED] Tenant created.");
+                    dbContext.Tenants.Add(new Tenant
+                    {
+                        Name = "Engineering Office",
+                        OfficeCode = "ENG",
+                        ContactNumber = "01-2345670",
+                        Address = "Mahendranagar,Kanchanpur, Nepal",
+                        Email = "eng@fwu.edu.np",
+                        TenantType = TenantType.Central,
+                        IsActive = true,
+                    });
+                    await dbContext.SaveChangesAsync();
             }
 
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
@@ -294,46 +303,37 @@ public partial class EntryPoint
             }
             Console.WriteLine("[SEED] All essential seeders complete.");
 
-            Console.WriteLine("[SEED] Seeding super admin users...");
-            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
-            Console.WriteLine("[SEED] Super admin users seeded.");
+            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
 
-            // ===== DATA SEEDERS COMMENTED OUT FOR TESTING/PRODUCTION =====
-            // Uncomment when reference/demo data is needed.
-            //
-            // if (app.Environment.IsDevelopment())
-            // {
-            //     var refreshedTenant = await dbContext.Tenants.FirstAsync(t => t.TenantType == TenantType.Central);
-            //     tenantContext.SetTenant(refreshedTenant.Id, refreshedTenant.OfficeCode, refreshedTenant.TenantType);
-            //
-            //     await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-            //
-            //     await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-            //     await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
-            //     await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
-            //
-            //     await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-            //     await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
-            //
-            //     await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
-            //
-            //     await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-            //
-            //     await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-            //     await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-            //     await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-            //     await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
-            //     await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
-            //
-            //     await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
-            //
-            //     await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
-            // }
-            // else
-            // {
-            //     await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-            //     await LocationSeeder.SeedLocationDataAsync(scope.ServiceProvider);
-            // }
+            await CollegeSeeder.SeedCollegesAsync(scope.ServiceProvider);
+
+            await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
+
+            await AcademicYearSeeder.SeedAcademicYearsAsync(scope.ServiceProvider);
+
+            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+
+            await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
+
+            await CollegeProgramSeeder.SeedCollegeProgramsAsync(scope.ServiceProvider);
+
+            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+
+            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+
+            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+
+            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
+
+            await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
+
+            await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
         }
 
             //             // Log.Information("FWU Examination Management System starting up...");
