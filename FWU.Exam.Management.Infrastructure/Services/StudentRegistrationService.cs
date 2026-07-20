@@ -359,6 +359,16 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
+    public async Task<List<SelectOption>> GetCollegesByLevelAsync(int levelId)
+    {
+        return await context.CollegePrograms
+            .Where(cp => cp.Program != null && cp.Program.LevelId == levelId && cp.College != null && cp.College.Name != null)
+            .Select(cp => new SelectOption { Id = cp.College!.Id, Name = cp.College.Name! })
+            .Distinct()
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null)
     {
         var query = context.CollegePrograms
