@@ -137,7 +137,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     [RequirePermission("districts.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,ProvinceId,DistrictName,Remarks,IsActive")] District district)
+    public async Task<IActionResult> Create([Bind("Id,ProvinceId,DistrictCode,DistrictName,Remarks,IsActive")] District district)
     {
         if (ModelState.IsValid)
         {
@@ -175,7 +175,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     [RequirePermission("districts.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceId,DistrictName,Remarks,IsActive")] District district)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,ProvinceId,DistrictCode,DistrictName,Remarks,IsActive")] District district)
     {
         if (id != district.Id)
         {

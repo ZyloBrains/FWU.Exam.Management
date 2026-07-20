@@ -294,14 +294,14 @@
                     <div class="flex items-center gap-3"><div class="w-9 h-9 bg-purple-100 rounded-lg flex items-center justify-center"><i class="fas fa-user-shield text-purple-600 text-sm"></i></div><span class="text-xs sm:text-sm font-medium text-gray-700">Roles</span></div>
                     <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalRoles</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
                 </a>
-                <div class="flex items-center justify-between p-4">
+                <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-3"><div class="w-9 h-9 bg-cyan-100 rounded-lg flex items-center justify-center"><i class="fas fa-clipboard-list text-cyan-600 text-sm"></i></div><span class="text-xs sm:text-sm font-medium text-gray-700">Exam Registrations</span></div>
-                    <span class="text-sm font-semibold text-gray-800">@Model.TotalExamRegistrations</span>
-                </div>
-                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalExamRegistrations</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
+                </a>
+                <a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-3"><div class="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center"><i class="fas fa-user-graduate text-red-600 text-sm"></i></div><span class="text-xs sm:text-sm font-medium text-gray-700">Student Registrations</span></div>
-                    <span class="text-sm font-semibold text-gray-800">@Model.TotalStudents</span>
-                </div>
+                    <div class="flex items-center gap-2"><span class="text-sm font-semibold text-gray-800">@Model.TotalStudents</span><i class="fas fa-chevron-right text-gray-400 text-xs"></i></div>
+                </a>
             </div>
         </div>
     </div>

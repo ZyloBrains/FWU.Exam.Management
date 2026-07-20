@@ -699,6 +699,32 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
+    public async Task<IActionResult> ExportToPdf(string searchTerm = "")
+    {
+        var collegeIds = userContext.FacultyCollegeIds.ToList();
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, 1, 99999, collegeIds.Count > 0 ? collegeIds : null);
+        ViewBag.TotalCount = totalCount;
+        ViewBag.SearchTerm = searchTerm;
+        return View("PrintPdf", data);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToCsv(string searchTerm = "")
+    {
+        var collegeIds = userContext.FacultyCollegeIds.ToList();
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, 1, 99999, collegeIds.Count > 0 ? collegeIds : null);
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Reg No,Student Name,Academic Year,Faculty,Contact,Email,Status");
+        foreach (var r in data)
+        {
+            sb.AppendLine($"\"{r.RegistrationNumber}\",\"{r.FullName}\",\"{r.AcademicYear}\",\"{r.Faculty}\",\"{r.ContactNumber}\",\"{r.Email}\",\"{r.Status}\"");
+        }
+        var csvBytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", $"StudentRegistrations_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    [HttpGet]
     public async Task<JsonResult> GetDistrictsByProvince(int provinceId)
     {
         var districts = await studentRegistrationService.GetDistrictsByProvinceAsync(provinceId);

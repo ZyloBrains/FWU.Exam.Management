@@ -30,6 +30,14 @@
         </div>
     }
 
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start shadow-sm" x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 5000)">
+            <svg class="h-5 w-5 text-emerald-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="text-sm font-medium text-emerald-800">@successMessage</div>
+        </div>
+    }
+
     @if (TempData["ErrorMessage"] is string errorMessage)
     {
         <div class="rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">

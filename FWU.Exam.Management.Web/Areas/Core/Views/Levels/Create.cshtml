@@ -46,8 +46,8 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <input asp-for="IsRunning" type="checkbox" class="w-4 h-4 text-cyan-600 rounded focus:ring-cyan-500" />
-                        <label asp-for="IsRunning" class="text-xs sm:text-sm font-medium text-gray-700">Currently Running</label>
+                        <input type="checkbox" name="IsRunning" value="true" @(Model?.IsRunning == true ? "checked" : "") class="w-4 h-4 text-cyan-600 rounded focus:ring-cyan-500" />
+                        <label class="text-xs sm:text-sm font-medium text-gray-700">Currently Running</label>
                     </div>
                     <p class="text-xs text-gray-500 mt-1">Check if this level is currently active for admissions</p>
                 </div>

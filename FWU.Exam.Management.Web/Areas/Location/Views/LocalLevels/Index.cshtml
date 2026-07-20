@@ -42,6 +42,17 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <label class="text-xs sm:text-sm text-gray-700 whitespace-nowrap">Rows:</label>
+                <select class="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:ring-teal-500 focus:border-teal-500"
+                        onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
+                    <option value="10" selected="@(pageSize == 10)">10</option>
+                    <option value="25" selected="@(pageSize == 25)">25</option>
+                    <option value="50" selected="@(pageSize == 50)">50</option>
+                    <option value="100" selected="@(pageSize == 100)">100</option>
+                    <option value="9999" selected="@(pageSize >= 9999)">All</option>
+                </select>
+            </div>
             <!-- Export dropdown -->
             <div class="relative">
                 <button x-on:click="openExport = !openExport"
@@ -67,6 +78,7 @@
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
+                           target="_blank"
                            class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
                     </a>
@@ -299,16 +311,6 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
-                        <select class="select2 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-teal-500 focus:border-teal-500"
-                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
-                            <option value="10" selected="@(pageSize == 10)">10</option>
-                            <option value="25" selected="@(pageSize == 25)">25</option>
-                            <option value="50" selected="@(pageSize == 50)">50</option>
-                            <option value="100" selected="@(pageSize == 100)">100</option>
-                        </select>
-                    </div>
                     <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
                         <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">

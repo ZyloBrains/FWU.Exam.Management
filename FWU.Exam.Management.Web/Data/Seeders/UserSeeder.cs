@@ -75,6 +75,8 @@ public static class UserSeeder
                 await userManager.ResetPasswordAsync(user, token, "Admin@123");
                 user.FacultyId = facultyId;
                 user.CollegeId = collegeId;
+                user.IsActive = true;
+                user.EmailConfirmed = true;
                 await userManager.UpdateAsync(user);
             }
 
