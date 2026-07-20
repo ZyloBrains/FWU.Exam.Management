@@ -214,24 +214,24 @@
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Local Level *</label>
-                                <select id="LocalLevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                                     <option value="">Select Local Level</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Ward Number</label>
-                                <input id="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <input id="WardNumber" name="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Tole/Street</label>
-                                <input id="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <input id="ToleStreet" name="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">House Number</label>
-                                <input id="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <input id="HouseNumber" name="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>                           
                         </div>
                     </div>
@@ -371,7 +371,10 @@
         function loadDistricts(provinceId, selectedDistrictId, callback) {
             var seq = ++_districtSeq;
             if (!provinceId) {
-                $("#DistrictId").empty().append('<option value="">Select District</option>');
+                var dd = $("#DistrictId");
+                dd.select2('destroy');
+                dd.empty().append('<option value="">Select District</option>');
+                dd.select2({ width: 'resolve' });
                 if (callback) callback();
                 return;
             }
@@ -379,12 +382,14 @@
             $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"), { provinceId: provinceId }, function (data) {
                 if (seq !== _districtSeq) return;
                 var dropdown = $("#DistrictId");
+                dropdown.select2('destroy');
                 dropdown.empty();
                 dropdown.append('<option value="">Select District</option>');
                 $.each(data, function (index, item) {
                     var selected = selectedDistrictId && item.id == selectedDistrictId ? ' selected' : '';
                     dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
                 });
+                dropdown.select2({ width: 'resolve' });
                 if (callback) callback();
             });
         }
@@ -392,7 +397,10 @@
         function loadLocalLevels(districtId, selectedLocalLevelId, callback) {
             var seq = ++_localLevelSeq;
             if (!districtId) {
-                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                var dd = $("#LocalLevelId");
+                dd.select2('destroy');
+                dd.empty().append('<option value="">Select Local Level</option>');
+                dd.select2({ width: 'resolve' });
                 if (callback) callback();
                 return;
             }
@@ -400,12 +408,14 @@
             $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
                 if (seq !== _localLevelSeq) return;
                 var dropdown = $("#LocalLevelId");
+                dropdown.select2('destroy');
                 dropdown.empty();
                 dropdown.append('<option value="">Select Local Level</option>');
                 $.each(data, function (index, item) {
                     var selected = selectedLocalLevelId && item.id == selectedLocalLevelId ? ' selected' : '';
                     dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
                 });
+                dropdown.select2({ width: 'resolve' });
                 if (callback) callback();
             });
         }

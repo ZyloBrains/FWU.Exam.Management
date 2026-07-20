@@ -187,24 +187,24 @@
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Local Level *</label>
-                                <select id="LocalLevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                                     <option value="">Select Local Level</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Ward Number</label>
-                                <input id="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input id="WardNumber" name="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Tole/Street</label>
-                                <input id="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input id="ToleStreet" name="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">House Number</label>
-                                <input id="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input id="HouseNumber" name="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
                         </div>
                     </div>
@@ -395,29 +395,33 @@
             // Province -> District
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
-                $("#DistrictId").html('<option>Loading...</option>');
-                $("#LocalLevelId").html('<option value="">Select Local Level</option>');
+                $("#DistrictId").empty().append('<option value="">Loading...</option>');
+                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
                 $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"), { provinceId: provinceId }, function (data) {
                     var dropdown = $("#DistrictId");
+                    dropdown.select2('destroy');
                     dropdown.empty();
                     dropdown.append('<option value="">Select District</option>');
                     $.each(data, function (index, item) {
                         dropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
+                    dropdown.select2({ width: 'resolve' });
                 });
             });
 
             // District -> LocalLevel
             $("#DistrictId").change(function () {
                 var districtId = $(this).val();
-                $("#LocalLevelId").html('<option value="">Loading...</option>');
+                $("#LocalLevelId").empty().append('<option value="">Loading...</option>');
                 $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
                     var dropdown = $("#LocalLevelId");
+                    dropdown.select2('destroy');
                     dropdown.empty();
                     dropdown.append('<option value="">Select Local Level</option>');
                     $.each(data, function (index, item) {
                         dropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
+                    dropdown.select2({ width: 'resolve' });
                 });
             });
 
