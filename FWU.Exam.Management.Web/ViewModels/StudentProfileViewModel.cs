@@ -71,6 +71,11 @@ public class ExamPaymentViewModel
     public string? ExamScheduleName { get; set; }
     public string? ProgramName { get; set; }
     public string? SemesterName { get; set; }
+    public string? StudentName { get; set; }
+    public string? RegistrationNumber { get; set; }
+    public string? EndDateBs { get; set; }
+    public string? AcademicYearName { get; set; }
+    public string? ExamTypeName { get; set; }
     public decimal TotalExamFee { get; set; }
     public decimal TotalPracticalFee { get; set; }
     public decimal GrandTotal { get; set; }
