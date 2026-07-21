@@ -23,7 +23,8 @@ public class StudentDashboardController(
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     IRetotalRequestService retotalRequestService,
-    AppDbContext context)
+    AppDbContext context,
+    IWebHostEnvironment env)
     : Controller
 {
     public async Task<IActionResult> Profile()
@@ -362,23 +363,38 @@ public class StudentDashboardController(
         }
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
-        var successUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students", status = "success", logId }, Request.Scheme);
-        var failureUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students", status = "failure", logId }, Request.Scheme);
+        var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
+        var successUrl = configuration["ESewa:SuccessUrl"] ?? defaultCallbackUrl;
+        var failureUrl = configuration["ESewa:FailureUrl"] ?? defaultCallbackUrl;
+
+        logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
+            amount, transactionUuid, successUrl, failureUrl);
 
         var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
 
+        HttpContext.Session.SetInt32("ESewaLogId", logId);
         ViewBag.LogId = logId;
         ViewBag.TransactionUuid = transactionUuid;
 
         return View(formData);
     }
 
-    public async Task<IActionResult> ESewaCallback(string status, string? data, int? logId)
+    public async Task<IActionResult> ESewaCallback(string? data)
     {
+        var sessionLogId = HttpContext.Session.GetInt32("ESewaLogId");
+        HttpContext.Session.Remove("ESewaLogId");
+
+        logger.LogInformation("ESewaCallback hit: sessionLogId={SessionLogId}, dataPresent={DataPresent}, queryString={QueryString}",
+            sessionLogId, !string.IsNullOrEmpty(data), Request.QueryString);
+
         if (string.IsNullOrEmpty(data))
         {
-            if (logId.HasValue)
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, "", false, "No response data received from eSewa.", "No response data received from eSewa.");
+            if (sessionLogId.HasValue)
+            {
+                var log = await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value);
+                if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+            }
 
             TempData["ErrorMessage"] = "No response data received from eSewa.";
             return RedirectToAction(nameof(PaymentFailure));
@@ -386,7 +402,7 @@ public class StudentDashboardController(
 
         try
         {
-            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
+            var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
             var decodedBytes = Convert.FromBase64String(data);
@@ -396,8 +412,8 @@ public class StudentDashboardController(
 
             if (response == null)
             {
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, "", false, "Invalid response from eSewa.", "Invalid response from eSewa.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, "Invalid response from eSewa.", "Invalid response from eSewa.");
 
                 TempData["ErrorMessage"] = "Invalid response from eSewa.";
                 return RedirectToAction(nameof(PaymentFailure));
@@ -405,8 +421,8 @@ public class StudentDashboardController(
 
             if (!esewaService.VerifyResponseSignature(response, decodedJson))
             {
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
 
                 TempData["ErrorMessage"] = "Signature verification failed.";
                 return RedirectToAction(nameof(PaymentFailure));
@@ -420,17 +436,17 @@ public class StudentDashboardController(
 
             if (verified == null || verified.Status != "COMPLETE")
             {
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", false, combinedData, "Transaction verification failed via eSewa.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, combinedData, "Transaction verification failed via eSewa.");
 
                 TempData["ErrorMessage"] = "Transaction verification failed.";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            if (logId.HasValue)
+            if (sessionLogId.HasValue)
             {
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
-                await HandlePostPaymentRegistration(logId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
+                await HandlePostPaymentRegistration(sessionLogId.Value);
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -483,7 +499,7 @@ public class StudentDashboardController(
         var baseUrl = $"{scheme}://{host}";
 
         var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
-            new { area = "Students", logId }, scheme)!;
+            new { area = "Students" }, scheme)!;
 
         var khaltiRequest = new KhaltiInitiateRequest
         {
@@ -513,6 +529,7 @@ public class StudentDashboardController(
             }
 
             logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
+            HttpContext.Session.SetInt32("KhaltiLogId", logId);
             return Redirect(response.PaymentUrl);
         }
         catch (Exception ex)
@@ -523,12 +540,17 @@ public class StudentDashboardController(
         }
     }
 
-    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id, int? logId)
+    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id)
     {
+        var sessionLogId = HttpContext.Session.GetInt32("KhaltiLogId");
+        HttpContext.Session.Remove("KhaltiLogId");
+
+        logger.LogInformation("KhaltiCallback hit: sessionLogId={SessionLogId}, pidx={Pidx}, status={Status}", sessionLogId, pidx, status);
+
         if (string.IsNullOrEmpty(pidx))
         {
-            if (logId.HasValue)
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
+            if (sessionLogId.HasValue)
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
 
             TempData["ErrorMessage"] = "No payment identifier received from Khalti.";
             return RedirectToAction(nameof(PaymentFailure));
@@ -536,11 +558,8 @@ public class StudentDashboardController(
 
         try
         {
-            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
+            var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
-
-            logger.LogInformation("Khalti callback received: pidx={Pidx}, status={Status}, transaction_id={TransactionId}, purchase_order_id={PurchaseOrderId}",
-                pidx, status, transaction_id, purchase_order_id);
 
             var lookup = await khaltiService.LookupPaymentAsync(pidx!);
             var responseData = System.Text.Json.JsonSerializer.Serialize(new
@@ -554,18 +573,18 @@ public class StudentDashboardController(
             if (lookup == null || lookup.Status != "Completed")
             {
                 logger.LogWarning("Khalti payment verification failed: status={LookupStatus}, callback_status={CallbackStatus}", lookup?.Status, status);
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
 
                 TempData["ErrorMessage"] = $"Payment verification failed. Status: {lookup?.Status ?? "Unknown"}";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
             logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
-            if (logId.HasValue)
+            if (sessionLogId.HasValue)
             {
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
-                await HandlePostPaymentRegistration(logId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
+                await HandlePostPaymentRegistration(sessionLogId.Value);
             }
 
             TempData["SuccessMessage"] = "Payment successful!";

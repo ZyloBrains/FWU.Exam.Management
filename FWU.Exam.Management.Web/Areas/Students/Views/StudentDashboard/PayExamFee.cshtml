@@ -7,6 +7,20 @@
 }
 
 <div class="min-h-screen pb-24 sm:pb-6">
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="mb-4 rounded-2xl bg-red-50 border border-red-200 p-4 flex items-start gap-3">
+            <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+            <p class="text-sm text-red-700">@errorMessage</p>
+        </div>
+    }
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="mb-4 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-500 mt-0.5"></i>
+            <p class="text-sm text-emerald-700">@successMessage</p>
+        </div>
+    }
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 mb-6 sm:mb-8">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
         <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>

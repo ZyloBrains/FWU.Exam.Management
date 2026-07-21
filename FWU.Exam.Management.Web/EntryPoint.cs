@@ -171,12 +171,19 @@ public partial class EntryPoint
             builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
             builder.Services.AddScoped<IESewaService, ESewaService>();
             builder.Services.AddHttpClient<IESewaService, ESewaService>();
-            builder.Services.AddScoped<IKhaltiService, KhaltiService>();
             builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
             builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
             builder.Services.AddScoped<ICountryService, CountryService>();
             builder.Services.AddScoped<IPermissionService, PermissionService>();
             builder.Services.AddMemoryCache();
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = isDevelopment ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+            });
             builder.Services.AddAuthorization();
             builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
             builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
@@ -229,6 +236,7 @@ public partial class EntryPoint
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseSession();
 
             app.UseMiddleware<UserContextMiddleware>();
 

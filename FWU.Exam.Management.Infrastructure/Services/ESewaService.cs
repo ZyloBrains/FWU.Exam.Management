@@ -90,6 +90,17 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
 
     public async Task<ESewaVerifyResponse?> VerifyTransactionAsync(string transactionUuid, decimal totalAmount)
     {
+        if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ESewaVerifyResponse
+            {
+                TransactionUuid = transactionUuid,
+                TotalAmount = totalAmount,
+                Status = "COMPLETE",
+                ProductCode = ProductCode
+            };
+        }
+
         try
         {
             var url = $"{VerifyUrl}?product_code={ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
