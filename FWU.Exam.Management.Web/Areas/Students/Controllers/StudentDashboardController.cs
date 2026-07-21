@@ -445,8 +445,8 @@ public class StudentDashboardController(
 
             if (sessionLogId.HasValue)
             {
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
                 await HandlePostPaymentRegistration(sessionLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -583,8 +583,8 @@ public class StudentDashboardController(
             logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
             if (sessionLogId.HasValue)
             {
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
                 await HandlePostPaymentRegistration(sessionLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -647,8 +647,8 @@ public class StudentDashboardController(
                 fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
-        await dashboardService.UpdatePaymentRequestLogAsync(logId, $"DEMO-{DateTime.Now:yyyyMMddHHmmss}", true, "{\"method\":\"demo\",\"note\":\"Demo payment for workflow testing\"}", "Demo payment approved.");
         await HandlePostPaymentRegistration(logId);
+        await dashboardService.UpdatePaymentRequestLogAsync(logId, $"DEMO-{DateTime.Now:yyyyMMddHHmmss}", true, "{\"method\":\"demo\",\"note\":\"Demo payment for workflow testing\"}", "Demo payment approved.");
 
         var examReg = await context.ExamRegistrations!
             .Where(er => er.ExamScheduleId == examScheduleId
