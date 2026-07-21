@@ -77,6 +77,7 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam Type</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date Range</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Registrations</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
@@ -107,6 +108,17 @@
                             {
                                 <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Inactive</span>
                             }
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            @{
+                                var counts = ViewBag.RegistrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+                                var regCount = counts.TryGetValue(item.Id, out var c) ? c : 0;
+                            }
+                            <a asp-controller="ExamRegistrations" asp-action="Index" asp-area="Exams" asp-route-examScheduleId="@item.Id"
+                               onclick="event.stopPropagation()"
+                               class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full @(regCount > 0 ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200") transition-colors">
+                                <i class="fas fa-users text-[10px]"></i> @regCount
+                            </a>
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
@@ -175,6 +187,17 @@
                         <div class="text-gray-800">@(item.StartDateBs ?? "-")</div>
                         <div class="text-gray-500">End Date</div>
                         <div class="text-gray-800">@(item.EndDateBs ?? "-")</div>
+                        <div class="text-gray-500">Registrations</div>
+                        <div class="text-gray-800">
+                            @{
+                                var mobileCounts = ViewBag.RegistrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+                                var mobileRegCount = mobileCounts.TryGetValue(item.Id, out var mc) ? mc : 0;
+                            }
+                            <a asp-controller="ExamRegistrations" asp-action="Index" asp-area="Exams" asp-route-examScheduleId="@item.Id"
+                               class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full @(mobileRegCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500")">
+                                <i class="fas fa-users text-[10px]"></i> @mobileRegCount
+                            </a>
+                        </div>
                     </div>
                     <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
                         <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">

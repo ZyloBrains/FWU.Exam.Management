@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -29,6 +30,14 @@ public class ExamSchedulesController(
 
         var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
 
+        var scheduleIds = items.Select(i => i.Id).ToList();
+        var registrationCounts = await context.ExamRegistrations
+            .Where(r => scheduleIds.Contains(r.ExamScheduleId))
+            .GroupBy(r => r.ExamScheduleId)
+            .Select(g => new { ScheduleId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ScheduleId, x => x.Count);
+
+        ViewBag.RegistrationCounts = registrationCounts;
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -142,6 +151,16 @@ public class ExamSchedulesController(
 
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
+
+        var registrations = await context.ExamRegistrations
+            .Where(r => r.ExamScheduleId == id.Value)
+            .ToListAsync();
+
+        ViewBag.TotalRegistrations = registrations.Count;
+        ViewBag.PaidCount = registrations.Count(r => r.FeeEnclosed.HasValue && r.FeeEnclosed > 0);
+        ViewBag.PendingCount = registrations.Count(r => !r.FeeEnclosed.HasValue || r.FeeEnclosed == 0);
+        ViewBag.RegisteredCount = registrations.Count(r => r.Status == RegistrationStatus.Registered);
+        ViewBag.PendingVerificationCount = registrations.Count(r => r.Status == RegistrationStatus.Pending);
 
         return View(examSchedule);
     }
