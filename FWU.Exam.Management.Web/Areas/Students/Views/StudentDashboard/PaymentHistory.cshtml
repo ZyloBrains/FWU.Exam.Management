@@ -1,0 +1,108 @@
+@model List<FWU.Exam.Management.Domain.Entities.Payments.PaymentRequestLog>
+
+@{
+    ViewData["Title"] = "Payment History";
+}
+
+<div class="min-h-screen">
+
+    @if (Model.Count == 0)
+    {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="text-center py-16 sm:py-20 px-6">
+                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <svg class="h-10 w-10 sm:h-12 sm:w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Payments Found</h3>
+                <p class="text-gray-500 max-w-sm mx-auto text-sm">You haven't made any exam fee payments yet. Submit an exam form to make a payment.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var payment in Model)
+            {
+                var scheduleName = payment.ExamSchedule?.ExamScheduleName ?? "Exam Fee";
+                var semesterName = payment.ExamSchedule?.Semester?.Name ?? "";
+                var isPaid = payment.PaymentRequestLogStatus == 1;
+                var statusColors = isPaid
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    : "bg-amber-50 border-amber-200 text-amber-700";
+                var statusIcon = isPaid ? "fa-check-circle" : "fa-clock";
+                var statusLabel = isPaid ? "Paid" : "Pending";
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200">
+                    <div class="p-4 sm:p-6">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                                <div class="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                                    <i class="fas fa-receipt text-white text-sm"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h3 class="text-base sm:text-lg font-bold text-gray-900">@scheduleName</h3>
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold @statusColors border">
+                                            <i class="fas @statusIcon text-[10px]"></i>
+                                            @statusLabel
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+                                        @if (!string.IsNullOrEmpty(semesterName))
+                                        {
+                                            <span class="inline-flex items-center gap-1.5">
+                                                <i class="fas fa-book-open text-gray-400 text-xs"></i>
+                                                @semesterName
+                                            </span>
+                                        }
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <i class="fas fa-calendar text-gray-400 text-xs"></i>
+                                            @payment.ForwardedTimestamp.ToString("dd MMM yyyy")
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(payment.InvoiceNumber))
+                                        {
+                                            <span class="inline-flex items-center gap-1.5">
+                                                <i class="fas fa-file-invoice text-gray-400 text-xs"></i>
+                                                @payment.InvoiceNumber
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(payment.PaymentType?.PaymentTypeName))
+                                        {
+                                            <span class="inline-flex items-center gap-1.5">
+                                                <i class="fas fa-credit-card text-gray-400 text-xs"></i>
+                                                @payment.PaymentType.PaymentTypeName
+                                            </span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(payment.TransactionId))
+                                        {
+                                            <span class="inline-flex items-center gap-1.5">
+                                                <i class="fas fa-hashtag text-gray-400 text-xs"></i>
+                                                @payment.TransactionId
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="shrink-0">
+                                <span class="text-lg sm:text-xl font-bold text-gray-900">Rs @payment.Amount.ToString("N0")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sm:hidden border-t border-gray-100 px-4 py-3 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-gray-500">Amount</span>
+                            <p class="text-base font-bold text-gray-900">Rs @payment.Amount.ToString("N0")</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-gray-500">Invoice</span>
+                            <p class="text-sm font-medium text-gray-700">@(payment.InvoiceNumber ?? "N/A")</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

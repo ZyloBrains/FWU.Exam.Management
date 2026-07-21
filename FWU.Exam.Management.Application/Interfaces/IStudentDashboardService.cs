@@ -28,4 +28,9 @@ public interface IStudentDashboardService
     Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds);
     Task<List<ExamRegistration>> GetStudentExamRegistrationsAsync(string userId);
     Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId);
+    Task<bool> HasSubmittedPreviousSemesterExamFormAsync(string userId, int currentSemesterId, int programId);
+    Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId);
+    Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId);
+    Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId);
+    Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(string email);
 }

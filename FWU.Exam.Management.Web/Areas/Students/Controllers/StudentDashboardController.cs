@@ -130,6 +130,24 @@ public class StudentDashboardController(
         return View(new ExamFormsListViewModel { ExamForms = forms });
     }
 
+    public async Task<IActionResult> AdmitCards()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id);
+        return View(admitCards);
+    }
+
+    public async Task<IActionResult> PaymentHistory()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var payments = await dashboardService.GetPaymentHistoryForStudentAsync(user.Email ?? "");
+        return View(payments);
+    }
+
     public async Task<IActionResult> MySubjects()
     {
         var user = await userManager.GetUserAsync(User);
@@ -187,6 +205,36 @@ public class StudentDashboardController(
 
         if (schedule.ProgramId != programId)
             return Forbid();
+
+        var hasExistingRegistration = await dashboardService.HasExistingPaymentAsync(examScheduleId, registration.Id);
+        if (hasExistingRegistration)
+        {
+            TempData["ErrorMessage"] = "You have already submitted this exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var isSupplementary = schedule.ExamType?.Name == "Supplementary";
+        if (isSupplementary)
+        {
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId);
+            if (!hasFailed)
+            {
+                TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
+                return RedirectToAction(nameof(ExamForms));
+            }
+        }
+        else
+        {
+            if (schedule.Semester != null && schedule.Semester.Number > 1)
+            {
+                var prevSubmitted = await dashboardService.HasSubmittedPreviousSemesterExamFormAsync(user.Id, schedule.SemesterId, programId);
+                if (!prevSubmitted)
+                {
+                    TempData["ErrorMessage"] = "Please submit the previous semester exam form first.";
+                    return RedirectToAction(nameof(ExamForms));
+                }
+            }
+        }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
