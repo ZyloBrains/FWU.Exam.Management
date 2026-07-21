@@ -34,6 +34,10 @@ public class ExamFormViewModel
     public string? Status { get; set; }
     public decimal Amount { get; set; }
     public bool HasPaid { get; set; }
+    public bool HasAdmitCard { get; set; }
+    public string? EndDateBs { get; set; }
+    public string? ExtendedDateBs { get; set; }
+    public DateTime? AdmissionCardReleaseDate { get; set; }
 }
 
 public class ExamFormsListViewModel

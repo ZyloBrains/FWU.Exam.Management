@@ -112,18 +112,18 @@ public class StudentDashboardController(
         foreach (var schedule in schedules)
         {
             var hasPaid = await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
-            var amount = await dashboardService.GetExamFeeForScheduleAsync(schedule.Id);
+            var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id);
 
             forms.Add(new ExamFormViewModel
             {
                 ExamScheduleId = schedule.Id,
-                Level = schedule.Program.Level?.LevelName,
-                Program = schedule.Program?.ProgramName,
                 Semester = $"{schedule.Semester?.Year ?? 0} / {schedule.Semester?.Number ?? 0}",
                 ExamScheduleName = schedule.ExamScheduleName,
-                Status = hasPaid ? "Paid" : "pending",
-                Amount = amount,
-                HasPaid = hasPaid
+                HasPaid = hasPaid,
+                HasAdmitCard = hasAdmitCard,
+                EndDateBs = schedule.EndDateBs,
+                ExtendedDateBs = schedule.ExtendedDate.HasValue ? schedule.ExtendedDate.Value.ToString("yyyy-MM-dd") : null,
+                AdmissionCardReleaseDate = schedule.AdmissionCardReleaseDate
             });
         }
 
