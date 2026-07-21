@@ -629,7 +629,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(prl => prl.ExamSchedule)
                 .ThenInclude(es => es!.Semester)
             .Include(prl => prl.PaymentType)
-            .Where(prl => prl.StudentRegistrationId == registration.Id)
+            .Where(prl => prl.StudentRegistrationId == registration.Id
+                       && prl.PaymentRequestLogStatus == 1)
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .ToListAsync();
     }
