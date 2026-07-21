@@ -18,6 +18,7 @@ public static class ReferenceDataSeeder
             ["eSewa"] = ("https://upload.wikimedia.org/wikipedia/commons/5/5c/ESewa_Logo.png", true),
             ["Khalti"] = ("https://khalti.com/static/images/khalti-icon.png", true),
             ["ConnectIPS"] = ("https://www.connectips.com/wp-content/uploads/2021/07/connect-ips-logo.png", true),
+            ["Demo"] = ("", true),
         };
 
         foreach (var (name, (logoUrl, isActive)) in seedTypes)

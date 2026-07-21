@@ -601,6 +601,72 @@ public class StudentDashboardController(
         }
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DemoPayment(int examScheduleId, decimal amount, string? selectedSubjectIds)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return NotFound("Student registration not found.");
+
+        var demoType = await context.Set<FWU.Exam.Management.Domain.Entities.Payments.PaymentType>()
+            .FirstOrDefaultAsync(pt => pt.PaymentTypeName == "Demo");
+        if (demoType == null)
+        {
+            demoType = new FWU.Exam.Management.Domain.Entities.Payments.PaymentType
+            {
+                PaymentTypeName = "Demo",
+                LogoUrl = "",
+                IsActive = true
+            };
+            context.Set<FWU.Exam.Management.Domain.Entities.Payments.PaymentType>().Add(demoType);
+            await context.SaveChangesAsync();
+        }
+
+        var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
+        var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
+            ? new List<int>()
+            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
+
+        int logId;
+        if (subjectIds.Count == 0)
+        {
+            logId = await dashboardService.CreatePaymentRequestLogAsync(
+                examScheduleId, registration.Id, amount, "demo", invoiceNumber,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
+        else
+        {
+            logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
+                examScheduleId, registration.Id, amount, "demo", invoiceNumber, subjectIds,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
+
+        await dashboardService.UpdatePaymentRequestLogAsync(logId, $"DEMO-{DateTime.Now:yyyyMMddHHmmss}", true, "{\"method\":\"demo\",\"note\":\"Demo payment for workflow testing\"}", "Demo payment approved.");
+        await HandlePostPaymentRegistration(logId);
+
+        var examReg = await context.ExamRegistrations!
+            .Where(er => er.ExamScheduleId == examScheduleId
+                      && er.IsActive
+                      && er.IsAppliedByStudent == true)
+            .OrderByDescending(er => er.Id)
+            .FirstOrDefaultAsync();
+        if (examReg != null && examReg.Status == FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending)
+        {
+            examReg.Status = FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered;
+            await context.SaveChangesAsync();
+        }
+
+        TempData["SuccessMessage"] = "Demo payment completed successfully!";
+        TempData["TransactionCode"] = $"DEMO-{DateTime.Now:yyyyMMddHHmmss}";
+        return RedirectToAction(nameof(PaymentSuccess));
+    }
+
     public IActionResult PaymentSuccess()
     {
         return View();

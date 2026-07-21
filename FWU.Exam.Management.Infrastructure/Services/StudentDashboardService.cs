@@ -65,21 +65,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var allSchedules = await query.ToListAsync();
 
-        var scheduleIds = allSchedules.Select(s => s.Id).ToList();
-        var existingRegistrationScheduleIds = await context.ExamRegistrations!
-            .AsNoTracking()
-            .Where(er => scheduleIds.Contains(er.ExamScheduleId)
-                      && er.IsActive
-                      && er.IsAppliedByStudent == true)
-            .Select(er => er.ExamScheduleId)
-            .ToListAsync();
-
         var filtered = new List<ExamSchedule>();
         foreach (var schedule in allSchedules)
         {
-            if (existingRegistrationScheduleIds.Contains(schedule.Id))
-                continue;
-
             var isSupplementary = schedule.ExamType?.Name == "Supplementary";
 
             if (isSupplementary)

@@ -331,6 +331,19 @@
                             </button>
                         }
                     </div>
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <button type="button" onclick="processPayment('demo')"
+                                class="w-full flex items-center sm:flex-col gap-4 sm:gap-3 p-4 sm:p-6 bg-amber-50 border-2 border-amber-200 rounded-xl hover:border-amber-400 transition-all duration-200 active:scale-[0.98] text-left sm:text-center">
+                            <div class="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-xl flex items-center justify-center bg-amber-100 border border-amber-200">
+                                <i class="fas fa-flask text-xl sm:text-2xl text-amber-600"></i>
+                            </div>
+                            <div class="flex-1 sm:text-center">
+                                <p class="text-sm sm:text-base font-bold text-amber-700">Demo Payment</p>
+                                <p class="text-xs text-amber-500 mt-0.5">Test the payment workflow (no real charge)</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-amber-600 sm:hidden text-sm"></i>
+                        </button>
+                    </div>
                 }
                 else
                 {
@@ -440,6 +453,8 @@
                     form.action = '@Url.Action("ESewaPayment", "StudentDashboard", new { area = "Students" })';
                 } else if (method === 'khalti') {
                     form.action = '@Url.Action("KhaltiPayment", "StudentDashboard", new { area = "Students" })';
+                } else if (method === 'demo') {
+                    form.action = '@Url.Action("DemoPayment", "StudentDashboard", new { area = "Students" })';
                 } else {
                     form.action = '@Url.Action("ProcessPayment", "StudentDashboard", new { area = "Students" })';
                 }
