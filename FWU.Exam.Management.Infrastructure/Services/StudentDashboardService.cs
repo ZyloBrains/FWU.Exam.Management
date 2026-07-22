@@ -291,7 +291,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             ProgramsId = admission.ProgramsId,
             FeeEnclosed = amount,
             RegistrationDate = DateTime.UtcNow,
-            Status = RegistrationStatus.Pending,
+            Status = RegistrationStatus.Registered,
             IsActive = true,
             IsAppliedByStudent = true
         };

@@ -204,4 +204,173 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             _ => descending ? query.OrderByDescending(e => e.Id) : query.OrderBy(e => e.Id)
         };
     }
+
+    public async Task<ExamFormsAdminResult> GetStudentExamFormsAsync(int? examScheduleId, string? search, int page, int pageSize)
+    {
+        var query = context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.IsAppliedByStudent == true && er.IsActive);
+
+        if (examScheduleId.HasValue)
+            query = query.Where(er => er.ExamScheduleId == examScheduleId.Value);
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(er =>
+                (er.ExamRollNumber != null && er.ExamRollNumber.Contains(search)) ||
+                (er.Remarks != null && er.Remarks.Contains(search)));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .Include(er => er.ExamSchedule)
+            .Include(er => er.College)
+            .Include(er => er.Program)
+            .OrderByDescending(er => er.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        if (items.Count == 0)
+        {
+            return new ExamFormsAdminResult
+            {
+                Forms = [],
+                TotalCount = totalCount,
+                PaymentConfirmedCount = 0,
+                AdmitCardGeneratedCount = 0,
+                PendingAdmitCardCount = 0
+            };
+        }
+
+        var registrationIds = items.Select(i => i.Id).ToList();
+        var scheduleIds = items.Select(i => i.ExamScheduleId).Distinct().ToList();
+        var collegeIds = items.Select(i => i.CollegeId).Distinct().ToList();
+        var programIds = items.Where(i => i.ProgramsId.HasValue).Select(i => i.ProgramsId!.Value).Distinct().ToList();
+
+        var admissions = await context.StudentAdmissions!
+            .AsNoTracking()
+            .Where(sa => sa.IsActive && sa.AppUserId != null
+                      && collegeIds.Contains(sa.CollegeId)
+                      && programIds.Contains(sa.ProgramsId))
+            .ToListAsync();
+
+        var admissionLookup = admissions
+            .Where(a => a.AppUserId != null)
+            .ToDictionary(
+                a => (a.CollegeId, a.ProgramsId),
+                a => a.AppUserId!);
+
+        var appUserIds = admissions
+            .Where(a => a.AppUserId != null)
+            .Select(a => a.AppUserId!)
+            .Distinct()
+            .ToList();
+
+        var appUsers = appUserIds.Count > 0
+            ? await context.Users!
+                .AsNoTracking()
+                .Where(u => appUserIds.Contains(u.Id))
+                .ToListAsync()
+            : [];
+
+        var userIdToEmail = appUsers
+            .Where(u => u.Email != null)
+            .ToDictionary(u => u.Id, u => u.Email!);
+
+        var emails = appUsers
+            .Where(u => u.Email != null)
+            .Select(u => u.Email!)
+            .Distinct()
+            .ToList();
+
+        var studentRegistrations = emails.Count > 0
+            ? await context.StudentRegistrations!
+                .AsNoTracking()
+                .Where(sr => sr.IsActive && sr.Email != null && emails.Contains(sr.Email))
+                .ToListAsync()
+            : [];
+
+        var emailToStudentReg = studentRegistrations
+            .Where(sr => sr.Email != null)
+            .ToDictionary(sr => sr.Email!, sr => sr);
+
+        var paymentLogs = await context.PaymentRequestLogs!
+            .AsNoTracking()
+            .Where(prl => scheduleIds.Contains(prl.ExamScheduleId)
+                       && prl.StudentRegistrationId != null)
+            .ToListAsync();
+
+        var paymentLogLookup = paymentLogs
+            .Where(pl => pl.PaymentRequestLogStatus == 1)
+            .ToDictionary(
+                pl => (pl.ExamScheduleId, pl.StudentRegistrationId!.Value),
+                pl => pl);
+
+        var admitCards = await context.AdmitCards!
+            .AsNoTracking()
+            .Where(ac => registrationIds.Contains(ac.ExamRegistrationId) && ac.IsActive)
+            .ToListAsync();
+
+        var forms = items.Select(er =>
+        {
+            string? studentName = null;
+            string? registrationNumber = null;
+            bool paymentConfirmed = false;
+            string? invoiceNumber = null;
+
+            if (er.ProgramsId.HasValue
+                && admissionLookup.TryGetValue((er.CollegeId, er.ProgramsId.Value), out var userId)
+                && userIdToEmail.TryGetValue(userId, out var email)
+                && emailToStudentReg.TryGetValue(email, out var sr))
+            {
+                studentName = string.Join(" ", new[] { sr.FirstName, sr.MiddleName, sr.LastName }.Where(x => !string.IsNullOrEmpty(x)));
+                registrationNumber = sr.RegistrationNumber;
+
+                if (paymentLogLookup.TryGetValue((er.ExamScheduleId, sr.Id), out var pl))
+                {
+                    paymentConfirmed = true;
+                    invoiceNumber = pl.InvoiceNumber;
+                }
+            }
+
+            return new ExamFormAdminDto
+            {
+                ExamRegistrationId = er.Id,
+                StudentName = studentName,
+                RegistrationNumber = registrationNumber,
+                CollegeName = er.College?.Name,
+                ExamScheduleId = er.ExamScheduleId,
+                ExamScheduleName = er.ExamSchedule?.ExamScheduleName,
+                ProgramName = er.Program?.ProgramName,
+                FeeEnclosed = er.FeeEnclosed,
+                Status = er.Status,
+                PaymentConfirmed = paymentConfirmed,
+                InvoiceNumber = invoiceNumber,
+                HasAdmitCard = admitCards.Any(ac => ac.ExamRegistrationId == er.Id),
+                RegistrationDate = er.RegistrationDate
+            };
+        }).ToList();
+
+        var allPaymentConfirmedCount = paymentLogs.Count(pl => pl.PaymentRequestLogStatus == 1);
+
+        var allAdmitCardCount = await context.AdmitCards!
+            .AsNoTracking()
+            .Where(ac => context.ExamRegistrations!
+                .Any(er => er.Id == ac.ExamRegistrationId
+                        && er.IsAppliedByStudent == true
+                        && er.IsActive)
+                && ac.IsActive)
+            .CountAsync();
+
+        return new ExamFormsAdminResult
+        {
+            Forms = forms,
+            TotalCount = totalCount,
+            PaymentConfirmedCount = allPaymentConfirmedCount,
+            AdmitCardGeneratedCount = allAdmitCardCount,
+            PendingAdmitCardCount = Math.Max(0, totalCount - allAdmitCardCount)
+        };
+    }
 }

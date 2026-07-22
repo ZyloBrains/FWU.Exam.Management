@@ -17,4 +17,5 @@ public interface IExamRegistrationService
     Task VerifyExamRegistrationAsync(int id);
     Task ApproveExamRegistrationAsync(int id);
     Task<ExamRegistrationSelectListsDto> GetSelectListDataAsync(ExamRegistration? examRegistration = null);
+    Task<ExamFormsAdminResult> GetStudentExamFormsAsync(int? examScheduleId, string? search, int page, int pageSize);
 }

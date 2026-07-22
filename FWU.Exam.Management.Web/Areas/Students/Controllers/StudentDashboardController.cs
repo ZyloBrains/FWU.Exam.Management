@@ -650,18 +650,6 @@ public class StudentDashboardController(
         await HandlePostPaymentRegistration(logId);
         await dashboardService.UpdatePaymentRequestLogAsync(logId, $"DEMO-{DateTime.Now:yyyyMMddHHmmss}", true, "{\"method\":\"demo\",\"note\":\"Demo payment for workflow testing\"}", "Demo payment approved.");
 
-        var examReg = await context.ExamRegistrations!
-            .Where(er => er.ExamScheduleId == examScheduleId
-                      && er.IsActive
-                      && er.IsAppliedByStudent == true)
-            .OrderByDescending(er => er.Id)
-            .FirstOrDefaultAsync();
-        if (examReg != null && examReg.Status == FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending)
-        {
-            examReg.Status = FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered;
-            await context.SaveChangesAsync();
-        }
-
         TempData["SuccessMessage"] = "Demo payment completed successfully!";
         TempData["TransactionCode"] = $"DEMO-{DateTime.Now:yyyyMMddHHmmss}";
         return RedirectToAction(nameof(PaymentSuccess));
