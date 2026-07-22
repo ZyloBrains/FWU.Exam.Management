@@ -66,12 +66,7 @@ public class IndexModel(
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null)
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
-
-        await LoadAsync(user);
-        return Page();
+        return RedirectToPage("./ChangePassword");
     }
 
     public async Task<IActionResult> OnPostAsync()
