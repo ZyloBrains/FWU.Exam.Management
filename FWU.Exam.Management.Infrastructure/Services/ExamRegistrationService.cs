@@ -245,92 +245,35 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var registrationIds = items.Select(i => i.Id).ToList();
         var scheduleIds = items.Select(i => i.ExamScheduleId).Distinct().ToList();
-        var collegeIds = items.Select(i => i.CollegeId).Distinct().ToList();
-        var programIds = items.Where(i => i.ProgramsId.HasValue).Select(i => i.ProgramsId!.Value).Distinct().ToList();
+        var voucherIds = items.Where(i => i.ApplicationVoucherId.HasValue).Select(i => i.ApplicationVoucherId!.Value).Distinct().ToList();
 
-        var admissions = await context.StudentAdmissions!
-            .AsNoTracking()
-            .Where(sa => sa.IsActive
-                      && collegeIds.Contains(sa.CollegeId)
-                      && programIds.Contains(sa.ProgramsId))
-            .ToListAsync();
-
-        var admissionLookup = admissions
-            .Where(a => a.AppUserId != null)
-            .GroupBy(a => (a.CollegeId, a.ProgramsId))
-            .ToDictionary(
-                g => g.Key,
-                g => g.First().AppUserId!);
-
-        var appUserIds = admissions
-            .Where(a => a.AppUserId != null)
-            .Select(a => a.AppUserId!)
-            .Distinct()
-            .ToList();
-
-        var appUsers = appUserIds.Count > 0
-            ? await context.Users!
+        var vouchers = voucherIds.Count > 0
+            ? await context.ApplicationVouchers!
                 .AsNoTracking()
-                .Where(u => appUserIds.Contains(u.Id))
+                .Where(v => voucherIds.Contains(v.Id))
                 .ToListAsync()
             : [];
 
-        var userIdToEmail = appUsers
-            .Where(u => u.Email != null)
-            .GroupBy(u => u.Id)
-            .ToDictionary(
-                g => g.Key,
-                g => g.First().Email!);
+        var erIdToSrId = vouchers
+            .Where(v => v.StudentRegistrationId.HasValue)
+            .ToDictionary(v => v.Id, v => v.StudentRegistrationId!.Value);
 
-        var emails = appUsers
-            .Where(u => u.Email != null)
-            .Select(u => u.Email!)
-            .Distinct()
-            .ToList();
+        var srIds = erIdToSrId.Values.Distinct().ToList();
 
-        var srCollegeProgramLookup = new Dictionary<(int CollegeId, int ProgramsId), string>();
-
-        if (!admissionLookup.Any())
-        {
-            var directStudentRegs = await context.StudentRegistrations!
-                .AsNoTracking()
-                .Where(sr => sr.IsActive && sr.Email != null
-                          && collegeIds.Contains(sr.CollegeId)
-                          && sr.ProgramId.HasValue
-                          && programIds.Contains(sr.ProgramId.Value))
-                .ToListAsync();
-
-            srCollegeProgramLookup = directStudentRegs
-                .GroupBy(sr => (sr.CollegeId, sr.ProgramId!.Value))
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.First().Email!);
-
-            var directEmails = directStudentRegs.Select(sr => sr.Email!).Distinct().ToList();
-            foreach (var e in directEmails)
-            {
-                if (!emails.Contains(e)) emails.Add(e);
-            }
-        }
-
-        var studentRegistrations = emails.Count > 0
+        var studentRegistrations = srIds.Count > 0
             ? await context.StudentRegistrations!
                 .AsNoTracking()
-                .Where(sr => sr.IsActive && sr.Email != null && emails.Contains(sr.Email))
+                .Where(sr => srIds.Contains(sr.Id))
                 .ToListAsync()
             : [];
 
-        var emailToStudentReg = studentRegistrations
-            .Where(sr => sr.Email != null)
-            .GroupBy(sr => sr.Email!)
-            .ToDictionary(
-                g => g.Key,
-                g => g.First());
+        var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
         var paymentLogs = await context.PaymentRequestLogs!
             .AsNoTracking()
             .Where(prl => scheduleIds.Contains(prl.ExamScheduleId)
-                       && prl.StudentRegistrationId != null)
+                       && prl.StudentRegistrationId != null
+                       && srIds.Contains(prl.StudentRegistrationId.Value))
             .ToListAsync();
 
         var paymentLogLookup = paymentLogs
@@ -352,31 +295,17 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             bool paymentConfirmed = false;
             string? invoiceNumber = null;
 
-            if (er.ProgramsId.HasValue
-                && admissionLookup.TryGetValue((er.CollegeId, er.ProgramsId.Value), out var userId)
-                && userIdToEmail.TryGetValue(userId, out var email)
-                && emailToStudentReg.TryGetValue(email, out var sr))
+            if (er.ApplicationVoucherId.HasValue
+                && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var srId)
+                && srLookup.TryGetValue(srId, out var sr))
             {
                 studentName = string.Join(" ", new[] { sr.FirstName, sr.MiddleName, sr.LastName }.Where(x => !string.IsNullOrEmpty(x)));
                 registrationNumber = sr.RegistrationNumber;
 
-                if (paymentLogLookup.TryGetValue((er.ExamScheduleId, sr.Id), out var pl))
+                if (paymentLogLookup.TryGetValue((er.ExamScheduleId, srId), out var pl))
                 {
                     paymentConfirmed = true;
                     invoiceNumber = pl.InvoiceNumber;
-                }
-            }
-            else if (er.ProgramsId.HasValue
-                && srCollegeProgramLookup.TryGetValue((er.CollegeId, er.ProgramsId.Value), out var directEmail)
-                && emailToStudentReg.TryGetValue(directEmail, out var sr2))
-            {
-                studentName = string.Join(" ", new[] { sr2.FirstName, sr2.MiddleName, sr2.LastName }.Where(x => !string.IsNullOrEmpty(x)));
-                registrationNumber = sr2.RegistrationNumber;
-
-                if (paymentLogLookup.TryGetValue((er.ExamScheduleId, sr2.Id), out var pl2))
-                {
-                    paymentConfirmed = true;
-                    invoiceNumber = pl2.InvoiceNumber;
                 }
             }
 

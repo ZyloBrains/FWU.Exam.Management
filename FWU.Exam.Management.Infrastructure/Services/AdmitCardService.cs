@@ -148,20 +148,20 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             .ToListAsync();
         var existingRegistrationIds = new HashSet<int>(existingAdmitCards.Select(ht => ht.ExamRegistrationId));
 
-        var registrationKeys = registrations
-            .Where(r => r.ProgramsId.HasValue)
-            .Select(r => new { r.CollegeId, ProgramsId = r.ProgramsId!.Value })
-            .Distinct()
-            .ToList();
-        var collegeIds = registrationKeys.Select(r => r.CollegeId).Distinct().ToList();
-        var programIds = registrationKeys.Select(r => r.ProgramsId).Distinct().ToList();
-        var studentAdmissions = await context.StudentAdmissions
-            .Where(sa => collegeIds.Contains(sa.CollegeId) && programIds.Contains(sa.ProgramsId) && sa.AppUserId != null)
-            .ToListAsync();
-        var admissionLookup = studentAdmissions.ToDictionary(sa => (sa.CollegeId, sa.ProgramsId), sa => sa.AppUserId);
+        var voucherIds = registrations.Where(r => r.ApplicationVoucherId.HasValue).Select(r => r.ApplicationVoucherId!.Value).Distinct().ToList();
+        var vouchers = voucherIds.Count > 0
+            ? await context.ApplicationVouchers.Where(v => voucherIds.Contains(v.Id)).ToListAsync()
+            : [];
+        var erIdToSrId = vouchers.Where(v => v.StudentRegistrationId.HasValue).ToDictionary(v => v.Id, v => v.StudentRegistrationId!.Value);
+
+        var srIds = erIdToSrId.Values.Distinct().ToList();
+        var studentRegistrations = srIds.Count > 0
+            ? await context.StudentRegistrations.Where(sr => srIds.Contains(sr.Id)).ToListAsync()
+            : [];
+        var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
         var colleges = await context.Colleges
-            .Where(c => collegeIds.Contains(c.Id))
+            .Where(c => c.Id == registrations.First().CollegeId)
             .ToListAsync();
         var collegeTenantLookup = colleges.ToDictionary(c => c.Id, c => c.TenantId);
         var tenantIds = colleges.Select(c => c.TenantId).Distinct().ToList();
@@ -183,18 +183,33 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
             string? photoPath = null;
             string? signaturePath = null;
-            if (registration.ProgramsId.HasValue && admissionLookup.TryGetValue((registration.CollegeId, registration.ProgramsId.Value), out var appUserId) && appUserId != null)
+            string? resolvedStudentRegNumber = null;
+            int? resolvedSrId = null;
+
+            if (registration.ApplicationVoucherId.HasValue
+                && erIdToSrId.TryGetValue(registration.ApplicationVoucherId.Value, out var srId)
+                && srLookup.TryGetValue(srId, out var sr))
             {
-                var studentUser = await context.Users.FindAsync(appUserId);
-                photoPath = studentUser?.ProfilePath;
-                signaturePath = studentUser?.SignaturePath;
+                resolvedSrId = srId;
+                resolvedStudentRegNumber = sr.RegistrationNumber;
+
+                if (!string.IsNullOrEmpty(sr.Email))
+                {
+                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Email == sr.Email);
+                    if (appUser != null)
+                    {
+                        photoPath = appUser.ProfilePath;
+                        signaturePath = appUser.SignaturePath;
+                    }
+                }
             }
 
             var admitCard = new AdmitCard
             {
                 ExamRegistrationId = registration.Id,
                 ExamScheduleId = examScheduleId,
-                StudentRegistrationId = null,
+                StudentRegistrationId = resolvedSrId,
+                RegistrationNumber = resolvedStudentRegNumber,
                 AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
                 PhotoPath = photoPath,
                 SignaturePath = signaturePath,
@@ -217,12 +232,12 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
     private async Task<FWU.Exam.Management.Infrastructure.Data.Models.AppUser?> ResolveStudentUserAsync(Domain.Entities.Exams.ExamRegistration registration)
     {
-        var studentAdmission = await context.StudentAdmissions
-            .FirstOrDefaultAsync(sa => sa.CollegeId == registration.CollegeId
-                && sa.ProgramsId == registration.ProgramsId
-                && sa.AppUserId != null);
-        if (studentAdmission?.AppUserId == null) return null;
-        return await context.Users.FindAsync(studentAdmission.AppUserId);
+        if (registration.ApplicationVoucherId == null) return null;
+        var voucher = await context.ApplicationVouchers.FindAsync(registration.ApplicationVoucherId.Value);
+        if (voucher?.StudentRegistrationId == null) return null;
+        var sr = await context.StudentRegistrations.FindAsync(voucher.StudentRegistrationId.Value);
+        if (sr?.Email == null) return null;
+        return await context.Users.FirstOrDefaultAsync(u => u.Email == sr.Email);
     }
 
     private async Task<string?> ResolveControllerSignatureAsync(int collegeId)
