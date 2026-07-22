@@ -220,7 +220,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var newIndex = maxIndex + 1;
         student.StudentRegistrationIndex = newIndex;
 
-        student.RegistrationNumber = $"{student.Faculty?.OfficeCode ?? "00"}-{student.AcademicYear?.AcademicYearCode ?? "0"}-{student.LevelId}-{student.ProgramId}-{newIndex:D4}";
+        student.RegistrationNumber = $"{student.Faculty?.ShortName ?? "00"}-{student.AcademicYear?.AcademicYearCode ?? "0"}-{student.LevelId}-{student.ProgramId}-{newIndex:D4}";
 
         student.IsRegistrationNumberGenerated = true;
         await context.SaveChangesAsync();

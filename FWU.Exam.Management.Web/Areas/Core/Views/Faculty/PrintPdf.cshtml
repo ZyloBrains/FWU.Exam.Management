@@ -36,6 +36,7 @@
         <thead>
             <tr>
                 <th>Name</th>
+                <th>Short Name</th>
                 <th>Office Code</th>
                 <th>Contact</th>
                 <th>Email</th>
@@ -47,6 +48,7 @@
             {
                 <tr>
                     <td><strong>@item.Name</strong></td>
+                    <td>@(item.ShortName ?? "-")</td>
                     <td><span class="office-code">@item.OfficeCode</span></td>
                     <td>@item.ContactNumber</td>
                     <td>@item.Email</td>
