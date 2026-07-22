@@ -364,8 +364,8 @@ public class StudentDashboardController(
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
-        var successUrl = configuration["ESewa:SuccessUrl"] ?? defaultCallbackUrl;
-        var failureUrl = configuration["ESewa:FailureUrl"] ?? defaultCallbackUrl;
+        var successUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:SuccessUrl"]) ? configuration["ESewa:SuccessUrl"]! : defaultCallbackUrl;
+        var failureUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:FailureUrl"]) ? configuration["ESewa:FailureUrl"]! : defaultCallbackUrl;
 
         logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
             amount, transactionUuid, successUrl, failureUrl);
@@ -405,21 +405,43 @@ public class StudentDashboardController(
             var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
-            var decodedBytes = Convert.FromBase64String(data);
+            logger.LogInformation("ESewaCallback: raw data length={Length}, first100={Preview}", data.Length, data.Length > 100 ? data[..100] : data);
+
+            var base64 = data.Replace('-', '+').Replace('_', '/');
+            switch (base64.Length % 4)
+            {
+                case 2: base64 += "=="; break;
+                case 3: base64 += "="; break;
+            }
+
+            var decodedBytes = Convert.FromBase64String(base64);
             var decodedJson = System.Text.Encoding.UTF8.GetString(decodedBytes);
+            logger.LogInformation("ESewaCallback: decodedJson={Json}", decodedJson);
+
             var response = System.Text.Json.JsonSerializer.Deserialize<ESewaVerifyResponse>(decodedJson,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+                });
 
             if (response == null)
             {
+                logger.LogWarning("ESewaCallback: deserialized response is null");
                 if (sessionLogId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, "Invalid response from eSewa.", "Invalid response from eSewa.");
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, decodedJson, "Invalid response from eSewa.");
 
                 TempData["ErrorMessage"] = "Invalid response from eSewa.";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            if (!esewaService.VerifyResponseSignature(response, decodedJson))
+            logger.LogInformation("ESewaCallback: txCode={TxCode}, status={Status}, totalAmount={Amount}, uuid={Uuid}, productCode={ProductCode}",
+                response.TransactionCode, response.Status, response.TotalAmount, response.TransactionUuid, response.ProductCode);
+
+            var sigValid = esewaService.VerifyResponseSignature(response, decodedJson);
+            logger.LogInformation("ESewaCallback: signatureValid={SigValid}", sigValid);
+
+            if (!sigValid)
             {
                 if (sessionLogId.HasValue)
                     await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
@@ -433,6 +455,8 @@ public class StudentDashboardController(
                 ? System.Text.Json.JsonSerializer.Serialize(verified)
                 : "null";
             var combinedData = $"{{\"callback\":{decodedJson},\"verification\":{verifyData}}}";
+
+            logger.LogInformation("ESewaCallback: verifyResult={Status}", verified?.Status ?? "null");
 
             if (verified == null || verified.Status != "COMPLETE")
             {
@@ -455,8 +479,9 @@ public class StudentDashboardController(
 
             return RedirectToAction(nameof(PaymentSuccess));
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "ESewaCallback: exception processing callback. queryString={QueryString}", Request.QueryString);
             TempData["ErrorMessage"] = "Failed to process eSewa callback.";
             return RedirectToAction(nameof(PaymentFailure));
         }
