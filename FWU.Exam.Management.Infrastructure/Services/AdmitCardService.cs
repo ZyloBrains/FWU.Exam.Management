@@ -148,12 +148,18 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             .ToListAsync();
         var existingRegistrationIds = new HashSet<int>(existingAdmitCards.Select(ht => ht.ExamRegistrationId));
 
+        var registrationKeys = registrations
+            .Where(r => r.ProgramsId.HasValue)
+            .Select(r => new { r.CollegeId, ProgramsId = r.ProgramsId!.Value })
+            .Distinct()
+            .ToList();
+        var collegeIds = registrationKeys.Select(r => r.CollegeId).Distinct().ToList();
+        var programIds = registrationKeys.Select(r => r.ProgramsId).Distinct().ToList();
         var studentAdmissions = await context.StudentAdmissions
-            .Where(sa => registrations.Any(r => r.CollegeId == sa.CollegeId && r.ProgramsId == sa.ProgramsId) && sa.AppUserId != null)
+            .Where(sa => collegeIds.Contains(sa.CollegeId) && programIds.Contains(sa.ProgramsId) && sa.AppUserId != null)
             .ToListAsync();
         var admissionLookup = studentAdmissions.ToDictionary(sa => (sa.CollegeId, sa.ProgramsId), sa => sa.AppUserId);
 
-        var collegeIds = registrations.Select(r => r.CollegeId).Distinct().ToList();
         var colleges = await context.Colleges
             .Where(c => collegeIds.Contains(c.Id))
             .ToListAsync();

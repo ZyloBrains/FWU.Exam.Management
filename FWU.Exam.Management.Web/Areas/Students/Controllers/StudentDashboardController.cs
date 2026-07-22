@@ -207,7 +207,7 @@ public class StudentDashboardController(
         if (schedule.ProgramId != programId)
             return Forbid();
 
-        var hasExistingRegistration = await dashboardService.HasExistingPaymentAsync(examScheduleId, registration.Id);
+        var hasExistingRegistration = await dashboardService.HasExistingExamRegistrationAsync(examScheduleId, user.Id);
         if (hasExistingRegistration)
         {
             TempData["ErrorMessage"] = "You have already submitted this exam form.";
@@ -327,8 +327,11 @@ public class StudentDashboardController(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber, subjectIds);
         }
 
-        TempData["SuccessMessage"] = $"Payment request of Rs {amount:N0} via {paymentMethod} has been recorded. Invoice: {invoiceNumber}";
-        return RedirectToAction(nameof(ExamForms));
+        await HandlePostPaymentRegistration(logId);
+        await dashboardService.UpdatePaymentRequestLogAsync(logId, invoiceNumber, true, $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}", $"Payment recorded via {paymentMethod}.");
+
+        TempData["SuccessMessage"] = $"Payment of Rs {amount:N0} via {paymentMethod} completed successfully. Invoice: {invoiceNumber}";
+        return RedirectToAction(nameof(PaymentSuccess));
     }
 
     [HttpPost]
@@ -690,31 +693,55 @@ public class StudentDashboardController(
         return View();
     }
 
-        private async Task HandlePostPaymentRegistration(int logId)
+    private async Task HandlePostPaymentRegistration(int logId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
         {
-            var user = await userManager.GetUserAsync(User);
-            if (user == null) return;
-
-            var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
-            if (paymentLog == null) return;
-
-            if (!paymentLog.StudentRegistrationId.HasValue) return;
-
-            var existingRegistration = await dashboardService.HasExistingPaymentAsync(
-                paymentLog.ExamScheduleId, paymentLog.StudentRegistrationId.Value);
-            if (existingRegistration) return;
-
-            var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
-                ? new List<int>()
-                : paymentLog.SelectedSubjectIds
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(int.Parse)
-                    .ToList();
-
-            if (subjectIds.Count == 0) return;
-
-            await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds);
+            logger.LogWarning("HandlePostPaymentRegistration: User not found for logId={LogId}", logId);
+            return;
         }
+
+        var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
+        if (paymentLog == null)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: PaymentLog not found for logId={LogId}", logId);
+            return;
+        }
+
+        if (!paymentLog.StudentRegistrationId.HasValue)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: StudentRegistrationId is null on logId={LogId}", logId);
+            return;
+        }
+
+        var existingRegistration = await dashboardService.HasExistingExamRegistrationAsync(
+            paymentLog.ExamScheduleId, user.Id);
+        if (existingRegistration)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: Existing payment found for scheduleId={ScheduleId}, studentRegId={StudentRegId}. Skipping registration creation.",
+                paymentLog.ExamScheduleId, paymentLog.StudentRegistrationId.Value);
+            return;
+        }
+
+        var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
+            ? new List<int>()
+            : paymentLog.SelectedSubjectIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList();
+
+        if (subjectIds.Count == 0)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: No subject IDs on logId={LogId} (SelectedSubjectIds={SelectedSubjectIds}). Skipping registration creation.",
+                logId, paymentLog.SelectedSubjectIds ?? "null");
+            return;
+        }
+
+        logger.LogInformation("HandlePostPaymentRegistration: Creating ExamRegistration for logId={LogId}, scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
+            logId, paymentLog.ExamScheduleId, user.Id, subjectIds.Count);
+        await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds, paymentLog.StudentRegistrationId.Value);
+    }
 
     public async Task<IActionResult> MarksheetPrint(int? examScheduleId)
     {

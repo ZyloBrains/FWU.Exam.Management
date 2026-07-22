@@ -9,9 +9,11 @@ using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.Extensions.Logging;
+
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentDashboardService(AppDbContext context, IUserContext userContext) : IStudentDashboardService
+public class StudentDashboardService(AppDbContext context, IUserContext userContext, ILogger<StudentDashboardService> logger) : IStudentDashboardService
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
@@ -146,6 +148,33 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                           && prl.PaymentRequestLogStatus == 1);
     }
 
+    public async Task<bool> HasExistingExamRegistrationAsync(int examScheduleId, string userId)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        var user = await context.Users!.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user?.Email == null) return false;
+
+        var sr = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email == user.Email && s.IsActive);
+
+        if (sr == null) return false;
+
+        var collegeId = sr.CollegeId;
+        var programsId = schedule?.ProgramId ?? sr.ProgramId;
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .AnyAsync(er => er.ExamScheduleId == examScheduleId
+                         && er.CollegeId == collegeId
+                         && er.ProgramsId == programsId
+                         && er.IsAppliedByStudent == true
+                         && er.IsActive);
+    }
+
     public async Task<List<PaymentType>> GetActivePaymentTypesAsync()
     {
         return await context.Set<PaymentType>()
@@ -266,38 +295,117 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(prl => prl.Id == logId);
     }
 
-    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds)
+    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds, int studentRegistrationId)
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
             .Include(es => es.Semester)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
-        if (schedule == null) return;
+        if (schedule == null)
+        {
+            logger.LogWarning("CreateExamRegistrationAsync: ExamSchedule not found for scheduleId={ScheduleId}", examScheduleId);
+            return;
+        }
+
+        var studentReg = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sr => sr.Id == studentRegistrationId);
 
         var admission = await context.StudentAdmissions!
             .AsNoTracking()
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
-        if (admission == null) return;
+        if (admission == null && studentReg != null)
+        {
+            admission = await context.StudentAdmissions!
+                .AsNoTracking()
+                .FirstOrDefaultAsync(sa => sa.CollegeId == studentReg.CollegeId
+                                        && sa.ProgramsId == studentReg.ProgramId
+                                        && sa.IsActive);
+
+            if (admission == null && schedule.CollegeId > 0)
+            {
+                admission = await context.StudentAdmissions!
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(sa => sa.CollegeId == schedule.CollegeId
+                                            && sa.ProgramsId == schedule.ProgramId
+                                            && sa.IsActive);
+            }
+        }
+
+        if (admission != null && string.IsNullOrEmpty(admission.AppUserId))
+        {
+            var trackedAdmission = await context.StudentAdmissions!
+                .FirstOrDefaultAsync(sa => sa.Id == admission.Id);
+
+            if (trackedAdmission != null)
+            {
+                trackedAdmission.AppUserId = userId;
+                await context.SaveChangesAsync();
+                logger.LogInformation("CreateExamRegistrationAsync: Linked AppUserId={UserId} to admissionId={AdmissionId}", userId, trackedAdmission.Id);
+            }
+        }
+
+        int collegeId;
+        int programsId;
+
+        if (admission != null)
+        {
+            collegeId = admission.CollegeId;
+            programsId = admission.ProgramsId;
+        }
+        else if (studentReg != null)
+        {
+            collegeId = studentReg.CollegeId;
+            programsId = schedule.ProgramId;
+            logger.LogInformation("CreateExamRegistrationAsync: No admission found, using StudentRegistration CollegeId={CollegeId} and ExamSchedule ProgramId={ProgramId} for userId={UserId}", collegeId, programsId, userId);
+        }
+        else
+        {
+            logger.LogWarning("CreateExamRegistrationAsync: Neither StudentAdmission nor StudentRegistration found for userId={UserId}, studentRegistrationId={SrId}", userId, studentRegistrationId);
+            return;
+        }
+
+        var studentName = studentReg != null
+            ? $"{studentReg.FirstName} {studentReg.MiddleName} {studentReg.LastName}".Replace("  ", " ").Trim()
+            : "";
+
+        var voucherNumber = $"VCH-{DateTime.UtcNow:yyyyMMdd}-{examScheduleId}-{studentRegistrationId}";
+        var voucher = new ApplicationVoucher
+        {
+            TenantId = schedule.TenantId,
+            VoucherNumber = voucherNumber,
+            StudentName = studentName,
+            StudentRegistrationId = studentRegistrationId,
+            ContactNumber = studentReg?.ContactNumber ?? "",
+            Amount = amount,
+            VoucherDate = DateTime.UtcNow,
+            Timestamp = DateTime.UtcNow,
+            ExamScheduleId = examScheduleId
+        };
+        context.ApplicationVouchers!.Add(voucher);
+        await context.SaveChangesAsync();
 
         var academicYearId = schedule.AcademicYearId;
 
         var registration = new ExamRegistration
         {
             ExamScheduleId = examScheduleId,
-            CollegeId = admission.CollegeId,
+            CollegeId = collegeId,
             AcademicYearId = academicYearId,
-            ProgramsId = admission.ProgramsId,
+            ProgramsId = programsId,
             FeeEnclosed = amount,
             RegistrationDate = DateTime.UtcNow,
             Status = RegistrationStatus.Registered,
             IsActive = true,
-            IsAppliedByStudent = true
+            IsAppliedByStudent = true,
+            ApplicationVoucherId = voucher.Id
         };
 
         context.ExamRegistrations!.Add(registration);
         await context.SaveChangesAsync();
+        logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
         var subjectOfferings = await context.SubjectOfferings!
             .AsNoTracking()
@@ -315,6 +423,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 ExamRegistrationId = registration.Id,
                 SubjectOfferingId = subjectOfferingId,
                 ExamScheduleId = examScheduleId,
+                ExamTypeId = schedule.ExamTypeId,
                 IsTheoryRegistered = subjectOffering.HasTheory,
                 IsPracticalRegistered = subjectOffering.HasPractical,
                 IsActive = true,

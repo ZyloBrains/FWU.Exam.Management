@@ -925,6 +925,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             await studentRegistrationService.DeleteStudentRegistrationAsync(id);
             return Json(new { success = true, message = "Student registration deleted successfully!" });
         }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            return Json(new { success = false, message = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first." });
+        }
         catch (Exception ex)
         {
             return Json(new { success = false, message = ex.Message });

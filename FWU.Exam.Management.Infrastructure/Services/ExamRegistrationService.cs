@@ -87,7 +87,6 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Include(e => e.AcademicYear)
             .Include(e => e.Program)
             .Include(e => e.ApplicationVoucher)
-            .Include(e => e.ExamSubjectResults)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
@@ -251,16 +250,17 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var admissions = await context.StudentAdmissions!
             .AsNoTracking()
-            .Where(sa => sa.IsActive && sa.AppUserId != null
+            .Where(sa => sa.IsActive
                       && collegeIds.Contains(sa.CollegeId)
                       && programIds.Contains(sa.ProgramsId))
             .ToListAsync();
 
         var admissionLookup = admissions
             .Where(a => a.AppUserId != null)
+            .GroupBy(a => (a.CollegeId, a.ProgramsId))
             .ToDictionary(
-                a => (a.CollegeId, a.ProgramsId),
-                a => a.AppUserId!);
+                g => g.Key,
+                g => g.First().AppUserId!);
 
         var appUserIds = admissions
             .Where(a => a.AppUserId != null)
@@ -277,13 +277,41 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var userIdToEmail = appUsers
             .Where(u => u.Email != null)
-            .ToDictionary(u => u.Id, u => u.Email!);
+            .GroupBy(u => u.Id)
+            .ToDictionary(
+                g => g.Key,
+                g => g.First().Email!);
 
         var emails = appUsers
             .Where(u => u.Email != null)
             .Select(u => u.Email!)
             .Distinct()
             .ToList();
+
+        var srCollegeProgramLookup = new Dictionary<(int CollegeId, int ProgramsId), string>();
+
+        if (!admissionLookup.Any())
+        {
+            var directStudentRegs = await context.StudentRegistrations!
+                .AsNoTracking()
+                .Where(sr => sr.IsActive && sr.Email != null
+                          && collegeIds.Contains(sr.CollegeId)
+                          && sr.ProgramId.HasValue
+                          && programIds.Contains(sr.ProgramId.Value))
+                .ToListAsync();
+
+            srCollegeProgramLookup = directStudentRegs
+                .GroupBy(sr => (sr.CollegeId, sr.ProgramId!.Value))
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().Email!);
+
+            var directEmails = directStudentRegs.Select(sr => sr.Email!).Distinct().ToList();
+            foreach (var e in directEmails)
+            {
+                if (!emails.Contains(e)) emails.Add(e);
+            }
+        }
 
         var studentRegistrations = emails.Count > 0
             ? await context.StudentRegistrations!
@@ -294,7 +322,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var emailToStudentReg = studentRegistrations
             .Where(sr => sr.Email != null)
-            .ToDictionary(sr => sr.Email!, sr => sr);
+            .GroupBy(sr => sr.Email!)
+            .ToDictionary(
+                g => g.Key,
+                g => g.First());
 
         var paymentLogs = await context.PaymentRequestLogs!
             .AsNoTracking()
@@ -304,9 +335,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var paymentLogLookup = paymentLogs
             .Where(pl => pl.PaymentRequestLogStatus == 1)
+            .GroupBy(pl => (pl.ExamScheduleId, pl.StudentRegistrationId!.Value))
             .ToDictionary(
-                pl => (pl.ExamScheduleId, pl.StudentRegistrationId!.Value),
-                pl => pl);
+                g => g.Key,
+                g => g.First());
 
         var admitCards = await context.AdmitCards!
             .AsNoTracking()
@@ -332,6 +364,19 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 {
                     paymentConfirmed = true;
                     invoiceNumber = pl.InvoiceNumber;
+                }
+            }
+            else if (er.ProgramsId.HasValue
+                && srCollegeProgramLookup.TryGetValue((er.CollegeId, er.ProgramsId.Value), out var directEmail)
+                && emailToStudentReg.TryGetValue(directEmail, out var sr2))
+            {
+                studentName = string.Join(" ", new[] { sr2.FirstName, sr2.MiddleName, sr2.LastName }.Where(x => !string.IsNullOrEmpty(x)));
+                registrationNumber = sr2.RegistrationNumber;
+
+                if (paymentLogLookup.TryGetValue((er.ExamScheduleId, sr2.Id), out var pl2))
+                {
+                    paymentConfirmed = true;
+                    invoiceNumber = pl2.InvoiceNumber;
                 }
             }
 
