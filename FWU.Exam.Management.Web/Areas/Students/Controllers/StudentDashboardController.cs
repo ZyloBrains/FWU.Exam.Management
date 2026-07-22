@@ -114,6 +114,7 @@ public class StudentDashboardController(
         {
             var hasPaid = await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
             var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id);
+            var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id) : null;
 
             forms.Add(new ExamFormViewModel
             {
@@ -122,6 +123,7 @@ public class StudentDashboardController(
                 ExamScheduleName = schedule.ExamScheduleName,
                 HasPaid = hasPaid,
                 HasAdmitCard = hasAdmitCard,
+                AdmitCardId = admitCardId,
                 EndDateBs = schedule.EndDateBs,
                 ExtendedDateBs = schedule.ExtendedDate.HasValue ? schedule.ExtendedDate.Value.ToString("yyyy-MM-dd") : null,
                 AdmissionCardReleaseDate = schedule.AdmissionCardReleaseDate

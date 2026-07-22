@@ -706,6 +706,20 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                          && ac.IsActive);
     }
 
+    public async Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return null;
+
+        return await context.Set<AdmitCard>()
+            .AsNoTracking()
+            .Where(ac => ac.ExamScheduleId == examScheduleId
+                      && studentErIds.Contains(ac.ExamRegistrationId)
+                      && ac.IsActive)
+            .Select(ac => (int?)ac.Id)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(string email)
     {
         var registration = await context.StudentRegistrations!
