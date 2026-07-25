@@ -14,12 +14,7 @@
             <p class="text-gray-500 mt-1">Your payment has been processed. Use the voucher code below to access the entrance application form.</p>
         </div>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center gap-2">
-                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-            </div>
-        }
+        @await Html.PartialAsync("_AlertMessages")
 
         <!-- Transaction Code -->
         @if (TempData["TransactionCode"] is string txnCode)

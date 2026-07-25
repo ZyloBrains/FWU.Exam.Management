@@ -16,12 +16,7 @@
             <p class="text-gray-500 mt-1">Complete your payment to access the entrance application form</p>
         </div>
 
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center gap-2">
-                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-            </div>
-        }
+        @await Html.PartialAsync("_AlertMessages")
 
         <!-- Summary Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
