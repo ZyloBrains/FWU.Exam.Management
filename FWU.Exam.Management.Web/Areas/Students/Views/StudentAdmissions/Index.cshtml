@@ -24,20 +24,7 @@
     </div>
 
     <!-- Alerts -->
-    @if (TempData["SuccessMessage"] is string successMessage)
-    {
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
-            <i class="fas fa-check-circle mt-0.5"></i>
-            <span>@successMessage</span>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] is string errorMessage)
-    {
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
-            <i class="fas fa-exclamation-circle mt-0.5"></i>
-            <span>@errorMessage</span>
-        </div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
 
     <!-- Toolbar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">

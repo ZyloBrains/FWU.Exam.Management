@@ -5,18 +5,7 @@
 }
 
 <div class="space-y-6">
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-            @TempData["SuccessMessage"]
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-            @TempData["ErrorMessage"]
-        </div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">

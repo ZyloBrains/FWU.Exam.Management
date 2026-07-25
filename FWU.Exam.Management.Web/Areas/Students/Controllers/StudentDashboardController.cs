@@ -45,6 +45,7 @@ public class StudentDashboardController(
         var vm = new StudentProfileViewModel
         {
             RegistrationId = registration.Id,
+            PermanentAddressId = registration.PermanentAddressId,
             RegistrationNumber = registration.RegistrationNumber,
             FullName = string.Join(" ", new[] { registration.FirstName, registration.MiddleName, registration.LastName }.Where(x => !string.IsNullOrEmpty(x))),
             NepaliName = registration.NepaliName,
@@ -72,7 +73,15 @@ public class StudentDashboardController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateProfile(IFormFile? photo, IFormFile? signature)
+    public async Task<IActionResult> UpdateProfile(
+        IFormFile? photo,
+        IFormFile? signature,
+        string? contactNumber,
+        string? bloodGroup,
+        string? nationality,
+        string? religion,
+        string? address,
+        int? permanentAddressId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -92,6 +101,28 @@ public class StudentDashboardController(
         }
 
         await userManager.UpdateAsync(user);
+
+        var registration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.Email == user.Email);
+        if (registration != null)
+        {
+            registration.ContactNumber = contactNumber;
+            registration.BloodGroup = bloodGroup;
+            registration.Nationality = nationality;
+            registration.Religion = religion;
+
+            if (permanentAddressId.HasValue)
+            {
+                var existingAddress = await context.Addresses.FindAsync(permanentAddressId.Value);
+                if (existingAddress != null)
+                {
+                    existingAddress.FullAddress = address;
+                }
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         TempData["SuccessMessage"] = "Profile updated successfully.";
         return RedirectToAction(nameof(Profile));
     }

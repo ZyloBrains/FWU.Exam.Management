@@ -12,13 +12,7 @@
                 <i class="fas fa-user-tie text-purple-600"></i>
             </div>
             <div>
-    @if (TempData["ErrorMessage"] is string errorMessage)
-    {
-        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
-        </div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">College Admin Assignments</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Manage college admin-subject-exam assignments.</p>
             </div>
@@ -27,14 +21,6 @@
             <i class="fas fa-plus text-xs"></i> New Assignment
         </a>
     </div>
-
-    @if (TempData["Success"] != null)
-    {
-        <div class="rounded-lg bg-green-50 p-4 border border-green-200 flex items-start gap-3 shadow-sm">
-            <i class="fas fa-check-circle text-green-400 mt-0.5"></i>
-            <div class="text-sm font-medium text-green-800">@TempData["Success"]</div>
-        </div>
-    }
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table class="w-full text-sm text-left">

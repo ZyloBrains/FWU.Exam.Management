@@ -149,16 +149,23 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
     {
         if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var threshold = examSchedule.EndDate.Value.AddDays(-7);
-            if (today < threshold && today < examSchedule.EndDate.Value)
-            {
-                throw new InvalidOperationException("Extension is only allowed when the exam end date is near or has passed.");
-            }
+            var existing = await context.ExamSchedules.FindAsync(examSchedule.Id);
+            var existingExtended = existing?.ExtendedDate;
+            var extendedChanged = existingExtended != examSchedule.ExtendedDate;
 
-            if (DateOnly.FromDateTime(examSchedule.ExtendedDate.Value) <= examSchedule.EndDate.Value)
+            if (extendedChanged)
             {
-                throw new InvalidOperationException("Extended date must be after the original end date.");
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var threshold = examSchedule.EndDate.Value.AddDays(-7);
+                if (today < threshold && today < examSchedule.EndDate.Value)
+                {
+                    throw new InvalidOperationException("Extension is only allowed when the exam end date is near or has passed.");
+                }
+
+                if (DateOnly.FromDateTime(examSchedule.ExtendedDate.Value) <= examSchedule.EndDate.Value)
+                {
+                    throw new InvalidOperationException("Extended date must be after the original end date.");
+                }
             }
         }
 
