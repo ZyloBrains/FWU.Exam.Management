@@ -6,20 +6,7 @@
 
 <div class="min-h-screen">
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium flex items-center gap-2">
-            <i class="fas fa-exclamation-circle"></i>
-            @TempData["ErrorMessage"]
-        </div>
-    }
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-semibold flex items-center gap-2">
-            <i class="fas fa-check-circle"></i>
-            @TempData["SuccessMessage"]
-        </div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
 
     @if (Model.ExamForms.Count == 0)
     {

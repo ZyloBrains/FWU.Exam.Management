@@ -3,6 +3,7 @@ namespace FWU.Exam.Management.Web.ViewModels;
 public class StudentProfileViewModel
 {
     public int RegistrationId { get; set; }
+    public int? PermanentAddressId { get; set; }
     public string? RegistrationNumber { get; set; }
     public string? FullName { get; set; }
     public string? NepaliName { get; set; }

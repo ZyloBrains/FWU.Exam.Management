@@ -13,25 +13,10 @@
             <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-envelope text-emerald-600"></i>
             </div>
-    @if (TempData["ErrorMessage"] is string errorMessage)
-    {
-        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-xs sm:text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
-        </div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Send Test Email</h1>
         </div>
     </div>
-
-    @if (TempData["Success"] is string success)
-    {
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">@success</div>
-    }
-    @if (TempData["Error"] is string error)
-    {
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">@error</div>
-    }
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <form asp-action="Index" method="post" class="space-y-6">

@@ -22,10 +22,7 @@
             <p class="mt-2 text-gray-600">Examination Management System</p>
         </div>
 
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">@TempData["ErrorMessage"]</div>
-        }
+        @await Html.PartialAsync("_AlertMessages")
 
         <!-- Entrance Application Card -->
         <div class="mb-6">

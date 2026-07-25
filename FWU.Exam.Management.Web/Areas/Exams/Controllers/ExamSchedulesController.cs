@@ -218,6 +218,13 @@ public class ExamSchedulesController(
                 examSchedule.TenantId = existing.TenantId;
                 await examScheduleService.UpdateExamScheduleAsync(examSchedule);
             }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                var retrySelectLists = await examScheduleService.GetSelectListDataAsync();
+                PopulateDropdowns(retrySelectLists, examSchedule);
+                return View(examSchedule);
+            }
             catch (DbUpdateConcurrencyException)
             {
                 if (!await examScheduleService.ExamScheduleExistsAsync(examSchedule.Id))

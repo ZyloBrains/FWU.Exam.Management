@@ -105,14 +105,7 @@
         </div>
     </div>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="px-3 py-1 text-xs font-medium text-green-800 bg-green-100 border-b border-green-200">@TempData["Success"]</div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="px-3 py-1 text-xs font-medium text-red-800 bg-red-100 border-b border-red-200">@TempData["Error"]</div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
 
     <form method="post" asp-action="MarksEntryExcel" x-data="marksEntry()" @@submit.prevent="submitForm">
         @Html.AntiForgeryToken()
