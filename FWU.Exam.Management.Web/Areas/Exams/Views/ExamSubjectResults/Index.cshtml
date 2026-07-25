@@ -1,4 +1,4 @@
-@model IEnumerable<FWU.Exam.Management.Domain.Entities.Exams.ExamSubjectResult>
+@model IEnumerable<FWU.Exam.Management.Application.DTOs.ExamRegistrationGroupedDto>
 
 @{
     ViewData["Title"] = "Subject Results";
@@ -7,8 +7,7 @@
     var totalPages = ViewBag.TotalPages ?? 1;
     var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
-    var currentSort = ViewBag.Sort as string ?? "Id";
-    var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentExamScheduleId = ViewBag.ExamScheduleId?.ToString();
 }
 
 <div class="space-y-6">
@@ -18,15 +17,15 @@
                 <i class="fas fa-check-double text-teal-600"></i>
             </div>
             <div>
-    @if (TempData["ErrorMessage"] is string errorMessage)
-    {
-        <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
-            <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
-        </div>
-    }
+                @if (TempData["ErrorMessage"] is string errorMessage)
+                {
+                    <div class="mb-6 rounded-lg bg-red-50 p-4 border border-red-200 flex items-start shadow-sm">
+                        <svg class="h-5 w-5 text-red-400 mr-3 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div class="text-sm font-medium text-red-800 whitespace-pre-line">@errorMessage</div>
+                    </div>
+                }
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Subject Results</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Manage subject-wise exam results.</p>
+                <p class="text-sm text-gray-500 mt-0.5">Manage subject-wise exam results per registration.</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -41,7 +40,7 @@
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" name="search" value="@currentSearch"
-                       placeholder="Search by grade, subject, remarks..."
+                       placeholder="Search by symbol number, roll number, schedule, college, program..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </div>
             <div>
@@ -51,19 +50,16 @@
                     {
                         foreach (var item in sl.Items as IEnumerable<dynamic>)
                         {
-                            <option value="@item.Id" selected="@(item.Id.ToString() == ViewBag.ExamScheduleId?.ToString())">@item.ExamScheduleName</option>
+                            <option value="@item.Id" selected="@(item.Id.ToString() == currentExamScheduleId)">@item.ExamScheduleName</option>
                         }
                     }
                 </select>
             </div>
-            <input type="hidden" name="sort" value="@currentSort" />
-            <input type="hidden" name="sortDir" value="@currentSortDir" />
-            <input type="hidden" name="pageSize" value="@pageSize" />
             <div class="flex gap-2">
                 <button type="submit" class="px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">Search</button>
-                @if (!string.IsNullOrEmpty(currentSearch))
+                @if (!string.IsNullOrEmpty(currentSearch) || !string.IsNullOrEmpty(currentExamScheduleId))
                 {
-                    <a asp-action="Index" asp-area="Exams" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                    <a asp-action="Index" asp-area="Exams" asp-route-pageSize="@pageSize"
                        class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-times text-xs"></i> Clear
                     </a>
@@ -72,115 +68,131 @@
         </form>
     </div>
 
-    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-        <table class="w-full text-sm text-left">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Registration</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Subject</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam Type</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Theory</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Practical</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Grade</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Submitted</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Excel</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @{ var serial = (currentPage - 1) * pageSize; }
-                @foreach (var item in Model)
-                {
-                    serial++;
-                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
-                        <td class="px-4 py-3 text-gray-500">@serial</td>
-                        <td class="px-4 py-3 font-medium text-gray-800">Reg #@item.ExamRegistrationId</td>
-                        <td class="px-4 py-3 text-gray-600">@item.SubjectOffering?.SubjectCatalog?.SubjectName</td>
-                        <td class="px-4 py-3 text-gray-600">@item.ExamType?.Name</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.ObtainedMarksTheory?.ToString("N2") ?? "-")</td>
-                        <td class="px-4 py-3 text-gray-600">@(item.ObtainedMarksPractical?.ToString("N2") ?? "-")</td>
-                        <td class="px-4 py-3 font-semibold">@(item.GradeLetter ?? "-")</td>
-                        <td class="px-4 py-3">
-                            @if (item.IsSubmitted)
-                            {
-                                <span class="text-green-600"><i class="fas fa-check-circle"></i></span>
-                            }
-                            else
-                            {
-                                <span class="text-gray-400"><i class="fas fa-clock"></i></span>
-                            }
-                        </td>
-                        <td class="px-4 py-3 text-center">
-                            <a asp-action="MarksEntryExcel" asp-controller="CollegeAdminMarks" asp-area="Exams"
-                               asp-route-subjectOfferingId="@item.SubjectOfferingId"
-                               asp-route-examScheduleId="@item.ExamScheduleId"
-                               class="inline-block p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Open spreadsheet view for this subject">
-                                <i class="fas fa-table"></i>
-                            </a>
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            <div class="flex items-center justify-end gap-1">
-                                <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
-                                    <i class="fas fa-eye text-xs"></i>
-                                </a>
-                                <a asp-action="Edit" asp-area="Exams" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
-                                    <i class="fas fa-edit text-xs"></i>
-                                </a>
-                                <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
-                                    <i class="fas fa-trash text-xs"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-        @if (!Model.Any())
+    <div class="space-y-4">
+        @{ var serial = (currentPage - 1) * pageSize; }
+        @foreach (var reg in Model)
         {
-            <div class="text-center py-16">
-                <i class="fas fa-check-double text-4xl text-gray-300 mb-4"></i>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
-                <p class="text-sm text-gray-500">No subject results found.</p>
-            </div>
-        }
-    </div>
-
-    <div class="lg:hidden space-y-3">
-        @{ var serialMobile = (currentPage - 1) * pageSize; }
-        @foreach (var item in Model)
-        {
-            serialMobile++;
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <h3 class="font-semibold text-gray-800 text-sm">Reg #@item.ExamRegistrationId</h3>
-                        <p class="text-xs text-gray-500">@item.SubjectOffering?.SubjectCatalog?.SubjectName</p>
+            serial++;
+            var submittedCount = reg.SubjectResults.Count(sr => sr.IsSubmitted);
+            var totalSubjects = reg.SubjectResults.Count;
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
+                <button type="button" onclick="toggleRegistration(this)" class="w-full text-left p-4 sm:p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md shadow-teal-500/20 shrink-0">
+                        <i class="fas fa-user-graduate text-white text-sm"></i>
                     </div>
-                    <div>@item.ExamType?.Name</div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                    <div class="text-gray-500">Grade</div><div class="text-gray-800 font-semibold">@(item.GradeLetter ?? "-")</div>
-                    <div class="text-gray-500">Theory</div><div class="text-gray-800">@(item.ObtainedMarksTheory?.ToString("N2") ?? "-")</div>
-                    <div class="text-gray-500">Practical</div><div class="text-gray-800">@(item.ObtainedMarksPractical?.ToString("N2") ?? "-")</div>
-                </div>
-                <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
-                    <a asp-action="MarksEntryExcel" asp-controller="CollegeAdminMarks" asp-area="Exams"
-                       asp-route-subjectOfferingId="@item.SubjectOfferingId"
-                       asp-route-examScheduleId="@item.ExamScheduleId"
-                       class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100"><i class="fas fa-table mr-1"></i> Excel</a>
-                    <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"><i class="fas fa-eye mr-1"></i> Details</a>
-                    <a asp-action="Edit" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100"><i class="fas fa-edit mr-1"></i> Edit</a>
-                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"><i class="fas fa-trash mr-1"></i> Delete</a>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900">@(reg.SymbolNumber ?? $"Reg #{reg.Id}")</h3>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
+                            @if (!string.IsNullOrEmpty(reg.StudentName))
+                            {
+                                <span><i class="fas fa-user mr-1"></i>@reg.StudentName</span>
+                            }
+                            <span><i class="fas fa-calendar-alt mr-1"></i>@(reg.ExamScheduleName ?? "-")</span>
+                            <span><i class="fas fa-university mr-1"></i>@(reg.CollegeName ?? "-")</span>
+                            <span><i class="fas fa-graduation-cap mr-1"></i>@(reg.ProgramName ?? "-")</span>
+                            @if (!string.IsNullOrEmpty(reg.ExamRollNumber))
+                            {
+                                <span><i class="fas fa-hashtag mr-1"></i>@reg.ExamRollNumber</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-xs text-gray-500">Subjects</p>
+                            <p class="text-sm font-bold text-gray-800">@submittedCount / @totalSubjects</p>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200 expand-icon"></i>
+                    </div>
+                </button>
+
+                <div class="hidden subject-results-panel border-t border-gray-100">
+                    @if (reg.SubjectResults.Any())
+                    {
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Subject</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Exam Type</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-center">Theory</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-center">Practical</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-center">Internal</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase">Grade</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-center">Submitted</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-center">Excel</th>
+                                        <th class="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach (var sr in reg.SubjectResults)
+                                    {
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="px-4 py-3 font-medium text-gray-800">@(sr.SubjectOffering?.SubjectCatalog?.SubjectName ?? "-")</td>
+                                            <td class="px-4 py-3 text-gray-600">@(sr.ExamType?.Name ?? "-")</td>
+                                            <td class="px-4 py-3 text-center text-gray-600">@(sr.ObtainedMarksTheory?.ToString("N2") ?? "-")</td>
+                                            <td class="px-4 py-3 text-center text-gray-600">@(sr.ObtainedMarksPractical?.ToString("N2") ?? "-")</td>
+                                            <td class="px-4 py-3 text-center text-gray-600">
+                                                @{
+                                                    var internalMarks = (sr.ObtainedMarksTheoryInternal ?? 0) + (sr.ObtainedMarksPracticalInternal ?? 0);
+                                                }
+                                                @(internalMarks > 0 ? internalMarks.ToString("N2") : "-")
+                                            </td>
+                                            <td class="px-4 py-3 font-semibold text-gray-800">@(sr.GradeLetter ?? "-")</td>
+                                            <td class="px-4 py-3 text-center">
+                                                @if (sr.IsSubmitted)
+                                                {
+                                                    <span class="text-green-600"><i class="fas fa-check-circle"></i></span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-gray-400"><i class="fas fa-clock"></i></span>
+                                                }
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <a asp-action="MarksEntryExcel" asp-controller="CollegeAdminMarks" asp-area="Exams"
+                                                   asp-route-subjectOfferingId="@sr.SubjectOfferingId"
+                                                   asp-route-examScheduleId="@sr.ExamScheduleId"
+                                                   class="inline-block p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Open spreadsheet view">
+                                                    <i class="fas fa-table"></i>
+                                                </a>
+                                            </td>
+                                            <td class="px-4 py-3 text-right">
+                                                <div class="flex items-center justify-end gap-1">
+                                                    <a asp-action="Details" asp-area="Exams" asp-route-id="@sr.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                                                        <i class="fas fa-eye text-xs"></i>
+                                                    </a>
+                                                    <a asp-action="Edit" asp-area="Exams" asp-route-id="@sr.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
+                                                        <i class="fas fa-edit text-xs"></i>
+                                                    </a>
+                                                    <a href="javascript:void(0)" onclick="deleteRecord('@sr.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                                        <i class="fas fa-trash text-xs"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8">
+                            <i class="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
+                            <p class="text-sm text-gray-500">No subject results for this registration.</p>
+                        </div>
+                    }
                 </div>
             </div>
         }
         @if (!Model.Any())
         {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 text-center py-16">
                 <i class="fas fa-check-double text-4xl text-gray-300 mb-4"></i>
                 <h3 class="text-sm font-semibold text-gray-900 mb-1">No records found</h3>
-                <p class="text-sm text-gray-500">No subject results found.</p>
+                <p class="text-sm text-gray-500">No exam registrations with subject results found.</p>
             </div>
         }
     </div>
@@ -189,12 +201,12 @@
     {
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
             <div class="text-sm text-gray-500 font-medium">
-                Showing <span class="font-semibold text-gray-900">@(((currentPage - 1) * pageSize) + 1)</span> to <span class="font-semibold text-gray-900">@(Math.Min(currentPage * pageSize, totalCount))</span> of <span class="font-semibold text-gray-900">@totalCount</span> entries
+                Showing <span class="font-semibold text-gray-900">@(((currentPage - 1) * pageSize) + 1)</span> to <span class="font-semibold text-gray-900">@(Math.Min(currentPage * pageSize, totalCount))</span> of <span class="font-semibold text-gray-900">@totalCount</span> registrations
             </div>
             <div class="flex items-center justify-between sm:justify-end gap-2">
                 @if (currentPage > 1)
                 {
-                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize" asp-route-examScheduleId="@ViewBag.ExamScheduleId"
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-examScheduleId="@currentExamScheduleId"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         <i class="fas fa-chevron-left text-xs"></i> Previous
                     </a>
@@ -202,7 +214,7 @@
                 <span class="text-sm font-semibold text-gray-700 min-w-[4rem] text-center">@currentPage / @totalPages</span>
                 @if (currentPage < totalPages)
                 {
-                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir" asp-route-pageSize="@pageSize" asp-route-examScheduleId="@ViewBag.ExamScheduleId"
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-examScheduleId="@currentExamScheduleId"
                        class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
                         Next <i class="fas fa-chevron-right text-xs"></i>
                     </a>
@@ -222,11 +234,23 @@
     </style>
     <script>
         $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
-    </script>
-    @Html.AntiForgeryToken()
-    <script>
+
+        function toggleRegistration(btn) {
+            var card = btn.closest('.bg-white');
+            var panel = card.querySelector('.subject-results-panel');
+            var icon = btn.querySelector('.expand-icon');
+
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                panel.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function deleteRecord(id) {
-            if (!confirm('Are you sure you want to delete this record?')) return;
+            if (!confirm('Are you sure you want to delete this subject result?')) return;
             $.ajax({
                 url: '@Url.Action("DeleteAjax", "ExamSubjectResults")',
                 type: 'POST',
@@ -239,4 +263,5 @@
             });
         }
     </script>
+    @Html.AntiForgeryToken()
 }

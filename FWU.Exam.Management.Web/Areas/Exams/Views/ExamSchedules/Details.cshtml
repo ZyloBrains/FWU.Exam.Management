@@ -124,6 +124,37 @@
             </div>
         </div>
 
+        <!-- Student Enrollment Summary -->
+        <div>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
+                <i class="fas fa-users mr-2 text-indigo-500"></i>Student Enrollment Summary
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-100">
+                    <p class="text-2xl font-bold text-indigo-700">@ViewBag.TotalRegistrations</p>
+                    <p class="text-xs font-medium text-indigo-600 mt-1">Total Registrations</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                    <p class="text-2xl font-bold text-green-700">@ViewBag.PaidCount</p>
+                    <p class="text-xs font-medium text-green-600 mt-1">Payment Done</p>
+                </div>
+                <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                    <p class="text-2xl font-bold text-amber-700">@ViewBag.PendingCount</p>
+                    <p class="text-xs font-medium text-amber-600 mt-1">Payment Pending</p>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
+                    <p class="text-2xl font-bold text-blue-700">@ViewBag.RegisteredCount</p>
+                    <p class="text-xs font-medium text-blue-600 mt-1">Fully Registered</p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a asp-controller="ExamRegistrations" asp-action="Index" asp-area="Exams" asp-route-examScheduleId="@Model?.Id"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                    <i class="fas fa-list text-xs"></i> View All Registered Students
+                </a>
+            </div>
+        </div>
+
         <!-- Status -->
         <div>
             <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>

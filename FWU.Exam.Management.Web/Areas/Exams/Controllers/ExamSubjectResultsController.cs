@@ -20,22 +20,18 @@ public class ExamSubjectResultsController(
     IUserContext userContext,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? examRegistrationId = null)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
-        var (items, totalCount) = await examSubjectResultService.GetExamSubjectResultsAsync(page, pageSize, search, sort, sortDir, examScheduleId, examRegistrationId);
+        var (items, totalCount) = await examSubjectResultService.GetRegistrationsWithSubjectResultsAsync(page, pageSize, search, examScheduleId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
-        ViewBag.Sort = sort;
-        ViewBag.SortDir = sortDir;
         ViewBag.ExamScheduleId = examScheduleId;
-        ViewBag.ExamRegistrationId = examRegistrationId;
 
         ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
-        ViewData["ExamRegistrationId"] = new SelectList(context.ExamRegistrations.AsNoTracking().Select(er => new { er.Id, Name = "Reg #" + er.Id }), "Id", "Name", examRegistrationId);
 
         return View(items);
     }

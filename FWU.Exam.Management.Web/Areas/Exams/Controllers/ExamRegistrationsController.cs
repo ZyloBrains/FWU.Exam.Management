@@ -160,6 +160,26 @@ public class ExamRegistrationsController(
         return RedirectToAction(nameof(Index));
     }
 
+    [RequirePermission("examregistration.view")]
+    public async Task<IActionResult> StudentForms(int? examScheduleId, string? search, int page = 1, int pageSize = 25)
+    {
+        var result = await examRegistrationService.GetStudentExamFormsAsync(examScheduleId, search, page, pageSize);
+
+        ViewBag.TotalCount = result.TotalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling(result.TotalCount / (double)pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.ExamScheduleId = examScheduleId;
+        ViewBag.PaymentConfirmedCount = result.PaymentConfirmedCount;
+        ViewBag.AdmitCardGeneratedCount = result.AdmitCardGeneratedCount;
+        ViewBag.PendingAdmitCardCount = result.PendingAdmitCardCount;
+
+        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+
+        return View(result.Forms);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();

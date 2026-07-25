@@ -71,7 +71,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("LevelId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Create([Bind("LevelId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId")] StudentRegistration studentRegistration)
     {
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
@@ -80,6 +80,12 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         if (ModelState.IsValid)
         {
+            if (studentRegistration.ProgramId.HasValue)
+            {
+                var program = await context.Programs.FindAsync(studentRegistration.ProgramId.Value);
+                studentRegistration.FacultyId = program?.FacultyId;
+            }
+
             var registrationId = await studentRegistrationService.CreateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
             await SaveQualificationsFromFormAsync(registrationId);
             await SaveGuardiansFromFormAsync(registrationId);
@@ -125,7 +131,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,FacultyId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId")] StudentRegistration studentRegistration)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,LevelId,CollegeId,ProgramId,RegistrationNumber,FirstName,MiddleName,LastName,ContactNumber,Email,DateOfBirthBS,DateOfBirthAD,GenderId,Nationality,Religion,IsActive,StudentCategoryId,VerifiedBy,VerifiedDate,EthnicityId,AcademicYearId,PermanentAddressId")] StudentRegistration studentRegistration)
     {
         if (id != studentRegistration.Id) return NotFound();
 
@@ -138,6 +144,12 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             try
             {
+                if (studentRegistration.ProgramId.HasValue)
+                {
+                    var program = await context.Programs.FindAsync(studentRegistration.ProgramId.Value);
+                    studentRegistration.FacultyId = program?.FacultyId;
+                }
+
                 await studentRegistrationService.UpdateStudentRegistrationAsync(studentRegistration, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber);
                 await SaveQualificationsFromFormAsync(id);
                 await SaveGuardiansFromFormAsync(id);
@@ -283,12 +295,15 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
                     var programLookup = await context.Programs!
                         .Where(p => p.IsActive)
-                        .Select(p => new { p.Id, p.ProgramName, p.ProgramCode, p.ShortName })
+                        .Select(p => new { p.Id, p.ProgramName, p.ProgramCode, p.ShortName, p.FacultyId })
                         .ToListAsync();
                     var programMap = BuildLookup(programLookup, p => p.ProgramName, p => p.ProgramCode, p => p.Id);
                     foreach (var p in programLookup.Where(p => !string.IsNullOrEmpty(p.ShortName)))
                         if (!programMap.ContainsKey(p.ShortName!.Trim()))
                             programMap[p.ShortName.Trim()] = p.Id;
+                    var programFacultyMap = programLookup
+                        .Where(p => p.FacultyId.HasValue)
+                        .ToDictionary(p => p.Id, p => p.FacultyId!.Value, EqualityComparer<int>.Default);
 
                     var boardLookup = await context.Boards!
                         .Where(b => b.IsActive)
@@ -393,9 +408,11 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                                 GenderId = ResolveId(worksheet.Cell(row, 11).GetString(), genderMap),
                                 StudentCategoryId = ResolveId(worksheet.Cell(row, 12).GetString(), categoryMap),
                                 IsActive = !(worksheet.Cell(row, 13).GetString() is string activeStr) || (bool.TryParse(activeStr, out var isActive) ? isActive : string.Equals(activeStr, "Yes", StringComparison.OrdinalIgnoreCase)),
-                                FacultyId = ResolveNullableId(worksheet.Cell(row, 14).GetString(), facultyMap),
                                 ProgramId = ResolveNullableId(worksheet.Cell(row, 15).GetString(), programMap)
                             };
+
+                            if (registration.ProgramId.HasValue && programFacultyMap.TryGetValue(registration.ProgramId.Value, out var resolvedFacultyId))
+                                registration.FacultyId = resolvedFacultyId;
 
                             if (registration.GenderId == 0)
                             {
@@ -857,7 +874,6 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", studentRegistration?.AcademicYearId);
         ViewBag.LevelId = new SelectList(selectLists.Levels, "Id", "Name", studentRegistration?.LevelId);
         ViewBag.CollegeId = new SelectList(selectLists.Colleges, "Id", "Name", studentRegistration?.CollegeId);
-        ViewBag.FacultyId = new SelectList(selectLists.Faculties, "Id", "Name", studentRegistration?.FacultyId);
         ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", studentRegistration?.ProgramId);
         ViewBag.GenderId = new SelectList(selectLists.Genders, "Id", "Name", studentRegistration?.GenderId);
         ViewBag.StudentCategoryId = new SelectList(selectLists.StudentCategories, "Id", "Name", studentRegistration?.StudentCategoryId);
@@ -888,6 +904,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
+    public async Task<JsonResult> GetCollegesByLevel(int levelId)
+    {
+        var colleges = await studentRegistrationService.GetCollegesByLevelAsync(levelId);
+        return Json(colleges);
+    }
+
+    [HttpGet]
     public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? levelId = null)
     {
         var programs = await studentRegistrationService.GetProgramsByCollegeAsync(collegeId, levelId);
@@ -901,6 +924,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             await studentRegistrationService.DeleteStudentRegistrationAsync(id);
             return Json(new { success = true, message = "Student registration deleted successfully!" });
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            return Json(new { success = false, message = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first." });
         }
         catch (Exception ex)
         {

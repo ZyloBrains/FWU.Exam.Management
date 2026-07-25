@@ -12,6 +12,9 @@ public class Faculty
     [Required, MaxLength(30)]
     [Display(Name = "Office Code")]
     public string OfficeCode { get; set; } = string.Empty;
+    [MaxLength(20)]
+    [Display(Name = "Short Name")]
+    public string? ShortName { get; set; }
     [MaxLength(50)]
     [Display(Name = "Contact Number")]
     public string ContactNumber { get; set; } = string.Empty;

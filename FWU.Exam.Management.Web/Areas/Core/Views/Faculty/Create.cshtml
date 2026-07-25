@@ -32,11 +32,16 @@
                         <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-5">
+                    <div class="grid grid-cols-3 gap-5">
                         <div>
                             <label asp-for="OfficeCode" class="text-xs sm:text-sm font-medium text-gray-700"></label>
                             <input asp-for="OfficeCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter office code" />
                             <span asp-validation-for="OfficeCode" class="text-xs text-red-500 mt-1 block"></span>
+                        </div>
+                        <div>
+                            <label asp-for="ShortName" class="text-xs sm:text-sm font-medium text-gray-700"></label>
+                            <input asp-for="ShortName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. MG" />
+                            <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
                         <div>
                             <label asp-for="ContactNumber" class="text-xs sm:text-sm font-medium text-gray-700"></label>

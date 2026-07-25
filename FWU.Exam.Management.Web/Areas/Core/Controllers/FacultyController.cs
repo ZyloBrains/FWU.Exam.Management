@@ -24,6 +24,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             faculties = faculties.Where(f =>
                 (f.Name?.ToLower().Contains(s) ?? false) ||
                 (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.ShortName?.ToLower().Contains(s) ?? false) ||
                 (f.Email?.ToLower().Contains(s) ?? false) ||
                 (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
                 (f.Address?.ToLower().Contains(s) ?? false)
@@ -33,6 +34,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         faculties = (sort?.ToLower()) switch
         {
             "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "shortname" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ShortName).ToList() : faculties.OrderBy(f => f.ShortName).ToList(),
             "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
             "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
             "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
@@ -57,7 +59,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Faculties");
 
-        var headers = new[] { "Name", "Office Code", "Contact Number", "Email", "Address" };
+        var headers = new[] { "Name", "Short Name", "Office Code", "Contact Number", "Email", "Address" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -70,10 +72,11 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         foreach (var f in items)
         {
             worksheet.Cell(row, 1).Value = f.Name;
-            worksheet.Cell(row, 2).Value = f.OfficeCode;
-            worksheet.Cell(row, 3).Value = f.ContactNumber;
-            worksheet.Cell(row, 4).Value = f.Email;
-            worksheet.Cell(row, 5).Value = f.Address;
+            worksheet.Cell(row, 2).Value = f.ShortName;
+            worksheet.Cell(row, 3).Value = f.OfficeCode;
+            worksheet.Cell(row, 4).Value = f.ContactNumber;
+            worksheet.Cell(row, 5).Value = f.Email;
+            worksheet.Cell(row, 6).Value = f.Address;
             row++;
         }
 
@@ -103,6 +106,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             faculties = faculties.Where(f =>
                 (f.Name?.ToLower().Contains(s) ?? false) ||
                 (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.ShortName?.ToLower().Contains(s) ?? false) ||
                 (f.Email?.ToLower().Contains(s) ?? false) ||
                 (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
                 (f.Address?.ToLower().Contains(s) ?? false)
@@ -112,6 +116,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         faculties = (sort?.ToLower()) switch
         {
             "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "shortname" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ShortName).ToList() : faculties.OrderBy(f => f.ShortName).ToList(),
             "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
             "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
             "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
@@ -120,11 +125,11 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         };
 
         var sb = new StringBuilder();
-        sb.AppendLine("Name,Office Code,Contact Number,Email,Address");
+        sb.AppendLine("Name,Short Name,Office Code,Contact Number,Email,Address");
 
         foreach (var f in faculties)
         {
-            sb.AppendLine($"{EscapeCsv(f.Name)},{EscapeCsv(f.OfficeCode)},{EscapeCsv(f.ContactNumber)},{EscapeCsv(f.Email)},{EscapeCsv(f.Address)}");
+            sb.AppendLine($"{EscapeCsv(f.Name)},{EscapeCsv(f.ShortName)},{EscapeCsv(f.OfficeCode)},{EscapeCsv(f.ContactNumber)},{EscapeCsv(f.Email)},{EscapeCsv(f.Address)}");
         }
 
         var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
@@ -142,6 +147,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             faculties = faculties.Where(f =>
                 (f.Name?.ToLower().Contains(s) ?? false) ||
                 (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.ShortName?.ToLower().Contains(s) ?? false) ||
                 (f.Email?.ToLower().Contains(s) ?? false) ||
                 (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
                 (f.Address?.ToLower().Contains(s) ?? false)
@@ -151,6 +157,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         faculties = (sort?.ToLower()) switch
         {
             "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "shortname" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ShortName).ToList() : faculties.OrderBy(f => f.ShortName).ToList(),
             "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
             "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
             "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),

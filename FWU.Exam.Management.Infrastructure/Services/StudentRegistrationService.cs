@@ -220,7 +220,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var newIndex = maxIndex + 1;
         student.StudentRegistrationIndex = newIndex;
 
-        student.RegistrationNumber = $"{student.Faculty?.OfficeCode ?? "00"}-{student.AcademicYear?.AcademicYearCode ?? "0"}-{student.LevelId}-{student.ProgramId}-{newIndex:D4}";
+        student.RegistrationNumber = $"{student.Faculty?.ShortName ?? "00"}-{student.AcademicYear?.AcademicYearCode ?? "0"}-{student.LevelId}-{student.ProgramId}-{newIndex:D4}";
 
         student.IsRegistrationNumberGenerated = true;
         await context.SaveChangesAsync();
@@ -354,6 +354,16 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Where(p => p.LevelId == levelId && p.FacultyId != null)
             .Include(p => p.Faculty)
             .Select(p => new SelectOption { Id = p.Faculty!.Id, Name = p.Faculty.Name! })
+            .Distinct()
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetCollegesByLevelAsync(int levelId)
+    {
+        return await context.CollegePrograms
+            .Where(cp => cp.Program != null && cp.Program.LevelId == levelId && cp.College != null && cp.College.Name != null)
+            .Select(cp => new SelectOption { Id = cp.College!.Id, Name = cp.College.Name! })
             .Distinct()
             .AsNoTracking()
             .ToListAsync();
