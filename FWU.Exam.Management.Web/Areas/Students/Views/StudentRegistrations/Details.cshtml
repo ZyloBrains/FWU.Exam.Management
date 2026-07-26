@@ -177,6 +177,18 @@
                         <h4 class="text-sm font-semibold text-gray-900 mb-4">Permanent Address</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div class="sm:col-span-1">
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">Province</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.LocalLevel?.District?.Province?.ProvinceName ?? "-")</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">District</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.LocalLevel?.District?.DistrictName ?? "-")</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">Local Level</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.LocalLevel?.LocalLevelName ?? "-")</dd>
+                            </div>
+                            <div class="sm:col-span-1">
                                 <dt class="text-xs sm:text-sm font-medium text-gray-500">Ward Number</dt>
                                 <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.WardNumber?.ToString() ?? "-")</dd>
                             </div>
