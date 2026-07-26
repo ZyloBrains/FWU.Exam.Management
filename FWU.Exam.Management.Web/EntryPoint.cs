@@ -84,17 +84,29 @@ public partial class EntryPoint
 
                 options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
                 {
-                    OnRedirectToLogin = ctx =>
+                    OnRedirectToLogin = async ctx =>
                     {
+                        if (IsAjaxRequest(ctx.HttpContext.Request))
+                        {
+                            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            ctx.Response.ContentType = "application/json";
+                            await ctx.Response.WriteAsJsonAsync(new { error = "Authentication required." });
+                            return;
+                        }
                         var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
                         ctx.Response.Redirect($"/Identity/Account/Login?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                        return Task.CompletedTask;
                     },
-                    OnRedirectToAccessDenied = ctx =>
+                    OnRedirectToAccessDenied = async ctx =>
                     {
+                        if (IsAjaxRequest(ctx.HttpContext.Request))
+                        {
+                            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            ctx.Response.ContentType = "application/json";
+                            await ctx.Response.WriteAsJsonAsync(new { error = "Access denied. You do not have permission to perform this action." });
+                            return;
+                        }
                         var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
                         ctx.Response.Redirect($"/Identity/Account/AccessDenied?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                        return Task.CompletedTask;
                     }
                 };
             });
@@ -356,5 +368,11 @@ public partial class EntryPoint
         {
             // Log.CloseAndFlush();
         }
+    }
+
+    private static bool IsAjaxRequest(HttpRequest request)
+    {
+        return string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(request.ContentType, "application/json", StringComparison.OrdinalIgnoreCase);
     }
 }

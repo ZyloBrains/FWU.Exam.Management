@@ -85,7 +85,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (ModelState.IsValid)
         {
+            logger.LogWarning("Login attempt for: {Input}", Input.EmailOrRegNumber);
             var user = await ResolveUserAsync(Input.EmailOrRegNumber);
+            logger.LogWarning("Resolved user: {UserId}, UserName: {UserName}, IsActive: {IsActive}, PasswordHash present: {HasHash}",
+                user?.Id, user?.UserName, user?.IsActive, user?.PasswordHash != null);
 
             if (user != null)
             {
@@ -97,6 +100,8 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 }
 
                 var result = await signInManager.CheckPasswordSignInAsync(user, Input.Password, false);
+                logger.LogWarning("CheckPasswordSignIn result: Succeeded={Succeeded}, IsLockedOut={IsLockedOut}, RequiresTwoFactor={RequiresTwoFactor}",
+                    result.Succeeded, result.IsLockedOut, result.RequiresTwoFactor);
                 if (result.Succeeded)
                 {
                     logger.LogInformation("User logged in.");
@@ -175,6 +180,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 }
             }
 
+            logger.LogWarning("Login failed for {Input} - user not found or invalid", Input.EmailOrRegNumber);
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return Page();
         }
@@ -242,10 +248,15 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
             .Select(s => s.Email)
             .FirstOrDefaultAsync();
 
-        if (studentEmail == null)
-            return null;
+        if (studentEmail != null)
+        {
+            var userByEmail = await userManager.Users
+                .FirstOrDefaultAsync(u => u.Email == studentEmail);
+            if (userByEmail != null)
+                return userByEmail;
+        }
 
         return await userManager.Users
-            .FirstOrDefaultAsync(u => u.Email == studentEmail);
+            .FirstOrDefaultAsync(u => u.UserName == input);
     }
 }

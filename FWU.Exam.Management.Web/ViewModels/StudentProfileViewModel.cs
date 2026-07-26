@@ -14,6 +14,7 @@ public class StudentProfileViewModel
     public string? Category { get; set; }
     public string? ContactNumber { get; set; }
     public string? Email { get; set; }
+    public bool IsEmailConfirmed { get; set; }
     public string? PhotoPath { get; set; }
     public string? SignaturePath { get; set; }
     public string? Address { get; set; }

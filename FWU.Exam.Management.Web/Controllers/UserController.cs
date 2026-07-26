@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
@@ -309,4 +311,165 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         }
     }
 
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<IActionResult> GetStudentsWithoutUsers(int? collegeId, int? facultyId)
+    {
+        var existingUserEmails = (await context.Users
+            .Where(u => u.Email != null)
+            .Select(u => u.Email!)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var existingUserNames = (await context.Users
+            .Where(u => u.UserName != null)
+            .Select(u => u.UserName!)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var query = context.StudentRegistrations
+            .Include(s => s.College)
+            .Include(s => s.Faculty)
+            .Where(s => s.IsActive);
+
+        if (collegeId.HasValue)
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        if (facultyId.HasValue)
+            query = query.Where(s => s.FacultyId == facultyId.Value);
+
+        var allStudents = await query
+            .OrderBy(s => s.LastName)
+            .ThenBy(s => s.FirstName)
+            .ToListAsync();
+
+        var students = allStudents
+            .Where(s =>
+            {
+                var hasEmail = !string.IsNullOrWhiteSpace(s.Email);
+                var hasRegNo = !string.IsNullOrWhiteSpace(s.RegistrationNumber);
+
+                var emailMatch = hasEmail && existingUserEmails.Contains(s.Email!);
+                var regNoMatch = hasRegNo && existingUserNames.Contains(s.RegistrationNumber!);
+
+                return !emailMatch && !regNoMatch;
+            })
+            .Select(s => new
+            {
+                s.Id,
+                FullName = s.FirstName + " " + s.LastName,
+                s.Email,
+                s.RegistrationNumber,
+                CollegeName = s.College?.Name ?? "",
+                FacultyName = s.Faculty?.Name ?? "",
+                s.DateOfBirthBS,
+                HasEmail = !string.IsNullOrWhiteSpace(s.Email)
+            })
+            .ToList();
+
+        return Json(students);
+    }
+
+    [RequirePermission("users.create")]
+    [HttpPost]
+    public async Task<IActionResult> CreateUsersFromRegistrations([FromBody] List<int> registrationIds)
+    {
+        try
+        {
+            if (registrationIds == null || registrationIds.Count == 0)
+                return Json(new { success = false, message = "No registrations selected." });
+
+            var results = new List<object>();
+
+            foreach (var id in registrationIds)
+            {
+                try
+                {
+                    var reg = await context.StudentRegistrations
+                        .Include(s => s.Faculty)
+                        .Include(s => s.College)
+                        .FirstOrDefaultAsync(s => s.Id == id);
+
+                    if (reg == null)
+                    {
+                        results.Add(new { id, success = false, name = $"ID {id}", message = "Registration not found." });
+                        continue;
+                    }
+
+                    var loginId = !string.IsNullOrWhiteSpace(reg.Email)
+                        ? reg.Email
+                        : reg.RegistrationNumber;
+
+                    if (string.IsNullOrWhiteSpace(loginId))
+                    {
+                        results.Add(new { id, success = false, name = $"{reg.FirstName} {reg.LastName}", message = "No email or registration number found." });
+                        continue;
+                    }
+
+                    var existingUser = await userManager.FindByEmailAsync(loginId);
+                    if (existingUser == null)
+                        existingUser = await userManager.Users.FirstOrDefaultAsync(u => u.UserName == loginId);
+
+                    if (existingUser != null)
+                    {
+                        results.Add(new { id, success = false, name = $"{reg.FirstName} {reg.LastName}", message = "User already exists." });
+                        continue;
+                    }
+
+                    var user = new AppUser
+                    {
+                        UserName = loginId,
+                        Email = loginId,
+                        EmailConfirmed = true,
+                        FullName = $"{reg.FirstName} {reg.LastName}".Trim(),
+                        IsActive = true,
+                        FacultyId = reg.FacultyId,
+                        CollegeId = reg.CollegeId
+                    };
+
+                    var createResult = await userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
+                    {
+                        results.Add(new { id, success = false, name = $"{reg.FirstName} {reg.LastName}", message = string.Join(", ", createResult.Errors.Select(e => e.Description)) });
+                        continue;
+                    }
+
+                    var password = reg.DateOfBirthBS;
+                    if (!string.IsNullOrWhiteSpace(password))
+                    {
+                        SetPasswordHashDirectly(user, password);
+                        await userManager.UpdateAsync(user);
+                    }
+
+                    if (!await userManager.IsInRoleAsync(user, Role.Student))
+                        await userManager.AddToRoleAsync(user, Role.Student);
+
+                    await userManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
+
+                    var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    await userManager.ConfirmEmailAsync(user, token);
+
+                    results.Add(new { id, success = true, name = $"{reg.FirstName} {reg.LastName}", message = $"Created (login: {loginId})." });
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new { id, success = false, name = $"ID {id}", message = ex.Message });
+                }
+            }
+
+            var created = results.Count(r => (bool)r.GetType().GetProperty("success")!.GetValue(r)!);
+            var failed = results.Count - created;
+
+            return Json(new { created, failed, results });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    private static void SetPasswordHashDirectly(AppUser user, string password)
+    {
+        var hasher = new PasswordHasher<AppUser>();
+        user.PasswordHash = hasher.HashPassword(user, password);
+    }
 }

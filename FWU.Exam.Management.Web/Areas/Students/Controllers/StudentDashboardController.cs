@@ -1,12 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -17,6 +23,8 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 public class StudentDashboardController(
     IStudentDashboardService dashboardService,
     UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager,
+    IEmailSender emailSender,
     IESewaService esewaService,
     IKhaltiService khaltiService,
     IConfiguration configuration,
@@ -56,6 +64,7 @@ public class StudentDashboardController(
             Category = registration.StudentCategory?.StudentCategoryName,
             ContactNumber = registration.ContactNumber,
             Email = registration.Email,
+            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
             PhotoPath = user.ProfilePath,
             SignaturePath = user.SignaturePath,
             BloodGroup = registration.BloodGroup,
@@ -124,6 +133,166 @@ public class StudentDashboardController(
         }
 
         TempData["SuccessMessage"] = "Profile updated successfully.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateEmail(string newEmail)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        if (string.IsNullOrWhiteSpace(newEmail))
+        {
+            TempData["ErrorMessage"] = "Please enter a valid email address.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (!newEmail.Contains('@') || !new EmailAddressAttribute().IsValid(newEmail))
+        {
+            TempData["ErrorMessage"] = "Please enter a valid email address.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var currentEmail = await userManager.GetEmailAsync(user);
+        if (string.Equals(currentEmail, newEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["InfoMessage"] = "This is already your current email address.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var existingUser = await userManager.FindByEmailAsync(newEmail);
+        if (existingUser != null && existingUser.Id != user.Id)
+        {
+            TempData["ErrorMessage"] = "This email address is already in use by another account.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var existingRegistration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.Email == newEmail && sr.Id != context.StudentRegistrations
+                .Where(s => s.Email == user.Email).Select(s => s.Id).FirstOrDefault());
+        if (existingRegistration != null)
+        {
+            TempData["ErrorMessage"] = "This email address is already in use by another student.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        try
+        {
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Action(
+                "ConfirmEmailChange",
+                "StudentDashboard",
+                new { area = "Students", userId = userId, email = newEmail, code = code },
+                protocol: Request.Scheme);
+
+            await emailSender.SendEmailAsync(
+                newEmail,
+                "Confirm your email",
+                EmailTemplateHelper.ChangeEmail(user.FullName ?? newEmail, callbackUrl));
+
+            TempData["SuccessMessage"] = "A verification link has been sent to your new email address. Please check your inbox and verify. You can continue using your current email to login until verification is complete.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send verification email to {Email}", newEmail);
+            TempData["ErrorMessage"] = "Failed to send verification email. Please try again later.";
+        }
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string code)
+    {
+        if (userId == null || email == null || code == null)
+        {
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User not found.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        var result = await userManager.ChangeEmailAsync(user, email, code);
+        if (!result.Succeeded)
+        {
+            TempData["ErrorMessage"] = "Error confirming email. The link may have expired or is invalid.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var setUserNameResult = await userManager.SetUserNameAsync(user, email);
+        if (!setUserNameResult.Succeeded)
+        {
+            TempData["ErrorMessage"] = "Error updating username.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var registration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.Email != null && sr.Email == user.Email);
+        if (registration != null)
+        {
+            registration.Email = email;
+            await context.SaveChangesAsync();
+        }
+
+        await signInManager.RefreshSignInAsync(user);
+        TempData["SuccessMessage"] = "Email verified successfully! You can now use this email to login.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendEmailVerification()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var email = await userManager.GetEmailAsync(user);
+        if (string.IsNullOrEmpty(email))
+        {
+            TempData["ErrorMessage"] = "No email address found on your account.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (await userManager.IsEmailConfirmedAsync(user))
+        {
+            TempData["InfoMessage"] = "Your email is already verified.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        try
+        {
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Action(
+                "ConfirmEmail",
+                "Account",
+                new { area = "Identity", userId = userId, code = code },
+                protocol: Request.Scheme);
+
+            await emailSender.SendEmailAsync(
+                email,
+                "Confirm your email",
+                EmailTemplateHelper.ConfirmEmail(user.FullName ?? email, callbackUrl));
+
+            TempData["SuccessMessage"] = "Verification email sent. Please check your inbox.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to resend verification email to {Email}", email);
+            TempData["ErrorMessage"] = "Failed to send verification email. Please try again later.";
+        }
+
         return RedirectToAction(nameof(Profile));
     }
 
