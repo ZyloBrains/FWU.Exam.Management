@@ -6,7 +6,7 @@ namespace FWU.Exam.Management.Domain.Entities;
 public class AuditLog : ITenantScoped
 {
     public int Id { get; set; }
-    public int TenantId { get; set; }
+    public int? TenantId { get; set; }
     public virtual Tenant? Tenant { get; set; }
 
     [MaxLength(128)]

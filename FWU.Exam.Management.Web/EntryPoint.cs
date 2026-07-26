@@ -84,17 +84,29 @@ public partial class EntryPoint
 
                 options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
                 {
-                    OnRedirectToLogin = ctx =>
+                    OnRedirectToLogin = async ctx =>
                     {
+                        if (IsAjaxRequest(ctx.HttpContext.Request))
+                        {
+                            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            ctx.Response.ContentType = "application/json";
+                            await ctx.Response.WriteAsJsonAsync(new { error = "Authentication required." });
+                            return;
+                        }
                         var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
                         ctx.Response.Redirect($"/Identity/Account/Login?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                        return Task.CompletedTask;
                     },
-                    OnRedirectToAccessDenied = ctx =>
+                    OnRedirectToAccessDenied = async ctx =>
                     {
+                        if (IsAjaxRequest(ctx.HttpContext.Request))
+                        {
+                            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            ctx.Response.ContentType = "application/json";
+                            await ctx.Response.WriteAsJsonAsync(new { error = "Access denied. You do not have permission to perform this action." });
+                            return;
+                        }
                         var returnUrl = ctx.HttpContext.Items["OriginalPath"] as string ?? ctx.Request.Path;
                         ctx.Response.Redirect($"/Identity/Account/AccessDenied?ReturnUrl={Uri.EscapeDataString(returnUrl!)}");
-                        return Task.CompletedTask;
                     }
                 };
             });
@@ -281,7 +293,7 @@ public partial class EntryPoint
                         ContactNumber = "01-2345670",
                         Address = "Mahendranagar,Kanchanpur, Nepal",
                         Email = "eng@fwu.edu.np",
-                        TenantType = TenantType.Central,
+                        TenantType = TenantType.Standard,
                         IsActive = true,
                     });
                     await dbContext.SaveChangesAsync();
@@ -311,37 +323,28 @@ public partial class EntryPoint
             }
             Console.WriteLine("[SEED] All essential seeders complete.");
 
-            await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
 
-            await CollegeSeeder.SeedCollegesAsync(scope.ServiceProvider);
-
-            await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
-
-            await AcademicYearSeeder.SeedAcademicYearsAsync(scope.ServiceProvider);
-
-            await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
-
-            await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
-
-            await CollegeProgramSeeder.SeedCollegeProgramsAsync(scope.ServiceProvider);
-
-            await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
-            await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
-
-            await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
-
-            await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
-
-            await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
-            await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
+            // await CollegeSeeder.SeedCollegesAsync(scope.ServiceProvider);
+            // await FacultySeeder.SeedFacultiesAsync(scope.ServiceProvider);
+            // await AcademicYearSeeder.SeedAcademicYearsAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedAdditionalReferenceDataAsync(scope.ServiceProvider);
+            // await ProgramSeeder.SeedProgramsAsync(scope.ServiceProvider);
+            // await CollegeProgramSeeder.SeedCollegeProgramsAsync(scope.ServiceProvider);
+            // await AcademicStructureSeeder.SeedAcademicStructureAsync(scope.ServiceProvider);
+            // await NaturalResourceManagementSeeder.SeedNaturalResourceManagementAsync(scope.ServiceProvider);
+            // await DemoDataSeeder.SeedDemoDataAsync(scope.ServiceProvider);
+            // await GradingSeeder.SeedGradingDataAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedPaymentTypesAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedESewaConfigurationAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(scope.ServiceProvider);
+            // await ReferenceDataSeeder.SeedSmsConfigurationAsync(scope.ServiceProvider);
 
             await UserSeeder.SeedSuperAdminAsync(scope.ServiceProvider);
 
-            await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
+            // await MarksheetDataSeeder.SeedMarksheetDataAsync(scope.ServiceProvider);
         }
 
             //             // Log.Information("FWU Examination Management System starting up...");
@@ -356,5 +359,11 @@ public partial class EntryPoint
         {
             // Log.CloseAndFlush();
         }
+    }
+
+    private static bool IsAjaxRequest(HttpRequest request)
+    {
+        return string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(request.ContentType, "application/json", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -27,7 +27,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
             .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
-            .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
+            .FirstOrDefaultAsync(s => (s.Email != null && s.Email == email) || s.RegistrationNumber == email);
     }
 
     public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)

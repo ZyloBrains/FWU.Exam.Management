@@ -97,6 +97,136 @@
             </div>
         </form>
     </div>
+
+    <!-- Batch Create Users from Existing Registrations -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8" x-data="batchCreate()">
+        <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
+                <i class="fas fa-users-cog text-amber-600"></i>
+            </div>
+            <div>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800">Create Users from Existing Registrations</h2>
+                <p class="text-sm text-gray-500 mt-0.5">Select registered students who don't have a login account yet</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+            <select x-model="filterCollegeId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="">All Colleges</option>
+                @foreach (var c in ViewBag.Colleges)
+                {
+                    <option value="@c.Value">@c.Text</option>
+                }
+            </select>
+            <select x-model="filterFacultyId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="">All Faculties</option>
+                @foreach (var f in ViewBag.Faculties)
+                {
+                    <option value="@f.Value">@f.Text</option>
+                }
+            </select>
+            <button x-on:click="loadStudents()" :disabled="loading"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+                <span x-text="loading ? 'Loading...' : 'Load Students'"></span>
+            </button>
+        </div>
+
+        <!-- Alert Messages -->
+        <template x-if="alertMessage">
+            <div :class="alertType === 'success' ? 'bg-green-50 text-green-700 border-green-200' : alertType === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'"
+                 class="border rounded-lg p-3 mb-4 text-sm flex items-center gap-2">
+                <i class="fas" :class="alertType === 'success' ? 'fa-check-circle' : alertType === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'"></i>
+                <span x-text="alertMessage"></span>
+                <button x-on:click="alertMessage = ''" class="ml-auto text-current opacity-50 hover:opacity-100">&times;</button>
+            </div>
+        </template>
+
+        <!-- Results Table -->
+        <template x-if="students.length > 0">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-sm text-gray-600">
+                        <span x-text="students.length"></span> students found without login accounts
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <span x-show="selectedIds.length > 0" class="text-sm font-medium text-blue-600" x-text="selectedIds.length + ' selected'"></span>
+                        <button x-show="selectedIds.length > 0" x-on:click="createUsers()"
+                                :disabled="creating"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50">
+                            <i class="fas" :class="creating ? 'fa-spinner fa-spin' : 'fa-user-plus'"></i>
+                            <span x-text="creating ? 'Creating...' : 'Create Selected Users'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left">
+                                    <input type="checkbox" x-on:change="toggleAll($event)"
+                                           :checked="selectedIds.length === students.length && students.length > 0"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Login ID</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reg. No</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">College</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Faculty</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            <template x-for="s in students" :key="s.id">
+                                <tr class="hover:bg-blue-50 transition-colors" :class="selectedIds.includes(s.id) ? 'bg-blue-50' : ''">
+                                    <td class="px-4 py-3">
+                                        <input type="checkbox" :value="s.id"
+                                               x-on:change="toggleSelect(s.id)"
+                                               :checked="selectedIds.includes(s.id)"
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                    </td>
+                                    <td class="px-4 py-3 text-sm font-medium text-gray-800" x-text="s.fullName"></td>
+                                    <td class="px-4 py-3 text-sm">
+                                        <span x-show="s.hasEmail" class="text-gray-700" x-text="s.email"></span>
+                                        <span x-show="!s.hasEmail" class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
+                                            <i class="fas fa-key text-[10px]"></i>
+                                            <span x-text="s.registrationNumber"></span>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600" x-text="s.registrationNumber || '-'"></td>
+                                    <td class="px-4 py-3 text-sm text-gray-600" x-text="s.collegeName"></td>
+                                    <td class="px-4 py-3 text-sm text-gray-600" x-text="s.facultyName || '-'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </template>
+
+        <!-- Empty State -->
+        <template x-if="loaded && students.length === 0">
+            <div class="text-center py-10">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                </div>
+                <p class="text-gray-600 font-medium">All registered students already have login accounts.</p>
+                <p class="text-sm text-gray-400 mt-1">No action needed.</p>
+            </div>
+        </template>
+
+        <!-- Not Loaded State -->
+        <template x-if="!loaded && !loading">
+            <div class="text-center py-10">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-clock text-gray-400 text-2xl"></i>
+                </div>
+                <p class="text-gray-500 font-medium">Click "Load Students" to find registered students without login accounts.</p>
+                <p class="text-sm text-gray-400 mt-1">Login ID will be the student's email (or registration number if no email). Password = date of birth (BS).</p>
+            </div>
+        </template>
+    </div>
 </div>
 
 @section Scripts {
@@ -137,5 +267,105 @@
                 setTimeout(initSelect2, 500);
             });
         });
+
+        function batchCreate() {
+            return {
+                filterCollegeId: '',
+                filterFacultyId: '',
+                students: [],
+                selectedIds: [],
+                loading: false,
+                loaded: false,
+                creating: false,
+                alertMessage: '',
+                alertType: 'info',
+
+                async loadStudents() {
+                    this.loading = true;
+                    this.alertMessage = '';
+                    this.selectedIds = [];
+                    try {
+                        var params = new URLSearchParams();
+                        if (this.filterCollegeId) params.append('collegeId', this.filterCollegeId);
+                        if (this.filterFacultyId) params.append('facultyId', this.filterFacultyId);
+
+                        var response = await fetch('@Url.Action("GetStudentsWithoutUsers", "User")?' + params.toString());
+                        this.students = await response.json();
+                        this.loaded = true;
+                        if (this.students.length === 0) {
+                            this.alertMessage = 'All registered students already have login accounts.';
+                            this.alertType = 'success';
+                        }
+                    } catch (e) {
+                        this.alertMessage = 'Failed to load students. Please try again.';
+                        this.alertType = 'error';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                toggleAll(event) {
+                    if (event.target.checked) {
+                        this.selectedIds = this.students.map(s => s.id);
+                    } else {
+                        this.selectedIds = [];
+                    }
+                },
+
+                toggleSelect(id) {
+                    var idx = this.selectedIds.indexOf(id);
+                    if (idx === -1) {
+                        this.selectedIds.push(id);
+                    } else {
+                        this.selectedIds.splice(idx, 1);
+                    }
+                },
+
+                async createUsers() {
+                    if (this.selectedIds.length === 0) return;
+                    this.creating = true;
+                    this.alertMessage = '';
+
+                    try {
+                        var headers = {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        };
+
+                        var response = await fetch('@Url.Action("CreateUsersFromRegistrations", "User")', {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify(this.selectedIds)
+                        });
+
+                        console.log('Response status:', response.status);
+                        var text = await response.text();
+                        console.log('Response body:', text);
+                        var data;
+                        try { data = JSON.parse(text); } catch (e) {
+                            this.alertMessage = 'Server error (' + response.status + '). Check browser console (F12) for details.';
+                            this.alertType = 'error';
+                            return;
+                        }
+
+                        if (data.created > 0) {
+                            this.alertMessage = data.created + ' user(s) created successfully.' + (data.failed > 0 ? ' ' + data.failed + ' failed.' : '');
+                            this.alertType = data.failed > 0 ? 'warning' : 'success';
+                        } else {
+                            this.alertMessage = 'No users were created. ' + (data.failed > 0 ? data.failed + ' failed.' : (data.message || ''));
+                            this.alertType = 'error';
+                        }
+
+                        this.selectedIds = [];
+                        await this.loadStudents();
+                    } catch (e) {
+                        this.alertMessage = 'An error occurred. Please try again.';
+                        this.alertType = 'error';
+                    } finally {
+                        this.creating = false;
+                    }
+                }
+            };
+        }
     </script>
 }
