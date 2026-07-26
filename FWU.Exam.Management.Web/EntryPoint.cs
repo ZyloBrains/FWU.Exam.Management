@@ -205,6 +205,8 @@ public partial class EntryPoint
             builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
             builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
             builder.Services.AddHttpClient<ISmsService, SmsService>();
+            builder.Services.AddScoped<IGumpNowEmailConfigurationService, GumpNowEmailConfigurationService>();
+            builder.Services.AddHttpClient<IGumpNowEmailService, GumpNowEmailService>();
             builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
             builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
             builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();
