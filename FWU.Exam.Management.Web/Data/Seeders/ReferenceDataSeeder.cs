@@ -45,39 +45,42 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.Genders.AnyAsync())
-            return;
-
-        // Genders
-        var genders = new[]
+        if (!await context.Genders.AnyAsync())
         {
-            new Gender { GenderName = "Male", IsActive = true },
-            new Gender { GenderName = "Female", IsActive = true },
-            new Gender { GenderName = "Other", IsActive = true },
-        };
-        await context.Genders.AddRangeAsync(genders);
+            var genders = new[]
+            {
+                new Gender { GenderName = "Male", IsActive = true },
+                new Gender { GenderName = "Female", IsActive = true },
+                new Gender { GenderName = "Other", IsActive = true },
+            };
+            await context.Genders.AddRangeAsync(genders);
+        }
 
-        // Previous Levels
-        var previousLevels = new[]
+        if (!await context.PreviousLevels.AnyAsync())
         {
-            new PreviousLevel { PreviousLevelName = "SEE (Grade 10)", IsActive = true },
-            new PreviousLevel { PreviousLevelName = "+2 / 10+2", IsActive = true },
-            new PreviousLevel { PreviousLevelName = "Bachelor", IsActive = true },
-            new PreviousLevel { PreviousLevelName = "Master", IsActive = true },
-        };
-        await context.PreviousLevels.AddRangeAsync(previousLevels);
+            var previousLevels = new[]
+            {
+                new PreviousLevel { PreviousLevelName = "SEE (Grade 10)", IsActive = true },
+                new PreviousLevel { PreviousLevelName = "+2 / 10+2", IsActive = true },
+                new PreviousLevel { PreviousLevelName = "Bachelor", IsActive = true },
+                new PreviousLevel { PreviousLevelName = "Master", IsActive = true },
+            };
+            await context.PreviousLevels.AddRangeAsync(previousLevels);
+        }
 
-        // Levels
-        var levels = new[]
+        if (!await context.Levels.AnyAsync())
         {
-            new Level { LevelCode = "1", LevelName = "Undergraduate", LevelDisplayOrder = 1, IsActive = true },
-            new Level { LevelCode = "2", LevelName = "Graduate", LevelDisplayOrder = 2, IsActive = true },
-            new Level { LevelCode = "3", LevelName = "MPhil Leading to Ph.D", LevelDisplayOrder = 3, IsActive = true },
-            new Level { LevelCode = "4", LevelName = "Ph.D.", LevelDisplayOrder = 4, IsActive = true },
-        };
-        await context.Levels.AddRangeAsync(levels);
+            var levels = new[]
+            {
+                new Level { LevelCode = "1", LevelName = "Undergraduate", LevelDisplayOrder = 1, IsActive = true },
+                new Level { LevelCode = "2", LevelName = "Graduate", LevelDisplayOrder = 2, IsActive = true },
+                new Level { LevelCode = "3", LevelName = "MPhil Leading to Ph.D", LevelDisplayOrder = 3, IsActive = true },
+                new Level { LevelCode = "4", LevelName = "Ph.D.", LevelDisplayOrder = 4, IsActive = true },
+            };
+            await context.Levels.AddRangeAsync(levels);
+        }
+
         await context.SaveChangesAsync();
-
     }
 
     public static async Task SeedTenantsAsync(IServiceProvider serviceProvider)
