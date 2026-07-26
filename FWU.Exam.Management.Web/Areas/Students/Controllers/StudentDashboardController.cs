@@ -237,7 +237,8 @@ public class StudentDashboardController(
         }
 
         var registration = await context.StudentRegistrations
-            .FirstOrDefaultAsync(sr => sr.Email != null && sr.Email == user.Email);
+            .FirstOrDefaultAsync(sr => sr.RegistrationNumber == user.UserName
+                                   || (sr.Email != null && sr.Email == user.Email));
         if (registration != null)
         {
             registration.Email = email;

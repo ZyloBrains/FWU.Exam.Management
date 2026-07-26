@@ -293,7 +293,7 @@ public partial class EntryPoint
                         ContactNumber = "01-2345670",
                         Address = "Mahendranagar,Kanchanpur, Nepal",
                         Email = "eng@fwu.edu.np",
-                        TenantType = TenantType.Central,
+                        TenantType = TenantType.Standard,
                         IsActive = true,
                     });
                     await dbContext.SaveChangesAsync();
