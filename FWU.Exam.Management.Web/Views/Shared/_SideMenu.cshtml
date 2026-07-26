@@ -126,6 +126,7 @@
                           IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
                           IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
                            IsActive(controllerName: "SmsConfigurations", areaName: "Core") ||
+                           IsActive(controllerName: "TestGumpNowSms", areaName: "Core") ||
                            IsActive(controllerName: "Notices", areaName: "Core") ||
                            IsActive(controllerName: "AuditLog", areaName: "Core") ||
                            IsActive(controllerName: "BackupRestore", areaName: "Core") ||
@@ -406,6 +407,7 @@
             @if (HasPerm("tenants.view")) { <li><a asp-area="" asp-controller="Tenants" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Tenants", actionName: "Index"))"><i class="fas fa-globe w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tenants</span></a></li> }
             @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="SmtpConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmtpConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMTP Configuration</span></a></li> }
             @if (HasPerm("sms.view")) { <li><a asp-area="Core" asp-controller="SmsConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmsConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-sms w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMS Configuration</span></a></li> }
+            @if (HasPerm("sms.view")) { <li><a asp-area="Core" asp-controller="TestGumpNowSms" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestGumpNowSms", actionName: "Index", areaName: "Core"))"><i class="fas fa-comment-dots w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Test GumpNow SMS</span></a></li> }
             @if (HasPerm("gumpnowemail.view")) { <li><a asp-area="Core" asp-controller="GumpNowEmailConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "GumpNowEmailConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope-open-text w-4 text-center opacity-70"></i><span class="whitespace-nowrap">GumpNow Email Config</span></a></li> }
             @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="TestEmail" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestEmail", actionName: "Index", areaName: "Core"))"><i class="fas fa-paper-plane w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Send Test Email</span></a></li> }
             @if (HasPerm("gumpnowemail.view")) { <li><a asp-area="Core" asp-controller="TestGumpNowEmail" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestGumpNowEmail", actionName: "Index", areaName: "Core"))"><i class="fas fa-paper-plane w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Test GumpNow Email</span></a></li> }
