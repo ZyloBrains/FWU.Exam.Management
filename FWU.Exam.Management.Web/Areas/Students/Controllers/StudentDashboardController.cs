@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -316,8 +317,8 @@ public class StudentDashboardController(
         foreach (var schedule in schedules)
         {
             var hasPaid = await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
-            var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id);
-            var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id) : null;
+            var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id, registration.Id);
+            var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id, registration.Id) : null;
 
             forms.Add(new ExamFormViewModel
             {
@@ -341,7 +342,10 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id);
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return View(new List<AdmitCard>());
+
+        var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id, registration.Id);
         return View(admitCards);
     }
 
@@ -350,7 +354,10 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var payments = await dashboardService.GetPaymentHistoryForStudentAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return View(new List<PaymentRequestLog>());
+
+        var payments = await dashboardService.GetPaymentHistoryForStudentAsync(registration.Id);
         return View(payments);
     }
 

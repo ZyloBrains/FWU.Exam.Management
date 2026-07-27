@@ -684,69 +684,61 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return log.Id;
     }
 
-    public async Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId)
+    public async Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
-        if (studentErIds.Count == 0) return [];
 
         return await context.Set<AdmitCard>()
             .AsNoTracking()
             .Include(ac => ac.ExamSchedule)
                 .ThenInclude(es => es!.Semester)
-            .Where(ac => studentErIds.Contains(ac.ExamRegistrationId) && ac.IsActive)
+            .Where(ac => ac.IsActive
+                      && (studentErIds.Contains(ac.ExamRegistrationId)
+                          || ac.StudentRegistrationId == studentRegistrationId))
             .OrderByDescending(ac => ac.GeneratedDate)
             .ToListAsync();
     }
 
-    public async Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId)
+    public async Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
-        if (studentErIds.Count == 0) return false;
 
         return await context.Set<AdmitCard>()
             .AsNoTracking()
             .AnyAsync(ac => ac.ExamScheduleId == examScheduleId
-                         && studentErIds.Contains(ac.ExamRegistrationId)
-                         && ac.IsActive);
+                         && ac.IsActive
+                         && (studentErIds.Contains(ac.ExamRegistrationId)
+                             || ac.StudentRegistrationId == studentRegistrationId));
     }
 
-    public async Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId)
+    public async Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
-        if (studentErIds.Count == 0) return null;
 
         return await context.Set<AdmitCard>()
             .AsNoTracking()
             .Where(ac => ac.ExamScheduleId == examScheduleId
-                      && studentErIds.Contains(ac.ExamRegistrationId)
-                      && ac.IsActive)
+                      && ac.IsActive
+                      && (studentErIds.Contains(ac.ExamRegistrationId)
+                          || ac.StudentRegistrationId == studentRegistrationId))
             .Select(ac => (int?)ac.Id)
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(string email)
+
+    public async Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId)
     {
-        var registration = await context.StudentRegistrations!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sr => sr.Email != null && sr.Email == email);
-
-        if (registration == null)
-        {
-            logger.LogWarning("GetPaymentHistoryForStudentAsync: No StudentRegistration found for email={Email}", email);
-            return [];
-        }
-
         var payments = await context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .Include(prl => prl.ExamSchedule)
                 .ThenInclude(es => es!.Semester)
             .Include(prl => prl.PaymentType)
-            .Where(prl => prl.StudentRegistrationId == registration.Id
+            .Where(prl => prl.StudentRegistrationId == studentRegistrationId
                        && prl.PaymentRequestLogStatus == 1)
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .ToListAsync();
 
-        logger.LogInformation("GetPaymentHistoryForStudentAsync: email={Email}, studentRegId={StudentRegId}, paymentCount={Count}", email, registration.Id, payments.Count);
+        logger.LogInformation("GetPaymentHistoryForStudentAsync: studentRegId={StudentRegId}, paymentCount={Count}", studentRegistrationId, payments.Count);
         return payments;
     }
 
