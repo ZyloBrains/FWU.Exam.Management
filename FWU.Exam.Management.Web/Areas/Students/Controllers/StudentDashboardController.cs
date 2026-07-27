@@ -681,10 +681,30 @@ public class StudentDashboardController(
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            if (sessionLogId.HasValue)
+            var resolvedLogId = sessionLogId;
+            if (!resolvedLogId.HasValue)
             {
-                await HandlePostPaymentRegistration(sessionLogId.Value);
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
+                logger.LogWarning("ESewaCallback: Session log ID lost. Attempting fallback lookup by student registration.");
+                var callbackUser = await userManager.GetUserAsync(User);
+                if (callbackUser != null)
+                {
+                    var registration = await dashboardService.GetStudentRegistrationByEmailAsync(callbackUser.Email ?? "");
+                    if (registration != null)
+                    {
+                        var pendingLog = await dashboardService.FindPendingPaymentLogByStudentAsync(registration.Id);
+                        if (pendingLog != null)
+                        {
+                            resolvedLogId = pendingLog.Id;
+                            logger.LogInformation("ESewaCallback: Fallback lookup found logId={LogId} for studentRegId={StudentRegId}", resolvedLogId, registration.Id);
+                        }
+                    }
+                }
+            }
+
+            if (resolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(resolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -820,10 +840,22 @@ public class StudentDashboardController(
             }
 
             logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
-            if (sessionLogId.HasValue)
+            var khaltiResolvedLogId = sessionLogId;
+            if (!khaltiResolvedLogId.HasValue && !string.IsNullOrEmpty(purchase_order_id))
             {
-                await HandlePostPaymentRegistration(sessionLogId.Value);
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
+                logger.LogWarning("KhaltiCallback: Session log ID lost. Attempting fallback lookup by invoice={Invoice}", purchase_order_id);
+                var invoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
+                if (invoiceLog != null)
+                {
+                    khaltiResolvedLogId = invoiceLog.Id;
+                    logger.LogInformation("KhaltiCallback: Fallback lookup found logId={LogId} for invoice={Invoice}", khaltiResolvedLogId, purchase_order_id);
+                }
+            }
+
+            if (khaltiResolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(khaltiResolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";

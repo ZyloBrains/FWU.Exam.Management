@@ -730,9 +730,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .FirstOrDefaultAsync(sr => sr.Email != null && sr.Email == email);
 
-        if (registration == null) return [];
+        if (registration == null)
+        {
+            logger.LogWarning("GetPaymentHistoryForStudentAsync: No StudentRegistration found for email={Email}", email);
+            return [];
+        }
 
-        return await context.Set<PaymentRequestLog>()
+        var payments = await context.Set<PaymentRequestLog>()
             .AsNoTracking()
             .Include(prl => prl.ExamSchedule)
                 .ThenInclude(es => es!.Semester)
@@ -741,5 +745,25 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                        && prl.PaymentRequestLogStatus == 1)
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .ToListAsync();
+
+        logger.LogInformation("GetPaymentHistoryForStudentAsync: email={Email}, studentRegId={StudentRegId}, paymentCount={Count}", email, registration.Id, payments.Count);
+        return payments;
+    }
+
+    public async Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.InvoiceNumber == invoiceNumber);
+    }
+
+    public async Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Where(prl => prl.StudentRegistrationId == studentRegistrationId
+                       && prl.PaymentRequestLogStatus == null)
+            .OrderByDescending(prl => prl.ForwardedTimestamp)
+            .FirstOrDefaultAsync();
     }
 }

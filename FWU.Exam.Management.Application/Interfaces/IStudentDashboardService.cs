@@ -36,4 +36,6 @@ public interface IStudentDashboardService
     Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId);
     Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId);
     Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(string email);
+    Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
+    Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
 }
