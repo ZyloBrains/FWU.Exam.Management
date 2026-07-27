@@ -12,7 +12,6 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examcenters.view")]
 public class ExamCenterDistributionController(
     IExamCenterDistributionService distributionService,
-    IExamRollNumberService rollNumberService,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int? examScheduleId)
@@ -35,9 +34,8 @@ public class ExamCenterDistributionController(
                 UnassignedCount = await distributionService.GetUnassignedCountAsync(examScheduleId.Value),
                 SymbolNumbersAssigned = await context.ExamRegistrations
                     .AnyAsync(er => er.ExamScheduleId == examScheduleId.Value && er.SymbolNumber != null),
-                RollNumbersAssigned = await rollNumberService.HasRollNumbersAsync(examScheduleId.Value),
-                RollNumberCount = await context.ExamRegistrations
-                    .CountAsync(er => er.ExamScheduleId == examScheduleId.Value && er.ExamRollNumber != null)
+                RollNumbersAssigned = false,
+                RollNumberCount = 0
             };
 
             var examCenters = await context.ExamCenters
@@ -46,16 +44,12 @@ public class ExamCenterDistributionController(
                 .Include(ec => ec.College)
                 .Include(ec => ec.ExamCenterVenues)
                     .ThenInclude(ecv => ecv.College)
-                .Include(ec => ec.ExamCenterColleges)
-                    .ThenInclude(ecc => ecc.College)
                 .ToListAsync();
 
-            var ranges = await distributionService.GetRangesAsync(examScheduleId.Value);
             var distributionCounts = await distributionService.GetCenterDistributionCountsAsync(examScheduleId.Value);
 
             foreach (var center in examCenters)
             {
-                var range = ranges.FirstOrDefault(r => r.ExamCenterId == center.Id);
                 dto.Centers.Add(new CenterDistributionInfo
                 {
                     ExamCenterId = center.Id,
@@ -64,13 +58,7 @@ public class ExamCenterDistributionController(
                         .Select(ecv => ecv.College?.Name ?? "")
                         .Where(n => !string.IsNullOrEmpty(n))
                         .ToList() ?? [],
-                    FromSymbolNumber = range?.FromSymbolNumber,
-                    ToSymbolNumber = range?.ToSymbolNumber,
                     StudentCount = distributionCounts.GetValueOrDefault(center.Id, 0),
-                    SourceColleges = center.ExamCenterColleges?
-                        .Select(ecc => ecc.College?.Name ?? "")
-                        .Where(n => !string.IsNullOrEmpty(n))
-                        .ToList() ?? []
                 });
             }
 
@@ -83,39 +71,11 @@ public class ExamCenterDistributionController(
     [HttpPost]
     [RequirePermission("examcenters.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AssignSymbolNumbers(int examScheduleId)
+    public async Task<IActionResult> AssignAndDistribute(int examScheduleId)
     {
         await distributionService.AssignSymbolNumbersAsync(examScheduleId);
-        TempData["SuccessMessage"] = "Symbol numbers assigned successfully!";
-        return RedirectToAction(nameof(Index), new { examScheduleId });
-    }
-
-    [HttpPost]
-    [RequirePermission("examcenters.edit")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveRanges(int examScheduleId, int[] examCenterIds, long[] fromSymbols, long[] toSymbols)
-    {
-        await distributionService.ClearRangesAsync(examScheduleId);
-
-        for (int i = 0; i < examCenterIds.Length; i++)
-        {
-            if (fromSymbols[i] > 0 && toSymbols[i] >= fromSymbols[i])
-            {
-                await distributionService.SetSymbolRangeAsync(examCenterIds[i], examScheduleId, fromSymbols[i], toSymbols[i]);
-            }
-        }
-
-        TempData["SuccessMessage"] = "Symbol number ranges saved!";
-        return RedirectToAction(nameof(Index), new { examScheduleId });
-    }
-
-    [HttpPost]
-    [RequirePermission("examcenters.edit")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DistributeStudents(int examScheduleId)
-    {
-        var assigned = await distributionService.DistributeStudentsAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"{assigned} students assigned to exam centers!";
+        var count = await distributionService.DistributeStudentsAsync(examScheduleId);
+        TempData["SuccessMessage"] = $"Symbol numbers assigned and {count} students distributed to exam centers!";
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 
@@ -126,26 +86,6 @@ public class ExamCenterDistributionController(
     {
         await distributionService.ResetDistributionAsync(examScheduleId);
         TempData["SuccessMessage"] = "Distribution has been reset.";
-        return RedirectToAction(nameof(Index), new { examScheduleId });
-    }
-
-    [HttpPost]
-    [RequirePermission("examcenters.generaterollnumbers")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> GenerateRollNumbers(int examScheduleId)
-    {
-        var count = await rollNumberService.GenerateRollNumbersAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"Roll numbers generated for {count} students!";
-        return RedirectToAction(nameof(Index), new { examScheduleId });
-    }
-
-    [HttpPost]
-    [RequirePermission("examcenters.generaterollnumbers")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ClearRollNumbers(int examScheduleId)
-    {
-        var count = await rollNumberService.ClearRollNumbersAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"Roll numbers cleared for {count} students.";
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 }

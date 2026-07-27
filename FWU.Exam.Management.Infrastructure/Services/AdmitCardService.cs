@@ -210,6 +210,13 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
 
+        if (string.IsNullOrEmpty(registration.SymbolNumber))
+        {
+            throw new InvalidOperationException(
+                "Cannot generate admit card: symbol number has not been assigned. " +
+                "Please assign symbol numbers first via Exam Center Distribution.");
+        }
+
         var studentUser = await ResolveStudentUserAsync(registration);
         var controllerSignaturePath = await ResolveControllerSignatureAsync(registration.CollegeId);
 
@@ -233,6 +240,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             StudentRegistrationId = resolvedSrId,
             RegistrationNumber = resolvedStudentRegNumber,
             AdmitCardNumber = $"AC-{registration.ExamScheduleId:D4}-{registration.Id:D6}",
+            ExamRollNo = registration.SymbolNumber,
             PhotoPath = studentUser?.ProfilePath,
             SignaturePath = studentUser?.SignaturePath,
             ControllerSignaturePath = controllerSignaturePath,
@@ -252,6 +260,14 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
             .Include(er => er.College)
             .ToListAsync();
+
+        var missingSymbol = registrations.Where(r => string.IsNullOrEmpty(r.SymbolNumber)).ToList();
+        if (missingSymbol.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Cannot generate admit cards: {missingSymbol.Count} registration(s) are missing symbol numbers. " +
+                "Please assign symbol numbers first via Exam Center Distribution before generating admit cards.");
+        }
 
         var registrationIds = registrations.Select(r => r.Id).ToList();
         var existingAdmitCards = await context.AdmitCards
@@ -322,6 +338,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
                 StudentRegistrationId = resolvedSrId,
                 RegistrationNumber = resolvedStudentRegNumber,
                 AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
+                ExamRollNo = registration.SymbolNumber,
                 PhotoPath = photoPath,
                 SignaturePath = signaturePath,
                 ControllerSignaturePath = controllerSignaturePath,

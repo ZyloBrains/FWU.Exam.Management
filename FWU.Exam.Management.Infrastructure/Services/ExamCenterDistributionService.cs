@@ -14,8 +14,16 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
             .Include(er => er.College)
                 .ThenInclude(c => c.Faculties)
             .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.AcademicYear)
             .OrderBy(er => er.Id)
             .ToListAsync();
+
+        var examSchedule = registrations.FirstOrDefault()?.ExamSchedule;
+        var academicYearCode = examSchedule?.AcademicYear?.AcademicYearCode
+            ?? DateTime.Now.Year.ToString();
+        var yy = academicYearCode.Length >= 2
+            ? academicYearCode[^2..]
+            : academicYearCode.PadLeft(2, '0');
 
         var existingCount = await context.ExamRegistrations
             .CountAsync(er => er.ExamScheduleId == examScheduleId && er.SymbolNumber != null);
@@ -25,106 +33,43 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
             if (!string.IsNullOrEmpty(reg.SymbolNumber))
                 continue;
 
-            var facultyCode = reg.College?.Faculties?.FirstOrDefault()?.OfficeCode ?? "FWU";
-            var seq = (existingCount + 1).ToString("D4");
-            reg.SymbolNumber = $"{facultyCode}{seq}";
+            var collegeIdPart = reg.CollegeId.ToString("D3");
+            var facultyId = reg.College?.Faculties?.FirstOrDefault()?.Id ?? 0;
+            var facultyIdPart = facultyId.ToString("D2");
+            var seq = (existingCount + 1).ToString("D3");
+
+            reg.SymbolNumber = $"{yy}{collegeIdPart}{facultyIdPart}{seq}";
             existingCount++;
         }
 
         await context.SaveChangesAsync();
     }
 
-    public async Task<List<ExamCenterSymbolRange>> GetRangesAsync(int examScheduleId)
-    {
-        return await context.ExamCenterSymbolRanges
-            .AsNoTracking()
-            .Where(r => r.ExamScheduleId == examScheduleId)
-            .Include(r => r.ExamCenter)
-                .ThenInclude(ec => ec.College)
-            .ToListAsync();
-    }
-
-    public async Task SetSymbolRangeAsync(int examCenterId, int examScheduleId, long fromSymbol, long toSymbol)
-    {
-        var existing = await context.ExamCenterSymbolRanges
-            .FirstOrDefaultAsync(r => r.ExamCenterId == examCenterId && r.ExamScheduleId == examScheduleId);
-
-        if (existing != null)
-        {
-            existing.FromSymbolNumber = fromSymbol;
-            existing.ToSymbolNumber = toSymbol;
-        }
-        else
-        {
-            context.ExamCenterSymbolRanges.Add(new ExamCenterSymbolRange
-            {
-                ExamCenterId = examCenterId,
-                ExamScheduleId = examScheduleId,
-                FromSymbolNumber = fromSymbol,
-                ToSymbolNumber = toSymbol
-            });
-        }
-
-        await context.SaveChangesAsync();
-    }
-
-    public async Task ClearRangesAsync(int examScheduleId)
-    {
-        var ranges = await context.ExamCenterSymbolRanges
-            .Where(r => r.ExamScheduleId == examScheduleId)
-            .ToListAsync();
-
-        context.ExamCenterSymbolRanges.RemoveRange(ranges);
-        await context.SaveChangesAsync();
-    }
-
     public async Task<int> DistributeStudentsAsync(int examScheduleId)
     {
-        var ranges = await context.ExamCenterSymbolRanges
-            .Where(r => r.ExamScheduleId == examScheduleId)
+        var centers = await context.ExamCenters
+            .Where(ec => ec.ExamScheduleId == examScheduleId && ec.IsActive)
+            .OrderBy(ec => ec.Id)
             .ToListAsync();
 
-        if (ranges.Count == 0) return 0;
+        if (centers.Count == 0) return 0;
 
         var registrations = await context.ExamRegistrations
-            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered)
+            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered && er.SymbolNumber != null)
+            .OrderBy(er => er.SymbolNumber)
             .ToListAsync();
 
-        var assignedCount = 0;
+        if (registrations.Count == 0) return 0;
+
+        int centerIndex = 0;
         foreach (var reg in registrations)
         {
-            if (string.IsNullOrEmpty(reg.SymbolNumber))
-                continue;
-
-            if (!long.TryParse(reg.SymbolNumber, out var symbolNum))
-            {
-                if (reg.SymbolNumber != null && reg.SymbolNumber.Length >= 3)
-                {
-                    var lastPart = reg.SymbolNumber[^4..];
-                    symbolNum = long.TryParse(lastPart, out var n) ? n : 0;
-                }
-            }
-
-            var range = ranges.FirstOrDefault(r =>
-            {
-                var from = r.FromSymbolNumber;
-                var to = r.ToSymbolNumber;
-
-                if (symbolNum > 0)
-                    return symbolNum >= from && symbolNum <= to;
-
-                return false;
-            });
-
-            if (range != null)
-            {
-                reg.ExamCenterId = range.ExamCenterId;
-                assignedCount++;
-            }
+            reg.ExamCenterId = centers[centerIndex].Id;
+            centerIndex = (centerIndex + 1) % centers.Count;
         }
 
         await context.SaveChangesAsync();
-        return assignedCount;
+        return registrations.Count;
     }
 
     public async Task ResetDistributionAsync(int examScheduleId)
