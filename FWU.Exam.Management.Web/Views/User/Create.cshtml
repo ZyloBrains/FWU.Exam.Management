@@ -149,9 +149,9 @@
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2">
                         <i class="fas" :class="jobStatus === 'Completed' ? 'fa-check-circle text-green-600' : jobStatus === 'Failed' ? 'fa-exclamation-circle text-red-600' : 'fa-spinner fa-spin text-blue-600'"></i>
-                        <span class="text-sm font-semibold text-gray-800" x-text="jobStatus === 'Completed' ? 'Completed' : jobStatus === 'Failed' ? 'Failed' : 'Processing...'"></span>
+                        <span class="text-sm font-semibold text-gray-800" x-text="jobStatus === 'Completed' ? 'Completed' : jobStatus === 'Failed' ? 'Failed' : 'Processing ' + progress + '%'"></span>
                     </div>
-                    <span class="text-sm text-gray-600" x-text="processed + ' / ' + totalStudents"></span>
+                    <span class="text-sm text-gray-600" x-text="processed + ' / ' + totalStudents + ' students'"></span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3 mb-3">
                     <div class="h-3 rounded-full transition-all duration-300"
@@ -547,7 +547,7 @@
                         } catch (e) {
                             console.error('Poll error:', e);
                         }
-                    }, 3000);
+                    }, 1000);
                 },
 
                 dismissJob() {

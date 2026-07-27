@@ -3,6 +3,8 @@ using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -16,9 +18,10 @@ public class BulkUserCreationService(
     AppDbContext context,
     UserManager<AppUser> userManager,
     IServiceScopeFactory scopeFactory,
+    ITenantContext tenantContext,
     ILogger<BulkUserCreationService> logger) : IBulkUserCreationService
 {
-    private const int BatchSize = 200;
+    private const int BatchSize = 50;
 
     public async Task<(List<StudentWithoutUserDto> Data, int TotalCount)> GetStudentsWithoutUsersAsync(
         int? collegeId, int? facultyId, int page, int pageSize)
@@ -72,8 +75,11 @@ public class BulkUserCreationService(
 
         var jobId = job.Id;
         var idsJson = JsonSerializer.Serialize(registrationIds);
+        var capturedTenantId = tenantContext.TenantId;
+        var capturedTenantCode = tenantContext.TenantCode;
+        var capturedTenantType = tenantContext.Type;
 
-        _ = Task.Run(async () => await ProcessJobBackgroundAsync(jobId, idsJson));
+        _ = Task.Run(async () => await ProcessJobBackgroundAsync(jobId, idsJson, capturedTenantId, capturedTenantCode, capturedTenantType));
 
         return job;
     }
@@ -102,12 +108,14 @@ public class BulkUserCreationService(
             .FirstOrDefaultAsync(j => j.Id == jobId);
     }
 
-    private async Task ProcessJobBackgroundAsync(int jobId, string idsJson)
+    private async Task ProcessJobBackgroundAsync(int jobId, string idsJson, int tenantId, string tenantCode, TenantType tenantType)
     {
         using var scope = scopeFactory.CreateScope();
         var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var scopedUserManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
         var scopedLogger = scope.ServiceProvider.GetRequiredService<ILogger<BulkUserCreationService>>();
+        var scopedTenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+        scopedTenantContext.SetTenant(tenantId, tenantCode, tenantType);
 
         try
         {
@@ -115,6 +123,19 @@ public class BulkUserCreationService(
             if (job == null) return;
 
             var registrationIds = JsonSerializer.Deserialize<List<int>>(idsJson) ?? new List<int>();
+
+            // Pre-load ALL existing emails/usernames ONCE (2 queries total)
+            var existingEmails = await scopedContext.Users
+                .Where(u => u.Email != null)
+                .Select(u => u.Email!)
+                .ToListAsync();
+            var existingUserNames = await scopedContext.Users
+                .Where(u => u.UserName != null)
+                .Select(u => u.UserName!)
+                .ToListAsync();
+            var existingEmailSet = new HashSet<string>(existingEmails, StringComparer.OrdinalIgnoreCase);
+            var existingUserNameSet = new HashSet<string>(existingUserNames, StringComparer.OrdinalIgnoreCase);
+
             var totalBatches = (int)Math.Ceiling(registrationIds.Count / (double)BatchSize);
 
             for (int i = 0; i < totalBatches; i++)
@@ -122,8 +143,6 @@ public class BulkUserCreationService(
                 var batch = registrationIds.Skip(i * BatchSize).Take(BatchSize).ToList();
 
                 var registrations = await scopedContext.StudentRegistrations
-                    .Include(s => s.Faculty)
-                    .Include(s => s.College)
                     .Where(s => batch.Contains(s.Id))
                     .ToListAsync();
 
@@ -142,11 +161,8 @@ public class BulkUserCreationService(
                             continue;
                         }
 
-                        var existingUser = await scopedUserManager.FindByEmailAsync(loginId);
-                        if (existingUser == null)
-                            existingUser = await scopedUserManager.Users.FirstOrDefaultAsync(u => u.UserName == loginId);
-
-                        if (existingUser != null)
+                        // Check pre-loaded sets instead of individual DB queries
+                        if (existingEmailSet.Contains(loginId) || existingUserNameSet.Contains(loginId))
                         {
                             job.FailedCount++;
                             job.ProcessedCount++;
@@ -167,9 +183,6 @@ public class BulkUserCreationService(
                         var createResult = await scopedUserManager.CreateAsync(user);
                         if (!createResult.Succeeded)
                         {
-                            scopedLogger.LogWarning("Failed to create user for {Name}: {Errors}",
-                                $"{reg.FirstName} {reg.LastName}",
-                                string.Join(", ", createResult.Errors.Select(e => e.Description)));
                             job.FailedCount++;
                             job.ProcessedCount++;
                             continue;
@@ -178,17 +191,15 @@ public class BulkUserCreationService(
                         var password = reg.DateOfBirthBS;
                         if (!string.IsNullOrWhiteSpace(password))
                         {
-                            SetPasswordHashDirectly(user, password);
-                            await scopedUserManager.UpdateAsync(user);
+                            user.PasswordHash = new PasswordHasher<AppUser>().HashPassword(user, password);
                         }
 
-                        if (!await scopedUserManager.IsInRoleAsync(user, "Student"))
-                            await scopedUserManager.AddToRoleAsync(user, "Student");
-
+                        await scopedUserManager.AddToRoleAsync(user, "Student");
                         await scopedUserManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
 
-                        var token = await scopedUserManager.GenerateEmailConfirmationTokenAsync(user);
-                        await scopedUserManager.ConfirmEmailAsync(user, token);
+                        // Add to pre-loaded sets so duplicates within same batch are caught
+                        existingEmailSet.Add(loginId);
+                        existingUserNameSet.Add(loginId);
 
                         job.SuccessCount++;
                         job.ProcessedCount++;
@@ -201,6 +212,7 @@ public class BulkUserCreationService(
                     }
                 }
 
+                // Save progress after EACH batch
                 await scopedContext.SaveChangesAsync();
             }
 
@@ -227,11 +239,5 @@ public class BulkUserCreationService(
                 scopedLogger.LogError(innerEx, "Failed to update job status for {JobId}", jobId);
             }
         }
-    }
-
-    private static void SetPasswordHashDirectly(AppUser user, string password)
-    {
-        var hasher = new PasswordHasher<AppUser>();
-        user.PasswordHash = hasher.HashPassword(user, password);
     }
 }
