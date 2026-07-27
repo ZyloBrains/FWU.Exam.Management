@@ -175,7 +175,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(sr => sr.StudentQualifications)
             .Include(sr => sr.ApplicationVouchers)
             .Include(sr => sr.PaymentRequestLogs)
-            .Include(sr => sr.StudentAdmissions)
+            .Include(sr => sr.StudentAdmission)
             .FirstOrDefaultAsync(sr => sr.Id == id);
         if (studentRegistration != null)
         {
@@ -187,8 +187,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 context.ApplicationVouchers.RemoveRange(studentRegistration.ApplicationVouchers);
             if (studentRegistration.PaymentRequestLogs?.Count > 0)
                 context.PaymentRequestLogs.RemoveRange(studentRegistration.PaymentRequestLogs);
-            if (studentRegistration.StudentAdmissions?.Count > 0)
-                context.StudentAdmissions.RemoveRange(studentRegistration.StudentAdmissions);
+            if (studentRegistration.StudentAdmission != null)
+                context.StudentAdmissions.Remove(studentRegistration.StudentAdmission);
 
             context.StudentRegistrations.Remove(studentRegistration);
             await context.SaveChangesAsync();

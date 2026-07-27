@@ -7,7 +7,7 @@
 --   Step 0: Seeds base data (Tenants, Provinces, Districts, LocalLevels, Countries)
 --   Steps 1-20: Migrates all available data from FUExamDBcopy
 -- SKIPPED tables (don't exist in source):
---   StudentAdmission, ExamSubjectAndMarksRegistration, ExamScheduleDetail
+--   ExamSubjectAndMarksRegistration, ExamScheduleDetail
 -- ============================================================================
 
 SET NOCOUNT ON;
@@ -179,6 +179,13 @@ CREATE TABLE #ExamRegMap (
 );
 
 CREATE TABLE #SemesterMap (
+    SourceYear NVARCHAR(3),
+    SourcePart NVARCHAR(2),
+    AcademicYearId INT,
+    NewId INT
+);
+
+CREATE TABLE #AYSemesterMap (
     SourceYear NVARCHAR(3),
     SourcePart NVARCHAR(2),
     AcademicYearId INT,
@@ -513,6 +520,33 @@ PRINT 'Step 10 complete: Batches migrated.';
 -- STEP 11a: Create Semesters (MUST be before SubjectOfferings for FK)
 -- ============================================================================
 
+-- Allow AcademicYearId to be NULL for curriculum semesters
+ALTER TABLE Semesters ALTER COLUMN AcademicYearId INT NULL;
+
+-- Drop existing FK to AcademicYears so we can have NULL AcademicYearId
+IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Semesters_AcademicYears_AcademicYearId')
+    ALTER TABLE Semesters DROP CONSTRAINT FK_Semesters_AcademicYears_AcademicYearId;
+
+-- Create 8 CURRICULUM semesters (AcademicYearId = NULL) for SubjectOfferings
+SET IDENTITY_INSERT Semesters ON;
+DECLARE @CurSemNum INT = 1;
+WHILE @CurSemNum <= 8
+BEGIN
+    DECLARE @CurSemCode NVARCHAR(30) = 'CUR-SEM' + CAST(@CurSemNum AS NVARCHAR(10));
+    IF NOT EXISTS (SELECT 1 FROM Semesters WHERE Code = @CurSemCode)
+    BEGIN
+        INSERT INTO Semesters (Id, Number, Year, Name, Code, AcademicYearId, FacultyId, StartDate, EndDate)
+        VALUES (@CurSemNum, @CurSemNum, CEILING(CAST(@CurSemNum AS FLOAT) / 2),
+            'Curriculum Semester ' + CAST(@CurSemNum AS NVARCHAR(10)),
+            @CurSemCode, NULL, NULL, '2020-01-01', '2020-07-01');
+    END
+    SET @CurSemNum = @CurSemNum + 1;
+END
+SET IDENTITY_INSERT Semesters OFF;
+
+PRINT '  8 curriculum semesters created (AcademicYearId=NULL).';
+
+-- Create per-AY semesters for ExamSchedules
 DECLARE @SemAYId INT, @SemNum INT, @SemStart DATE, @SemEnd DATE, @SemCode NVARCHAR(30), @SemNewId INT;
 DECLARE sem_cursor CURSOR FOR
     SELECT DISTINCT ay.Id
@@ -536,12 +570,11 @@ BEGIN
             VALUES (@SemNum, CEILING(CAST(@SemNum AS FLOAT) / 2),
                 'Semester ' + CAST(@SemNum AS NVARCHAR(10)),
                 @SemCode, @SemAYId, NULL, @SemStart, @SemEnd);
-            SET @SemNewId = SCOPE_IDENTITY();
         END
-        ELSE
-            SET @SemNewId = (SELECT Id FROM Semesters WHERE Code = @SemCode);
 
-        INSERT INTO #SemesterMap (SourceYear, SourcePart, AcademicYearId, NewId)
+        SET @SemNewId = (SELECT Id FROM Semesters WHERE Code = @SemCode);
+
+        INSERT INTO #AYSemesterMap (SourceYear, SourcePart, AcademicYearId, NewId)
         SELECT y.YearVal, p.PartVal, @SemAYId, @SemNewId
         FROM (VALUES ('I'), ('II'), ('III'), ('IV'), ('V')) y(YearVal)
         CROSS JOIN (VALUES ('I'), ('II')) p(PartVal)
@@ -557,12 +590,36 @@ BEGIN
             (y.YearVal = 'V' AND p.PartVal = 'I' AND @SemNum = 9) OR
             (y.YearVal = 'V' AND p.PartVal = 'II' AND @SemNum = 10)
         );
+
         SET @SemNum = @SemNum + 1;
     END
     FETCH NEXT FROM sem_cursor INTO @SemAYId;
 END
 CLOSE sem_cursor;
 DEALLOCATE sem_cursor;
+
+PRINT '  Per-AY semesters created for ExamSchedules.';
+
+-- #SemesterMap: maps source (Year, Part) → curriculum SemesterId (for SubjectOfferings)
+INSERT INTO #SemesterMap (SourceYear, SourcePart, AcademicYearId, NewId)
+SELECT y.YearVal, p.PartVal, NULL, s.Id
+FROM (VALUES ('I'), ('II'), ('III'), ('IV'), ('V')) y(YearVal)
+CROSS JOIN (VALUES ('I'), ('II')) p(PartVal)
+INNER JOIN Semesters s ON s.Code = (
+    CASE
+        WHEN y.YearVal = 'I'  AND p.PartVal = 'I'  THEN 'CUR-SEM1'
+        WHEN y.YearVal = 'I'  AND p.PartVal = 'II' THEN 'CUR-SEM2'
+        WHEN y.YearVal = 'II' AND p.PartVal = 'I'  THEN 'CUR-SEM3'
+        WHEN y.YearVal = 'II' AND p.PartVal = 'II' THEN 'CUR-SEM4'
+        WHEN y.YearVal = 'III' AND p.PartVal = 'I'  THEN 'CUR-SEM5'
+        WHEN y.YearVal = 'III' AND p.PartVal = 'II' THEN 'CUR-SEM6'
+        WHEN y.YearVal = 'IV'  AND p.PartVal = 'I'  THEN 'CUR-SEM7'
+        WHEN y.YearVal = 'IV'  AND p.PartVal = 'II' THEN 'CUR-SEM8'
+        WHEN y.YearVal = 'V'   AND p.PartVal = 'I'  THEN 'CUR-SEM9'
+        WHEN y.YearVal = 'V'   AND p.PartVal = 'II' THEN 'CUR-SEM10'
+    END
+)
+WHERE s.Code IN ('CUR-SEM1','CUR-SEM2','CUR-SEM3','CUR-SEM4','CUR-SEM5','CUR-SEM6','CUR-SEM7','CUR-SEM8','CUR-SEM9','CUR-SEM10');
 
 PRINT 'Step 11a: Semesters created.';
 
@@ -704,9 +761,49 @@ FROM [FUExamDBcopy].dbo.StudentRegistration;
 PRINT 'Step 12 complete: StudentRegistrations migrated.';
 
 -- ============================================================================
--- STEP 13: SKIPPED - StudentAdmission table does not exist in FUExamDBcopy
+-- STEP 13: Migrate StudentAdmissions (46,860 rows) + link to registrations
 -- ============================================================================
-PRINT 'Step 13 SKIPPED: StudentAdmission not in source.';
+
+CREATE TABLE #AdmissionMap (SourceAdmissionId INT, SourceStudentRegId INT, NewId INT);
+
+SET IDENTITY_INSERT StudentAdmissions ON;
+INSERT INTO StudentAdmissions (Id, TenantId, ProgramsId, CollegeId, AcademicYearId,
+    AdmissionDate, CheckedBy, IsCompleted, IsActive, HasFeeExemption)
+SELECT
+    sa.StudentAdmissionID,
+    @TenantId,
+    sa.ProgramID,
+    sa.CollegeID,
+    ISNULL(sa.AcademicYearID, b.AcademicYearID),
+    ISNULL(sa.AdmissionDate, '2016-01-01'),
+    sa.CheckedBy,
+    ISNULL(sa.IsCompleted, 0),
+    ISNULL(sa.IsActive, 1),
+    0
+FROM [FUExamDBcopy].dbo.StudentAdmission sa
+LEFT JOIN [FUExamDBcopy].dbo.Batch b ON sa.BatchID = b.BatchID;
+SET IDENTITY_INSERT StudentAdmissions OFF;
+
+INSERT INTO #AdmissionMap (SourceAdmissionId, SourceStudentRegId, NewId)
+SELECT sa.StudentAdmissionID, sa.StudentRegistrationID, sa.StudentAdmissionID
+FROM [FUExamDBcopy].dbo.StudentAdmission sa;
+
+PRINT 'Step 13a: StudentAdmissions created.';
+
+-- Link StudentRegistrations → StudentAdmissions + fill ProgramId
+UPDATE sr
+SET sr.StudentAdmissionId = am.NewId,
+    sr.ProgramId = sa.ProgramID
+FROM StudentRegistrations sr
+INNER JOIN #AdmissionMap am ON sr.Id = am.SourceStudentRegId
+INNER JOIN [FUExamDBcopy].dbo.StudentAdmission sa ON sa.StudentAdmissionID = am.SourceAdmissionId;
+
+PRINT 'Step 13b: StudentRegistrations linked to admissions + ProgramId filled.';
+
+DECLARE @CntAdm INT = (SELECT COUNT(*) FROM StudentAdmissions);
+PRINT 'Step 13 complete: StudentAdmissions migrated. Count=' + CAST(@CntAdm AS VARCHAR);
+
+DROP TABLE #AdmissionMap;
 
 -- ============================================================================
 -- STEP 14: Migrate ExamSchedules (98 rows) + ExamCenters
@@ -741,7 +838,7 @@ SELECT
         ELSE 1
     END
 FROM [FUExamDBcopy].dbo.ExamSchedule es
-LEFT JOIN #SemesterMap sm ON sm.SourceYear = es.Year AND sm.SourcePart = es.Part AND sm.AcademicYearId = es.AcademicYearID
+LEFT JOIN #AYSemesterMap sm ON sm.SourceYear = es.Year AND sm.SourcePart = es.Part AND sm.AcademicYearId = es.AcademicYearID
 WHERE NOT EXISTS (SELECT 1 FROM ExamSchedules WHERE Id = es.ExamScheduleID);
 SET IDENTITY_INSERT ExamSchedules OFF;
 
@@ -907,6 +1004,7 @@ UNION ALL SELECT 'Semesters', COUNT(*) FROM Semesters
 UNION ALL SELECT 'SubjectCatalogs', COUNT(*) FROM SubjectCatalogs
 UNION ALL SELECT 'SubjectOfferings', COUNT(*) FROM SubjectOfferings
 UNION ALL SELECT 'StudentRegistrations', COUNT(*) FROM StudentRegistrations
+UNION ALL SELECT 'StudentAdmissions', COUNT(*) FROM StudentAdmissions
 UNION ALL SELECT 'ExamSchedules', COUNT(*) FROM ExamSchedules
 UNION ALL SELECT 'ExamCenters', COUNT(*) FROM ExamCenters
 UNION ALL SELECT 'ExamRegistrations', COUNT(*) FROM ExamRegistrations
@@ -925,6 +1023,7 @@ DROP TABLE #ExamScheduleMap;
 DROP TABLE #ExamCenterMap;
 DROP TABLE #ExamRegMap;
 DROP TABLE #SemesterMap;
+DROP TABLE #AYSemesterMap;
 
 PRINT '';
 PRINT '========================================';

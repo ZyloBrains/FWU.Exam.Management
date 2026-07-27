@@ -119,6 +119,9 @@ public class StudentRegistration : ITenantScoped
     public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
 
+    [Display(Name = "Student Admission")]
+    public int? StudentAdmissionId { get; set; }
+
     public virtual Level? Level { get; set; }
     public virtual Faculty? Faculty { get; set; }
     public virtual College? College { get; set; }
@@ -128,9 +131,9 @@ public class StudentRegistration : ITenantScoped
     public virtual Ethnicity? Ethnicity { get; set; }
     public virtual Address? PermanentAddress { get; set; }
     public virtual Address? CurrentAddress { get; set; }
+    public virtual StudentAdmission? StudentAdmission { get; set; }
     public virtual ICollection<ApplicationVoucher>? ApplicationVouchers { get; set; }
     public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
-    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
     public virtual ICollection<StudentGuardian>? StudentGuardians { get; set; }
     public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
 }

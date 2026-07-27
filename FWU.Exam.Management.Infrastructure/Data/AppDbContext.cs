@@ -256,6 +256,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(nameof(StudentAdmission.AppUserId))
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<StudentAdmission>()
+            .HasOne(sa => sa.AcademicYear)
+            .WithMany()
+            .HasForeignKey(sa => sa.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.StudentAdmission)
+            .WithMany()
+            .HasForeignKey(sr => sr.StudentAdmissionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<ExamRegistration>()
             .HasOne(er => er.ExamCenter)
             .WithMany(ec => ec.ExamRegistrations)
