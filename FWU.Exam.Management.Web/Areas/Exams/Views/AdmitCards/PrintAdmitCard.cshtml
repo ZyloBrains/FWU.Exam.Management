@@ -305,11 +305,11 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Level</span>
-                    <span class="info-value">@(Model.Level ?? "Undergraduate")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.Level?.LevelName ?? Model.ExamSchedule?.Program?.Level?.LevelName ?? Model.Level ?? "-")</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Program</span>
-                    <span class="info-value">@(Model.Program ?? Model.ExamRegistration?.Program?.ProgramName ?? "-")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.Program?.ProgramName ?? Model.Program ?? Model.ExamRegistration?.Program?.ProgramName ?? "-")</span>
                 </div>
             </div>
             <div>
@@ -319,19 +319,15 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Semester</span>
-                    <span class="info-value">@(Model.Semester ?? "Eighth Semester")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.Semester?.Name ?? Model.Semester ?? "-")</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Exam Type</span>
-                    <span class="info-value">@(Model.ExamType ?? "Regular")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.ExamType?.Name ?? Model.ExamType ?? "-")</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Year</span>
-                    <span class="info-value">@(Model.Year ?? "2024")</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Generated Date</span>
-                    <span class="info-value">@Model.GeneratedDate.ToString("yyyy-MM-dd")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.AcademicYear?.AcademicYearCode ?? Model.Year ?? "-")</span>
                 </div>
             </div>
         </div>
@@ -350,29 +346,18 @@
             <tbody>
                 @{
                     var subjects = Model.Subjects ?? new List<Subject>();
-                    if (subjects.Any())
+                    int sn = 1;
+                    foreach (var sub in subjects)
                     {
-                        int sn = 1;
-                        foreach (var sub in subjects)
-                        {
-                            <tr>
-                                <td>@sn</td>
-                                <td>@sub.Code</td>
-                                <td class="subject-name">@sub.Name</td>
-                                <td>@(sub.Theory ? "Y" : "\u2014")</td>
-                                <td>@(sub.Practical ? "Y" : "\u2014")</td>
-                                <td>@sub.Remarks</td>
-                            </tr>
-                            sn++;
-                        }
-                    }
-                    else
-                    {
-                        <tr><td>1</td><td>CSIT.421</td><td class="subject-name">Parallel Computing</td><td>Y</td><td>Y</td><td></td></tr>
-                        <tr><td>2</td><td>CSIT.422</td><td class="subject-name">Internship</td><td>Y</td><td>Y</td><td></td></tr>
-                        <tr><td>3</td><td>CSIT.423.2</td><td class="subject-name">Advanced Database Design</td><td>Y</td><td>Y</td><td></td></tr>
-                        <tr><td>4</td><td>CSIT.424.4</td><td class="subject-name">Cloud Computing</td><td>Y</td><td>Y</td><td></td></tr>
-                        <tr><td>5</td><td>CSIT.425.2</td><td class="subject-name">E-Governance</td><td>Y</td><td>Y</td><td></td></tr>
+                        <tr>
+                            <td>@sn</td>
+                            <td>@sub.Code</td>
+                            <td class="subject-name">@sub.Name</td>
+                            <td>@(sub.Theory ? "Y" : "\u2014")</td>
+                            <td>@(sub.Practical ? "Y" : "\u2014")</td>
+                            <td>@sub.Remarks</td>
+                        </tr>
+                        sn++;
                     }
                 }
             </tbody>
