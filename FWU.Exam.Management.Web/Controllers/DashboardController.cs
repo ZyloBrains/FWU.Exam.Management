@@ -110,15 +110,6 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
 
         var allSubjectOfferings = await studentDashboardService.GetSubjectOfferingsByProgramAsync(programId);
 
-        var latestSchedule = examSchedules.OrderByDescending(es => es.StartDateBs).FirstOrDefault();
-        var currentSemesterId = latestSchedule?.SemesterId
-            ?? allSubjectOfferings.FirstOrDefault(so => so.Semester != null)?.SemesterId;
-
-        vm.SemesterName = latestSchedule?.Semester?.Name
-            ?? allSubjectOfferings.FirstOrDefault(so => so.Semester != null)?.Semester?.Name;
-
-        vm.SubjectOfferings = currentSemesterId.HasValue
-            ? allSubjectOfferings.Where(so => so.SemesterId == currentSemesterId.Value).ToList()
-            : allSubjectOfferings;
+        vm.SubjectOfferings = allSubjectOfferings;
     }
 }

@@ -520,31 +520,7 @@ PRINT 'Step 10 complete: Batches migrated.';
 -- STEP 11a: Create Semesters (MUST be before SubjectOfferings for FK)
 -- ============================================================================
 
--- Allow AcademicYearId to be NULL for curriculum semesters
-ALTER TABLE Semesters ALTER COLUMN AcademicYearId INT NULL;
-
--- Drop existing FK to AcademicYears so we can have NULL AcademicYearId
-IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Semesters_AcademicYears_AcademicYearId')
-    ALTER TABLE Semesters DROP CONSTRAINT FK_Semesters_AcademicYears_AcademicYearId;
-
--- Create 8 CURRICULUM semesters (AcademicYearId = NULL) for SubjectOfferings
-SET IDENTITY_INSERT Semesters ON;
-DECLARE @CurSemNum INT = 1;
-WHILE @CurSemNum <= 8
-BEGIN
-    DECLARE @CurSemCode NVARCHAR(30) = 'CUR-SEM' + CAST(@CurSemNum AS NVARCHAR(10));
-    IF NOT EXISTS (SELECT 1 FROM Semesters WHERE Code = @CurSemCode)
-    BEGIN
-        INSERT INTO Semesters (Id, Number, Year, Name, Code, AcademicYearId, FacultyId, StartDate, EndDate)
-        VALUES (@CurSemNum, @CurSemNum, CEILING(CAST(@CurSemNum AS FLOAT) / 2),
-            'Curriculum Semester ' + CAST(@CurSemNum AS NVARCHAR(10)),
-            @CurSemCode, NULL, NULL, '2020-01-01', '2020-07-01');
-    END
-    SET @CurSemNum = @CurSemNum + 1;
-END
-SET IDENTITY_INSERT Semesters OFF;
-
-PRINT '  8 curriculum semesters created (AcademicYearId=NULL).';
+-- AcademicYearId remains NOT NULL (required by entity model)
 
 -- Create per-AY semesters for ExamSchedules
 DECLARE @SemAYId INT, @SemNum INT, @SemStart DATE, @SemEnd DATE, @SemCode NVARCHAR(30), @SemNewId INT;
@@ -600,26 +576,27 @@ DEALLOCATE sem_cursor;
 
 PRINT '  Per-AY semesters created for ExamSchedules.';
 
--- #SemesterMap: maps source (Year, Part) → curriculum SemesterId (for SubjectOfferings)
+-- #SemesterMap: maps source (Year, Part) → per-AY SemesterId (for SubjectOfferings)
 INSERT INTO #SemesterMap (SourceYear, SourcePart, AcademicYearId, NewId)
-SELECT y.YearVal, p.PartVal, NULL, s.Id
+SELECT y.YearVal, p.PartVal, s.AcademicYearId, MIN(s.Id)
 FROM (VALUES ('I'), ('II'), ('III'), ('IV'), ('V')) y(YearVal)
 CROSS JOIN (VALUES ('I'), ('II')) p(PartVal)
-INNER JOIN Semesters s ON s.Code = (
+INNER JOIN Semesters s ON s.Number = (
     CASE
-        WHEN y.YearVal = 'I'  AND p.PartVal = 'I'  THEN 'CUR-SEM1'
-        WHEN y.YearVal = 'I'  AND p.PartVal = 'II' THEN 'CUR-SEM2'
-        WHEN y.YearVal = 'II' AND p.PartVal = 'I'  THEN 'CUR-SEM3'
-        WHEN y.YearVal = 'II' AND p.PartVal = 'II' THEN 'CUR-SEM4'
-        WHEN y.YearVal = 'III' AND p.PartVal = 'I'  THEN 'CUR-SEM5'
-        WHEN y.YearVal = 'III' AND p.PartVal = 'II' THEN 'CUR-SEM6'
-        WHEN y.YearVal = 'IV'  AND p.PartVal = 'I'  THEN 'CUR-SEM7'
-        WHEN y.YearVal = 'IV'  AND p.PartVal = 'II' THEN 'CUR-SEM8'
-        WHEN y.YearVal = 'V'   AND p.PartVal = 'I'  THEN 'CUR-SEM9'
-        WHEN y.YearVal = 'V'   AND p.PartVal = 'II' THEN 'CUR-SEM10'
+        WHEN y.YearVal = 'I'  AND p.PartVal = 'I'  THEN 1
+        WHEN y.YearVal = 'I'  AND p.PartVal = 'II' THEN 2
+        WHEN y.YearVal = 'II' AND p.PartVal = 'I'  THEN 3
+        WHEN y.YearVal = 'II' AND p.PartVal = 'II' THEN 4
+        WHEN y.YearVal = 'III' AND p.PartVal = 'I'  THEN 5
+        WHEN y.YearVal = 'III' AND p.PartVal = 'II' THEN 6
+        WHEN y.YearVal = 'IV'  AND p.PartVal = 'I'  THEN 7
+        WHEN y.YearVal = 'IV'  AND p.PartVal = 'II' THEN 8
+        WHEN y.YearVal = 'V'   AND p.PartVal = 'I'  THEN 9
+        WHEN y.YearVal = 'V'   AND p.PartVal = 'II' THEN 10
     END
 )
-WHERE s.Code IN ('CUR-SEM1','CUR-SEM2','CUR-SEM3','CUR-SEM4','CUR-SEM5','CUR-SEM6','CUR-SEM7','CUR-SEM8','CUR-SEM9','CUR-SEM10');
+WHERE s.AcademicYearId IS NOT NULL
+GROUP BY y.YearVal, p.PartVal, s.AcademicYearId;
 
 PRINT 'Step 11a: Semesters created.';
 
@@ -729,7 +706,7 @@ SET IDENTITY_INSERT StudentRegistrations ON;
         LEFT(NULLIF(LTRIM(RTRIM(sr.ContactNo)), ''), 15) AS ContactNumber,
         NULLIF(LTRIM(RTRIM(sr.Email)), '') AS Email,
         ISNULL(sr.BirthDateBS, '') AS DateOfBirthBS,
-        CASE WHEN sr.BirthDateAD IS NOT NULL THEN CONVERT(NVARCHAR(255), sr.BirthDateAD, 121) ELSE NULL END AS DateOfBirthAD,
+        CASE WHEN sr.BirthDateAD IS NOT NULL THEN CONVERT(NVARCHAR(10), sr.BirthDateAD, 23) ELSE NULL END AS DateOfBirthAD,
         ISNULL(NULLIF(sr.GenderID, 0), 1) AS GenderId,
         1 AS StudentCategoryId,
         sr.AcademicYearID AS AcademicYearId,
@@ -809,6 +786,33 @@ DROP TABLE #AdmissionMap;
 -- STEP 14: Migrate ExamSchedules (98 rows) + ExamCenters
 -- ============================================================================
 
+-- Derive correct ProgramId for each ExamSchedule from source data:
+-- ExamSchedule → ExamRegistration → StudentAdmission → ProgramID
+CREATE TABLE #ExamScheduleProgramMap (
+    ExamScheduleId INT PRIMARY KEY,
+    ProgramId INT NOT NULL
+);
+
+INSERT INTO #ExamScheduleProgramMap (ExamScheduleId, ProgramId)
+SELECT ExamScheduleId, ProgramId
+FROM (
+    SELECT er.ExamScheduleID, sa.ProgramID,
+        ROW_NUMBER() OVER (PARTITION BY er.ExamScheduleID ORDER BY COUNT(*) DESC) AS rn
+    FROM [FUExamDBcopy].dbo.ExamRegistration er
+    INNER JOIN [FUExamDBcopy].dbo.StudentAdmission sa ON sa.CollegeID = er.CollegeID AND sa.AcademicYearID = er.AcademicYearID
+    WHERE sa.ProgramID IS NOT NULL
+    GROUP BY er.ExamScheduleID, sa.ProgramID
+) ranked
+WHERE rn = 1;
+
+-- Fallback: for ExamSchedules with no ExamRegistrations, use LevelId → first active program
+INSERT INTO #ExamScheduleProgramMap (ExamScheduleId, ProgramId)
+SELECT es.ExamScheduleID,
+    ISNULL((SELECT TOP 1 p.Id FROM Programs p WHERE p.LevelId = es.LevelID AND p.IsActive = 1),
+           (SELECT TOP 1 p.Id FROM Programs p WHERE p.LevelId = es.LevelID))
+FROM [FUExamDBcopy].dbo.ExamSchedule es
+WHERE NOT EXISTS (SELECT 1 FROM #ExamScheduleProgramMap WHERE ExamScheduleId = es.ExamScheduleID);
+
 SET IDENTITY_INSERT ExamSchedules ON;
 INSERT INTO ExamSchedules (Id, TenantId, ExamScheduleName, AcademicYearId, LevelId, IsActive,
     StartTime, EndTime, StartDate, EndDate, StartDateBs, EndDateBs, PublishedDate, Remarks,
@@ -828,7 +832,7 @@ SELECT
     es.EndToBS,
     es.PublishedDate,
     es.Remarks,
-    ISNULL((SELECT TOP 1 p.Id FROM Programs p WHERE p.LevelId = es.LevelID AND p.IsActive = 1), (SELECT TOP 1 p.Id FROM Programs p WHERE p.LevelId = es.LevelID)),
+    ISNULL(pgm.ProgramId, (SELECT TOP 1 p.Id FROM Programs p WHERE p.LevelId = es.LevelID AND p.IsActive = 1)),
     ISNULL(sm.NewId, (SELECT TOP 1 s.Id FROM Semesters s WHERE s.AcademicYearId = es.AcademicYearID)),
     CASE
         WHEN es.ExamScheduleName LIKE '%Partial%' THEN 2
@@ -839,6 +843,7 @@ SELECT
     END
 FROM [FUExamDBcopy].dbo.ExamSchedule es
 LEFT JOIN #AYSemesterMap sm ON sm.SourceYear = es.Year AND sm.SourcePart = es.Part AND sm.AcademicYearId = es.AcademicYearID
+LEFT JOIN #ExamScheduleProgramMap pgm ON pgm.ExamScheduleId = es.ExamScheduleID
 WHERE NOT EXISTS (SELECT 1 FROM ExamSchedules WHERE Id = es.ExamScheduleID);
 SET IDENTITY_INSERT ExamSchedules OFF;
 
@@ -849,6 +854,7 @@ FROM [FUExamDBcopy].dbo.ExamSchedule;
 PRINT 'Step 14b: ExamSchedules migrated.';
 
 -- Create placeholder ExamSchedules for AYs that have ExamRegistrations but no ExamSchedules
+-- Derive ProgramId from ExamRegistrations → StudentAdmissions chain
 SET IDENTITY_INSERT ExamSchedules ON;
 INSERT INTO ExamSchedules (Id, TenantId, ExamScheduleName, AcademicYearId, LevelId, IsActive,
     StartTime, EndTime, StartDate, EndDate, StartDateBs, EndDateBs, Remarks, ProgramId, SemesterId, ExamTypeId)
@@ -857,7 +863,7 @@ SELECT
     @TenantId,
     'Regular ' + ay.AcademicYearName,
     ay.Id,
-    (SELECT TOP 1 LevelId FROM Programs WHERE IsActive = 1),
+    ISNULL(ph.ProgramLevelId, (SELECT TOP 1 LevelId FROM Programs WHERE IsActive = 1)),
     1,
     '08:00:00',
     '11:00:00',
@@ -866,10 +872,19 @@ SELECT
     NULL,
     NULL,
     'Auto-created for exam registrations',
-    (SELECT TOP 1 Id FROM Programs WHERE IsActive = 1),
+    ISNULL(ph.ProgramId, (SELECT TOP 1 Id FROM Programs WHERE IsActive = 1)),
     (SELECT TOP 1 Id FROM Semesters s WHERE s.AcademicYearId = ay.Id),
     (SELECT TOP 1 Id FROM ExamTypes)
 FROM AcademicYears ay
+LEFT JOIN (
+    SELECT er.AcademicYearID, sa.ProgramID, p.LevelId AS ProgramLevelId,
+        ROW_NUMBER() OVER (PARTITION BY er.AcademicYearID ORDER BY COUNT(*) DESC) AS rn
+    FROM [FUExamDBcopy].dbo.ExamRegistration er
+    INNER JOIN [FUExamDBcopy].dbo.StudentAdmission sa ON sa.CollegeID = er.CollegeID AND sa.AcademicYearID = er.AcademicYearID
+    INNER JOIN Programs p ON p.Id = sa.ProgramID
+    WHERE sa.ProgramID IS NOT NULL
+    GROUP BY er.AcademicYearID, sa.ProgramID, p.LevelId
+) ph ON ph.AcademicYearID = ay.Id AND ph.rn = 1
 WHERE NOT EXISTS (SELECT 1 FROM ExamSchedules WHERE AcademicYearId = ay.Id)
   AND EXISTS (SELECT 1 FROM [FUExamDBcopy].dbo.ExamRegistration WHERE AcademicYearID = ay.Id);
 SET IDENTITY_INSERT ExamSchedules OFF;
@@ -891,6 +906,34 @@ WHERE es.Id > 100
 SET IDENTITY_INSERT ExamCenters OFF;
 
 PRINT 'Step 14c: Placeholder ExamSchedules + ExamCenters created.';
+
+-- ============================================================================
+-- STEP 14d: Verify + Fix ExamSchedule ProgramId
+-- ============================================================================
+-- Re-derive correct ProgramId for ALL ExamSchedules (including placeholders)
+-- using ExamRegistration → StudentAdmission → ProgramID via CollegeID + AcademicYearID.
+-- This catches any mismatches from earlier steps.
+
+UPDATE es
+SET es.ProgramId = cpm.CorrectProgramId
+FROM ExamSchedules es
+INNER JOIN (
+    SELECT ExamScheduleId, CorrectProgramId
+    FROM (
+        SELECT er.ExamScheduleID, sa.ProgramID AS CorrectProgramId,
+            ROW_NUMBER() OVER (PARTITION BY er.ExamScheduleID ORDER BY COUNT(*) DESC) AS rn
+        FROM [FUExamDBcopy].dbo.ExamRegistration er
+        INNER JOIN [FUExamDBcopy].dbo.StudentAdmission sa
+            ON sa.CollegeID = er.CollegeID AND sa.AcademicYearID = er.AcademicYearID
+        WHERE sa.ProgramID IS NOT NULL
+        GROUP BY er.ExamScheduleID, sa.ProgramID
+    ) ranked
+    WHERE rn = 1
+) cpm ON cpm.ExamScheduleId = es.Id
+WHERE es.ProgramId != cpm.CorrectProgramId;
+
+DECLARE @FixedCnt INT = @@ROWCOUNT;
+PRINT 'Step 14d: ExamSchedule ProgramIds verified. Fixed=' + CAST(@FixedCnt AS VARCHAR);
 
 -- ============================================================================
 -- STEP 15: Migrate ExamRegistrations (248,797 rows)
@@ -1024,6 +1067,7 @@ DROP TABLE #ExamCenterMap;
 DROP TABLE #ExamRegMap;
 DROP TABLE #SemesterMap;
 DROP TABLE #AYSemesterMap;
+DROP TABLE #ExamScheduleProgramMap;
 
 PRINT '';
 PRINT '========================================';
