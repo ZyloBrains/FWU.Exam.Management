@@ -32,8 +32,10 @@ public interface IStudentDashboardService
     Task<bool> HasSubmittedPreviousSemesterExamFormAsync(string userId, int currentSemesterId, int programId);
     Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId);
     Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId);
-    Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId);
-    Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId);
-    Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId);
-    Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(string email);
+    Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId);
+    Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId);
+    Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId);
+    Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId);
+    Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
+    Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
 }
