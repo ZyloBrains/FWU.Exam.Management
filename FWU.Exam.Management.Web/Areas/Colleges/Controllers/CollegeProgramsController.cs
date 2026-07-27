@@ -18,11 +18,14 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 [RequirePermission("collegeprograms.view")]
 public class CollegeProgramsController(ICollegeProgramService collegeProgramService, IUserContext userContext) : Controller
 {
-    public async Task<IActionResult> Index(string search = null, string sort = "collegename", string sortDir = "asc")
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;

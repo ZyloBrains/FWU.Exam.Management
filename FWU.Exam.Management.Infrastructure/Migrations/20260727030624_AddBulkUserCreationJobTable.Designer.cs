@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260727030624_AddBulkUserCreationJobTable")]
+    partial class AddBulkUserCreationJobTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3277,9 +3280,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AcademicYearId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("AdmissionDate")
                         .HasColumnType("datetime2");
 
@@ -3317,6 +3317,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int>("ProgramsId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("StudentRegistrationId")
+                        .HasColumnType("int");
+
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
 
@@ -3328,8 +3331,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AcademicYearId");
-
                     b.HasIndex("AppUserId");
 
                     b.HasIndex("BatchId");
@@ -3337,6 +3338,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("CollegeId");
 
                     b.HasIndex("ProgramsId");
+
+                    b.HasIndex("StudentRegistrationId");
 
                     b.HasIndex("TenantId");
 
@@ -3704,9 +3707,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("StudentAdmissionId")
-                        .HasColumnType("int");
-
                     b.Property<int>("StudentCategoryId")
                         .HasColumnType("int");
 
@@ -3753,8 +3753,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("PermanentAddressId");
 
                     b.HasIndex("ProgramId");
-
-                    b.HasIndex("StudentAdmissionId");
 
                     b.HasIndex("StudentCategoryId");
 
@@ -5466,12 +5464,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentAdmission", b =>
                 {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
-                        .WithMany()
-                        .HasForeignKey("AcademicYearId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("FWU.Exam.Management.Infrastructure.Data.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("AppUserId")
@@ -5493,13 +5485,15 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Students.StudentRegistration", null)
+                        .WithMany("StudentAdmissions")
+                        .HasForeignKey("StudentRegistrationId");
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("AcademicYear");
 
                     b.Navigation("College");
 
@@ -5629,11 +5623,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasForeignKey("ProgramId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Students.StudentAdmission", "StudentAdmission")
-                        .WithMany()
-                        .HasForeignKey("StudentAdmissionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Students.StudentCategory", "StudentCategory")
                         .WithMany("StudentRegistrations")
                         .HasForeignKey("StudentCategoryId")
@@ -5663,8 +5652,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("PermanentAddress");
 
                     b.Navigation("Program");
-
-                    b.Navigation("StudentAdmission");
 
                     b.Navigation("StudentCategory");
 
@@ -6060,6 +6047,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("ApplicationVouchers");
 
                     b.Navigation("PaymentRequestLogs");
+
+                    b.Navigation("StudentAdmissions");
 
                     b.Navigation("StudentGuardians");
 

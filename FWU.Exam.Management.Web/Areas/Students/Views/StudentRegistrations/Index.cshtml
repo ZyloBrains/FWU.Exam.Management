@@ -2,7 +2,7 @@
     ViewData["Title"] = "Student Registrations";
 }
 
-<div class="space-y-6" x-data="{ openExport: false }">
+<div class="space-y-6" x-data="{ openExport: false, showFilters: false }">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -23,50 +23,138 @@
 
     @await Html.PartialAsync("_AlertMessages")
 
-    <!-- Search & Actions -->
+    <!-- Search & Filter Card -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-                <div class="relative flex-1">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input id="searchBox" type="search" placeholder="Search by name, registration no, email..."
-                           class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                </div>
-                <div class="flex items-center gap-3">
-                    <select id="pageSize" class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
-                        <option value="10">10 / page</option>
-                        <option value="25">25 / page</option>
-                        <option value="50">50 / page</option>
-                        <option value="9999">All</option>
-                    </select>
-                    <div class="relative">
-                        <button x-on:click="openExport = !openExport"
-                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
-                            <i class="fas fa-download text-xs"></i> Export
-                        </button>
-                        <div x-show="openExport"
-                             x-on:click.away="openExport = false"
-                             x-transition
-                             class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                            <a href="javascript:void(0)" onclick="exportPdf()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-file-pdf text-red-600"></i> PDF
-                            </a>
-                            <a href="javascript:void(0)" onclick="exportExcel()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-file-excel text-green-600"></i> Excel
-                            </a>
-                            <a href="javascript:void(0)" onclick="exportCsv()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i class="fas fa-file-csv text-blue-600"></i> CSV
-                            </a>
-                        </div>
+        <!-- Row 1: Search Box + Actions -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input id="searchBox" type="search" placeholder="Search by name, registration no, email, phone..."
+                       class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" x-on:click="showFilters = !showFilters"
+                        :class="showFilters ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-white text-gray-700 border-gray-200'"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-filter text-xs"></i> Filters
+                    <span x-show="activeFilterCount > 0" x-text="activeFilterCount"
+                          class="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-teal-500 rounded-full"></span>
+                </button>
+                <div class="relative">
+                    <button x-on:click="openExport = !openExport"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-download text-xs"></i> Export
+                    </button>
+                    <div x-show="openExport"
+                         x-on:click.away="openExport = false"
+                         x-transition
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                        <a href="javascript:void(0)" onclick="exportPdf()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-pdf text-red-600"></i> PDF
+                        </a>
+                        <a href="javascript:void(0)" onclick="exportExcel()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-excel text-green-600"></i> Excel
+                        </a>
+                        <a href="javascript:void(0)" onclick="exportCsv()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fas fa-file-csv text-blue-600"></i> CSV
+                        </a>
                     </div>
                 </div>
             </div>
-            <form asp-action="ImportExcel" method="post" enctype="multipart/form-data" class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-dashed border-gray-300 w-full sm:w-auto">
-                <input type="file" name="file" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-gray-700 file:ring-1 file:ring-gray-300 hover:file:bg-gray-50 transition cursor-pointer" required />
-                <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-800 text-white rounded-md text-xs font-medium hover:bg-gray-900 transition shrink-0">
-                    <i class="fas fa-upload text-xs"></i> Import
-                </button>
-            </form>
+        </div>
+
+        <!-- Row 2: Filter Dropdowns (Collapsible) -->
+        <div x-show="showFilters" x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+             class="mt-4 pt-4 border-t border-gray-200">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
+                    <select id="filterAcademicYear" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Years</option>
+                        @if (ViewBag.AcademicYears is SelectList ayList)
+                        {
+                            foreach (var item in ayList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Faculty</label>
+                    <select id="filterFaculty" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Faculties</option>
+                        @if (ViewBag.Faculties is SelectList fList)
+                        {
+                            foreach (var item in fList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">College</label>
+                    <select id="filterCollege" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Colleges</option>
+                        @if (ViewBag.Colleges is SelectList cList)
+                        {
+                            foreach (var item in cList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Level</label>
+                    <select id="filterLevel" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Levels</option>
+                        @if (ViewBag.Levels is SelectList lList)
+                        {
+                            foreach (var item in lList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                    <select id="filterStatus" class="filter-select w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-3 gap-3">
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Filters apply automatically when changed</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <form asp-action="ImportExcel" method="post" enctype="multipart/form-data" class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-dashed border-gray-300">
+                        <input type="file" name="file" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-gray-700 file:ring-1 file:ring-gray-300 hover:file:bg-gray-50 transition cursor-pointer" required />
+                        <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-800 text-white rounded-md text-xs font-medium hover:bg-gray-900 transition shrink-0">
+                            <i class="fas fa-upload text-xs"></i> Import
+                        </button>
+                    </form>
+                    <select id="pageSize" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="10">10 / page</option>
+                        <option value="25">25 / page</option>
+                        <option value="50" selected>50 / page</option>
+                        <option value="9999">All</option>
+                    </select>
+                    <button type="button" x-on:click="clearAllFilters()"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times text-xs"></i> Clear All
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -142,12 +230,48 @@
             const tbody = document.getElementById('registrationsBody');
             const mobileContainer = document.getElementById('mobileCardsContainer');
 
+            const filterAcademicYear = document.getElementById('filterAcademicYear');
+            const filterFaculty = document.getElementById('filterFaculty');
+            const filterCollege = document.getElementById('filterCollege');
+            const filterLevel = document.getElementById('filterLevel');
+            const filterStatus = document.getElementById('filterStatus');
+            const filterSelects = [filterAcademicYear, filterFaculty, filterCollege, filterLevel, filterStatus];
+
             let page = 1;
             let pageSize = parseInt(pageSizeSelect.value, 10);
             let searchTimeout = null;
             let totalRecords = 0;
 
             const base = window.location.pathname.replace(/\/Students\/StudentRegistrations.*/, '');
+
+            // Alpine.js active filter count
+            window.activeFilterCount = 0;
+            const updateFilterCount = () => {
+                let count = 0;
+                filterSelects.forEach(s => { if (s.value) count++; });
+                window.activeFilterCount = count;
+            };
+
+            const getFilterParams = () => {
+                const params = new URLSearchParams();
+                params.append('searchTerm', searchBox.value.trim());
+                params.append('page', page);
+                params.append('pageSize', pageSize);
+                if (filterAcademicYear.value) params.append('academicYear', filterAcademicYear.value);
+                if (filterFaculty.value) params.append('facultyId', filterFaculty.value);
+                if (filterCollege.value) params.append('collegeId', filterCollege.value);
+                if (filterLevel.value) params.append('levelId', filterLevel.value);
+                if (filterStatus.value) params.append('status', filterStatus.value);
+                return params.toString();
+            };
+
+            window.clearAllFilters = () => {
+                searchBox.value = '';
+                filterSelects.forEach(s => s.value = '');
+                updateFilterCount();
+                page = 1;
+                loadData();
+            };
 
             const showLoading = () => {
                 tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-20 text-center">
@@ -163,13 +287,10 @@
             };
 
             const loadData = async () => {
-                const query = encodeURIComponent(searchBox.value.trim());
                 showLoading();
-
                 try {
-                    const response = await fetch(`${base}/Students/StudentRegistrations/GetPagedData?searchTerm=${query}&page=${page}&pageSize=${pageSize}`);
+                    const response = await fetch(`${base}/Students/StudentRegistrations/GetPagedData?${getFilterParams()}`);
                     const result = await response.json();
-
                     totalRecords = result.totalCount;
                     renderTable(result.data);
                     updatePagination();
@@ -181,10 +302,8 @@
             };
 
             const renderStatusBadge = (status) => {
-                const cls = status === 'Approved' ? 'bg-green-100 text-green-700' :
-                           status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                           'bg-yellow-100 text-yellow-800';
-                return `<span class="px-2 py-0.5 text-xs font-medium rounded-full ${cls}">${status || 'Pending'}</span>`;
+                const cls = status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                return `<span class="px-2 py-0.5 text-xs font-medium rounded-full ${cls}">${status || '-'}</span>`;
             };
 
             const renderActions = (item, isMobile) => {
@@ -312,6 +431,14 @@
                 }
             });
 
+            filterSelects.forEach(sel => {
+                sel.addEventListener('change', () => {
+                    updateFilterCount();
+                    page = 1;
+                    loadData();
+                });
+            });
+
             $(pageSizeSelect).on('change', function () {
                 pageSize = parseInt(this.value, 10);
                 page = 1;
@@ -334,18 +461,15 @@
             });
 
             window.exportPdf = () => {
-                const query = encodeURIComponent(searchBox.value.trim());
-                window.open(`${base}/Students/StudentRegistrations/ExportToPdf?searchTerm=${query}`, '_blank');
+                window.open(`${base}/Students/StudentRegistrations/ExportToPdf?searchTerm=${encodeURIComponent(searchBox.value.trim())}`, '_blank');
             };
 
             window.exportExcel = () => {
-                const query = encodeURIComponent(searchBox.value.trim());
-                window.location.href = `${base}/Students/StudentRegistrations/ExportToExcel?searchTerm=${query}`;
+                window.location.href = `${base}/Students/StudentRegistrations/ExportToExcel?searchTerm=${encodeURIComponent(searchBox.value.trim())}`;
             };
 
             window.exportCsv = () => {
-                const query = encodeURIComponent(searchBox.value.trim());
-                window.location.href = `${base}/Students/StudentRegistrations/ExportToCsv?searchTerm=${query}`;
+                window.location.href = `${base}/Students/StudentRegistrations/ExportToCsv?searchTerm=${encodeURIComponent(searchBox.value.trim())}`;
             };
 
             window.deleteStudentRegistration = async (id) => {

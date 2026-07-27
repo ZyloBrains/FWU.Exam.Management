@@ -45,8 +45,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         return new List<int>();
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        ViewBag.AcademicYears = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(a => a.AcademicYearName).ToListAsync(), "AcademicYearName", "AcademicYearName");
+        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().OrderBy(f => f.Name).ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
+        ViewBag.Levels = new SelectList(await context.Levels.AsNoTracking().OrderBy(l => l.LevelName).ToListAsync(), "Id", "LevelName");
+        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
         return View();
     }
 
@@ -203,10 +208,15 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10)
+    public async Task<IActionResult> GetPagedData(string searchTerm = "", int page = 1, int pageSize = 10,
+        string? academicYear = null, int? facultyId = null, int? collegeId = null,
+        int? levelId = null, int? programId = null, string? status = null)
     {
         var collegeIds = await GetUserCollegeIdsAsync();
-        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(searchTerm, page, pageSize, collegeIds.Count > 0 ? collegeIds : null);
+        var (data, totalCount) = await studentRegistrationService.GetPagedDataAsync(
+            searchTerm, page, pageSize,
+            collegeIds.Count > 0 ? collegeIds : null,
+            academicYear, facultyId, collegeId, levelId, programId, status);
 
         return Json(new { data, totalCount });
     }

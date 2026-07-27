@@ -95,6 +95,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
     public DbSet<CollegeAdminSubjectAssignment>? CollegeAdminSubjectAssignments { get; set; }
     public DbSet<AuditLog>? AuditLogs { get; set; }
+    public DbSet<BulkUserCreationJob>? BulkUserCreationJobs { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -253,6 +254,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne<AppUser>()
             .WithMany()
             .HasForeignKey(nameof(StudentAdmission.AppUserId))
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentAdmission>()
+            .HasOne(sa => sa.AcademicYear)
+            .WithMany()
+            .HasForeignKey(sa => sa.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.StudentAdmission)
+            .WithMany()
+            .HasForeignKey(sr => sr.StudentAdmissionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamRegistration>()
@@ -1008,6 +1021,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             entity.Property(a => a.ChangesJson).HasMaxLength(4000);
             entity.HasIndex(a => new { a.EntityName, a.EntityId });
             entity.HasIndex(a => a.Timestamp);
+        });
+
+        builder.Entity<BulkUserCreationJob>(entity =>
+        {
+            entity.ToTable("BulkUserCreationJobs");
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.UserId).HasMaxLength(128);
+            entity.Property(b => b.Status).HasMaxLength(32);
+            entity.Property(b => b.ErrorMessage).HasMaxLength(2000);
+            entity.HasIndex(b => b.Status);
+            entity.HasIndex(b => b.CreatedAt);
         });
     }
 }

@@ -14,41 +14,19 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("faculties.view")]
 public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
 {
-    public async Task<IActionResult> Index(string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
-        var faculties = await facultyService.GetAllFacultiesAsync();
+        var (items, totalCount) = await facultyService.GetFacultiesPagedAsync(page, pageSize, search, sort, sortDir);
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.ToLower();
-            faculties = faculties.Where(f =>
-                (f.Name?.ToLower().Contains(s) ?? false) ||
-                (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
-                (f.ShortName?.ToLower().Contains(s) ?? false) ||
-                (f.Email?.ToLower().Contains(s) ?? false) ||
-                (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
-                (f.Address?.ToLower().Contains(s) ?? false)
-            ).ToList();
-        }
-
-        faculties = (sort?.ToLower()) switch
-        {
-            "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
-            "shortname" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ShortName).ToList() : faculties.OrderBy(f => f.ShortName).ToList(),
-            "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
-            "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
-            "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
-            "address" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Address).ToList() : faculties.OrderBy(f => f.Address).ToList(),
-            _ => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList()
-        };
-
-        var totalCount = faculties.Count;
         ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
 
-        return View(faculties);
+        return View(items);
     }
 
     [HttpGet]

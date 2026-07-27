@@ -449,34 +449,38 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var currentSemester = await context.Semesters!
             .AsNoTracking()
+            .Select(s => new { s.Id, s.Year, s.Number })
             .FirstOrDefaultAsync(s => s.Id == currentSemesterId);
 
         if (currentSemester == null) return false;
 
-        Semester? previousSemester;
+        int? previousSemesterId;
         if (currentSemester.Number > 1)
         {
-            previousSemester = await context.Semesters!
+            previousSemesterId = await context.Semesters!
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Year == currentSemester.Year
-                                       && s.Number == currentSemester.Number - 1);
+                .Where(s => s.Year == currentSemester.Year
+                         && s.Number == currentSemester.Number - 1)
+                .Select(s => (int?)s.Id)
+                .FirstOrDefaultAsync();
         }
         else
         {
-            previousSemester = await context.Semesters!
+            previousSemesterId = await context.Semesters!
                 .AsNoTracking()
                 .Where(s => s.Year == currentSemester.Year - 1)
                 .OrderByDescending(s => s.Number)
+                .Select(s => (int?)s.Id)
                 .FirstOrDefaultAsync();
         }
 
-        if (previousSemester == null) return true;
+        if (previousSemesterId == null) return true;
 
         var previousScheduleIds = await context.ExamSchedules!
             .AsNoTracking()
             .Where(es => es.IsActive
                       && es.ProgramId == programId
-                      && es.SemesterId == previousSemester.Id
+                      && es.SemesterId == previousSemesterId
                       && es.ExamType != null
                       && es.ExamType.Name != "Entrance")
             .Select(es => es.Id)

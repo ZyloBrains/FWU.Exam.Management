@@ -175,7 +175,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(sr => sr.StudentQualifications)
             .Include(sr => sr.ApplicationVouchers)
             .Include(sr => sr.PaymentRequestLogs)
-            .Include(sr => sr.StudentAdmissions)
+            .Include(sr => sr.StudentAdmission)
             .FirstOrDefaultAsync(sr => sr.Id == id);
         if (studentRegistration != null)
         {
@@ -187,8 +187,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 context.ApplicationVouchers.RemoveRange(studentRegistration.ApplicationVouchers);
             if (studentRegistration.PaymentRequestLogs?.Count > 0)
                 context.PaymentRequestLogs.RemoveRange(studentRegistration.PaymentRequestLogs);
-            if (studentRegistration.StudentAdmissions?.Count > 0)
-                context.StudentAdmissions.RemoveRange(studentRegistration.StudentAdmissions);
+            if (studentRegistration.StudentAdmission != null)
+                context.StudentAdmissions.Remove(studentRegistration.StudentAdmission);
 
             context.StudentRegistrations.Remove(studentRegistration);
             await context.SaveChangesAsync();
@@ -233,7 +233,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null)
+    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null, string? academicYear = null, int? facultyId = null, int? collegeId = null, int? levelId = null, int? programId = null, string? status = null)
     {
         var query = context.StudentRegistrations
             .AsNoTracking();
@@ -253,6 +253,22 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 (s.LastName != null && s.LastName.ToLower().Contains(lowerSearchTerm)) ||
                 (s.Email != null && s.Email.ToLower().Contains(lowerSearchTerm)) ||
                 (s.ContactNumber != null && s.ContactNumber.ToLower().Contains(lowerSearchTerm)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(academicYear))
+            query = query.Where(s => s.AcademicYear != null && s.AcademicYear.AcademicYearName == academicYear);
+        if (facultyId.HasValue)
+            query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (collegeId.HasValue)
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        if (levelId.HasValue)
+            query = query.Where(s => s.LevelId == levelId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var isActive = status.ToLower() == "active";
+            query = query.Where(s => s.IsActive == isActive);
         }
 
         var totalCount = await query.CountAsync();
