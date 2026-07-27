@@ -23,7 +23,7 @@ public class SubjectOfferingService : ISubjectOfferingService
         _userContext = userContext;
     }
 
-    public async Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<SubjectOffering> Items, int TotalProgramCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = _context.SubjectOfferings
             .Include(s => s.SubjectCatalog)
@@ -40,17 +40,35 @@ public class SubjectOfferingService : ISubjectOfferingService
                 (s.Program != null && s.Program.ProgramName != null && s.Program.ProgramName.Contains(search)));
         }
 
-        query = sortDir.ToLower() == "desc"
-            ? query.OrderByDescending(GetSortProperty(sort))
-            : query.OrderBy(GetSortProperty(sort));
-
-        var totalCount = await query.CountAsync();
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var matchingProgramIds = await query
+            .Select(s => s.ProgramId)
+            .Distinct()
             .ToListAsync();
 
-        return (items, totalCount);
+        var programs = await _context.Programs
+            .Where(p => matchingProgramIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.ProgramName })
+            .ToListAsync();
+
+        var sortedPrograms = sortDir.ToLower() == "desc"
+            ? programs.OrderByDescending(p => p.ProgramName).ToList()
+            : programs.OrderBy(p => p.ProgramName).ToList();
+
+        var totalProgramCount = sortedPrograms.Count;
+        var pagedProgramIds = sortedPrograms
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => p.Id)
+            .ToList();
+
+        var items = await query
+            .Where(s => pagedProgramIds.Contains(s.ProgramId))
+            .OrderBy(s => s.Program!.ProgramName)
+            .ThenBy(s => s.Semester!.Number)
+            .ThenBy(s => s.DisplayOrder)
+            .ToListAsync();
+
+        return (items, totalProgramCount);
     }
 
     public async Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)

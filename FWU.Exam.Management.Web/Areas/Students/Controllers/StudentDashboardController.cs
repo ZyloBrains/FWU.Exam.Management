@@ -309,6 +309,8 @@ public class StudentDashboardController(
         }
 
         var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        schedules = schedules.Where(s => !IsScheduleDeadlinePassed(s)).ToList();
+
         var forms = new List<ExamFormViewModel>();
 
         foreach (var schedule in schedules)
@@ -391,6 +393,12 @@ public class StudentDashboardController(
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null) return NotFound("Exam schedule not found.");
+
+        if (IsScheduleDeadlinePassed(schedule))
+        {
+            TempData["ErrorMessage"] = "The deadline for this exam form has passed.";
+            return RedirectToAction(nameof(ExamForms));
+        }
 
         var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
         int programId;
@@ -1214,5 +1222,13 @@ public class StudentDashboardController(
             })
             .OrderBy(s => s.SubjectName)
             .ToList();
+    }
+
+    private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
+    {
+        var effectiveDeadline = schedule.ExtendedDate
+            ?? schedule.EndDate?.ToDateTime(TimeOnly.MinValue);
+
+        return effectiveDeadline.HasValue && DateTime.Now > effectiveDeadline.Value;
     }
 }

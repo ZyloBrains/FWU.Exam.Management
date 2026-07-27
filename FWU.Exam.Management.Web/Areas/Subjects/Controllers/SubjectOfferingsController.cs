@@ -27,11 +27,11 @@ public class SubjectOfferingsController : Controller
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Program", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalProgramCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
 
-        ViewBag.TotalCount = totalCount;
+        ViewBag.TotalCount = totalProgramCount;
         ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalProgramCount / pageSize);
         ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;

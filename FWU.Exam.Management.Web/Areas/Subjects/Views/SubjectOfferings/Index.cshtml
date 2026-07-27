@@ -27,7 +27,7 @@
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Subject Offerings</h1>
                 <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
-                    <span class="font-semibold text-gray-700">@totalCount</span> records
+                    <span class="font-semibold text-gray-700">@totalCount</span> program(s)
                 </p>
                 <p class="text-xs text-gray-400 mt-1 max-w-xl">
                     Assigns subjects to specific programs and semesters with assessment configuration (theory, practical, internal marks breakdown).
@@ -394,7 +394,7 @@
                     <p class="text-xs sm:text-sm text-gray-700">
                         Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
                         to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
-                        of <span class="font-medium">@totalCount</span> results
+                        of <span class="font-medium">@totalCount</span> programs
                     </p>
                 </div>
                 <div class="flex items-center gap-4">
@@ -402,10 +402,10 @@
                         <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
                         <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
                                 onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
+                            <option value="5" selected="@(pageSize == 5)">5</option>
                             <option value="10" selected="@(pageSize == 10)">10</option>
                             <option value="25" selected="@(pageSize == 25)">25</option>
                             <option value="50" selected="@(pageSize == 50)">50</option>
-                            <option value="100" selected="@(pageSize == 100)">100</option>
                         </select>
                     </div>
                     <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
