@@ -135,20 +135,49 @@
 
         <!-- Alert Messages -->
         <template x-if="alertMessage">
-            <div :class="alertType === 'success' ? 'bg-green-50 text-green-700 border-green-200' : alertType === 'error' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'"
+            <div :class="alertType === 'success' ? 'bg-green-50 text-green-700 border-green-200' : alertType === 'error' ? 'bg-red-50 text-red-700 border-red-200' : alertType === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200'"
                  class="border rounded-lg p-3 mb-4 text-sm flex items-center gap-2">
-                <i class="fas" :class="alertType === 'success' ? 'fa-check-circle' : alertType === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'"></i>
+                <i class="fas" :class="alertType === 'success' ? 'fa-check-circle' : alertType === 'error' ? 'fa-exclamation-circle' : alertType === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'"></i>
                 <span x-text="alertMessage"></span>
                 <button x-on:click="alertMessage = ''" class="ml-auto text-current opacity-50 hover:opacity-100">&times;</button>
             </div>
         </template>
 
+        <!-- Progress Bar (shown during job processing) -->
+        <template x-if="activeJobId !== null">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fas" :class="jobStatus === 'Completed' ? 'fa-check-circle text-green-600' : jobStatus === 'Failed' ? 'fa-exclamation-circle text-red-600' : 'fa-spinner fa-spin text-blue-600'"></i>
+                        <span class="text-sm font-semibold text-gray-800" x-text="jobStatus === 'Completed' ? 'Completed' : jobStatus === 'Failed' ? 'Failed' : 'Processing...'"></span>
+                    </div>
+                    <span class="text-sm text-gray-600" x-text="processed + ' / ' + totalStudents"></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div class="h-3 rounded-full transition-all duration-300"
+                         :class="jobStatus === 'Completed' ? 'bg-green-500' : jobStatus === 'Failed' ? 'bg-red-500' : 'bg-blue-600'"
+                         :style="'width: ' + progress + '%'"></div>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                    <span class="text-green-600"><i class="fas fa-check mr-1"></i> <span x-text="successCount"></span> created</span>
+                    <span class="text-red-600" x-show="failedCount > 0"><i class="fas fa-times mr-1"></i> <span x-text="failedCount"></span> failed</span>
+                </div>
+                <template x-if="jobStatus === 'Completed' || jobStatus === 'Failed'">
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                        <button x-on:click="dismissJob()" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-times mr-1"></i> Dismiss
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </template>
+
         <!-- Results Table -->
-        <template x-if="students.length > 0">
+        <template x-if="students.length > 0 && activeJobId === null">
             <div>
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-sm text-gray-600">
-                        <span x-text="students.length"></span> students found without login accounts
+                        <span x-text="totalCount"></span> students found without login accounts
                     </p>
                     <div class="flex items-center gap-3">
                         <span x-show="selectedIds.length > 0" class="text-sm font-medium text-blue-600" x-text="selectedIds.length + ' selected'"></span>
@@ -156,7 +185,13 @@
                                 :disabled="creating"
                                 class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-sm disabled:opacity-50">
                             <i class="fas" :class="creating ? 'fa-spinner fa-spin' : 'fa-user-plus'"></i>
-                            <span x-text="creating ? 'Creating...' : 'Create Selected Users'"></span>
+                            <span x-text="creating ? 'Starting...' : 'Create Selected Users'"></span>
+                        </button>
+                        <button x-show="totalCount > 0" x-on:click="createAllMatching()"
+                                :disabled="creating"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition shadow-sm disabled:opacity-50">
+                            <i class="fas" :class="creating ? 'fa-spinner fa-spin' : 'fa-users'"></i>
+                            <span x-text="creating ? 'Starting...' : 'Create All Matching (' + totalCount + ')'"></span>
                         </button>
                     </div>
                 </div>
@@ -166,9 +201,12 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left">
-                                    <input type="checkbox" x-on:change="toggleAll($event)"
-                                           :checked="selectedIds.length === students.length && students.length > 0"
-                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" x-on:change="togglePage($event)"
+                                               :checked="isPageSelected()"
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                        <span class="text-[10px] text-gray-400" x-show="totalCount > pageSize">page</span>
+                                    </div>
                                 </th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Login ID</th>
@@ -202,11 +240,45 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <span>Showing</span>
+                        <span class="font-medium" x-text="((page - 1) * pageSize) + 1"></span>
+                        <span>to</span>
+                        <span class="font-medium" x-text="Math.min(page * pageSize, totalCount)"></span>
+                        <span>of</span>
+                        <span class="font-medium" x-text="totalCount"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select x-model="pageSize" x-on:change="page = 1; loadStudents()"
+                                class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <button x-on:click="changePage(page - 1)" :disabled="page <= 1"
+                                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <template x-for="p in pageNumbers" :key="p">
+                            <button x-on:click="changePage(p)"
+                                    :class="p === page ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'"
+                                    class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg"
+                                    x-text="p"></button>
+                        </template>
+                        <button x-on:click="changePage(page + 1)" :disabled="page >= totalPages"
+                                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </template>
 
         <!-- Empty State -->
-        <template x-if="loaded && students.length === 0">
+        <template x-if="loaded && students.length === 0 && activeJobId === null">
             <div class="text-center py-10">
                 <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-check-circle text-green-500 text-2xl"></i>
@@ -217,7 +289,7 @@
         </template>
 
         <!-- Not Loaded State -->
-        <template x-if="!loaded && !loading">
+        <template x-if="!loaded && !loading && activeJobId === null">
             <div class="text-center py-10">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-user-clock text-gray-400 text-2xl"></i>
@@ -280,6 +352,23 @@
                 alertMessage: '',
                 alertType: 'info',
 
+                // Pagination
+                page: 1,
+                pageSize: 50,
+                totalCount: 0,
+                totalPages: 0,
+                pageNumbers: [],
+
+                // Background job
+                activeJobId: null,
+                jobStatus: '',
+                progress: 0,
+                processed: 0,
+                totalStudents: 0,
+                successCount: 0,
+                failedCount: 0,
+                pollInterval: null,
+
                 async loadStudents() {
                     this.loading = true;
                     this.alertMessage = '';
@@ -288,9 +377,15 @@
                         var params = new URLSearchParams();
                         if (this.filterCollegeId) params.append('collegeId', this.filterCollegeId);
                         if (this.filterFacultyId) params.append('facultyId', this.filterFacultyId);
+                        params.append('page', this.page);
+                        params.append('pageSize', this.pageSize);
 
                         var response = await fetch('@Url.Action("GetStudentsWithoutUsers", "User")?' + params.toString());
-                        this.students = await response.json();
+                        var result = await response.json();
+                        this.students = result.data || [];
+                        this.totalCount = result.totalCount || 0;
+                        this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+                        this.updatePageNumbers();
                         this.loaded = true;
                         if (this.students.length === 0) {
                             this.alertMessage = 'All registered students already have login accounts.';
@@ -304,12 +399,32 @@
                     }
                 },
 
-                toggleAll(event) {
+                updatePageNumbers() {
+                    var pages = [];
+                    var start = Math.max(1, this.page - 2);
+                    var end = Math.min(this.totalPages, this.page + 2);
+                    for (var i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+                    this.pageNumbers = pages;
+                },
+
+                changePage(p) {
+                    if (p < 1 || p > this.totalPages) return;
+                    this.page = p;
+                    this.loadStudents();
+                },
+
+                togglePage(event) {
                     if (event.target.checked) {
                         this.selectedIds = this.students.map(s => s.id);
                     } else {
                         this.selectedIds = [];
                     }
+                },
+
+                isPageSelected() {
+                    return this.students.length > 0 && this.students.every(s => this.selectedIds.includes(s.id));
                 },
 
                 toggleSelect(id) {
@@ -338,32 +453,111 @@
                             body: JSON.stringify(this.selectedIds)
                         });
 
-                        console.log('Response status:', response.status);
-                        var text = await response.text();
-                        console.log('Response body:', text);
-                        var data;
-                        try { data = JSON.parse(text); } catch (e) {
-                            this.alertMessage = 'Server error (' + response.status + '). Check browser console (F12) for details.';
-                            this.alertType = 'error';
-                            return;
-                        }
+                        var data = await response.json();
 
-                        if (data.created > 0) {
-                            this.alertMessage = data.created + ' user(s) created successfully.' + (data.failed > 0 ? ' ' + data.failed + ' failed.' : '');
-                            this.alertType = data.failed > 0 ? 'warning' : 'success';
+                        if (data.success && data.jobId) {
+                            this.activeJobId = data.jobId;
+                            this.totalStudents = data.totalStudents;
+                            this.jobStatus = 'Running';
+                            this.progress = 0;
+                            this.processed = 0;
+                            this.successCount = 0;
+                            this.failedCount = 0;
+                            this.pollJobStatus();
                         } else {
-                            this.alertMessage = 'No users were created. ' + (data.failed > 0 ? data.failed + ' failed.' : (data.message || ''));
+                            this.alertMessage = data.message || 'Failed to start background job.';
                             this.alertType = 'error';
+                            this.creating = false;
                         }
-
-                        this.selectedIds = [];
-                        await this.loadStudents();
                     } catch (e) {
                         this.alertMessage = 'An error occurred. Please try again.';
                         this.alertType = 'error';
-                    } finally {
                         this.creating = false;
                     }
+                },
+
+                async createAllMatching() {
+                    if (this.creating) return;
+                    this.creating = true;
+                    this.alertMessage = '';
+
+                    try {
+                        var response = await fetch('@Url.Action("CreateUsersFromFilters", "User")', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                            body: JSON.stringify({
+                                collegeId: this.filterCollegeId ? parseInt(this.filterCollegeId) : null,
+                                facultyId: this.filterFacultyId ? parseInt(this.filterFacultyId) : null
+                            })
+                        });
+
+                        var data = await response.json();
+
+                        if (data.success && data.jobId) {
+                            this.activeJobId = data.jobId;
+                            this.totalStudents = data.totalStudents;
+                            this.jobStatus = 'Running';
+                            this.progress = 0;
+                            this.processed = 0;
+                            this.successCount = 0;
+                            this.failedCount = 0;
+                            this.pollJobStatus();
+                        } else {
+                            this.alertMessage = data.message || 'Failed to start background job.';
+                            this.alertType = 'error';
+                            this.creating = false;
+                        }
+                    } catch (e) {
+                        this.alertMessage = 'An error occurred. Please try again.';
+                        this.alertType = 'error';
+                        this.creating = false;
+                    }
+                },
+
+                pollJobStatus() {
+                    this.pollInterval = setInterval(async () => {
+                        try {
+                            var response = await fetch('@Url.Action("GetBulkJobStatus", "User")?jobId=' + this.activeJobId);
+                            if (!response.ok) {
+                                clearInterval(this.pollInterval);
+                                this.creating = false;
+                                return;
+                            }
+                            var job = await response.json();
+                            this.jobStatus = job.status;
+                            this.progress = job.percentage;
+                            this.processed = job.processedCount;
+                            this.totalStudents = job.totalStudents;
+                            this.successCount = job.successCount;
+                            this.failedCount = job.failedCount;
+
+                            if (job.status === 'Completed' || job.status === 'Failed') {
+                                clearInterval(this.pollInterval);
+                                this.creating = false;
+                                if (job.status === 'Completed') {
+                                    this.alertMessage = job.successCount + ' user(s) created successfully.' + (job.failedCount > 0 ? ' ' + job.failedCount + ' failed.' : '');
+                                    this.alertType = job.failedCount > 0 ? 'warning' : 'success';
+                                } else {
+                                    this.alertMessage = 'Job failed: ' + (job.errorMessage || 'Unknown error');
+                                    this.alertType = 'error';
+                                }
+                                this.selectedIds = [];
+                                await this.loadStudents();
+                            }
+                        } catch (e) {
+                            console.error('Poll error:', e);
+                        }
+                    }, 3000);
+                },
+
+                dismissJob() {
+                    this.activeJobId = null;
+                    this.jobStatus = '';
+                    this.progress = 0;
+                    this.processed = 0;
+                    this.totalStudents = 0;
+                    this.successCount = 0;
+                    this.failedCount = 0;
                 }
             };
         }

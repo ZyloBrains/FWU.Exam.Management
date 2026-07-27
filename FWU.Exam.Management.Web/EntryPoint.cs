@@ -219,6 +219,7 @@ public partial class EntryPoint
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
             builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
             builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
+            builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
             var app = builder.Build();
 
             EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
