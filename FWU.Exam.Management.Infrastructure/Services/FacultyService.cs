@@ -27,6 +27,52 @@ public class FacultyService(
             .ToListAsync();
     }
 
+    public async Task<(List<Faculty> Items, int TotalCount)> GetFacultiesPagedAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    {
+        var query = context.Faculties
+            .AsNoTracking()
+            .ApplyScope(userContext);
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            var s = search.ToLower();
+            query = query.Where(f =>
+                (f.Name != null && f.Name.ToLower().Contains(s)) ||
+                (f.OfficeCode != null && f.OfficeCode.ToLower().Contains(s)) ||
+                (f.ShortName != null && f.ShortName.ToLower().Contains(s)) ||
+                (f.Email != null && f.Email.ToLower().Contains(s)) ||
+                (f.ContactNumber != null && f.ContactNumber.ToLower().Contains(s)) ||
+                (f.Address != null && f.Address.ToLower().Contains(s)));
+        }
+
+        query = sortDir.ToLower() == "desc"
+            ? query.OrderByDescending(GetSortProperty(sort))
+            : query.OrderBy(GetSortProperty(sort));
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<Faculty, object>> GetSortProperty(string sort)
+    {
+        return sort.ToLower() switch
+        {
+            "name" => f => f.Name ?? "",
+            "shortname" => f => f.ShortName ?? "",
+            "officecode" => f => f.OfficeCode ?? "",
+            "email" => f => f.Email ?? "",
+            "contactnumber" => f => f.ContactNumber ?? "",
+            "address" => f => f.Address ?? "",
+            _ => f => f.Name ?? ""
+        };
+    }
+
     public async Task<Faculty?> GetFacultyByIdAsync(int id)
     {
         return await context.Faculties.FindAsync(id);

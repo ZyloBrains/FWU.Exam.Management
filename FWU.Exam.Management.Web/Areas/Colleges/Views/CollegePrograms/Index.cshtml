@@ -5,6 +5,9 @@
 @{
     ViewData["Title"] = "College Programs";
     var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "collegename";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
@@ -296,6 +299,95 @@
             </div>
         }
     </div>
+
+    <!-- Pagination + Page Size Selector -->
+    @if (totalPages > 1)
+    {
+        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+            <div class="flex flex-1 justify-between sm:hidden">
+                @if (currentPage > 1)
+                {
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Previous
+                    </a>
+                }
+                else
+                {
+                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Next
+                    </a>
+                }
+                else
+                {
+                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
+                }
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs sm:text-sm text-gray-700">
+                        Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
+                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
+                        of <span class="font-medium">@totalCount</span> results
+                    </p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
+                        <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-purple-500 focus:border-purple-500"
+                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
+                            <option value="10" selected="@(pageSize == 10)">10</option>
+                            <option value="25" selected="@(pageSize == 25)">25</option>
+                            <option value="50" selected="@(pageSize == 50)">50</option>
+                            <option value="100" selected="@(pageSize == 100)">100</option>
+                        </select>
+                    </div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                        <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
+                            <i class="fas fa-chevron-left text-xs"></i>
+                        </a>
+                        @{
+                            var startPage = Math.Max(1, currentPage - 2);
+                            var endPage = Math.Min(totalPages, currentPage + 2);
+                            if (startPage > 1)
+                            {
+                                <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
+                                if (startPage > 2)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                            }
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-purple-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                            }
+                            if (endPage < totalPages)
+                            {
+                                if (endPage < totalPages - 1)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                                <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
+                            }
+                        }
+                        <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @section Scripts {

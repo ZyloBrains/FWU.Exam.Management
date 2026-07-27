@@ -26,29 +26,77 @@ public class UserController(
     IUserContext userContext,
     IBulkUserCreationService bulkUserCreationService) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
         IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
             .Include(u => u.College);
         usersQuery = usersQuery.ApplyScope(userContext);
 
-        var users = await usersQuery.ToListAsync();
-        var model = new List<UserListItemViewModel>();
-        foreach (var user in users)
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            model.Add(new UserListItemViewModel
-            {
-                Id = user.Id,
-                Email = user.Email ?? string.Empty,
-                FullName = user.FullName,
-                FacultyName = user.Faculty?.Name,
-                CollegeName = user.College?.Name,
-                IsActive = user.IsActive,
-                Roles = await userManager.GetRolesAsync(user)
-            });
+            var s = search.ToLower();
+            usersQuery = usersQuery.Where(u =>
+                (u.Email != null && u.Email.ToLower().Contains(s)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
+                (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
+                (u.College != null && u.College.Name != null && u.College.Name.ToLower().Contains(s)));
         }
+
+        usersQuery = sortDir.ToLower() == "desc"
+            ? usersQuery.OrderByDescending(GetUserSortProperty(sort))
+            : usersQuery.OrderBy(GetUserSortProperty(sort));
+
+        var totalCount = await usersQuery.CountAsync();
+
+        var users = await usersQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var userIds = users.Select(u => u.Id).ToList();
+        var userRoles = await context.UserRoles
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .ToListAsync();
+
+        var roleLookup = userRoles
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => (IList<string>)g.Select(x => x.Name).ToList());
+
+        var model = users.Select(user => new UserListItemViewModel
+        {
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FullName = user.FullName,
+            FacultyName = user.Faculty?.Name,
+            CollegeName = user.College?.Name,
+            IsActive = user.IsActive,
+            Roles = roleLookup.GetValueOrDefault(user.Id, new List<string>())
+        }).ToList();
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
         return View(model);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<AppUser, object>> GetUserSortProperty(string sort)
+    {
+        return sort.ToLower() switch
+        {
+            "email" => u => u.Email ?? "",
+            "fullname" => u => u.FullName ?? "",
+            "isactive" => u => u.IsActive,
+            "faculty" => u => u.Faculty != null ? u.Faculty.Name ?? "" : "",
+            "college" => u => u.College != null ? u.College.Name ?? "" : "",
+            _ => u => u.Email ?? ""
+        };
     }
 
     public async Task<IActionResult> Details(string id)
