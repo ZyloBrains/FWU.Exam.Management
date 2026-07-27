@@ -56,7 +56,7 @@ public class SectionController(IPermissionService permissionService, UserManager
             sections.Add(new("System Config", "fas fa-cog", "text-indigo-600", "bg-indigo-100", "group-hover:bg-indigo-200", "Configure tenants, SMTP, SMS, payment gateways and more", Url.Action("SystemConfig")!));
 
         if (perms.Any(p => p is "reports.collegepayments" or "reports.subjectcount" or "reports.examtriplicate" or "reports.summary" or "reports.tabulationtriplicate" or "reports.programwisestudent" or "reports.attendanceheet" or "reports.marksfoil" or "reports.bankvoucherlist"))
-            sections.Add(new("Reports", "fas fa-chart-line", "text-rose-600", "bg-rose-100", "group-hover:bg-rose-200", "Generate and view various reports", Url.Action("Reports", "Reports", new { area = "Reports" })!));
+            sections.Add(new("Reports", "fas fa-chart-line", "text-rose-600", "bg-rose-100", "group-hover:bg-rose-200", "Generate and view various reports", Url.Action("Index", "Reports", new { area = "Reports" })!));
 
         return View(sections);
     }

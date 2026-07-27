@@ -323,6 +323,18 @@ public partial class EntryPoint
             }
             Console.WriteLine("[SEED] All essential seeders complete.");
 
+            // Reset Faculty TenantId so unassigned faculties appear in tenant creation dropdown
+            var facultiesToReset = await dbContext.Faculties.Where(f => f.TenantId != null).ToListAsync();
+            if (facultiesToReset.Any())
+            {
+                foreach (var faculty in facultiesToReset)
+                {
+                    faculty.TenantId = null;
+                }
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine($"[SEED] Reset TenantId for {facultiesToReset.Count} faculties.");
+            }
+
             // await ReferenceDataSeeder.SeedTenantsAsync(scope.ServiceProvider);
             // await ReferenceDataSeeder.SeedReferenceDataAsync(scope.ServiceProvider);
 
