@@ -1,0 +1,207 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.AuditLog>
+
+@{
+    ViewData["Title"] = "Audit Log";
+    var totalCount = (int)ViewBag.TotalCount;
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var totalPages = (int)ViewBag.TotalPages;
+    var entityNames = (List<string>)ViewData["EntityNames"]!;
+    var actions = (List<string>)ViewData["Actions"]!;
+}
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-history text-indigo-600"></i>
+            </div>
+            <div>
+    @await Html.PartialAsync("_AlertMessages")
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Audit Log</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Track all changes made across the system.</p>
+            </div>
+        </div>
+        <div class="text-xs sm:text-sm text-gray-500">
+            @totalCount total records
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" asp-action="Index" asp-area="Core" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Entity</label>
+                    <select name="entityName" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Entities</option>
+                        @foreach (var name in entityNames)
+                        {
+                            <option value="@name" selected="@(ViewBag.EntityName == name ? "selected" : null)">@name</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Action</label>
+                    <select name="action" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Actions</option>
+                        @foreach (var act in actions)
+                        {
+                            <option value="@act" selected="@(ViewBag.Action == act ? "selected" : null)">@act</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">User</label>
+                    <input type="text" name="userName" value="@ViewBag.UserName" placeholder="Search user..."
+                           class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Search</label>
+                    <input type="text" name="search" value="@ViewBag.Search" placeholder="Entity, ID, user..."
+                           class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">From Date</label>
+                    <input type="date" name="from" value="@ViewBag.From"
+                           class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">To Date</label>
+                    <input type="date" name="to" value="@ViewBag.To"
+                           class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                        <i class="fas fa-search mr-1"></i> Filter
+                    </button>
+                    <a asp-action="Index" asp-area="Core" class="px-4 py-2.5 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times mr-1"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Timestamp</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Entity</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Entity ID</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Action</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Changes</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Details</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @if (Model.Any())
+                    {
+                        @foreach (var log in Model)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                                    @log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                        @log.EntityName
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-mono text-gray-700">@log.EntityId</td>
+                                <td class="px-4 py-3">
+                                    @switch (log.Action)
+                                    {
+                                        case "Created":
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                                <i class="fas fa-plus-circle mr-1"></i> Created
+                                            </span>
+                                            break;
+                                        case "Updated":
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                                <i class="fas fa-edit mr-1"></i> Updated
+                                            </span>
+                                            break;
+                                        case "Deleted":
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                                <i class="fas fa-trash mr-1"></i> Deleted
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                                @log.Action
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">@log.UserName</td>
+                                <td class="px-4 py-3 text-gray-500 text-xs">
+                                    @if (!string.IsNullOrEmpty(log.ChangesJson))
+                                    {
+                                        var changeCount = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(log.ChangesJson)?.Count ?? 0;
+                                        <span>@changeCount field(s) changed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400">-</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3">
+                                    <a asp-action="Details" asp-route-id="@log.Id"
+                                       class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                        <i class="fas fa-eye mr-1"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="px-4 py-12 text-center">
+                                <i class="fas fa-history text-4xl text-gray-300 mb-3"></i>
+                                <p class="text-xs sm:text-sm text-gray-500">No audit log entries found.</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                <div class="text-xs sm:text-sm text-gray-500">
+                    Showing @((page - 1) * pageSize + 1) to @Math.Min(page * pageSize, totalCount) of @totalCount
+                </div>
+                <div class="flex items-center gap-1">
+                    @if (page > 1)
+                    {
+                        <a href="?page=@(page - 1)&entityName=@ViewBag.EntityName&action=@ViewBag.Action&userName=@ViewBag.UserName&from=@ViewBag.From&to=@ViewBag.To&search=@ViewBag.Search"
+                           class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    }
+                    @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                    {
+                        <a href="?page=@i&entityName=@ViewBag.EntityName&action=@ViewBag.Action&userName=@ViewBag.UserName&from=@ViewBag.From&to=@ViewBag.To&search=@ViewBag.Search"
+                           class="px-3 py-1.5 text-sm border rounded-lg @(i == page ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 hover:bg-gray-50") transition-colors">
+                            @i
+                        </a>
+                    }
+                    @if (page < totalPages)
+                    {
+                        <a href="?page=@(page + 1)&entityName=@ViewBag.EntityName&action=@ViewBag.Action&userName=@ViewBag.UserName&from=@ViewBag.From&to=@ViewBag.To&search=@ViewBag.Search"
+                           class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

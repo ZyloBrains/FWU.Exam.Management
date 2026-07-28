@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("boards.view")]
-public class BoardsController(IBoardService boardService) : Controller
+public class BoardsController(IBoardService boardService, ICountryService countryService) : Controller
 {
 
     // GET: Boards with pagination, search, and sorting
@@ -132,8 +132,9 @@ public class BoardsController(IBoardService boardService) : Controller
 
     // GET: Boards/Create
     [RequirePermission("boards.create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        ViewBag.CountryList = new SelectList(await countryService.GetAllAsync(), "Id", "CountryName");
         return View();
     }
 
@@ -146,6 +147,7 @@ public class BoardsController(IBoardService boardService) : Controller
         if (ModelState.IsValid)
         {
             await boardService.CreateBoardAsync(board);
+            TempData["SuccessMessage"] = "Board created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(board);
@@ -165,6 +167,7 @@ public class BoardsController(IBoardService boardService) : Controller
         {
             return NotFound();
         }
+        ViewBag.CountryList = new SelectList(await countryService.GetAllAsync(), "Id", "CountryName", board.CountryId);
         return View(board);
     }
 
@@ -196,6 +199,7 @@ public class BoardsController(IBoardService boardService) : Controller
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "Board updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(board);
@@ -225,8 +229,22 @@ public class BoardsController(IBoardService boardService) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await boardService.DeleteBoardAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await boardService.DeleteBoardAsync(id);
+            TempData["SuccessMessage"] = "Board deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("boards.delete")]
     [HttpPost]
@@ -234,6 +252,36 @@ public class BoardsController(IBoardService boardService) : Controller
     public async Task<IActionResult> DeleteAjax(int id)
     {
         try { await boardService.DeleteBoardAsync(id); return Json(new { success = true, message = "Board deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> SearchCountries(string q)
+    {
+        var countries = await countryService.GetAllAsync();
+        if (!string.IsNullOrEmpty(q))
+            countries = countries.Where(c => c.CountryName!.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        return Json(countries.Select(c => new { id = c.Id, text = c.CountryName }));
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> CreateCountry([FromBody] CountryCreateRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest(new { success = false, message = "Country name is required." });
+
+        var existing = await countryService.FindByNameAsync(request.Name.Trim());
+        if (existing != null)
+            return Ok(new { id = existing.Id, text = existing.CountryName });
+
+        var country = await countryService.CreateAsync(request.Name.Trim());
+        return Ok(new { id = country.Id, text = country.CountryName });
+    }
+
+    public class CountryCreateRequest
+    {
+        public string? Name { get; set; }
     }
 
 }

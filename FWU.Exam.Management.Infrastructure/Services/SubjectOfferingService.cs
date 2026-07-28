@@ -5,7 +5,9 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
@@ -13,19 +15,22 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class SubjectOfferingService : ISubjectOfferingService
 {
     private readonly AppDbContext _context;
+    private readonly IUserContext _userContext;
 
-    public SubjectOfferingService(AppDbContext context)
+    public SubjectOfferingService(AppDbContext context, IUserContext userContext)
     {
         _context = context;
+        _userContext = userContext;
     }
 
-    public async Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    public async Task<(List<SubjectOffering> Items, int TotalProgramCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = _context.SubjectOfferings
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
             .AsNoTracking();
+        query = query.ApplyScope(_userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -35,17 +40,35 @@ public class SubjectOfferingService : ISubjectOfferingService
                 (s.Program != null && s.Program.ProgramName != null && s.Program.ProgramName.Contains(search)));
         }
 
-        query = sortDir.ToLower() == "desc"
-            ? query.OrderByDescending(GetSortProperty(sort))
-            : query.OrderBy(GetSortProperty(sort));
-
-        var totalCount = await query.CountAsync();
-        var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var matchingProgramIds = await query
+            .Select(s => s.ProgramId)
+            .Distinct()
             .ToListAsync();
 
-        return (items, totalCount);
+        var programs = await _context.Programs
+            .Where(p => matchingProgramIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.ProgramName })
+            .ToListAsync();
+
+        var sortedPrograms = sortDir.ToLower() == "desc"
+            ? programs.OrderByDescending(p => p.ProgramName).ToList()
+            : programs.OrderBy(p => p.ProgramName).ToList();
+
+        var totalProgramCount = sortedPrograms.Count;
+        var pagedProgramIds = sortedPrograms
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(p => p.Id)
+            .ToList();
+
+        var items = await query
+            .Where(s => pagedProgramIds.Contains(s.ProgramId))
+            .OrderBy(s => s.Program!.ProgramName)
+            .ThenBy(s => s.Semester!.Number)
+            .ThenBy(s => s.DisplayOrder)
+            .ToListAsync();
+
+        return (items, totalProgramCount);
     }
 
     public async Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir)
@@ -55,6 +78,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.Program)
             .Include(s => s.Semester)
             .AsNoTracking();
+        query = query.ApplyScope(_userContext);
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -132,6 +156,7 @@ public class SubjectOfferingService : ISubjectOfferingService
 
         var programs = await _context.Programs
             .Where(p => p.IsActive)
+            .ApplyScope(_userContext)
             .OrderBy(p => p.ProgramName)
             .AsNoTracking()
             .ToListAsync();

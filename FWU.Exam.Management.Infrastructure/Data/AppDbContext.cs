@@ -5,7 +5,7 @@ using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Permissions;
-using FWU.Exam.Management.Domain.Entities.Teachers;
+using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
@@ -33,6 +33,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<College>? Colleges { get; set; }
     public DbSet<CollegeProgram>? CollegePrograms { get; set; }
     public DbSet<CollegeType>? CollegeTypes { get; set; }
+    public DbSet<Country>? Countries { get; set; }
     public DbSet<District>? Districts { get; set; }
     public DbSet<EntryFormat>? EntryFormats { get; set; }
     public DbSet<Ethnicity>? Ethnicities { get; set; }
@@ -46,7 +47,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamType>? ExamTypes { get; set; }
     public DbSet<AdmitCard>? AdmitCards { get; set; }
     public DbSet<RetotalRequest>? RetotalRequests { get; set; }
-    public DbSet<Department>? Departments { get; set; }
     public DbSet<FiscalYear>? FiscalYears { get; set; }
     public DbSet<Gender>? Genders { get; set; }
     public DbSet<IndexGroup>? IndexGroups { get; set; }
@@ -93,8 +93,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamCenterCollege>? ExamCenterColleges { get; set; }
     public DbSet<ExamCenterVenue>? ExamCenterVenues { get; set; }
     public DbSet<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
-    public DbSet<TeacherSubjectAssignment>? TeacherSubjectAssignments { get; set; }
- 
+    public DbSet<CollegeAdminSubjectAssignment>? CollegeAdminSubjectAssignments { get; set; }
+    public DbSet<AuditLog>? AuditLogs { get; set; }
+    public DbSet<BulkUserCreationJob>? BulkUserCreationJobs { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -117,7 +119,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
             var contextField = Expression.Field(Expression.Constant(this), nameof(_tenantContext));
             var tenantIdValue = Expression.Property(contextField, nameof(ITenantContext.TenantId));
-            var body = Expression.Equal(tenantIdProp, tenantIdValue);
+            var isCentral = Expression.Property(contextField, nameof(ITenantContext.IsCentralTenant));
+            var body = Expression.OrElse(isCentral, Expression.Equal(tenantIdProp, tenantIdValue));
             var lambda = Expression.Lambda(body, param);
             entityType.SetQueryFilter(lambda);
 
@@ -193,6 +196,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasMany(c => c.Faculties)
             .WithMany(f => f.Colleges);
 
+        builder.Entity<Program>()
+            .HasOne(p => p.Faculty)
+            .WithMany()
+            .HasForeignKey(p => p.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.PermanentAddress)
             .WithMany()
@@ -247,6 +256,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(nameof(StudentAdmission.AppUserId))
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<StudentAdmission>()
+            .HasOne(sa => sa.AcademicYear)
+            .WithMany()
+            .HasForeignKey(sa => sa.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<StudentRegistration>()
+            .HasOne(sr => sr.StudentAdmission)
+            .WithMany()
+            .HasForeignKey(sr => sr.StudentAdmissionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<ExamRegistration>()
             .HasOne(er => er.ExamCenter)
             .WithMany(ec => ec.ExamRegistrations)
@@ -289,12 +310,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(sr => sr.Level)
             .WithMany(l => l.StudentRegistrations)
             .HasForeignKey(sr => sr.LevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<StudentRegistration>()
-            .HasOne(sr => sr.Department)
-            .WithMany(d => d.StudentRegistrations)
-            .HasForeignKey(sr => sr.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
@@ -469,7 +484,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SubjectOffering>()
-            .HasIndex(so => new { so.SubjectCatalogId, so.ProgramId })
+            .HasIndex(so => new { so.SubjectCatalogId, so.ProgramId, so.SemesterId })
             .IsUnique();
 
         builder.Entity<CurriculumVersion>()
@@ -562,19 +577,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(ess => ess.ExamCenterId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<TeacherSubjectAssignment>()
+        builder.Entity<CollegeAdminSubjectAssignment>()
             .HasOne<AppUser>()
             .WithMany()
-            .HasForeignKey(tsa => tsa.TeacherUserId)
+            .HasForeignKey(tsa => tsa.CollegeAdminUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<TeacherSubjectAssignment>()
+        builder.Entity<CollegeAdminSubjectAssignment>()
             .HasOne(tsa => tsa.SubjectOffering)
             .WithMany()
             .HasForeignKey(tsa => tsa.SubjectOfferingId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<TeacherSubjectAssignment>()
+        builder.Entity<CollegeAdminSubjectAssignment>()
             .HasOne(tsa => tsa.ExamSchedule)
             .WithMany()
             .HasForeignKey(tsa => tsa.ExamScheduleId)
@@ -703,12 +718,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(u => u.College)
             .WithMany()
             .HasForeignKey(u => u.CollegeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<AppUser>()
-            .HasOne(u => u.Department)
-            .WithMany()
-            .HasForeignKey(u => u.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<College>()
@@ -859,16 +868,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .IsUnique()
             .HasFilter("[OfficeCode] IS NOT NULL");
 
-        builder.Entity<Department>()
-            .HasIndex(d => d.DepartmentCode)
-            .IsUnique();
-
-        builder.Entity<Department>()
-            .HasOne(d => d.Faculty)
-            .WithMany(f => f.Departments)
-            .HasForeignKey(d => d.FacultyId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<Program>()
             .HasIndex(p => p.ProgramCode)
             .IsUnique()
@@ -916,6 +915,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasIndex(e => e.EthnicityName)
             .IsUnique()
             .HasFilter("[EthnicityName] IS NOT NULL");
+
+        builder.Entity<Country>()
+            .HasIndex(c => c.CountryName)
+            .IsUnique()
+            .HasFilter("[CountryName] IS NOT NULL");
 
         builder.Entity<Board>()
             .HasIndex(b => b.BoardName)
@@ -966,7 +970,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ExamScheduleCode] IS NOT NULL");
 
         builder.Entity<Semester>()
-            .HasIndex(s => s.Code)
+            .HasOne(s => s.Faculty)
+            .WithMany()
+            .HasForeignKey(s => s.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Semester>()
+            .HasIndex(s => new { s.FacultyId, s.Code })
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL");
 
@@ -997,6 +1007,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.EntityName).HasMaxLength(128);
+            entity.Property(a => a.EntityId).HasMaxLength(128);
+            entity.Property(a => a.Action).HasMaxLength(32);
+            entity.Property(a => a.UserName).HasMaxLength(256);
+            entity.Property(a => a.UserId).HasMaxLength(128);
+            entity.Property(a => a.ChangesJson).HasMaxLength(4000);
+            entity.HasIndex(a => new { a.EntityName, a.EntityId });
+            entity.HasIndex(a => a.Timestamp);
+        });
+
+        builder.Entity<BulkUserCreationJob>(entity =>
+        {
+            entity.ToTable("BulkUserCreationJobs");
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.UserId).HasMaxLength(128);
+            entity.Property(b => b.Status).HasMaxLength(32);
+            entity.Property(b => b.ErrorMessage).HasMaxLength(2000);
+            entity.HasIndex(b => b.Status);
+            entity.HasIndex(b => b.CreatedAt);
         });
     }
 }

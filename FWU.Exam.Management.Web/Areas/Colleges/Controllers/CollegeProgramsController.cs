@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
@@ -15,13 +16,16 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("collegeprograms.view")]
-public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
+public class CollegeProgramsController(ICollegeProgramService collegeProgramService, IUserContext userContext) : Controller
 {
-    public async Task<IActionResult> Index(string search = null, string sort = "collegename", string sortDir = "asc")
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(1, int.MaxValue, search, sort, sortDir);
+        var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
@@ -258,6 +262,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "College program updated successfully.";
             return RedirectToAction(nameof(Index));
         }
         var (colleges, programs) = await collegeProgramService.GetSelectListsAsync();
@@ -288,8 +293,22 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     [RequirePermission("collegeprograms.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await collegeProgramService.DeleteCollegeProgramAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await collegeProgramService.DeleteCollegeProgramAsync(id);
+            TempData["SuccessMessage"] = "College program deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("collegeprograms.delete")]
     [HttpPost]

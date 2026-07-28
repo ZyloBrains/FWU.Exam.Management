@@ -5,37 +5,38 @@
     ViewData["Title"] = "Student Registration Details";
     var isActive = Model?.IsActive == true;
     var isRegGenerated = Model?.IsRegistrationNumberGenerated == true;
+    var hasManualRegNumber = !string.IsNullOrEmpty(Model?.RegistrationNumber) && Model?.IsRegistrationNumberGenerated != true;
 }
 
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="md:flex md:items-center md:justify-between mb-8 pb-5 border-b border-gray-200">
-        <div class="flex-1 min-w-0">
-            <h1 class="text-3xl font-bold leading-tight text-gray-900 tracking-tight">Student Details</h1>
-            <p class="mt-2 text-sm text-gray-500">Complete academic, personal, and verification information for the student.</p>
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600 text-sm"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-teal-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-user-graduate text-teal-600 text-sm"></i>
+            </div>
+            <h1 class="text-xl font-bold text-gray-800">Student Details</h1>
         </div>
-        <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
-            <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
-                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                Back to List
-            </a>
-            <a asp-action="Edit" asp-route-id="@Model?.Id" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
-                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                Edit Registration
+        <div class="ml-auto flex gap-3">
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm">
+                <i class="fas fa-edit mr-1"></i> Edit
             </a>
         </div>
     </div>
 
     <!-- Quick Stats Profile Banner -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
-        <div class="p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-gradient-to-r from-gray-50 to-white">
+        <div class="p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-linear-to-r from-gray-50 to-white">
             <div class="flex items-center gap-5">
                 <div class="h-16 w-16 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-2xl shadow-sm">
                     @(Model?.FirstName?.FirstOrDefault() ?? 'U')@(Model?.LastName?.FirstOrDefault() ?? 'N')
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">@(Model?.FirstName) @(Model?.MiddleName) @(Model?.LastName)</h2>
-                    <div class="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">@(Model?.FirstName) @(Model?.MiddleName) @(Model?.LastName)</h2>
+                    <div class="mt-1 flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         @(Model?.Email ?? "No email provided")
                     </div>
@@ -46,30 +47,50 @@
                     <svg class="mr-1.5 h-2 w-2 @(isActive ? "text-emerald-500" : "text-gray-400")" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" /></svg>
                     @(isActive ? "Active Enrollment" : "Inactive")
                 </span>
-                <span class="inline-flex items-center rounded-full px-3 py-1 font-medium @(isRegGenerated ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20" : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20")">
-                    @(isRegGenerated ? "Registration Generated" : "Pending Generation")
+                <span id="regStatusBadge" class="inline-flex items-center rounded-full px-3 py-1 font-medium @(isRegGenerated ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20" : hasManualRegNumber ? "bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20" : "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20")">
+                    @(isRegGenerated ? "Registration Generated" : hasManualRegNumber ? "Manual Entry" : "Pending Generation")
                 </span>
             </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200 border-t border-gray-200">
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Registration No.</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.RegistrationNumber ?? "-")</p>
+                <p id="regNumberDisplay" class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.RegistrationNumber ?? "-")</p>
             </div>
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Academic Year</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.AcademicYear?.AcademicYearName ?? "-")</p>
+                <p class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.AcademicYear?.AcademicYearName ?? "-")</p>
             </div>
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program Level</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.Level?.LevelName ?? "-")</p>
-            </div>
-            <div class="p-4 sm:px-6">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Department</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900 truncate" title="@(Model?.Department?.DepartmentName)">@(Model?.Department?.DepartmentName ?? "-")</p>
+                <p class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.Level?.LevelName ?? "-")</p>
             </div>
         </div>
     </div>
+
+    @if (string.IsNullOrEmpty(Model?.RegistrationNumber))
+    {
+        <div id="generateRegSection" class="bg-white rounded-xl shadow-sm border-2 border-dashed border-amber-300 overflow-hidden">
+            <div class="px-6 py-5 flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-amber-800">Registration Number Not Generated</h3>
+                    <p class="mt-1 text-sm text-amber-600">Generate a system-assigned registration number for this student.</p>
+                </div>
+                <button id="generateRegBtn" type="button" onclick="generateRegNumber(@Model.Id)"
+                        class="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-amber-700 transition shadow-sm">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Generate Registration Number
+                </button>
+            </div>
+            <div id="generateRegSpinner" class="hidden px-6 py-4 bg-amber-50">
+                <div class="flex items-center gap-2 text-sm text-amber-700">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    Generating registration number...
+                </div>
+            </div>
+        </div>
+        <div class="h-8"></div>
+    }
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
@@ -84,44 +105,44 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">First Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.FirstName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">First Name</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.FirstName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Middle Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.MiddleName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Middle Name</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.MiddleName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Last Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.LastName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Last Name</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.LastName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Nepali Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.NepaliName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Nepali Name</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.NepaliName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Date of Birth (BS)</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.DateOfBirthBS ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Date of Birth (BS)</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.DateOfBirthBS ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Date of Birth (AD)</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.DateOfBirthAD ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Date of Birth (AD)</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.DateOfBirthAD ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Gender</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Gender?.GenderName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Gender</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Gender?.GenderName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Blood Group</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.BloodGroup ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Blood Group</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.BloodGroup ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Nationality</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Nationality ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Nationality</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Nationality ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Religion</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Religion ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Religion</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Religion ?? "-")</dd>
                     </div>
                 </dl>
             </div>
@@ -138,32 +159,44 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Mobile Number</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.ContactNumber ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Mobile Number</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.ContactNumber ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Phone</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Phone ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Phone</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Phone ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-2">
-                        <dt class="text-sm font-medium text-gray-500">Email Address</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Email ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Email Address</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Email ?? "-")</dd>
                     </div>
                     
                     <div class="sm:col-span-2 mt-4 pt-4 border-t border-gray-100">
                         <h4 class="text-sm font-semibold text-gray-900 mb-4">Permanent Address</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-500">Ward Number</dt>
-                                <dd class="mt-1 text-sm text-gray-900">@(Model?.PermanentAddress?.WardNumber?.ToString() ?? "-")</dd>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">Province</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.LocalLevel?.District?.Province?.ProvinceName ?? "-")</dd>
                             </div>
                             <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-500">Tole / Street</dt>
-                                <dd class="mt-1 text-sm text-gray-900">@(Model?.PermanentAddress?.ToleStreet ?? "-")</dd>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">District</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.LocalLevel?.District?.DistrictName ?? "-")</dd>
                             </div>
                             <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-500">House Number</dt>
-                                <dd class="mt-1 text-sm text-gray-900">@(Model?.PermanentAddress?.HouseNumber ?? "-")</dd>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">Local Level</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.LocalLevel?.LocalLevelName ?? "-")</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">Ward Number</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.WardNumber?.ToString() ?? "-")</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">Tole / Street</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.ToleStreet ?? "-")</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500">House Number</dt>
+                                <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.PermanentAddress?.HouseNumber ?? "-")</dd>
                             </div>
                         </div>
                     </div>
@@ -182,24 +215,24 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-2">
-                        <dt class="text-sm font-medium text-gray-500">College / Institution</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.College?.Name ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">College / Institution</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.College?.Name ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Faculty</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Faculty?.Name ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Faculty</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Faculty?.Name ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Program</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Program?.ProgramName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Program</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Program?.ProgramName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Student Category</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.StudentCategory?.StudentCategoryName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Student Category</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.StudentCategory?.StudentCategoryName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Ethnicity</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Ethnicity?.EthnicityName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Ethnicity</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Ethnicity?.EthnicityName ?? "-")</dd>
                     </div>
                 </dl>
             </div>
@@ -216,16 +249,16 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Verified By (User ID)</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.VerifiedBy?.ToString() ?? "Pending Verification")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Verified By (User ID)</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.VerifiedBy?.ToString() ?? "Pending Verification")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Verification Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.VerifiedDate?.ToString("dd MMM yyyy hh:mm tt") ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Verification Date</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.VerifiedDate?.ToString("dd MMM yyyy hh:mm tt") ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Entrance Roll Number</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Entrance Roll Number</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">
                             @if (!string.IsNullOrEmpty(Model?.EntranceRollNumber))
                             {
                                 <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded font-medium font-mono text-xs">@Model.EntranceRollNumber</span>
@@ -237,8 +270,8 @@
                         </dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">System Status</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">System Status</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">
                             @(isActive ? "Active Enrollment" : "Disabled/Archived")
                         </dd>
                     </div>
@@ -264,28 +297,28 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Father Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(guardian.FatherName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Father Name</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(guardian.FatherName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Father Occupation</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(guardian.FatherProfession ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Father Occupation</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(guardian.FatherProfession ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Father Phone</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(guardian.FatherContactNumber ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Father Phone</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(guardian.FatherContactNumber ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Mother Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(guardian.MotherName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Mother Name</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(guardian.MotherName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Mother Occupation</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(guardian.MotherProfession ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Mother Occupation</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(guardian.MotherProfession ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Mother Phone</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(guardian.MotherContactNumber ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Mother Phone</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(guardian.MotherContactNumber ?? "-")</dd>
                     </div>
                 </dl>
             </div>
@@ -348,3 +381,45 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function generateRegNumber(id) {
+            var btn = document.getElementById('generateRegBtn');
+            var spinner = document.getElementById('generateRegSpinner');
+            var section = document.getElementById('generateRegSection');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            $.post(tenantUrl('/Students/StudentRegistrations/GenerateRegistrationNumber'), { id: id })
+                .done(function (result) {
+                    if (result.success) {
+                        section.innerHTML =
+                            '<div class="px-6 py-5 flex items-center gap-3 bg-green-50">' +
+                                '<svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' +
+                                '<div>' +
+                                    '<p class="text-xs sm:text-sm font-medium text-green-800">Registration Number Generated</p>' +
+                                    '<p class="mt-1 text-lg font-bold text-green-700 font-mono">' + result.registrationNumber + '</p>' +
+                                '</div>' +
+                            '</div>';
+                        // Update the badge and number in the header
+                        document.getElementById('regNumberDisplay').textContent = result.registrationNumber;
+                        var badge = document.getElementById('regStatusBadge');
+                        if (badge) {
+                            badge.className = 'inline-flex items-center rounded-full px-3 py-1 font-medium bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20';
+                            badge.textContent = 'Registration Generated';
+                        }
+                    } else {
+                        alert('Error: ' + result.message);
+                        btn.disabled = false;
+                    }
+                })
+                .fail(function () {
+                    alert('An unexpected error occurred.');
+                    btn.disabled = false;
+                    spinner.classList.add('hidden');
+                });
+        }
+    </script>
+}

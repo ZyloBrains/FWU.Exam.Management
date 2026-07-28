@@ -3,7 +3,11 @@
     var pendingCount = ViewBag.PendingCount as int? ?? 0;
     var totalCount = ViewBag.TotalCount as int? ?? 0;
     var existingCount = ViewBag.ExistingCount as int? ?? 0;
+    var missingSymbolCount = ViewBag.MissingSymbolCount as int? ?? 0;
     var selectedScheduleId = ViewBag.SelectedScheduleId as int?;
+
+    var symbolsAssigned = selectedScheduleId.HasValue && missingSymbolCount == 0 && totalCount > 0;
+    var canGenerateCards = symbolsAssigned && pendingCount > 0;
 }
 
 <div class="space-y-6">
@@ -17,7 +21,7 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Generate Admit Cards</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Bulk generate admit cards for exam registrations.</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Assign symbol numbers first, then generate admit cards.</p>
             </div>
         </div>
     </div>
@@ -25,8 +29,8 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <form method="get" asp-action="Generate" asp-area="Exams" class="flex flex-col sm:flex-row gap-4 items-end">
             <div class="flex-1 w-full">
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">Select Exam Schedule</label>
-                <select name="examScheduleId" class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Select Exam Schedule</label>
+                <select name="examScheduleId" class="select2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">-- Select Schedule --</option>
                     @if (ViewData["ExamScheduleId"] is SelectList scheduleList)
                     {
@@ -37,7 +41,7 @@
                     }
                 </select>
             </div>
-            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-search mr-1"></i> Check
             </button>
         </form>
@@ -47,43 +51,124 @@
     {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold text-gray-800">@totalCount</div>
-                <div class="text-sm text-gray-500 mt-1">Total Registrations</div>
+                <div class="text-xl sm:text-2xl font-bold text-gray-800">@totalCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Total Registrations</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold text-green-600">@pendingCount</div>
-                <div class="text-sm text-gray-500 mt-1">Pending (No Card)</div>
+                <div class="text-xl sm:text-2xl font-bold text-green-600">@pendingCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Pending (No Card)</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-2xl font-bold text-amber-600">@existingCount</div>
-                <div class="text-sm text-gray-500 mt-1">Already Generated</div>
+                <div class="text-xl sm:text-2xl font-bold text-amber-600">@existingCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Already Generated</div>
             </div>
         </div>
 
-        @if (pendingCount > 0)
-        {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <i class="fas fa-ticket-alt text-4xl text-blue-300 mb-4"></i>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">Ready to Generate</h3>
-                <p class="text-sm text-gray-500 mb-4">
-                    @pendingCount admit card(s) will be generated for the selected exam schedule.
-                </p>
-                <form method="post" asp-action="GenerateConfirmed" asp-area="Exams">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="examScheduleId" value="@selectedScheduleId.Value" />
-                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                        <i class="fas fa-cogs"></i> Generate @pendingCount Card(s)
-                    </button>
-                </form>
+        @* ── Step Progress ── *@
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Prerequisite Steps</h3>
+            <div class="space-y-3">
+
+                @* Step 1: Symbol Numbers *@
+                <div class="flex items-center gap-4 p-4 rounded-lg @(symbolsAssigned ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200")">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center @(symbolsAssigned ? "bg-green-100" : "bg-red-100")">
+                        @if (symbolsAssigned)
+                        {
+                            <i class="fas fa-check text-green-600"></i>
+                        }
+                        else
+                        {
+                            <span class="text-sm font-bold text-red-600">1</span>
+                        }
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold @(symbolsAssigned ? "text-green-800" : "text-red-800")">Symbol Numbers</div>
+                        <div class="text-xs @(symbolsAssigned ? "text-green-600" : "text-red-600")">
+                            @if (symbolsAssigned)
+                            {
+                                <span>All @totalCount registration(s) have symbol numbers assigned.</span>
+                            }
+                            else
+                            {
+                                <span>@missingSymbolCount out of @totalCount registration(s) are missing symbol numbers.</span>
+                            }
+                        </div>
+                    </div>
+                    @if (!symbolsAssigned)
+                    {
+                        <a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" asp-route-examScheduleId="@selectedScheduleId"
+                           class="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-hashtag"></i> Assign
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="flex-shrink-0 text-xs font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">Done</span>
+                    }
+                </div>
+
+                @* Step 2: Admit Cards *@
+                <div class="flex items-center gap-4 p-4 rounded-lg @(canGenerateCards ? "bg-blue-50 border border-blue-200" : totalCount == 0 ? "bg-gray-50 border border-gray-200" : "bg-gray-50 border border-gray-200")">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center @(canGenerateCards ? "bg-blue-100" : "bg-gray-100")">
+                        @if (existingCount == totalCount && totalCount > 0)
+                        {
+                            <i class="fas fa-check text-green-600"></i>
+                        }
+                        else
+                        {
+                            <span class="text-sm font-bold @(canGenerateCards ? "text-blue-600" : "text-gray-400")">2</span>
+                        }
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold @(canGenerateCards ? "text-blue-800" : "text-gray-500")">Generate Admit Cards</div>
+                        <div class="text-xs @(canGenerateCards ? "text-blue-600" : "text-gray-400")">
+                            @if (existingCount == totalCount && totalCount > 0)
+                            {
+                                <span>All @totalCount admit card(s) have been generated.</span>
+                            }
+                            else if (canGenerateCards)
+                            {
+                                <span>@pendingCount admit card(s) are ready to be generated.</span>
+                            }
+                            else
+                            {
+                                <span>Complete Step 1 (Symbol Numbers) first.</span>
+                            }
+                        </div>
+                    </div>
+                    @if (existingCount == totalCount && totalCount > 0)
+                    {
+                        <span class="flex-shrink-0 text-xs font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full">All Done</span>
+                    }
+                    else if (canGenerateCards)
+                    {
+                        <form method="post" asp-action="GenerateConfirmed" asp-area="Exams">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="examScheduleId" value="@selectedScheduleId.Value" />
+                            <button type="submit" class="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-cogs"></i> Generate @pendingCount Card(s)
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="flex-shrink-0 text-xs font-medium text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Locked</span>
+                    }
+                </div>
             </div>
-        }
-        else if (totalCount > 0)
-        {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <i class="fas fa-check-circle text-4xl text-green-300 mb-4"></i>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">All Cards Generated</h3>
-                <p class="text-sm text-gray-500">All registrations already have admit cards for this schedule.</p>
-            </div>
-        }
+        </div>
     }
 </div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+    </style>
+    <script>
+        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
+    </script>
+}

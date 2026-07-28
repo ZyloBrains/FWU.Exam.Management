@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class FacultyService(
     AppDbContext context,
     UserManager<AppUser> userManager,
-    ILogger<FacultyService> logger) : IFacultyService
+    ILogger<FacultyService> logger,
+    IUserContext userContext) : IFacultyService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -19,8 +22,55 @@ public class FacultyService(
     {
         return await context.Faculties
             .AsNoTracking()
+            .ApplyScope(userContext)
             .OrderBy(f => f.Name)
             .ToListAsync();
+    }
+
+    public async Task<(List<Faculty> Items, int TotalCount)> GetFacultiesPagedAsync(int page, int pageSize, string? search, string sort, string sortDir)
+    {
+        var query = context.Faculties
+            .AsNoTracking()
+            .ApplyScope(userContext);
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            var s = search.ToLower();
+            query = query.Where(f =>
+                (f.Name != null && f.Name.ToLower().Contains(s)) ||
+                (f.OfficeCode != null && f.OfficeCode.ToLower().Contains(s)) ||
+                (f.ShortName != null && f.ShortName.ToLower().Contains(s)) ||
+                (f.Email != null && f.Email.ToLower().Contains(s)) ||
+                (f.ContactNumber != null && f.ContactNumber.ToLower().Contains(s)) ||
+                (f.Address != null && f.Address.ToLower().Contains(s)));
+        }
+
+        query = sortDir.ToLower() == "desc"
+            ? query.OrderByDescending(GetSortProperty(sort))
+            : query.OrderBy(GetSortProperty(sort));
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<Faculty, object>> GetSortProperty(string sort)
+    {
+        return sort.ToLower() switch
+        {
+            "name" => f => f.Name ?? "",
+            "shortname" => f => f.ShortName ?? "",
+            "officecode" => f => f.OfficeCode ?? "",
+            "email" => f => f.Email ?? "",
+            "contactnumber" => f => f.ContactNumber ?? "",
+            "address" => f => f.Address ?? "",
+            _ => f => f.Name ?? ""
+        };
     }
 
     public async Task<Faculty?> GetFacultyByIdAsync(int id)
@@ -92,6 +142,25 @@ public class FacultyService(
             context.Faculties.Remove(faculty);
             await context.SaveChangesAsync();
         }
+    }
+
+    public async Task<(bool canDelete, List<string> blockingEntities)> CheckDeleteDependenciesAsync(int id)
+    {
+        var reasons = new List<string>();
+
+        var programs = await context.Programs.CountAsync(p => p.FacultyId == id);
+        if (programs > 0) reasons.Add($"{programs} Program(s)");
+
+        var semesters = await context.Semesters.CountAsync(s => s.FacultyId == id);
+        if (semesters > 0) reasons.Add($"{semesters} Semester(s)");
+
+        var users = await context.Users.CountAsync(u => u.FacultyId == id);
+        if (users > 0) reasons.Add($"{users} User account(s)");
+
+        var registrations = await context.StudentRegistrations.CountAsync(r => r.FacultyId == id);
+        if (registrations > 0) reasons.Add($"{registrations} Student Registration(s)");
+
+        return (reasons.Count == 0, reasons);
     }
 
     public async Task<bool> FacultyExistsAsync(int id)

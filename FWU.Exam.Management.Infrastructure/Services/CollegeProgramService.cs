@@ -4,16 +4,19 @@ using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeProgramService(AppDbContext context) : ICollegeProgramService
+public class CollegeProgramService(AppDbContext context, IUserContext userContext) : ICollegeProgramService
 {
     public async Task<(List<CollegeProgram> Items, int TotalCount)> GetCollegeProgramsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = BuildQuery(search);
+        query = query.ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
 
@@ -86,8 +89,8 @@ public class CollegeProgramService(AppDbContext context) : ICollegeProgramServic
 
     public async Task<(List<College> Colleges, List<Program> Programs)> GetSelectListsAsync()
     {
-        var colleges = await context.Colleges.AsNoTracking().ToListAsync();
-        var programs = await context.Programs.AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync();
+        var programs = await context.Programs.ApplyScope(userContext).AsNoTracking().ToListAsync();
 
         return (colleges, programs);
     }

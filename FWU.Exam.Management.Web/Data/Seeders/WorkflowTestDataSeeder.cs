@@ -59,25 +59,12 @@ public static class WorkflowTestDataSeeder
         // ===================================================================
         var levels = new[]
         {
-            new Level { LevelCode = "BL", LevelName = "Bachelor", IsActive = true },
-            new Level { LevelCode = "MA", LevelName = "Master", IsActive = true },
+            new Level { LevelCode = "1", LevelName = "Undergraduate", IsActive = true },
+            new Level { LevelCode = "2", LevelName = "Graduate", IsActive = true },
         };
         await context.Levels.AddRangeAsync(levels);
         await context.SaveChangesAsync();
         var bachelorLevel = levels[0];
-
-        // ===================================================================
-        // 4. DEPARTMENTS
-        // ===================================================================
-        var departments = new[]
-        {
-            new Department { DepartmentCode = "SCI", DepartmentName = "Science and Technology", ShortName = "SCI", IsActive = true },
-            new Department { DepartmentCode = "HUM", DepartmentName = "Humanities and Social Sciences", ShortName = "HUM", IsActive = true },
-        };
-        await context.Departments.AddRangeAsync(departments);
-        await context.SaveChangesAsync();
-        var deptSci = departments[0];
-        var deptHum = departments[1];
 
         // ===================================================================
         // 5. PROGRAMS
@@ -86,22 +73,20 @@ public static class WorkflowTestDataSeeder
         {
             new Program
             {
-                ProgramCode = "BSCSIT",
+                ProgramCode = "L008",
                 ProgramName = "Bachelor of Science in Computer Science and Information Technology",
                 ShortName = "B.Sc. CSIT",
                 LevelId = bachelorLevel.Id,
-                DepartmentId = deptSci.Id,
                 Duration = 4,
                 IsActive = true,
                 RollNumberPrefix = "CSIT"
             },
             new Program
             {
-                ProgramCode = "BA",
+                ProgramCode = "L011",
                 ProgramName = "Bachelor of Arts",
                 ShortName = "BA",
                 LevelId = bachelorLevel.Id,
-                DepartmentId = deptHum.Id,
                 Duration = 4,
                 IsActive = true,
                 RollNumberPrefix = "BA"
@@ -138,11 +123,6 @@ public static class WorkflowTestDataSeeder
         await context.SaveChangesAsync();
         var fstFaculty = faculties[0];
         var humFaculty = faculties[1];
-
-        // Assign departments to faculties
-        deptSci.FacultyId = fstFaculty.Id;
-        deptHum.FacultyId = humFaculty.Id;
-        await context.SaveChangesAsync();
 
         // ===================================================================
         // 7. COLLEGES (with Faculty M2M links)
@@ -198,8 +178,8 @@ public static class WorkflowTestDataSeeder
         // ===================================================================
         var semesters = new[]
         {
-            new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id },
-            new Semester { Number = 2, Year = 1, Name = "Second Semester", Code = "SEM2", StartDate = new DateTime(2025, 2, 1), EndDate = new DateTime(2025, 6, 30), AcademicYearId = runningYear.Id },
+            new Semester { Number = 1, Year = 1, Name = "First Semester", Code = "SEM1", StartDate = new DateTime(2024, 9, 1), EndDate = new DateTime(2025, 1, 30), AcademicYearId = runningYear.Id, FacultyId = fstFaculty.Id },
+            new Semester { Number = 2, Year = 1, Name = "Second Semester", Code = "SEM2", StartDate = new DateTime(2025, 2, 1), EndDate = new DateTime(2025, 6, 30), AcademicYearId = runningYear.Id, FacultyId = fstFaculty.Id },
         };
         await context.Semesters.AddRangeAsync(semesters);
         await context.SaveChangesAsync();
@@ -440,7 +420,6 @@ public static class WorkflowTestDataSeeder
             CollegeId = collegeCst.Id,
             FacultyId = fstFaculty.Id,
             LevelId = bachelorLevel.Id,
-            DepartmentId = deptSci.Id,
             ProgramId = csitProgram.Id,
             StudentCategoryId = categoryRegular.Id,
             EthnicityId = ethnicityOther.Id,
@@ -461,7 +440,6 @@ public static class WorkflowTestDataSeeder
             CollegeId = collegeHum.Id,
             FacultyId = humFaculty.Id,
             LevelId = bachelorLevel.Id,
-            DepartmentId = deptHum.Id,
             ProgramId = baProgram.Id,
             StudentCategoryId = categoryRegular.Id,
             EthnicityId = ethnicityOther.Id,
@@ -590,7 +568,6 @@ public static class WorkflowTestDataSeeder
             CollegeId = collegeCst.Id,
             FacultyId = fstFaculty.Id,
             LevelId = bachelorLevel.Id,
-            DepartmentId = deptSci.Id,
             ProgramId = csitProgram.Id,
             StudentCategoryId = categoryRegular.Id,
             EthnicityId = ethnicityOther.Id,

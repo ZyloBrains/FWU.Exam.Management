@@ -3,6 +3,7 @@ namespace FWU.Exam.Management.Web.ViewModels;
 public class StudentProfileViewModel
 {
     public int RegistrationId { get; set; }
+    public int? PermanentAddressId { get; set; }
     public string? RegistrationNumber { get; set; }
     public string? FullName { get; set; }
     public string? NepaliName { get; set; }
@@ -13,6 +14,7 @@ public class StudentProfileViewModel
     public string? Category { get; set; }
     public string? ContactNumber { get; set; }
     public string? Email { get; set; }
+    public bool IsEmailConfirmed { get; set; }
     public string? PhotoPath { get; set; }
     public string? SignaturePath { get; set; }
     public string? Address { get; set; }
@@ -20,7 +22,6 @@ public class StudentProfileViewModel
     public string? Nationality { get; set; }
     public string? Religion { get; set; }
     public string? AcademicYear { get; set; }
-    public string? Department { get; set; }
     public string? College { get; set; }
     public string? Level { get; set; }
 }
@@ -35,6 +36,11 @@ public class ExamFormViewModel
     public string? Status { get; set; }
     public decimal Amount { get; set; }
     public bool HasPaid { get; set; }
+    public bool HasAdmitCard { get; set; }
+    public int? AdmitCardId { get; set; }
+    public string? EndDateBs { get; set; }
+    public string? ExtendedDateBs { get; set; }
+    public DateTime? AdmissionCardReleaseDate { get; set; }
 }
 
 public class ExamFormsListViewModel
@@ -68,6 +74,11 @@ public class ExamPaymentViewModel
     public string? ExamScheduleName { get; set; }
     public string? ProgramName { get; set; }
     public string? SemesterName { get; set; }
+    public string? StudentName { get; set; }
+    public string? RegistrationNumber { get; set; }
+    public string? EndDateBs { get; set; }
+    public string? AcademicYearName { get; set; }
+    public string? ExamTypeName { get; set; }
     public decimal TotalExamFee { get; set; }
     public decimal TotalPracticalFee { get; set; }
     public decimal GrandTotal { get; set; }
@@ -110,4 +121,30 @@ public class MarksheetSubjectViewModel
     public string? GradePoint { get; set; }
     public bool IsPassed { get; set; }
     public string? Status { get; set; }
+}
+
+public class ExamFormAdminViewModel
+{
+    public int ExamRegistrationId { get; set; }
+    public string? StudentName { get; set; }
+    public string? RegistrationNumber { get; set; }
+    public string? CollegeName { get; set; }
+    public int? ExamScheduleId { get; set; }
+    public string? ExamScheduleName { get; set; }
+    public string? ProgramName { get; set; }
+    public decimal? FeeEnclosed { get; set; }
+    public Domain.Enums.RegistrationStatus Status { get; set; }
+    public bool PaymentConfirmed { get; set; }
+    public string? InvoiceNumber { get; set; }
+    public bool HasAdmitCard { get; set; }
+    public DateTime? RegistrationDate { get; set; }
+}
+
+public class ExamFormsAdminListViewModel
+{
+    public List<ExamFormAdminViewModel> Forms { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PaymentConfirmedCount { get; set; }
+    public int AdmitCardGeneratedCount { get; set; }
+    public int PendingAdmitCardCount { get; set; }
 }

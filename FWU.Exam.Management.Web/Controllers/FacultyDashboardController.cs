@@ -49,7 +49,7 @@ public class FacultyDashboardController(
         if (currentUser == null)
             return (null, Challenge());
 
-        if (User.IsInRole(Role.SuperAdmin) || User.IsInRole(Role.FacultyAdmin) || currentUser.FacultyId == faculty.Id)
+        if (User.IsInRole(Role.SuperAdmin) || currentUser.FacultyId == faculty.Id)
             return (faculty, null);
 
         return (null, Forbid());
@@ -313,9 +313,9 @@ public class FacultyDashboardController(
         return RedirectToAction(nameof(Users), new { officeCode });
     }
 
-    [HttpPost]
+    [HttpPost("users/{id}/delete-ajax")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteAjax(string id)
+    public async Task<IActionResult> DeleteAjax(string officeCode, string id)
     {
         try
         {

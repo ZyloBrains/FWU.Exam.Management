@@ -150,6 +150,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         if (ModelState.IsValid)
         {
             await academicYearService.CreateAcademicYearAsync(academicYear);
+            TempData["SuccessMessage"] = "Academic year created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(academicYear);
@@ -198,6 +199,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
                     throw;
                 }
             }
+            TempData["SuccessMessage"] = "Academic year updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(academicYear);
@@ -225,8 +227,22 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await academicYearService.DeleteAcademicYearAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await academicYearService.DeleteAcademicYearAsync(id);
+            TempData["SuccessMessage"] = "Academic year deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("academicyears.delete")]
     [HttpPost]

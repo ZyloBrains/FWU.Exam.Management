@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -14,8 +16,8 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
-public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
+[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, IUserContext userContext, AppDbContext context) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -27,16 +29,14 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
-            return await context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
-                .Select(c => c.Id)
+            return await context.CollegePrograms
+                .Where(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId)
+                .Select(cp => cp.CollegeId)
+                .Distinct()
                 .ToListAsync();
         }
 
         if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
-            return [user.CollegeId.Value];
-
-        if (User.IsInRole(Role.DepartmentAdmin) && user.CollegeId != null)
             return [user.CollegeId.Value];
 
         return [];
@@ -44,10 +44,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
     public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int pageSize = 10, int? admissionId = null)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
-
-        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId);
+        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -71,10 +68,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
     public async Task<IActionResult> Create(int? studentAdmissionId = null)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
-
-        var admissions = await enrollmentService.GetActiveAdmissionsAsync(collegeId);
+        var admissions = await enrollmentService.GetActiveAdmissionsAsync();
         ViewBag.StudentAdmissionId = new SelectList(admissions.Select(a => new
         {
             a.Id,
@@ -112,9 +106,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             return RedirectToAction(nameof(Index));
         }
 
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
-        var admissions = await enrollmentService.GetActiveAdmissionsAsync(collegeId);
+        var admissions = await enrollmentService.GetActiveAdmissionsAsync();
         ViewBag.StudentAdmissionId = new SelectList(admissions.Select(a => new
         {
             a.Id,
@@ -135,16 +127,17 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         var enrollment = await enrollmentService.GetEnrollmentByIdAsync(id.Value);
         if (enrollment == null) return NotFound();
 
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
-        var admissions = await enrollmentService.GetActiveAdmissionsAsync(collegeId);
+        var admissions = await enrollmentService.GetActiveAdmissionsAsync();
         ViewBag.StudentAdmissionId = new SelectList(admissions.Select(a => new
         {
             a.Id,
             DisplayName = $"{a.CollegeRollNumber} - {a.Program?.ProgramName} ({a.College?.Name})"
         }), "Id", "DisplayName", enrollment.StudentAdmissionId);
 
-        var semesters = await context.Semesters.AsNoTracking().ToListAsync();
+        var admission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
+        var semesters = admission != null
+            ? await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId)
+            : await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
         ViewBag.SemesterId = new SelectList(semesters, "Id", "Name", enrollment.SemesterId);
         ViewBag.EnrollmentStatusList = new SelectList(Enum.GetValues<StudentEnrollmentStatus>(), enrollment.EnrollmentStatus);
         ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);
@@ -191,9 +184,22 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await enrollmentService.DeleteEnrollmentAsync(id);
-        TempData["SuccessMessage"] = "Semester enrollment deleted successfully!";
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await enrollmentService.DeleteEnrollmentAsync(id);
+            TempData["SuccessMessage"] = "Semester enrollment deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [HttpGet]
@@ -211,9 +217,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
-        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId);
+        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId);
 
         var sb = new StringBuilder();
         sb.AppendLine("S.N.,Admission,Semester,Status,Type,Payment,Total Fee,Total Credits,Result");
@@ -229,9 +233,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : null;
-        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId);
+        var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("SemesterEnrollments");

@@ -31,8 +31,10 @@ public static class Permissions
     public const string GroupCollegePrograms = "collegeprograms";
     public const string GroupNotices = "notices";
     public const string GroupBoards = "boards";
-    public const string GroupDepartments = "departments";
     public const string GroupLevels = "levels";
+    public const string GroupGenders = "genders";
+    public const string GroupEthnicities = "ethnicities";
+    public const string GroupCountries = "countries";
     public const string GroupSmtp = "smtp";
     public const string GroupSms = "sms";
     public const string GroupESewa = "esewa";
@@ -49,6 +51,8 @@ public static class Permissions
     public const string GroupRetotaling = "retotaling";
     public const string GroupMarksEntry = "marksentry";
     public const string GroupReports = "reports";
+    public const string GroupAuditLog = "auditlog";
+    public const string GroupBackupRestore = "backuprestore";
 
     // Helper to build permission name
     public static string N(string group, string action) => $"{group}.{action}";
@@ -227,17 +231,28 @@ public static class Permissions
     public const string BoardsEdit = "boards.edit";
     public const string BoardsDelete = "boards.delete";
 
-    // Departments
-    public const string DepartmentsView = "departments.view";
-    public const string DepartmentsCreate = "departments.create";
-    public const string DepartmentsEdit = "departments.edit";
-    public const string DepartmentsDelete = "departments.delete";
-
     // Levels
     public const string LevelsView = "levels.view";
     public const string LevelsCreate = "levels.create";
     public const string LevelsEdit = "levels.edit";
     public const string LevelsDelete = "levels.delete";
+
+    // Genders
+    public const string GendersView = "genders.view";
+    public const string GendersCreate = "genders.create";
+    public const string GendersEdit = "genders.edit";
+    public const string GendersDelete = "genders.delete";
+
+    // Ethnicities
+    public const string EthnicitiesView = "ethnicities.view";
+    public const string EthnicitiesCreate = "ethnicities.create";
+    public const string EthnicitiesEdit = "ethnicities.edit";
+    public const string EthnicitiesDelete = "ethnicities.delete";
+
+    public const string CountriesView = "countries.view";
+    public const string CountriesCreate = "countries.create";
+    public const string CountriesEdit = "countries.edit";
+    public const string CountriesDelete = "countries.delete";
 
     // SMTP
     public const string SmtpView = "smtp.view";
@@ -309,6 +324,7 @@ public static class Permissions
     public const string ExamCentersCreate = "examcenters.create";
     public const string ExamCentersEdit = "examcenters.edit";
     public const string ExamCentersDelete = "examcenters.delete";
+    public const string ExamCentersGenerateRollNumbers = "examcenters.generaterollnumbers";
 
     // Admit Cards
     public const string AdmitCardsView = "admitcards.view";
@@ -325,7 +341,13 @@ public static class Permissions
     public const string RetotalingReject = "retotaling.reject";
     public const string RetotalingReview = "retotaling.review";
 
-    // Marks Entry (Teacher)
+    // Audit Log
+    public const string AuditLogView = "auditlog.view";
+
+    // Backup & Restore
+    public const string BackupRestoreManage = "backuprestore.manage";
+
+    // Marks Entry (College Admin)
     public const string MarksEntryView = "marksentry.view";
     public const string MarksEntrySubmit = "marksentry.submit";
     public const string MarksEntryImport = "marksentry.import";
@@ -486,15 +508,25 @@ public static class Permissions
         (BoardsEdit, "Edit Boards", GroupBoards, "Edit existing boards"),
         (BoardsDelete, "Delete Boards", GroupBoards, "Delete boards"),
 
-        (DepartmentsView, "View Departments", GroupDepartments, "View department list"),
-        (DepartmentsCreate, "Create Departments", GroupDepartments, "Create new departments"),
-        (DepartmentsEdit, "Edit Departments", GroupDepartments, "Edit existing departments"),
-        (DepartmentsDelete, "Delete Departments", GroupDepartments, "Delete departments"),
-
         (LevelsView, "View Levels", GroupLevels, "View level list"),
         (LevelsCreate, "Create Levels", GroupLevels, "Create new levels"),
         (LevelsEdit, "Edit Levels", GroupLevels, "Edit existing levels"),
         (LevelsDelete, "Delete Levels", GroupLevels, "Delete levels"),
+
+        (GendersView, "View Genders", GroupGenders, "View gender list"),
+        (GendersCreate, "Create Genders", GroupGenders, "Create new genders"),
+        (GendersEdit, "Edit Genders", GroupGenders, "Edit existing genders"),
+        (GendersDelete, "Delete Genders", GroupGenders, "Delete genders"),
+
+        (EthnicitiesView, "View Ethnicities", GroupEthnicities, "View ethnicity list"),
+        (EthnicitiesCreate, "Create Ethnicities", GroupEthnicities, "Create new ethnicities"),
+        (EthnicitiesEdit, "Edit Ethnicities", GroupEthnicities, "Edit existing ethnicities"),
+        (EthnicitiesDelete, "Delete Ethnicities", GroupEthnicities, "Delete ethnicities"),
+
+        (CountriesView, "View Countries", GroupCountries, "View country list"),
+        (CountriesCreate, "Create Countries", GroupCountries, "Create new countries"),
+        (CountriesEdit, "Edit Countries", GroupCountries, "Edit existing countries"),
+        (CountriesDelete, "Delete Countries", GroupCountries, "Delete countries"),
 
         (SmtpView, "View SMTP Config", GroupSmtp, "View SMTP configuration"),
         (SmtpCreate, "Create SMTP Config", GroupSmtp, "Create new SMTP configuration"),
@@ -554,6 +586,7 @@ public static class Permissions
         (ExamCentersCreate, "Create Exam Centers", GroupExamCenters, "Create new exam centers"),
         (ExamCentersEdit, "Edit Exam Centers", GroupExamCenters, "Edit existing exam centers"),
         (ExamCentersDelete, "Delete Exam Centers", GroupExamCenters, "Delete exam centers"),
+        (ExamCentersGenerateRollNumbers, "Generate Roll Numbers", GroupExamCenters, "Generate exam roll numbers for registrations"),
 
         (AdmitCardsView, "View Admit Cards", GroupAdmitCards, "View admit card list"),
         (AdmitCardsCreate, "Create Admit Cards", GroupAdmitCards, "Create new admit cards"),
@@ -587,6 +620,10 @@ public static class Permissions
         (MarksEntrySubmit, "Submit Marks", GroupMarksEntry, "Submit marks for assigned subjects"),
         (MarksEntryImport, "Import Marks", GroupMarksEntry, "Import marks from Excel for assigned subjects"),
         (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
+
+        (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
+
+        (BackupRestoreManage, "Manage Backup & Restore", GroupBackupRestore, "Backup and restore database"),
     ];
 
     // Permission set per role
@@ -623,6 +660,7 @@ public static class Permissions
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
 
             ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
+            ExamCentersGenerateRollNumbers,
 
             AdmitCardsView, AdmitCardsCreate, AdmitCardsEdit, AdmitCardsGenerate, AdmitCardsDownload,
             RetotalingView, RetotalingReview, RetotalingApprove, RetotalingReject,
@@ -638,9 +676,14 @@ public static class Permissions
 
             NoticesView, NoticesCreate, NoticesEdit, NoticesDelete,
             BoardsView, BoardsCreate, BoardsEdit, BoardsDelete,
-            DepartmentsView, DepartmentsCreate, DepartmentsEdit, DepartmentsDelete,
+            GendersView, GendersCreate, GendersEdit, GendersDelete,
+            EthnicitiesView, EthnicitiesCreate, EthnicitiesEdit, EthnicitiesDelete,
+            CountriesView, CountriesCreate, CountriesEdit, CountriesDelete,
 
             SmsView, SmsCreate, SmsEdit, SmsDelete,
+
+            AuditLogView,
+            BackupRestoreManage,
         ],
 
         ["CollegeAdmin"] =
@@ -677,44 +720,6 @@ public static class Permissions
             BanksView, BanksCreate, BanksEdit,
             PaymentTypesView, PaymentTypesCreate, PaymentTypesEdit, PaymentTypesDelete,
             BillTitlesView, BillTitlesCreate, BillTitlesEdit, BillTitlesDelete,
-        ],
-
-        ["DepartmentAdmin"] =
-        [
-            DashboardView,
-
-            SubjectsView,
-            SubjectTypesView,
-            SubjectOfferingsView,
-            SemestersView,
-            AcademicYearsView,
-
-            ExamSchedulesView,
-
-            GradingSchemesView,
-            ExamRegistrationView,
-            ExamSubjectResultsView,
-            ResultRecordsView,
-            AdmitCardsView,
-            RetotalingView,
-
-            StudentsView, StudentsCreate, StudentsEdit,
-            StudentAdmissionsView,
-
-            NoticesView,
-            DepartmentsView,
-            LevelsView,
-        ],
-
-        ["Teacher"] =
-        [
-            DashboardView,
-
-            SubjectsView,
-            ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
-            StudentsView,
-
-            MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
         ],
 
         ["Student"] =

@@ -24,20 +24,7 @@
     </div>
 
     <!-- Alerts -->
-    @if (TempData["SuccessMessage"] is string successMessage)
-    {
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
-            <i class="fas fa-check-circle mt-0.5"></i>
-            <span>@successMessage</span>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] is string errorMessage)
-    {
-        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-start gap-2">
-            <i class="fas fa-exclamation-circle mt-0.5"></i>
-            <span>@errorMessage</span>
-        </div>
-    }
+    @await Html.PartialAsync("_AlertMessages")
 
     <!-- Toolbar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -100,7 +87,7 @@
                     int sn = ((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1;
                     @foreach (var item in Model)
                     {
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
                             <td class="px-4 py-3 text-gray-500 text-sm">@sn</td>
                             <td class="px-4 py-3 font-medium text-gray-800 text-sm">@(item.CollegeRollNumber ?? "-")</td>
                             <td class="px-4 py-3 text-gray-600 text-sm">@(item.College?.Name ?? "-")</td>
@@ -127,13 +114,13 @@
                                             </button>
                                         </form>
                                     }
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                                    <a asp-action="Details" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
                                         <i class="fas fa-eye text-xs"></i>
                                     </a>
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
-                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 </div>
@@ -207,7 +194,7 @@
                         <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                             Edit
                         </a>
-                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     </div>

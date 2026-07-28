@@ -14,7 +14,7 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-graduation-cap text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Edit College Program</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Edit College Program</h1>
         </div>
     </div>
 
@@ -26,18 +26,18 @@
 
             <!-- Section: Program Details -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Program Details</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Program Details</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="CollegeId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="CollegeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeId">
+                        <label asp-for="CollegeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="CollegeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.CollegeId">
                             <option value="">-- Select College --</option>
                         </select>
                         <span asp-validation-for="CollegeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="ProgramId" class="text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.ProgramId">
+                        <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" asp-items="ViewBag.ProgramId">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
@@ -47,15 +47,15 @@
 
             <!-- Section: Affiliation Information -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Affiliation Information</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Affiliation Information</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="AffiliationDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label asp-for="AffiliationDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                         <input asp-for="AffiliationDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                         <span asp-validation-for="AffiliationDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="NumberOfStudents" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label asp-for="NumberOfStudents" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                         <input asp-for="NumberOfStudents" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Number of students" />
                         <span asp-validation-for="NumberOfStudents" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -64,10 +64,10 @@
 
             <!-- Section: Additional Information -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
                 <div class="grid grid-cols-1 gap-5">
                     <div>
-                        <label asp-for="Remarks" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                        <label asp-for="Remarks" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                         <textarea asp-for="Remarks" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Any remarks about the program affiliation"></textarea>
                         <span asp-validation-for="Remarks" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -76,11 +76,11 @@
 
             <!-- Section: Options -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Status</h2>
                 <div class="flex flex-wrap gap-6">
                     <div class="flex items-center gap-2">
                         <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                        <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
                     </div>
                 </div>
             </div>
@@ -99,7 +99,38 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.25rem;
+            padding: 0;
+            color: #374151;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #3b82f6;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        }
+    </style>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(function () { $('select').select2({ width: 'resolve' }); });
+    </script>
 }

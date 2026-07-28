@@ -12,16 +12,11 @@
             <div class="w-20 h-20 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <i class="fas fa-credit-card text-3xl text-white"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Pay Entrance Fee</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Pay Entrance Fee</h1>
             <p class="text-gray-500 mt-1">Complete your payment to access the entrance application form</p>
         </div>
 
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6 flex items-center gap-2">
-                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-            </div>
-        }
+        @await Html.PartialAsync("_AlertMessages")
 
         <!-- Summary Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
@@ -56,7 +51,7 @@
         <!-- Payment Form -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-teal-600 to-cyan-600">
-                <h2 class="text-lg font-semibold text-white">Your Details</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-white">Your Details</h2>
                 <p class="text-teal-100 text-sm mt-0.5">Fill in your name and phone number to proceed with payment</p>
             </div>
 
@@ -96,7 +91,7 @@
                                 <i class="fas fa-credit-card text-gray-400"></i>
                             </div>
                             <select name="paymentTypeId" required
-                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 transition appearance-none bg-white">
+                                    class="select2 w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 transition appearance-none bg-white">
                                 <option value="">-- Select Payment Method --</option>
                                 @if (ViewBag.PaymentTypes is SelectList pts)
                                 {
@@ -127,3 +122,20 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <style>
+        .select2-container--default .select2-selection--single { height: 48px; border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 0.75rem 1rem 0.75rem 2.5rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 46px; }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #14b8a6;
+            outline: 2px solid transparent; outline-offset: 2px;
+        }
+    </style>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        $(function () { $('.select2').select2({width:'resolve'}); });
+    </script>
+}

@@ -158,7 +158,6 @@
                 <th>Program Name</th>
                 <th>Short Name</th>
                 <th>Level</th>
-                <th>Department</th>
                 <th>Board</th>
                 <th>Duration</th>
                 <th>Total Marks</th>
@@ -178,7 +177,6 @@
                     <td>@item.ProgramName</td>
                     <td>@(string.IsNullOrEmpty(item.ShortName) ? "-" : item.ShortName)</td>
                     <td>@item.Level?.LevelName</td>
-                    <td>@item.Department?.DepartmentCode</td>
                     <td>@item.Board?.BoardName</td>
                     <td style="text-align: center;">@item.Duration</td>
                     <td style="text-align: right;">@item.GrandTotalMarks</td>

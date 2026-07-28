@@ -18,10 +18,6 @@ public class StudentRegistration : ITenantScoped
     public int LevelId { get; set; }
 
     [Range(1, int.MaxValue)]
-    [Display(Name = "Department")]
-    public int DepartmentId { get; set; }
-
-    [Range(1, int.MaxValue)]
     [Display(Name = "College")]
     public int CollegeId { get; set; }
 
@@ -115,14 +111,18 @@ public class StudentRegistration : ITenantScoped
     [Display(Name = "Is Registration Number Generated")]
     public bool? IsRegistrationNumberGenerated { get; set; }
 
+    [Display(Name = "Registration Index")]
+    public int? StudentRegistrationIndex { get; set; }
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Academic Year")]
     public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
 
+    [Display(Name = "Student Admission")]
+    public int? StudentAdmissionId { get; set; }
+
     public virtual Level? Level { get; set; }
-    public virtual Department? Department { get; set; }
     public virtual Faculty? Faculty { get; set; }
     public virtual College? College { get; set; }
     public virtual Program? Program { get; set; }
@@ -131,9 +131,9 @@ public class StudentRegistration : ITenantScoped
     public virtual Ethnicity? Ethnicity { get; set; }
     public virtual Address? PermanentAddress { get; set; }
     public virtual Address? CurrentAddress { get; set; }
+    public virtual StudentAdmission? StudentAdmission { get; set; }
     public virtual ICollection<ApplicationVoucher>? ApplicationVouchers { get; set; }
     public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
-    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
     public virtual ICollection<StudentGuardian>? StudentGuardians { get; set; }
     public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
 }

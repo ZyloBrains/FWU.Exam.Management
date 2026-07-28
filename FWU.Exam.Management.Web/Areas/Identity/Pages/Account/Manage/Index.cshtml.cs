@@ -54,7 +54,6 @@ public class IndexModel(
             StudentProfile = await context.StudentRegistrations
                 .Include(s => s.AcademicYear)
                 .Include(s => s.Level)
-                .Include(s => s.Department)
                 .Include(s => s.College)
                 .Include(s => s.Gender)
                 .Include(s => s.StudentCategory)
@@ -67,12 +66,7 @@ public class IndexModel(
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null)
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
-
-        await LoadAsync(user);
-        return Page();
+        return RedirectToPage("./ChangePassword");
     }
 
     public async Task<IActionResult> OnPostAsync()

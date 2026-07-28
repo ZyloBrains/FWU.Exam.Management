@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-building text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create Faculty</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Faculty</h1>
         </div>
     </div>
 
@@ -24,22 +24,27 @@
 
             <!-- Section: Basic Info -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
                 <div class="space-y-4">
                     <div>
-                        <label asp-for="Name" class="text-sm font-medium text-gray-700"></label>
+                        <label asp-for="Name" class="text-xs sm:text-sm font-medium text-gray-700"></label>
                         <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter faculty name" />
                         <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-5">
+                    <div class="grid grid-cols-3 gap-5">
                         <div>
-                            <label asp-for="OfficeCode" class="text-sm font-medium text-gray-700"></label>
+                            <label asp-for="OfficeCode" class="text-xs sm:text-sm font-medium text-gray-700"></label>
                             <input asp-for="OfficeCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter office code" />
                             <span asp-validation-for="OfficeCode" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
                         <div>
-                            <label asp-for="ContactNumber" class="text-sm font-medium text-gray-700"></label>
+                            <label asp-for="ShortName" class="text-xs sm:text-sm font-medium text-gray-700"></label>
+                            <input asp-for="ShortName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. MG" />
+                            <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
+                        </div>
+                        <div>
+                            <label asp-for="ContactNumber" class="text-xs sm:text-sm font-medium text-gray-700"></label>
                             <input asp-for="ContactNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter contact number" />
                             <span asp-validation-for="ContactNumber" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
@@ -48,12 +53,12 @@
                     <!-- Address & Email side by side -->
                     <div class="grid grid-cols-2 gap-5">
                         <div>
-                            <label asp-for="Address" class="text-sm font-medium text-gray-700"></label>
+                            <label asp-for="Address" class="text-xs sm:text-sm font-medium text-gray-700"></label>
                             <input asp-for="Address" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter address" />
                             <span asp-validation-for="Address" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
                         <div>
-                            <label asp-for="Email" class="text-sm font-medium text-gray-700"></label>
+                            <label asp-for="Email" class="text-xs sm:text-sm font-medium text-gray-700"></label>
                             <input asp-for="Email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email" />
                             <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
@@ -63,16 +68,16 @@
 
             <!-- Section: Admin Login -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Admin Login</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Admin Login</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-sm font-medium text-gray-700">Admin Password</label>
+                        <label class="text-xs sm:text-sm font-medium text-gray-700">Admin Password</label>
                         <div class="flex gap-2">
                             <input type="text" name="adminPassword" id="adminPassword"
                                    class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
                                    placeholder="Leave empty to auto-generate" />
                             <button type="button" onclick="generatePassword()"
-                                    class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition border border-gray-300">
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition border border-gray-300">
                                 <i class="fas fa-key mr-1"></i> Generate
                             </button>
                         </div>
@@ -83,7 +88,7 @@
 
             <!-- Section: Logo -->
             <div>
-                <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculty Logo</h2>
+                <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculty Logo</h2>
                 <div>
                     <input type="file" name="logoFile" id="logoFile" accept="image/*"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" />

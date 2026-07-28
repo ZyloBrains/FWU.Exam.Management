@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -13,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, ISmsService smsService) : IEntranceExamApplicationService
+public class EntranceExamApplicationService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext, IEmailService emailService, ISmsService smsService) : IEntranceExamApplicationService
 {
     private const string EntranceExamTypeCode = "4";
 
@@ -93,6 +94,14 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Include(a => a.College)
             .Include(a => a.Program)
             .AsNoTracking();
+
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+                query = query.Where(a => a.CollegeId == userContext.CollegeId.Value);
+            else if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                query = query.Where(a => a.Program != null && a.Program.FacultyId == userContext.FacultyId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -200,9 +209,9 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .ToListAsync();
     }
 
-    public List<Province> GetProvinces()
+    public async Task<List<Province>> GetProvincesAsync()
     {
-        return context.Provinces.AsNoTracking().ToList();
+        return await context.Provinces.AsNoTracking().ToListAsync();
     }
 
     public async Task<List<EntranceExamApplication>> GetAllApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId)
@@ -263,7 +272,6 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                     CollegeId = application.CollegeId,
                     ProgramId = application.ProgramId,
                     LevelId = application.Program?.LevelId ?? 0,
-                    DepartmentId = application.Program?.DepartmentId ?? 0,
                     FirstName = application.FirstName,
                     MiddleName = application.MiddleName,
                     LastName = application.LastName!,
@@ -607,15 +615,6 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         return existing.Id;
     }
 
-    public async Task<List<SelectOption>> GetCollegesByProgramAsync(int programId)
-    {
-        return await context.CollegePrograms
-            .Where(cp => cp.ProgramId == programId && cp.College.IsActive)
-            .Select(cp => new SelectOption { Id = cp.College.Id, Name = cp.College.Name })
-            .AsNoTracking()
-            .ToListAsync();
-    }
-
     public async Task<List<SelectOption>> GetDistrictsAsync()
     {
         return await context.Districts
@@ -780,12 +779,6 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         await context.SaveChangesAsync();
 
         return voucher;
-    }
-
-    public async Task<string?> GetPaymentTypeNameByIdAsync(int paymentTypeId)
-    {
-        var pt = await context.Set<PaymentType>().AsNoTracking().FirstOrDefaultAsync(p => p.Id == paymentTypeId);
-        return pt?.PaymentTypeName;
     }
 
     public async Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId)

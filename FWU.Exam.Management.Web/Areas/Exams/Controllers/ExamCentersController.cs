@@ -1,6 +1,9 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,8 +15,14 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examcenters.view")]
 public class ExamCentersController(
     IExamCenterService examCenterService,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
+    private async Task<List<ExamSchedule>> GetFilteredExamSchedulesAsync()
+    {
+        return await context.ExamSchedules.AsNoTracking().ApplyScope(userContext).ToListAsync();
+    }
+
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await examCenterService.GetExamCentersAsync(page, pageSize, search, sort, sortDir);
@@ -40,7 +49,8 @@ public class ExamCentersController(
     [RequirePermission("examcenters.create")]
     public async Task<IActionResult> Create()
     {
-        ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName");
+        var examSchedules = await GetFilteredExamSchedulesAsync();
+        ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
@@ -66,10 +76,12 @@ public class ExamCentersController(
                 examCenter,
                 [.. venueColleges],
                 [.. sourceColleges]);
+            TempData["SuccessMessage"] = "Exam center created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
-        ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName", examCenter.ExamScheduleId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
+        ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
@@ -90,7 +102,8 @@ public class ExamCentersController(
         var examCenter = await examCenterService.GetExamCenterByIdAsync(id.Value);
         if (examCenter == null) return NotFound();
 
-        ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName", examCenter.ExamScheduleId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
+        ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
@@ -130,10 +143,12 @@ public class ExamCentersController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam center updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
-        ViewData["ExamScheduleId"] = new SelectList(await context.ExamSchedules.AsNoTracking().ToListAsync(), "Id", "ExamScheduleName", examCenter.ExamScheduleId);
+        var examSchedules = await GetFilteredExamSchedulesAsync();
+        ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
@@ -163,8 +178,22 @@ public class ExamCentersController(
     [RequirePermission("examcenters.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examCenterService.DeleteExamCenterAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examCenterService.DeleteExamCenterAsync(id);
+            TempData["SuccessMessage"] = "Exam center deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("examcenters.delete")]

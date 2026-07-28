@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-building text-indigo-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create Tenant</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Tenant</h1>
         </div>
     </div>
 
@@ -23,38 +23,38 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="Tenant.Name" class="text-sm font-medium text-gray-700 block mb-1">Organization Name</label>
+                    <label asp-for="Tenant.Name" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Organization Name</label>
                     <input asp-for="Tenant.Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Far-Western University" />
                     <span asp-validation-for="Tenant.Name" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.OfficeCode" class="text-sm font-medium text-gray-700 block mb-1">Office Code</label>
+                    <label asp-for="Tenant.OfficeCode" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Office Code</label>
                     <input asp-for="Tenant.OfficeCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., FWU" />
                     <span asp-validation-for="Tenant.OfficeCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.Email" class="text-sm font-medium text-gray-700 block mb-1">Email</label>
+                    <label asp-for="Tenant.Email" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Email</label>
                     <input asp-for="Tenant.Email" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="admin@example.com" />
                     <span asp-validation-for="Tenant.Email" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.ContactNumber" class="text-sm font-medium text-gray-700 block mb-1">Contact Number</label>
+                    <label asp-for="Tenant.ContactNumber" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Contact Number</label>
                     <input asp-for="Tenant.ContactNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 9851234567" />
                     <span asp-validation-for="Tenant.ContactNumber" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="Tenant.Address" class="text-sm font-medium text-gray-700 block mb-1">Address</label>
+                    <label asp-for="Tenant.Address" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Address</label>
                     <input asp-for="Tenant.Address" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Mahendranagar, Kanchanpur" />
                     <span asp-validation-for="Tenant.Address" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Tenant.TenantType" class="text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
-                    <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="TenantTypeSelect"></select>
+                    <label asp-for="Tenant.TenantType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
+                    <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="TenantTypeSelect"></select>
                     <span asp-validation-for="Tenant.TenantType" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div id="FacultyField" style="display:none">
-                    <label asp-for="SelectedFacultyId" class="text-sm font-medium text-gray-700 block mb-1">Faculty</label>
-                    <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <label asp-for="SelectedFacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Faculty</label>
+                    <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Select Faculty --</option>
                     </select>
                     <span asp-validation-for="SelectedFacultyId" class="text-xs text-red-500 mt-1 block"></span>
@@ -62,7 +62,7 @@
                 <div>
                     <div class="flex items-center gap-2 mt-7">
                         <input asp-for="Tenant.IsActive" type="checkbox" checked="checked" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" />
-                        <label asp-for="Tenant.IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                        <label asp-for="Tenant.IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
                     </div>
                 </div>
             </div>
@@ -72,28 +72,46 @@
                     <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
                         <i class="fas fa-user-shield text-amber-600"></i>
                     </div>
-                    <h2 class="text-lg font-semibold text-gray-800">Admin User</h2>
+                    <h2 class="text-base sm:text-lg font-semibold text-gray-800">Admin User</h2>
                 </div>
-                <p class="text-sm text-gray-500 mb-4">An admin user will be created for this tenant with the <span class="font-medium text-gray-700">FacultyAdmin</span> role.</p>
+                <p class="text-xs sm:text-sm text-gray-500 mb-4">An admin user will be created for this tenant with the <span class="font-medium text-gray-700">FacultyAdmin</span> role.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="AdminFullName" class="text-sm font-medium text-gray-700 block mb-1">Full Name</label>
+                        <label asp-for="AdminFullName" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Full Name</label>
                         <input asp-for="AdminFullName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., John Doe" />
                         <span asp-validation-for="AdminFullName" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="AdminEmail" class="text-sm font-medium text-gray-700 block mb-1">Email (Login ID)</label>
+                        <label asp-for="AdminEmail" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Email (Login ID)</label>
                         <input asp-for="AdminEmail" type="email" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="admin@tenant.edu" />
                         <span asp-validation-for="AdminEmail" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="AdminPassword" class="text-sm font-medium text-gray-700 block mb-1">Password</label>
-                        <input asp-for="AdminPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label asp-for="AdminPassword" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Password</label>
+                        <div class="relative flex">
+                            <input asp-for="AdminPassword" id="AdminPasswordInput" type="password"
+                                   class="w-full border border-gray-300 rounded-l-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <button type="button" id="toggleAdminPassword"
+                                    class="px-2.5 bg-gray-100 border border-l-0 border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition text-sm">
+                                <i class="fas fa-eye" id="toggleAdminPasswordIcon"></i>
+                            </button>
+                            <button type="button" id="generatePasswordBtn"
+                                    class="px-3 bg-indigo-100 text-indigo-700 text-xs font-semibold border border-l-0 border-gray-300 rounded-r-md hover:bg-indigo-200 transition flex items-center gap-1">
+                                <i class="fas fa-dice"></i> Generate
+                            </button>
+                        </div>
                         <span asp-validation-for="AdminPassword" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="ConfirmAdminPassword" class="text-sm font-medium text-gray-700 block mb-1">Confirm Password</label>
-                        <input asp-for="ConfirmAdminPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label asp-for="ConfirmAdminPassword" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Confirm Password</label>
+                        <div class="relative flex">
+                            <input asp-for="ConfirmAdminPassword" id="ConfirmAdminPasswordInput" type="password"
+                                   class="w-full border border-gray-300 rounded-l-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                            <button type="button" id="toggleConfirmAdminPassword"
+                                    class="px-2.5 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition text-sm">
+                                <i class="fas fa-eye" id="toggleConfirmAdminPasswordIcon"></i>
+                            </button>
+                        </div>
                         <span asp-validation-for="ConfirmAdminPassword" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
@@ -112,16 +130,112 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            outline: 2px solid transparent; outline-offset: 2px;
+            border-color: #6366f1;
+        }
+    </style>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
     <script>
-        document.getElementById('TenantTypeSelect').addEventListener('change', function() {
-            var facultyField = document.getElementById('FacultyField');
-            facultyField.style.display = this.value === '0' ? 'block' : 'none';
-        });
-        if (document.getElementById('TenantTypeSelect').value === '0') {
-            document.getElementById('FacultyField').style.display = 'block';
+        function reinitSelect2($el) {
+            if ($el.data('select2')) $el.select2('destroy');
+            $el.select2({width:'resolve'});
         }
+
+        $(function () {
+            $('.select2').select2({ width: 'resolve' });
+
+            function toggleFacultyField(show) {
+                var $field = $('#FacultyField');
+                var $faculty = $('#SelectedFacultyId');
+                if (show) {
+                    $field.show();
+                    reinitSelect2($faculty);
+                } else {
+                    $field.hide();
+                }
+            }
+
+            $('#TenantTypeSelect').on('change', function() {
+                toggleFacultyField(this.value === '0');
+            });
+
+            if ($('#TenantTypeSelect').val() === '0') {
+                toggleFacultyField(true);
+            }
+
+            function togglePassword(inputId, iconId) {
+                var $input = $(inputId);
+                var $icon = $(iconId);
+                if ($input.attr('type') === 'password') {
+                    $input.attr('type', 'text');
+                    $icon.removeClass('fa-eye').addClass('fa-eye-slash');
+                } else {
+                    $input.attr('type', 'password');
+                    $icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            }
+
+            $('#toggleAdminPassword').on('click', function () {
+                togglePassword('#AdminPasswordInput', '#toggleAdminPasswordIcon');
+            });
+
+            $('#toggleConfirmAdminPassword').on('click', function () {
+                togglePassword('#ConfirmAdminPasswordInput', '#toggleConfirmAdminPasswordIcon');
+            });
+
+            $('#generatePasswordBtn').on('click', function () {
+                var length = 14;
+                var lower = 'abcdefghijklmnopqrstuvwxyz';
+                var upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                var digits = '0123456789';
+                var special = '@@#$!%*?&';
+                var all = lower + upper + digits + special;
+
+                function getRandomChar(str) {
+                    var array = new Uint32Array(1);
+                    window.crypto.getRandomValues(array);
+                    return str[array[0] % str.length];
+                }
+
+                function shuffle(arr) {
+                    for (var i = arr.length - 1; i > 0; i--) {
+                        var array = new Uint32Array(1);
+                        window.crypto.getRandomValues(array);
+                        var j = array[0] % (i + 1);
+                        var tmp = arr[i];
+                        arr[i] = arr[j];
+                        arr[j] = tmp;
+                    }
+                }
+
+                var pw = [];
+                pw.push(getRandomChar(lower));
+                pw.push(getRandomChar(upper));
+                pw.push(getRandomChar(digits));
+                pw.push(getRandomChar(special));
+
+                for (var i = 4; i < length; i++) {
+                    pw.push(getRandomChar(all));
+                }
+
+                shuffle(pw);
+                var password = pw.join('');
+
+                $('#AdminPasswordInput').val(password).attr('type', 'text');
+                $('#toggleAdminPasswordIcon').removeClass('fa-eye').addClass('fa-eye-slash');
+                $('#ConfirmAdminPasswordInput').val(password).attr('type', 'text');
+                $('#toggleConfirmAdminPasswordIcon').removeClass('fa-eye').addClass('fa-eye-slash');
+            });
+        });
     </script>
 }

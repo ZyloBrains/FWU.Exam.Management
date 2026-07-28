@@ -14,5 +14,6 @@ public interface IExamSubjectResultService
     Task UpdateExamSubjectResultAsync(ExamSubjectResult examSubjectResult);
     Task DeleteExamSubjectResultAsync(int id);
     Task<bool> ExamSubjectResultExistsAsync(int id);
-    ExamSubjectResultSelectListsDto GetSelectListData(ExamSubjectResult? examSubjectResult = null);
+    Task<ExamSubjectResultSelectListsDto> GetSelectListDataAsync(ExamSubjectResult? examSubjectResult = null);
+    Task<(List<ExamRegistrationGroupedDto> Items, int TotalCount)> GetRegistrationsWithSubjectResultsAsync(int page, int pageSize, string? search, int? examScheduleId = null);
 }

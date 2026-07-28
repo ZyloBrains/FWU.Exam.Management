@@ -138,8 +138,8 @@ public class ManagePermissionsController(
     private async Task<List<string>> GetPermissionNamesAsync(List<int> ids)
     {
         if (ids.Count == 0) return [];
-        return await permissionService.GetAllPermissionsAsync()
-            .ContinueWith(t => t.Result.Where(p => ids.Contains(p.Id)).Select(p => p.Name).ToList());
+        var allPermissions = await permissionService.GetAllPermissionsAsync();
+        return allPermissions.Where(p => ids.Contains(p.Id)).Select(p => p.Name).ToList();
     }
 
     private static string FormatGroupName(string group)

@@ -21,37 +21,37 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-book text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Subject Catalog Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Subject Catalog Details</h1>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <p class="text-sm font-medium text-gray-600">Subject Code</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Subject Code</p>
                 <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.SubjectCode)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Short Name</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Short Name</p>
                 <p class="mt-1 text-gray-800">@(Model.ShortName ?? "-")</p>
             </div>
             <div class="md:col-span-2">
-                <p class="text-sm font-medium text-gray-600">Subject Name</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Subject Name</p>
                 <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.SubjectName)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Subject Type</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Subject Type</p>
                 <p class="mt-1 text-gray-800">@(Model.SubjectType?.Name ?? "-")</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Credit Hours</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Credit Hours</p>
                 <p class="mt-1 text-gray-800">
                     <i class="fas fa-clock text-gray-400 mr-1"></i>
                     @Html.DisplayFor(model => model.CreditHours) hours
                 </p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Status</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                 <div class="mt-1">
                     @if (Model.IsActive)
                     {
@@ -64,7 +64,7 @@
                 </div>
             </div>
             <div class="md:col-span-2">
-                <p class="text-sm font-medium text-gray-600">Description</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Description</p>
                 <p class="mt-1 text-gray-800">@(Model.Description ?? "-")</p>
             </div>
         </div>

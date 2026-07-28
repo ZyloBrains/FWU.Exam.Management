@@ -1,0 +1,228 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Country>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
+@{
+    ViewData["Title"] = "Countries";
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    var currentSort = ViewBag.Sort as string ?? "Id";
+    var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
+}
+
+<div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-globe text-cyan-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Countries</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    <span class="font-semibold text-gray-700">@totalCount</span> total records
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            @if (HasPerm("countries.create"))
+            {
+                <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-cyan-700 transition-colors shadow-sm">
+                    <i class="fas fa-plus text-xs"></i> Create New
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Country Name</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                @{
+                    int serial = (currentPage - 1) * pageSize;
+                }
+                @foreach (var item in Model)
+                {
+                    serial++;
+                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                        <td class="px-4 py-3 text-gray-600">@serial</td>
+                        <td class="px-4 py-3 font-medium text-gray-800">@item.CountryName</td>
+                        <td class="px-4 py-3">
+                            @if (item.IsActive)
+                            {
+                                <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
+                            }
+                            else
+                            {
+                                <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">Inactive</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a asp-action="Details" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                                @if (HasPerm("countries.edit"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                        <i class="fas fa-edit text-xs"></i>
+                                    </a>
+                                }
+                                @if (HasPerm("countries.delete"))
+                                {
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </a>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-globe text-4xl mb-3 opacity-50"></i>
+                <p>No countries found.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Mobile card layout -->
+    <div class="lg:hidden space-y-3">
+        @{
+            int serialMobile = (currentPage - 1) * pageSize;
+        }
+        @foreach (var item in Model)
+        {
+            serialMobile++;
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-globe text-cyan-600 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 mb-0.5">#@serialMobile</p>
+                            <h3 class="font-semibold text-gray-800 text-sm">@item.CountryName</h3>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        @if (item.IsActive)
+                        {
+                            <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
+                        }
+                        else
+                        {
+                            <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">Inactive</span>
+                        }
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-4 border-t border-gray-100 mt-2">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
+                        Details
+                    </a>
+                    @if (HasPerm("countries.edit"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
+                            Edit
+                        </a>
+                    }
+                    @if (HasPerm("countries.delete"))
+                    {
+                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                            Delete
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+        @if (!Model.Any())
+        {
+            <div class="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
+                <i class="fas fa-globe text-4xl mb-3 opacity-50"></i>
+                <p>No countries found.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs sm:text-sm text-gray-700">
+                        Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
+                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
+                        of <span class="font-medium">@totalCount</span> results
+                    </p>
+                </div>
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                       class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
+                        <i class="fas fa-chevron-left text-xs"></i>
+                    </a>
+                    @{
+                        var startPage = Math.Max(1, currentPage - 2);
+                        var endPage = Math.Min(totalPages, currentPage + 2);
+                        for (int i = startPage; i <= endPage; i++)
+                        {
+                            <a asp-action="Index" asp-route-page="@i" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                               class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-cyan-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                        }
+                    }
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                       class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
+                        <i class="fas fa-chevron-right text-xs"></i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script>
+        var el = document.getElementById('successAlert');
+        if (el) {
+            setTimeout(function () {
+                el.style.opacity = '0';
+                setTimeout(function () { el.remove(); }, 500);
+            }, 5000);
+        }
+
+        function deleteRecord(id) {
+            if (!confirm('Are you sure you want to delete this record?')) return;
+            $.ajax({
+                url: '@Url.Action("DeleteAjax", "Countries")',
+                type: 'POST',
+                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
+                success: function (response) {
+                    if (response.success) { alert(response.message); location.reload(); }
+                    else { alert('Error: ' + response.message); }
+                },
+                error: function () { alert('An error occurred while deleting.'); }
+            });
+        }
+    </script>
+}

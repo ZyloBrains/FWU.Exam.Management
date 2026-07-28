@@ -5,18 +5,19 @@
 }
 
 <div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- Page Header -->
     <div class="md:flex md:items-center md:justify-between mb-8 pb-5 border-b border-gray-200">
         <div class="flex-1 min-w-0">
             <h1 class="text-3xl font-bold leading-tight text-gray-900 tracking-tight">Admission Details</h1>
-            <p class="mt-2 text-sm text-gray-500">Complete information about the student admission record.</p>
+            <p class="mt-2 text-xs sm:text-sm text-gray-500">Complete information about the student admission record.</p>
         </div>
         <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
-            <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
+            <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
                 <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 Back to List
             </a>
-            <a asp-action="Edit" asp-route-id="@Model?.Id" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-xs sm:text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all">
                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 Edit Admission
             </a>
@@ -31,8 +32,8 @@
                     @(Model?.CollegeRollNumber?.FirstOrDefault() ?? 'A')
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">@(Model?.College?.Name ?? "Admission Record")</h2>
-                    <div class="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-900">@(Model?.College?.Name ?? "Admission Record")</h2>
+                    <div class="mt-1 flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         @(Model?.Program?.ProgramName ?? "No program assigned")
                     </div>
@@ -57,19 +58,19 @@
         <div class="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200 border-t border-gray-200">
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">College Roll No.</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.CollegeRollNumber ?? "-")</p>
+                <p class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.CollegeRollNumber ?? "-")</p>
             </div>
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">College</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.College?.Name ?? "-")</p>
+                <p class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.College?.Name ?? "-")</p>
             </div>
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.Program?.ProgramName ?? "-")</p>
+                <p class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.Program?.ProgramName ?? "-")</p>
             </div>
             <div class="p-4 sm:px-6">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission Date</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">@(Model?.AdmissionDate.ToString("yyyy-MM-dd") ?? "-")</p>
+                <p class="mt-1 text-base sm:text-lg font-semibold text-gray-900">@(Model?.AdmissionDate.ToString("yyyy-MM-dd") ?? "-")</p>
             </div>
         </div>
     </div>
@@ -87,28 +88,28 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">College Roll Number</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.CollegeRollNumber ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">College Roll Number</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.CollegeRollNumber ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Admission Date</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.AdmissionDate.ToString("dd MMM yyyy") ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Admission Date</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.AdmissionDate.ToString("dd MMM yyyy") ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">College</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.College?.Name ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">College</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.College?.Name ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Program</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.Program?.ProgramName ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Program</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.Program?.ProgramName ?? "-")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Has Fee Exemption</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.HasFeeExemption == true ? "Yes" : "No")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Has Fee Exemption</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.HasFeeExemption == true ? "Yes" : "No")</dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">App User ID</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.AppUserId ?? "-")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">App User ID</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.AppUserId ?? "-")</dd>
                     </div>
                 </dl>
             </div>
@@ -125,7 +126,7 @@
             <div class="px-6 py-5">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Status</dt>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Status</dt>
                         <dd class="mt-1">
                             <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset @(Model?.IsCompleted == true ? "bg-green-50 text-green-700 ring-green-600/20" : "bg-yellow-50 text-yellow-800 ring-yellow-600/20")">
                                 @(Model?.IsCompleted == true ? "Completed" : "Pending")
@@ -133,7 +134,7 @@
                         </dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Active</dt>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Active</dt>
                         <dd class="mt-1">
                             <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium @(Model?.IsActive == true ? "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" : "bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-500/20")">
                                 @(Model?.IsActive == true ? "Yes" : "No")
@@ -141,8 +142,8 @@
                         </dd>
                     </div>
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Checked By</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@(Model?.CheckedBy?.ToString() ?? "Not checked")</dd>
+                        <dt class="text-xs sm:text-sm font-medium text-gray-500">Checked By</dt>
+                        <dd class="mt-1 text-xs sm:text-sm text-gray-900">@(Model?.CheckedBy?.ToString() ?? "Not checked")</dd>
                     </div>
                 </dl>
             </div>

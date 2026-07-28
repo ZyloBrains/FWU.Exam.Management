@@ -17,6 +17,28 @@
                     <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
                     <input type="hidden" asp-for="Id" />
 
+                    @if (string.IsNullOrEmpty(Model?.RegistrationNumber))
+                    {
+                        <div id="generateRegSection" class="bg-white rounded-xl shadow-sm border-2 border-dashed border-amber-300 p-4 mb-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-amber-800">Registration Number Not Generated</h3>
+                                    <p class="mt-1 text-sm text-amber-600">Generate a system-assigned registration number for this student.</p>
+                                </div>
+                                <button id="generateRegBtn" type="button" onclick="generateRegNumber(@Model.Id)"
+                                        class="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition shadow-sm">
+                                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    Generate Registration Number
+                                </button>
+                            </div>
+                            <div id="generateRegSpinner" class="hidden mt-3 flex items-center gap-2 text-sm text-amber-700">
+                                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" /><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                                Generating registration number...
+                            </div>
+                            <div id="generateRegResult" class="hidden mt-3"></div>
+                        </div>
+                    }
+
                     <!-- Personal Information -->
                     <div>
                         <h2 class="text-sm font-semibold text-gray-700 mb-3">Personal Information</h2>
@@ -29,40 +51,23 @@
                                     *
                                 </label>
                                 <select asp-for="AcademicYearId"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"
+                                        class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"
                                         asp-items="ViewBag.AcademicYearId"></select>
                             </div>
 
                             <div>
                                 <label asp-for="LevelId" class="block text-sm font-medium text-gray-700 mb-1">Level/Grade *</label>
-                                <select asp-for="LevelId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.LevelId"></select>
-                            </div>
-
-                            <div>
-                                <label asp-for="FacultyId" class="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
-                                <select asp-for="FacultyId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.FacultyId">
-                                    <option value="">Select Faculty</option>
-                                </select>
+                                <select asp-for="LevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.LevelId"></select>
                             </div>
 
                             <div>
                                 <label asp-for="CollegeId" class="block text-sm font-medium text-gray-700 mb-1">College/Campus *</label>
-                                <select asp-for="CollegeId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.CollegeId"></select>
-                            </div>
-
-                            <div>
-                                <label asp-for="DepartmentId" class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-                                <select asp-for="DepartmentId"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
-                                        asp-items="ViewBag.DepartmentId">
-                                    <option value="">Select Department</option>
-                                </select>
-                                <span asp-validation-for="DepartmentId" class="text-red-600 text-xs"></span>
+                                <select asp-for="CollegeId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.CollegeId"><option value="">Select College</option></select>
                             </div>
 
                             <div>
                                 <label asp-for="ProgramId" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
-                                <select asp-for="ProgramId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.ProgramId">
+                                <select asp-for="ProgramId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.ProgramId">
                                     <option value="">Select Program</option>
                                 </select>
                             </div>
@@ -78,7 +83,7 @@
 
                             <div>
                                 <label asp-for="GenderId" class="block text-sm text-gray-600 mb-1">Gender *</label>
-                                <select asp-for="GenderId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.GenderId"></select>
+                                <select asp-for="GenderId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.GenderId"></select>
                             </div>
 
                             <div>
@@ -94,14 +99,8 @@
                             </div>
 
                             <div>
-                                <label asp-for="RegistrationNumber" class="block text-sm text-gray-600 mb-1">College Roll No</label>
-                                <input asp-for="RegistrationNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
-                                <span asp-validation-for="RegistrationNumber" class="text-red-600 text-xs"></span>
-                            </div>
-
-                            <div>
                                 <label asp-for="EthnicityId" class="block text-sm text-gray-600 mb-1">Ethnicity</label>
-                                <select asp-for="EthnicityId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.EthnicityId"></select>
+                                <select asp-for="EthnicityId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.EthnicityId"></select>
                             </div>
 
                             <div>
@@ -134,7 +133,7 @@
                     <div>
                         <label asp-for="StudentCategoryId" class="block text-sm font-medium">Student Category *</label>
                         <select asp-for="StudentCategoryId" asp-items="ViewBag.StudentCategoryId"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 shadow-sm">
+                                class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500 shadow-sm">
                             <option value="">Select Category</option>
                         </select>
                         <span asp-validation-for="StudentCategoryId" class="text-red-600 text-xs"></span>
@@ -199,34 +198,40 @@
                         <div class="border-t border-gray-100 mb-4"></div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">Province *</label>
+                                <select id="ProvinceId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="@ViewBag.Provinces">
+                                    <option value="">Select Province</option>
+                                </select>
+                            </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">District *</label>
-                                <select id="DistrictId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
-                                    <option>Select District</option>
+                                <select id="DistrictId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">Select District</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Local Level *</label>
-                                <select id="LocalLevelId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
-                                    <option>Select Local Level</option>
+                                <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                                    <option value="">Select Local Level</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Ward Number</label>
-                                <input id="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <input id="WardNumber" name="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Tole/Street</label>
-                                <input id="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <input id="ToleStreet" name="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">House Number</label>
-                                <input id="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
+                                <input id="HouseNumber" name="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
                             </div>                           
                         </div>
                     </div>
@@ -278,9 +283,21 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #14b8a6;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(20,184,166,0.2);
+        }
+    </style>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         var qualificationIndex = @(((System.Collections.Generic.List<StudentQualification>)ViewBag.Qualifications)?.Count ?? 0);
 
@@ -349,42 +366,79 @@
             }
         }
 
+        var _districtSeq = 0, _localLevelSeq = 0, _collegeSeq = 0, _programSeq = 0;
+
+        function loadDistricts(provinceId, selectedDistrictId, callback) {
+            var seq = ++_districtSeq;
+            if (!provinceId) {
+                var dd = $("#DistrictId");
+                dd.select2('destroy');
+                dd.empty().append('<option value="">Select District</option>');
+                dd.select2({ width: 'resolve' });
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"), { provinceId: provinceId }, function (data) {
+                if (seq !== _districtSeq) return;
+                var dropdown = $("#DistrictId");
+                dropdown.select2('destroy');
+                dropdown.empty();
+                dropdown.append('<option value="">Select District</option>');
+                $.each(data, function (index, item) {
+                    var selected = selectedDistrictId && item.id == selectedDistrictId ? ' selected' : '';
+                    dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
+                });
+                dropdown.select2({ width: 'resolve' });
+                if (callback) callback();
+            });
+        }
+
+        function loadLocalLevels(districtId, selectedLocalLevelId, callback) {
+            var seq = ++_localLevelSeq;
+            if (!districtId) {
+                var dd = $("#LocalLevelId");
+                dd.select2('destroy');
+                dd.empty().append('<option value="">Select Local Level</option>');
+                dd.select2({ width: 'resolve' });
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
+                if (seq !== _localLevelSeq) return;
+                var dropdown = $("#LocalLevelId");
+                dropdown.select2('destroy');
+                dropdown.empty();
+                dropdown.append('<option value="">Select Local Level</option>');
+                $.each(data, function (index, item) {
+                    var selected = selectedLocalLevelId && item.id == selectedLocalLevelId ? ' selected' : '';
+                    dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
+                });
+                dropdown.select2({ width: 'resolve' });
+                if (callback) callback();
+            });
+        }
+
+        var _cascadeBusy = false;
+
         function loadExistingQualifications() {
             var data = @Html.Raw(string.IsNullOrEmpty(qualsJson) ? "[]" : qualsJson);
             data.forEach(function(q) { addQualificationRow(q); });
         }
 
-        function loadFaculties(levelId, selectedFacultyId, callback) {
+        function loadColleges(levelId, selectedCollegeId, callback) {
+            var seq = ++_collegeSeq;
             if (!levelId) {
-                $("#FacultyId").empty().append('<option value="">Select Faculty</option>');
-                if (callback) callback();
-                return;
-            }
-
-            $.get(tenantUrl("/Students/StudentRegistrations/GetFacultiesByLevel"),
-                { levelId: levelId },
-                function (data) {
-                    var dropdown = $("#FacultyId");
-                    dropdown.empty();
-                    dropdown.append('<option value="">Select Faculty</option>');
-                    $.each(data, function (index, item) {
-                        var selected = selectedFacultyId && item.id == selectedFacultyId ? 'selected' : '';
-                        dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
-                    });
-                    if (callback) callback();
-            });
-        }
-
-        function loadColleges(facultyId, selectedCollegeId, callback) {
-            if (!facultyId) {
                 $("#CollegeId").empty().append('<option value="">Select College</option>');
                 if (callback) callback();
                 return;
             }
 
-            $.get(tenantUrl("/Students/StudentRegistrations/GetCollegesByFaculty"),
-                { facultyId: facultyId },
+            $.get(tenantUrl("/Students/StudentRegistrations/GetCollegesByLevel"),
+                { levelId: levelId },
                 function (data) {
+                    if (seq !== _collegeSeq) return;
                     var dropdown = $("#CollegeId");
                     dropdown.empty();
                     dropdown.append('<option value="">Select College</option>');
@@ -396,176 +450,184 @@
             });
         }
 
-        function loadDepartments(collegeId, selectedDepartmentId, callback) {
+        function loadPrograms(collegeId, selectedProgramId, callback) {
+            var seq = ++_programSeq;
+            var levelId = $("#LevelId").val();
+
             if (!collegeId) {
-                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
                 if (callback) callback();
                 return;
             }
 
-            $.get(tenantUrl("/Students/StudentRegistrations/GetDepartmentsByCollege"),
-                { collegeId: collegeId },
+            $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
+                { collegeId: collegeId, levelId: levelId || null },
                 function (data) {
-                    var dropdown = $("#DepartmentId");
+                    if (seq !== _programSeq) return;
+                    var dropdown = $("#ProgramId");
                     dropdown.empty();
-                    dropdown.append('<option value="">Select Department</option>');
-                    $.each(data, function (index, item) {
-                        var selected = selectedDepartmentId && item.id == selectedDepartmentId ? 'selected' : '';
-                        dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
+                    dropdown.append('<option value="">Select Program</option>');
+                    $.each(data, function (i, item) {
+                        var selected = selectedProgramId && item.id == selectedProgramId ? ' selected' : '';
+                        dropdown.append(`<option value="${item.id}"${selected}>${item.name}</option>`);
                     });
                     if (callback) callback();
             });
         }
 
-        function loadPrograms(collegeId, selectedProgramId) {
-            var levelId = $("#LevelId").val();
-            var departmentId = $("#DepartmentId").val();
-
-            if (!collegeId) {
-                $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                return;
-            }
-
-            $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
-                { collegeId: collegeId, levelId: levelId || null, departmentId: departmentId || null },
-                function (data) {
-                    var dropdown = $("#ProgramId");
-                    dropdown.empty();
-                    dropdown.append('<option value="">Select Program</option>');
-                    $.each(data, function (index, item) {
-                        var selected = selectedProgramId && item.id == selectedProgramId ? 'selected' : '';
-                        dropdown.append(`<option value="${item.id}" ${selected}>${item.name}</option>`);
-                    });
-            });
-        }
-
         $(function () {
+            $('.select2').select2({ width: 'resolve' });
             loadExistingQualifications();
 
-            // BS <-> AD auto-conversion via server (using NepaliCalendarHelper)
             var convertTimer;
             $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
-                }
+                var val = $(this).val().trim();
+                if (val.length < 10) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: val }, function (data) {
+                        if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
+                    });
+                }, 300);
             });
 
             $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
+                var val = $(this).val().trim();
+                if (val.length < 8) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: val }, function (data) {
+                        if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
+                    });
+                }, 300);
+            });
+
+            // Province -> District
+            $("#ProvinceId").change(function () {
+                var provinceId = $(this).val();
+                loadDistricts(provinceId, null, function () {
+                    if (window._addrPendingDistrictId) {
+                        $("#DistrictId").val(window._addrPendingDistrictId).trigger('change');
+                        window._addrPendingDistrictId = null;
+                    }
+                });
+                loadLocalLevels(null, null, function () {});
             });
 
             // District -> LocalLevel
             $("#DistrictId").change(function () {
                 var districtId = $(this).val();
-                $("#LocalLevelId").html('<option>Loading...</option>');
-                $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
-                    var dropdown = $("#LocalLevelId");
-                    dropdown.empty();
-                    dropdown.append('<option value="">Select Local Level</option>');
-                    $.each(data, function (index, item) {
-                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                    });
+                loadLocalLevels(districtId, null, function () {
+                    if (window._addrPendingLocalLevelId) {
+                        $("#LocalLevelId").val(window._addrPendingLocalLevelId).trigger('change');
+                        window._addrPendingLocalLevelId = null;
+                    }
                 });
             });
 
-            // Level -> Faculty + clear downstream
+            // Level -> College + clear downstream
             $("#LevelId").change(function () {
+                if (_cascadeBusy) return;
                 var levelId = $(this).val();
-                $("#FacultyId").html('<option>Loading...</option>');
                 $("#CollegeId").empty().append('<option value="">Select College</option>');
-                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                loadFaculties(levelId, null);
+                loadColleges(levelId, null);
             });
 
-            // Faculty -> College + clear downstream
-            $("#FacultyId").change(function () {
-                var facultyId = $(this).val();
-                $("#CollegeId").html('<option>Loading...</option>');
-                $("#DepartmentId").empty().append('<option value="">Select Department</option>');
-                $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                loadColleges(facultyId, null);
-            });
-
-            // College -> Department + Program + clear downstream
+            // College -> Program
             $("#CollegeId").change(function () {
+                if (_cascadeBusy) return;
                 var collegeId = $(this).val();
-                $("#DepartmentId").html('<option>Loading...</option>');
                 $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                loadDepartments(collegeId, null);
                 loadPrograms(collegeId, null);
             });
 
-            // Department -> Program
-            $("#DepartmentId").change(function () {
-                var collegeId = $("#CollegeId").val();
-                loadPrograms(collegeId, null);
-            });
-
-            // On page load, cascade initial values
+            // On page load, cascade initial values (suppress cascading change handlers via _cascadeBusy)
+            _cascadeBusy = true;
             var initLevelId = $("#LevelId").val();
-            var initFacultyId = $("#FacultyId").val();
             var initCollegeId = $("#CollegeId").val();
-            var initDeptId = $("#DepartmentId").val();
             var initProgramId = $("#ProgramId").val();
+            var initProvinceId = $("#ProvinceId").val();
+            var initDistrictId = $("#DistrictId").val();
+            var initLocalLevelId = $("#LocalLevelId").val();
 
-            if (initLevelId) {
-                loadFaculties(initLevelId, initFacultyId, function () {
-                    if (initFacultyId) {
-                        loadColleges(initFacultyId, initCollegeId, function () {
-                            if (initCollegeId) {
-                                loadDepartments(initCollegeId, initDeptId, function () {
-                                    if (initDeptId) {
-                                        loadPrograms(initCollegeId, initProgramId);
-                                    } else {
-                                        loadPrograms(initCollegeId, initProgramId);
-                                    }
-                                });
-                            }
-                        });
-                    }
+            if (initProvinceId) {
+                loadDistricts(initProvinceId, initDistrictId, function () {
+                    if (initDistrictId) loadLocalLevels(initDistrictId, initLocalLevelId);
                 });
             }
 
-            // BS <-> AD auto-conversion
-            var convertTimer;
-            $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
-                }
-            });
+            function cascadeDone() { _cascadeBusy = false; }
 
-            $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
-            });
+            if (initLevelId) {
+                loadColleges(initLevelId, initCollegeId, function () {
+                    if (initCollegeId) {
+                        loadPrograms(initCollegeId, initProgramId, cascadeDone);
+                    } else { cascadeDone(); }
+                });
+            } else { cascadeDone(); }
+
+            // Pre-populate address cascade (pending vars handled in change handler callbacks)
+            var existingProvinceId = @((ViewBag.ExistingProvinceId as int?)?.ToString() ?? "null");
+            var existingDistrictId = @((ViewBag.ExistingDistrictId as int?)?.ToString() ?? "null");
+            var existingLocalLevelId = @((ViewBag.ExistingLocalLevelId as int?)?.ToString() ?? "null");
+
+            if (existingProvinceId && existingProvinceId !== null) {
+                window._addrPendingDistrictId = existingDistrictId;
+                window._addrPendingLocalLevelId = existingLocalLevelId;
+                $("#ProvinceId").val(existingProvinceId).trigger('change');
+            }
+            var ward = '@(ViewBag.ExistingWardNumber?.ToString() ?? "")';
+            var tole = '@(ViewBag.ExistingToleStreet?.ToString() ?? "")';
+            var house = '@(ViewBag.ExistingHouseNumber?.ToString() ?? "")';
+            if (ward) $('#WardNumber').val(ward);
+            if (tole) $('#ToleStreet').val(tole);
+            if (house) $('#HouseNumber').val(house);
         });
+
+        function generateRegNumber(id) {
+            var btn = document.getElementById('generateRegBtn');
+            var spinner = document.getElementById('generateRegSpinner');
+            var result = document.getElementById('generateRegResult');
+            var section = document.getElementById('generateRegSection');
+
+            if (btn) btn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
+            if (result) result.classList.add('hidden');
+
+            $.post(tenantUrl('/Students/StudentRegistrations/GenerateRegistrationNumber'), { id: id })
+                .done(function (res) {
+                    if (res.success) {
+                        if (section) {
+                            section.className = 'bg-green-50 border border-green-300 rounded-xl p-4 mb-6';
+                            section.innerHTML =
+                                '<div class="flex items-center gap-3">' +
+                                    '<svg class="h-6 w-6 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' +
+                                    '<div>' +
+                                        '<p class="text-sm font-medium text-green-800">Registration Number Generated</p>' +
+                                        '<p class="mt-1 text-lg font-bold text-green-700 font-mono">' + res.registrationNumber + '</p>' +
+                                    '</div>' +
+                                '</div>';
+                        }
+                    } else {
+                        if (result) {
+                            result.className = 'mt-3 text-sm text-red-600';
+                            result.textContent = 'Error: ' + (res.message || 'Unknown error');
+                            result.classList.remove('hidden');
+                        }
+                        if (btn) btn.disabled = false;
+                        if (spinner) spinner.classList.add('hidden');
+                    }
+                })
+                .fail(function () {
+                    if (result) {
+                        result.className = 'mt-3 text-sm text-red-600';
+                        result.textContent = 'An unexpected error occurred.';
+                        result.classList.remove('hidden');
+                    }
+                    if (btn) btn.disabled = false;
+                    if (spinner) spinner.classList.add('hidden');
+                });
+        }
     </script>
 }

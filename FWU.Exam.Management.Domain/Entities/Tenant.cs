@@ -25,6 +25,8 @@ public class Tenant
     [MaxLength(500)]
     [Display(Name = "Logo Path")]
     public string? LogoPath { get; set; }
+    [Display(Name = "Controller Signature Path")]
+    public string? ControllerSignaturePath { get; set; }
     [Display(Name = "Tenant Type")]
     public TenantType TenantType { get; set; } = TenantType.Standard;
     [Display(Name = "Is Active")]

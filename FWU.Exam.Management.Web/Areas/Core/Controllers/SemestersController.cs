@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +14,11 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("semesters.view")]
-public class SemestersController(ISemesterService semesterService, IAcademicYearService academicYearService) : Controller
+public class SemestersController(ISemesterService semesterService, IAcademicYearService academicYearService, IFacultyService facultyService, IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await semesterService.GetSemestersAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await semesterService.GetSemestersAsync(page, pageSize, search, sort, sortDir, userContext);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -40,7 +41,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, userContext);
 
         var sb = new StringBuilder();
         sb.AppendLine("Code,Name,Number,Year,Start Date,End Date,Remark");
@@ -63,7 +64,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var (items, totalCount) = await semesterService.GetSemestersAsync(page, pageSize, search, sort, sortDir);
+        var (items, totalCount) = await semesterService.GetSemestersAsync(page, pageSize, search, sort, sortDir, userContext);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
@@ -78,7 +79,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
     {
-        var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, userContext);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Semesters");
@@ -128,20 +129,23 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
     public async Task<IActionResult> Create()
     {
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName");
+        ViewData["FacultyId"] = new SelectList(await GetFacultiesAsync(), "Id", "Name");
         return View();
     }
 
     [RequirePermission("semesters.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,Code,Name,Number,Year,StartDate,EndDate,Remark,AcademicYearId")] Semester semester)
+    public async Task<IActionResult> Create([Bind("Id,Code,Name,Number,Year,StartDate,EndDate,Remark,AcademicYearId,FacultyId")] Semester semester)
     {
         if (ModelState.IsValid)
         {
             await semesterService.CreateSemesterAsync(semester);
+            TempData["SuccessMessage"] = "Semester created successfully!";
             return RedirectToAction(nameof(Index));
         }
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName", semester.AcademicYearId);
+        ViewData["FacultyId"] = new SelectList(await GetFacultiesAsync(), "Id", "Name", semester.FacultyId);
         return View(semester);
     }
 
@@ -154,13 +158,14 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         if (semester == null) return NotFound();
 
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName", semester.AcademicYearId);
+        ViewData["FacultyId"] = new SelectList(await GetFacultiesAsync(), "Id", "Name", semester.FacultyId);
         return View(semester);
     }
 
     [RequirePermission("semesters.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,Number,Year,StartDate,EndDate,Remark,AcademicYearId")] Semester semester)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,Number,Year,StartDate,EndDate,Remark,AcademicYearId,FacultyId")] Semester semester)
     {
         if (id != semester.Id) return NotFound();
 
@@ -176,9 +181,11 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Semester updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         ViewData["AcademicYearId"] = new SelectList(await GetAcademicYearsAsync(), "Id", "AcademicYearName", semester.AcademicYearId);
+        ViewData["FacultyId"] = new SelectList(await GetFacultiesAsync(), "Id", "Name", semester.FacultyId);
         return View(semester);
     }
 
@@ -198,14 +205,33 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await semesterService.DeleteSemesterAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await semesterService.DeleteSemesterAsync(id);
+            TempData["SuccessMessage"] = "Semester deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private async Task<List<Domain.Entities.AcademicYear>> GetAcademicYearsAsync()
     {
         var (items, _) = await academicYearService.GetAllAcademicYearsAsync(1, int.MaxValue, null);
         return items;
+    }
+
+    private async Task<List<Domain.Entities.Faculty>> GetFacultiesAsync()
+    {
+        return await facultyService.GetAllFacultiesAsync();
     }
         [RequirePermission("semesters.delete")]
     [HttpPost]

@@ -29,4 +29,7 @@ public class SmtpConfiguration
 
     [Display(Name = "Enable SSL")]
     public bool EnableSsl { get; set; }
+
+    [Display(Name = "Is Active")]
+    public bool IsActive { get; set; }
 }

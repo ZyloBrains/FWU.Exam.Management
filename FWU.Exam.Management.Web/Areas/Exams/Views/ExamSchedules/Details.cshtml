@@ -14,7 +14,7 @@
             <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-calendar-alt text-indigo-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Exam Schedule Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Schedule Details</h1>
         </div>
     </div>
 
@@ -22,14 +22,14 @@
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8 space-y-6">
         <!-- Basic Information -->
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Basic Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Schedule Name</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule Name</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ExamScheduleName)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Schedule Code</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Schedule Code</p>
                     <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.ExamScheduleCode)</p>
                 </div>
             </div>
@@ -37,18 +37,18 @@
 
         <!-- Academic Details -->
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Academic Year</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear.AcademicYearName)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Program</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Program.ProgramName)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Type</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamType.Name)</p>
                 </div>
             </div>
@@ -56,38 +56,38 @@
 
         <!-- Date & Time -->
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Date & Time</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Date & Time</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Start Date (BS)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Start Date (BS)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.StartDateBs)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">End Date (BS)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">End Date (BS)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.EndDateBs)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Start Date (AD)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Start Date (AD)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.StartDate)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">End Date (AD)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">End Date (AD)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.EndDate)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Start Time</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Start Time</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.StartTime)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">End Time</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">End Time</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.EndTime)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Published Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Published Date</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PublishedDate)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Extended Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDate)</p>
                 </div>
             </div>
@@ -95,38 +95,69 @@
 
         <!-- Other Details -->
         <div>
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Other Details</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Other Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">College Approval Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">College Approval Date</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeApprovalDate)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Admission Card Release Date</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Admission Card Release Date</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AdmissionCardReleaseDate)</p>
                 </div>                
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Extended Date Charge</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date Charge</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDateCharge)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Exam Fee (Flat)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Fee (Flat)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamFee)</p>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-600">Practical Fee (Per Subject)</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Practical Fee (Per Subject)</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PracticalSubjectFee)</p>
                 </div>
                 <div class="md:col-span-2">
-                    <p class="text-sm font-medium text-gray-600">Remarks</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Remarks</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Remarks)</p>
                 </div>
             </div>
         </div>
 
+        <!-- Student Enrollment Summary -->
+        <div>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
+                <i class="fas fa-users mr-2 text-indigo-500"></i>Student Enrollment Summary
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-100">
+                    <p class="text-2xl font-bold text-indigo-700">@ViewBag.TotalRegistrations</p>
+                    <p class="text-xs font-medium text-indigo-600 mt-1">Total Registrations</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                    <p class="text-2xl font-bold text-green-700">@ViewBag.PaidCount</p>
+                    <p class="text-xs font-medium text-green-600 mt-1">Payment Done</p>
+                </div>
+                <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                    <p class="text-2xl font-bold text-amber-700">@ViewBag.PendingCount</p>
+                    <p class="text-xs font-medium text-amber-600 mt-1">Payment Pending</p>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
+                    <p class="text-2xl font-bold text-blue-700">@ViewBag.RegisteredCount</p>
+                    <p class="text-xs font-medium text-blue-600 mt-1">Fully Registered</p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a asp-controller="ExamRegistrations" asp-action="Index" asp-area="Exams" asp-route-examScheduleId="@Model?.Id"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                    <i class="fas fa-list text-xs"></i> View All Registered Students
+                </a>
+            </div>
+        </div>
+
         <!-- Status -->
         <div>
-            <p class="text-sm font-medium text-gray-600">Status</p>
+            <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
             <div class="mt-1">
                 @if (Model.IsActive)
                 {
@@ -140,6 +171,143 @@
                         <i class="fas fa-circle mr-1"></i> Inactive
                     </span>
                 }
+            </div>
+        </div>
+
+        <!-- Exam Subjects -->
+        <div>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
+                <i class="fas fa-book mr-2 text-indigo-500"></i>Exam Subjects
+            </h2>
+
+            @{
+                var slots = ViewBag.ExamSlots as List<FWU.Exam.Management.Domain.Entities.Exams.ExamSlot> ?? new();
+            }
+
+            @if (slots.Any())
+            {
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 border-b">
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject Code</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject Name</th>
+                                <th class="px-3 py-2 text-center font-semibold text-gray-600">Theory</th>
+                                <th class="px-3 py-2 text-center font-semibold text-gray-600">Practical</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Time</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Room</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Center</th>
+                                <th class="px-3 py-2 text-center font-semibold text-gray-600">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @for (int i = 0; i < slots.Count; i++)
+                            {
+                                var slot = slots[i];
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-3 py-2 font-medium text-gray-700">@(i + 1)</td>
+                                    <td class="px-3 py-2 font-semibold text-gray-800">@(slot.SubjectOffering?.SubjectCatalog?.SubjectCode ?? "-")</td>
+                                    <td class="px-3 py-2 text-gray-700">@(slot.SubjectOffering?.SubjectCatalog?.SubjectName ?? "-")</td>
+                                    <td class="px-3 py-2 text-center">@(slot.SubjectOffering?.HasTheory == true ? "Y" : "\u2014")</td>
+                                    <td class="px-3 py-2 text-center">@(slot.SubjectOffering?.HasPractical == true ? "Y" : "\u2014")</td>
+                                    <td class="px-3 py-2 text-gray-700">@(slot.ExamDate ?? "-")</td>
+                                    <td class="px-3 py-2 text-gray-700">@slot.StartTime - @slot.EndTime</td>
+                                    <td class="px-3 py-2 text-gray-700">@(slot.RoomNumber ?? "-")</td>
+                                    <td class="px-3 py-2 text-gray-700">@(slot.ExamCenter?.Code ?? "-")</td>
+                                    <td class="px-3 py-2 text-center">
+                                        <form asp-action="DeleteExamSlot" method="post" class="inline" onsubmit="return confirm('Remove this subject?')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@slot.Id" />
+                                            <input type="hidden" name="examScheduleId" value="@Model.Id" />
+                                            <button type="submit" class="text-red-500 hover:text-red-700 hover:bg-red-50 rounded p-1 transition" title="Remove">
+                                                <i class="fas fa-trash-alt text-xs"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-gray-400 text-sm italic py-4 text-center">No subjects configured for this exam schedule yet.</p>
+            }
+
+            <!-- Add Subject Form -->
+            <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3"><i class="fas fa-plus-circle mr-1 text-green-500"></i> Add Subject</h3>
+                <form asp-action="AddExamSlot" method="post" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="examScheduleId" value="@Model.Id" />
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Subject *</label>
+                        <select name="subjectOfferingId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">-- Select Subject --</option>
+                            @foreach (var item in (List<SelectListItem>)ViewBag.SubjectOfferings)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Exam Center *</label>
+                        <select name="examCenterId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">-- Select Center --</option>
+                            @foreach (var item in (List<SelectListItem>)ViewBag.ExamCenters)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Batch *</label>
+                        <select name="batchId" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">-- Select Batch --</option>
+                            @foreach (var item in (List<SelectListItem>)ViewBag.Batches)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Exam Date (BS)</label>
+                        <input type="text" name="examDate" placeholder="YYYY-MM-DD" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Start Time *</label>
+                        <input type="time" name="startTime" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">End Time *</label>
+                        <input type="time" name="endTime" required class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Room Number</label>
+                        <input type="text" name="roomNumber" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Remarks</label>
+                        <input type="text" name="remarks" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    </div>
+
+                    <div class="md:col-span-4 flex justify-end">
+                        <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
+                            <i class="fas fa-plus mr-1"></i> Add Subject
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 

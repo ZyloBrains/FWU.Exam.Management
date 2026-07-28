@@ -199,6 +199,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         {
             context.Add(configuration);
             await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "ConnectIPS configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(configuration);
@@ -234,6 +235,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "ConnectIPS configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         return View(configuration);
@@ -256,14 +258,28 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var configuration = await context.ConnectIpsPaymentConfigurations.FindAsync(id);
-        if (configuration != null)
+        try
         {
-            context.ConnectIpsPaymentConfigurations.Remove(configuration);
-        }
+            var configuration = await context.ConnectIpsPaymentConfigurations.FindAsync(id);
+            if (configuration != null)
+            {
+                context.ConnectIpsPaymentConfigurations.Remove(configuration);
+            }
 
-        await context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+            await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "ConnectIPS configuration deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private bool ConnectIPSConfigurationExists(int id)

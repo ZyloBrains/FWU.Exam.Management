@@ -20,7 +20,7 @@ public interface IEntranceExamApplicationService
     Task<EntranceExamApplicationSelectListsDto> GetSelectListsAsync();
     Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId);
     Task<List<SelectOption>> GetLocalLevelsByDistrictAsync(int districtId);
-    List<Province> GetProvinces();
+    Task<List<Province>> GetProvincesAsync();
     Task<List<EntranceExamApplication>> GetAllApplicationsAsync(string? search, ApplicationStatus? status, int? programId, int? academicYearId);
     Task<int> ConvertToAdmissionAsync(int applicationId);
     Task<bool> IsExamScheduleOpenAsync(int programId, int collegeId, int academicYearId);
@@ -40,6 +40,4 @@ public interface IEntranceExamApplicationService
     Task<ApplicationVoucher?> InitiatePaymentAsync(int scheduleId, string studentName, string contactNumber, int paymentTypeId);
     Task<ApplicationVoucher?> GetVoucherByIdAsync(int voucherId);
     Task<List<PaymentType>> GetActivePaymentTypesAsync();
-    Task<string?> GetPaymentTypeNameByIdAsync(int paymentTypeId);
-    Task<List<SelectOption>> GetCollegesByProgramAsync(int programId);
 }

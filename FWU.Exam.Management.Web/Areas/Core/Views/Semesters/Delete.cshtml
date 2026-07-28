@@ -14,7 +14,7 @@
             <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-calendar-alt text-red-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Delete Semester</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Delete Semester</h1>
         </div>
     </div>
 
@@ -59,6 +59,10 @@
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</p>
                 <p class="text-gray-800 font-medium">@(Model.AcademicYear?.AcademicYearName ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty</p>
+                <p class="text-gray-800 font-medium">@(Model.Faculty?.Name ?? "-")</p>
             </div>
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</p>

@@ -3,11 +3,11 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +18,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("gradingschemes.view")]
 public class GradingSchemesController(
     IGradingSchemeService gradingSchemeService,
-    UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
@@ -37,9 +37,9 @@ public class GradingSchemesController(
     }
 
     [RequirePermission("gradingschemes.create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         var model = new GradingScheme { IsActive = true };
         model.GradeDefinitions = GetDefaultGradeDefinitions();
@@ -58,9 +58,10 @@ public class GradingSchemesController(
                 gradePoints, remarks, isPasses, displayOrders);
 
             await gradingSchemeService.CreateGradingSchemeAsync(gradingScheme);
+            TempData["SuccessMessage"] = "Grading scheme created successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, gradingScheme);
         gradingScheme.GradeDefinitions ??= GetDefaultGradeDefinitions();
         return View(gradingScheme);
@@ -74,7 +75,7 @@ public class GradingSchemesController(
         var gradingScheme = await gradingSchemeService.GetGradingSchemeByIdAsync(id.Value);
         if (gradingScheme == null) return NotFound();
 
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, gradingScheme);
         return View(gradingScheme);
     }
@@ -102,9 +103,10 @@ public class GradingSchemesController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Grading scheme updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = gradingSchemeService.GetSelectListData();
+        var selectLists = await gradingSchemeService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, gradingScheme);
         return View(gradingScheme);
     }
@@ -125,8 +127,22 @@ public class GradingSchemesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await gradingSchemeService.DeleteGradingSchemeAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await gradingSchemeService.DeleteGradingSchemeAsync(id);
+            TempData["SuccessMessage"] = "Grading scheme deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     public async Task<IActionResult> Details(int? id)
@@ -179,7 +195,7 @@ public class GradingSchemesController(
 
     private void PopulateDropdowns(GradingSchemeSelectListsDto selectLists, GradingScheme? gradingScheme = null)
     {
-        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "ProgramName", gradingScheme?.ProgramId);
+        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", gradingScheme?.ProgramId);
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
     }
 

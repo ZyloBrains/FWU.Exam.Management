@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Web.Helpers;
@@ -15,7 +16,7 @@ using Microsoft.AspNetCore.Identity;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, ILogger<EntranceController> logger) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, IUserContext userContext, ILogger<EntranceController> logger) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -101,13 +102,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             return RedirectToAction(nameof(VerifyPayment));
         }
 
-        var paymentTypeName = await service.GetPaymentTypeNameByIdAsync(paymentTypeId);
-        if (string.IsNullOrWhiteSpace(paymentTypeName))
-        {
-            TempData["ErrorMessage"] = "Invalid payment method selected.";
-            return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
-        }
-
         var schedule = (await service.GetAvailableExamSchedulesAsync()).FirstOrDefault(s => s.Id == scheduleId);
         var amount = schedule?.ExamFee ?? 1000;
         var transactionUuid = esewaService.GenerateTransactionUuid();
@@ -117,16 +111,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             TempData["ErrorMessage"] = "Unable to process payment. Please try again.";
             return RedirectToAction(nameof(AvailableSchedules));
-        }
-
-        if (paymentTypeName.Contains("khalti", StringComparison.OrdinalIgnoreCase))
-        {
-            return RedirectToAction(nameof(KhaltiPayment), new { scheduleId, logId, amount, studentName, contactNumber });
-        }
-
-        if (paymentTypeName.Contains("connect", StringComparison.OrdinalIgnoreCase))
-        {
-            return RedirectToAction(nameof(ConnectIPSPayment), new { scheduleId, logId, amount, studentName, contactNumber });
         }
 
         TempData["EsewaAmount"] = amount.ToString("F2");
@@ -213,7 +197,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             TempData["VoucherNumber"] = voucher.VoucherNumber;
             TempData["VoucherId"] = voucher.Id;
 
-            return RedirectToAction(nameof(ApplyStep), new { voucherId = voucher.Id });
+            return RedirectToAction(nameof(PaymentSuccess));
         }
         catch (FormatException)
         {
@@ -262,132 +246,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [AllowAnonymous]
-    public async Task<IActionResult> KhaltiPayment(int scheduleId, int logId, decimal amount, string studentName, string contactNumber)
-    {
-        var schedule = (await service.GetAvailableExamSchedulesAsync()).FirstOrDefault(s => s.Id == scheduleId);
-        var scheme = Request.Scheme;
-        var baseUrl = $"{scheme}://{Request.Host.Value}";
-
-        var returnUrl = Url.Action(nameof(KhaltiCallback), "Entrance",
-            new { area = "Exams", logId }, scheme)!;
-
-        var khaltiRequest = new KhaltiInitiateRequest
-        {
-            ReturnUrl = returnUrl,
-            WebsiteUrl = baseUrl,
-            Amount = (long)(amount * 100),
-            PurchaseOrderId = $"ENT-{logId}-{DateTime.Now:yyyyMMddHHmmss}",
-            PurchaseOrderName = $"Entrance Fee - {schedule?.ProgramName ?? schedule?.ExamScheduleName ?? ""}",
-            CustomerInfo = new KhaltiCustomerInfo
-            {
-                Name = studentName,
-                Email = "",
-                Phone = contactNumber
-            }
-        };
-
-        try
-        {
-            logger.LogInformation("Initiating Khalti payment for entrance: amount={Amount}, logId={LogId}", amount, logId);
-            var response = await khaltiService.InitiatePaymentAsync(khaltiRequest);
-            if (response?.PaymentUrl == null)
-            {
-                TempData["ErrorMessage"] = "Khalti did not return a payment URL. Please try again.";
-                return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
-            }
-
-            return Redirect(response.PaymentUrl);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Khalti payment initiation failed for entrance");
-            TempData["ErrorMessage"] = $"Khalti payment failed: {ex.Message}";
-            return RedirectToAction(nameof(InitiatePayment), new { scheduleId });
-        }
-    }
-
-    [AllowAnonymous]
-    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id, int? logId)
-    {
-        if (string.IsNullOrEmpty(pidx))
-        {
-            if (logId.HasValue)
-                await service.LogEsewaResponseAsync(logId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
-
-            TempData["ErrorMessage"] = "No payment identifier received from Khalti.";
-            return RedirectToAction(nameof(VerifyPayment));
-        }
-
-        try
-        {
-            logger.LogInformation("Khalti callback for entrance: pidx={Pidx}, status={Status}, logId={LogId}", pidx, status, logId);
-
-            var lookup = await khaltiService.LookupPaymentAsync(pidx!);
-            var responseData = JsonSerializer.Serialize(new
-            {
-                pidx,
-                callback_status = status,
-                callback_transaction_id = transaction_id,
-                lookup
-            });
-
-            if (lookup == null || lookup.Status != "Completed")
-            {
-                logger.LogWarning("Khalti payment verification failed for entrance: status={LookupStatus}", lookup?.Status);
-                if (logId.HasValue)
-                    await service.LogEsewaResponseAsync(logId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
-
-                TempData["ErrorMessage"] = $"Payment verification failed. Status: {lookup?.Status ?? "Unknown"}";
-                return RedirectToAction(nameof(VerifyPayment));
-            }
-
-            logger.LogInformation("Khalti payment successful for entrance: transaction_id={TransactionId}", lookup.TransactionId);
-
-            var voucher = await service.CompleteEsewaPaymentAsync(logId!.Value, lookup.TotalAmount / 100m);
-            if (voucher != null)
-            {
-                await service.LogEsewaResponseAsync(logId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
-
-                TempData["SuccessMessage"] = "Payment successful!";
-                TempData["TransactionCode"] = lookup.TransactionId ?? transaction_id;
-                TempData["TransactionUuid"] = pidx;
-                TempData["VoucherNumber"] = voucher.VoucherNumber;
-                TempData["VoucherId"] = voucher.Id;
-
-                return RedirectToAction(nameof(ApplyStep), new { voucherId = voucher.Id });
-            }
-
-            TempData["ErrorMessage"] = "Failed to record payment. Please contact support.";
-            return RedirectToAction(nameof(VerifyPayment));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Khalti callback processing failed for entrance");
-            TempData["ErrorMessage"] = "Failed to process Khalti callback.";
-            return RedirectToAction(nameof(VerifyPayment));
-        }
-    }
-
-    [AllowAnonymous]
-    public async Task<IActionResult> ConnectIPSPayment(int scheduleId, int logId, decimal amount, string studentName, string contactNumber)
-    {
-        await service.LogEsewaResponseAsync(logId, "", true, "{\"message\":\"ConnectIPS payment recorded\"}", "Payment recorded via ConnectIPS.");
-
-        var voucher = await service.CompleteEsewaPaymentAsync(logId, amount);
-        if (voucher == null)
-        {
-            TempData["ErrorMessage"] = "Failed to record payment. Please contact support.";
-            return RedirectToAction(nameof(VerifyPayment));
-        }
-
-        TempData["SuccessMessage"] = "Payment request recorded successfully!";
-        TempData["VoucherNumber"] = voucher.VoucherNumber;
-        TempData["VoucherId"] = voucher.Id;
-
-        return RedirectToAction(nameof(ApplyStep), new { voucherId = voucher.Id });
-    }
-
-    [AllowAnonymous]
     public IActionResult PaymentSuccess()
     {
         return View();
@@ -404,21 +262,15 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         }
 
         var selectLists = await service.GetStepFormSelectListsAsync();
-        PopulateStepSelectLists(selectLists);
+        await PopulateStepSelectListsAsync(selectLists);
 
         var schedule = voucher.ExamSchedule;
-        if (schedule != null)
-        {
-            ViewBag.CollegeId = new SelectList(await service.GetCollegesByProgramAsync(schedule.ProgramId), "Id", "Name");
-        }
         ViewBag.VoucherId = voucherId;
         ViewBag.VoucherNumber = voucher.VoucherNumber;
         ViewBag.EntranceFee = voucher.Amount;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
         ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
-        ViewBag.VoucherStudentName = voucher.StudentName ?? "";
-        ViewBag.VoucherContactNumber = voucher.ContactNumber ?? "";
 
         // Check for existing application linked to this voucher
         var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
@@ -449,23 +301,9 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApplyStep([Bind("AcademicYearId,CollegeId,ProgramId,FirstName,MiddleName,LastName,NepaliName,DateOfBirthBS,DateOfBirthAD,GenderId,Email,ContactNumber,Phone,FatherName,FatherContact,MotherName,MotherContact,GuardianEmail,FatherProfession,MotherProfession,CitizenshipNo,CitizenshipDistrictId,CitizenshipIssueDateBs,CitizenshipIssueDateAd,BloodGroup,BirthPlace,Country,PostalCode,PreviousSchoolCollege,PreviousLevelId,PreviousPassedYear,PreviousSymbolNumber,PreviousGPA,PreviousDivision,PreviousLevel2Id,PreviousSchoolCollege2,PreviousBoard2,PreviousSymbolNumber2,PreviousPassedYear2,PreviousGPA2,PreviousDivision2,PreviousLevel3Id,PreviousSchoolCollege3,PreviousBoard3,PreviousSymbolNumber3,PreviousPassedYear3,PreviousGPA3,PreviousDivision3")] EntranceExamApplication application, int voucherId,
-        IFormFile? PhotoFile, IFormFile? DocumentsFile)
+        IFormFile? PhotoFile, IFormFile? DocumentsFile, IFormFile? VoucherFile)
     {
         var selectLists = await service.GetStepFormSelectListsAsync();
-
-        // Fix GenderId binding: non-nullable int can't parse empty string from "Select Gender" option
-        if (application.GenderId == 0 && string.IsNullOrEmpty(Request.Form["GenderId"]))
-        {
-            ModelState.Remove("GenderId");
-            ModelState.AddModelError("GenderId", "Gender is required.");
-        }
-
-        // Fix CollegeId binding: non-nullable int from select dropdown
-        if (application.CollegeId == 0 && string.IsNullOrEmpty(Request.Form["CollegeId"]))
-        {
-            ModelState.Remove("CollegeId");
-            ModelState.AddModelError("CollegeId", "Please select a college.");
-        }
 
         var permanentLocalLevelId = Request.Form["LocalLevelId"].ToString();
         var permanentWardNumber = Request.Form["WardNumber"].ToString();
@@ -473,67 +311,42 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var permanentHouseNumber = Request.Form["HouseNumber"].ToString();
 
         // Validate file uploads
-        var fileErrors = ValidateUploadedFiles(PhotoFile, DocumentsFile);
+        var fileErrors = ValidateUploadedFiles(PhotoFile, DocumentsFile, VoucherFile);
         foreach (var error in fileErrors)
             ModelState.AddModelError("", error);
 
         if (ModelState.IsValid)
         {
-            // Override CollegeId/ProgramId/AcademicYearId from the voucher's exam schedule
-            // (these are pre-determined by payment, not user-editable)
-            var voucherMeta = await service.GetVoucherByIdAsync(voucherId);
-            var voucherSchedule = voucherMeta?.ExamSchedule;
-            if (voucherSchedule == null)
-            {
-                ModelState.AddModelError("", "Invalid payment reference. Exam schedule not found.");
-                TempData["ErrorMessage"] = "Invalid payment reference. Exam schedule not found.";
-                return RedirectToAction(nameof(VerifyPayment));
-            }
-
-            application.AcademicYearId = voucherSchedule.AcademicYearId;
-            application.ProgramId = voucherSchedule.ProgramId;
-
             // Handle file uploads
-            if (PhotoFile?.Length > 0)
-                application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
-            if (DocumentsFile?.Length > 0)
-                application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
+            application.PhotoPath = await fileUploadHelper.UploadAsync(PhotoFile, "entrance/photos");
+            application.DocumentsPath = await fileUploadHelper.UploadAsync(DocumentsFile, "entrance/documents");
+            application.VoucherPath = await fileUploadHelper.UploadAsync(VoucherFile, "entrance/vouchers");
+
             // Check if editing an existing application
             var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
             if (existing != null && (existing.Status == ApplicationStatus.Submitted || existing.Status == ApplicationStatus.Rejected))
             {
                 await service.UpdateStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId, existing.Id);
                 TempData["SuccessMessage"] = "Application updated successfully.";
-                return RedirectToAction("Index", "Home", new { area = "" });
+                return RedirectToAction(nameof(Confirmation), new { id = existing.Id });
             }
 
             var id = await service.SubmitStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId);
-            TempData["SuccessMessage"] = "Application submitted successfully.";
-            return RedirectToAction("Index", "Home", new { area = "" });
+            return RedirectToAction(nameof(Confirmation), new { id });
         }
 
-        TempData["ErrorMessage"] = "Please fix the validation errors and try again.";
-        PopulateStepSelectLists(selectLists);
+        await PopulateStepSelectListsAsync(selectLists);
         ViewBag.VoucherId = voucherId;
 
-        var voucher = await service.GetVoucherByIdAsync(voucherId);
-        var schedule = voucher?.ExamSchedule;
-        if (schedule != null)
-        {
-            ViewBag.CollegeId = new SelectList(await service.GetCollegesByProgramAsync(schedule.ProgramId), "Id", "Name");
-        }
+        var schedule = (await service.GetVoucherByIdAsync(voucherId))?.ExamSchedule;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
         ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
-        ViewBag.VoucherNumber = voucher?.VoucherNumber ?? "";
-        ViewBag.EntranceFee = voucher?.Amount ?? 0;
-        ViewBag.VoucherStudentName = voucher?.StudentName ?? "";
-        ViewBag.VoucherContactNumber = voucher?.ContactNumber ?? "";
 
         return View(application);
     }
 
-    private List<string> ValidateUploadedFiles(IFormFile? photo, IFormFile? documents)
+    private List<string> ValidateUploadedFiles(IFormFile? photo, IFormFile? documents, IFormFile? voucher)
     {
         var errors = new List<string>();
         var allowedImageExts = new[] { ".jpg", ".jpeg", ".png" };
@@ -556,6 +369,15 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
                 errors.Add("Documents must be PDF, JPG, PNG, or DOC/DOCX file.");
             if (documents.Length > maxSize)
                 errors.Add("Documents must be less than 5MB.");
+        }
+
+        if (voucher != null && voucher.Length > 0)
+        {
+            var ext = Path.GetExtension(voucher.FileName).ToLowerInvariant();
+            if (!allowedDocExts.Contains(ext))
+                errors.Add("Voucher must be PDF, JPG, or DOC/DOCX file.");
+            if (voucher.Length > maxSize)
+                errors.Add("Voucher must be less than 5MB.");
         }
 
         return errors;
@@ -604,21 +426,10 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
     [HttpGet]
     [AllowAnonymous]
-    public JsonResult GetProvinces()
+    public async Task<JsonResult> GetProvinces()
     {
-        var provinces = service.GetProvinces();
+        var provinces = await service.GetProvincesAsync();
         return Json(provinces.Select(p => new { id = p.Id, name = p.ProvinceName }));
-    }
-
-    [HttpGet]
-    [AllowAnonymous]
-    public JsonResult ConvertBsToAd(string bsDate)
-    {
-        var parts = bsDate.Split('-');
-        if (parts.Length != 3 || !int.TryParse(parts[0], out var y) || !int.TryParse(parts[1], out var m) || !int.TryParse(parts[2], out var d))
-            return Json(new { adDate = (string?)null });
-        var ad = NepaliCalendarHelper.BsToAd(y, m, d);
-        return Json(new { adDate = ad?.ToString("yyyy-MM-dd") });
     }
 
     // --- Admin actions ---
@@ -642,7 +453,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.AcademicYearId = academicYearId;
 
         var selectLists = await service.GetSelectListsAsync();
-        ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "Name", programId);
+        ViewBag.ProgramIdList = new SelectList(selectLists.Programs, "Id", "ProgramName", programId);
         ViewBag.AcademicYearIdList = new SelectList(selectLists.AcademicYears, "Id", "Name", academicYearId);
 
         return View(items);
@@ -680,7 +491,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
@@ -742,7 +553,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin,DepartmentAdmin")]
+    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConvertToAdmission(int id)
     {
@@ -766,8 +577,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
-        var (collegeId, facultyId) = await GetEntranceScopeAsync();
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, "Entrance");
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, "Entrance");
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -781,9 +591,9 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [RequirePermission("examschedules.create")]
-    public IActionResult CreateSchedule()
+    public async Task<IActionResult> CreateSchedule()
     {
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateScheduleDropdowns(selectLists);
         return View("ScheduleForm", new ExamSchedule
         {
@@ -801,7 +611,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     {
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
-        var sl = examScheduleService.GetSelectListData();
+        var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
@@ -824,7 +634,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var schedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (schedule == null) return NotFound();
 
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateScheduleDropdowns(selectLists, schedule);
         return View("ScheduleForm", schedule);
     }
@@ -838,7 +648,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
         ModelState.Remove(nameof(model.ExamTypeId));
         ModelState.Remove(nameof(model.SemesterId));
-        var sl = examScheduleService.GetSelectListData();
+        var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
@@ -850,6 +660,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         }
 
         PopulateScheduleDropdowns(sl, model);
+ 
         return View("ScheduleForm", model);
     }
 
@@ -878,29 +689,15 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         }
     }
 
-    private async Task<(int? collegeId, int? facultyId)> GetEntranceScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
-    }
-
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)
     {
-        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "ProgramName", model?.ProgramId);
+        ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", model?.ProgramId);
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", model?.AcademicYearId);
     }
 
-    private void PopulateStepSelectLists(EntranceExamApplicationSelectListsDto selectLists)
+    private async Task PopulateStepSelectListsAsync(EntranceExamApplicationSelectListsDto selectLists)
     {
-        var provinces = service.GetProvinces();
+        var provinces = await service.GetProvincesAsync();
         ViewBag.Provinces = new SelectList(provinces, "Id", "ProvinceName");
         ViewBag.Districts = new SelectList(selectLists.Districts, "Id", "Name");
         ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name");

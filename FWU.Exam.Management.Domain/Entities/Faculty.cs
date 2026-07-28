@@ -1,9 +1,10 @@
 ﻿using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
-public class Faculty
+public class Faculty : ITenantScoped
 {    
     public int Id { get; set; }
     [Required, MaxLength(100)]
@@ -12,6 +13,9 @@ public class Faculty
     [Required, MaxLength(30)]
     [Display(Name = "Office Code")]
     public string OfficeCode { get; set; } = string.Empty;
+    [MaxLength(20)]
+    [Display(Name = "Short Name")]
+    public string? ShortName { get; set; }
     [MaxLength(50)]
     [Display(Name = "Contact Number")]
     public string ContactNumber { get; set; } = string.Empty;
@@ -26,6 +30,5 @@ public class Faculty
     public int? TenantId { get; set; }
     public Tenant? Tenant { get; set; }
     public virtual ICollection<College>? Colleges { get; set; }
-    public virtual ICollection<Department>? Departments { get; set; }
 }
 

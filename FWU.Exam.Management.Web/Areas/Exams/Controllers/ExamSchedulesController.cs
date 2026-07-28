@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,27 +24,20 @@ public class ExamSchedulesController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
-    }
-
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId);
+        var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
 
+        var scheduleIds = items.Select(i => i.Id).ToList();
+        var registrationCounts = await context.ExamRegistrations
+            .Where(r => scheduleIds.Contains(r.ExamScheduleId))
+            .GroupBy(r => r.ExamScheduleId)
+            .Select(g => new { ScheduleId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ScheduleId, x => x.Count);
+
+        ViewBag.RegistrationCounts = registrationCounts;
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -64,8 +59,7 @@ public class ExamSchedulesController(
 
     public async Task<IActionResult> ExportToCsv(string search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Start Date (AD),End Date (AD),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
@@ -98,16 +92,14 @@ public class ExamSchedulesController(
 
     public async Task<IActionResult> ExportToPdf(string search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(string search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await examScheduleService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await examScheduleService.GetFilteredItemsAsync(search);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("ExamSchedules");
@@ -160,13 +152,103 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
+        var registrations = await context.ExamRegistrations
+            .Where(r => r.ExamScheduleId == id.Value)
+            .ToListAsync();
+
+        var examSlots = await context.ExamSlots
+            .Where(es => es.ExamScheduleId == id.Value)
+            .Include(es => es.SubjectOffering)
+                .ThenInclude(so => so!.SubjectCatalog)
+            .Include(es => es.ExamCenter)
+            .ToListAsync();
+
+        ViewBag.TotalRegistrations = registrations.Count;
+        ViewBag.PaidCount = registrations.Count(r => r.FeeEnclosed.HasValue && r.FeeEnclosed > 0);
+        ViewBag.PendingCount = registrations.Count(r => !r.FeeEnclosed.HasValue || r.FeeEnclosed == 0);
+        ViewBag.RegisteredCount = registrations.Count(r => r.Status == RegistrationStatus.Registered);
+        ViewBag.PendingVerificationCount = registrations.Count(r => r.Status == RegistrationStatus.Pending);
+        ViewBag.ExamSlots = examSlots;
+
+        var subjectOfferings = await context.SubjectOfferings
+            .Where(so => so.ProgramId == examSchedule.ProgramId && so.SemesterId == examSchedule.SemesterId)
+            .Include(so => so.SubjectCatalog)
+            .ToListAsync();
+        var existingSlotSubjectIds = examSlots.Select(es => es.SubjectOfferingId).ToHashSet();
+        ViewBag.SubjectOfferings = subjectOfferings
+            .Where(so => !existingSlotSubjectIds.Contains(so.Id))
+            .Select(so => new SelectListItem
+            {
+                Value = so.Id.ToString(),
+                Text = $"{so.SubjectCatalog?.SubjectCode} - {so.SubjectCatalog?.SubjectName}"
+            }).ToList();
+
+        ViewBag.ExamCenters = await context.ExamCenters
+            .Where(ec => ec.IsActive && ec.ExamScheduleId == id.Value)
+            .Select(ec => new SelectListItem { Value = ec.Id.ToString(), Text = ec.Code ?? $"Center {ec.Id}" })
+            .ToListAsync();
+
+        var batches = await context.Batches
+            .Where(b => b.AcademicYearId == examSchedule.AcademicYearId && b.IsActive)
+            .Select(b => new SelectListItem { Value = b.Id.ToString(), Text = b.BatchName })
+            .ToListAsync();
+        ViewBag.Batches = batches;
+
         return View(examSchedule);
     }
 
-    [RequirePermission("examschedules.create")]
-    public IActionResult Create()
+    [HttpPost]
+    [RequirePermission("examschedules.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddExamSlot(int examScheduleId, int subjectOfferingId, int examCenterId, int batchId, string? examDate, TimeOnly startTime, TimeOnly endTime, string? roomNumber, string? remarks)
     {
-        var selectLists = examScheduleService.GetSelectListData();
+        var existing = await context.ExamSlots
+            .AnyAsync(es => es.ExamScheduleId == examScheduleId && es.SubjectOfferingId == subjectOfferingId);
+        if (existing)
+        {
+            TempData["ErrorMessage"] = "This subject is already added to the schedule.";
+            return RedirectToAction(nameof(Details), new { id = examScheduleId });
+        }
+
+        var slot = new ExamSlot
+        {
+            ExamScheduleId = examScheduleId,
+            SubjectOfferingId = subjectOfferingId,
+            ExamCenterId = examCenterId,
+            BatchId = batchId,
+            ExamDate = examDate,
+            StartTime = startTime,
+            EndTime = endTime,
+            RoomNumber = roomNumber,
+            Remarks = remarks,
+            TenantId = (await context.ExamSchedules.FindAsync(examScheduleId))?.TenantId ?? 0
+        };
+
+        context.ExamSlots.Add(slot);
+        await context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Subject added to exam schedule successfully!";
+        return RedirectToAction(nameof(Details), new { id = examScheduleId });
+    }
+
+    [HttpPost]
+    [RequirePermission("examschedules.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteExamSlot(int id, int examScheduleId)
+    {
+        var slot = await context.ExamSlots.FindAsync(id);
+        if (slot != null)
+        {
+            context.ExamSlots.Remove(slot);
+            await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Subject removed from exam schedule.";
+        }
+        return RedirectToAction(nameof(Details), new { id = examScheduleId });
+    }
+
+    [RequirePermission("examschedules.create")]
+    public async Task<IActionResult> Create()
+    {
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -176,18 +258,13 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        if (collegeId.HasValue)
-            examSchedule.CollegeId = collegeId;
-        else if (facultyId.HasValue)
-            examSchedule.CollegeId = null;
-
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
+            TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -200,7 +277,7 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -212,10 +289,6 @@ public class ExamSchedulesController(
     {
         if (id != examSchedule.Id) return NotFound();
 
-        var (collegeId, facultyId) = await GetScopeAsync();
-        if (collegeId.HasValue)
-            examSchedule.CollegeId = collegeId;
-
         if (ModelState.IsValid)
         {
             try
@@ -225,15 +298,23 @@ public class ExamSchedulesController(
                 examSchedule.TenantId = existing.TenantId;
                 await examScheduleService.UpdateExamScheduleAsync(examSchedule);
             }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                var retrySelectLists = await examScheduleService.GetSelectListDataAsync();
+                PopulateDropdowns(retrySelectLists, examSchedule);
+                return View(examSchedule);
+            }
             catch (DbUpdateConcurrencyException)
             {
                 if (!await examScheduleService.ExamScheduleExistsAsync(examSchedule.Id))
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examScheduleService.GetSelectListData();
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -254,8 +335,22 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examScheduleService.DeleteExamScheduleAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)

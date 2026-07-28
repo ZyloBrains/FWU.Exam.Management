@@ -33,6 +33,8 @@
         </div>
     </div>
 
+    @await Html.PartialAsync("_AlertMessages")
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
@@ -63,19 +65,24 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Name / Code</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Academic Year</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Exam Type</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date Range</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Registrations</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                @{ var serial = (currentPage - 1) * pageSize; }
                 @foreach (var item in Model)
                 {
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    serial++;
+                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                        <td class="px-4 py-3 text-gray-500">@serial</td>
                         <td class="px-4 py-3">
                             <div class="font-medium text-gray-800">@item.ExamScheduleName</div>
                             <div class="text-xs text-gray-500">@item.ExamScheduleCode</div>
@@ -97,15 +104,26 @@
                                 <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Inactive</span>
                             }
                         </td>
+                        <td class="px-4 py-3 text-center">
+                            @{
+                                var counts = ViewBag.RegistrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+                                var regCount = counts.TryGetValue(item.Id, out var c) ? c : 0;
+                            }
+                            <a asp-controller="ExamRegistrations" asp-action="Index" asp-area="Exams" asp-route-examScheduleId="@item.Id"
+                               onclick="event.stopPropagation()"
+                               class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full @(regCount > 0 ? "bg-blue-100 text-blue-700 hover:bg-blue-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200") transition-colors">
+                                <i class="fas fa-users text-[10px]"></i> @regCount
+                            </a>
+                        </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-1">
-                                <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
+                                <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
-                                <a asp-action="Edit" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
+                                <a asp-action="Edit" asp-area="Exams" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit">
                                     <i class="fas fa-edit text-xs"></i>
                                 </a>
-                                <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
                                     <i class="fas fa-trash text-xs"></i>
                                 </a>
                             </div>
@@ -125,15 +143,17 @@
     </div>
 
     <div class="lg:hidden space-y-3">
+        @{ var serialMobile = (currentPage - 1) * pageSize; }
         @if (Model.Any())
         {
             @foreach (var item in Model)
             {
+                serialMobile++;
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <i class="fas fa-calendar-alt text-indigo-600 text-sm"></i>
+                                <span class="text-xs font-bold text-indigo-700">@serialMobile</span>
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-800 text-sm">@item.ExamScheduleName</h3>
@@ -162,6 +182,17 @@
                         <div class="text-gray-800">@(item.StartDateBs ?? "-")</div>
                         <div class="text-gray-500">End Date</div>
                         <div class="text-gray-800">@(item.EndDateBs ?? "-")</div>
+                        <div class="text-gray-500">Registrations</div>
+                        <div class="text-gray-800">
+                            @{
+                                var mobileCounts = ViewBag.RegistrationCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+                                var mobileRegCount = mobileCounts.TryGetValue(item.Id, out var mc) ? mc : 0;
+                            }
+                            <a asp-controller="ExamRegistrations" asp-action="Index" asp-area="Exams" asp-route-examScheduleId="@item.Id"
+                               class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full @(mobileRegCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500")">
+                                <i class="fas fa-users text-[10px]"></i> @mobileRegCount
+                            </a>
+                        </div>
                     </div>
                     <div class="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
                         <a asp-action="Details" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
@@ -170,7 +201,7 @@
                         <a asp-action="Edit" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                             <i class="fas fa-edit mr-1"></i> Edit
                         </a>
-                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             <i class="fas fa-trash mr-1"></i> Delete
                         </a>
                     </div>

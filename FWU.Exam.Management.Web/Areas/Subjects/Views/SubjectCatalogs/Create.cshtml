@@ -13,7 +13,7 @@
             <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-book text-teal-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Create Subject Catalog</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Subject Catalog</h1>
         </div>
     </div>
 
@@ -23,41 +23,41 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label asp-for="SubjectCode" class="text-sm font-medium text-gray-700 block mb-1">Subject Code <span class="text-red-500">*</span></label>
+                    <label asp-for="SubjectCode" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject Code <span class="text-red-500">*</span></label>
                     <input asp-for="SubjectCode" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., MATH101, ENG201" />
                     <span asp-validation-for="SubjectCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="ShortName" class="text-sm font-medium text-gray-700 block mb-1">Short Name</label>
+                    <label asp-for="ShortName" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Short Name</label>
                     <input asp-for="ShortName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Math, English" />
                     <span asp-validation-for="ShortName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="SubjectName" class="text-sm font-medium text-gray-700 block mb-1">Subject Name <span class="text-red-500">*</span></label>
+                    <label asp-for="SubjectName" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject Name <span class="text-red-500">*</span></label>
                     <input asp-for="SubjectName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Mathematics I, English Composition" />
                     <span asp-validation-for="SubjectName" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="SubjectTypeId" class="text-sm font-medium text-gray-700 block mb-1">Subject Type</label>
-                    <select asp-for="SubjectTypeId" asp-items="ViewBag.SubjectTypeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                    <label asp-for="SubjectTypeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject Type</label>
+                    <select asp-for="SubjectTypeId" asp-items="ViewBag.SubjectTypeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                         <option value="">-- Select Subject Type --</option>
                     </select>
                     <span asp-validation-for="SubjectTypeId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="CreditHours" class="text-sm font-medium text-gray-700 block mb-1">Credit Hours</label>
+                    <label asp-for="CreditHours" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Credit Hours</label>
                     <input asp-for="CreditHours" type="number" min="1" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 3, 4, 5" />
                     <span asp-validation-for="CreditHours" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label asp-for="Description" class="text-sm font-medium text-gray-700 block mb-1">Description</label>
+                    <label asp-for="Description" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Description</label>
                     <textarea asp-for="Description" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Enter description (optional)"></textarea>
                     <span asp-validation-for="Description" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
                         <input asp-for="IsActive" type="checkbox" checked="checked" class="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
-                        <label asp-for="IsActive" class="text-sm font-medium text-gray-700">Active</label>
+                        <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
                     </div>
                 </div>
             </div>
@@ -75,6 +75,40 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.25rem;
+            padding: 0;
+            color: #374151;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #14b8a6;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(20,184,166,0.2);
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            $('.select2').select2({ width: 'resolve' });
+        });
+    </script>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }

@@ -9,9 +9,9 @@ public class EmailService(AppDbContext context) : IEmailService
 {
     public async Task SendEmailAsync(string toEmail, string subject, string body, bool isHtml = true, List<string>? attachmentPaths = null)
     {
-        var smtpConfig = await context.SmtpConfigurations.FirstOrDefaultAsync();
+        var smtpConfig = await context.SmtpConfigurations.FirstOrDefaultAsync(c => c.IsActive);
         if (smtpConfig == null)
-            throw new InvalidOperationException("No SMTP configuration found. Please configure SMTP settings first.");
+            return;
 
         using var message = new MailMessage
         {

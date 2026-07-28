@@ -3,6 +3,7 @@ using System.Text.Json;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -24,11 +25,14 @@ public class SubjectOfferingsController : Controller
         _subjectOfferingService = subjectOfferingService;
     }
 
-    public async Task<IActionResult> Index(string search = null, string sort = "Program", string sortDir = "asc")
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Program", string sortDir = "asc", int pageSize = 10)
     {
-        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(1, int.MaxValue, search, sort, sortDir);
+        var (items, totalProgramCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
 
-        ViewBag.TotalCount = totalCount;
+        ViewBag.TotalCount = totalProgramCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalProgramCount / pageSize);
+        ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
@@ -305,6 +309,7 @@ public class SubjectOfferingsController : Controller
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Subject offering updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
@@ -330,8 +335,22 @@ public class SubjectOfferingsController : Controller
     [RequirePermission("subjectofferings.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
+            TempData["SuccessMessage"] = "Subject offering deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
         [RequirePermission("subjectofferings.delete")]
     [HttpPost]

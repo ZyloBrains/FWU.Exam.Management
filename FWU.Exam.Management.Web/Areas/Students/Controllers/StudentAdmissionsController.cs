@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
 [RequirePermission("studentadmissions.view")]
-public class StudentAdmissionsController(IStudentAdmissionService admissionService, IStudentRegistrationService studentService, UserManager<AppUser> userManager, AppDbContext context) : Controller
+public class StudentAdmissionsController(IStudentAdmissionService admissionService, IStudentRegistrationService studentService, UserManager<AppUser> userManager, AppDbContext context, IUserContext userContext) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -27,18 +28,14 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
         if (User.IsInRole(Role.FacultyAdmin) && user.FacultyId != null)
         {
-            return await context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == user.FacultyId))
-                .Select(c => c.Id)
+            return await context.CollegePrograms
+                .Where(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId)
+                .Select(cp => cp.CollegeId)
+                .Distinct()
                 .ToListAsync();
         }
 
         if (User.IsInRole(Role.CollegeAdmin) && user.CollegeId != null)
-        {
-            return new List<int> { user.CollegeId.Value };
-        }
-
-        if (User.IsInRole(Role.DepartmentAdmin) && user.CollegeId != null)
         {
             return new List<int> { user.CollegeId.Value };
         }
@@ -48,10 +45,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "AdmissionDate", string sortDir = "desc", int pageSize = 10)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : (int?)null;
-
-        var (items, totalCount) = await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null);
+        var (items, totalCount) = await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -77,11 +71,9 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     [RequirePermission("studentadmissions.create")]
     public async Task<IActionResult> Create(int? studentRegistrationId = null)
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-
-        if (collegeIds.Count == 1)
+        if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
-            ViewBag.CollegeId = new SelectList(await context.Colleges.Where(c => c.Id == collegeIds[0]).ToListAsync(), "Id", "Name", collegeIds[0]);
+            ViewBag.CollegeId = new SelectList(await context.Colleges.Where(c => c.Id == userContext.CollegeId.Value).ToListAsync(), "Id", "Name", userContext.CollegeId.Value);
         }
         else
         {
@@ -150,10 +142,9 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             return RedirectToAction(nameof(Index));
         }
 
-        var collegeIds = await GetUserCollegeIdsAsync();
-        if (collegeIds.Count == 1)
+        if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
-            ViewBag.CollegeId = new SelectList(await context.Colleges.Where(c => c.Id == collegeIds[0]).ToListAsync(), "Id", "Name", collegeIds[0]);
+            ViewBag.CollegeId = new SelectList(await context.Colleges.Where(c => c.Id == userContext.CollegeId.Value).ToListAsync(), "Id", "Name", userContext.CollegeId.Value);
         }
         else
         {
@@ -225,9 +216,22 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     [RequirePermission("studentadmissions.delete")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await admissionService.DeleteAdmissionAsync(id);
-        TempData["SuccessMessage"] = "Student admission deleted successfully!";
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await admissionService.DeleteAdmissionAsync(id);
+            TempData["SuccessMessage"] = "Student admission deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     private string EscapeCsv(string field)
@@ -240,9 +244,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : (int?)null;
-        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null);
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         var sb = new StringBuilder();
         sb.AppendLine("S.N.,College Roll No.,College,Program,Admission Date,Status,Active");
@@ -266,13 +268,11 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : (int?)null;
-        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null);
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         ViewBag.CurrentPage = page;
         ViewBag.PageSize = pageSize;
-        ViewBag.TotalCount = (await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null)).TotalCount;
+        ViewBag.TotalCount = (await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir)).TotalCount;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
@@ -283,9 +283,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
-        var collegeIds = await GetUserCollegeIdsAsync();
-        int? collegeId = collegeIds.Count == 1 ? collegeIds[0] : (int?)null;
-        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, collegeIds.Count > 0 ? collegeId : null);
+        var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("StudentAdmissions");

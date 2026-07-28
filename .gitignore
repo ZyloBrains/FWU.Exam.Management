@@ -362,7 +362,21 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/fwu-examination-management-system/wwwroot/images
-/FWU.Exam.Management.Web/wwwroot/faculty
-/FWU.Exam.Management.Web/wwwroot/images
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Tailwind CLI
+FWU.Exam.Management.Web/tailwindcss.exe
+
+# Uploaded files (user content)
+/FWU.Exam.Management.Web/wwwroot/faculty/
+/FWU.Exam.Management.Web/wwwroot/uploads/
+/FWU.Exam.Management.Web/wwwroot/css/tailwind.css
+
+# Logs
+logs/
+*.log
+
 /learning

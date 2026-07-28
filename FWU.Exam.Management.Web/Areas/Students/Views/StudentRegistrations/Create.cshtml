@@ -33,40 +33,23 @@
                                     *
                                 </label>
                                 <select asp-for="AcademicYearId"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"
+                                        class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500"
                                         asp-items="ViewBag.AcademicYearId"></select>
                             </div>
 
                             <div>
                                 <label asp-for="LevelId" class="block text-sm font-medium text-gray-700 mb-1">Level/Grade *</label>
-                                <select asp-for="LevelId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.LevelId"></select>
-                            </div>
-
-                            <div>
-                                <label asp-for="FacultyId" class="block text-sm font-medium text-gray-700 mb-1">Faculty</label>
-                                <select asp-for="FacultyId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.FacultyId">
-                                    <option value="">Select Faculty</option>
-                                </select>
+                                <select asp-for="LevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.LevelId"></select>
                             </div>
 
                             <div>
                                 <label asp-for="CollegeId" class="block text-sm font-medium text-gray-700 mb-1">College/Campus *</label>
-                                <select asp-for="CollegeId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.CollegeId"></select>
-                            </div>
-
-                            <div>
-                                <label asp-for="DepartmentId" class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-                                <select asp-for="DepartmentId"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
-                                        asp-items="ViewBag.DepartmentId">
-                                    <option value="">Select Department</option>
-                                </select>
-                                <span asp-validation-for="DepartmentId" class="text-red-600 text-xs"></span>
+                                <select asp-for="CollegeId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.CollegeId"></select>
                             </div>
 
                             <div>
                                 <label asp-for="ProgramId" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
-                                <select asp-for="ProgramId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.ProgramId">
+                                <select asp-for="ProgramId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.ProgramId">
                                     <option value="">Select Program</option>
                                 </select>
                             </div>
@@ -82,7 +65,7 @@
 
                             <div>
                                 <label asp-for="GenderId" class="block text-sm text-gray-600 mb-1">Gender *</label>
-                                <select asp-for="GenderId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.GenderId"></select>
+                                <select asp-for="GenderId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.GenderId"></select>
                             </div>
 
                             <div>
@@ -98,14 +81,8 @@
                             </div>
 
                             <div>
-                                <label asp-for="RegistrationNumber" class="block text-sm text-gray-600 mb-1">College Roll No</label>
-                                <input asp-for="RegistrationNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" />
-                                <span asp-validation-for="RegistrationNumber" class="text-red-600 text-xs"></span>
-                            </div>
-
-                            <div>
                                 <label asp-for="EthnicityId" class="block text-sm text-gray-600 mb-1">Ethnicity</label>
-                                <select asp-for="EthnicityId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.EthnicityId"></select>
+                                <select asp-for="EthnicityId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500" asp-items="ViewBag.EthnicityId"></select>
                             </div>
 
                             <div>
@@ -138,7 +115,7 @@
                     <div>
                         <label asp-for="StudentCategoryId" class="block text-sm font-medium">Student Category *</label>
                         <select asp-for="StudentCategoryId" asp-items="ViewBag.StudentCategoryId"
-                                class="w-full px-3 py-2 border rounded-md bg-white text-sm">
+                                class="select2 w-full px-3 py-2 border rounded-md bg-white text-sm">
                             <option value="">Select Category</option>
                         </select>
                         <span asp-validation-for="StudentCategoryId" class="text-red-600 text-xs"></span>
@@ -196,38 +173,38 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Province *</label>
-                                <select id="ProvinceId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="@ViewBag.Provinces">
-                                    <option>Select Province</option>
+                                <select id="ProvinceId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" asp-items="@ViewBag.Provinces">
+                                    <option value="">Select Province</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">District *</label>
-                                <select id="DistrictId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                                    <option>Select District</option>
+                                <select id="DistrictId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <option value="">Select District</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Local Level *</label>
-                                <select id="LocalLevelId" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                                    <option>Select Local Level</option>
+                                <select id="LocalLevelId" name="LocalLevelId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                                    <option value="">Select Local Level</option>
                                 </select>
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Ward Number</label>
-                                <input id="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input id="WardNumber" name="WardNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">Tole/Street</label>
-                                <input id="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input id="ToleStreet" name="ToleStreet" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
 
                             <div>
                                 <label class="block text-sm text-gray-600 mb-1">House Number</label>
-                                <input id="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input id="HouseNumber" name="HouseNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                             </div>
                         </div>
                     </div>
@@ -276,9 +253,21 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding: 0; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #14b8a6;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(20,184,166,0.2);
+        }
+    </style>
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         var qualificationIndex = 0;
 
@@ -329,210 +318,127 @@
             if (data.boardId) row.querySelector('[name="Qualifications.BoardId"]').value = data.boardId;
         }
 
-        function loadPrograms() {
-            var collegeId = $("#CollegeId").val();
-            var levelId = $("#LevelId").val();
-            var departmentId = $("#DepartmentId").val();
+        var _collegeSeq = 0, _programSeq = 0;
 
-            $("#ProgramId").html('<option>Loading...</option>');
+        function loadPrograms(collegeId, callback) {
+            var levelId = $("#LevelId").val();
+            var seq = ++_programSeq;
 
             if (!collegeId) {
-                var programDropdown = $("#ProgramId");
-                programDropdown.empty();
-                programDropdown.append('<option value="">Select Program</option>');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                if (callback) callback();
                 return;
             }
 
             $.get(tenantUrl("/Students/StudentRegistrations/GetProgramsByCollege"),
-                { collegeId: collegeId, levelId: levelId || null, departmentId: departmentId || null },
+                { collegeId: collegeId, levelId: levelId || null },
                 function (data) {
-                    var programDropdown = $("#ProgramId");
-                    programDropdown.empty();
-                    programDropdown.append('<option value="">Select Program</option>');
+                    if (seq !== _programSeq) return;
+                    var dropdown = $("#ProgramId");
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Program</option>');
                     $.each(data, function (index, item) {
-                        programDropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
                     });
+                    if (callback) callback();
+            });
+        }
+
+        function loadColleges(levelId, callback) {
+            var dropdown = $("#CollegeId");
+            var seq = ++_collegeSeq;
+            if (!levelId) {
+                dropdown.empty().append('<option value="">Select College</option>');
+                if (callback) callback();
+                return;
+            }
+
+            $.get(tenantUrl("/Students/StudentRegistrations/GetCollegesByLevel"),
+                { levelId: levelId },
+                function (data) {
+                    if (seq !== _collegeSeq) return;
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select College</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    if (callback) callback();
             });
         }
 
         $(function () {
+            $('.select2').select2({ width: 'resolve' });
 
-            // BS <-> AD auto-conversion via server (using NepaliCalendarHelper)
             var convertTimer;
             $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
-                }
+                var val = $(this).val().trim();
+                if (val.length < 10) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: val }, function (data) {
+                        if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
+                    });
+                }, 300);
             });
 
             $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
+                var val = $(this).val().trim();
+                if (val.length < 8) return;
+                clearTimeout(convertTimer);
+                convertTimer = setTimeout(function () {
+                    $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: val }, function (data) {
+                        if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
+                    });
+                }, 300);
             });
 
             // Province -> District
             $("#ProvinceId").change(function () {
                 var provinceId = $(this).val();
-
-                $("#DistrictId").html('<option>Loading...</option>');
-                $("#LocalLevelId").html('<option>Select Local Level</option>');
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"),
-                    { provinceId: provinceId },
-                    function (data) {
-                        let districtDropdown = $("#DistrictId");
-                        districtDropdown.empty();
-                        districtDropdown.append('<option value="">Select District</option>');
-                        $.each(data, function (index, item) {
-                            districtDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
+                $("#DistrictId").empty().append('<option value="">Loading...</option>');
+                $("#LocalLevelId").empty().append('<option value="">Select Local Level</option>');
+                $.get(tenantUrl("/Students/StudentRegistrations/GetDistrictsByProvince"), { provinceId: provinceId }, function (data) {
+                    var dropdown = $("#DistrictId");
+                    dropdown.select2('destroy');
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select District</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    dropdown.select2({ width: 'resolve' });
                 });
             });
 
             // District -> LocalLevel
             $("#DistrictId").change(function () {
                 var districtId = $(this).val();
-
-                $("#LocalLevelId").html('<option>Loading...</option>');
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"),
-                    { districtId: districtId },
-                    function (data) {
-                        let localDropdown = $("#LocalLevelId");
-                        localDropdown.empty();
-                        localDropdown.append('<option value="">Select Local Level</option>');
-                        $.each(data, function (index, item) {
-                            localDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
+                $("#LocalLevelId").empty().append('<option value="">Loading...</option>');
+                $.get(tenantUrl("/Students/StudentRegistrations/GetLocalLevelsByDistrict"), { districtId: districtId }, function (data) {
+                    var dropdown = $("#LocalLevelId");
+                    dropdown.select2('destroy');
+                    dropdown.empty();
+                    dropdown.append('<option value="">Select Local Level</option>');
+                    $.each(data, function (index, item) {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                    dropdown.select2({ width: 'resolve' });
                 });
             });
 
-            // Level -> Faculty
+            // Level -> College + clear downstream
             $("#LevelId").change(function () {
                 var levelId = $(this).val();
-
-                $("#FacultyId").html('<option>Loading...</option>');
-                $("#CollegeId").html('<option value="">Select College</option>');
-                $("#DepartmentId").html('<option value="">Select Department</option>');
-                $("#ProgramId").html('<option value="">Select Program</option>');
-
-                if (!levelId) {
-                    var facultyDropdown = $("#FacultyId");
-                    facultyDropdown.empty();
-                    facultyDropdown.append('<option value="">Select Faculty</option>');
-                    return;
-                }
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetFacultiesByLevel"),
-                    { levelId: levelId },
-                    function (data) {
-                        var facultyDropdown = $("#FacultyId");
-                        facultyDropdown.empty();
-                        facultyDropdown.append('<option value="">Select Faculty</option>');
-                        $.each(data, function (index, item) {
-                            facultyDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                });
+                $("#CollegeId").empty().append('<option value="">Select College</option>');
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                loadColleges(levelId);
             });
 
-            // Faculty -> College
-            $("#FacultyId").change(function () {
-                var facultyId = $(this).val();
-
-                $("#CollegeId").html('<option>Loading...</option>');
-                $("#DepartmentId").html('<option value="">Select Department</option>');
-                $("#ProgramId").html('<option value="">Select Program</option>');
-
-                if (!facultyId) {
-                    var collegeDropdown = $("#CollegeId");
-                    collegeDropdown.empty();
-                    collegeDropdown.append('<option value="">Select College</option>');
-                    return;
-                }
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetCollegesByFaculty"),
-                    { facultyId: facultyId },
-                    function (data) {
-                        var collegeDropdown = $("#CollegeId");
-                        collegeDropdown.empty();
-                        collegeDropdown.append('<option value="">Select College</option>');
-                        $.each(data, function (index, item) {
-                            collegeDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                });
-            });
-
-            // College -> Department + Program
+            // College -> Program
             $("#CollegeId").change(function () {
                 var collegeId = $(this).val();
-
-                $("#DepartmentId").html('<option>Loading...</option>');
-                $("#ProgramId").html('<option>Loading...</option>');
-
-                if (!collegeId) {
-                    $("#DepartmentId").empty().append('<option value="">Select Department</option>');
-                    $("#ProgramId").empty().append('<option value="">Select Program</option>');
-                    return;
-                }
-
-                $.get(tenantUrl("/Students/StudentRegistrations/GetDepartmentsByCollege"),
-                    { collegeId: collegeId },
-                    function (data) {
-                        var deptDropdown = $("#DepartmentId");
-                        deptDropdown.empty();
-                        deptDropdown.append('<option value="">Select Department</option>');
-                        $.each(data, function (index, item) {
-                            deptDropdown.append(`<option value="${item.id}">${item.name}</option>`);
-                        });
-                });
-
-                loadPrograms();
-            });
-
-            // Department -> Program
-            $("#DepartmentId").change(function () {
-                loadPrograms();
-            });
-
-            // BS <-> AD auto-conversion
-            var convertTimer;
-            $("#DateOfBirthBS").on("input", function () {
-                var bs = $(this).val().trim();
-                if (bs.length === 10) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                            if (data.adDate) $("#DateOfBirthAD").val(data.adDate);
-                        });
-                    }, 300);
-                }
-            });
-
-            $("#DateOfBirthAD").on("input", function () {
-                var ad = $(this).val().trim();
-                if (ad.length >= 8) {
-                    clearTimeout(convertTimer);
-                    convertTimer = setTimeout(function () {
-                        $.get(tenantUrl("/Students/StudentRegistrations/ConvertAdToBs"), { adDate: ad }, function (data) {
-                            if (data.bsDate) $("#DateOfBirthBS").val(data.bsDate);
-                        });
-                    }, 300);
-                }
+                $("#ProgramId").empty().append('<option value="">Select Program</option>');
+                loadPrograms(collegeId);
             });
         });
     </script>
-
 }

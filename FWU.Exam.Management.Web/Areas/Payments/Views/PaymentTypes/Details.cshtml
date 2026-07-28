@@ -21,18 +21,18 @@
             <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-credit-card text-blue-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Payment Type Details</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Payment Type Details</h1>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <p class="text-sm font-medium text-gray-600">Payment Type Name</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Payment Type Name</p>
                 <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.PaymentTypeName)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Logo</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Logo</p>
                 <p class="mt-1">
                     @if (!string.IsNullOrEmpty(Model.LogoUrl))
                     {
@@ -45,11 +45,11 @@
                 </p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Logo URL</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Logo URL</p>
                 <p class="mt-1 text-gray-800 font-semibold text-sm break-all">@Html.DisplayFor(model => model.LogoUrl)</p>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-600">Status</p>
+                <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                 <p class="mt-1">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(Model.IsActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600")">
                         @(Model.IsActive ? "Active" : "Inactive")

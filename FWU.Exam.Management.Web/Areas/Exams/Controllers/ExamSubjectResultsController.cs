@@ -3,11 +3,10 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -18,33 +17,29 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examsubjectresults.view")]
 public class ExamSubjectResultsController(
     IExamSubjectResultService examSubjectResultService,
-    UserManager<AppUser> userManager,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null, int? examRegistrationId = null)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
-        var (items, totalCount) = await examSubjectResultService.GetExamSubjectResultsAsync(page, pageSize, search, sort, sortDir, examScheduleId, examRegistrationId);
+        var (items, totalCount) = await examSubjectResultService.GetRegistrationsWithSubjectResultsAsync(page, pageSize, search, examScheduleId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
-        ViewBag.Sort = sort;
-        ViewBag.SortDir = sortDir;
         ViewBag.ExamScheduleId = examScheduleId;
-        ViewBag.ExamRegistrationId = examRegistrationId;
 
         ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
-        ViewData["ExamRegistrationId"] = new SelectList(context.ExamRegistrations.AsNoTracking().Select(er => new { er.Id, Name = "Reg #" + er.Id }), "Id", "Name", examRegistrationId);
 
         return View(items);
     }
 
     [RequirePermission("examsubjectresults.create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists);
         return View();
     }
@@ -57,9 +52,10 @@ public class ExamSubjectResultsController(
         if (ModelState.IsValid)
         {
             await examSubjectResultService.CreateExamSubjectResultAsync(examSubjectResult);
+            TempData["SuccessMessage"] = "Exam subject result created successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -72,7 +68,7 @@ public class ExamSubjectResultsController(
         var examSubjectResult = await examSubjectResultService.GetExamSubjectResultByIdAsync(id.Value);
         if (examSubjectResult == null) return NotFound();
 
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -96,9 +92,10 @@ public class ExamSubjectResultsController(
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Exam subject result updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = examSubjectResultService.GetSelectListData();
+        var selectLists = await examSubjectResultService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSubjectResult);
         return View(examSubjectResult);
     }
@@ -119,8 +116,22 @@ public class ExamSubjectResultsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await examSubjectResultService.DeleteExamSubjectResultAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await examSubjectResultService.DeleteExamSubjectResultAsync(id);
+            TempData["SuccessMessage"] = "Exam subject result deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     public async Task<IActionResult> Details(int? id)

@@ -5,136 +5,409 @@
 }
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8" />
     <title>Admit Card - @Model.AdmitCardNumber</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 40px;
-            color: #333;
+            font-family: 'Segoe UI', 'Nirmala UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef1f5;
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
         }
-        .ticket {
-            max-width: 800px;
-            margin: 0 auto;
-            border: 2px solid #333;
-            padding: 30px;
+
+        /* ── Header ── */
+        .header-top {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            border-bottom: 3px double #1a2a4a;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+            min-height: 120px; /* increased to fit larger logo */
         }
-        .header {
+
+        .header-logo, .header-photo {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .header-logo { left: 0; }
+        .header-photo { right: 0; }
+
+        .logo-box {
+            width: 150px;   /* larger */
+            height: 100px;  /* larger */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .photo-box {
+            width: 90px;
+            height: 105px;
+            border: 2px solid #1a2a4a;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+        .photo-box svg { width: 48px; height: 48px; fill: #b0b8c5; }
+        .photo-box .photo-label { font-size: 11px; font-weight: 600; color: #1a2a4a; }
+
+        .header-center {
+            flex: 1;
             text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+            min-width: 220px;
+            padding: 0 10px; /* avoid overlap with absolute positioned elements */
         }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
+        .header-center .univ-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a2a4a;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
+            line-height: 1.2;
         }
-        .header h2 {
-            margin: 5px 0;
-            font-size: 18px;
+        .header-center .office { font-size: 15px; font-weight: 600; color: #2c3e6b; margin-top: 1px; }
+        .header-center .address { font-size: 14px; color: #444; margin-top: 1px; }
+        .header-center .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a2a4a;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 3px;
+            border-top: 1px solid #ccc;
+            padding-top: 3px;
+            display: inline-block;
+            padding-left: 12px;
+            padding-right: 12px;
         }
-        .header p {
-            margin: 5px 0;
-            font-size: 14px;
+
+        /* ── Student Info ── */
+        .student-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px 24px;
+            background: #f8fafc;
+            border: 1px solid #d0d7e2;
+            border-radius: 0;
+            padding: 8px 14px; /* reduced padding */
+            margin-bottom: 10px;
         }
-        .info-table {
+        .student-info .info-item {
+            display: flex;
+            padding: 2px 0;
+            border-bottom: 1px dashed #e0e6ee;
+        }
+        .student-info .info-item:last-child { border-bottom: none; }
+        .student-info .info-label {
+            font-weight: 600;
+            color: #1a2a4a;
+            min-width: 100px;
+            flex-shrink: 0;
+            font-size: 13px; /* slightly smaller */
+        }
+        .student-info .info-value {
+            color: #111;
+            font-weight: 500;
+            font-size: 13px;
+            word-break: break-word;
+        }
+
+        /* ── Subject Table ── */
+        .subject-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 13px; /* reduced */
+            margin-bottom: 10px;
+            border: 1px solid #b0b8c5;
         }
-        .info-table td {
-            padding: 8px 12px;
-            font-size: 14px;
-            border: 1px solid #ddd;
-        }
-        .info-table td:first-child {
+        .subject-table th {
+            background: #1a2a4a;
+            color: #fff;
             font-weight: 600;
-            width: 180px;
-            background: #f9f9f9;
-        }
-        .footer {
+            padding: 5px 8px; /* reduced */
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #333;
+            border: 1px solid #1a2a4a;
             font-size: 12px;
         }
-        .ticket-number {
+        .subject-table td {
+            padding: 4px 8px; /* reduced */
+            border: 1px solid #b0b8c5;
             text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            padding: 10px;
-            background: #f0f0f0;
-            border: 1px dashed #666;
+            vertical-align: middle;
+        }
+        .subject-table td:first-child { font-weight: 600; }
+        .subject-table .subject-name { text-align: left; padding-left: 10px; }
+
+        /* ── Rules ── */
+        .rules-section {
+            margin-bottom: 8px; /* reduced */
+            border-top: 2px solid #1a2a4a;
+            padding-top: 6px; /* reduced */
+        }
+        .rules-section .rules-title {
+            font-size: 15px; /* slightly smaller */
+            font-weight: 700;
+            color: #1a2a4a;
+            text-align: center;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .rules-section .rules-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 12.5px; /* reduced */
+            line-height: 1.5; /* slightly tighter */
+            color: #222;
+            text-align: justify;
+        }
+        .rules-section .rules-list li {
+            margin-bottom: 2px; /* reduced */
+            padding-left: 20px;
+            text-indent: -18px;
+        }
+        .rules-section .rules-list li::before {
+            content: attr(data-num) ". ";
+            font-weight: 600;
+            color: #1a2a4a;
+        }
+        .rules-section .note {
+            margin-top: 4px;
+            font-size: 12px; /* reduced */
+            color: #333;
+            border-top: 1px dashed #ccc;
+            padding-top: 4px;
+        }
+
+        /* ── Signatures ── */
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding-top: 8px;
+            border-top: 2px solid #1a2a4a;
+            page-break-inside: avoid; /* keep together */
+        }
+        .signatures .sig-block {
+            text-align: center;
+            flex: 1;
+        }
+        .signatures .sig-block img {
+            max-height: 30px;
+            object-fit: contain;
+        }
+        .signatures .sig-line {
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            width: 70%;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 3px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a2a4a;
+        }
+
+        /* ── Print: scale to fit A4 ── */
+        @@page {
+            size: A4 portrait;
+            margin: 7mm; /* slightly reduced */
         }
         @@media print {
-            body { padding: 0; }
-            .ticket { border: none; }
+            html, body { background: #fff; }
+            body { display: block; padding: 0; }
+            .student-info, .subject-table th, .header-logo .logo-box, .header-photo .photo-box {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            /* Ensure everything stays on one page */
+            .signatures { page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
-    <div class="ticket">
-        <div class="header">
-            <h1>Far Western University</h1>
-            <h2>Admit Card</h2>
-            <p>Exam Management System</p>
+
+    <div>
+
+        <div class="header-top">
+            <div class="header-logo">
+                <div class="logo-box">
+                    <img src="~/images/download.png" alt="Far Western University Logo" />
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="univ-name">Far Western University</div>
+                <div class="office">Office of the Controller of Examinations</div>
+                <div class="address">Mahendranagar, Kanchanpur</div>
+                <div class="card-title">Admit Card</div>
+            </div>
+            <div class="header-photo">
+                <div class="photo-box">
+                    @if (!string.IsNullOrEmpty(Model.PhotoPath))
+                    {
+                        <img src="@Model.PhotoPath" alt="Student Photo" />
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="30" r="22" fill="#b0b8c5" />
+                            <path d="M12 95 Q12 60 50 60 Q88 60 88 95 Z" fill="#b0b8c5" />
+                        </svg>
+                        <span class="photo-label">Photo</span>
+                    }
+                </div>
+            </div>
         </div>
 
-        <div class="ticket-number">
-            Card No: @Model.AdmitCardNumber
+        <div class="student-info">
+            <div>
+                <div class="info-item">
+                    <span class="info-label">Symbol No</span>
+                    <span class="info-value">@(Model.ExamRegistration?.SymbolNumber ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">
+                        @if (Model.StudentRegistration != null)
+                        {
+                            @($"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}")
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Campus</span>
+                    <span class="info-value">@(Model.Campus ?? Model.ExamRegistration?.College?.Name ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Level</span>
+                    <span class="info-value">@(Model.ExamSchedule?.Level?.LevelName ?? Model.ExamSchedule?.Program?.Level?.LevelName ?? Model.Level ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Program</span>
+                    <span class="info-value">@(Model.ExamSchedule?.Program?.ProgramName ?? Model.Program ?? Model.ExamRegistration?.Program?.ProgramName ?? "-")</span>
+                </div>
+            </div>
+            <div>
+                <div class="info-item">
+                    <span class="info-label">Regd. No</span>
+                    <span class="info-value">@(Model.RegistrationNumber ?? Model.StudentRegistration?.RegistrationNumber ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Semester</span>
+                    <span class="info-value">@(Model.ExamSchedule?.Semester?.Name ?? Model.Semester ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Exam Type</span>
+                    <span class="info-value">@(Model.ExamSchedule?.ExamType?.Name ?? Model.ExamType ?? "-")</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Year</span>
+                    <span class="info-value">@(Model.ExamSchedule?.AcademicYear?.AcademicYearCode ?? Model.Year ?? "-")</span>
+                </div>
+            </div>
         </div>
 
-        <table class="info-table">
-            <tr>
-                <td>Exam Schedule</td>
-                <td>@Model.ExamSchedule?.ExamScheduleName</td>
-            </tr>
-            @if (Model.ExamRegistration != null)
-            {
+        <table class="subject-table">
+            <thead>
                 <tr>
-                    <td>Symbol Number</td>
-                    <td>@(Model.ExamRegistration.SymbolNumber ?? "-")</td>
+                    <th>S.N.</th>
+                    <th>Subject Code</th>
+                    <th style="text-align:left; padding-left:10px;">Subject Name</th>
+                    <th>Theory</th>
+                    <th>Practical</th>
+                    <th>Remarks</th>
                 </tr>
-                <tr>
-                    <td>Registration Number</td>
-                    <td>@(Model.StudentRegistration?.RegistrationNumber ?? "-")</td>
-                </tr>
-                <tr>
-                    <td>Program</td>
-                    <td>@(Model.ExamRegistration.Program?.ProgramName ?? "-")</td>
-                </tr>
-                <tr>
-                    <td>College</td>
-                    <td>@(Model.ExamRegistration.College?.Name ?? "-")</td>
-                </tr>
-                <tr>
-                    <td>Exam Center</td>
-                    <td>@(Model.ExamRegistration.ExamCenter?.College?.Name ?? Model.ExamRegistration.ExamCenter?.Code ?? "-")</td>
-                </tr>
-            }
-            <tr>
-                <td>Student Name</td>
-                <td>@(Model.StudentRegistration != null ? $"{Model.StudentRegistration.FirstName} {Model.StudentRegistration.LastName}" : "-")</td>
-            </tr>
-            <tr>
-                <td>Generated Date</td>
-                <td>@Model.GeneratedDate.ToString("yyyy-MM-dd")</td>
-            </tr>
+            </thead>
+            <tbody>
+                @{
+                    var subjects = Model.Subjects ?? new List<Subject>();
+                    int sn = 1;
+                    foreach (var sub in subjects)
+                    {
+                        <tr>
+                            <td>@sn</td>
+                            <td>@sub.Code</td>
+                            <td class="subject-name">@sub.Name</td>
+                            <td>@(sub.Theory ? "Y" : "\u2014")</td>
+                            <td>@(sub.Practical ? "Y" : "\u2014")</td>
+                            <td>@sub.Remarks</td>
+                        </tr>
+                        sn++;
+                    }
+                }
+            </tbody>
         </table>
 
-        <div class="footer">
-            <p>This is a computer-generated admit card. Signature not required.</p>
-            <p>Generated by FWU Exam Management System</p>
+        <div class="rules-section">
+            <div class="rules-title">परीक्षार्थीले पालना गर्नुपर्ने नियमहरू</div>
+            <ol class="rules-list" style="list-style:none; padding-left:0;">
+                <li data-num="१">परीक्षार्थीले परीक्षा हल भित्र प्रवेश गर्दा प्रवेश-पत्र साथमै लगेर जानुका साथै आधिकारिक व्यक्तिले बाजेको बेला तुरुन्त देखाउनु पर्नेछ।</li>
+                <li data-num="२">परीक्षार्थीले परीक्षा फाराम तथा प्रवेश-पत्रमा भरेको विषयमात्र परीक्षा दिन पाउने छ। अन्यथा कुनै परीक्षार्थीको परीक्षा मिति जुध्न गएमा वा कुनै विषय छुट्न गएमा तुरुन्त प.नि.का. मा खबर गर्नुपर्ने छ।</li>
+                <li data-num="३">परीक्षार्थीले परीक्षा केन्द्रको सिटप्लान अनुसार प्रश्नपत्र वितरण हुनु १० मिनेट अगावै सिटमा बसी सम्पूर्ण नियमको पालना गरी परीक्षा दिनु पर्नेछ।</li>
+                <li data-num="४">परीक्षार्थीले परीक्षा सुरु भएको आधा घण्टापछि परीक्षाहलमा प्रवेश गर्न पाउने छैन। परीक्षा सुरु भएको एक घण्टा अगावै केन्द्राध्यक्ष, निरीक्षक वा आधिकारिक व्यक्तिको अनुमतिविना परीक्षार्थीले आफ्नो सिट तथा परीक्षाहल छाड्न पाउने छैन।</li>
+                <li data-num="५">परीक्षार्थीले व्यक्तिगत वा सामुहिक रुपमा कुनैपनि किसिमले परीक्षा विगोल्ने कार्य गर्न पाउने छैन। परीक्षाहलमा जाँदा आवश्यक सामाग्रीहरू बाहेक निषेधित वस्तु लैजानु हुँदैन। अमर्यादित कार्य गरेमा निष्काशन गरिनेछ र १ वर्षदेखि ४ वर्षसम्म विश्वविद्यालयको कुनै पनि परीक्षामा सम्मिलित हुन नपाउने गरी निष्काशन गर्न सकिनेछ।</li>
+                <li data-num="६">परीक्षार्थीले परीक्षा भवन छाड्नुअघि आफ्नो उत्तरपुस्तिका सम्बन्धित निरीक्षकलाई बुझाउनु पर्नेछ।</li>
+                <li data-num="७">रोगी, अस्वस्थ वा शारीरिक अपाङ्गता भएका परीक्षार्थीले परीक्षा सञ्चालन हुनु १ घण्टा अगावै केन्द्राध्यक्षलाई जानकारी गराउनु पर्नेछ। दृष्टिविहिन वा लेख्न नसक्ने भएमा केन्द्राध्यक्षबाट सहयोगी लेखकको अनुमति लिनु पर्नेछ।</li>
+                <li data-num="८">परीक्षार्थीले तोकेको भाषा, माध्यममा उत्तर दिन पाउने छ।</li>
+                <li data-num="९">परीक्षार्थीले आफूले दिनुपर्ने परीक्षामा अरुलाई सम्मिलित गराउनु हुँदैन। प्रमाणित भएमा ४ वर्ष सम्म निष्काशन र फौजदारी अभियोगको कारबाही हुन सक्नेछ।</li>
+                <li data-num="१०">Mobile Phone, Cell Phone, Tab जस्ता विद्युतीय सामाग्रीहरू परीक्षा हलमा प्रयोग गर्न पाइने छैन।</li>
+                <li data-num="११">परीक्षा भवनमा परीक्षार्थीको आवेदन फाराम कुनै कारणवश अस्वीकृत भएमा प्रवेश-पत्र स्वतः रद्द हुनेछ।</li>
+                <li data-num="१२">प्रवेश-पत्र लिई आउँदा प्रवेश-पत्र अनिवार्य ल्याउनु पर्ने छ। प्रवेश-पत्र हराएमा तोकिएको शुल्क तिरी प्रतिलिपि लिन सकिनेछ।</li>
+            </ol>
+            <p class="note">
+                <strong>नोट :</strong> परीक्षार्थीले आफूले अध्ययन गरेको तहको पहिलो पटक परीक्षामा सम्मिलित भएको वर्षबाट दुई वर्षे शैक्षिक कार्यक्रम ६ वर्ष र चार वर्षे शैक्षिक कार्यक्रम ८ वर्षभित्र पाठ्यक्रमले तह पूरा गर्न तोकेको सम्पूर्ण आवश्यकताहरू पूरा गरी सक्नु पर्नेछ।
+            </p>
         </div>
+
+        <div class="signatures">
+            <div class="sig-block">
+                @if (!string.IsNullOrEmpty(Model.SignaturePath))
+                {
+                    <img src="@Model.SignaturePath" alt="Student Signature" />
+                }
+                <div class="sig-line">Full Signature of Applicant</div>
+            </div>
+            <div class="sig-block">
+                @if (!string.IsNullOrEmpty(Model.ControllerSignaturePath))
+                {
+                    <img src="@Model.ControllerSignaturePath" alt="Controller Signature" />
+                }
+                <div class="sig-line">Signature of Controller</div>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        window.print();
+        window.onload = function () {
+            window.print();
+        };
     </script>
+
 </body>
 </html>

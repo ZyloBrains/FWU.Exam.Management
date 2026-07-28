@@ -1,4 +1,8 @@
+using System.Security.Claims;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
@@ -8,76 +12,91 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 
 
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("users.view")]
-public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context) : Controller
+public class UserController(
+    UserManager<AppUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    AppDbContext context,
+    IUserContext userContext,
+    IBulkUserCreationService bulkUserCreationService) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
-        var currentUser = await userManager.GetUserAsync(User);
-        if (currentUser == null) return Challenge();
-
-        var isSuperAdmin = User.IsInRole(Role.SuperAdmin);
-
-        var usersQuery = userManager.Users
+        IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
             .Include(u => u.College);
+        usersQuery = usersQuery.ApplyScope(userContext);
 
-        IQueryable<AppUser> filteredQuery;
-
-        if (isSuperAdmin)
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            filteredQuery = usersQuery;
-        }
-        else if (User.IsInRole(Role.CollegeAdmin) && currentUser.CollegeId != null)
-        {
-            filteredQuery = usersQuery.Where(u => u.CollegeId == currentUser.CollegeId);
-        }
-        else if (User.IsInRole(Role.FacultyAdmin) && currentUser.FacultyId != null)
-        {
-            var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
-                .Select(c => (int?)c.Id)
-                .ToListAsync();
-            filteredQuery = usersQuery.Where(u =>
-                u.FacultyId == currentUser.FacultyId ||
-                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
-        }
-        else if (User.IsInRole(Role.DepartmentAdmin) && currentUser.FacultyId != null)
-        {
-            var facultyCollegeIds = await context.Colleges
-                .Where(c => c.Faculties!.Any(f => f.Id == currentUser.FacultyId))
-                .Select(c => (int?)c.Id)
-                .ToListAsync();
-            filteredQuery = usersQuery.Where(u =>
-                u.FacultyId == currentUser.FacultyId ||
-                (u.CollegeId != null && facultyCollegeIds.Contains(u.CollegeId)));
-        }
-        else
-        {
-            filteredQuery = usersQuery.Where(u => u.Id == currentUser.Id);
+            var s = search.ToLower();
+            usersQuery = usersQuery.Where(u =>
+                (u.Email != null && u.Email.ToLower().Contains(s)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
+                (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
+                (u.College != null && u.College.Name != null && u.College.Name.ToLower().Contains(s)));
         }
 
-        var users = await filteredQuery.ToListAsync();
-        var model = new List<UserListItemViewModel>();
-        foreach (var user in users)
+        usersQuery = sortDir.ToLower() == "desc"
+            ? usersQuery.OrderByDescending(GetUserSortProperty(sort))
+            : usersQuery.OrderBy(GetUserSortProperty(sort));
+
+        var totalCount = await usersQuery.CountAsync();
+
+        var users = await usersQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var userIds = users.Select(u => u.Id).ToList();
+        var userRoles = await context.UserRoles
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .ToListAsync();
+
+        var roleLookup = userRoles
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => (IList<string>)g.Select(x => x.Name).ToList());
+
+        var model = users.Select(user => new UserListItemViewModel
         {
-            model.Add(new UserListItemViewModel
-            {
-                Id = user.Id,
-                Email = user.Email ?? string.Empty,
-                FullName = user.FullName,
-                FacultyName = user.Faculty?.Name,
-                CollegeName = user.College?.Name,
-                IsActive = user.IsActive,
-                Roles = await userManager.GetRolesAsync(user)
-            });
-        }
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FullName = user.FullName,
+            FacultyName = user.Faculty?.Name,
+            CollegeName = user.College?.Name,
+            IsActive = user.IsActive,
+            Roles = roleLookup.GetValueOrDefault(user.Id, new List<string>())
+        }).ToList();
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
         return View(model);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<AppUser, object>> GetUserSortProperty(string sort)
+    {
+        return sort.ToLower() switch
+        {
+            "email" => u => u.Email ?? "",
+            "fullname" => u => u.FullName ?? "",
+            "isactive" => u => u.IsActive,
+            "faculty" => u => u.Faculty != null ? u.Faculty.Name ?? "" : "",
+            "college" => u => u.College != null ? u.College.Name ?? "" : "",
+            _ => u => u.Email ?? ""
+        };
     }
 
     public async Task<IActionResult> Details(string id)
@@ -104,7 +123,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
-        ViewBag.Departments = new SelectList(await context.Departments.ToListAsync(), "Id", "DepartmentName");
         return View(new CreateUserViewModel());
     }
 
@@ -132,17 +150,15 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             if (model.SelectedRole is Role.FacultyAdmin)
                 user.FacultyId = model.FacultyId;
 
-            if (model.SelectedRole is Role.CollegeAdmin or Role.DepartmentAdmin or Role.Teacher or Role.Student)
+            if (model.SelectedRole is Role.CollegeAdmin or Role.Student)
                 user.CollegeId = model.CollegeId;
-
-            if (model.SelectedRole is Role.DepartmentAdmin)
-                user.DepartmentId = model.DepartmentId;
 
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
                 if (await roleManager.RoleExistsAsync(model.SelectedRole))
                     await userManager.AddToRoleAsync(user, model.SelectedRole);
+                TempData["SuccessMessage"] = "User created successfully!";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -156,7 +172,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -179,14 +194,12 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             Email = user.Email ?? string.Empty,
             FullName = user.FullName,
             FacultyId = user.FacultyId,
-            CollegeId = user.CollegeId,
-            DepartmentId = user.DepartmentId
+            CollegeId = user.CollegeId
         };
 
         ViewBag.PrimaryRole = primaryRole;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -207,11 +220,13 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
             user.FullName = model.FullName;
             user.FacultyId = model.FacultyId;
             user.CollegeId = model.CollegeId;
-            user.DepartmentId = model.DepartmentId;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "User updated successfully!";
                 return RedirectToAction(nameof(Index));
+            }
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);
@@ -221,7 +236,6 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
-        ViewBag.Departments = new SelectList(await context.Departments.AsNoTracking().ToListAsync(), "Id", "DepartmentName", model.DepartmentId);
         return View(model);
     }
 
@@ -235,6 +249,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         user.IsActive = !user.IsActive;
         await userManager.UpdateAsync(user);
 
+        TempData["SuccessMessage"] = $"User status updated to {(user.IsActive ? "active" : "inactive")}.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -258,11 +273,25 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string id)
     {
-        var user = await userManager.FindByIdAsync(id);
-        if (user != null)
-            await userManager.DeleteAsync(user);
+        try
+        {
+            var user = await userManager.FindByIdAsync(id);
+            if (user != null)
+                await userManager.DeleteAsync(user);
 
-        return RedirectToAction(nameof(Index));
+            TempData["SuccessMessage"] = "User deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("users.assign.roles")]
@@ -315,6 +344,7 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         if (toRemove.Count > 0)
             await userManager.RemoveFromRolesAsync(user, toRemove);
 
+        TempData["SuccessMessage"] = "User roles updated successfully!";
         return RedirectToAction(nameof(Index));
     }
     [RequirePermission("users.delete")]
@@ -335,4 +365,77 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
         }
     }
 
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<IActionResult> GetStudentsWithoutUsers(
+        int? collegeId, int? facultyId, int page = 1, int pageSize = 50)
+    {
+        var (data, totalCount) = await bulkUserCreationService.GetStudentsWithoutUsersAsync(
+            collegeId, facultyId, page, pageSize);
+        return Json(new { data, totalCount });
+    }
+
+    [RequirePermission("users.create")]
+    [HttpPost]
+    public async Task<IActionResult> CreateUsersFromRegistrations([FromBody] List<int> registrationIds)
+    {
+        if (registrationIds == null || registrationIds.Count == 0)
+            return Json(new { success = false, message = "No registrations selected." });
+
+        var userId = userManager.GetUserId(User) ?? "unknown";
+        var job = await bulkUserCreationService.StartJobAsync(registrationIds, userId);
+
+        return Json(new
+        {
+            success = true,
+            jobId = job.Id,
+            totalStudents = job.TotalStudents,
+            message = $"Background job started. Processing {job.TotalStudents} students."
+        });
+    }
+
+    [RequirePermission("users.create")]
+    [HttpPost]
+    public async Task<IActionResult> CreateUsersFromFilters([FromBody] FilterModel filters)
+    {
+        var userId = userManager.GetUserId(User) ?? "unknown";
+        var job = await bulkUserCreationService.StartJobFromFiltersAsync(
+            filters.CollegeId, filters.FacultyId, userId);
+
+        return Json(new
+        {
+            success = true,
+            jobId = job.Id,
+            totalStudents = job.TotalStudents,
+            message = $"Background job started. Processing {job.TotalStudents} students."
+        });
+    }
+
+    public class FilterModel
+    {
+        public int? CollegeId { get; set; }
+        public int? FacultyId { get; set; }
+    }
+
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<IActionResult> GetBulkJobStatus(int jobId)
+    {
+        var job = await bulkUserCreationService.GetJobStatusAsync(jobId);
+        if (job == null) return NotFound();
+
+        return Json(new
+        {
+            job.Status,
+            job.TotalStudents,
+            job.ProcessedCount,
+            job.SuccessCount,
+            job.FailedCount,
+            percentage = job.TotalStudents > 0
+                ? (int)(job.ProcessedCount * 100.0 / job.TotalStudents)
+                : 0,
+            job.ErrorMessage,
+            completedAt = job.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss")
+        });
+    }
 }

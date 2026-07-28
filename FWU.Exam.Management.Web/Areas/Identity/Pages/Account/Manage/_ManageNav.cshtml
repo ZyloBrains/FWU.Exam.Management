@@ -1,38 +1,11 @@
-@inject SignInManager<AppUser> SignInManager
-@{
-    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
-}
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
         <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</p>
     </div>
     <nav class="flex flex-col">
-        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.IndexNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="profile" asp-page="./Index">
-            <i class="fas fa-user w-4 text-center"></i>
-            <span>Profile</span>
-        </a>
-        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.EmailNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="email" asp-page="./Email">
-            <i class="fas fa-envelope w-4 text-center"></i>
-            <span>Email</span>
-        </a>
-        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.ChangePasswordNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="change-password" asp-page="./ChangePassword">
+        <a class="flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.ChangePasswordNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="change-password" asp-page="./ChangePassword">
             <i class="fas fa-lock w-4 text-center"></i>
             <span>Password</span>
-        </a>
-        @if (hasExternalLogins)
-        {
-            <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.ExternalLoginsNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="external-login" asp-page="./ExternalLogins">
-                <i class="fas fa-link w-4 text-center"></i>
-                <span>External logins</span>
-            </a>
-        }
-        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="two-factor" asp-page="./TwoFactorAuthentication">
-            <i class="fas fa-shield-alt w-4 text-center"></i>
-            <span>Two-factor authentication</span>
-        </a>
-        <a class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors duration-200 border-l-4 @(ManageNavPages.PersonalDataNavClass(ViewContext) == "active" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900")" id="personal-data" asp-page="./PersonalData">
-            <i class="fas fa-database w-4 text-center"></i>
-            <span>Personal data</span>
         </a>
     </nav>
 </div>

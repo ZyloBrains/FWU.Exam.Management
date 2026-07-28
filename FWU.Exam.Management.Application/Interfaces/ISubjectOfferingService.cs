@@ -8,7 +8,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface ISubjectOfferingService
 {
-    Task<(List<SubjectOffering> Items, int TotalCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir);
+    Task<(List<SubjectOffering> Items, int TotalProgramCount)> GetSubjectOfferingsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<List<SubjectOffering>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<SubjectOffering?> GetSubjectOfferingByIdAsync(int id);
     Task CreateSubjectOfferingAsync(SubjectOffering subjectOffering);

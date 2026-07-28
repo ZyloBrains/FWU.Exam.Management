@@ -108,12 +108,8 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
         vm.ExamSchedules = examSchedules;
 
-        var subjectOfferings = await studentDashboardService.GetSubjectOfferingsByProgramAsync(programId);
+        var allSubjectOfferings = await studentDashboardService.GetSubjectOfferingsByProgramAsync(programId);
 
-        var latestSchedule = examSchedules.OrderByDescending(es => es.StartDateBs).FirstOrDefault();
-        vm.SemesterName = latestSchedule?.Semester?.Name
-            ?? subjectOfferings.FirstOrDefault(so => so.Semester != null)?.Semester?.Name;
-
-        vm.SubjectOfferings = subjectOfferings;
+        vm.SubjectOfferings = allSubjectOfferings;
     }
 }

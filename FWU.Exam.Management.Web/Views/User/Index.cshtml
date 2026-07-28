@@ -2,10 +2,17 @@
 
 @{
     ViewData["Title"] = "Users";
-    var totalCount = Model.Count();
+    var totalCount = ViewBag.TotalCount ?? Model.Count();
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var pageSize = ViewBag.PageSize ?? 10;
+    var currentSearch = ViewBag.Search as string ?? "";
+    var currentSort = ViewBag.Sort as string ?? "email";
+    var currentSortDir = ViewBag.SortDir as string ?? "asc";
 }
 
-<div class="space-y-6" x-data="{ search: '', get filtered() { return this.search.toLowerCase(); } }">
+<div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -13,8 +20,8 @@
                 <i class="fas fa-users text-blue-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Users</h1>
-                <p class="text-sm text-gray-500 mt-0.5">
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Users</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
                     <span class="inline-flex items-center gap-1">
                         <span class="font-semibold text-gray-700">@totalCount</span> total records
                     </span>
@@ -22,26 +29,35 @@
             </div>
         </div>
         <a asp-action="Create"
-           class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
             <i class="fas fa-plus text-xs"></i> Create New
         </a>
     </div>
 
-    <!-- Search & Filter Bar -->
+    <!-- Search Bar -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div class="flex flex-col sm:flex-row gap-3">
+        <form method="get" asp-action="Index" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <input type="text" x-model="search" placeholder="Search by name, email, faculty, college, or role..."
+                <input type="text" name="search" value="@currentSearch"
+                       placeholder="Search by name, email, faculty, or college..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" />
             </div>
-            <div class="flex items-center gap-2">
-                <button x-show="search.length > 0" x-on:click="search = ''"
-                        class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                    <i class="fas fa-times text-xs"></i> Clear
+            <input type="hidden" name="sort" value="@currentSort" />
+            <input type="hidden" name="sortDir" value="@currentSortDir" />
+            <div class="flex gap-2">
+                <button type="submit" class="px-4 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                    Search
                 </button>
+                @if (!string.IsNullOrEmpty(currentSearch))
+                {
+                    <a asp-action="Index" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                           class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times text-xs"></i> Clear
+                    </a>
+                }
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Desktop Table -->
@@ -50,6 +66,7 @@
             <table class="w-full text-sm text-left">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
+                        <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">#</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
@@ -58,13 +75,13 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
+                    @{ int serial = 0; }
                     @foreach (var item in Model)
                     {
-                    var statusText = item.IsActive ? "active" : "inactive";
-                    var searchText = $"{(item.FullName ?? item.Email)?.ToLower()} {item.FacultyName?.ToLower()} {item.CollegeName?.ToLower()} {string.Join(" ", item.Roles).ToLower()} {statusText}";
+                        serial++;
                     <tr class="hover:bg-gray-50 transition-colors duration-150"
-                        x-show="search === '' || '@searchText'.includes(filtered)"
-                        x-transition>
+                        style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                            <td class="px-6 py-4 text-gray-500 text-sm">@serial</td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -133,8 +150,8 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details"><i class="fas fa-eye text-xs"></i></a>
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit"><i class="fas fa-edit text-xs"></i></a>
+                                    <a asp-action="Details" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Details"><i class="fas fa-eye text-xs"></i></a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Edit"><i class="fas fa-edit text-xs"></i></a>
                                     <form asp-action="ToggleStatus" asp-route-id="@item.Id" method="post" class="inline" style="display:inline;">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="p-1.5 @(item.IsActive ? "text-red-600 hover:bg-red-50" : "text-green-600 hover:bg-green-50") rounded-md transition-colors" title="@(item.IsActive ? "Deactivate" : "Activate")">
@@ -142,7 +159,7 @@
                                         </button>
                                     </form>
                                     <a asp-action="AssignRoles" asp-route-id="@item.Id" class="p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-colors" title="Assign Roles"><i class="fas fa-user-shield text-xs"></i></a>
-                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></a>
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete"><i class="fas fa-trash text-xs"></i></a>
                                 </div>
                             </td>
                         </tr>
@@ -156,11 +173,7 @@
     <div class="md:hidden space-y-4">
         @foreach (var item in Model)
         {
-            var filterStatusText = item.IsActive ? "active" : "inactive";
-            var searchText = $"{(item.FullName ?? item.Email)?.ToLower()} {item.FacultyName?.ToLower()} {item.CollegeName?.ToLower()} {string.Join(" ", item.Roles).ToLower()} {filterStatusText}";
-            <div class="user-card bg-white rounded-xl shadow-sm border border-gray-200 p-4"
-                 x-show="search === '' || '@searchText'.includes(filtered)"
-                 x-transition>
+            <div class="user-card bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-user text-blue-600 text-sm"></i>
@@ -241,12 +254,101 @@
             <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-users text-4xl text-green-300"></i>
             </div>
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">No users yet</h3>
-            <p class="text-sm text-gray-500 mb-6">Get started by creating your first user</p>
+            <h3 class="text-base sm:text-lg font-semibold text-gray-700 mb-2">No users yet</h3>
+            <p class="text-xs sm:text-sm text-gray-500 mb-6">Get started by creating your first user</p>
             <a asp-action="Create"
-               class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-plus text-xs"></i> Create User
             </a>
+        </div>
+    }
+
+    <!-- Pagination + Page Size Selector -->
+    @if (totalPages > 1)
+    {
+        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+            <div class="flex flex-1 justify-between sm:hidden">
+                @if (currentPage > 1)
+                {
+                    <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Previous
+                    </a>
+                }
+                else
+                {
+                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Next
+                    </a>
+                }
+                else
+                {
+                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
+                }
+            </div>
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-xs sm:text-sm text-gray-700">
+                        Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
+                        to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
+                        of <span class="font-medium">@totalCount</span> results
+                    </p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
+                        <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
+                            <option value="10" selected="@(pageSize == 10)">10</option>
+                            <option value="25" selected="@(pageSize == 25)">25</option>
+                            <option value="50" selected="@(pageSize == 50)">50</option>
+                            <option value="100" selected="@(pageSize == 100)">100</option>
+                        </select>
+                    </div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                        <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                               class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == 1 ? "pointer-events-none opacity-50" : "")">
+                            <i class="fas fa-chevron-left text-xs"></i>
+                        </a>
+                        @{
+                            var startPage = Math.Max(1, currentPage - 2);
+                            var endPage = Math.Min(totalPages, currentPage + 2);
+                            if (startPage > 1)
+                            {
+                                <a asp-action="Index" asp-route-page="1" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
+                                if (startPage > 2)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                            }
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                <a asp-action="Index" asp-route-page="@i" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold @(i == currentPage ? "bg-blue-600 text-white" : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50")">@i</a>
+                            }
+                            if (endPage < totalPages)
+                            {
+                                if (endPage < totalPages - 1)
+                                {
+                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                }
+                                <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
+                            }
+                        }
+                        <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
+                               class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 @(currentPage == totalPages ? "pointer-events-none opacity-50" : "")">
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
         </div>
     }
 </div>

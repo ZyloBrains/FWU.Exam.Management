@@ -1,12 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -17,13 +24,16 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 public class StudentDashboardController(
     IStudentDashboardService dashboardService,
     UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager,
+    IEmailSender emailSender,
     IESewaService esewaService,
     IKhaltiService khaltiService,
     IConfiguration configuration,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     IRetotalRequestService retotalRequestService,
-    AppDbContext context)
+    AppDbContext context,
+    IWebHostEnvironment env)
     : Controller
 {
     public async Task<IActionResult> Profile()
@@ -44,6 +54,7 @@ public class StudentDashboardController(
         var vm = new StudentProfileViewModel
         {
             RegistrationId = registration.Id,
+            PermanentAddressId = registration.PermanentAddressId,
             RegistrationNumber = registration.RegistrationNumber,
             FullName = string.Join(" ", new[] { registration.FirstName, registration.MiddleName, registration.LastName }.Where(x => !string.IsNullOrEmpty(x))),
             NepaliName = registration.NepaliName,
@@ -54,13 +65,13 @@ public class StudentDashboardController(
             Category = registration.StudentCategory?.StudentCategoryName,
             ContactNumber = registration.ContactNumber,
             Email = registration.Email,
+            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
             PhotoPath = user.ProfilePath,
             SignaturePath = user.SignaturePath,
             BloodGroup = registration.BloodGroup,
             Nationality = registration.Nationality,
             Religion = registration.Religion,
             AcademicYear = registration.AcademicYear?.AcademicYearName,
-            Department = registration.Department?.DepartmentName,
             College = registration.College?.Name,
             Level = registration.Level?.LevelName,
             Address = registration.PermanentAddress?.FullAddress
@@ -72,7 +83,15 @@ public class StudentDashboardController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateProfile(IFormFile? photo, IFormFile? signature)
+    public async Task<IActionResult> UpdateProfile(
+        IFormFile? photo,
+        IFormFile? signature,
+        string? contactNumber,
+        string? bloodGroup,
+        string? nationality,
+        string? religion,
+        string? address,
+        int? permanentAddressId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -92,7 +111,190 @@ public class StudentDashboardController(
         }
 
         await userManager.UpdateAsync(user);
+
+        var registration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.Email == user.Email);
+        if (registration != null)
+        {
+            registration.ContactNumber = contactNumber;
+            registration.BloodGroup = bloodGroup;
+            registration.Nationality = nationality;
+            registration.Religion = religion;
+
+            if (permanentAddressId.HasValue)
+            {
+                var existingAddress = await context.Addresses.FindAsync(permanentAddressId.Value);
+                if (existingAddress != null)
+                {
+                    existingAddress.FullAddress = address;
+                }
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         TempData["SuccessMessage"] = "Profile updated successfully.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateEmail(string newEmail)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        if (string.IsNullOrWhiteSpace(newEmail))
+        {
+            TempData["ErrorMessage"] = "Please enter a valid email address.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (!newEmail.Contains('@') || !new EmailAddressAttribute().IsValid(newEmail))
+        {
+            TempData["ErrorMessage"] = "Please enter a valid email address.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var currentEmail = await userManager.GetEmailAsync(user);
+        if (string.Equals(currentEmail, newEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["InfoMessage"] = "This is already your current email address.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var existingUser = await userManager.FindByEmailAsync(newEmail);
+        if (existingUser != null && existingUser.Id != user.Id)
+        {
+            TempData["ErrorMessage"] = "This email address is already in use by another account.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var existingRegistration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.Email == newEmail && sr.Id != context.StudentRegistrations
+                .Where(s => s.Email == user.Email).Select(s => s.Id).FirstOrDefault());
+        if (existingRegistration != null)
+        {
+            TempData["ErrorMessage"] = "This email address is already in use by another student.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        try
+        {
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Action(
+                "ConfirmEmailChange",
+                "StudentDashboard",
+                new { area = "Students", userId = userId, email = newEmail, code = code },
+                protocol: Request.Scheme);
+
+            await emailSender.SendEmailAsync(
+                newEmail,
+                "Confirm your email",
+                EmailTemplateHelper.ChangeEmail(user.FullName ?? newEmail, callbackUrl));
+
+            TempData["SuccessMessage"] = "A verification link has been sent to your new email address. Please check your inbox and verify. You can continue using your current email to login until verification is complete.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send verification email to {Email}", newEmail);
+            TempData["ErrorMessage"] = "Failed to send verification email. Please try again later.";
+        }
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmailChange(string userId, string email, string code)
+    {
+        if (userId == null || email == null || code == null)
+        {
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User not found.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        var result = await userManager.ChangeEmailAsync(user, email, code);
+        if (!result.Succeeded)
+        {
+            TempData["ErrorMessage"] = "Error confirming email. The link may have expired or is invalid.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var setUserNameResult = await userManager.SetUserNameAsync(user, email);
+        if (!setUserNameResult.Succeeded)
+        {
+            TempData["ErrorMessage"] = "Error updating username.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var registration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.RegistrationNumber == user.UserName
+                                   || (sr.Email != null && sr.Email == user.Email));
+        if (registration != null)
+        {
+            registration.Email = email;
+            await context.SaveChangesAsync();
+        }
+
+        await signInManager.RefreshSignInAsync(user);
+        TempData["SuccessMessage"] = "Email verified successfully! You can now use this email to login.";
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendEmailVerification()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var email = await userManager.GetEmailAsync(user);
+        if (string.IsNullOrEmpty(email))
+        {
+            TempData["ErrorMessage"] = "No email address found on your account.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (await userManager.IsEmailConfirmedAsync(user))
+        {
+            TempData["InfoMessage"] = "Your email is already verified.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        try
+        {
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Action(
+                "ConfirmEmail",
+                "Account",
+                new { area = "Identity", userId = userId, code = code },
+                protocol: Request.Scheme);
+
+            await emailSender.SendEmailAsync(
+                email,
+                "Confirm your email",
+                EmailTemplateHelper.ConfirmEmail(user.FullName ?? email, callbackUrl));
+
+            TempData["SuccessMessage"] = "Verification email sent. Please check your inbox.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to resend verification email to {Email}", email);
+            TempData["ErrorMessage"] = "Failed to send verification email. Please try again later.";
+        }
+
         return RedirectToAction(nameof(Profile));
     }
 
@@ -108,27 +310,55 @@ public class StudentDashboardController(
         }
 
         var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        schedules = schedules.Where(s => !IsScheduleDeadlinePassed(s)).ToList();
+
         var forms = new List<ExamFormViewModel>();
 
         foreach (var schedule in schedules)
         {
             var hasPaid = await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
-            var amount = await dashboardService.GetExamFeeForScheduleAsync(schedule.Id);
+            var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id, registration.Id);
+            var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id, registration.Id) : null;
 
             forms.Add(new ExamFormViewModel
             {
                 ExamScheduleId = schedule.Id,
-                Level = schedule.Program.Level?.LevelName,
-                Program = schedule.Program?.ProgramName,
                 Semester = $"{schedule.Semester?.Year ?? 0} / {schedule.Semester?.Number ?? 0}",
                 ExamScheduleName = schedule.ExamScheduleName,
-                Status = hasPaid ? "Paid" : "pending",
-                Amount = amount,
-                HasPaid = hasPaid
+                HasPaid = hasPaid,
+                HasAdmitCard = hasAdmitCard,
+                AdmitCardId = admitCardId,
+                EndDateBs = schedule.EndDateBs,
+                ExtendedDateBs = schedule.ExtendedDate.HasValue ? schedule.ExtendedDate.Value.ToString("yyyy-MM-dd") : null,
+                AdmissionCardReleaseDate = schedule.AdmissionCardReleaseDate
             });
         }
 
         return View(new ExamFormsListViewModel { ExamForms = forms });
+    }
+
+    public async Task<IActionResult> AdmitCards()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return View(new List<AdmitCard>());
+
+        var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id, registration.Id);
+        return View(admitCards);
+    }
+
+    public async Task<IActionResult> PaymentHistory()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return View(new List<PaymentRequestLog>());
+
+        var payments = await dashboardService.GetPaymentHistoryForStudentAsync(registration.Id);
+        return View(payments);
     }
 
     public async Task<IActionResult> MySubjects()
@@ -171,6 +401,12 @@ public class StudentDashboardController(
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null) return NotFound("Exam schedule not found.");
 
+        if (IsScheduleDeadlinePassed(schedule))
+        {
+            TempData["ErrorMessage"] = "The deadline for this exam form has passed.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
         var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
         int programId;
         if (admission != null)
@@ -188,6 +424,36 @@ public class StudentDashboardController(
 
         if (schedule.ProgramId != programId)
             return Forbid();
+
+        var hasExistingRegistration = await dashboardService.HasExistingExamRegistrationAsync(examScheduleId, user.Id);
+        if (hasExistingRegistration)
+        {
+            TempData["ErrorMessage"] = "You have already submitted this exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var isSupplementary = schedule.ExamType?.Name == "Supplementary";
+        if (isSupplementary)
+        {
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId);
+            if (!hasFailed)
+            {
+                TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
+                return RedirectToAction(nameof(ExamForms));
+            }
+        }
+        else
+        {
+            if (schedule.Semester != null && schedule.Semester.Number > 1)
+            {
+                var prevSubmitted = await dashboardService.HasSubmittedPreviousSemesterExamFormAsync(user.Id, schedule.SemesterId, programId);
+                if (!prevSubmitted)
+                {
+                    TempData["ErrorMessage"] = "Please submit the previous semester exam form first.";
+                    return RedirectToAction(nameof(ExamForms));
+                }
+            }
+        }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var examFee = await dashboardService.GetExamFeeForScheduleAsync(examScheduleId);
@@ -226,6 +492,11 @@ public class StudentDashboardController(
             ExamScheduleName = schedule.ExamScheduleName,
             ProgramName = schedule.Program?.ProgramName,
             SemesterName = schedule.Semester?.Name,
+            StudentName = user.FullName,
+            RegistrationNumber = registration.RegistrationNumber,
+            EndDateBs = schedule.EndDateBs,
+            AcademicYearName = schedule.AcademicYear?.AcademicYearName,
+            ExamTypeName = schedule.ExamType?.Name,
             TotalExamFee = examFee,
             HasESewa = hasESewa,
             HasKhalti = hasKhalti,
@@ -274,8 +545,11 @@ public class StudentDashboardController(
                 examScheduleId, registration.Id, amount, paymentMethod, invoiceNumber, subjectIds);
         }
 
-        TempData["SuccessMessage"] = $"Payment request of Rs {amount:N0} via {paymentMethod} has been recorded. Invoice: {invoiceNumber}";
-        return RedirectToAction(nameof(ExamForms));
+        await HandlePostPaymentRegistration(logId);
+        await dashboardService.UpdatePaymentRequestLogAsync(logId, invoiceNumber, true, $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}", $"Payment recorded via {paymentMethod}.");
+
+        TempData["SuccessMessage"] = $"Payment of Rs {amount:N0} via {paymentMethod} completed successfully. Invoice: {invoiceNumber}";
+        return RedirectToAction(nameof(PaymentSuccess));
     }
 
     [HttpPost]
@@ -300,33 +574,48 @@ public class StudentDashboardController(
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
-        var successUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students", status = "success", logId }, Request.Scheme);
-        var failureUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students", status = "failure", logId }, Request.Scheme);
+        var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
+        var successUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:SuccessUrl"]) ? configuration["ESewa:SuccessUrl"]! : defaultCallbackUrl;
+        var failureUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:FailureUrl"]) ? configuration["ESewa:FailureUrl"]! : defaultCallbackUrl;
+
+        logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
+            amount, transactionUuid, successUrl, failureUrl);
 
         var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
 
+        HttpContext.Session.SetInt32("ESewaLogId", logId);
         ViewBag.LogId = logId;
         ViewBag.TransactionUuid = transactionUuid;
 
         return View(formData);
     }
 
-    public async Task<IActionResult> ESewaCallback(string status, string? data, int? logId)
+    public async Task<IActionResult> ESewaCallback(string? data)
     {
+        var sessionLogId = HttpContext.Session.GetInt32("ESewaLogId");
+        HttpContext.Session.Remove("ESewaLogId");
+
+        logger.LogInformation("ESewaCallback hit: sessionLogId={SessionLogId}, dataPresent={DataPresent}, queryString={QueryString}",
+            sessionLogId, !string.IsNullOrEmpty(data), Request.QueryString);
+
         if (string.IsNullOrEmpty(data))
         {
-            if (logId.HasValue)
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, "", false, "No response data received from eSewa.", "No response data received from eSewa.");
+            if (sessionLogId.HasValue)
+            {
+                var log = await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value);
+                if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+            }
 
             TempData["ErrorMessage"] = "No response data received from eSewa.";
             return RedirectToAction(nameof(PaymentFailure));
@@ -334,27 +623,49 @@ public class StudentDashboardController(
 
         try
         {
-            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
+            var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
 
-            var decodedBytes = Convert.FromBase64String(data);
+            logger.LogInformation("ESewaCallback: raw data length={Length}, first100={Preview}", data.Length, data.Length > 100 ? data[..100] : data);
+
+            var base64 = data.Replace('-', '+').Replace('_', '/');
+            switch (base64.Length % 4)
+            {
+                case 2: base64 += "=="; break;
+                case 3: base64 += "="; break;
+            }
+
+            var decodedBytes = Convert.FromBase64String(base64);
             var decodedJson = System.Text.Encoding.UTF8.GetString(decodedBytes);
+            logger.LogInformation("ESewaCallback: decodedJson={Json}", decodedJson);
+
             var response = System.Text.Json.JsonSerializer.Deserialize<ESewaVerifyResponse>(decodedJson,
-                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+                });
 
             if (response == null)
             {
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, "", false, "Invalid response from eSewa.", "Invalid response from eSewa.");
+                logger.LogWarning("ESewaCallback: deserialized response is null");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, decodedJson, "Invalid response from eSewa.");
 
                 TempData["ErrorMessage"] = "Invalid response from eSewa.";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            if (!esewaService.VerifyResponseSignature(response, decodedJson))
+            logger.LogInformation("ESewaCallback: txCode={TxCode}, status={Status}, totalAmount={Amount}, uuid={Uuid}, productCode={ProductCode}",
+                response.TransactionCode, response.Status, response.TotalAmount, response.TransactionUuid, response.ProductCode);
+
+            var sigValid = esewaService.VerifyResponseSignature(response, decodedJson);
+            logger.LogInformation("ESewaCallback: signatureValid={SigValid}", sigValid);
+
+            if (!sigValid)
             {
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, decodedJson, "Signature verification failed via eSewa.");
 
                 TempData["ErrorMessage"] = "Signature verification failed.";
                 return RedirectToAction(nameof(PaymentFailure));
@@ -366,19 +677,41 @@ public class StudentDashboardController(
                 : "null";
             var combinedData = $"{{\"callback\":{decodedJson},\"verification\":{verifyData}}}";
 
+            logger.LogInformation("ESewaCallback: verifyResult={Status}", verified?.Status ?? "null");
+
             if (verified == null || verified.Status != "COMPLETE")
             {
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", false, combinedData, "Transaction verification failed via eSewa.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", false, combinedData, "Transaction verification failed via eSewa.");
 
                 TempData["ErrorMessage"] = "Transaction verification failed.";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            if (logId.HasValue)
+            var resolvedLogId = sessionLogId;
+            if (!resolvedLogId.HasValue)
             {
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
-                await HandlePostPaymentRegistration(logId.Value);
+                logger.LogWarning("ESewaCallback: Session log ID lost. Attempting fallback lookup by student registration.");
+                var callbackUser = await userManager.GetUserAsync(User);
+                if (callbackUser != null)
+                {
+                    var registration = await dashboardService.GetStudentRegistrationByEmailAsync(callbackUser.Email ?? "");
+                    if (registration != null)
+                    {
+                        var pendingLog = await dashboardService.FindPendingPaymentLogByStudentAsync(registration.Id);
+                        if (pendingLog != null)
+                        {
+                            resolvedLogId = pendingLog.Id;
+                            logger.LogInformation("ESewaCallback: Fallback lookup found logId={LogId} for studentRegId={StudentRegId}", resolvedLogId, registration.Id);
+                        }
+                    }
+                }
+            }
+
+            if (resolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(resolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -387,8 +720,9 @@ public class StudentDashboardController(
 
             return RedirectToAction(nameof(PaymentSuccess));
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "ESewaCallback: exception processing callback. queryString={QueryString}", Request.QueryString);
             TempData["ErrorMessage"] = "Failed to process eSewa callback.";
             return RedirectToAction(nameof(PaymentFailure));
         }
@@ -417,13 +751,13 @@ public class StudentDashboardController(
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, "khalti", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, registration.CollegeId);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
         }
 
         var scheme = Request.Scheme;
@@ -431,7 +765,7 @@ public class StudentDashboardController(
         var baseUrl = $"{scheme}://{host}";
 
         var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
-            new { area = "Students", logId }, scheme)!;
+            new { area = "Students" }, scheme)!;
 
         var khaltiRequest = new KhaltiInitiateRequest
         {
@@ -461,6 +795,7 @@ public class StudentDashboardController(
             }
 
             logger.LogInformation("Khalti redirecting to: {PaymentUrl}", response.PaymentUrl);
+            HttpContext.Session.SetInt32("KhaltiLogId", logId);
             return Redirect(response.PaymentUrl);
         }
         catch (Exception ex)
@@ -471,12 +806,17 @@ public class StudentDashboardController(
         }
     }
 
-    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id, int? logId)
+    public async Task<IActionResult> KhaltiCallback(string? pidx, string? status, string? transaction_id, string? purchase_order_id)
     {
+        var sessionLogId = HttpContext.Session.GetInt32("KhaltiLogId");
+        HttpContext.Session.Remove("KhaltiLogId");
+
+        logger.LogInformation("KhaltiCallback hit: sessionLogId={SessionLogId}, pidx={Pidx}, status={Status}", sessionLogId, pidx, status);
+
         if (string.IsNullOrEmpty(pidx))
         {
-            if (logId.HasValue)
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
+            if (sessionLogId.HasValue)
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, "No pidx received from Khalti.", "No pidx received from Khalti.");
 
             TempData["ErrorMessage"] = "No payment identifier received from Khalti.";
             return RedirectToAction(nameof(PaymentFailure));
@@ -484,11 +824,8 @@ public class StudentDashboardController(
 
         try
         {
-            var log = logId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(logId.Value) : null;
+            var log = sessionLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value) : null;
             if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
-
-            logger.LogInformation("Khalti callback received: pidx={Pidx}, status={Status}, transaction_id={TransactionId}, purchase_order_id={PurchaseOrderId}",
-                pidx, status, transaction_id, purchase_order_id);
 
             var lookup = await khaltiService.LookupPaymentAsync(pidx!);
             var responseData = System.Text.Json.JsonSerializer.Serialize(new
@@ -502,18 +839,30 @@ public class StudentDashboardController(
             if (lookup == null || lookup.Status != "Completed")
             {
                 logger.LogWarning("Khalti payment verification failed: status={LookupStatus}, callback_status={CallbackStatus}", lookup?.Status, status);
-                if (logId.HasValue)
-                    await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
+                if (sessionLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, transaction_id ?? "", false, responseData, "Payment verification failed via Khalti.");
 
                 TempData["ErrorMessage"] = $"Payment verification failed. Status: {lookup?.Status ?? "Unknown"}";
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
             logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
-            if (logId.HasValue)
+            var khaltiResolvedLogId = sessionLogId;
+            if (!khaltiResolvedLogId.HasValue && !string.IsNullOrEmpty(purchase_order_id))
             {
-                await dashboardService.UpdatePaymentRequestLogAsync(logId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
-                await HandlePostPaymentRegistration(logId.Value);
+                logger.LogWarning("KhaltiCallback: Session log ID lost. Attempting fallback lookup by invoice={Invoice}", purchase_order_id);
+                var invoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
+                if (invoiceLog != null)
+                {
+                    khaltiResolvedLogId = invoiceLog.Id;
+                    logger.LogInformation("KhaltiCallback: Fallback lookup found logId={LogId} for invoice={Invoice}", khaltiResolvedLogId, purchase_order_id);
+                }
+            }
+
+            if (khaltiResolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(khaltiResolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -530,6 +879,8 @@ public class StudentDashboardController(
         }
     }
 
+
+
     public IActionResult PaymentSuccess()
     {
         return View();
@@ -540,33 +891,57 @@ public class StudentDashboardController(
         return View();
     }
 
-        private async Task HandlePostPaymentRegistration(int logId)
+    private async Task HandlePostPaymentRegistration(int logId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null)
         {
-            var user = await userManager.GetUserAsync(User);
-            if (user == null) return;
-
-            var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
-            if (paymentLog == null) return;
-
-            if (!paymentLog.StudentRegistrationId.HasValue) return;
-
-            var existingRegistration = await dashboardService.HasExistingPaymentAsync(
-                paymentLog.ExamScheduleId, paymentLog.StudentRegistrationId.Value);
-            if (existingRegistration) return;
-
-            var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
-                ? new List<int>()
-                : paymentLog.SelectedSubjectIds
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(int.Parse)
-                    .ToList();
-
-            if (subjectIds.Count == 0) return;
-
-            await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds);
+            logger.LogWarning("HandlePostPaymentRegistration: User not found for logId={LogId}", logId);
+            return;
         }
 
-        public async Task<IActionResult> Marksheet()
+        var paymentLog = await dashboardService.GetPaymentLogByIdAsync(logId);
+        if (paymentLog == null)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: PaymentLog not found for logId={LogId}", logId);
+            return;
+        }
+
+        if (!paymentLog.StudentRegistrationId.HasValue)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: StudentRegistrationId is null on logId={LogId}", logId);
+            return;
+        }
+
+        var existingRegistration = await dashboardService.HasExistingExamRegistrationAsync(
+            paymentLog.ExamScheduleId, user.Id);
+        if (existingRegistration)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: Existing payment found for scheduleId={ScheduleId}, studentRegId={StudentRegId}. Skipping registration creation.",
+                paymentLog.ExamScheduleId, paymentLog.StudentRegistrationId.Value);
+            return;
+        }
+
+        var subjectIds = string.IsNullOrEmpty(paymentLog.SelectedSubjectIds)
+            ? new List<int>()
+            : paymentLog.SelectedSubjectIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList();
+
+        if (subjectIds.Count == 0)
+        {
+            logger.LogWarning("HandlePostPaymentRegistration: No subject IDs on logId={LogId} (SelectedSubjectIds={SelectedSubjectIds}). Skipping registration creation.",
+                logId, paymentLog.SelectedSubjectIds ?? "null");
+            return;
+        }
+
+        logger.LogInformation("HandlePostPaymentRegistration: Creating ExamRegistration for logId={LogId}, scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
+            logId, paymentLog.ExamScheduleId, user.Id, subjectIds.Count);
+        await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds, paymentLog.StudentRegistrationId.Value);
+    }
+
+    public async Task<IActionResult> MarksheetPrint(int? examScheduleId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -587,6 +962,8 @@ public class StudentDashboardController(
             var scheduleId = rr.ExamScheduleId;
             if (scheduleId == null) continue;
 
+            if (examScheduleId.HasValue && scheduleId.Value != examScheduleId.Value) continue;
+
             var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value);
 
             marksheets.Add(new MarksheetViewModel
@@ -604,9 +981,10 @@ public class StudentDashboardController(
             });
         }
 
-        // Also include exam registrations that have no result records yet (pending)
         foreach (var er in examRegistrations)
         {
+            if (examScheduleId.HasValue && er.ExamScheduleId != examScheduleId.Value) continue;
+
             if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
                 var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId);
@@ -622,7 +1000,75 @@ public class StudentDashboardController(
             }
         }
 
-        return View(marksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
+        var sorted = marksheets.OrderByDescending(m => m.ExamScheduleId).ToList();
+
+        ViewBag.StudentRegistration = registration;
+        ViewBag.SymbolNumber = sorted.Count > 0 ? examRegistrations.FirstOrDefault(er => er.ExamScheduleId == sorted.First().ExamScheduleId)?.SymbolNumber : null;
+
+        return View(sorted);
+    }
+
+    public async Task<IActionResult> Marksheet()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+
+        // Show all marksheets for logged-in student
+        if (registration?.RegistrationNumber == null)
+        {
+            return View(new List<MarksheetViewModel>());
+        }
+
+        var allResultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
+        var allExamRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
+
+        var allMarksheets = new List<MarksheetViewModel>();
+
+        foreach (var rr in allResultRecords)
+        {
+            var scheduleId = rr.ExamScheduleId;
+            if (scheduleId == null) continue;
+
+            var subjects = GetMarksheetSubjects(allExamRegistrations, scheduleId.Value);
+
+            allMarksheets.Add(new MarksheetViewModel
+            {
+                RegistrationNumber = rr.RegistrationNumber,
+                StudentName = rr.StudentName,
+                Program = rr.Program?.ProgramName,
+                ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
+                AcademicYear = rr.AcademicYear?.AcademicYearName,
+                College = rr.College?.Name,
+                TotalGpa = rr.Gpa,
+                Result = rr.Result,
+                ExamScheduleId = scheduleId.Value,
+                Subjects = subjects
+            });
+        }
+
+        foreach (var er in allExamRegistrations)
+        {
+            if (!allMarksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
+            {
+                var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId);
+                allMarksheets.Add(new MarksheetViewModel
+                {
+                    RegistrationNumber = registration.RegistrationNumber,
+                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    ExamSchedule = er.ExamSchedule?.ExamScheduleName,
+                    ExamScheduleId = er.ExamScheduleId,
+                    Result = "Pending",
+                    Subjects = subjects
+                });
+            }
+        }
+
+        ViewBag.StudentRegistration = registration;
+        ViewBag.SymbolNumber = allExamRegistrations.FirstOrDefault()?.SymbolNumber;
+
+        return View(allMarksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
     }
 
     public async Task<IActionResult> RetotalRequests()
@@ -763,5 +1209,13 @@ public class StudentDashboardController(
             })
             .OrderBy(s => s.SubjectName)
             .ToList();
+    }
+
+    private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
+    {
+        var effectiveDate = schedule.ExtendedDate?.Date
+            ?? schedule.EndDate?.ToDateTime(TimeOnly.MinValue).Date;
+
+        return effectiveDate.HasValue && DateTime.Now.Date > effectiveDate.Value;
     }
 }

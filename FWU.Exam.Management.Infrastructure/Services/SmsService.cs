@@ -11,7 +11,7 @@ public class SmsService(AppDbContext context, HttpClient httpClient) : ISmsServi
     {
         var config = await context.SmsConfigurations.FirstOrDefaultAsync(c => c.IsActive);
         if (config == null)
-            throw new InvalidOperationException("No active SMS configuration found. Please configure SMS settings first.");
+            return;
 
         var payload = new GumpNowSmsRequest
         {

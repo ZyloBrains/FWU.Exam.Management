@@ -49,8 +49,8 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
     public class InputModel
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        [Display(Name = "Email or Registration Number")]
+        public string EmailOrRegNumber { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
@@ -85,19 +85,23 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (ModelState.IsValid)
         {
-            var user = await userManager.Users
-                .FirstOrDefaultAsync(u => u.Email == Input.Email);
+            logger.LogWarning("Login attempt for: {Input}", Input.EmailOrRegNumber);
+            var user = await ResolveUserAsync(Input.EmailOrRegNumber);
+            logger.LogWarning("Resolved user: {UserId}, UserName: {UserName}, IsActive: {IsActive}, PasswordHash present: {HasHash}",
+                user?.Id, user?.UserName, user?.IsActive, user?.PasswordHash != null);
 
             if (user != null)
             {
                 if (!user.IsActive)
                 {
-                    logger.LogWarning("Login attempt by inactive user {Email}", Input.Email);
+                    logger.LogWarning("Login attempt by inactive user {Input}", Input.EmailOrRegNumber);
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }
 
                 var result = await signInManager.CheckPasswordSignInAsync(user, Input.Password, false);
+                logger.LogWarning("CheckPasswordSignIn result: Succeeded={Succeeded}, IsLockedOut={IsLockedOut}, RequiresTwoFactor={RequiresTwoFactor}",
+                    result.Succeeded, result.IsLockedOut, result.RequiresTwoFactor);
                 if (result.Succeeded)
                 {
                     logger.LogInformation("User logged in.");
@@ -176,6 +180,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 }
             }
 
+            logger.LogWarning("Login failed for {Input} - user not found or invalid", Input.EmailOrRegNumber);
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return Page();
         }
@@ -222,5 +227,36 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
             IsEssential = true,
             MaxAge = TimeSpan.FromHours(24)
         });
+    }
+
+    private async Task<AppUser?> ResolveUserAsync(string emailOrRegNumber)
+    {
+        if (string.IsNullOrWhiteSpace(emailOrRegNumber))
+            return null;
+
+        var input = emailOrRegNumber.Trim();
+
+        if (input.Contains('@'))
+        {
+            return await userManager.Users
+                .FirstOrDefaultAsync(u => u.Email == input);
+        }
+
+        var studentEmail = await context.StudentRegistrations
+            .AsNoTracking()
+            .Where(s => s.RegistrationNumber == input && s.Email != null)
+            .Select(s => s.Email)
+            .FirstOrDefaultAsync();
+
+        if (studentEmail != null)
+        {
+            var userByEmail = await userManager.Users
+                .FirstOrDefaultAsync(u => u.Email == studentEmail);
+            if (userByEmail != null)
+                return userByEmail;
+        }
+
+        return await userManager.Users
+            .FirstOrDefaultAsync(u => u.UserName == input);
     }
 }

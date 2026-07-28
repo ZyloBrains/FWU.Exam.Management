@@ -8,6 +8,7 @@
 }
 
 <div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -20,13 +21,6 @@
             </div>
         </div>
     </div>
-
-    @if (TempData["Success"] != null)
-    {
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-            <i class="fas fa-check-circle mr-1"></i> @TempData["Success"]
-        </div>
-    }
 
     <!-- Desktop table -->
     <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">

@@ -1,33 +1,17 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ResultRecordService(AppDbContext context) : IResultRecordService
+public class ResultRecordService(AppDbContext context, IUserContext userContext) : IResultRecordService
 {
-    private IQueryable<ResultRecord> ApplyScope(IQueryable<ResultRecord> query, int? collegeId, int? facultyId)
+    public async Task<(List<ResultRecord> Items, int TotalCount)> GetResultRecordsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
-        if (collegeId.HasValue)
-            return query.Where(r => r.CollegeId == collegeId.Value);
-
-        if (facultyId.HasValue)
-        {
-            var collegeIds = context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
-                .Select(c => c.Id)
-                .ToList();
-
-            return query.Where(r => collegeIds.Contains(r.CollegeId));
-        }
-
-        return query;
-    }
-
-    public async Task<(List<ResultRecord> Items, int TotalCount)> GetResultRecordsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null)
-    {
-        var query = ApplyScope(BuildQuery(search, sort, sortDir), collegeId, facultyId);
+        var query = BuildQuery(search, sort, sortDir).ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -67,9 +51,9 @@ public class ResultRecordService(AppDbContext context) : IResultRecordService
         return (items, totalCount);
     }
 
-    public async Task<List<ResultRecord>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
+    public async Task<List<ResultRecord>> GetFilteredItemsAsync(string? search)
     {
-        var query = ApplyScope(BuildQuery(search, "Id", "asc"), collegeId, facultyId);
+        var query = BuildQuery(search, "Id", "asc").ApplyScope(userContext);
         return await query
             .Select(r => new ResultRecord
             {

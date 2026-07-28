@@ -14,39 +14,19 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("faculties.view")]
 public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
 {
-    public async Task<IActionResult> Index(string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
-        var faculties = await facultyService.GetAllFacultiesAsync();
+        var (items, totalCount) = await facultyService.GetFacultiesPagedAsync(page, pageSize, search, sort, sortDir);
 
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.ToLower();
-            faculties = faculties.Where(f =>
-                (f.Name?.ToLower().Contains(s) ?? false) ||
-                (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
-                (f.Email?.ToLower().Contains(s) ?? false) ||
-                (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
-                (f.Address?.ToLower().Contains(s) ?? false)
-            ).ToList();
-        }
-
-        faculties = (sort?.ToLower()) switch
-        {
-            "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
-            "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
-            "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
-            "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
-            "address" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Address).ToList() : faculties.OrderBy(f => f.Address).ToList(),
-            _ => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList()
-        };
-
-        var totalCount = faculties.Count;
         ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
         ViewBag.Sort = sort;
         ViewBag.SortDir = sortDir;
 
-        return View(faculties);
+        return View(items);
     }
 
     [HttpGet]
@@ -57,7 +37,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Faculties");
 
-        var headers = new[] { "Name", "Office Code", "Contact Number", "Email", "Address" };
+        var headers = new[] { "Name", "Short Name", "Office Code", "Contact Number", "Email", "Address" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -70,10 +50,11 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         foreach (var f in items)
         {
             worksheet.Cell(row, 1).Value = f.Name;
-            worksheet.Cell(row, 2).Value = f.OfficeCode;
-            worksheet.Cell(row, 3).Value = f.ContactNumber;
-            worksheet.Cell(row, 4).Value = f.Email;
-            worksheet.Cell(row, 5).Value = f.Address;
+            worksheet.Cell(row, 2).Value = f.ShortName;
+            worksheet.Cell(row, 3).Value = f.OfficeCode;
+            worksheet.Cell(row, 4).Value = f.ContactNumber;
+            worksheet.Cell(row, 5).Value = f.Email;
+            worksheet.Cell(row, 6).Value = f.Address;
             row++;
         }
 
@@ -103,6 +84,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             faculties = faculties.Where(f =>
                 (f.Name?.ToLower().Contains(s) ?? false) ||
                 (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.ShortName?.ToLower().Contains(s) ?? false) ||
                 (f.Email?.ToLower().Contains(s) ?? false) ||
                 (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
                 (f.Address?.ToLower().Contains(s) ?? false)
@@ -112,6 +94,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         faculties = (sort?.ToLower()) switch
         {
             "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "shortname" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ShortName).ToList() : faculties.OrderBy(f => f.ShortName).ToList(),
             "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
             "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
             "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
@@ -120,11 +103,11 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         };
 
         var sb = new StringBuilder();
-        sb.AppendLine("Name,Office Code,Contact Number,Email,Address");
+        sb.AppendLine("Name,Short Name,Office Code,Contact Number,Email,Address");
 
         foreach (var f in faculties)
         {
-            sb.AppendLine($"{EscapeCsv(f.Name)},{EscapeCsv(f.OfficeCode)},{EscapeCsv(f.ContactNumber)},{EscapeCsv(f.Email)},{EscapeCsv(f.Address)}");
+            sb.AppendLine($"{EscapeCsv(f.Name)},{EscapeCsv(f.ShortName)},{EscapeCsv(f.OfficeCode)},{EscapeCsv(f.ContactNumber)},{EscapeCsv(f.Email)},{EscapeCsv(f.Address)}");
         }
 
         var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
@@ -142,6 +125,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             faculties = faculties.Where(f =>
                 (f.Name?.ToLower().Contains(s) ?? false) ||
                 (f.OfficeCode?.ToLower().Contains(s) ?? false) ||
+                (f.ShortName?.ToLower().Contains(s) ?? false) ||
                 (f.Email?.ToLower().Contains(s) ?? false) ||
                 (f.ContactNumber?.ToLower().Contains(s) ?? false) ||
                 (f.Address?.ToLower().Contains(s) ?? false)
@@ -151,6 +135,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         faculties = (sort?.ToLower()) switch
         {
             "name" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Name).ToList() : faculties.OrderBy(f => f.Name).ToList(),
+            "shortname" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ShortName).ToList() : faculties.OrderBy(f => f.ShortName).ToList(),
             "officecode" => sortDir == "desc" ? faculties.OrderByDescending(f => f.OfficeCode).ToList() : faculties.OrderBy(f => f.OfficeCode).ToList(),
             "email" => sortDir == "desc" ? faculties.OrderByDescending(f => f.Email).ToList() : faculties.OrderBy(f => f.Email).ToList(),
             "contactnumber" => sortDir == "desc" ? faculties.OrderByDescending(f => f.ContactNumber).ToList() : faculties.OrderBy(f => f.ContactNumber).ToList(),
@@ -203,6 +188,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
                 TempData["OrgOfficeCode"] = faculty.OfficeCode;
             }
 
+            TempData["SuccessMessage"] = "Faculty created successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -244,6 +230,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
                     return NotFound();
                 throw;
             }
+            TempData["SuccessMessage"] = "Faculty updated successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -266,15 +253,38 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        var (canDelete, blockingEntities) = await facultyService.CheckDeleteDependenciesAsync(id);
+        if (!canDelete)
+        {
+            TempData["ErrorMessage"] = $"Cannot delete this Faculty. It is referenced by: {string.Join(", ", blockingEntities)}. Please remove or reassign these records first.";
+            return RedirectToAction(nameof(Index));
+        }
+
         await facultyService.DeleteFacultyAsync(id);
+        TempData["SuccessMessage"] = "Faculty deleted successfully!";
         return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("faculties.delete")]
+
+    [RequirePermission("faculties.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await facultyService.DeleteFacultyAsync(id); return Json(new { success = true, message = "Faculty deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        var (canDelete, blockingEntities) = await facultyService.CheckDeleteDependenciesAsync(id);
+        if (!canDelete)
+        {
+            return Json(new { success = false, message = $"Cannot delete this Faculty. It is referenced by: {string.Join(", ", blockingEntities)}. Please remove or reassign these records first." });
+        }
+
+        try
+        {
+            await facultyService.DeleteFacultyAsync(id);
+            return Json(new { success = true, message = "Faculty deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 
 }

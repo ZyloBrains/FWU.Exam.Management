@@ -1,34 +1,18 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class AdmitCardService(AppDbContext context) : IAdmitCardService
+public class AdmitCardService(AppDbContext context, IUserContext userContext) : IAdmitCardService
 {
-    private IQueryable<AdmitCard> ApplyScope(IQueryable<AdmitCard> query, int? collegeId, int? facultyId)
+    public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null)
     {
-        if (collegeId.HasValue)
-            return query.Where(e => e.ExamRegistration != null && e.ExamRegistration.CollegeId == collegeId.Value);
-
-        if (facultyId.HasValue)
-        {
-            var collegeIds = context.Colleges
-                .Where(c => c.Faculties.Any(f => f.Id == facultyId.Value))
-                .Select(c => c.Id)
-                .ToList();
-
-            return query.Where(e => e.ExamRegistration != null && collegeIds.Contains(e.ExamRegistration.CollegeId));
-        }
-
-        return query;
-    }
-
-    public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? collegeId = null, int? facultyId = null, int? examScheduleId = null)
-    {
-        var query = ApplyScope(BuildQuery(search, sort, sortDir, examScheduleId), collegeId, facultyId);
+        var query = BuildQuery(search, sort, sortDir, examScheduleId).ApplyScope(userContext);
 
         var totalCount = await query.CountAsync();
         var items = await query
@@ -54,9 +38,9 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
         return (items, totalCount);
     }
 
-    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search, int? collegeId = null, int? facultyId = null)
+    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search)
     {
-        var query = ApplyScope(BuildQuery(search, "Id", "asc", null), collegeId, facultyId);
+        var query = BuildQuery(search, "Id", "asc", null).ApplyScope(userContext);
         return await query
             .Select(e => new AdmitCard
             {
@@ -76,7 +60,7 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
 
     public async Task<AdmitCard?> GetAdmitCardByIdAsync(int id)
     {
-        return await context.AdmitCards
+        var admitCard = await context.AdmitCards
             .AsNoTracking()
             .Include(e => e.ExamRegistration)
                 .ThenInclude(er => er.College)
@@ -84,9 +68,106 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
                 .ThenInclude(er => er.ExamCenter)
             .Include(e => e.ExamRegistration)
                 .ThenInclude(er => er.Program)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er.ApplicationVoucher)
+                    .ThenInclude(v => v!.StudentRegistration)
             .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s.Semester)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s.Program)
+                    .ThenInclude(p => p!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s.ExamType)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s.AcademicYear)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (admitCard == null) return null;
+
+        if (admitCard.ExamSchedule != null)
+        {
+            var subjectOfferings = await context.SubjectOfferings
+                .AsNoTracking()
+                .Include(so => so.SubjectCatalog)
+                .Where(so => so.ProgramId == admitCard.ExamSchedule.ProgramId
+                          && so.SemesterId == admitCard.ExamSchedule.SemesterId)
+                .OrderBy(so => so.DisplayOrder)
+                .ToListAsync();
+
+            admitCard.Subjects = subjectOfferings
+                .Where(so => so.SubjectCatalog != null)
+                .Select(so => new Subject
+                {
+                    Code = so.SubjectCatalog!.SubjectCode,
+                    Name = so.SubjectCatalog.SubjectName,
+                    Theory = so.HasTheory,
+                    Practical = so.HasPractical,
+                    Remarks = null
+                })
+                .ToList();
+        }
+
+        var sr = admitCard.StudentRegistration
+            ?? admitCard.ExamRegistration?.ApplicationVoucher?.StudentRegistration;
+
+        if (sr != null)
+        {
+            admitCard.StudentRegistrationId ??= sr.Id;
+            admitCard.StudentRegistration ??= sr;
+            admitCard.RegistrationNumber ??= sr.RegistrationNumber;
+
+            if (string.IsNullOrEmpty(admitCard.PhotoPath) || string.IsNullOrEmpty(admitCard.SignaturePath))
+            {
+                if (!string.IsNullOrEmpty(sr.RegistrationNumber))
+                {
+                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+                    if (appUser != null)
+                    {
+                        admitCard.PhotoPath ??= appUser.ProfilePath;
+                        admitCard.SignaturePath ??= appUser.SignaturePath;
+                    }
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(admitCard.Campus))
+            admitCard.Campus = admitCard.ExamRegistration?.College?.Name;
+
+        if (string.IsNullOrEmpty(admitCard.Level))
+            admitCard.Level = admitCard.ExamSchedule?.Level?.LevelName;
+
+        if (string.IsNullOrEmpty(admitCard.Program))
+            admitCard.Program = admitCard.ExamSchedule?.Program?.ProgramName
+                ?? admitCard.ExamRegistration?.Program?.ProgramName;
+
+        if (string.IsNullOrEmpty(admitCard.Semester))
+            admitCard.Semester = admitCard.ExamSchedule?.Semester?.Name;
+
+        if (string.IsNullOrEmpty(admitCard.ExamType))
+            admitCard.ExamType = admitCard.ExamSchedule?.ExamType?.Name;
+
+        if (string.IsNullOrEmpty(admitCard.Year))
+            admitCard.Year = admitCard.ExamSchedule?.AcademicYear?.AcademicYearCode;
+
+        if (string.IsNullOrEmpty(admitCard.ExamRollNo))
+            admitCard.ExamRollNo = admitCard.ExamRegistration?.ExamRollNumber
+                ?? admitCard.ExamRegistration?.SymbolNumber;
+
+        if (string.IsNullOrEmpty(admitCard.ControllerSignaturePath) && admitCard.ExamRegistration?.CollegeId != null)
+        {
+            var college = await context.Colleges.AsNoTracking().FirstOrDefaultAsync(c => c.Id == admitCard.ExamRegistration.CollegeId);
+            if (college != null)
+            {
+                var tenant = await context.Tenants.FindAsync(college.TenantId);
+                if (!string.IsNullOrEmpty(tenant?.ControllerSignaturePath))
+                    admitCard.ControllerSignaturePath = tenant.ControllerSignaturePath;
+            }
+        }
+
+        return admitCard;
     }
 
     public async Task CreateAdmitCardAsync(AdmitCard admitCard)
@@ -125,15 +206,44 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
     {
         var registration = await context.ExamRegistrations
             .Include(er => er.ExamSchedule)
+            .Include(er => er.College)
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
+
+        if (string.IsNullOrEmpty(registration.SymbolNumber))
+        {
+            throw new InvalidOperationException(
+                "Cannot generate admit card: symbol number has not been assigned. " +
+                "Please assign symbol numbers first via Exam Center Distribution.");
+        }
+
+        var studentUser = await ResolveStudentUserAsync(registration);
+        var controllerSignaturePath = await ResolveControllerSignatureAsync(registration.CollegeId);
+
+        int? resolvedSrId = null;
+        string? resolvedStudentRegNumber = null;
+        if (registration.ApplicationVoucherId.HasValue)
+        {
+            var voucher = await context.ApplicationVouchers.FindAsync(registration.ApplicationVoucherId.Value);
+            if (voucher?.StudentRegistrationId.HasValue == true)
+            {
+                resolvedSrId = voucher.StudentRegistrationId.Value;
+                var sr = await context.StudentRegistrations.FindAsync(voucher.StudentRegistrationId.Value);
+                resolvedStudentRegNumber = sr?.RegistrationNumber;
+            }
+        }
 
         var admitCard = new AdmitCard
         {
             ExamRegistrationId = examRegistrationId,
             ExamScheduleId = registration.ExamScheduleId,
-            StudentRegistrationId = null,
+            StudentRegistrationId = resolvedSrId,
+            RegistrationNumber = resolvedStudentRegNumber,
             AdmitCardNumber = $"AC-{registration.ExamScheduleId:D4}-{registration.Id:D6}",
+            ExamRollNo = registration.SymbolNumber,
+            PhotoPath = studentUser?.ProfilePath,
+            SignaturePath = studentUser?.SignaturePath,
+            ControllerSignaturePath = controllerSignaturePath,
             GeneratedDate = DateTime.UtcNow,
             IsDownloaded = false,
             IsActive = true
@@ -148,28 +258,95 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
     {
         var registrations = await context.ExamRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
+            .Include(er => er.College)
             .ToListAsync();
+
+        var missingSymbol = registrations.Where(r => string.IsNullOrEmpty(r.SymbolNumber)).ToList();
+        if (missingSymbol.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Cannot generate admit cards: {missingSymbol.Count} registration(s) are missing symbol numbers. " +
+                "Please assign symbol numbers first via Exam Center Distribution before generating admit cards.");
+        }
+
+        var registrationIds = registrations.Select(r => r.Id).ToList();
+        var existingAdmitCards = await context.AdmitCards
+            .Where(ht => registrationIds.Contains(ht.ExamRegistrationId) && ht.IsActive)
+            .ToListAsync();
+        var existingRegistrationIds = new HashSet<int>(existingAdmitCards.Select(ht => ht.ExamRegistrationId));
+
+        var voucherIds = registrations.Where(r => r.ApplicationVoucherId.HasValue).Select(r => r.ApplicationVoucherId!.Value).Distinct().ToList();
+        var vouchers = voucherIds.Count > 0
+            ? await context.ApplicationVouchers.Where(v => voucherIds.Contains(v.Id)).ToListAsync()
+            : [];
+        var erIdToSrId = vouchers.Where(v => v.StudentRegistrationId.HasValue).ToDictionary(v => v.Id, v => v.StudentRegistrationId!.Value);
+
+        var srIds = erIdToSrId.Values.Distinct().ToList();
+        var studentRegistrations = srIds.Count > 0
+            ? await context.StudentRegistrations.Where(sr => srIds.Contains(sr.Id)).ToListAsync()
+            : [];
+        var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
+
+        var colleges = await context.Colleges
+            .Where(c => c.Id == registrations.First().CollegeId)
+            .ToListAsync();
+        var collegeTenantLookup = colleges.ToDictionary(c => c.Id, c => c.TenantId);
+        var tenantIds = colleges.Select(c => c.TenantId).Distinct().ToList();
+        var tenants = await context.Tenants.Where(t => tenantIds.Contains(t.Id)).ToListAsync();
+        var tenantSignatureLookup = tenants.ToDictionary(t => t.Id, t => t.ControllerSignaturePath);
 
         var admitCards = new List<AdmitCard>();
         foreach (var registration in registrations)
         {
-            var existing = await context.AdmitCards
-                .FirstOrDefaultAsync(ht => ht.ExamRegistrationId == registration.Id && ht.IsActive);
+            if (existingRegistrationIds.Contains(registration.Id))
+                continue;
 
-            if (existing == null)
+            string? controllerSignaturePath = null;
+            if (collegeTenantLookup.TryGetValue(registration.CollegeId, out var tenantId) &&
+                tenantSignatureLookup.TryGetValue(tenantId, out var sig))
             {
-                var admitCard = new AdmitCard
-                {
-                    ExamRegistrationId = registration.Id,
-                    ExamScheduleId = examScheduleId,
-                    StudentRegistrationId = null,
-                    AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
-                    GeneratedDate = DateTime.UtcNow,
-                    IsDownloaded = false,
-                    IsActive = true
-                };
-                admitCards.Add(admitCard);
+                controllerSignaturePath = sig;
             }
+
+            string? photoPath = null;
+            string? signaturePath = null;
+            string? resolvedStudentRegNumber = null;
+            int? resolvedSrId = null;
+
+            if (registration.ApplicationVoucherId.HasValue
+                && erIdToSrId.TryGetValue(registration.ApplicationVoucherId.Value, out var srId)
+                && srLookup.TryGetValue(srId, out var sr))
+            {
+                resolvedSrId = srId;
+                resolvedStudentRegNumber = sr.RegistrationNumber;
+
+                if (!string.IsNullOrEmpty(sr.RegistrationNumber))
+                {
+                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+                    if (appUser != null)
+                    {
+                        photoPath = appUser.ProfilePath;
+                        signaturePath = appUser.SignaturePath;
+                    }
+                }
+            }
+
+            var admitCard = new AdmitCard
+            {
+                ExamRegistrationId = registration.Id,
+                ExamScheduleId = examScheduleId,
+                StudentRegistrationId = resolvedSrId,
+                RegistrationNumber = resolvedStudentRegNumber,
+                AdmitCardNumber = $"AC-{examScheduleId:D4}-{registration.Id:D6}",
+                ExamRollNo = registration.SymbolNumber,
+                PhotoPath = photoPath,
+                SignaturePath = signaturePath,
+                ControllerSignaturePath = controllerSignaturePath,
+                GeneratedDate = DateTime.UtcNow,
+                IsDownloaded = false,
+                IsActive = true
+            };
+            admitCards.Add(admitCard);
         }
 
         if (admitCards.Count > 0)
@@ -181,11 +358,31 @@ public class AdmitCardService(AppDbContext context) : IAdmitCardService
         return admitCards;
     }
 
-    public AdmitCardSelectListsDto GetSelectListData(AdmitCard? admitCard = null)
+    private async Task<FWU.Exam.Management.Infrastructure.Data.Models.AppUser?> ResolveStudentUserAsync(Domain.Entities.Exams.ExamRegistration registration)
     {
-        var examSchedules = context.ExamSchedules.AsNoTracking().ToList();
-        var examRegistrations = context.ExamRegistrations.AsNoTracking().ToList();
-        var examCenters = context.ExamCenters.AsNoTracking().ToList();
+        if (registration.ApplicationVoucherId == null) return null;
+        var voucher = await context.ApplicationVouchers.FindAsync(registration.ApplicationVoucherId.Value);
+        if (voucher?.StudentRegistrationId == null) return null;
+        var sr = await context.StudentRegistrations.FindAsync(voucher.StudentRegistrationId.Value);
+        if (sr?.RegistrationNumber == null) return null;
+        return await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+    }
+
+    private async Task<string?> ResolveControllerSignatureAsync(int collegeId)
+    {
+        var college = await context.Colleges
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == collegeId);
+        if (college == null) return null;
+        var tenant = await context.Tenants.FindAsync(college.TenantId);
+        return tenant?.ControllerSignaturePath;
+    }
+
+    public async Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null)
+    {
+        var examSchedules = await context.ExamSchedules.AsNoTracking().ToListAsync();
+        var examRegistrations = await context.ExamRegistrations.AsNoTracking().ToListAsync();
+        var examCenters = await context.ExamCenters.AsNoTracking().ToListAsync();
 
         return new AdmitCardSelectListsDto
         {

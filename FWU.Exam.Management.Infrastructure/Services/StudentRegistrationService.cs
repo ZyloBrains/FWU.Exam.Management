@@ -5,13 +5,15 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IEmailService emailService, ISmsService smsService) : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IEmailService emailService, ISmsService smsService, IUserContext userContext) : IStudentRegistrationService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -20,15 +22,24 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.Faculty)
             .Include(s => s.Program)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
+            .Include(s => s.PermanentAddress)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
+                .ThenInclude(d => d.Province)
+            .Include(s => s.StudentGuardians)
+            .Include(s => s.StudentQualifications)
+                .ThenInclude(q => q.Board)
+            .Include(s => s.StudentQualifications)
+                .ThenInclude(q => q.PreviousLevel)
             .AsNoTracking();
+        query = query.ApplyScope(userContext);
 
-        if (collegeIds != null && collegeIds.Count > 0)
+        if (userContext.IsSuperAdmin && collegeIds != null && collegeIds.Count > 0)
         {
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
         }
@@ -43,13 +54,17 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.Faculty)
             .Include(s => s.Program)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
+            .Include(s => s.PermanentAddress)
+                .ThenInclude(a => a.LocalLevel)
+                .ThenInclude(ll => ll.District)
+                .ThenInclude(d => d.Province)
+            .Include(s => s.CurrentAddress)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
@@ -75,6 +90,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 studentRegistration.PermanentAddressId = permanentAddress.Id;
             }
 
+            studentRegistration.IsActive = true;
             context.StudentRegistrations.Add(studentRegistration);
             await context.SaveChangesAsync();
 
@@ -131,6 +147,13 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 }
             }
 
+            if (existingRegistration != null && !string.IsNullOrEmpty(existingRegistration.RegistrationNumber))
+            {
+                studentRegistration.RegistrationNumber = existingRegistration.RegistrationNumber;
+                studentRegistration.IsRegistrationNumberGenerated = existingRegistration.IsRegistrationNumberGenerated;
+                studentRegistration.StudentRegistrationIndex = existingRegistration.StudentRegistrationIndex;
+            }
+
             context.StudentRegistrations.Update(studentRegistration);
             await context.SaveChangesAsync();
 
@@ -152,7 +175,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(sr => sr.StudentQualifications)
             .Include(sr => sr.ApplicationVouchers)
             .Include(sr => sr.PaymentRequestLogs)
-            .Include(sr => sr.StudentAdmissions)
+            .Include(sr => sr.StudentAdmission)
             .FirstOrDefaultAsync(sr => sr.Id == id);
         if (studentRegistration != null)
         {
@@ -164,12 +187,45 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 context.ApplicationVouchers.RemoveRange(studentRegistration.ApplicationVouchers);
             if (studentRegistration.PaymentRequestLogs?.Count > 0)
                 context.PaymentRequestLogs.RemoveRange(studentRegistration.PaymentRequestLogs);
-            if (studentRegistration.StudentAdmissions?.Count > 0)
-                context.StudentAdmissions.RemoveRange(studentRegistration.StudentAdmissions);
+            if (studentRegistration.StudentAdmission != null)
+                context.StudentAdmissions.Remove(studentRegistration.StudentAdmission);
 
             context.StudentRegistrations.Remove(studentRegistration);
             await context.SaveChangesAsync();
         }
+    }
+
+    public async Task<string?> GenerateRegistrationNumberAsync(int studentRegistrationId)
+    {
+        var student = await context.StudentRegistrations
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Level)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
+            .FirstOrDefaultAsync(s => s.Id == studentRegistrationId);
+
+        if (student == null) return null;
+        if (student.IsRegistrationNumberGenerated == true) return student.RegistrationNumber;
+        if (!string.IsNullOrEmpty(student.RegistrationNumber))
+        {
+            student.IsRegistrationNumberGenerated = true;
+            await context.SaveChangesAsync();
+            return student.RegistrationNumber;
+        }
+
+        var maxIndex = await context.StudentRegistrations
+            .Where(s => s.AcademicYearId == student.AcademicYearId && s.StudentRegistrationIndex != null)
+            .MaxAsync(s => (int?)s.StudentRegistrationIndex) ?? 0;
+
+        var newIndex = maxIndex + 1;
+        student.StudentRegistrationIndex = newIndex;
+
+        student.RegistrationNumber = $"{student.Faculty?.ShortName ?? "00"}-{student.AcademicYear?.AcademicYearCode ?? "0"}-{student.LevelId}-{student.ProgramId}-{newIndex:D4}";
+
+        student.IsRegistrationNumberGenerated = true;
+        await context.SaveChangesAsync();
+
+        return student.RegistrationNumber;
     }
 
     public async Task<bool> StudentRegistrationExistsAsync(int id)
@@ -177,20 +233,13 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         return await context.StudentRegistrations.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null)
+    public async Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null, string? academicYear = null, int? facultyId = null, int? collegeId = null, int? levelId = null, int? programId = null, string? status = null)
     {
         var query = context.StudentRegistrations
-            .Include(s => s.AcademicYear)
-            .Include(s => s.Level)
-            .Include(s => s.Department)
-            .Include(s => s.Faculty)
-            .Include(s => s.Program)
-            .Include(s => s.College)
-            .Include(s => s.Gender)
-            .Include(s => s.StudentCategory)
             .AsNoTracking();
+        query = query.ApplyScope(userContext);
 
-        if (collegeIds != null && collegeIds.Count > 0)
+        if (userContext.IsSuperAdmin && collegeIds != null && collegeIds.Count > 0)
         {
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
         }
@@ -204,6 +253,22 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 (s.LastName != null && s.LastName.ToLower().Contains(lowerSearchTerm)) ||
                 (s.Email != null && s.Email.ToLower().Contains(lowerSearchTerm)) ||
                 (s.ContactNumber != null && s.ContactNumber.ToLower().Contains(lowerSearchTerm)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(academicYear))
+            query = query.Where(s => s.AcademicYear != null && s.AcademicYear.AcademicYearName == academicYear);
+        if (facultyId.HasValue)
+            query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (collegeId.HasValue)
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        if (levelId.HasValue)
+            query = query.Where(s => s.LevelId == levelId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var isActive = status.ToLower() == "active";
+            query = query.Where(s => s.IsActive == isActive);
         }
 
         var totalCount = await query.CountAsync();
@@ -226,7 +291,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 Category = s.StudentCategory != null ? s.StudentCategory.StudentCategoryName : "-",
                 ContactNumber = s.ContactNumber ?? "-",
                 Email = s.Email ?? "-",
-                DepartmentId = s.DepartmentId,
                 Status = s.IsActive ? "Active" : "Inactive"
             })
             .ToListAsync();
@@ -258,7 +322,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var departments = await context.Departments.Where(d => d.DepartmentName != null).AsNoTracking().ToListAsync();
         var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
@@ -273,7 +336,6 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             Levels = levels.Select(l => new SelectOption { Id = l.Id, Name = l.LevelName }).ToList(),
-            Departments = departments.Select(d => new SelectOption { Id = d.Id, Name = d.DepartmentName }).ToList(),
             Colleges = colleges.Select(c => new SelectOption { Id = c.Id, Name = c.Name }).ToList(),
             Genders = genders.Select(g => new SelectOption { Id = g.Id, Name = g.GenderName }).ToList(),
             StudentCategories = studentCategories.Select(sc => new SelectOption { Id = sc.Id, Name = sc.StudentCategoryName }).ToList(),
@@ -304,41 +366,26 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task<List<SelectOption>> GetFacultiesByLevelAsync(int levelId)
     {
-        var collegeIds = await context.Programs
-            .Where(p => p.LevelId == levelId)
-            .Join(context.CollegePrograms, p => p.Id, cp => cp.ProgramId, (p, cp) => cp.CollegeId)
-            .Distinct()
-            .ToListAsync();
-
-        if (collegeIds.Count == 0) return [];
-
-        return await context.Colleges
-            .Where(c => collegeIds.Contains(c.Id))
-            .SelectMany(c => c.Faculties)
-            .Select(f => new SelectOption { Id = f.Id, Name = f.Name })
+        return await context.Programs
+            .Where(p => p.LevelId == levelId && p.FacultyId != null)
+            .Include(p => p.Faculty)
+            .Select(p => new SelectOption { Id = p.Faculty!.Id, Name = p.Faculty.Name! })
             .Distinct()
             .AsNoTracking()
             .ToListAsync();
     }
 
-    public async Task<List<SelectOption>> GetDepartmentsByCollegeAsync(int collegeId)
+    public async Task<List<SelectOption>> GetCollegesByLevelAsync(int levelId)
     {
-        var departmentIds = await context.CollegePrograms
-            .Where(cp => cp.CollegeId == collegeId)
-            .Join(context.Programs, cp => cp.ProgramId, p => p.Id, (cp, p) => p.DepartmentId)
+        return await context.CollegePrograms
+            .Where(cp => cp.Program != null && cp.Program.LevelId == levelId && cp.College != null && cp.College.Name != null)
+            .Select(cp => new SelectOption { Id = cp.College!.Id, Name = cp.College.Name! })
             .Distinct()
-            .ToListAsync();
-
-        if (departmentIds.Count == 0) return [];
-
-        return await context.Departments
-            .Where(d => departmentIds.Contains(d.Id))
-            .Select(d => new SelectOption { Id = d.Id, Name = d.DepartmentName })
             .AsNoTracking()
             .ToListAsync();
     }
 
-    public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null, int? departmentId = null)
+    public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null)
     {
         var query = context.CollegePrograms
             .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
@@ -348,19 +395,15 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         if (levelId.HasValue)
             query = query.Where(cp => cp.Program!.LevelId == levelId.Value);
 
-        if (departmentId.HasValue)
-            query = query.Where(cp => cp.Program!.DepartmentId == departmentId.Value);
-
         return await query
             .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
             .AsNoTracking()
             .ToListAsync();
     }
 
-    public List<Province> GetProvinces()
+    public async Task<List<Province>> GetProvincesAsync()
     {
-        var provinces =  context.Provinces.AsNoTracking().ToList();
-        return provinces;
+        return await context.Provinces.AsNoTracking().ToListAsync();
     }
 
     public async Task SaveQualificationsAsync(int studentRegistrationId, List<StudentQualification> qualifications)
@@ -455,14 +498,16 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             if (string.IsNullOrWhiteSpace(password))
                 throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {studentRegistration.Email}");
 
-            var result = await userManager.CreateAsync(user, password);
-
-            if (!result.Succeeded)
+            var createResult = await userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
             {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
                 logger.LogError("Failed to create AppUser for student {Email}: {Errors}", studentRegistration.Email, errors);
                 throw new InvalidOperationException($"Failed to create user account for {studentRegistration.Email}: {errors}");
             }
+
+            SetPasswordHashDirectly(user, password);
+            await userManager.UpdateAsync(user);
 
             if (!await userManager.IsInRoleAsync(user, "Student"))
                 await userManager.AddToRoleAsync(user, "Student");
@@ -539,18 +584,18 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             var passwordValid = await userManager.CheckPasswordAsync(user, password);
             if (!passwordValid)
             {
-                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-                var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
-                if (!resetResult.Succeeded)
-                {
-                    var errors = string.Join("; ", resetResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to reset password for student {Email}: {Errors}", studentRegistration.Email, errors);
-                    throw new InvalidOperationException($"Failed to reset user password for {studentRegistration.Email}: {errors}");
-                }
+                SetPasswordHashDirectly(user, password);
+                await userManager.UpdateAsync(user);
             }
 
             return false;
         }
+    }
+
+    private static void SetPasswordHashDirectly(AppUser user, string password)
+    {
+        var hasher = new PasswordHasher<AppUser>();
+        user.PasswordHash = hasher.HashPassword(user, password);
     }
 
     private async Task SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, bool isNewUser)

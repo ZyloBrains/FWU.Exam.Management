@@ -5,6 +5,7 @@
 }
 
 <div class="space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -12,7 +13,7 @@
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Application #@Model.Id</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Application #@Model.Id</h1>
                 <p class="text-sm text-gray-500">Submitted on @Model.CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt")</p>
             </div>
         </div>
@@ -31,13 +32,6 @@
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-            @TempData["SuccessMessage"]
-        </div>
-    }
-
     <!-- Payment Info -->
     @if (Model.PaymentVerified && Model.ApplicationVoucher != null)
     {
@@ -53,7 +47,7 @@
     <!-- Program Selection -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Program Selection</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Program Selection</h2>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -76,7 +70,7 @@
     <!-- Applicant Information -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Personal Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Personal Information</h2>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -134,7 +128,7 @@
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Issued District</label>
-                            <p class="text-gray-800">@(Model.CitizenshipDistrict?.DistrictName ?? "-")</p>
+                            <p class="text-gray-800">@Model.CitizenshipDistrict?.DistrictName ?? "-"</p>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Issue Date</label>
@@ -149,7 +143,7 @@
     <!-- Address -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Permanent Address</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Permanent Address</h2>
         </div>
         <div class="px-6 py-4">
             @if (Model.PermanentAddress != null)
@@ -199,7 +193,7 @@
     <!-- Guardian Information -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Guardian Information</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Guardian Information</h2>
         </div>
         <div class="px-6 py-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -238,7 +232,7 @@
     <!-- Previous Qualifications -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Academic Qualifications</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Academic Qualifications</h2>
         </div>
         <div class="px-6 py-4 space-y-4">
             <!-- Qualification 1 -->
@@ -247,7 +241,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                     <div>
                         <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Level</label>
-                        <p class="text-gray-800 text-sm">@(Model.PreviousLevel?.PreviousLevelName ?? "-")</p>
+                        <p class="text-gray-800 text-sm">@Model.PreviousLevel?.PreviousLevelName ?? "-"</p>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Institution</label>
@@ -275,7 +269,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div>
                             <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Level</label>
-                            <p class="text-gray-800 text-sm">@(Model.PreviousLevel2?.PreviousLevelName ?? "-")</p>
+                            <p class="text-gray-800 text-sm">@Model.PreviousLevel2?.PreviousLevelName ?? "-"</p>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Institution</label>
@@ -304,7 +298,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div>
                             <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Level</label>
-                            <p class="text-gray-800 text-sm">@(Model.PreviousLevel3?.PreviousLevelName ?? "-")</p>
+                            <p class="text-gray-800 text-sm">@Model.PreviousLevel3?.PreviousLevelName ?? "-"</p>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Institution</label>
@@ -329,79 +323,44 @@
     </div>
 
     <!-- Documents -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Documents</h2>
-        </div>
-        <div class="px-6 py-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @if (!string.IsNullOrEmpty(Model.PhotoPath))
-                {
-                    <div>
-                        <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Photo</label>
-                        <a href="@Model.PhotoPath" target="_blank">
-                            <img src="@Model.PhotoPath" alt="Applicant Photo" class="w-full max-w-[200px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(image not available)</span>'">
-                        </a>
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(Model.DocumentsPath))
-                {
-                    <div>
-                        <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Documents</label>
-                        <div class="flex flex-col gap-2">
-                            @{
-                                var docExt = System.IO.Path.GetExtension(Model.DocumentsPath)?.ToLowerInvariant();
-                            }
-                            @if (docExt == ".pdf")
-                            {
-                                <embed src="@Model.DocumentsPath" type="application/pdf" class="w-full max-w-[300px] h-40 rounded-lg border border-gray-200" />
-                            }
-                            else
-                            {
-                                <a href="@Model.DocumentsPath" target="_blank">
-                                    <img src="@Model.DocumentsPath" alt="Documents" class="w-full max-w-[300px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(document not available)</span>'">
-                                </a>
-                            }
-                            <a href="@Model.DocumentsPath" target="_blank" class="text-sm text-teal-600 hover:underline"><i class="fas fa-download mr-1"></i>Download</a>
+    @if (!string.IsNullOrEmpty(Model.PhotoPath) || !string.IsNullOrEmpty(Model.DocumentsPath) || !string.IsNullOrEmpty(Model.VoucherPath))
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-800">Documents</h2>
+            </div>
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    @if (!string.IsNullOrEmpty(Model.PhotoPath))
+                    {
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Photo</label>
+                            <a href="@Model.PhotoPath" target="_blank" class="text-sm text-teal-600 hover:underline">View Photo</a>
                         </div>
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(Model.VoucherPath))
-                {
-                    <div>
-                        <label class="block text-xs text-gray-500 uppercase font-semibold mb-2">Bank Voucher</label>
-                        <div class="flex flex-col gap-2">
-                            @{
-                                var voucherExt = System.IO.Path.GetExtension(Model.VoucherPath)?.ToLowerInvariant();
-                            }
-                            @if (voucherExt == ".pdf")
-                            {
-                                <embed src="@Model.VoucherPath" type="application/pdf" class="w-full max-w-[300px] h-40 rounded-lg border border-gray-200" />
-                            }
-                            else
-                            {
-                                <a href="@Model.VoucherPath" target="_blank">
-                                    <img src="@Model.VoucherPath" alt="Bank Voucher" class="w-full max-w-[300px] h-auto rounded-lg border border-gray-200 shadow-sm hover:opacity-90 transition-opacity" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-sm text-gray-400\'>(image not available)</span>'">
-                                </a>
-                            }
-                            <a href="@Model.VoucherPath" target="_blank" class="text-sm text-teal-600 hover:underline"><i class="fas fa-download mr-1"></i>Download</a>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.DocumentsPath))
+                    {
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Documents</label>
+                            <a href="@Model.DocumentsPath" target="_blank" class="text-sm text-teal-600 hover:underline">View Documents</a>
                         </div>
-                    </div>
-                }
-                @if (string.IsNullOrEmpty(Model.PhotoPath) && string.IsNullOrEmpty(Model.DocumentsPath) && string.IsNullOrEmpty(Model.VoucherPath))
-                {
-                    <div class="col-span-full text-sm text-gray-400 py-4 text-center">
-                        No documents uploaded.
-                    </div>
-                }
+                    }
+                    @if (!string.IsNullOrEmpty(Model.VoucherPath))
+                    {
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase font-semibold mb-1">Bank Voucher</label>
+                            <a href="@Model.VoucherPath" target="_blank" class="text-sm text-teal-600 hover:underline">View Voucher</a>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
-    </div>
+    }
 
     <!-- Review Section -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Review Actions</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-800">Review Actions</h2>
         </div>
         <div class="px-6 py-4">
             @if (Model.Status == ApplicationStatus.Submitted || Model.Status == ApplicationStatus.UnderReview)

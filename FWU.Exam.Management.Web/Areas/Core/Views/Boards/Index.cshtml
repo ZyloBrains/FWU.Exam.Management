@@ -19,6 +19,7 @@
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- Header and action buttons -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -26,8 +27,8 @@
                 <i class="fas fa-chalkboard text-purple-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Boards</h1>
-                <p class="text-sm text-gray-500 mt-0.5">
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Boards</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
                     <span class="font-semibold text-gray-700">@totalCount</span> total records
                 </p>
             </div>
@@ -36,7 +37,7 @@
             <!-- Export dropdown -->
             <div class="relative">
                 <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
                     <i class="fas fa-download text-xs"></i> Export
                 </button>
                 <div x-show="openExport"
@@ -49,7 +50,7 @@
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-csv text-blue-600"></i> CSV (Current Page)
                     </a>
                     <a asp-action="ExportToPdf"
@@ -58,7 +59,7 @@
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
                     </a>
                     <a asp-action="ExportToExcel"
@@ -67,14 +68,14 @@
                            asp-route-search="@currentSearch"
                            asp-route-sort="@currentSort"
                            asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-excel text-green-600"></i> Export Excel
                     </a>
                 </div>
             </div>
             @if (HasPerm("boards.create"))
             {
-                <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Create New
                 </a>
             }
@@ -94,13 +95,13 @@
             <input type="hidden" name="sortDir" value="@currentSortDir" />
             <input type="hidden" name="pageSize" value="@pageSize" />
             <div class="flex gap-2">
-                <button type="submit" class="px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                <button type="submit" class="px-4 py-2.5 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
                     Search
                 </button>
                 @if (!string.IsNullOrEmpty(currentSearch))
                 {
                     <a asp-action="Index" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                           class="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                           class="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
                         <i class="fas fa-times text-xs"></i> Clear
                     </a>
                 }
@@ -134,6 +135,7 @@
         <table class="w-full text-sm text-left">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-12">#</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Board Name</th>
                     @* <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Country</th> *@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Remarks</th>
@@ -142,9 +144,14 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                @{
+                    int serial = (ViewBag.CurrentPage - 1) * ViewBag.PageSize;
+                }
                 @foreach (var item in Model)
                 {
-                    <tr class="hover:bg-gray-50 transition-colors">
+                    serial++;
+                    <tr class="hover:bg-gray-50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                        <td class="px-4 py-3 text-gray-600">@serial</td>
                         <td class="px-4 py-3 font-medium text-gray-800">@item.BoardName</td>
                         @* <td class="px-4 py-3 text-gray-600">@(item.Country?.CountryName ?? "-")</td> *@
                         <td class="px-4 py-3 text-gray-600">@(item.Remarks ?? "-")</td>
@@ -160,18 +167,18 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                <a asp-action="Details" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
                                 @if (HasPerm("boards.edit"))
                                 {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
                                 }
                                 @if (HasPerm("boards.delete"))
                                 {
-                                    <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
                                         <i class="fas fa-trash text-xs"></i>
                                     </a>
                                 }
@@ -192,8 +199,12 @@
 
     <!-- Mobile card layout -->
     <div class="lg:hidden space-y-3">
+        @{
+            int serialMobile = (ViewBag.CurrentPage - 1) * ViewBag.PageSize;
+        }
         @foreach (var item in Model)
         {
+            serialMobile++;
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
@@ -201,6 +212,7 @@
                             <i class="fas fa-chalkboard text-purple-600 text-sm"></i>
                         </div>
                         <div>
+                            <p class="text-xs text-gray-400 mb-0.5">#@serialMobile</p>
                             <h3 class="font-semibold text-gray-800 text-sm">@item.BoardName</h3>
                             @* <p class="text-xs text-gray-500">@(item.Country?.CountryName ?? "No Country")</p> *@
                         </div>
@@ -232,7 +244,7 @@
                     }
                     @if (HasPerm("boards.delete"))
                     {
-                        <a href="javascript:void(0)" onclick="deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
                             Delete
                         </a>
                     }
@@ -256,29 +268,29 @@
                 @if (currentPage > 1)
                 {
                     <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                           class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Previous
                     </a>
                 }
                 else
                 {
-                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
+                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Previous</span>
                 }
                 @if (currentPage < totalPages)
                 {
                     <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
-                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                           class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50">
                         Next
                     </a>
                 }
                 else
                 {
-                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
+                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 cursor-not-allowed">Next</span>
                 }
             </div>
             <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-sm text-gray-700">
+                    <p class="text-xs sm:text-sm text-gray-700">
                         Showing <span class="font-medium">@(((currentPage - 1) * pageSize) + 1)</span>
                         to <span class="font-medium">@(Math.Min(currentPage * pageSize, totalCount))</span>
                         of <span class="font-medium">@totalCount</span> results
@@ -286,8 +298,8 @@
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-700">Rows:</label>
-                        <select class="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-purple-500 focus:border-purple-500"
+                        <label class="text-xs sm:text-sm text-gray-700">Rows:</label>
+                        <select class="select2 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-purple-500 focus:border-purple-500"
                                 onchange="window.location.href='@Url.Action("Index", new { search = currentSearch, sort = currentSort, sortDir = currentSortDir, pageSize = "__val__" })'.replace('__val__', this.value)">
                             <option value="10" selected="@(pageSize == 10)">10</option>
                             <option value="25" selected="@(pageSize == 25)">25</option>
@@ -309,7 +321,7 @@
                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">1</a>
                                 if (startPage > 2)
                                 {
-                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
                                 }
                             }
                             for (int i = startPage; i <= endPage; i++)
@@ -321,7 +333,7 @@
                             {
                                 if (endPage < totalPages - 1)
                                 {
-                                    <span class="relative inline-flex items-center px-4 py-2 text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
+                                    <span class="relative inline-flex items-center px-4 py-2 text-xs sm:text-sm text-gray-400 ring-1 ring-inset ring-gray-300">...</span>
                                 }
                                 <a asp-action="Index" asp-route-page="@totalPages" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="@currentSort" asp-route-sortDir="@currentSortDir"
                                        class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">@totalPages</a>
@@ -339,6 +351,13 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single { height: 34px; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; padding: 0.125rem 0; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.25rem; padding-left: 0.5rem; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 32px; }
+    </style>
     @Html.AntiForgeryToken()
     <script>
         function deleteRecord(id) {
@@ -354,5 +373,8 @@
                 error: function () { alert('An error occurred while deleting.'); }
             });
         }
+    </script>
+    <script>
+        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
     </script>
 }

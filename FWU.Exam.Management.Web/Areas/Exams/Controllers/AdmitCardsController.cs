@@ -2,6 +2,7 @@ using System.Text;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
@@ -19,24 +20,9 @@ public class AdmitCardsController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    private async Task<(int? collegeId, int? facultyId)> GetScopeAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return (null, null);
-
-        if (User.IsInRole(Role.CollegeAdmin))
-            return (user.CollegeId, null);
-
-        if (User.IsInRole(Role.FacultyAdmin))
-            return (null, user.FacultyId);
-
-        return (null, null);
-    }
-
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var (items, totalCount) = await admitCardService.GetAdmitCardsAsync(page, pageSize, search, sort, sortDir, collegeId, facultyId, examScheduleId);
+        var (items, totalCount) = await admitCardService.GetAdmitCardsAsync(page, pageSize, search, sort, sortDir, examScheduleId);
 
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -70,9 +56,11 @@ public class AdmitCardsController(
                 .ToListAsync();
 
             var pendingRegistrations = registrations.Where(r => !existingTicketIds.Contains(r.Id)).ToList();
+            var missingSymbolCount = pendingRegistrations.Count(r => string.IsNullOrEmpty(r.SymbolNumber));
             ViewBag.PendingCount = pendingRegistrations.Count;
             ViewBag.TotalCount = registrations.Count;
             ViewBag.ExistingCount = existingTicketIds.Count;
+            ViewBag.MissingSymbolCount = missingSymbolCount;
             ViewBag.SelectedScheduleId = examScheduleId.Value;
         }
 
@@ -84,8 +72,15 @@ public class AdmitCardsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GenerateConfirmed(int examScheduleId)
     {
-        var admitCards = await admitCardService.GenerateBulkAdmitCardsAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"{admitCards.Count} admit card(s) generated successfully!";
+        try
+        {
+            var admitCards = await admitCardService.GenerateBulkAdmitCardsAsync(examScheduleId);
+            TempData["SuccessMessage"] = $"{admitCards.Count} admit card(s) generated successfully!";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 
@@ -120,8 +115,21 @@ public class AdmitCardsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await admitCardService.DeleteAdmitCardAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await admitCardService.DeleteAdmitCardAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException)
+        {
+            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
     }
 
     [RequirePermission("admitcards.delete")]
@@ -152,8 +160,7 @@ public class AdmitCardsController(
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
-        var (collegeId, facultyId) = await GetScopeAsync();
-        var items = await admitCardService.GetFilteredItemsAsync(search, collegeId, facultyId);
+        var items = await admitCardService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Admit Card Number,Exam Schedule,Generated Date,Downloaded,Is Active");

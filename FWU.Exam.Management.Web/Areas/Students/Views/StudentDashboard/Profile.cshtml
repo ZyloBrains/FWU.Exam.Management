@@ -5,6 +5,7 @@
 }
 
 <div class="min-h-screen space-y-5 sm:space-y-6">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
         <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
@@ -25,6 +26,7 @@
 
     <form method="post" asp-action="UpdateProfile" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
+        <input type="hidden" name="permanentAddressId" value="@Model.PermanentAddressId" />
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 px-5 sm:px-8 py-6 sm:py-8">
@@ -102,14 +104,10 @@
                         </div>
                         <h3 class="text-[11px] sm:text-sm font-semibold text-gray-800 uppercase tracking-wider">Contact</h3>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 sm:gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-1 gap-2 sm:gap-5">
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Contact Number</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1">@Model.ContactNumber</p>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
-                            <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Email</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1 truncate">@Model.Email</p>
+                            <input type="text" name="contactNumber" value="@Model.ContactNumber" class="mt-0.5 sm:mt-1 w-full text-xs sm:text-sm font-semibold text-gray-800 bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-0 p-0" />
                         </div>
                     </div>
                 </div>
@@ -124,19 +122,19 @@
                     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-5">
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Address</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1 truncate">@Model.Address</p>
+                            <input type="text" name="address" value="@Model.Address" class="mt-0.5 sm:mt-1 w-full text-xs sm:text-sm font-semibold text-gray-800 bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-0 p-0" />
                         </div>
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Blood Group</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1">@Model.BloodGroup</p>
+                            <input type="text" name="bloodGroup" value="@Model.BloodGroup" class="mt-0.5 sm:mt-1 w-full text-xs sm:text-sm font-semibold text-gray-800 bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-0 p-0" />
                         </div>
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Nationality</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1">@(string.IsNullOrEmpty(Model.Nationality) ? "—" : Model.Nationality)</p>
+                            <input type="text" name="nationality" value="@(string.IsNullOrEmpty(Model.Nationality) ? "" : Model.Nationality)" class="mt-0.5 sm:mt-1 w-full text-xs sm:text-sm font-semibold text-gray-800 bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-0 p-0" />
                         </div>
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Religion</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1">@Model.Religion</p>
+                            <input type="text" name="religion" value="@Model.Religion" class="mt-0.5 sm:mt-1 w-full text-xs sm:text-sm font-semibold text-gray-800 bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-0 p-0" />
                         </div>
                     </div>
                 </div>
@@ -160,10 +158,6 @@
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Level</span>
                             <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1">@Model.Level</p>
-                        </div>
-                        <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
-                            <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">Faculty</span>
-                            <p class="text-xs sm:text-sm font-semibold text-gray-800 mt-0.5 sm:mt-1 truncate">@Model.Department</p>
                         </div>
                         <div class="bg-gray-50 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-gray-100">
                             <span class="text-[10px] sm:text-[11px] font-medium text-gray-400 uppercase tracking-wider">College</span>
@@ -250,6 +244,8 @@
             </div>
         </div>
     </form>
+
+
 </div>
 
 <script>

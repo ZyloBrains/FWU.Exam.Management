@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -8,9 +9,11 @@ using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.Extensions.Logging;
+
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentDashboardService(AppDbContext context) : IStudentDashboardService
+public class StudentDashboardService(AppDbContext context, IUserContext userContext, ILogger<StudentDashboardService> logger) : IStudentDashboardService
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
@@ -18,22 +21,18 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .AsNoTracking()
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
-            .Include(s => s.Department)
             .Include(s => s.College)
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
             .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
-            .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
+            .FirstOrDefaultAsync(s => (s.Email != null && s.Email == email) || s.RegistrationNumber == email);
     }
 
     public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
-        var studentAdmission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .Where(sa => sa.IsActive)
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        var studentAdmission = await ResolveStudentAdmissionAsync(userId, student.Email);
 
         int programId;
         if (studentAdmission != null)
@@ -63,12 +62,33 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             query = query.Where(es => es.LevelId == null || es.LevelId == student.LevelId);
         }
 
-        if (student.DepartmentId != 0)
+        var allSchedules = await query.ToListAsync();
+
+        var filtered = new List<ExamSchedule>();
+        foreach (var schedule in allSchedules)
         {
-            query = query.Where(es => es.Program != null && es.Program.DepartmentId == student.DepartmentId);
+            var isSupplementary = schedule.ExamType?.Name == "Supplementary";
+
+            if (isSupplementary)
+            {
+                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterId);
+                if (!hasFailed)
+                    continue;
+            }
+            else
+            {
+                if (schedule.Semester != null && schedule.Semester.Number > 1)
+                {
+                    var prevSubmitted = await HasSubmittedPreviousSemesterExamFormAsync(userId, schedule.SemesterId, programId);
+                    if (!prevSubmitted)
+                        continue;
+                }
+            }
+
+            filtered.Add(schedule);
         }
 
-        return await query.ToListAsync();
+        return filtered;
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId)
@@ -125,6 +145,17 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
                           && prl.PaymentRequestLogStatus == 1);
     }
 
+    public async Task<bool> HasExistingExamRegistrationAsync(int examScheduleId, string userId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .AnyAsync(er => er.ExamScheduleId == examScheduleId
+                         && studentErIds.Contains(er.Id)
+                         && er.IsAppliedByStudent == true);
+    }
+
     public async Task<List<PaymentType>> GetActivePaymentTypesAsync()
     {
         return await context.Set<PaymentType>()
@@ -157,9 +188,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId)
     {
-        return await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        return await ResolveStudentAdmissionAsync(userId);
     }
 
     public async Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId)
@@ -175,11 +204,8 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<List<ExamRegistration>> GetStudentExamRegistrationsAsync(string userId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
-
-        if (admission == null) return new();
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return new();
 
         return await context.ExamRegistrations!
             .AsNoTracking()
@@ -187,25 +213,22 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .Include(er => er.ExamSubjectResults!)
                 .ThenInclude(esr => esr.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
-            .Where(er => er.ProgramsId == admission.ProgramsId && er.IsActive)
+            .Where(er => studentErIds.Contains(er.Id) && er.IsActive)
             .OrderByDescending(er => er.RegistrationDate)
             .ToListAsync();
     }
 
     public async Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
-
-        if (admission == null) return new();
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return new();
 
         var registrations = await context.ExamRegistrations!
             .AsNoTracking()
             .Include(er => er.ExamSubjectResults!)
                 .ThenInclude(esr => esr.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
-            .Where(er => er.ProgramsId == admission.ProgramsId
+            .Where(er => studentErIds.Contains(er.Id)
                       && er.ExamScheduleId == examScheduleId
                       && er.IsActive)
             .ToListAsync();
@@ -245,52 +268,135 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .FirstOrDefaultAsync(prl => prl.Id == logId);
     }
 
-    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds)
+    public async Task CreateExamRegistrationAsync(int examScheduleId, string userId, decimal amount, List<int> subjectOfferingIds, int studentRegistrationId)
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
             .Include(es => es.Semester)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
-        if (schedule == null) return;
+        if (schedule == null)
+        {
+            logger.LogWarning("CreateExamRegistrationAsync: ExamSchedule not found for scheduleId={ScheduleId}", examScheduleId);
+            return;
+        }
+
+        var studentReg = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sr => sr.Id == studentRegistrationId);
 
         var admission = await context.StudentAdmissions!
             .AsNoTracking()
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
 
-        if (admission == null) return;
+        if (admission == null && studentReg != null)
+        {
+            admission = await context.StudentAdmissions!
+                .AsNoTracking()
+                .FirstOrDefaultAsync(sa => sa.CollegeId == studentReg.CollegeId
+                                        && sa.ProgramsId == studentReg.ProgramId
+                                        && sa.IsActive);
+
+            if (admission == null && schedule.CollegeId > 0)
+            {
+                admission = await context.StudentAdmissions!
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(sa => sa.CollegeId == schedule.CollegeId
+                                            && sa.ProgramsId == schedule.ProgramId
+                                            && sa.IsActive);
+            }
+        }
+
+        if (admission != null && string.IsNullOrEmpty(admission.AppUserId))
+        {
+            var trackedAdmission = await context.StudentAdmissions!
+                .FirstOrDefaultAsync(sa => sa.Id == admission.Id);
+
+            if (trackedAdmission != null)
+            {
+                trackedAdmission.AppUserId = userId;
+                await context.SaveChangesAsync();
+                logger.LogInformation("CreateExamRegistrationAsync: Linked AppUserId={UserId} to admissionId={AdmissionId}", userId, trackedAdmission.Id);
+            }
+        }
+
+        int collegeId;
+        int programsId;
+
+        if (admission != null)
+        {
+            collegeId = admission.CollegeId;
+            programsId = admission.ProgramsId;
+        }
+        else if (studentReg != null)
+        {
+            collegeId = studentReg.CollegeId;
+            programsId = schedule.ProgramId;
+            logger.LogInformation("CreateExamRegistrationAsync: No admission found, using StudentRegistration CollegeId={CollegeId} and ExamSchedule ProgramId={ProgramId} for userId={UserId}", collegeId, programsId, userId);
+        }
+        else
+        {
+            logger.LogWarning("CreateExamRegistrationAsync: Neither StudentAdmission nor StudentRegistration found for userId={UserId}, studentRegistrationId={SrId}", userId, studentRegistrationId);
+            return;
+        }
+
+        var studentName = studentReg != null
+            ? $"{studentReg.FirstName} {studentReg.MiddleName} {studentReg.LastName}".Replace("  ", " ").Trim()
+            : "";
+
+        var voucherNumber = $"VCH-{DateTime.UtcNow:yyyyMMdd}-{examScheduleId}-{studentRegistrationId}";
+        var voucher = new ApplicationVoucher
+        {
+            TenantId = schedule.TenantId,
+            VoucherNumber = voucherNumber,
+            StudentName = studentName,
+            StudentRegistrationId = studentRegistrationId,
+            ContactNumber = studentReg?.ContactNumber ?? "",
+            Amount = amount,
+            VoucherDate = DateTime.UtcNow,
+            Timestamp = DateTime.UtcNow,
+            ExamScheduleId = examScheduleId
+        };
+        context.ApplicationVouchers!.Add(voucher);
+        await context.SaveChangesAsync();
 
         var academicYearId = schedule.AcademicYearId;
 
         var registration = new ExamRegistration
         {
             ExamScheduleId = examScheduleId,
-            CollegeId = admission.CollegeId,
+            CollegeId = collegeId,
             AcademicYearId = academicYearId,
-            ProgramsId = admission.ProgramsId,
+            ProgramsId = programsId,
             FeeEnclosed = amount,
             RegistrationDate = DateTime.UtcNow,
-            Status = RegistrationStatus.Pending,
+            Status = RegistrationStatus.Registered,
             IsActive = true,
-            IsAppliedByStudent = true
+            IsAppliedByStudent = true,
+            ApplicationVoucherId = voucher.Id
         };
 
         context.ExamRegistrations!.Add(registration);
         await context.SaveChangesAsync();
+        logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
+
+        var subjectOfferings = await context.SubjectOfferings!
+            .AsNoTracking()
+            .Where(so => subjectOfferingIds.Contains(so.Id))
+            .ToListAsync();
+        var subjectOfferingDict = subjectOfferings.ToDictionary(so => so.Id);
 
         foreach (var subjectOfferingId in subjectOfferingIds)
         {
-            var subjectOffering = await context.SubjectOfferings!
-                .AsNoTracking()
-                .FirstOrDefaultAsync(so => so.Id == subjectOfferingId);
-
-            if (subjectOffering == null) continue;
+            if (!subjectOfferingDict.TryGetValue(subjectOfferingId, out var subjectOffering))
+                continue;
 
             context.ExamSubjectResults!.Add(new ExamSubjectResult
             {
                 ExamRegistrationId = registration.Id,
                 SubjectOfferingId = subjectOfferingId,
                 ExamScheduleId = examScheduleId,
+                ExamTypeId = schedule.ExamTypeId,
                 IsTheoryRegistered = subjectOffering.HasTheory,
                 IsPracticalRegistered = subjectOffering.HasPractical,
                 IsActive = true,
@@ -303,29 +409,30 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
 
     public async Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId)
     {
-        var admission = await context.StudentAdmissions!
-            .AsNoTracking()
-            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
-
+        var admission = await ResolveStudentAdmissionAsync(userId);
         if (admission == null) return [];
 
-        var enrollments = await context.Set<SemesterEnrollment>()
+        var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
-            .Include(se => se.ExamRegistrations!)
-                .ThenInclude(er => er.ExamSubjectResults!)
-            .Where(se => se.StudentAdmissionId == admission.Id && se.SemesterId != semesterId)
+            .Where(es => es.IsActive
+                      && es.ProgramId == admission.ProgramsId
+                      && es.SemesterId != semesterId
+                      && es.ExamType != null
+                      && es.ExamType.Name != "Entrance")
+            .Select(es => es.Id)
             .ToListAsync();
 
-        if (!enrollments.Any(e => e.ExamRegistrations != null && e.ExamRegistrations.Any(er => er.IsActive)))
-            return [];
+        if (scheduleIds.Count == 0) return [];
 
-        var results = enrollments
-            .Where(e => e.ExamRegistrations != null)
-            .SelectMany(e => e.ExamRegistrations!)
-            .Where(er => er.IsActive)
-            .SelectMany(er => er.ExamSubjectResults ?? Enumerable.Empty<ExamSubjectResult>())
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+
+        var results = await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
+                      && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
+            .SelectMany(er => er.ExamSubjectResults!)
             .Where(esr => esr.IsActive)
-            .ToList();
+            .ToListAsync();
 
         var latestPerSubject = results
             .GroupBy(esr => esr.SubjectOfferingId)
@@ -338,6 +445,155 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             .ToList();
     }
 
+    public async Task<bool> HasSubmittedPreviousSemesterExamFormAsync(string userId, int currentSemesterId, int programId)
+    {
+        var currentSemester = await context.Semesters!
+            .AsNoTracking()
+            .Select(s => new { s.Id, s.Year, s.Number })
+            .FirstOrDefaultAsync(s => s.Id == currentSemesterId);
+
+        if (currentSemester == null) return false;
+
+        int? previousSemesterId;
+        if (currentSemester.Number > 1)
+        {
+            previousSemesterId = await context.Semesters!
+                .AsNoTracking()
+                .Where(s => s.Year == currentSemester.Year
+                         && s.Number == currentSemester.Number - 1)
+                .Select(s => (int?)s.Id)
+                .FirstOrDefaultAsync();
+        }
+        else
+        {
+            previousSemesterId = await context.Semesters!
+                .AsNoTracking()
+                .Where(s => s.Year == currentSemester.Year - 1)
+                .OrderByDescending(s => s.Number)
+                .Select(s => (int?)s.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        if (previousSemesterId == null) return true;
+
+        var previousScheduleIds = await context.ExamSchedules!
+            .AsNoTracking()
+            .Where(es => es.IsActive
+                      && es.ProgramId == programId
+                      && es.SemesterId == previousSemesterId
+                      && es.ExamType != null
+                      && es.ExamType.Name != "Entrance")
+            .Select(es => es.Id)
+            .ToListAsync();
+
+        if (previousScheduleIds.Count == 0) return true;
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return false;
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .AnyAsync(er => studentErIds.Contains(er.Id)
+                         && previousScheduleIds.Contains(er.ExamScheduleId)
+                         && er.IsAppliedByStudent == true);
+    }
+
+    public async Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId)
+    {
+        var admission = await ResolveStudentAdmissionAsync(userId);
+
+        if (admission == null) return false;
+
+        var failedIds = await GetFailedSubjectOfferingIdsForSemesterAsync(userId, semesterId, admission.ProgramsId);
+        return failedIds.Count > 0;
+    }
+
+    public async Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId)
+    {
+        var scheduleIds = await context.ExamSchedules!
+            .AsNoTracking()
+            .Where(es => es.IsActive
+                      && es.ProgramId == programId
+                      && es.SemesterId == semesterId)
+            .Select(es => es.Id)
+            .ToListAsync();
+
+        if (scheduleIds.Count == 0) return [];
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+
+        var results = await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
+                      && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
+            .SelectMany(er => er.ExamSubjectResults!)
+            .Where(esr => esr.IsActive)
+            .ToListAsync();
+
+        var latestPerSubject = results
+            .GroupBy(esr => esr.SubjectOfferingId)
+            .Select(g => g.OrderByDescending(esr => esr.Id).First())
+            .ToList();
+
+        return latestPerSubject
+            .Where(esr => IsFailedGrade(esr.GradeLetter))
+            .Select(esr => esr.SubjectOfferingId)
+            .ToList();
+    }
+
+    private async Task<StudentAdmission?> ResolveStudentAdmissionAsync(string userId, string? email = null)
+    {
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        if (admission != null) return admission;
+
+        if (string.IsNullOrEmpty(email))
+        {
+            var user = await context.Users.FindAsync(userId);
+            email = user?.Email;
+        }
+        if (string.IsNullOrEmpty(email)) return null;
+
+        var sr = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email == email);
+        if (sr == null || !sr.ProgramId.HasValue) return null;
+
+        return await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
+                                    && sa.ProgramsId == sr.ProgramId
+                                    && sa.IsActive);
+    }
+
+    private async Task<List<int>> GetStudentExamRegistrationIdsAsync(string userId)
+    {
+        var user = await context.Users.FindAsync(userId);
+        if (user?.Email == null) return [];
+
+        var sr = await context.StudentRegistrations!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Email == user.Email && s.IsActive);
+        if (sr == null) return [];
+
+        var voucherIds = await context.ApplicationVouchers!
+            .AsNoTracking()
+            .Where(av => av.StudentRegistrationId == sr.Id)
+            .Select(av => av.Id)
+            .ToListAsync();
+
+        if (voucherIds.Count == 0) return [];
+
+        return await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => er.ApplicationVoucherId != null
+                      && voucherIds.Contains(er.ApplicationVoucherId!.Value)
+                      && er.IsActive)
+            .Select(er => er.Id)
+            .ToListAsync();
+    }
+
     private static bool IsFailedGrade(string? gradeLetter)
     {
         if (string.IsNullOrEmpty(gradeLetter)) return false;
@@ -345,7 +601,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         return upper is "F" or "NG";
     }
 
-    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
+    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -367,7 +623,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             FullName = fullName ?? "",
             Email = email,
             MobileNumber = mobileNumber,
-            CollegeId = collegeId,
+            CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
             PaymentTypeId = paymentType?.Id ?? 0,
@@ -393,7 +649,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         return log.Id;
     }
 
-    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, int? collegeId = null)
+    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -415,7 +671,7 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
             FullName = fullName ?? "",
             Email = email,
             MobileNumber = mobileNumber,
-            CollegeId = collegeId,
+            CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
             FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}",
             PaymentTypeId = paymentType?.Id ?? 0,
@@ -426,5 +682,80 @@ public class StudentDashboardService(AppDbContext context) : IStudentDashboardSe
         context.Set<PaymentRequestLog>().Add(log);
         await context.SaveChangesAsync();
         return log.Id;
+    }
+
+    public async Task<List<AdmitCard>> GetAdmitCardsForStudentAsync(string userId, int studentRegistrationId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+
+        return await context.Set<AdmitCard>()
+            .AsNoTracking()
+            .Include(ac => ac.ExamSchedule)
+                .ThenInclude(es => es!.Semester)
+            .Where(ac => ac.IsActive
+                      && (studentErIds.Contains(ac.ExamRegistrationId)
+                          || ac.StudentRegistrationId == studentRegistrationId))
+            .OrderByDescending(ac => ac.GeneratedDate)
+            .ToListAsync();
+    }
+
+    public async Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+
+        return await context.Set<AdmitCard>()
+            .AsNoTracking()
+            .AnyAsync(ac => ac.ExamScheduleId == examScheduleId
+                         && ac.IsActive
+                         && (studentErIds.Contains(ac.ExamRegistrationId)
+                             || ac.StudentRegistrationId == studentRegistrationId));
+    }
+
+    public async Task<int?> GetAdmitCardIdForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+
+        return await context.Set<AdmitCard>()
+            .AsNoTracking()
+            .Where(ac => ac.ExamScheduleId == examScheduleId
+                      && ac.IsActive
+                      && (studentErIds.Contains(ac.ExamRegistrationId)
+                          || ac.StudentRegistrationId == studentRegistrationId))
+            .Select(ac => (int?)ac.Id)
+            .FirstOrDefaultAsync();
+    }
+
+
+    public async Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId)
+    {
+        var payments = await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Include(prl => prl.ExamSchedule)
+                .ThenInclude(es => es!.Semester)
+            .Include(prl => prl.PaymentType)
+            .Where(prl => prl.StudentRegistrationId == studentRegistrationId
+                       && prl.PaymentRequestLogStatus == 1)
+            .OrderByDescending(prl => prl.ForwardedTimestamp)
+            .ToListAsync();
+
+        logger.LogInformation("GetPaymentHistoryForStudentAsync: studentRegId={StudentRegId}, paymentCount={Count}", studentRegistrationId, payments.Count);
+        return payments;
+    }
+
+    public async Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(prl => prl.InvoiceNumber == invoiceNumber);
+    }
+
+    public async Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId)
+    {
+        return await context.Set<PaymentRequestLog>()
+            .AsNoTracking()
+            .Where(prl => prl.StudentRegistrationId == studentRegistrationId
+                       && prl.PaymentRequestLogStatus == null)
+            .OrderByDescending(prl => prl.ForwardedTimestamp)
+            .FirstOrDefaultAsync();
     }
 }

@@ -11,6 +11,7 @@
 }
 
 <div class="space-y-6" x-data="{ openExport: false }">
+    @await Html.PartialAsync("_AlertMessages")
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -18,7 +19,7 @@
                 <i class="fas fa-file-alt text-indigo-600"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Entrance Applications</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Entrance Applications</h1>
                 <p class="text-sm text-gray-500 mt-0.5">
                     <span class="font-semibold text-gray-700">@totalCount</span> total records
                 </p>
@@ -56,17 +57,17 @@
                        placeholder="Search name, email, phone..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
-            <select name="status" class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="status" class="select2 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Status</option>
                 <option value="Submitted" selected="@(currentStatus == "Submitted")">Submitted</option>
                 <option value="UnderReview" selected="@(currentStatus == "UnderReview")">Under Review</option>
                 <option value="Approved" selected="@(currentStatus == "Approved")">Approved</option>
                 <option value="Rejected" selected="@(currentStatus == "Rejected")">Rejected</option>
             </select>
-            <select name="programId" asp-items="ViewBag.ProgramIdList" class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="programId" asp-items="ViewBag.ProgramIdList" class="select2 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Programs</option>
             </select>
-            <select name="academicYearId" asp-items="ViewBag.AcademicYearIdList" class="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select name="academicYearId" asp-items="ViewBag.AcademicYearIdList" class="select2 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">All Academic Years</option>
             </select>
             <div class="flex gap-2">
@@ -235,3 +236,35 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.25rem;
+            padding: 0;
+            color: #374151;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #6366f1;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+        }
+    </style>
+
+    <script>$(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });</script>
+}

@@ -1,12 +1,13 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
+public class GradingSchemeService(AppDbContext context, IUserContext userContext) : IGradingSchemeService
 {
     public async Task<(List<GradingScheme> Items, int TotalCount)> GetGradingSchemesAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
@@ -141,10 +142,16 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
         return await context.GradingSchemes.AnyAsync(e => e.Id == id);
     }
 
-    public GradingSchemeSelectListsDto GetSelectListData(GradingScheme? gradingScheme = null)
+    public async Task<GradingSchemeSelectListsDto> GetSelectListDataAsync(GradingScheme? gradingScheme = null)
     {
-        var programs = context.Programs.AsNoTracking().ToList();
-        var academicYears = context.AcademicYears.AsNoTracking().ToList();
+        var programsQuery = context.Programs.AsNoTracking();
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                programsQuery = programsQuery.Where(p => p.FacultyId == userContext.FacultyId.Value);
+        }
+        var programs = await programsQuery.ToListAsync();
+        var academicYears = await context.AcademicYears.AsNoTracking().ToListAsync();
 
         return new GradingSchemeSelectListsDto
         {
@@ -156,6 +163,12 @@ public class GradingSchemeService(AppDbContext context) : IGradingSchemeService
     private IQueryable<GradingScheme> BuildQuery(string? search, string sort, string sortDir)
     {
         var query = context.GradingSchemes.AsNoTracking();
+
+        if (!userContext.IsSuperAdmin)
+        {
+            if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                query = query.Where(e => e.Program != null && e.Program.FacultyId == userContext.FacultyId.Value);
+        }
 
         if (!string.IsNullOrEmpty(search))
         {

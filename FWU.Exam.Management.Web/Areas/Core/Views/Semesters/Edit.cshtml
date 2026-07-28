@@ -14,7 +14,7 @@
             <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                 <i class="fas fa-calendar-alt text-amber-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800">Edit Semester</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Edit Semester</h1>
         </div>
     </div>
 
@@ -26,44 +26,51 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                    <label for="Code" class="text-sm font-medium text-gray-700 block mb-1">Code <span class="text-red-500">*</span></label>
+                    <label for="Code" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Code <span class="text-red-500">*</span></label>
                     <input asp-for="Code" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="e.g., SEM-2024-01" />
                     <span asp-validation-for="Code" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label for="Name" class="text-sm font-medium text-gray-700 block mb-1">Name <span class="text-red-500">*</span></label>
+                    <label for="Name" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Name <span class="text-red-500">*</span></label>
                     <input asp-for="Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Enter semester name" />
                     <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Number" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="Number" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="Number" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="e.g., 1, 2, 3" />
                     <span asp-validation-for="Number" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="Year" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="Year" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="Year" type="number" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="e.g., 2024" />
                     <span asp-validation-for="Year" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="StartDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
                     <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="EndDate" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="EndDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" />
                     <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label for="AcademicYearId" class="text-sm font-medium text-gray-700 block mb-1">Academic Year</label>
-                    <select id="AcademicYearId" name="AcademicYearId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" asp-items="ViewBag.AcademicYearId">
+                    <label for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Academic Year</label>
+                    <select id="AcademicYearId" name="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" asp-items="ViewBag.AcademicYearId">
                         <option value="">-- Select Academic Year --</option>
                     </select>
                     <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
+                <div>
+                    <label for="FacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Faculty <span class="text-red-500">*</span></label>
+                    <select id="FacultyId" name="FacultyId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" asp-items="ViewBag.FacultyId">
+                        <option value="">-- Select Faculty --</option>
+                    </select>
+                    <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
                 <div class="md:col-span-2">
-                    <label asp-for="Remark" class="text-sm font-medium text-gray-700 block mb-1"></label>
+                    <label asp-for="Remark" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <textarea asp-for="Remark" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Enter remark (optional)"></textarea>
                     <span asp-validation-for="Remark" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
@@ -83,6 +90,40 @@
 </div>
 
 @section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.25rem;
+            padding: 0;
+            color: #374151;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #f59e0b;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(245,158,11,0.2);
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            $('.select2').select2({ width: 'resolve' });
+        });
+    </script>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
