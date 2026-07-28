@@ -21,11 +21,6 @@ public static class UserSeeder
     private static readonly (string Email, string FullName, string Role, string? FacultyCode, string? CollegeCode)[] SeedUsers =
     [
         ("admin@gmail.com", "Super Admin", Role.SuperAdmin, null, null),
-        ("faculty@admin.com", "Faculty Admin (L091)", Role.FacultyAdmin, "L091", null),
-        ("college@gmail.com", "College Admin (COC)", Role.CollegeAdmin, null, "COC"),
-        ("campuschief@gmail.com", "College Admin (SOM)", Role.CollegeAdmin, null, "SOM"),
-        ("student@gmail.com", "Test Student (COC)", Role.Student, null, "COC"),
-        ("student2@gmail.com", "Test Student (SOM)", Role.Student, null, "SOM"),
     ];
 
     public static async Task SeedSuperAdminAsync(IServiceProvider serviceProvider)
