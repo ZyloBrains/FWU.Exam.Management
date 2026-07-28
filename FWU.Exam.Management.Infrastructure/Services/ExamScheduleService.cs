@@ -147,11 +147,13 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
     public async Task UpdateExamScheduleAsync(ExamSchedule examSchedule)
     {
+        var existing = await context.ExamSchedules.FindAsync(examSchedule.Id);
+        if (existing == null)
+            throw new InvalidOperationException("Exam schedule not found.");
+
         if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
         {
-            var existing = await context.ExamSchedules.FindAsync(examSchedule.Id);
-            var existingExtended = existing?.ExtendedDate;
-            var extendedChanged = existingExtended != examSchedule.ExtendedDate;
+            var extendedChanged = existing.ExtendedDate != examSchedule.ExtendedDate;
 
             if (extendedChanged)
             {
@@ -169,7 +171,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             }
         }
 
-        context.ExamSchedules.Update(examSchedule);
+        context.Entry(existing).CurrentValues.SetValues(examSchedule);
         await context.SaveChangesAsync();
     }
 
