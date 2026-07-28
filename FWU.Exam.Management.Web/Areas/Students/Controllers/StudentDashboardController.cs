@@ -1265,9 +1265,9 @@ public class StudentDashboardController(
 
     private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
     {
-        var effectiveDeadline = schedule.ExtendedDate
-            ?? schedule.EndDate?.ToDateTime(TimeOnly.MinValue);
+        var effectiveDate = schedule.ExtendedDate?.Date
+            ?? schedule.EndDate?.ToDateTime(TimeOnly.MinValue).Date;
 
-        return effectiveDeadline.HasValue && DateTime.Now > effectiveDeadline.Value;
+        return effectiveDate.HasValue && DateTime.Now.Date > effectiveDate.Value;
     }
 }
