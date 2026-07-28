@@ -5,9 +5,6 @@ namespace FWU.Exam.Management.Application.Interfaces;
 public interface IExamCenterDistributionService
 {
     Task AssignSymbolNumbersAsync(int examScheduleId);
-    Task<List<ExamCenterSymbolRange>> GetRangesAsync(int examScheduleId);
-    Task SetSymbolRangeAsync(int examCenterId, int examScheduleId, long fromSymbol, long toSymbol);
-    Task ClearRangesAsync(int examScheduleId);
     Task<int> DistributeStudentsAsync(int examScheduleId);
     Task ResetDistributionAsync(int examScheduleId);
     Task<int> GetRegisteredCountAsync(int examScheduleId);

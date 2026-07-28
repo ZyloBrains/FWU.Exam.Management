@@ -56,9 +56,11 @@ public class AdmitCardsController(
                 .ToListAsync();
 
             var pendingRegistrations = registrations.Where(r => !existingTicketIds.Contains(r.Id)).ToList();
+            var missingSymbolCount = pendingRegistrations.Count(r => string.IsNullOrEmpty(r.SymbolNumber));
             ViewBag.PendingCount = pendingRegistrations.Count;
             ViewBag.TotalCount = registrations.Count;
             ViewBag.ExistingCount = existingTicketIds.Count;
+            ViewBag.MissingSymbolCount = missingSymbolCount;
             ViewBag.SelectedScheduleId = examScheduleId.Value;
         }
 
@@ -70,8 +72,15 @@ public class AdmitCardsController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GenerateConfirmed(int examScheduleId)
     {
-        var admitCards = await admitCardService.GenerateBulkAdmitCardsAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"{admitCards.Count} admit card(s) generated successfully!";
+        try
+        {
+            var admitCards = await admitCardService.GenerateBulkAdmitCardsAsync(examScheduleId);
+            TempData["SuccessMessage"] = $"{admitCards.Count} admit card(s) generated successfully!";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 
