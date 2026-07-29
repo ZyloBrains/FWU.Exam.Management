@@ -51,7 +51,14 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
-        // 3. Check for tenant cookie
+        // 3. Identity pages (login, register, forgot password) — always allow without tenant
+        if (IsIdentityPath(path))
+        {
+            await next(context);
+            return;
+        }
+
+        // 4. Check for tenant cookie
         var cookieTenantCode = context.Request.Cookies["tenant_code"];
 
         // 5. If user has a tenant cookie, enforce tenant in URL
@@ -77,19 +84,10 @@ public class TenantResolutionMiddleware(RequestDelegate next)
             else
             {
                 context.Response.Cookies.Delete("tenant_code");
-                context.Response.Redirect("/Identity/Account/Login");
-                return;
             }
         }
 
-        // 6. Identity pages (login, register, forgot password) — allow without tenant
-        if (IsIdentityPath(path))
-        {
-            await next(context);
-            return;
-        }
-
-        // 7. No tenant, not a public path — redirect to login
+        // 6. No tenant, not a public path — redirect to login
         context.Response.Redirect("/Identity/Account/Login");
     }
 
