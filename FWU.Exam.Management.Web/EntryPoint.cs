@@ -228,15 +228,6 @@ public partial class EntryPoint
             options.Cookie.SecurePolicy = isDevelopment ? CookieSecurePolicy.None : CookieSecurePolicy.Always;
             options.Cookie.SameSite = SameSiteMode.Lax;
         });
-        builder.Services.AddAuthorization();
-        builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-        builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
-        builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
-        builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
-        builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
-        builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
-        builder.Services.AddHttpClient<ISmsService, SmsService>();
         builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
         builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
         builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();
