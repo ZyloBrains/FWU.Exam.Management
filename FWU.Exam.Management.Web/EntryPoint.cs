@@ -258,7 +258,6 @@ public partial class EntryPoint
             app.UseForwardedHeaders();
         }
 
-        app.UseHttpsRedirection();
         app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseRateLimiter();
 
