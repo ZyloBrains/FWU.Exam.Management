@@ -20,24 +20,32 @@ using FWU.Exam.Management.Web.Middleware;
 using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 
 public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
-        // Log.Logger = new LoggerConfiguration()
-        //     .WriteTo.Console()
-        //     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
-        //     .MinimumLevel.Information()
-        //     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
-        //     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
-        //     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
-        //     .Enrich.FromLogContext()
-        //     .CreateLogger();
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
 
-        // builder.Host.UseSerilog();
+        builder.Host.UseSerilog();
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
 
         // Add services to the container.
         builder.Services.AddHttpContextAccessor();
@@ -247,7 +255,9 @@ public partial class EntryPoint
         {
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
+            app.UseForwardedHeaders();
         }
+
         app.UseHttpsRedirection();
         app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseRateLimiter();
