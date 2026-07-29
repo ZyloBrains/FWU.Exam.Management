@@ -20,6 +20,10 @@ public class StudentAdmission : IAuditable, ITenantScoped
     [Display(Name = "College")]
     public int CollegeId { get; set; }
 
+    [Range(1, int.MaxValue)]
+    [Display(Name = "Academic Year")]
+    public int AcademicYearId { get; set; }
+
     [Display(Name = "Admission Date")]
     public DateTime AdmissionDate { get; set; }
 
@@ -43,6 +47,6 @@ public class StudentAdmission : IAuditable, ITenantScoped
     public string? AppUserId { get; set; }
 
     public virtual Program? Program { get; set; }
-
     public virtual College? College { get; set; }
+    public virtual AcademicYear? AcademicYear { get; set; }
 }

@@ -302,4 +302,70 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         }
     }
 
+    [RequirePermission("tenants.edit")]
+    public async Task<IActionResult> ResetPassword(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
+        if (tenant == null) return NotFound();
+
+        var adminUser = await _userManager.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == tenant.Email);
+
+        if (adminUser == null)
+        {
+            TempData["ErrorMessage"] = "No admin user found for this tenant.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var model = new TenantResetPasswordViewModel
+        {
+            TenantId = tenant.Id,
+            TenantName = tenant.Name,
+            OfficeCode = tenant.OfficeCode,
+            AdminEmail = tenant.Email
+        };
+
+        return View(model);
+    }
+
+    [RequirePermission("tenants.edit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(TenantResetPasswordViewModel viewModel)
+    {
+        if (!ModelState.IsValid)
+            return View(viewModel);
+
+        var tenant = await _context.Tenants.FindAsync(viewModel.TenantId);
+        if (tenant == null) return NotFound();
+
+        var adminUser = await _userManager.Users
+            .FirstOrDefaultAsync(u => u.Email == tenant.Email);
+
+        if (adminUser == null)
+        {
+            TempData["ErrorMessage"] = "No admin user found for this tenant.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(adminUser);
+        var result = await _userManager.ResetPasswordAsync(adminUser, token, viewModel.NewPassword);
+
+        if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = $"Password reset successfully for '{tenant.Name}' admin user.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+
+        return View(viewModel);
+    }
+
 }

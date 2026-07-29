@@ -198,8 +198,8 @@ public class CollegeAdminMarksService(
 
         var regByAdmission = await context.StudentRegistrations!
             .AsNoTracking()
-            .Where(sr => sr.StudentAdmissions!.Any(sa => admissionIds.Contains(sa.Id)))
-            .SelectMany(sr => sr.StudentAdmissions!, (sr, sa) => new { AdmissionId = sa.Id, sr.RegistrationNumber })
+            .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId!.Value))
+            .Select(sr => new { AdmissionId = sr.StudentAdmissionId!.Value, sr.RegistrationNumber })
             .Where(x => x.RegistrationNumber != null)
             .Distinct()
             .ToDictionaryAsync(x => x.AdmissionId, x => x.RegistrationNumber!);

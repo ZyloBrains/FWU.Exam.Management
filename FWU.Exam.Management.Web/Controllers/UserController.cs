@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -18,31 +19,84 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("users.view")]
-public class UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context, IUserContext userContext) : Controller
+public class UserController(
+    UserManager<AppUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    AppDbContext context,
+    IUserContext userContext,
+    IBulkUserCreationService bulkUserCreationService) : Controller
 {
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
         IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
             .Include(u => u.College);
         usersQuery = usersQuery.ApplyScope(userContext);
 
-        var users = await usersQuery.ToListAsync();
-        var model = new List<UserListItemViewModel>();
-        foreach (var user in users)
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            model.Add(new UserListItemViewModel
-            {
-                Id = user.Id,
-                Email = user.Email ?? string.Empty,
-                FullName = user.FullName,
-                FacultyName = user.Faculty?.Name,
-                CollegeName = user.College?.Name,
-                IsActive = user.IsActive,
-                Roles = await userManager.GetRolesAsync(user)
-            });
+            var s = search.ToLower();
+            usersQuery = usersQuery.Where(u =>
+                (u.Email != null && u.Email.ToLower().Contains(s)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
+                (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
+                (u.College != null && u.College.Name != null && u.College.Name.ToLower().Contains(s)));
         }
+
+        usersQuery = sortDir.ToLower() == "desc"
+            ? usersQuery.OrderByDescending(GetUserSortProperty(sort))
+            : usersQuery.OrderBy(GetUserSortProperty(sort));
+
+        var totalCount = await usersQuery.CountAsync();
+
+        var users = await usersQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var userIds = users.Select(u => u.Id).ToList();
+        var userRoles = await context.UserRoles
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .ToListAsync();
+
+        var roleLookup = userRoles
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => (IList<string>)g.Select(x => x.Name).ToList());
+
+        var model = users.Select(user => new UserListItemViewModel
+        {
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FullName = user.FullName,
+            FacultyName = user.Faculty?.Name,
+            CollegeName = user.College?.Name,
+            IsActive = user.IsActive,
+            Roles = roleLookup.GetValueOrDefault(user.Id, new List<string>())
+        }).ToList();
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
         return View(model);
+    }
+
+    private static System.Linq.Expressions.Expression<Func<AppUser, object>> GetUserSortProperty(string sort)
+    {
+        return sort.ToLower() switch
+        {
+            "email" => u => u.Email ?? "",
+            "fullname" => u => u.FullName ?? "",
+            "isactive" => u => u.IsActive,
+            "faculty" => u => u.Faculty != null ? u.Faculty.Name ?? "" : "",
+            "college" => u => u.College != null ? u.College.Name ?? "" : "",
+            _ => u => u.Email ?? ""
+        };
     }
 
     public async Task<IActionResult> Details(string id)
@@ -313,163 +367,75 @@ public class UserController(UserManager<AppUser> userManager, RoleManager<Identi
 
     [RequirePermission("users.create")]
     [HttpGet]
-    public async Task<IActionResult> GetStudentsWithoutUsers(int? collegeId, int? facultyId)
+    public async Task<IActionResult> GetStudentsWithoutUsers(
+        int? collegeId, int? facultyId, int page = 1, int pageSize = 50)
     {
-        var existingUserEmails = (await context.Users
-            .Where(u => u.Email != null)
-            .Select(u => u.Email!)
-            .ToListAsync())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var existingUserNames = (await context.Users
-            .Where(u => u.UserName != null)
-            .Select(u => u.UserName!)
-            .ToListAsync())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var query = context.StudentRegistrations
-            .Include(s => s.College)
-            .Include(s => s.Faculty)
-            .Where(s => s.IsActive);
-
-        if (collegeId.HasValue)
-            query = query.Where(s => s.CollegeId == collegeId.Value);
-        if (facultyId.HasValue)
-            query = query.Where(s => s.FacultyId == facultyId.Value);
-
-        var allStudents = await query
-            .OrderBy(s => s.LastName)
-            .ThenBy(s => s.FirstName)
-            .ToListAsync();
-
-        var students = allStudents
-            .Where(s =>
-            {
-                var hasEmail = !string.IsNullOrWhiteSpace(s.Email);
-                var hasRegNo = !string.IsNullOrWhiteSpace(s.RegistrationNumber);
-
-                var emailMatch = hasEmail && existingUserEmails.Contains(s.Email!);
-                var regNoMatch = hasRegNo && existingUserNames.Contains(s.RegistrationNumber!);
-
-                return !emailMatch && !regNoMatch;
-            })
-            .Select(s => new
-            {
-                s.Id,
-                FullName = s.FirstName + " " + s.LastName,
-                s.Email,
-                s.RegistrationNumber,
-                CollegeName = s.College?.Name ?? "",
-                FacultyName = s.Faculty?.Name ?? "",
-                s.DateOfBirthBS,
-                HasEmail = !string.IsNullOrWhiteSpace(s.Email)
-            })
-            .ToList();
-
-        return Json(students);
+        var (data, totalCount) = await bulkUserCreationService.GetStudentsWithoutUsersAsync(
+            collegeId, facultyId, page, pageSize);
+        return Json(new { data, totalCount });
     }
 
     [RequirePermission("users.create")]
     [HttpPost]
     public async Task<IActionResult> CreateUsersFromRegistrations([FromBody] List<int> registrationIds)
     {
-        try
+        if (registrationIds == null || registrationIds.Count == 0)
+            return Json(new { success = false, message = "No registrations selected." });
+
+        var userId = userManager.GetUserId(User) ?? "unknown";
+        var job = await bulkUserCreationService.StartJobAsync(registrationIds, userId);
+
+        return Json(new
         {
-            if (registrationIds == null || registrationIds.Count == 0)
-                return Json(new { success = false, message = "No registrations selected." });
-
-            var results = new List<object>();
-
-            foreach (var id in registrationIds)
-            {
-                try
-                {
-                    var reg = await context.StudentRegistrations
-                        .Include(s => s.Faculty)
-                        .Include(s => s.College)
-                        .FirstOrDefaultAsync(s => s.Id == id);
-
-                    if (reg == null)
-                    {
-                        results.Add(new { id, success = false, name = $"ID {id}", message = "Registration not found." });
-                        continue;
-                    }
-
-                    var loginId = !string.IsNullOrWhiteSpace(reg.Email)
-                        ? reg.Email
-                        : reg.RegistrationNumber;
-
-                    if (string.IsNullOrWhiteSpace(loginId))
-                    {
-                        results.Add(new { id, success = false, name = $"{reg.FirstName} {reg.LastName}", message = "No email or registration number found." });
-                        continue;
-                    }
-
-                    var existingUser = await userManager.FindByEmailAsync(loginId);
-                    if (existingUser == null)
-                        existingUser = await userManager.Users.FirstOrDefaultAsync(u => u.UserName == loginId);
-
-                    if (existingUser != null)
-                    {
-                        results.Add(new { id, success = false, name = $"{reg.FirstName} {reg.LastName}", message = "User already exists." });
-                        continue;
-                    }
-
-                    var user = new AppUser
-                    {
-                        UserName = loginId,
-                        Email = loginId,
-                        EmailConfirmed = true,
-                        FullName = $"{reg.FirstName} {reg.LastName}".Trim(),
-                        IsActive = true,
-                        FacultyId = reg.FacultyId,
-                        CollegeId = reg.CollegeId
-                    };
-
-                    var createResult = await userManager.CreateAsync(user);
-                    if (!createResult.Succeeded)
-                    {
-                        results.Add(new { id, success = false, name = $"{reg.FirstName} {reg.LastName}", message = string.Join(", ", createResult.Errors.Select(e => e.Description)) });
-                        continue;
-                    }
-
-                    var password = reg.DateOfBirthBS;
-                    if (!string.IsNullOrWhiteSpace(password))
-                    {
-                        SetPasswordHashDirectly(user, password);
-                        await userManager.UpdateAsync(user);
-                    }
-
-                    if (!await userManager.IsInRoleAsync(user, Role.Student))
-                        await userManager.AddToRoleAsync(user, Role.Student);
-
-                    await userManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
-
-                    var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                    await userManager.ConfirmEmailAsync(user, token);
-
-                    results.Add(new { id, success = true, name = $"{reg.FirstName} {reg.LastName}", message = $"Created (login: {loginId})." });
-                }
-                catch (Exception ex)
-                {
-                    results.Add(new { id, success = false, name = $"ID {id}", message = ex.Message });
-                }
-            }
-
-            var created = results.Count(r => (bool)r.GetType().GetProperty("success")!.GetValue(r)!);
-            var failed = results.Count - created;
-
-            return Json(new { created, failed, results });
-        }
-        catch (Exception ex)
-        {
-            return Json(new { success = false, message = ex.Message });
-        }
+            success = true,
+            jobId = job.Id,
+            totalStudents = job.TotalStudents,
+            message = $"Background job started. Processing {job.TotalStudents} students."
+        });
     }
 
-    private static void SetPasswordHashDirectly(AppUser user, string password)
+    [RequirePermission("users.create")]
+    [HttpPost]
+    public async Task<IActionResult> CreateUsersFromFilters([FromBody] FilterModel filters)
     {
-        var hasher = new PasswordHasher<AppUser>();
-        user.PasswordHash = hasher.HashPassword(user, password);
+        var userId = userManager.GetUserId(User) ?? "unknown";
+        var job = await bulkUserCreationService.StartJobFromFiltersAsync(
+            filters.CollegeId, filters.FacultyId, userId);
+
+        return Json(new
+        {
+            success = true,
+            jobId = job.Id,
+            totalStudents = job.TotalStudents,
+            message = $"Background job started. Processing {job.TotalStudents} students."
+        });
+    }
+
+    public class FilterModel
+    {
+        public int? CollegeId { get; set; }
+        public int? FacultyId { get; set; }
+    }
+
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<IActionResult> GetBulkJobStatus(int jobId)
+    {
+        var job = await bulkUserCreationService.GetJobStatusAsync(jobId);
+        if (job == null) return NotFound();
+
+        return Json(new
+        {
+            job.Status,
+            job.TotalStudents,
+            job.ProcessedCount,
+            job.SuccessCount,
+            job.FailedCount,
+            percentage = job.TotalStudents > 0
+                ? (int)(job.ProcessedCount * 100.0 / job.TotalStudents)
+                : 0,
+            job.ErrorMessage,
+            completedAt = job.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss")
+        });
     }
 }

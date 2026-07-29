@@ -14,7 +14,7 @@ public interface IStudentRegistrationService
     Task UpdateStudentRegistrationAsync(StudentRegistration studentRegistration, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber);
     Task DeleteStudentRegistrationAsync(int id);
     Task<bool> StudentRegistrationExistsAsync(int id);
-    Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null);
+    Task<(List<StudentRegistrationListDto> Data, int TotalCount)> GetPagedDataAsync(string searchTerm, int page, int pageSize, List<int>? collegeIds = null, string? academicYear = null, int? facultyId = null, int? collegeId = null, int? levelId = null, int? programId = null, string? status = null);
     Task UpdateStatusAsync(int id, bool isActive);
     Task<StudentRegistrationSelectListsDto> GetSelectListDataAsync(StudentRegistration? studentRegistration = null);
     Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId);

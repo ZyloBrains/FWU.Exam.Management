@@ -156,13 +156,93 @@ public class ExamSchedulesController(
             .Where(r => r.ExamScheduleId == id.Value)
             .ToListAsync();
 
+        var examSlots = await context.ExamSlots
+            .Where(es => es.ExamScheduleId == id.Value)
+            .Include(es => es.SubjectOffering)
+                .ThenInclude(so => so!.SubjectCatalog)
+            .Include(es => es.ExamCenter)
+            .ToListAsync();
+
         ViewBag.TotalRegistrations = registrations.Count;
         ViewBag.PaidCount = registrations.Count(r => r.FeeEnclosed.HasValue && r.FeeEnclosed > 0);
         ViewBag.PendingCount = registrations.Count(r => !r.FeeEnclosed.HasValue || r.FeeEnclosed == 0);
         ViewBag.RegisteredCount = registrations.Count(r => r.Status == RegistrationStatus.Registered);
         ViewBag.PendingVerificationCount = registrations.Count(r => r.Status == RegistrationStatus.Pending);
+        ViewBag.ExamSlots = examSlots;
+
+        var subjectOfferings = await context.SubjectOfferings
+            .Where(so => so.ProgramId == examSchedule.ProgramId && so.SemesterId == examSchedule.SemesterId)
+            .Include(so => so.SubjectCatalog)
+            .ToListAsync();
+        var existingSlotSubjectIds = examSlots.Select(es => es.SubjectOfferingId).ToHashSet();
+        ViewBag.SubjectOfferings = subjectOfferings
+            .Where(so => !existingSlotSubjectIds.Contains(so.Id))
+            .Select(so => new SelectListItem
+            {
+                Value = so.Id.ToString(),
+                Text = $"{so.SubjectCatalog?.SubjectCode} - {so.SubjectCatalog?.SubjectName}"
+            }).ToList();
+
+        ViewBag.ExamCenters = await context.ExamCenters
+            .Where(ec => ec.IsActive && ec.ExamScheduleId == id.Value)
+            .Select(ec => new SelectListItem { Value = ec.Id.ToString(), Text = ec.Code ?? $"Center {ec.Id}" })
+            .ToListAsync();
+
+        var batches = await context.Batches
+            .Where(b => b.AcademicYearId == examSchedule.AcademicYearId && b.IsActive)
+            .Select(b => new SelectListItem { Value = b.Id.ToString(), Text = b.BatchName })
+            .ToListAsync();
+        ViewBag.Batches = batches;
 
         return View(examSchedule);
+    }
+
+    [HttpPost]
+    [RequirePermission("examschedules.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddExamSlot(int examScheduleId, int subjectOfferingId, int examCenterId, int batchId, string? examDate, TimeOnly startTime, TimeOnly endTime, string? roomNumber, string? remarks)
+    {
+        var existing = await context.ExamSlots
+            .AnyAsync(es => es.ExamScheduleId == examScheduleId && es.SubjectOfferingId == subjectOfferingId);
+        if (existing)
+        {
+            TempData["ErrorMessage"] = "This subject is already added to the schedule.";
+            return RedirectToAction(nameof(Details), new { id = examScheduleId });
+        }
+
+        var slot = new ExamSlot
+        {
+            ExamScheduleId = examScheduleId,
+            SubjectOfferingId = subjectOfferingId,
+            ExamCenterId = examCenterId,
+            BatchId = batchId,
+            ExamDate = examDate,
+            StartTime = startTime,
+            EndTime = endTime,
+            RoomNumber = roomNumber,
+            Remarks = remarks,
+            TenantId = (await context.ExamSchedules.FindAsync(examScheduleId))?.TenantId ?? 0
+        };
+
+        context.ExamSlots.Add(slot);
+        await context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Subject added to exam schedule successfully!";
+        return RedirectToAction(nameof(Details), new { id = examScheduleId });
+    }
+
+    [HttpPost]
+    [RequirePermission("examschedules.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteExamSlot(int id, int examScheduleId)
+    {
+        var slot = await context.ExamSlots.FindAsync(id);
+        if (slot != null)
+        {
+            context.ExamSlots.Remove(slot);
+            await context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Subject removed from exam schedule.";
+        }
+        return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
 
     [RequirePermission("examschedules.create")]

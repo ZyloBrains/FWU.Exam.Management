@@ -313,9 +313,9 @@ public class FacultyDashboardController(
         return RedirectToAction(nameof(Users), new { officeCode });
     }
 
-    [HttpPost]
+    [HttpPost("users/{id}/delete-ajax")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteAjax(string id)
+    public async Task<IActionResult> DeleteAjax(string officeCode, string id)
     {
         try
         {

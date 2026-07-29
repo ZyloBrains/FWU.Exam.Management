@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -309,13 +310,15 @@ public class StudentDashboardController(
         }
 
         var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        schedules = schedules.Where(s => !IsScheduleDeadlinePassed(s)).ToList();
+
         var forms = new List<ExamFormViewModel>();
 
         foreach (var schedule in schedules)
         {
             var hasPaid = await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
-            var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id);
-            var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id) : null;
+            var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id, registration.Id);
+            var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id, registration.Id) : null;
 
             forms.Add(new ExamFormViewModel
             {
@@ -339,7 +342,10 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id);
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return View(new List<AdmitCard>());
+
+        var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id, registration.Id);
         return View(admitCards);
     }
 
@@ -348,7 +354,10 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var payments = await dashboardService.GetPaymentHistoryForStudentAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return View(new List<PaymentRequestLog>());
+
+        var payments = await dashboardService.GetPaymentHistoryForStudentAsync(registration.Id);
         return View(payments);
     }
 
@@ -391,6 +400,12 @@ public class StudentDashboardController(
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null) return NotFound("Exam schedule not found.");
+
+        if (IsScheduleDeadlinePassed(schedule))
+        {
+            TempData["ErrorMessage"] = "The deadline for this exam form has passed.";
+            return RedirectToAction(nameof(ExamForms));
+        }
 
         var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
         int programId;
@@ -673,10 +688,30 @@ public class StudentDashboardController(
                 return RedirectToAction(nameof(PaymentFailure));
             }
 
-            if (sessionLogId.HasValue)
+            var resolvedLogId = sessionLogId;
+            if (!resolvedLogId.HasValue)
             {
-                await HandlePostPaymentRegistration(sessionLogId.Value);
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
+                logger.LogWarning("ESewaCallback: Session log ID lost. Attempting fallback lookup by student registration.");
+                var callbackUser = await userManager.GetUserAsync(User);
+                if (callbackUser != null)
+                {
+                    var registration = await dashboardService.GetStudentRegistrationByEmailAsync(callbackUser.Email ?? "");
+                    if (registration != null)
+                    {
+                        var pendingLog = await dashboardService.FindPendingPaymentLogByStudentAsync(registration.Id);
+                        if (pendingLog != null)
+                        {
+                            resolvedLogId = pendingLog.Id;
+                            logger.LogInformation("ESewaCallback: Fallback lookup found logId={LogId} for studentRegId={StudentRegId}", resolvedLogId, registration.Id);
+                        }
+                    }
+                }
+            }
+
+            if (resolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(resolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, response.TransactionCode ?? "", true, combinedData, "Payment verified via eSewa.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -812,10 +847,22 @@ public class StudentDashboardController(
             }
 
             logger.LogInformation("Khalti payment successful: transaction_id={TransactionId}", lookup.TransactionId);
-            if (sessionLogId.HasValue)
+            var khaltiResolvedLogId = sessionLogId;
+            if (!khaltiResolvedLogId.HasValue && !string.IsNullOrEmpty(purchase_order_id))
             {
-                await HandlePostPaymentRegistration(sessionLogId.Value);
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
+                logger.LogWarning("KhaltiCallback: Session log ID lost. Attempting fallback lookup by invoice={Invoice}", purchase_order_id);
+                var invoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(purchase_order_id);
+                if (invoiceLog != null)
+                {
+                    khaltiResolvedLogId = invoiceLog.Id;
+                    logger.LogInformation("KhaltiCallback: Fallback lookup found logId={LogId} for invoice={Invoice}", khaltiResolvedLogId, purchase_order_id);
+                }
+            }
+
+            if (khaltiResolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(khaltiResolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(khaltiResolvedLogId.Value, lookup.TransactionId ?? transaction_id ?? "", true, responseData, "Payment verified via Khalti.");
             }
 
             TempData["SuccessMessage"] = "Payment successful!";
@@ -832,59 +879,7 @@ public class StudentDashboardController(
         }
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DemoPayment(int examScheduleId, decimal amount, string? selectedSubjectIds)
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
-        if (registration == null) return NotFound("Student registration not found.");
-
-        var demoType = await context.Set<FWU.Exam.Management.Domain.Entities.Payments.PaymentType>()
-            .FirstOrDefaultAsync(pt => pt.PaymentTypeName == "Demo");
-        if (demoType == null)
-        {
-            demoType = new FWU.Exam.Management.Domain.Entities.Payments.PaymentType
-            {
-                PaymentTypeName = "Demo",
-                LogoUrl = "",
-                IsActive = true
-            };
-            context.Set<FWU.Exam.Management.Domain.Entities.Payments.PaymentType>().Add(demoType);
-            await context.SaveChangesAsync();
-        }
-
-        var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
-        var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
-            ? new List<int>()
-            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
-
-        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
-
-        int logId;
-        if (subjectIds.Count == 0)
-        {
-            logId = await dashboardService.CreatePaymentRequestLogAsync(
-                examScheduleId, registration.Id, amount, "demo", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
-        }
-        else
-        {
-            logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
-                examScheduleId, registration.Id, amount, "demo", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
-        }
-
-        await HandlePostPaymentRegistration(logId);
-        await dashboardService.UpdatePaymentRequestLogAsync(logId, $"DEMO-{DateTime.Now:yyyyMMddHHmmss}", true, "{\"method\":\"demo\",\"note\":\"Demo payment for workflow testing\"}", "Demo payment approved.");
-
-        TempData["SuccessMessage"] = "Demo payment completed successfully!";
-        TempData["TransactionCode"] = $"DEMO-{DateTime.Now:yyyyMMddHHmmss}";
-        return RedirectToAction(nameof(PaymentSuccess));
-    }
 
     public IActionResult PaymentSuccess()
     {
@@ -1214,5 +1209,13 @@ public class StudentDashboardController(
             })
             .OrderBy(s => s.SubjectName)
             .ToList();
+    }
+
+    private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
+    {
+        var effectiveDate = schedule.ExtendedDate?.Date
+            ?? schedule.EndDate?.ToDateTime(TimeOnly.MinValue).Date;
+
+        return effectiveDate.HasValue && DateTime.Now.Date > effectiveDate.Value;
     }
 }

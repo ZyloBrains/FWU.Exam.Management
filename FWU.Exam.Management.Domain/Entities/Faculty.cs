@@ -1,9 +1,10 @@
 ﻿using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
-public class Faculty
+public class Faculty : ITenantScoped
 {    
     public int Id { get; set; }
     [Required, MaxLength(100)]
