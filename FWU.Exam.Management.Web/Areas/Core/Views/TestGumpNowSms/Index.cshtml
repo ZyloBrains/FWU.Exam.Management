@@ -1,0 +1,62 @@
+@model TestGumpNowSmsViewModel
+
+@{
+    ViewData["Title"] = "Send Test GumpNow SMS";
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a asp-area="" asp-controller="Home" asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-sms text-green-600"></i>
+            </div>
+            @await Html.PartialAsync("_AlertMessages")
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Send Test GumpNow SMS</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
+        <form asp-action="Index" method="post" class="space-y-6">
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
+
+            <div class="grid grid-cols-1 gap-5">
+                <div>
+                    <label asp-for="PhoneNumber" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <input asp-for="PhoneNumber" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="+97798XXXXXXXX" />
+                    <span asp-validation-for="PhoneNumber" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Message" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <textarea asp-for="Message" rows="5" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+                    <span asp-validation-for="Message" class="text-xs text-red-500 mt-1 block"></span>
+                    <p class="text-xs text-gray-400 mt-1">SMS character count: <span id="charCount">0</span></p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-md">
+                    <i class="fas fa-paper-plane mr-1"></i> Send SMS
+                </button>
+                <a asp-area="" asp-controller="Home" asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        const msg = document.getElementById('Message');
+        const counter = document.getElementById('charCount');
+        function updateCount() { counter.textContent = msg.value.length; }
+        msg.addEventListener('input', updateCount);
+        updateCount();
+    </script>
+}

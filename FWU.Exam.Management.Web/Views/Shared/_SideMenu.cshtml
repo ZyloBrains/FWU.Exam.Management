@@ -63,7 +63,7 @@
     var showPayments = HasPerm("banks.view") || HasPerm("paymenttypes.view") || HasPerm("billtitles.view");
     var showLocation = HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view");
     var showStudentPortal = HasPerm("student.portal.profile") || HasPerm("student.portal.examforms") || HasPerm("student.portal.marksheet") || HasPerm("student.portal.payment") || HasPerm("retotaling.view");
-    var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("sms.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view") || HasPerm("auditlog.view") || HasPerm("backuprestore.manage");
+    var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("sms.view") || HasPerm("gumpnowemail.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view") || HasPerm("auditlog.view") || HasPerm("backuprestore.manage");
     var showReports = HasPerm("reports.collegepayments") || HasPerm("reports.subjectcount") || HasPerm("reports.examtriplicate") || HasPerm("reports.summary") ||
                       HasPerm("reports.tabulationtriplicate") || HasPerm("reports.programwisestudent") || HasPerm("reports.attendanceheet") || HasPerm("reports.marksfoil") ||
                       HasPerm("reports.bankvoucherlist");
@@ -118,16 +118,19 @@
     var isStudentActive = IsActive(controllerName: "StudentDashboard", areaName: "Students") ||
                            IsActive(controllerName: "Section", actionName: "StudentPortal");
     var isConfigActive = IsActive(controllerName: "Tenants") ||
-                         IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
-                         IsActive(controllerName: "TestEmail", areaName: "Core") ||
-                         IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
-                         IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
-                         IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "SmsConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "Notices", areaName: "Core") ||
-                          IsActive(controllerName: "AuditLog", areaName: "Core") ||
-                          IsActive(controllerName: "BackupRestore", areaName: "Core") ||
-                          IsActive(controllerName: "Section", actionName: "SystemConfig");
+                          IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "TestEmail", areaName: "Core") ||
+                          IsActive(controllerName: "GumpNowEmailConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "TestGumpNowEmail", areaName: "Core") ||
+                          IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
+                          IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
+                           IsActive(controllerName: "SmsConfigurations", areaName: "Core") ||
+                           IsActive(controllerName: "TestGumpNowSms", areaName: "Core") ||
+                           IsActive(controllerName: "Notices", areaName: "Core") ||
+                           IsActive(controllerName: "AuditLog", areaName: "Core") ||
+                           IsActive(controllerName: "BackupRestore", areaName: "Core") ||
+                           IsActive(controllerName: "Section", actionName: "SystemConfig");
     var isReportActive = IsActive(controllerName: "Reports", areaName: "Reports") ||
                          IsActive(controllerName: "Section", actionName: "Reports");
     var isCoreActive = IsActive(controllerName: "Programs", areaName: "Core") ||
@@ -404,7 +407,10 @@
             @if (HasPerm("tenants.view")) { <li><a asp-area="" asp-controller="Tenants" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Tenants", actionName: "Index"))"><i class="fas fa-globe w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tenants</span></a></li> }
             @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="SmtpConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmtpConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMTP Configuration</span></a></li> }
             @if (HasPerm("sms.view")) { <li><a asp-area="Core" asp-controller="SmsConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmsConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-sms w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMS Configuration</span></a></li> }
+            @if (HasPerm("sms.view")) { <li><a asp-area="Core" asp-controller="TestGumpNowSms" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestGumpNowSms", actionName: "Index", areaName: "Core"))"><i class="fas fa-comment-dots w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Test GumpNow SMS</span></a></li> }
+            @if (HasPerm("gumpnowemail.view")) { <li><a asp-area="Core" asp-controller="GumpNowEmailConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "GumpNowEmailConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope-open-text w-4 text-center opacity-70"></i><span class="whitespace-nowrap">GumpNow Email Config</span></a></li> }
             @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="TestEmail" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestEmail", actionName: "Index", areaName: "Core"))"><i class="fas fa-paper-plane w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Send Test Email</span></a></li> }
+            @if (HasPerm("gumpnowemail.view")) { <li><a asp-area="Core" asp-controller="TestGumpNowEmail" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestGumpNowEmail", actionName: "Index", areaName: "Core"))"><i class="fas fa-paper-plane w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Test GumpNow Email</span></a></li> }
             @if (HasPerm("esewa.view")) { <li><a asp-area="Core" asp-controller="ESewaConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ESewaConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">eSewa Configuration</span></a></li> }
             @if (HasPerm("khalti.view")) { <li><a asp-area="Core" asp-controller="KhaltiConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "KhaltiConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Khalti Configuration</span></a></li> }
             @if (HasPerm("connectips.view")) { <li><a asp-area="Core" asp-controller="ConnectIPSConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ConnectIPSConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">ConnectIPS Configuration</span></a></li> }

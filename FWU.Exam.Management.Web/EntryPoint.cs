@@ -168,6 +168,47 @@ public partial class EntryPoint
                 limiterOptions.Window = TimeSpan.FromMinutes(1);
                 limiterOptions.QueueLimit = 0;
             });
+            builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+            builder.Services.AddScoped<ISemesterEnrollmentService, SemesterEnrollmentService>();
+            builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
+            builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
+            builder.Services.AddHttpClient<ISmsService, SmsService>();
+            builder.Services.AddScoped<IGumpNowEmailConfigurationService, GumpNowEmailConfigurationService>();
+            builder.Services.AddHttpClient<IGumpNowEmailService, GumpNowEmailService>();
+            builder.Services.AddScoped<IGradingSchemeService, GradingSchemeService>();
+            builder.Services.AddScoped<IExamRegistrationService, ExamRegistrationService>();
+            builder.Services.AddScoped<IExamSubjectResultService, ExamSubjectResultService>();
+            builder.Services.AddScoped<IResultRecordService, ResultRecordService>();
+            builder.Services.AddScoped<IExamCenterService, ExamCenterService>();
+            builder.Services.AddScoped<IAdmitCardService, AdmitCardService>();
+            builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
+            builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
+            builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
+            builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
+            builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
+            builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
+            var app = builder.Build();
+
+            EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseMigrationsEndPoint();
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
+            }
         });
 
         builder.Services.AddScoped<IBoardService, BoardService>();

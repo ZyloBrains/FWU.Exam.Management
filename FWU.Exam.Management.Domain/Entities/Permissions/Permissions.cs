@@ -37,6 +37,7 @@ public static class Permissions
     public const string GroupCountries = "countries";
     public const string GroupSmtp = "smtp";
     public const string GroupSms = "sms";
+    public const string GroupGumpNowEmail = "gumpnowemail";
     public const string GroupESewa = "esewa";
     public const string GroupKhalti = "khalti";
     public const string GroupConnectIPS = "connectips";
@@ -265,6 +266,12 @@ public static class Permissions
     public const string SmsCreate = "sms.create";
     public const string SmsEdit = "sms.edit";
     public const string SmsDelete = "sms.delete";
+
+    // GumpNow Email
+    public const string GumpNowEmailView = "gumpnowemail.view";
+    public const string GumpNowEmailCreate = "gumpnowemail.create";
+    public const string GumpNowEmailEdit = "gumpnowemail.edit";
+    public const string GumpNowEmailDelete = "gumpnowemail.delete";
 
     // eSewa Config
     public const string ESewaView = "esewa.view";
@@ -538,6 +545,11 @@ public static class Permissions
         (SmsEdit, "Edit SMS Config", GroupSms, "Edit SMS configuration"),
         (SmsDelete, "Delete SMS Config", GroupSms, "Delete SMS configuration"),
 
+        (GumpNowEmailView, "View GumpNow Email Config", GroupGumpNowEmail, "View GumpNow email configuration"),
+        (GumpNowEmailCreate, "Create GumpNow Email Config", GroupGumpNowEmail, "Create new GumpNow email configuration"),
+        (GumpNowEmailEdit, "Edit GumpNow Email Config", GroupGumpNowEmail, "Edit GumpNow email configuration"),
+        (GumpNowEmailDelete, "Delete GumpNow Email Config", GroupGumpNowEmail, "Delete GumpNow email configuration"),
+
         (ESewaView, "View eSewa Config", GroupESewa, "View eSewa configuration"),
         (ESewaCreate, "Create eSewa Config", GroupESewa, "Create eSewa configuration"),
         (ESewaEdit, "Edit eSewa Config", GroupESewa, "Edit eSewa configuration"),
@@ -681,6 +693,7 @@ public static class Permissions
             CountriesView, CountriesCreate, CountriesEdit, CountriesDelete,
 
             SmsView, SmsCreate, SmsEdit, SmsDelete,
+            GumpNowEmailView, GumpNowEmailCreate, GumpNowEmailEdit, GumpNowEmailDelete,
 
             AuditLogView,
             BackupRestoreManage,
