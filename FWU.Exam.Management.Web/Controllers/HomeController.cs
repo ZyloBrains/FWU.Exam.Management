@@ -28,6 +28,7 @@ public class HomeController : Controller
         return RedirectToAction("VerifyPayment", "Entrance", new { area = "Exams" });
     }
 
+    [AllowAnonymous]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
