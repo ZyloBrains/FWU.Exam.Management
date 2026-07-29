@@ -28,14 +28,13 @@ public class SmsService(AppDbContext context, HttpClient httpClient) : ISmsServi
         };
         request.Headers.Add("x-gumpnow-auth", config.ApiKey);
 
-        try
+        var response = await httpClient.SendAsync(request);
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
         {
-            var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new InvalidOperationException($"SMS sending failed: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"GumpNow SMS API returned {(int)response.StatusCode} ({response.StatusCode}): {responseBody}");
         }
     }
 }
