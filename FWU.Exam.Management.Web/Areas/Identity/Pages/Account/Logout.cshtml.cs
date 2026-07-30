@@ -14,7 +14,17 @@ public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutMod
 {
     public async Task<IActionResult> OnPost(string returnUrl = null)
     {
+        var userId = signInManager.UserManager.GetUserId(User);
+        if (userId != null)
+        {
+            // Invalidate permissions cache for the logging-out user
+            var permissionService = HttpContext.RequestServices.GetRequiredService<Application.Interfaces.IPermissionService>();
+            await permissionService.InvalidateCacheAsync(userId);
+        }
+
+        HttpContext.Session.Clear();
         HttpContext.Response.Cookies.Delete("tenant_code");
+        HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
         await signInManager.SignOutAsync();
         logger.LogInformation("User logged out.");
         if (returnUrl != null)

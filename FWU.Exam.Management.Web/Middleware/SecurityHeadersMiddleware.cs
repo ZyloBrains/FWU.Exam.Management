@@ -11,6 +11,9 @@ public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment
             var headers = context.Response.Headers;
 
             headers.Append("X-Content-Type-Options", "nosniff");
+            headers.Append("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+            headers.Append("Pragma", "no-cache");
+            headers.Append("Expires", "0");
             headers.Append("X-Frame-Options", "DENY");
             headers.Append("X-XSS-Protection", "1; mode=block");
             headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");

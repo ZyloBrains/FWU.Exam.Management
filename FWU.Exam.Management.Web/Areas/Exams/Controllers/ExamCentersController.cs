@@ -52,11 +52,13 @@ public class ExamCentersController(
         var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName");
         ViewData["VenueCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
             .OrderBy(c => c.Name)
             .ToListAsync();
         ViewData["SourceCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.Name)
@@ -83,11 +85,13 @@ public class ExamCentersController(
         var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
             .OrderBy(c => c.Name)
             .ToListAsync();
         ViewData["SourceCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.Name)
@@ -105,11 +109,13 @@ public class ExamCentersController(
         var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
             .OrderBy(c => c.Name)
             .ToListAsync();
         ViewData["SourceCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.Name)
@@ -150,11 +156,13 @@ public class ExamCentersController(
         var examSchedules = await GetFilteredExamSchedulesAsync();
         ViewData["ExamScheduleId"] = new SelectList(examSchedules, "Id", "ExamScheduleName", examCenter.ExamScheduleId);
         ViewData["VenueCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive && c.IsExamCenterOnly)
             .OrderBy(c => c.Name)
             .ToListAsync();
         ViewData["SourceCollegeList"] = await context.Colleges
+            .ApplyScope(userContext)
             .AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.Name)

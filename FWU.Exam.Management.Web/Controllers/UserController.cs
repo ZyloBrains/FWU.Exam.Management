@@ -121,8 +121,8 @@ public class UserController(
         ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
-        ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).ToListAsync(), "Id", "Name");
         return View(new CreateUserViewModel());
     }
 
@@ -170,8 +170,8 @@ public class UserController(
         ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -198,8 +198,8 @@ public class UserController(
         };
 
         ViewBag.PrimaryRole = primaryRole;
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -234,8 +234,8 @@ public class UserController(
 
         var roles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(id));
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 

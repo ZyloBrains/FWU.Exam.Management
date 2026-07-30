@@ -9,6 +9,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Identity;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.Data.SqlClient;
 
@@ -48,10 +49,10 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
     public async Task<IActionResult> Index()
     {
         ViewBag.AcademicYears = new SelectList(await context.AcademicYears.AsNoTracking().OrderBy(a => a.AcademicYearName).ToListAsync(), "AcademicYearName", "AcademicYearName");
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().OrderBy(f => f.Name).ToListAsync(), "Id", "Name");
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().OrderBy(f => f.Name).ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
         ViewBag.Levels = new SelectList(await context.Levels.AsNoTracking().OrderBy(l => l.LevelName).ToListAsync(), "Id", "LevelName");
-        ViewBag.Programs = new SelectList(await context.Programs.AsNoTracking().OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
+        ViewBag.Programs = new SelectList(await context.Programs.ApplyScope(userContext).AsNoTracking().OrderBy(p => p.ProgramName).ToListAsync(), "Id", "ProgramName");
         return View();
     }
 
