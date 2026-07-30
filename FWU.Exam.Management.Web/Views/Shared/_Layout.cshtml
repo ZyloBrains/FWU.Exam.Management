@@ -284,13 +284,9 @@
                                 var tenantPrefix = !string.IsNullOrEmpty(tenantCode) ? $"/tenant/{tenantCode}" : "";
                                 var identityBase = $"{tenantPrefix}/Identity/Account";
                             }
-                            <a href="@identityBase/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                <i class="fas fa-user-circle w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
-                                <span class="ml-2 font-medium">My Profile</span>
-                            </a>
-                            <a href="@identityBase/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                <i class="fas fa-cog w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
-                                <span class="ml-2 font-medium">Account Settings</span>
+                            <a href="@identityBase/Manage/ChangePassword" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                <i class="fas fa-lock w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
+                                <span class="ml-2 font-medium">Update Password</span>
                             </a>
                             
                             <div class="h-px bg-gray-100 my-1.5"></div>
