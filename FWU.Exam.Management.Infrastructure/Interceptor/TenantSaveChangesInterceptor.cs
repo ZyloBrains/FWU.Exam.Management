@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -24,7 +25,7 @@ public class TenantSaveChangesInterceptor(ITenantContext tenantContext, ILogger<
         if (context == null) return;
         if (tenantContext.TenantId <= 0) return;
         var entries = context.ChangeTracker.Entries()
-            .Where(e => e.Entity is ITenantScoped && e.State == EntityState.Added);
+            .Where(e => e.Entity is ITenantScoped && e.State == EntityState.Added && e.Entity is not Faculty);
         foreach (var entry in entries)
         {
             var currentValue = entry.Property("TenantId").CurrentValue;
