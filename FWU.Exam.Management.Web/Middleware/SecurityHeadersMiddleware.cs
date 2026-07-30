@@ -12,6 +12,7 @@ public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment
 
             headers.Append("X-Content-Type-Options", "nosniff");
             headers.Append("X-Frame-Options", "DENY");
+            headers.Append("X-XSS-Protection", "1; mode=block");
             headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
             headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
 
