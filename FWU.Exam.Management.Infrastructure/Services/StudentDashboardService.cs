@@ -19,6 +19,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         return await context.StudentRegistrations!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(s => s.AcademicYear)
             .Include(s => s.Level)
             .Include(s => s.College)
@@ -50,6 +51,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var query = context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(es => es.ExamType)
             .Include(es => es.Program)
             .Include(es => es.Level)
@@ -111,6 +113,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         return await context.SubjectOfferings!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(so => so.SubjectCatalog)
             .Include(so => so.Semester)
             .Where(so => so.ProgramId == programId)
@@ -545,6 +548,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var admission = await context.StudentAdmissions!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
         if (admission != null) return admission;
 
@@ -557,11 +561,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var sr = await context.StudentRegistrations!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(s => s.Email == email);
         if (sr == null || !sr.ProgramId.HasValue) return null;
 
         return await context.StudentAdmissions!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(sa => sa.CollegeId == sr.CollegeId
                                     && sa.ProgramsId == sr.ProgramId
                                     && sa.IsActive);

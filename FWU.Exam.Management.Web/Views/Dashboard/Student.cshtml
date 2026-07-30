@@ -9,7 +9,7 @@
 
 <div class="min-h-screen space-y-5 sm:space-y-8">
     <!-- Header Section -->
-    <!-- <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-900 via-blue-700 to-blue-600">
+    <div class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-900 via-blue-700 to-blue-600">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
         <div class="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div class="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -40,7 +40,7 @@
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-6">
@@ -112,48 +112,72 @@
                 <div class="p-4 sm:p-8">
                     @if (subjectCount > 0)
                     {
-                        <div class="space-y-4 sm:space-y-6">
+                        <div class="space-y-3 sm:space-y-4" id="subjectsAccordion">
+                            @{ int semIdx = 0; }
                             @foreach (var semesterGroup in subjectsBySemester!)
                             {
-                                <div>
-                                    <div class="flex items-center gap-2 mb-2 sm:mb-3">
-                                        <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500"></div>
-                                        <h4 class="text-[11px] sm:text-sm font-bold text-gray-700 uppercase tracking-wide">@semesterGroup.Key</h4>
-                                        <span class="text-[10px] sm:text-xs text-gray-400">(@semesterGroup.Count())</span>
-                                    </div>
-                                    <div class="space-y-1.5 sm:space-y-2">
-                                        @{ int idx = 0; }
-                                        @foreach (var so in semesterGroup)
-                                        {
-                                            idx++;
-                                            <div class="group flex items-center justify-between p-2.5 sm:p-4 bg-gray-50/80 rounded-lg sm:rounded-xl hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-200">
-                                                <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-                                                    <span class="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 items-center justify-center text-xs font-bold text-gray-400 group-hover:text-emerald-600">@idx</span>
-                                                    <div class="min-w-0 flex-1">
-                                                        <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
-                                                        <p class="text-[10px] sm:text-xs text-gray-500 font-mono mt-0.5">@so.SubjectCatalog?.SubjectCode</p>
+                                var groupId = $"semester-{semIdx}";
+                                var isFirst = semIdx == 0;
+                                semIdx++;
+                                <div class="bg-gray-50/60 rounded-xl sm:rounded-2xl border border-gray-100 overflow-hidden">
+                                    <button type="button" onclick="toggleSemester('@groupId')" class="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-gray-100/60 transition-colors duration-200">
+                                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                                            <div class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></div>
+                                            <h4 class="text-[11px] sm:text-sm font-bold text-gray-700 uppercase tracking-wide truncate">@semesterGroup.Key</h4>
+                                            <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-50 text-emerald-700">@semesterGroup.Count()</span>
+                                        </div>
+                                        <svg id="chevron-@groupId" class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 shrink-0 transition-transform duration-300 @(isFirst ? "rotate-180" : "")" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    <div id="@groupId" class="transition-all duration-300 ease-in-out @(isFirst ? "" : "hidden")">
+                                        <div class="px-4 sm:px-6 pb-3 sm:pb-4 space-y-1.5 sm:space-y-2">
+                                            @{ int idx = 0; }
+                                            @foreach (var so in semesterGroup)
+                                            {
+                                                idx++;
+                                                <div class="group flex items-center justify-between p-2.5 sm:p-4 bg-white rounded-lg sm:rounded-xl hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-200">
+                                                    <div class="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                                                        <span class="hidden sm:flex flex-shrink-0 w-8 h-8 rounded-lg bg-gray-50 shadow-sm border border-gray-100 items-center justify-center text-xs font-bold text-gray-400 group-hover:text-emerald-600">@idx</span>
+                                                        <div class="min-w-0 flex-1">
+                                                            <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">@so.SubjectCatalog?.SubjectName</p>
+                                                            <p class="text-[10px] sm:text-xs text-gray-500 font-mono mt-0.5">@so.SubjectCatalog?.SubjectCode</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-2 sm:ml-4">
+                                                        @if (so.HasTheory)
+                                                        {
+                                                            <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">T</span>
+                                                        }
+                                                        @if (so.HasPractical)
+                                                        {
+                                                            <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">P</span>
+                                                        }
+                                                        @if (so.HasInternal)
+                                                        {
+                                                            <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">I</span>
+                                                        }
                                                     </div>
                                                 </div>
-                                                <div class="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-2 sm:ml-4">
-                                                    @if (so.HasTheory)
-                                                    {
-                                                        <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">T</span>
-                                                    }
-                                                    @if (so.HasPractical)
-                                                    {
-                                                        <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100">P</span>
-                                                    }
-                                                    @if (so.HasInternal)
-                                                    {
-                                                        <span class="inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">I</span>
-                                                    }
-                                                </div>
-                                            </div>
-                                        }
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             }
                         </div>
+                        <script>
+                            function toggleSemester(id) {
+                                var content = document.getElementById(id);
+                                var chevron = document.getElementById('chevron-' + id);
+                                if (content.classList.contains('hidden')) {
+                                    content.classList.remove('hidden');
+                                    chevron.classList.add('rotate-180');
+                                } else {
+                                    content.classList.add('hidden');
+                                    chevron.classList.remove('rotate-180');
+                                }
+                            }
+                        </script>
                     }
                     else
                     {
