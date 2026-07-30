@@ -28,7 +28,7 @@ public class StudentDashboardController(
     IEmailSender emailSender,
     IESewaService esewaService,
     IKhaltiService khaltiService,
-    IConfiguration configuration,
+    IESewaConfigurationService esewaConfigService,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     IRetotalRequestService retotalRequestService,
@@ -466,7 +466,8 @@ public class StudentDashboardController(
 
         if (paymentTypes.Count == 0)
         {
-            hasESewa = !string.IsNullOrEmpty(configuration["ESewa:PostUrl"]);
+            var eSewaConfig = await esewaConfigService.GetActiveAsync();
+            hasESewa = eSewaConfig != null;
         }
 
         var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
@@ -585,8 +586,9 @@ public class StudentDashboardController(
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
-        var successUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:SuccessUrl"]) ? configuration["ESewa:SuccessUrl"]! : defaultCallbackUrl;
-        var failureUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:FailureUrl"]) ? configuration["ESewa:FailureUrl"]! : defaultCallbackUrl;
+        var eSewaConfig = await esewaConfigService.GetActiveAsync();
+        var successUrl = !string.IsNullOrWhiteSpace(eSewaConfig?.SuccessUrl) ? eSewaConfig.SuccessUrl : defaultCallbackUrl;
+        var failureUrl = defaultCallbackUrl;
 
         logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
             amount, transactionUuid, successUrl, failureUrl);

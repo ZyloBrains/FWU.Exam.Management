@@ -3,6 +3,7 @@ using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace FWU.Exam.Management.Web.Data.Seeders;
 
@@ -27,6 +28,9 @@ public static class UserSeeder
     {
         var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
         var context = serviceProvider.GetRequiredService<AppDbContext>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+
+        var adminPassword = configuration["SeedDefaults:AdminPassword"] ?? throw new InvalidOperationException("SeedDefaults:AdminPassword is not configured");
 
         foreach (var (email, fullName, role, facultyCode, collegeCode) in SeedUsers)
         {
@@ -60,14 +64,14 @@ public static class UserSeeder
                     FacultyId = facultyId,
                     CollegeId = collegeId
                 };
-                var result = await userManager.CreateAsync(user, "Admin@123");
+                var result = await userManager.CreateAsync(user, adminPassword);
                 if (!result.Succeeded)
                     throw new Exception($"Failed to create user {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
             }
             else
             {
                 var token = await userManager.GeneratePasswordResetTokenAsync(user);
-                await userManager.ResetPasswordAsync(user, token, "Admin@123");
+                await userManager.ResetPasswordAsync(user, token, adminPassword);
                 user.FacultyId = facultyId;
                 user.CollegeId = collegeId;
                 user.IsActive = true;

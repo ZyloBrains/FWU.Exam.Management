@@ -8,6 +8,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Data.Seeders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 
@@ -44,6 +45,13 @@ public class SeederTests : TestBase
         userMgr.CreateAsync(Arg.Any<AppUser>(), Arg.Any<string>()).Returns(IdentityResult.Success);
         userMgr.AddToRoleAsync(Arg.Any<AppUser>(), Arg.Any<string>()).Returns(IdentityResult.Success);
         services.AddSingleton(userMgr);
+
+        var configBuilder = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SeedDefaults:AdminPassword"] = "Test@123"
+            });
+        services.AddSingleton<IConfiguration>(configBuilder.Build());
 
         return services.BuildServiceProvider();
     }

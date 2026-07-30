@@ -12,13 +12,17 @@ namespace FWU.Exam.Management.Infrastructure.Tests.Services;
 
 public class KhaltiServiceTests
 {
-    private static IConfiguration CreateConfig()
+    private static IKhaltiConfigurationService CreateConfigService()
     {
-        var config = Substitute.For<IConfiguration>();
-        config["Khalti:BaseUrl"].Returns("https://dev.khalti.com/api/v2");
-        config["Khalti:SecretKey"].Returns("test-secret-key");
-        config["Khalti:WebsiteUrl"].Returns("https://example.com");
-        return config;
+        var configService = Substitute.For<IKhaltiConfigurationService>();
+        var config = new Domain.Entities.Payments.KhaltiConfiguration
+        {
+            PostUrl = "https://dev.khalti.com/api/v2",
+            AuthorizationKey = "test-secret-key",
+            WebsiteUrl = "https://example.com"
+        };
+        configService.GetActiveAsync().Returns(config);
+        return configService;
     }
 
     private static ILogger<KhaltiService> CreateLogger() =>
@@ -27,7 +31,7 @@ public class KhaltiServiceTests
     [Fact]
     public async Task InitiatePaymentAsync_WithSuccessfulResponse_ShouldReturnResult()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var logger = CreateLogger();
         var handler = new MockHttpMessageHandler(request =>
         {
@@ -47,7 +51,7 @@ public class KhaltiServiceTests
             };
         });
         using var httpClient = new HttpClient(handler);
-        var service = new KhaltiService(httpClient, config, logger);
+        var service = new KhaltiService(httpClient, configService, logger);
 
         var request = new KhaltiInitiateRequest
         {
@@ -73,7 +77,7 @@ public class KhaltiServiceTests
     [Fact]
     public async Task InitiatePaymentAsync_WithHttpError_ShouldThrow()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var logger = CreateLogger();
         var handler = new MockHttpMessageHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -82,7 +86,7 @@ public class KhaltiServiceTests
             }
         );
         using var httpClient = new HttpClient(handler);
-        var service = new KhaltiService(httpClient, config, logger);
+        var service = new KhaltiService(httpClient, configService, logger);
 
         var request = new KhaltiInitiateRequest
         {
@@ -101,7 +105,7 @@ public class KhaltiServiceTests
     [Fact]
     public async Task LookupPaymentAsync_WithSuccessfulResponse_ShouldReturnResult()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var logger = CreateLogger();
         var handler = new MockHttpMessageHandler(request =>
         {
@@ -123,7 +127,7 @@ public class KhaltiServiceTests
             };
         });
         using var httpClient = new HttpClient(handler);
-        var service = new KhaltiService(httpClient, config, logger);
+        var service = new KhaltiService(httpClient, configService, logger);
 
         var result = await service.LookupPaymentAsync("pxYZ12345");
 
@@ -136,7 +140,7 @@ public class KhaltiServiceTests
     [Fact]
     public async Task LookupPaymentAsync_WithHttpError_ShouldThrow()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var logger = CreateLogger();
         var handler = new MockHttpMessageHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.NotFound)
@@ -145,7 +149,7 @@ public class KhaltiServiceTests
             }
         );
         using var httpClient = new HttpClient(handler);
-        var service = new KhaltiService(httpClient, config, logger);
+        var service = new KhaltiService(httpClient, configService, logger);
 
         var act = () => service.LookupPaymentAsync("invalid-pidx");
 
@@ -156,7 +160,7 @@ public class KhaltiServiceTests
     [Fact]
     public async Task InitiatePaymentAsync_ShouldSendCorrectHeaders()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var logger = CreateLogger();
         string? authHeader = null;
         var handler = new MockHttpMessageHandler(request =>
@@ -168,7 +172,7 @@ public class KhaltiServiceTests
             };
         });
         using var httpClient = new HttpClient(handler);
-        var service = new KhaltiService(httpClient, config, logger);
+        var service = new KhaltiService(httpClient, configService, logger);
 
         await service.InitiatePaymentAsync(new KhaltiInitiateRequest
         {

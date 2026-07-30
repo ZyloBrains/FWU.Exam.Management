@@ -11,23 +11,27 @@ namespace FWU.Exam.Management.Infrastructure.Tests.Services;
 
 public class ESewaServiceTests
 {
-    private static IConfiguration CreateConfig()
+    private static IESewaConfigurationService CreateConfigService()
     {
-        var config = Substitute.For<IConfiguration>();
-        config["ESewa:SecretKey"].Returns("8gBm/:&EnhH.1/q");
-        config["ESewa:PostUrl"].Returns("https://rc-epay.esewa.com.np/api/epay/main/v2/form");
-        config["ESewa:ProductCode"].Returns("EPAYTEST");
-        config["ESewa:ServiceChargeAmount"].Returns("0");
-        config["ESewa:VerifyUrl"].Returns("https://rc-epay.esewa.com.np/api/epay/transaction/status/");
-        return config;
+        var configService = Substitute.For<IESewaConfigurationService>();
+        var config = new Domain.Entities.Payments.ESewaConfiguration
+        {
+            SecretKey = "8gBm/:&EnhH.1/q",
+            PostUrl = "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
+            ProductCode = "EPAYTEST",
+            ServiceChargeAmount = 0,
+            VerifyUrl = "https://rc-epay.esewa.com.np/api/epay/transaction/status/"
+        };
+        configService.GetActiveAsync().Returns(config);
+        return configService;
     }
 
     [Fact]
     public void GenerateTransactionUuid_ShouldReturnExpectedFormat()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var uuid = service.GenerateTransactionUuid();
 
@@ -37,9 +41,9 @@ public class ESewaServiceTests
     [Fact]
     public void GenerateSignature_ShouldReturnBase64EncodedString()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var signature = service.GenerateSignature("test");
 
@@ -51,9 +55,9 @@ public class ESewaServiceTests
     [Fact]
     public void GenerateSignature_SameInput_ShouldProduceSameOutput()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
         var message = "total_amount=1000,transaction_uuid=20240729-abc12345,product_code=EPAYTEST";
 
         var sig1 = service.GenerateSignature(message);
@@ -65,9 +69,9 @@ public class ESewaServiceTests
     [Fact]
     public void GenerateSignature_DifferentInput_ShouldProduceDifferentOutput()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var sig1 = service.GenerateSignature("message1");
         var sig2 = service.GenerateSignature("message2");
@@ -78,9 +82,9 @@ public class ESewaServiceTests
     [Fact]
     public void GeneratePaymentFormData_ShouldSetAllExpectedFields()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var result = service.GeneratePaymentFormData(1000m, "TXN-001", "https://example.com/success", "https://example.com/failure");
 
@@ -101,9 +105,9 @@ public class ESewaServiceTests
     [Fact]
     public void GeneratePaymentFormData_ShouldGenerateCorrectSignature()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var result = service.GeneratePaymentFormData(1000m, "TXN-001", "https://example.com/success", "https://example.com/failure");
 
@@ -115,9 +119,9 @@ public class ESewaServiceTests
     [Fact]
     public void GeneratePaymentFormData_ShouldRoundDecimalAmount()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var result = service.GeneratePaymentFormData(1000.75m, "TXN-001", "https://example.com/success", "https://example.com/failure");
 
@@ -128,9 +132,9 @@ public class ESewaServiceTests
     [Fact]
     public void VerifyResponseSignature_WithValidData_ShouldReturnTrue()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var totalAmount = 1000;
         var txnUuid = "TXN-001";
@@ -167,9 +171,9 @@ public class ESewaServiceTests
     [Fact]
     public void VerifyResponseSignature_WithTamperedSignature_ShouldReturnFalse()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var rawJson = """
             {
@@ -198,9 +202,9 @@ public class ESewaServiceTests
     [Fact]
     public void VerifyResponseSignature_WithNullSignedFieldNames_ShouldReturnFalse()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var response = new ESewaVerifyResponse
         {
@@ -216,9 +220,9 @@ public class ESewaServiceTests
     [Fact]
     public void VerifyResponseSignature_WithNullSignature_ShouldReturnFalse()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var response = new ESewaVerifyResponse
         {
@@ -234,9 +238,9 @@ public class ESewaServiceTests
     [Fact]
     public void VerifyResponseSignature_WithMissingJsonField_ShouldUseEmptyValue()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         using var httpClient = new HttpClient();
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var signature = service.GenerateSignature("total_amount=,transaction_uuid=TXN-001,product_code=EPAYTEST");
 
@@ -269,9 +273,9 @@ public class ESewaServiceTests
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
         try
         {
-            var config = CreateConfig();
+            var configService = CreateConfigService();
             using var httpClient = new HttpClient();
-            var service = new ESewaService(config, httpClient);
+            var service = new ESewaService(configService, httpClient);
 
             var result = await service.VerifyTransactionAsync("TXN-001", 1000m);
 
@@ -290,7 +294,7 @@ public class ESewaServiceTests
     [Fact]
     public async Task VerifyTransactionAsync_WithSuccessfulResponse_ShouldReturnDeserializedResult()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var handler = new MockHttpMessageHandler(request =>
         {
             request.RequestUri.Should().NotBeNull();
@@ -309,7 +313,7 @@ public class ESewaServiceTests
             };
         });
         using var httpClient = new HttpClient(handler);
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var result = await service.VerifyTransactionAsync("TXN-001", 1000m);
 
@@ -323,12 +327,12 @@ public class ESewaServiceTests
     [Fact]
     public async Task VerifyTransactionAsync_WithHttpError_ShouldReturnNull()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         var handler = new MockHttpMessageHandler(_ =>
             new HttpResponseMessage(HttpStatusCode.BadGateway)
         );
         using var httpClient = new HttpClient(handler);
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         var result = await service.VerifyTransactionAsync("TXN-001", 1000m);
 
@@ -338,7 +342,7 @@ public class ESewaServiceTests
     [Fact]
     public async Task VerifyTransactionAsync_ShouldBuildCorrectUrl()
     {
-        var config = CreateConfig();
+        var configService = CreateConfigService();
         string? capturedUrl = null;
         var handler = new MockHttpMessageHandler(request =>
         {
@@ -349,7 +353,7 @@ public class ESewaServiceTests
             };
         });
         using var httpClient = new HttpClient(handler);
-        var service = new ESewaService(config, httpClient);
+        var service = new ESewaService(configService, httpClient);
 
         await service.VerifyTransactionAsync("TXN-001", 1000m);
 

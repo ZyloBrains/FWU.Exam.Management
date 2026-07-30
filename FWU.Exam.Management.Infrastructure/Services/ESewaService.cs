@@ -2,17 +2,20 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using FWU.Exam.Management.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using FWU.Exam.Management.Domain.Entities.Payments;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ESewaService(IConfiguration configuration, HttpClient httpClient) : IESewaService
+public class ESewaService(IESewaConfigurationService configService, HttpClient httpClient) : IESewaService
 {
-    private string PostUrl => configuration["ESewa:PostUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
-    private string ProductCode => configuration["ESewa:ProductCode"] ?? "EPAYTEST";
-    private string SecretKey => configuration["ESewa:SecretKey"] ?? throw new InvalidOperationException("ESewa:SecretKey is not configured");
-    private string ServiceChargeAmount => configuration["ESewa:ServiceChargeAmount"] ?? "0";
-    private string VerifyUrl => configuration["ESewa:VerifyUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
+    private ESewaConfiguration? _config;
+    private ESewaConfiguration GetConfig()
+    {
+        if (_config != null) return _config;
+        _config = configService.GetActiveAsync().GetAwaiter().GetResult()
+            ?? throw new InvalidOperationException("No active eSewa configuration found. Configure eSewa in the admin panel.");
+        return _config;
+    }
 
     public string GenerateTransactionUuid()
     {
@@ -21,7 +24,8 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
 
     public string GenerateSignature(string message)
     {
-        var keyBytes = Encoding.UTF8.GetBytes(SecretKey);
+        var config = GetConfig();
+        var keyBytes = Encoding.UTF8.GetBytes(config.SecretKey!);
         var messageBytes = Encoding.UTF8.GetBytes(message);
 
         using var hmac = new HMACSHA256(keyBytes);
@@ -31,20 +35,21 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
 
     public ESewaPaymentFormData GeneratePaymentFormData(decimal totalAmount, string transactionUuid, string successUrl, string failureUrl)
     {
+        var config = GetConfig();
         var totalAmountStr = totalAmount.ToString("F0");
         var signedFieldNames = "total_amount,transaction_uuid,product_code";
-        var message = $"total_amount={totalAmountStr},transaction_uuid={transactionUuid},product_code={ProductCode}";
+        var message = $"total_amount={totalAmountStr},transaction_uuid={transactionUuid},product_code={config.ProductCode}";
         var signature = GenerateSignature(message);
 
         return new ESewaPaymentFormData
         {
-            PostUrl = PostUrl,
+            PostUrl = config.PostUrl!,
             Amount = totalAmountStr,
             TaxAmount = "0",
             TotalAmount = totalAmountStr,
             TransactionUuid = transactionUuid,
-            ProductCode = ProductCode,
-            ProductServiceCharge = ServiceChargeAmount,
+            ProductCode = config.ProductCode!,
+            ProductServiceCharge = config.ServiceChargeAmount.ToString(),
             ProductDeliveryCharge = "0",
             SuccessUrl = successUrl,
             FailureUrl = failureUrl,
@@ -97,13 +102,14 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
                 TransactionUuid = transactionUuid,
                 TotalAmount = totalAmount,
                 Status = "COMPLETE",
-                ProductCode = ProductCode
+                ProductCode = GetConfig().ProductCode
             };
         }
 
         try
         {
-            var url = $"{VerifyUrl}?product_code={ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
+            var config = GetConfig();
+            var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
             var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 

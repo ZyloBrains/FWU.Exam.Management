@@ -26,6 +26,7 @@ public class StudentDashboardControllerTests
     private readonly IEmailSender _emailSender = Substitute.For<IEmailSender>();
     private readonly IESewaService _esewaService = Substitute.For<IESewaService>();
     private readonly IKhaltiService _khaltiService = Substitute.For<IKhaltiService>();
+    private readonly IESewaConfigurationService _esewaConfigService = Substitute.For<IESewaConfigurationService>();
     private readonly IConfiguration _configuration = Substitute.For<IConfiguration>();
     private readonly ILogger<StudentDashboardController> _logger = Substitute.For<ILogger<StudentDashboardController>>();
     private readonly IFileUploadHelper _fileUploadHelper = Substitute.For<IFileUploadHelper>();
@@ -50,7 +51,7 @@ public class StudentDashboardControllerTests
 
         _controller = new StudentDashboardController(
             _dashboardService, _userManager, _signInManager, _emailSender,
-            _esewaService, _khaltiService, _configuration, _logger,
+            _esewaService, _khaltiService, _esewaConfigService, _logger,
             _fileUploadHelper, _retotalRequestService, _context, _env)
         {
             ControllerContext = new ControllerContext

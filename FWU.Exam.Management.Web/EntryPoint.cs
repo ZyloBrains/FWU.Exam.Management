@@ -218,8 +218,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<IPaymentTypeService, PaymentTypeService>();
         builder.Services.AddScoped<IBillTitleService, BillTitleService>();
         builder.Services.AddScoped<IStudentDashboardService, StudentDashboardService>();
+        builder.Services.AddScoped<IESewaConfigurationService, ESewaConfigurationService>();
+        builder.Services.AddScoped<IKhaltiConfigurationService, KhaltiConfigurationService>();
         builder.Services.AddScoped<IESewaService, ESewaService>();
         builder.Services.AddHttpClient<IESewaService, ESewaService>();
+        builder.Services.AddScoped<IKhaltiService, KhaltiService>();
         builder.Services.AddHttpClient<IKhaltiService, KhaltiService>();
         builder.Services.AddScoped<IStudentAdmissionService, StudentAdmissionService>();
         builder.Services.AddScoped<ICountryService, CountryService>();
