@@ -140,6 +140,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     private async Task<IEnumerable<SelectListItem>> GetAvailableFacultiesAsync()
     {
         return await _context.Faculties
+            .IgnoreQueryFilters()
             .Where(f => f.TenantId == null)
             .OrderBy(f => f.Name)
             .Select(f => new SelectListItem
