@@ -21,6 +21,8 @@ using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 public partial class EntryPoint
 {
@@ -74,6 +76,9 @@ public partial class EntryPoint
             options.Password.RequireNonAlphanumeric = true;
             options.Password.RequiredLength = 8;
             options.Password.RequiredUniqueChars = 1;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            options.Lockout.AllowedForNewUsers = true;
         })
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppDbContext>();
@@ -243,6 +248,10 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
         builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
+
+        builder.Services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>();
+
         var app = builder.Build();
 
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
@@ -275,6 +284,12 @@ public partial class EntryPoint
         app.UseFacultyResolution();
 
         app.UseAuthorization();
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseAdminIpWhitelist();
+        }
+
         app.UseSession();
 
         app.UseMiddleware<UserContextMiddleware>();
@@ -292,6 +307,27 @@ public partial class EntryPoint
             .WithStaticAssets();
 
         app.MapRazorPages();
+
+        app.MapHealthChecks("/health", new HealthCheckOptions
+        {
+            ResponseWriter = async (context, report) =>
+            {
+                context.Response.ContentType = "application/json";
+                var response = new
+                {
+                    status = report.Status.ToString(),
+                    totalDuration = report.TotalDuration.TotalMilliseconds,
+                    entries = report.Entries.Select(e => new
+                    {
+                        name = e.Key,
+                        status = e.Value.Status.ToString(),
+                        description = e.Value.Description,
+                        duration = e.Value.Duration.TotalMilliseconds
+                    })
+                };
+                await context.Response.WriteAsJsonAsync(response);
+            }
+        });
 
         app.Run();
     }

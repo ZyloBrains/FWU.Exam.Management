@@ -49,7 +49,10 @@ public class SecurityHeadersMiddlewareTests
         await middleware.InvokeAsync(httpContext);
 
         httpContext.Response.Headers.Should().ContainKey("Content-Security-Policy");
-        httpContext.Response.Headers["Content-Security-Policy"].ToString().Should().Contain("default-src 'self'");
+        var csp = httpContext.Response.Headers["Content-Security-Policy"].ToString();
+        csp.Should().Contain("default-src 'self'");
+        csp.Should().Contain("strict-dynamic");
+        csp.Should().Contain("nonce-");
     }
 
     [Fact]

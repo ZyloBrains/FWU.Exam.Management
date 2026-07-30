@@ -34,7 +34,7 @@ public class SmsService(AppDbContext context, HttpClient httpClient) : ISmsServi
         if (!response.IsSuccessStatusCode)
         {
             throw new InvalidOperationException(
-                $"GumpNow SMS API returned {(int)response.StatusCode} ({response.StatusCode}): {responseBody}");
+                $"SMS sending failed: GumpNow SMS API returned {(int)response.StatusCode} ({response.StatusCode}): {responseBody}");
         }
     }
 }

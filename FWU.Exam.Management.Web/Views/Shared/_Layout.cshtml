@@ -21,7 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <style>
+    <style nonce="@Context.Items["ScriptNonce"]">
         .select2-container--default .select2-selection--single {
             border-color: #d1d5db;
             border-radius: 0.5rem;
@@ -34,7 +34,7 @@
         }
     </style>
     
-    <style>
+    <style nonce="@Context.Items["ScriptNonce"]">
         /* AlpineJS Cloak */
         [x-cloak] { display: none !important; }
 
@@ -319,13 +319,13 @@
     <!-- Minimal Scripts Footer -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
+    <script nonce="@Context.Items["ScriptNonce"]">
         var __tenantCode = '@Context.Items["TenantCode"]';
         function tenantUrl(path) {
             return __tenantCode ? '/tenant/' + __tenantCode + path : path;
         }
     </script>
-    <script>
+    <script nonce="@Context.Items["ScriptNonce"]">
         (function () {
             var key = 'sidebar-scroll-top';
             var nav = document.querySelector('nav.flex-1');

@@ -42,16 +42,12 @@ public class FileUploadHelperTests
     [Fact]
     public async Task UploadAsync_WithValidImage_ReturnsPath()
     {
-        var content = new byte[1024];
+        var content = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46 };
         var ms = new MemoryStream(content);
         var file = Substitute.For<IFormFile>();
-        file.Length.Returns(1024);
+        file.Length.Returns(content.Length);
         file.FileName.Returns("photo.jpg");
-        file.CopyToAsync(Arg.Any<Stream>()).ReturnsForAnyArgs(callInfo =>
-        {
-            var target = callInfo.Arg<Stream>();
-            return ms.CopyToAsync(target);
-        });
+        file.OpenReadStream().Returns(ms);
 
         var result = await _sut.UploadAsync(file);
 
@@ -87,16 +83,12 @@ public class FileUploadHelperTests
     [Fact]
     public async Task UploadAsync_WithCustomSubfolder_UsesSubfolder()
     {
-        var content = new byte[512];
+        var content = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34 };
         var ms = new MemoryStream(content);
         var file = Substitute.For<IFormFile>();
-        file.Length.Returns(512);
+        file.Length.Returns(content.Length);
         file.FileName.Returns("doc.pdf");
-        file.CopyToAsync(Arg.Any<Stream>()).ReturnsForAnyArgs(callInfo =>
-        {
-            var target = callInfo.Arg<Stream>();
-            return ms.CopyToAsync(target);
-        });
+        file.OpenReadStream().Returns(ms);
 
         var result = await _sut.UploadAsync(file, "documents");
 
