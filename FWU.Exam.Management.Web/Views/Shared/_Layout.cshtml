@@ -137,7 +137,9 @@
 
         if (appUser?.FacultyId != null)
         {
-            var faculty = await DbContext.Faculties.FindAsync(appUser.FacultyId.Value);
+            var faculty = await DbContext.Faculties
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(f => f.Id == appUser.FacultyId.Value);
             if (faculty != null)
             {
                 orgName = faculty.Name;

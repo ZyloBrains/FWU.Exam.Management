@@ -22,7 +22,9 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
 
         if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
         {
-            var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+            var faculty = await context.Faculties
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
             if (faculty?.OfficeCode != null)
                 return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
         }

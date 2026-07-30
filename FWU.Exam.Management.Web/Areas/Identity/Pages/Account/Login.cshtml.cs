@@ -137,7 +137,9 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
                     if (user.FacultyId != null)
                     {
-                        var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
+                        var faculty = await context.Faculties
+                            .IgnoreQueryFilters()
+                            .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
                         if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
                         {
                             return tenantCode != null

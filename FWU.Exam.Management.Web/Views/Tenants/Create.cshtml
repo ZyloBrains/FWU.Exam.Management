@@ -54,9 +54,19 @@
                 </div>
                 <div id="FacultyField" style="display:none">
                     <label asp-for="SelectedFacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Faculty</label>
-                    <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="">-- Select Faculty --</option>
-                    </select>
+                    @if (Model.FacultyList != null && Model.FacultyList.Any())
+                    {
+                        <select asp-for="SelectedFacultyId" asp-items="Model.FacultyList" id="SelectedFacultyId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">-- Select Faculty --</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <select asp-for="SelectedFacultyId" id="SelectedFacultyId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50">
+                            <option value="">-- No faculties available --</option>
+                        </select>
+                        <p class="text-xs text-amber-600 mt-1"><i class="fas fa-info-circle mr-1"></i>No unassigned faculties found. Create a faculty first before creating a Standard tenant.</p>
+                    }
                     <span asp-validation-for="SelectedFacultyId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
@@ -159,8 +169,13 @@
                 var $faculty = $('#SelectedFacultyId');
                 if (show) {
                     $field.show();
-                    reinitSelect2($faculty);
+                    if ($faculty.children('option').length > 1) {
+                        reinitSelect2($faculty);
+                    }
                 } else {
+                    if ($faculty.data('select2')) {
+                        $faculty.select2('destroy');
+                    }
                     $field.hide();
                 }
             }

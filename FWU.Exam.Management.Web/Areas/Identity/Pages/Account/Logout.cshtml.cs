@@ -14,6 +14,7 @@ public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutMod
 {
     public async Task<IActionResult> OnPost(string returnUrl = null)
     {
+        HttpContext.Response.Cookies.Delete("tenant_code");
         await signInManager.SignOutAsync();
         logger.LogInformation("User logged out.");
         if (returnUrl != null)

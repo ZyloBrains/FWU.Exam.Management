@@ -3,6 +3,7 @@ using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -19,7 +20,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FWU.Exam.Management.Web.Controllers;
 
 [RequirePermission("tenants.view")]
-public class TenantsController(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, IFileUploadHelper fileUploadHelper) : Controller
+public class TenantsController(AppDbContext context, UserManager<AppUser> userManager, IEmailService emailService, IFileUploadHelper fileUploadHelper, ITenantContext tenantContext) : Controller
 {
     private readonly AppDbContext _context = context;
     private readonly UserManager<AppUser> _userManager = userManager;
@@ -139,10 +140,20 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
 
     private async Task<IEnumerable<SelectListItem>> GetAvailableFacultiesAsync()
     {
-        return await _context.Faculties
+        var query = _context.Faculties
             .IgnoreQueryFilters()
-            .Where(f => f.TenantId == null)
-            .OrderBy(f => f.Name)
+            .OrderBy(f => f.Name);
+
+        if (tenantContext.IsCentralTenant)
+        {
+            query = (IOrderedQueryable<Faculty>)query.Where(f => f.TenantId == null || f.TenantId == tenantContext.TenantId);
+        }
+        else
+        {
+            query = (IOrderedQueryable<Faculty>)query.Where(f => f.TenantId == null);
+        }
+
+        return await query
             .Select(f => new SelectListItem
             {
                 Value = f.Id.ToString(),
