@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -24,6 +25,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 {
     private readonly ILogger<AppDbContext> _logger = logger ?? NullLogger<AppDbContext>.Instance;
     private readonly ITenantContext? _tenantContext = tenantContext;
+
+    internal static readonly AsyncLocal<ITenantContext?> AmbientTenantContext = new();
+    private readonly bool _ambientContextInitialized = SetAmbientTenantContext(tenantContext);
+
+    private static bool SetAmbientTenantContext(ITenantContext? ctx)
+    {
+        AmbientTenantContext.Value = ctx;
+        return true;
+    }
+
+    internal static int GetCurrentTenantId() => AmbientTenantContext.Value?.TenantId ?? 0;
+    internal static bool IsCurrentTenantCentral() => AmbientTenantContext.Value?.IsCentralTenant ?? false;
 
     public DbSet<AcademicYear>? AcademicYears { get; set; }
     public DbSet<Address>? Addresses { get; set; }
@@ -118,9 +131,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         {
             var param = Expression.Parameter(entityType.ClrType, "e");
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
-            var contextField = Expression.Field(Expression.Constant(this), nameof(_tenantContext));
-            var tenantIdValue = Expression.Property(contextField, nameof(ITenantContext.TenantId));
-            var isCentral = Expression.Property(contextField, nameof(ITenantContext.IsCentralTenant));
+            var tenantIdMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentTenantId), BindingFlags.NonPublic | BindingFlags.Static);
+            var isCentralMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentTenantCentral), BindingFlags.NonPublic | BindingFlags.Static);
+            var tenantIdValue = Expression.Call(null, tenantIdMethod!);
+            var isCentral = Expression.Call(null, isCentralMethod!);
             var body = Expression.OrElse(isCentral, Expression.Equal(tenantIdProp, tenantIdValue));
             var lambda = Expression.Lambda(body, param);
             entityType.SetQueryFilter(lambda);
