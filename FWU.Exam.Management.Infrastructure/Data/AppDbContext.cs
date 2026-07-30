@@ -76,6 +76,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<Tenant>? Tenants { get; set; }
     public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
     public DbSet<SmsConfiguration>? SmsConfigurations { get; set; }
+    public DbSet<GumpNowEmailConfiguration>? GumpNowEmailConfigurations { get; set; }
     public DbSet<CollegeProfile>? CollegeProfiles { get; set; }
     public DbSet<UserAttachment>? UserAttachments { get; set; }
     public DbSet<GradingScheme>? GradingSchemes { get; set; }
