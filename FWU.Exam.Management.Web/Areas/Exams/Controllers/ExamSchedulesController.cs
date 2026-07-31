@@ -24,7 +24,7 @@ public class ExamSchedulesController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
@@ -194,7 +194,55 @@ public class ExamSchedulesController(
             .ToListAsync();
         ViewBag.Batches = batches;
 
+        ViewBag.RemainingSubjectCount = subjectOfferings.Count(so => !existingSlotSubjectIds.Contains(so.Id));
+
         return View(examSchedule);
+    }
+
+    [HttpPost]
+    [RequirePermission("examschedules.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddAllExamSlots(int examScheduleId, int examCenterId, int batchId, string? examDate, TimeOnly startTime, TimeOnly endTime, string? roomNumber, string? remarks)
+    {
+        var schedule = await context.ExamSchedules.FindAsync(examScheduleId);
+        if (schedule == null) return NotFound();
+
+        var existingSlotSubjectIds = await context.ExamSlots
+            .Where(es => es.ExamScheduleId == examScheduleId)
+            .Select(es => es.SubjectOfferingId)
+            .ToHashSetAsync();
+
+        var offerings = await context.SubjectOfferings
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId)
+            .Where(so => !existingSlotSubjectIds.Contains(so.Id))
+            .ToListAsync();
+
+        if (offerings.Count == 0)
+        {
+            TempData["ErrorMessage"] = "All subjects for this academic year and semester are already added.";
+            return RedirectToAction(nameof(Details), new { id = examScheduleId });
+        }
+
+        foreach (var offering in offerings)
+        {
+            context.ExamSlots.Add(new ExamSlot
+            {
+                ExamScheduleId = examScheduleId,
+                SubjectOfferingId = offering.Id,
+                ExamCenterId = examCenterId,
+                BatchId = batchId,
+                ExamDate = examDate,
+                StartTime = startTime,
+                EndTime = endTime,
+                RoomNumber = roomNumber,
+                Remarks = remarks,
+                TenantId = schedule.TenantId
+            });
+        }
+
+        await context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"{offerings.Count} subject(s) added to the exam schedule!";
+        return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
 
     [HttpPost]
@@ -359,6 +407,13 @@ public class ExamSchedulesController(
         ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId)
+    {
+        var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId);
+        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 
     [HttpGet]

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
@@ -16,6 +17,11 @@ public interface ISubjectOfferingService
     Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task DeleteSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);
-    Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId);
+    Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId);
+    Task<List<SelectOption>> GetAcademicYearsAsync();
+    Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId);
+    Task<List<ProgramOfferingSummary>> GetProgramsByAcademicYearAsync(int academicYearId);
+    Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId);
+    Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null);
     Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null);
 }
