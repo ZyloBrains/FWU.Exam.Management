@@ -26,7 +26,7 @@ public class BulkUserCreationService(
     public async Task<(List<StudentWithoutUserDto> Data, int TotalCount)> GetStudentsWithoutUsersAsync(
         int? collegeId, int? facultyId, int page, int pageSize)
     {
-        var query = context.StudentRegistrations
+        var query = context.StudentRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
@@ -86,7 +86,7 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, string userId)
     {
-        var query = context.StudentRegistrations
+        var query = context.StudentRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
@@ -142,7 +142,7 @@ public class BulkUserCreationService(
             {
                 var batch = registrationIds.Skip(i * BatchSize).Take(BatchSize).ToList();
 
-                var registrations = await scopedContext.StudentRegistrations
+                var registrations = await scopedContext.StudentRegistrations.IgnoreQueryFilters()
                     .Where(s => batch.Contains(s.Id))
                     .ToListAsync();
 

@@ -417,6 +417,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == admission.ProgramsId
                       && es.SemesterId != semesterId
@@ -431,6 +432,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var results = await context.ExamRegistrations!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
                       && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
             .SelectMany(er => er.ExamSubjectResults!)
@@ -481,6 +483,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var previousScheduleIds = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == programId
                       && es.SemesterId == previousSemesterId
@@ -496,6 +499,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         return await context.ExamRegistrations!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .AnyAsync(er => studentErIds.Contains(er.Id)
                          && previousScheduleIds.Contains(er.ExamScheduleId)
                          && er.IsAppliedByStudent == true);
@@ -515,6 +519,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == programId
                       && es.SemesterId == semesterId)
@@ -527,6 +532,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var results = await context.ExamRegistrations!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
                       && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
             .SelectMany(er => er.ExamSubjectResults!)
@@ -593,6 +599,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         return await context.ExamRegistrations!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(er => er.ApplicationVoucherId != null
                       && voucherIds.Contains(er.ApplicationVoucherId!.Value)
                       && er.IsActive)

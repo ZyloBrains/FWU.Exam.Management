@@ -112,7 +112,7 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
 
     public async Task<ExamSubjectResultSelectListsDto> GetSelectListDataAsync(ExamSubjectResult? examSubjectResult = null)
     {
-        var examRegistrationsQuery = context.ExamRegistrations
+        var examRegistrationsQuery = context.ExamRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Include(er => er.ApplicationVoucher)
             .AsQueryable();
@@ -131,12 +131,12 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
         var subjectOfferings = await context.SubjectOfferings.AsNoTracking().ToListAsync();
         var examTypes = await context.ExamTypes.AsNoTracking().ToListAsync();
 
-        var examSchedulesQuery = context.ExamSchedules.AsNoTracking();
+        var examSchedulesQuery = context.ExamSchedules.IgnoreQueryFilters().AsNoTracking();
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var collegeProgramIds = await context.CollegePrograms.AsNoTracking()
+                var collegeProgramIds = await context.CollegePrograms.IgnoreQueryFilters().AsNoTracking()
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
                     .ToListAsync();
@@ -204,7 +204,7 @@ public class ExamSubjectResultService(AppDbContext context, IUserContext userCon
 
     public async Task<(List<ExamRegistrationGroupedDto> Items, int TotalCount)> GetRegistrationsWithSubjectResultsAsync(int page, int pageSize, string? search, int? examScheduleId = null)
     {
-        var registrationsQuery = context.ExamRegistrations
+        var registrationsQuery = context.ExamRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Include(er => er.ExamSchedule)
             .Include(er => er.College)

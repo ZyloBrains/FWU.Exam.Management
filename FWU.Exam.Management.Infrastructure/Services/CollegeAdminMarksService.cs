@@ -40,12 +40,12 @@ public class CollegeAdminMarksService(
 
             var examScheduleIds = examSchedules.Any()
                 ? examSchedules
-                : await context.ExamSchedules
+                : await context.ExamSchedules.IgnoreQueryFilters()
                     .Where(es => es.ProgramId == so.ProgramId && es.SemesterId == so.SemesterId && es.IsActive)
                     .Select(es => es.Id)
                     .ToListAsync();
 
-            var registeredCount = await context.ExamRegistrations
+            var registeredCount = await context.ExamRegistrations.IgnoreQueryFilters()
                 .CountAsync(er => examScheduleIds.Contains(er.ExamScheduleId)
                                && er.ProgramsId == so.ProgramId
                                && er.IsActive);
@@ -81,7 +81,7 @@ public class CollegeAdminMarksService(
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId)
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
-        var examRegistrations = await context.ExamRegistrations
+        var examRegistrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Where(er => er.ExamScheduleId == examScheduleId
                       && er.ProgramsId == subjectOffering.ProgramId
@@ -196,7 +196,7 @@ public class CollegeAdminMarksService(
 
         if (admissionIds.Count == 0) return new Dictionary<int, string>();
 
-        var regByAdmission = await context.StudentRegistrations!
+        var regByAdmission = await context.StudentRegistrations!.IgnoreQueryFilters()
             .AsNoTracking()
             .Where(sr => sr.StudentAdmissionId != null && admissionIds.Contains(sr.StudentAdmissionId!.Value))
             .Select(sr => new { AdmissionId = sr.StudentAdmissionId!.Value, sr.RegistrationNumber })
@@ -252,7 +252,7 @@ public class CollegeAdminMarksService(
                         IsActive = true
                     };
 
-                    var examTypeId = await context.ExamSchedules
+                    var examTypeId = await context.ExamSchedules.IgnoreQueryFilters()
                         .Where(es => es.Id == dto.ExamScheduleId)
                         .Select(es => es.ExamTypeId)
                         .FirstOrDefaultAsync();
@@ -366,7 +366,7 @@ public class CollegeAdminMarksService(
                 var theoryInternalStr = colTheoryInternal >= 0 ? row.Cell(colTheoryInternal + 1).GetString().Trim() : "";
                 var practicalInternalStr = colPracticalInternal >= 0 ? row.Cell(colPracticalInternal + 1).GetString().Trim() : "";
 
-                var examRegs = await context.ExamRegistrations
+                var examRegs = await context.ExamRegistrations.IgnoreQueryFilters()
                     .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive)
                     .ToListAsync();
 
@@ -426,7 +426,7 @@ public class CollegeAdminMarksService(
                 else
                 {
                     var totalMarks = gradeCalculationService.CalculateTotalMarks(theoryMarks, practicalMarks, theoryInternal, practicalInternal);
-                    var examTypeId = await context.ExamSchedules
+                    var examTypeId = await context.ExamSchedules.IgnoreQueryFilters()
                         .Where(es => es.Id == examScheduleId)
                         .Select(es => es.ExamTypeId)
                         .FirstOrDefaultAsync();
@@ -473,7 +473,7 @@ public class CollegeAdminMarksService(
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId)
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
-        var examRegistrations = await context.ExamRegistrations
+        var examRegistrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Where(er => er.ExamScheduleId == examScheduleId
                       && er.ProgramsId == subjectOffering.ProgramId
@@ -541,7 +541,7 @@ public class CollegeAdminMarksService(
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId)
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
-        var examRegistrations = await context.ExamRegistrations
+        var examRegistrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Where(er => er.ExamScheduleId == examScheduleId
                       && er.ProgramsId == subjectOffering.ProgramId

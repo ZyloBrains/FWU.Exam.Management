@@ -158,7 +158,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
         if (string.IsNullOrEmpty(admitCard.ControllerSignaturePath) && admitCard.ExamRegistration?.CollegeId != null)
         {
-            var college = await context.Colleges.AsNoTracking().FirstOrDefaultAsync(c => c.Id == admitCard.ExamRegistration.CollegeId);
+            var college = await context.Colleges.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(c => c.Id == admitCard.ExamRegistration.CollegeId);
             if (college != null)
             {
                 var tenant = await context.Tenants.FindAsync(college.TenantId);
@@ -204,7 +204,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
     public async Task<AdmitCard> GenerateAdmitCardAsync(int examRegistrationId)
     {
-        var registration = await context.ExamRegistrations
+        var registration = await context.ExamRegistrations.IgnoreQueryFilters()
             .Include(er => er.ExamSchedule)
             .Include(er => er.College)
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
@@ -256,7 +256,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
     public async Task<List<AdmitCard>> GenerateBulkAdmitCardsAsync(int examScheduleId)
     {
-        var registrations = await context.ExamRegistrations
+        var registrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
             .Include(er => er.College)
             .ToListAsync();
@@ -287,7 +287,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             : [];
         var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
-        var colleges = await context.Colleges
+        var colleges = await context.Colleges.IgnoreQueryFilters()
             .Where(c => c.Id == registrations.First().CollegeId)
             .ToListAsync();
         var collegeTenantLookup = colleges.ToDictionary(c => c.Id, c => c.TenantId);
@@ -370,7 +370,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
     private async Task<string?> ResolveControllerSignatureAsync(int collegeId)
     {
-        var college = await context.Colleges
+        var college = await context.Colleges.IgnoreQueryFilters()
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == collegeId);
         if (college == null) return null;
@@ -380,8 +380,8 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
     public async Task<AdmitCardSelectListsDto> GetSelectListDataAsync(AdmitCard? admitCard = null)
     {
-        var examSchedules = await context.ExamSchedules.AsNoTracking().ToListAsync();
-        var examRegistrations = await context.ExamRegistrations.AsNoTracking().ToListAsync();
+        var examSchedules = await context.ExamSchedules.IgnoreQueryFilters().AsNoTracking().ToListAsync();
+        var examRegistrations = await context.ExamRegistrations.IgnoreQueryFilters().AsNoTracking().ToListAsync();
         var examCenters = await context.ExamCenters.AsNoTracking().ToListAsync();
 
         return new AdmitCardSelectListsDto

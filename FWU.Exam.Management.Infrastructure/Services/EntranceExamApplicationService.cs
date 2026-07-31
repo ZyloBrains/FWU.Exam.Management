@@ -176,7 +176,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     public async Task<EntranceExamApplicationSelectListsDto> GetSelectListsAsync()
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null && ay.IsActive).AsNoTracking().ToListAsync();
-        var colleges = await context.Colleges.Where(c => c.Name != null && c.IsActive).AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.IgnoreQueryFilters().Where(c => c.Name != null && c.IsActive).AsNoTracking().ToListAsync();
         var programs = await context.Programs.Where(p => p.ProgramName != null && p.IsActive).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null && g.IsActive).AsNoTracking().ToListAsync();
         var previousLevels = await context.PreviousLevels.Where(pl => pl.PreviousLevelName != null && pl.IsActive).AsNoTracking().ToListAsync();
@@ -256,7 +256,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-            var existingRegistration = await context.StudentRegistrations
+            var existingRegistration = await context.StudentRegistrations.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(sr => sr.Email == application.Email);
 
             int studentRegistrationId;
@@ -333,7 +333,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
     private async Task<string> GenerateCollegeRollNumberAsync(int collegeId, int programId)
     {
-        var college = await context.Colleges.AsNoTracking().FirstOrDefaultAsync(c => c.Id == collegeId);
+        var college = await context.Colleges.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(c => c.Id == collegeId);
         var program = await context.Programs.AsNoTracking().FirstOrDefaultAsync(p => p.Id == programId);
         var collegeCode = college?.Code ?? "CLG";
         var programCode = program?.ShortName ?? "PROG";
@@ -356,7 +356,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Where(et => et.Code == EntranceExamTypeCode)
             .Select(et => et.Id)
             .FirstOrDefaultAsync();
-        return await context.ExamSchedules
+        return await context.ExamSchedules.IgnoreQueryFilters()
             .AnyAsync(es => es.ProgramId == programId
                 && es.CollegeId == collegeId
                 && es.AcademicYearId == academicYearId
@@ -440,7 +440,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     public async Task<EntranceExamApplicationSelectListsDto> GetStepFormSelectListsAsync()
     {
         var programs = await context.Programs.Where(p => p.ProgramName != null && p.IsActive).AsNoTracking().ToListAsync();
-        var colleges = await context.Colleges.Where(c => c.Name != null && c.IsActive).AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.IgnoreQueryFilters().Where(c => c.Name != null && c.IsActive).AsNoTracking().ToListAsync();
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null && ay.IsActive).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null && g.IsActive).AsNoTracking().ToListAsync();
         var previousLevels = await context.PreviousLevels.Where(pl => pl.PreviousLevelName != null && pl.IsActive).AsNoTracking().ToListAsync();
@@ -494,7 +494,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     {
         var fullName = $"{application.FirstName} {application.LastName}".Trim();
         var program = await context.Programs.Where(p => p.Id == application.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
-        var college = await context.Colleges.Where(c => c.Id == application.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
+        var college = await context.Colleges.IgnoreQueryFilters().Where(c => c.Id == application.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
 
         try
         {
@@ -625,7 +625,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
     public async Task<decimal?> GetEntranceFeeForProgramAsync(int programId, int academicYearId)
     {
-        return await context.ExamSchedules
+        return await context.ExamSchedules.IgnoreQueryFilters()
             .Where(es => es.ProgramId == programId && es.AcademicYearId == academicYearId && es.IsActive)
             .Select(es => es.ExamFee)
             .FirstOrDefaultAsync();
@@ -638,7 +638,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Where(et => et.Code == EntranceExamTypeCode)
             .Select(et => et.Id)
             .FirstOrDefaultAsync();
-        return await context.ExamSchedules
+        return await context.ExamSchedules.IgnoreQueryFilters()
             .Include(es => es.Program)
             .Include(es => es.College)
             .Include(es => es.AcademicYear)

@@ -19,7 +19,7 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var collegeProgramIds = context.CollegePrograms
+                var collegeProgramIds = context.CollegePrograms.IgnoreQueryFilters()
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
                     .Distinct();
@@ -65,7 +65,7 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var collegeProgramIds = context.CollegePrograms
+                var collegeProgramIds = context.CollegePrograms.IgnoreQueryFilters()
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
                     .Distinct();
@@ -132,13 +132,13 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
 
     public async Task<List<ExamSchedule>> GetExamSchedulesAsync()
     {
-        IQueryable<ExamSchedule> query = context.ExamSchedules.AsNoTracking();
+        IQueryable<ExamSchedule> query = context.ExamSchedules.IgnoreQueryFilters().AsNoTracking();
 
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var programIds = await context.CollegePrograms!
+                var programIds = await context.CollegePrograms!.IgnoreQueryFilters()
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
                     .Distinct()
@@ -166,7 +166,7 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
             {
-                var collegeProgramIds = await context.CollegePrograms.AsNoTracking()
+                var collegeProgramIds = await context.CollegePrograms.IgnoreQueryFilters().AsNoTracking()
                     .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
                     .Select(cp => cp.ProgramId)
                     .ToListAsync();

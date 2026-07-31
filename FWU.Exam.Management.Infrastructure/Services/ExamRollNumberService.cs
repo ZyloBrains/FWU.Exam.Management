@@ -9,7 +9,7 @@ public class ExamRollNumberService(AppDbContext context) : IExamRollNumberServic
 {
     public async Task<int> GenerateRollNumbersAsync(int examScheduleId)
     {
-        var schedule = await context.ExamSchedules!
+        var schedule = await context.ExamSchedules!.IgnoreQueryFilters()
             .AsNoTracking()
             .Include(s => s.AcademicYear)
             .FirstOrDefaultAsync(s => s.Id == examScheduleId);
@@ -29,7 +29,7 @@ public class ExamRollNumberService(AppDbContext context) : IExamRollNumberServic
         var prefix = setup?.Prefix ?? "";
         var suffix = setup?.Suffix ?? "";
 
-        var registrations = await context.ExamRegistrations!
+        var registrations = await context.ExamRegistrations!.IgnoreQueryFilters()
             .Where(r => r.ExamScheduleId == examScheduleId)
             .OrderBy(r => r.Id)
             .ToListAsync();
@@ -53,7 +53,7 @@ public class ExamRollNumberService(AppDbContext context) : IExamRollNumberServic
 
     public async Task<int> ClearRollNumbersAsync(int examScheduleId)
     {
-        var registrations = await context.ExamRegistrations!
+        var registrations = await context.ExamRegistrations!.IgnoreQueryFilters()
             .Where(r => r.ExamScheduleId == examScheduleId && r.ExamRollNumber != null)
             .ToListAsync();
 
@@ -70,7 +70,7 @@ public class ExamRollNumberService(AppDbContext context) : IExamRollNumberServic
 
     public async Task<bool> HasRollNumbersAsync(int examScheduleId)
     {
-        return await context.ExamRegistrations!
+        return await context.ExamRegistrations!.IgnoreQueryFilters()
             .AnyAsync(r => r.ExamScheduleId == examScheduleId && r.ExamRollNumber != null);
     }
 }

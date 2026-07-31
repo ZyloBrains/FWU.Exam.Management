@@ -93,7 +93,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
 
     public async Task<List<Program>> GetCollegeProgramsAsync(int collegeId)
     {
-        return await context.CollegePrograms
+        return await context.CollegePrograms.IgnoreQueryFilters()
             .Where(cp => cp.CollegeId == collegeId && cp.IsActive)
             .Include(cp => cp.Program)
             .Select(cp => cp.Program)
@@ -103,7 +103,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
 
     public async Task<List<SelectOption>> GetCollegeSelectListAsync()
     {
-        return await context.Colleges
+        return await context.Colleges.IgnoreQueryFilters()
             .AsNoTracking()
             .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
             .ToListAsync();
@@ -129,7 +129,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
             .Distinct()
             .ToListAsync();
 
-        return await context.StudentRegistrations
+        return await context.StudentRegistrations.IgnoreQueryFilters()
             .AsNoTracking()
             .Include(sr => sr.Program)
             .Where(sr => sr.CollegeId == collegeId && sr.IsActive)

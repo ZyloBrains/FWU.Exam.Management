@@ -9,7 +9,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
 {
     public async Task AssignSymbolNumbersAsync(int examScheduleId)
     {
-        var registrations = await context.ExamRegistrations
+        var registrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered)
             .Include(er => er.College)
                 .ThenInclude(c => c.Faculties)
@@ -25,7 +25,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
             ? academicYearCode[^2..]
             : academicYearCode.PadLeft(2, '0');
 
-        var existingCount = await context.ExamRegistrations
+        var existingCount = await context.ExamRegistrations.IgnoreQueryFilters()
             .CountAsync(er => er.ExamScheduleId == examScheduleId && er.SymbolNumber != null);
 
         foreach (var reg in registrations)
@@ -54,7 +54,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
 
         if (centers.Count == 0) return 0;
 
-        var registrations = await context.ExamRegistrations
+        var registrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered && er.SymbolNumber != null)
             .OrderBy(er => er.SymbolNumber)
             .ToListAsync();
@@ -74,7 +74,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
 
     public async Task ResetDistributionAsync(int examScheduleId)
     {
-        var registrations = await context.ExamRegistrations
+        var registrations = await context.ExamRegistrations.IgnoreQueryFilters()
             .Where(er => er.ExamScheduleId == examScheduleId && er.ExamCenterId != null)
             .ToListAsync();
 
@@ -88,25 +88,25 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
 
     public async Task<int> GetRegisteredCountAsync(int examScheduleId)
     {
-        return await context.ExamRegistrations
+        return await context.ExamRegistrations.IgnoreQueryFilters()
             .CountAsync(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered);
     }
 
     public async Task<int> GetAssignedCountAsync(int examScheduleId)
     {
-        return await context.ExamRegistrations
+        return await context.ExamRegistrations.IgnoreQueryFilters()
             .CountAsync(er => er.ExamScheduleId == examScheduleId && er.ExamCenterId != null);
     }
 
     public async Task<int> GetUnassignedCountAsync(int examScheduleId)
     {
-        return await context.ExamRegistrations
+        return await context.ExamRegistrations.IgnoreQueryFilters()
             .CountAsync(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered && er.ExamCenterId == null);
     }
 
     public async Task<Dictionary<int, int>> GetCenterDistributionCountsAsync(int examScheduleId)
     {
-        return await context.ExamRegistrations
+        return await context.ExamRegistrations.IgnoreQueryFilters()
             .Where(er => er.ExamScheduleId == examScheduleId && er.ExamCenterId != null)
             .GroupBy(er => er.ExamCenterId!.Value)
             .Select(g => new { ExamCenterId = g.Key, Count = g.Count() })

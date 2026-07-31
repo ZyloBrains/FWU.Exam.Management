@@ -322,7 +322,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.IgnoreQueryFilters().Where(c => c.Name != null).AsNoTracking().ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
         var ethnicities = await context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();
@@ -377,7 +377,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task<List<SelectOption>> GetCollegesByLevelAsync(int levelId)
     {
-        return await context.CollegePrograms
+        return await context.CollegePrograms.IgnoreQueryFilters()
             .Where(cp => cp.Program != null && cp.Program.LevelId == levelId && cp.College != null && cp.College.Name != null)
             .Select(cp => new SelectOption { Id = cp.College!.Id, Name = cp.College.Name! })
             .Distinct()
@@ -387,7 +387,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     public async Task<List<SelectOption>> GetProgramsByCollegeAsync(int collegeId, int? levelId = null)
     {
-        var query = context.CollegePrograms
+        var query = context.CollegePrograms.IgnoreQueryFilters()
             .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
             .Include(cp => cp.Program)
             .AsQueryable();
