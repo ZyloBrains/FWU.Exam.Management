@@ -25,19 +25,16 @@ public class SubjectOfferingsController : Controller
         _subjectOfferingService = subjectOfferingService;
     }
 
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Program", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int? academicYearId, int? programId, int? semesterId)
     {
-        var (items, totalProgramCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
+        var academicYears = await _subjectOfferingService.GetAcademicYearsAsync();
+        var selectedYear = academicYearId ?? academicYears.FirstOrDefault()?.Id;
+        ViewData["AcademicYearId"] = new SelectList(academicYears, "Id", "Name", selectedYear);
+        ViewBag.SelectedAcademicYearId = selectedYear;
+        ViewBag.InitialProgramId = programId;
+        ViewBag.InitialSemesterId = semesterId;
 
-        ViewBag.TotalCount = totalProgramCount;
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling((double)totalProgramCount / pageSize);
-        ViewBag.PageSize = pageSize;
-        ViewBag.Search = search;
-        ViewBag.Sort = sort;
-        ViewBag.SortDir = sortDir;
-
-        return View(items);
+        return View();
     }
 
     private string EscapeCsv(string field)
@@ -147,6 +144,29 @@ public class SubjectOfferingsController : Controller
     {
         var semesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);
         return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByAcademicYear(int academicYearId)
+    {
+        var programs = await _subjectOfferingService.GetProgramsByAcademicYearAsync(academicYearId);
+        return Json(programs.Select(p => new { p.ProgramId, p.ProgramName, p.SemesterCount, p.SubjectCount }));
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetSemestersByProgram(int programId, int academicYearId)
+    {
+        var semesters = await _subjectOfferingService.GetSemestersByProgramAsync(programId, academicYearId);
+        return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetProgramSubjects(int programId, int? semesterId)
+    {
+        var offerings = await _subjectOfferingService.GetSubjectOfferingsAsync(programId, semesterId);
+        ViewBag.ProgramName = offerings.FirstOrDefault()?.Program?.ProgramName ?? "Program";
+        ViewBag.SemesterName = semesterId.HasValue ? offerings.FirstOrDefault()?.Semester?.Name : null;
+        return PartialView("_ProgramSubjects", offerings);
     }
 
     public async Task<IActionResult> Create()

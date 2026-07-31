@@ -168,6 +168,80 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
     }
 
+    public async Task<List<ProgramOfferingSummary>> GetProgramsByAcademicYearAsync(int academicYearId)
+    {
+        var groups = await _context.SubjectOfferings
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId)
+            .GroupBy(so => so.ProgramId)
+            .Select(g => new
+            {
+                ProgramId = g.Key,
+                SemesterCount = g.Select(x => x.SemesterId).Distinct().Count(),
+                SubjectCount = g.Count()
+            })
+            .ToListAsync();
+
+        var programIds = groups.Select(g => g.ProgramId).ToList();
+        var programs = await _context.Programs
+            .AsNoTracking()
+            .Where(p => programIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.ProgramName })
+            .ToListAsync();
+
+        return groups
+            .Select(g => new ProgramOfferingSummary
+            {
+                ProgramId = g.ProgramId,
+                ProgramName = programs.FirstOrDefault(p => p.Id == g.ProgramId)?.ProgramName ?? "Program",
+                SemesterCount = g.SemesterCount,
+                SubjectCount = g.SubjectCount
+            })
+            .OrderBy(p => p.ProgramName)
+            .ToList();
+    }
+
+    public async Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId)
+    {
+        return await _context.SubjectOfferings
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(so => so.ProgramId == programId
+                         && so.Semester != null
+                         && so.Semester.AcademicYearId == academicYearId)
+            .GroupBy(so => new { so.SemesterId, SemesterNumber = so.Semester!.Number, SemesterName = so.Semester!.Name })
+            .Select(g => new SemesterOfferingSummary
+            {
+                SemesterId = g.Key.SemesterId,
+                SemesterNumber = g.Key.SemesterNumber,
+                SemesterName = g.Key.SemesterName,
+                SubjectCount = g.Count()
+            })
+            .OrderBy(s => s.SemesterNumber)
+            .ToListAsync();
+    }
+
+    public async Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null)
+    {
+        var query = _context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .Include(so => so.Program)
+            .Include(so => so.Semester)
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(so => so.ProgramId == programId);
+
+        if (semesterId.HasValue)
+            query = query.Where(so => so.SemesterId == semesterId.Value);
+
+        return await query
+            .OrderBy(so => so.Semester != null ? so.Semester.Number : 0)
+            .ThenBy(so => so.DisplayOrder)
+            .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
+            .ToListAsync();
+    }
+
     public async Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null)
     {
         var subjectCatalogs = await _context.SubjectCatalogs

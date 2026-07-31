@@ -1,0 +1,157 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
+@{
+    var programName = ViewBag.ProgramName as string ?? "Program";
+    var semesterName = ViewBag.SemesterName as string;
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
+
+    var semesterGroups = Model
+        .GroupBy(o => new { o.Semester?.Id, o.Semester?.Name, o.Semester?.Number })
+        .OrderBy(g => g.Key.Number ?? 0)
+        .Select(g => new
+        {
+            g.Key.Name,
+            g.Key.Id,
+            Offerings = g.OrderBy(o => o.DisplayOrder).ThenBy(o => o.SubjectCatalog?.SubjectName).ToList()
+        })
+        .ToList();
+}
+
+<div class="space-y-5">
+    <div class="flex items-center justify-between gap-3">
+        <div>
+            <h2 class="text-base font-bold text-gray-800">@programName@(semesterName != null ? $" — {semesterName}" : "")</h2>
+            <p class="text-xs text-gray-500">
+                @if (semesterName != null)
+                {
+                    <text>@Model.Count() subject(s) in @semesterName</text>
+                }
+                else
+                {
+                    <text>@Model.Count() subject(s) across @semesterGroups.Count semester(s)</text>
+                }
+            </p>
+        </div>
+        @if (HasPerm("subjectofferings.create"))
+        {
+            <a asp-action="Create" asp-area="Subjects" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">
+                <i class="fas fa-plus text-xs"></i> Add Subjects
+            </a>
+        }
+    </div>
+
+    @foreach (var semesterGroup in semesterGroups)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-50 to-white border-b border-gray-100">
+                <i class="fas fa-folder-open text-amber-500 text-xs"></i>
+                <h3 class="text-sm font-semibold text-gray-700">@(semesterGroup.Name ?? "Semester")</h3>
+                <span class="text-xs text-gray-400">(@semesterGroup.Offerings.Count subjects)</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead>
+                        <tr class="border-b border-gray-100">
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase w-8">#</th>
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Subject</th>
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Type</th>
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Theory</th>
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Practical</th>
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase">Internal</th>
+                            <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @foreach (var item in semesterGroup.Offerings)
+                        {
+                            <tr class="hover:bg-gray-50/50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
+                                <td class="px-4 py-2.5 text-xs text-gray-400">@item.DisplayOrder</td>
+                                <td class="px-4 py-2.5">
+                                    <div class="text-sm font-medium text-gray-800">@(item.SubjectCatalog?.SubjectName ?? "-")</div>
+                                    <div class="text-xs text-gray-400">@(item.SubjectCatalog?.SubjectCode ?? "-")</div>
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    @if (item.IsCompulsory)
+                                    {
+                                        <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Compulsory</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Elective</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    @if (item.HasTheory)
+                                    {
+                                        <div class="text-sm text-gray-700">@item.TheoryFullMarks</div>
+                                        <div class="text-xs text-gray-400">pass @item.TheoryPassMarks</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-300">-</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    @if (item.HasPractical)
+                                    {
+                                        <div class="text-sm text-gray-700">@(item.PracticalFullMarks ?? 0)</div>
+                                        <div class="text-xs text-gray-400">pass @(item.PracticalPassMarks ?? 0)</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-300">-</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    @if (item.HasInternal)
+                                    {
+                                        <div class="text-xs text-gray-600">Th: <span class="text-gray-800">@(item.InternalTheoryFullMarks ?? 0)</span></div>
+                                        <div class="text-xs text-gray-600">Pr: <span class="text-gray-800">@(item.InternalPracticalFullMarks ?? 0)</span></div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-300">-</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-2.5 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
+                                            <i class="fas fa-eye text-xs"></i>
+                                        </a>
+                                        @if (HasPerm("subjectofferings.edit"))
+                                        {
+                                            <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                                <i class="fas fa-edit text-xs"></i>
+                                            </a>
+                                        }
+                                        @if (HasPerm("subjectofferings.delete"))
+                                        {
+                                            <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
+                                                <i class="fas fa-trash text-xs"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-200">
+            <i class="fas fa-layer-group text-4xl mb-3 opacity-50"></i>
+            <p>No subject offerings for this program in the selected academic year.</p>
+        </div>
+    }
+</div>
