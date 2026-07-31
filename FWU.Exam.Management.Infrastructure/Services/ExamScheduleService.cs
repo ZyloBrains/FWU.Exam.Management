@@ -134,6 +134,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
+                Semester = e.Semester,
                 ExamType = e.ExamType
             })
             .FirstOrDefaultAsync();
@@ -196,7 +197,10 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var examTypes = await context.ExamTypes.AsNoTracking().ToListAsync();
         var programsQuery = context.Programs.AsNoTracking().ApplyScope(userContext);
         var programs = await programsQuery.ToListAsync();
-        var semesters = await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
+        var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext);
+        if (examSchedule != null && examSchedule.AcademicYearId > 0)
+            semestersQuery = semestersQuery.Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
+        var semesters = await semestersQuery.OrderBy(s => s.Number).ToListAsync();
 
         return new ExamScheduleSelectListsDto
         {
@@ -205,6 +209,16 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
             Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name }).ToList()
         };
+    }
+
+    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId)
+    {
+        return await context.Semesters.AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(s => s.AcademicYearId == academicYearId)
+            .OrderBy(s => s.Number)
+            .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
+            .ToListAsync();
     }
 
     private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null)
@@ -239,6 +253,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             "examtype" => descending
                 ? query.OrderByDescending(e => e.ExamType != null ? e.ExamType.Name : string.Empty)
                 : query.OrderBy(e => e.ExamType != null ? e.ExamType.Name : string.Empty),
+            "startdate" => descending ? query.OrderByDescending(e => e.StartDate) : query.OrderBy(e => e.StartDate),
             _ => descending ? query.OrderByDescending(e => e.Id) : query.OrderBy(e => e.Id)
         };
     }

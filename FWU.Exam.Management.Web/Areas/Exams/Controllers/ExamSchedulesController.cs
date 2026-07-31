@@ -24,7 +24,7 @@ public class ExamSchedulesController(
     UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
@@ -359,6 +359,13 @@ public class ExamSchedulesController(
         ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId)
+    {
+        var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId);
+        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 
     [HttpGet]

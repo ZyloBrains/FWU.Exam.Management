@@ -186,6 +186,30 @@
             $('.select2').select2({ width: 'resolve' });
         });
 
+        function loadSemesters(academicYearId) {
+            $('#SemesterId').select2('destroy');
+            var semesterDropdown = $("#SemesterId");
+            semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+
+            if (!academicYearId) {
+                semesterDropdown.prop('disabled', true);
+                $('#SemesterId').select2({ width: 'resolve' });
+                return;
+            }
+
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId }, function (data) {
+                $.each(data, function (index, item) {
+                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                semesterDropdown.prop('disabled', false);
+                semesterDropdown.select2({ width: 'resolve' });
+            });
+        }
+
+        $("#AcademicYearId").change(function () {
+            loadSemesters($(this).val());
+        });
+
         var convertTimer;
         $("#StartDateBs").on("input", function () {
             var bs = $(this).val().trim();

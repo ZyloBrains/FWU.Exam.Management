@@ -69,7 +69,7 @@
                     </div>
                     <div>
                         <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="SemesterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                        <select asp-for="SemesterId" disabled="@(Model != null && Model.AcademicYearId > 0 ? null : "disabled")" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
                             <option value="">-- Select Semester --</option>
                         </select>
                         <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
@@ -217,6 +217,34 @@
         $(function () {
             $('.select2').select2({ width: 'resolve' });
         });
+
+        function loadSemesters(academicYearId) {
+            $('#SemesterId').select2('destroy');
+            var semesterDropdown = $("#SemesterId");
+            semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+
+            if (!academicYearId) {
+                semesterDropdown.prop('disabled', true);
+                $('#SemesterId').select2({ width: 'resolve' });
+                return;
+            }
+
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId }, function (data) {
+                $.each(data, function (index, item) {
+                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                semesterDropdown.prop('disabled', false);
+                semesterDropdown.select2({ width: 'resolve' });
+            });
+        }
+
+        $("#AcademicYearId").change(function () {
+            loadSemesters($(this).val());
+        });
+
+        if (!$("#AcademicYearId").val()) {
+            loadSemesters('');
+        }
 
         var convertTimer;
         $("#StartDateBs").on("input", function () {

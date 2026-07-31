@@ -48,6 +48,10 @@
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Program.ProgramName)</p>
                 </div>
                 <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Semester</p>
+                    <p class="mt-1 text-gray-800">@(Model.Semester?.Name ?? "-")</p>
+                </div>
+                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamType.Name)</p>
                 </div>
