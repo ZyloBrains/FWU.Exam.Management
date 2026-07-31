@@ -141,7 +141,6 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     {
         return await _context.Faculties
             .IgnoreQueryFilters()
-            .Where(f => f.TenantId == null)
             .OrderBy(f => f.Name)
             .Select(f => new SelectListItem
             {
