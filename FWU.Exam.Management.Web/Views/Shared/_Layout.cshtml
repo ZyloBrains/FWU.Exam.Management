@@ -274,27 +274,18 @@
                              x-transition:leave-end="transform opacity-0 scale-95"
                              class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 origin-top-right overflow-hidden" 
                              x-cloak>
-                            
-                            <div class="px-4 py-3 border-b border-gray-100 md:hidden">
-                                <p class="text-sm font-medium text-gray-900 truncate">@displayName</p>
-                                <p class="text-xs text-gray-500 truncate">@roleLabel</p>
-                            </div>
 
                             @{
                                 var tenantPrefix = !string.IsNullOrEmpty(tenantCode) ? $"/tenant/{tenantCode}" : "";
                                 var identityBase = $"{tenantPrefix}/Identity/Account";
                             }
-                            <a href="@identityBase/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                <i class="fas fa-user-circle w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
-                                <span class="ml-2 font-medium">My Profile</span>
+                            <a href="@identityBase/Manage/ChangePassword" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                <i class="fas fa-key w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
+                                <span class="ml-2 font-medium">Update Password</span>
                             </a>
-                            <a href="@identityBase/Manage/Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
-                                <i class="fas fa-cog w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
-                                <span class="ml-2 font-medium">Account Settings</span>
-                            </a>
-                            
+
                             <div class="h-px bg-gray-100 my-1.5"></div>
-                            
+
                             <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/Identity/Account/Login" class="block m-0">
                                 <button type="submit" class="group flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left">
                                     <i class="fas fa-sign-out-alt w-5 text-red-400 group-hover:text-red-600 transition-colors"></i>
