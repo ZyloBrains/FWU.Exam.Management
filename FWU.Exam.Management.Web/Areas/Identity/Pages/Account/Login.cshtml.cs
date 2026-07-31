@@ -128,40 +128,29 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                         return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
                     }
 
-                    if (await userManager.IsInRoleAsync(user, "Student"))
-                    {
-                        return tenantCode != null
-                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
-                            : RedirectToAction("Index", "Dashboard", new { area = "" });
-                    }
-
-                    if (user.FacultyId != null)
-                    {
-                        var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
-                        if (faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode))
-                        {
-                            return tenantCode != null
-                                ? Redirect($"/tenant/{tenantCode}/faculty/{faculty.OfficeCode}")
-                                : RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
-                        }
-                    }
-
                     var roles = await userManager.GetRolesAsync(user);
-                    if (roles.Contains("SuperAdmin") || roles.Contains("SystemAdmin"))
+                    if (roles.Contains(Role.SuperAdmin))
                     {
                         return tenantCode != null
                             ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
                             : RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
 
-                    if (roles.Contains("FacultyAdmin"))
+                    if (roles.Contains(Role.FacultyAdmin))
                     {
                         return tenantCode != null
                             ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
                             : RedirectToAction("Index", "Dashboard", new { area = "" });
                     }
 
-                    if (roles.Contains("CollegeAdmin") || roles.Contains("Admin"))
+                    if (roles.Contains(Role.CollegeAdmin))
+                    {
+                        return tenantCode != null
+                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                            : RedirectToAction("Index", "Dashboard", new { area = "" });
+                    }
+
+                    if (roles.Contains(Role.Student))
                     {
                         return tenantCode != null
                             ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
