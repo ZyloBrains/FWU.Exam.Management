@@ -23,7 +23,7 @@
         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
 
         <div class="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Program</label>
                     <select asp-for="ProgramId" asp-items="ViewBag.ProgramId"
@@ -34,8 +34,17 @@
                     <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
+                    <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Academic Year</label>
+                    <select asp-for="AcademicYearId" asp-items="ViewBag.AcademicYearId"
+                            class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Select Academic Year --</option>
+                    </select>
+                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
                     <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Semester</label>
                     <select asp-for="SemesterId" asp-items="ViewBag.SemesterId"
+                            disabled="@(Model != null && Model.AcademicYearId > 0 ? null : "disabled")"
                             x-on:change="initExistingSubjects()"
                             class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">-- Select Semester --</option>
@@ -322,8 +331,9 @@
 
                 async initExistingSubjects() {
                     const programId = document.getElementById('ProgramId').value;
-                    if (programId) {
-                        const resp = await fetch(`/Subjects/SubjectOfferings/GetExistingSubjects?programId=${programId}`);
+                    const semesterId = document.getElementById('SemesterId').value;
+                    if (programId && semesterId) {
+                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjects?programId=${programId}&semesterId=${semesterId}`));
                         this.existingSubjectIds = await resp.json();
                     } else {
                         this.existingSubjectIds = [];
@@ -388,6 +398,36 @@
                     this.$el.submit();
                 }
             };
+        }
+
+        function loadSemesters(academicYearId) {
+            $('#SemesterId').select2('destroy');
+            var semesterDropdown = $("#SemesterId");
+            semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+
+            if (!academicYearId) {
+                semesterDropdown.prop('disabled', true);
+                $('#SemesterId').select2({ width: 'resolve' });
+                return;
+            }
+
+            $.get(tenantUrl("/Subjects/SubjectOfferings/GetSemestersByAcademicYear"), { academicYearId: academicYearId }, function (data) {
+                $.each(data, function (index, item) {
+                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                var initialSemesterId = '@(Model?.SemesterId ?? 0)';
+                if (initialSemesterId) semesterDropdown.val(initialSemesterId);
+                semesterDropdown.prop('disabled', false);
+                semesterDropdown.select2({ width: 'resolve' });
+            });
+        }
+
+        $("#AcademicYearId").change(function () {
+            loadSemesters($(this).val());
+        });
+
+        if (!$("#AcademicYearId").val()) {
+            loadSemesters('');
         }
     </script>
 }

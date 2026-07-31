@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Semesters;
@@ -138,11 +139,32 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.SubjectOfferings.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId)
+    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId)
     {
         return await _context.SubjectOfferings
-            .Where(so => so.ProgramId == programId)
+            .Where(so => so.ProgramId == programId && so.SemesterId == semesterId)
             .Select(so => so.SubjectCatalogId)
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetAcademicYearsAsync()
+    {
+        return await _context.AcademicYears
+            .Where(ay => ay.IsActive)
+            .OrderByDescending(ay => ay.Id)
+            .AsNoTracking()
+            .Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName })
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId)
+    {
+        return await _context.Semesters
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(s => s.AcademicYearId == academicYearId)
+            .OrderBy(s => s.Number)
+            .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
             .ToListAsync();
     }
 

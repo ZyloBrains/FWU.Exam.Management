@@ -136,15 +136,23 @@ public class SubjectOfferingsController : Controller
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetExistingSubjects(int programId)
+    public async Task<JsonResult> GetExistingSubjects(int programId, int semesterId)
     {
-        var ids = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(programId);
+        var ids = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(programId, semesterId);
         return Json(ids);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId)
+    {
+        var semesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);
+        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 
     public async Task<IActionResult> Create()
     {
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
+        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name");
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name");
 
@@ -169,6 +177,9 @@ public class SubjectOfferingsController : Controller
         if (model.ProgramId <= 0)
             ModelState.AddModelError(nameof(model.ProgramId), "Program is required.");
 
+        if (model.AcademicYearId <= 0)
+            ModelState.AddModelError(nameof(model.AcademicYearId), "Academic Year is required.");
+
         if (model.SemesterId <= 0)
             ModelState.AddModelError(nameof(model.SemesterId), "Semester is required.");
 
@@ -183,9 +194,16 @@ public class SubjectOfferingsController : Controller
             }
         }
 
+        if (model.AcademicYearId > 0 && model.SemesterId > 0)
+        {
+            var semester = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId);
+            if (!semester.Any(s => s.Id == model.SemesterId))
+                ModelState.AddModelError(nameof(model.SemesterId), "The selected semester does not belong to the selected academic year.");
+        }
+
         if (ModelState.IsValid)
         {
-            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId);
+            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId, model.SemesterId);
             var duplicateIds = model.Subjects
                 .Where(s => existingIds.Contains(s.SubjectCatalogId))
                 .Select(s => s.SubjectCatalogId)
@@ -227,6 +245,7 @@ public class SubjectOfferingsController : Controller
             {
                 ModelState.AddModelError("", "A database error occurred. The subject offering may already exist.");
                 var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync();
+                ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
                 ViewData["ProgramId"] = new SelectList(progs, "Id", "ProgramName", model.ProgramId);
                 ViewData["SemesterId"] = new SelectList(sems, "Id", "Name", model.SemesterId);
                 ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(cats.Select(s => new
@@ -244,6 +263,7 @@ public class SubjectOfferingsController : Controller
         }
 
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
+        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", model.ProgramId);
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", model.SemesterId);
 
@@ -270,6 +290,7 @@ public class SubjectOfferingsController : Controller
 
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
+        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", subjectOffering.Semester?.AcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
         return View(subjectOffering);
@@ -277,7 +298,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering, int academicYearId)
     {
         if (id != subjectOffering.Id) return NotFound();
 
@@ -288,9 +309,16 @@ public class SubjectOfferingsController : Controller
                           || current.ProgramId != subjectOffering.ProgramId
                           || current.SemesterId != subjectOffering.SemesterId;
 
+        if (academicYearId > 0 && subjectOffering.SemesterId > 0)
+        {
+            var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);
+            if (!yearSemesters.Any(s => s.Id == subjectOffering.SemesterId))
+                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester does not belong to the selected academic year.");
+        }
+
         if (ModelState.IsValid && subjectChanged)
         {
-            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(subjectOffering.ProgramId);
+            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(subjectOffering.ProgramId, subjectOffering.SemesterId);
             if (existingIds.Contains(subjectOffering.SubjectCatalogId))
             {
                 ModelState.AddModelError(nameof(subjectOffering.SubjectCatalogId), "This subject already exists in this semester for the selected program.");
@@ -314,6 +342,7 @@ public class SubjectOfferingsController : Controller
         }
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
+        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", academicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
         return View(subjectOffering);
