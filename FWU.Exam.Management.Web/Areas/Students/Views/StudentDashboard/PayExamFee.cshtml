@@ -358,17 +358,44 @@
         var flatExamFee = @Model.TotalExamFee;
 
         function onSubjectChange(cb) {
-            if (cb.checked) {
-                var typeId = cb.getAttribute('data-subject-type-id');
-                if (typeId) {
-                    document.querySelectorAll('.subject-checkbox[data-subject-type-id="' + typeId + '"]').forEach(function(other) {
+            var typeId = cb.getAttribute('data-subject-type-id');
+            if (typeId) {
+                var group = document.querySelectorAll('.subject-checkbox[data-subject-type-id="' + typeId + '"]');
+                if (cb.checked) {
+                    group.forEach(function(other) {
                         if (other !== cb && other.checked) {
                             other.checked = false;
                         }
                     });
+                } else {
+                    var anyChecked = Array.prototype.some.call(group, function(other) {
+                        return other !== cb && other.checked;
+                    });
+                    if (!anyChecked) {
+                        cb.checked = true;
+                        alert('At least one elective must be selected from this group.');
+                    }
                 }
             }
             updateTotals();
+        }
+
+        function validateElectiveGroups() {
+            var groups = {};
+            document.querySelectorAll('.subject-checkbox.elective-checkbox').forEach(function(cb) {
+                var typeId = cb.getAttribute('data-subject-type-id');
+                if (typeId && !(typeId in groups)) groups[typeId] = 0;
+            });
+            document.querySelectorAll('.subject-checkbox.elective-checkbox:checked').forEach(function(cb) {
+                var typeId = cb.getAttribute('data-subject-type-id');
+                if (typeId && (typeId in groups)) groups[typeId]++;
+            });
+            for (var typeId in groups) {
+                if (groups[typeId] === 0) {
+                    return 'Please select at least one elective subject from each elective group.';
+                }
+            }
+            return null;
         }
 
         function updateTotals() {
@@ -426,6 +453,11 @@
 
         function processPayment(method) {
             updateTotals();
+            var groupError = validateElectiveGroups();
+            if (groupError) {
+                alert(groupError);
+                return;
+            }
             var amount = document.getElementById('hfAmount').value;
             if (amount == 0 || amount === '0') {
                 alert('Please select at least one subject to proceed with payment.');

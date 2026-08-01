@@ -916,8 +916,6 @@ public class StudentDashboardController(
 
     private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
     {
-        if (subjectIds.Count == 0) return (true, null);
-
         var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
         var offeringLookup = offerings.ToDictionary(o => o.Id);
         foreach (var id in subjectIds)
@@ -926,20 +924,18 @@ public class StudentDashboardController(
                 return (false, "Selected subject is not part of this exam schedule.");
         }
 
-        var selectedByType = subjectIds
-            .Select(id => offeringLookup[id].SubjectCatalog?.SubjectTypeId ?? 0)
-            .GroupBy(typeId => typeId)
-            .Where(g => g.Count() > 1)
-            .Select(g => g.Key)
-            .ToList();
+        var electiveGroups = offerings
+            .Where(o => !o.IsCompulsory && o.SubjectCatalog != null)
+            .GroupBy(o => o.SubjectCatalog!.SubjectTypeId);
 
-        if (selectedByType.Count > 0)
+        foreach (var group in electiveGroups)
         {
-            var groupNames = offerings
-                .Where(o => selectedByType.Contains(o.SubjectCatalog?.SubjectTypeId ?? 0))
-                .Select(o => o.SubjectCatalog?.SubjectType?.Name ?? o.SubjectCatalog?.SubjectTypeId.ToString() ?? "Unknown")
-                .Distinct();
-            return (false, $"Only one subject can be selected from each elective group ({string.Join(", ", groupNames)}).");
+            var groupName = group.First().SubjectCatalog?.SubjectType?.Name ?? group.Key.ToString();
+            var selectedCount = group.Count(o => subjectIds.Contains(o.Id));
+            if (selectedCount == 0)
+                return (false, $"Please select at least one elective subject from {groupName}.");
+            if (selectedCount > 1)
+                return (false, $"Only one subject can be selected from {groupName}.");
         }
 
         return (true, null);
