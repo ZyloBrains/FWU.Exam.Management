@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -10,9 +11,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class SemesterEnrollmentService(AppDbContext context, IUserContext userContext) : ISemesterEnrollmentService
 {
-    public async Task<(List<SemesterEnrollment> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null)
+    public async Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
     {
-        var query = BuildQuery(search, admissionId);
+        var query = BuildQuery(search, admissionId, collegeId, programId, semesterId, academicYearId);
         var totalCount = await query.CountAsync();
 
         query = sortDir.ToLower() == "desc"
@@ -22,14 +23,15 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(ToListItemDto)
             .ToListAsync();
 
         return (items, totalCount);
     }
 
-    public async Task<List<SemesterEnrollment>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null)
+    public async Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
     {
-        var query = BuildQuery(search, admissionId);
+        var query = BuildQuery(search, admissionId, collegeId, programId, semesterId, academicYearId);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -38,6 +40,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(ToListItemDto)
             .ToListAsync();
     }
 
@@ -102,15 +105,155 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return await query.ToListAsync();
     }
 
-    public async Task<List<Semester>> GetSemestersByProgramAsync(int programId)
+    public async Task<List<Semester>> GetSemestersByProgramAsync(int programId, int? academicYearId = null)
     {
-        return await context.SubjectOfferings
-            .Where(so => so.ProgramId == programId)
+        var query = context.SubjectOfferings
+            .Where(so => so.ProgramId == programId);
+
+        if (academicYearId.HasValue)
+            query = query.Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId.Value);
+
+        return await query
             .Select(so => so.Semester!)
             .Distinct()
             .OrderBy(s => s.Number)
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task<(List<SemesterEnrollmentCandidateDto> Items, int TotalCount)> GetEnrollmentCandidatesAsync(string? search, int? academicYearId, int? collegeId, int? programId, int? semesterId, int page = 1, int pageSize = 25)
+    {
+        var query = BuildCandidateQuery(search, academicYearId, collegeId, programId);
+
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 25;
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderBy(sa => sa.CollegeRollNumber)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(sa => new SemesterEnrollmentCandidateDto
+            {
+                AdmissionId = sa.Id,
+                StudentName = context.StudentRegistrations
+                    .Where(r => r.StudentAdmissionId == sa.Id)
+                    .Select(r => r.FirstName + (r.MiddleName != null ? " " + r.MiddleName : "") + (r.LastName != null ? " " + r.LastName : ""))
+                    .FirstOrDefault(),
+                RegistrationNumber = context.StudentRegistrations
+                    .Where(r => r.StudentAdmissionId == sa.Id)
+                    .Select(r => r.RegistrationNumber)
+                    .FirstOrDefault(),
+                CollegeRollNumber = sa.CollegeRollNumber,
+                ProgramName = sa.Program != null ? sa.Program.ProgramName : null,
+                CollegeName = sa.College != null ? sa.College.Name : null,
+                AcademicYearName = sa.AcademicYear != null ? sa.AcademicYear.AcademicYearCode : null,
+                IsEnrolled = semesterId.HasValue && context.SemesterEnrollments.Any(se =>
+                    se.StudentAdmissionId == sa.Id && se.SemesterId == semesterId.Value)
+            })
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    private IQueryable<StudentAdmission> BuildCandidateQuery(string? search, int? academicYearId, int? collegeId, int? programId)
+    {
+        var query = context.StudentAdmissions
+            .AsNoTracking()
+            .Where(sa => sa.IsActive);
+
+        if (academicYearId.HasValue)
+            query = query.Where(sa => sa.AcademicYearId == academicYearId.Value);
+
+        if (collegeId.HasValue)
+            query = query.Where(sa => sa.CollegeId == collegeId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(sa => sa.ProgramsId == programId.Value);
+
+        if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            query = query.Where(sa => sa.CollegeId == userContext.CollegeId.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(sa =>
+                (sa.CollegeRollNumber != null && sa.CollegeRollNumber.Contains(term)) ||
+                (sa.Program != null && sa.Program.ProgramName.Contains(term)) ||
+                context.StudentRegistrations.Any(r =>
+                    r.StudentAdmissionId == sa.Id &&
+                    ((r.FirstName + (r.MiddleName != null ? " " + r.MiddleName : "") + (r.LastName != null ? " " + r.LastName : "")).Contains(term) ||
+                     (r.RegistrationNumber != null && r.RegistrationNumber.Contains(term)))));
+        }
+
+        return query;
+    }
+
+    public async Task<(int Created, int Skipped)> BulkCreateAllEnrollmentsAsync(string? search, int? academicYearId, int? collegeId, int? programId, int semesterId)
+    {
+        var admissionIds = await BuildCandidateQuery(search, academicYearId, collegeId, programId)
+            .Select(sa => sa.Id)
+            .ToListAsync();
+
+        if (admissionIds.Count == 0)
+            return (0, 0);
+
+        return await BulkCreateEnrollmentsAsync(admissionIds, semesterId);
+    }
+
+    public async Task<(int Created, int Skipped)> BulkCreateEnrollmentsAsync(List<int> admissionIds, int semesterId)
+    {
+        if (admissionIds == null || admissionIds.Count == 0)
+            return (0, 0);
+
+        var distinctIds = admissionIds.Distinct().ToList();
+
+        var admissionsQuery = context.StudentAdmissions
+            .AsNoTracking()
+            .Where(sa => distinctIds.Contains(sa.Id));
+
+        if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            admissionsQuery = admissionsQuery.Where(sa => sa.CollegeId == userContext.CollegeId.Value);
+
+        var admissions = await admissionsQuery.ToListAsync();
+        if (admissions.Count == 0)
+            return (0, 0);
+
+        var scopedIds = admissions.Select(a => a.Id).ToList();
+
+        var alreadyEnrolled = await context.SemesterEnrollments
+            .Where(se => se.SemesterId == semesterId && scopedIds.Contains(se.StudentAdmissionId))
+            .Select(se => se.StudentAdmissionId)
+            .ToListAsync();
+
+        var toCreate = admissions.Where(a => !alreadyEnrolled.Contains(a.Id)).ToList();
+        var skipped = admissionIds.Count - toCreate.Count;
+
+        foreach (var admission in toCreate)
+        {
+            context.SemesterEnrollments.Add(new SemesterEnrollment
+            {
+                TenantId = admission.TenantId,
+                StudentAdmissionId = admission.Id,
+                SemesterId = semesterId,
+                EnrollmentStatus = StudentEnrollmentStatus.Active,
+                EnrollmentType = EnrollmentType.FullTime,
+                PaymentStatus = PaymentStatus.Pending,
+                ResultStatus = ResultStatus.Incomplete,
+                EnrolledDate = DateTime.UtcNow,
+                TotalCredits = 0,
+                GradePoints = 0,
+                TotalFee = 0,
+                PaidAmount = 0,
+                Deficiency = false
+            });
+        }
+
+        if (toCreate.Count > 0)
+            await context.SaveChangesAsync();
+
+        return (toCreate.Count, skipped);
     }
 
     public async Task<int> PromoteCompletedSemestersAsync()
@@ -203,7 +346,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return schedules.FirstOrDefault();
     }
 
-    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null)
+    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
     {
         var query = context.SemesterEnrollments
             .Include(se => se.StudentAdmission)
@@ -216,27 +359,70 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         if (admissionId.HasValue)
             query = query.Where(se => se.StudentAdmissionId == admissionId.Value);
 
+        if (collegeId.HasValue)
+            query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.CollegeId == collegeId.Value);
+
+        if (programId.HasValue)
+            query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.ProgramsId == programId.Value);
+
+        if (semesterId.HasValue)
+            query = query.Where(se => se.SemesterId == semesterId.Value);
+
+        if (academicYearId.HasValue)
+            query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.AcademicYearId == academicYearId.Value);
+
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
                 query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.CollegeId == userContext.CollegeId.Value);
         }
 
-        if (!string.IsNullOrEmpty(search))
+        if (!string.IsNullOrWhiteSpace(search))
         {
+            var term = search.Trim();
             query = query.Where(se =>
-                se.Semester!.Name!.Contains(search) ||
-                se.StudentAdmission!.CollegeRollNumber!.Contains(search));
+                (se.Semester != null && se.Semester.Name != null && se.Semester.Name.Contains(term)) ||
+                (se.StudentAdmission != null && se.StudentAdmission.CollegeRollNumber != null && se.StudentAdmission.CollegeRollNumber.Contains(term)) ||
+                context.StudentRegistrations.Any(r =>
+                    r.StudentAdmissionId == se.StudentAdmissionId &&
+                    ((r.FirstName + (r.MiddleName != null ? " " + r.MiddleName : "") + (r.LastName != null ? " " + r.LastName : "")).Contains(term) ||
+                     (r.RegistrationNumber != null && r.RegistrationNumber.Contains(term)))));
         }
 
         return query;
     }
+
+    private readonly System.Linq.Expressions.Expression<Func<SemesterEnrollment, SemesterEnrollmentListItemDto>> ToListItemDto = se =>
+        new SemesterEnrollmentListItemDto
+        {
+            Id = se.Id,
+            StudentName = context.StudentRegistrations
+                .Where(r => r.StudentAdmissionId == se.StudentAdmissionId)
+                .Select(r => r.FirstName + (r.MiddleName != null ? " " + r.MiddleName : "") + (r.LastName != null ? " " + r.LastName : ""))
+                .FirstOrDefault(),
+            RegistrationNumber = context.StudentRegistrations
+                .Where(r => r.StudentAdmissionId == se.StudentAdmissionId)
+                .Select(r => r.RegistrationNumber)
+                .FirstOrDefault(),
+            CollegeRollNumber = se.StudentAdmission!.CollegeRollNumber,
+            ProgramName = se.StudentAdmission!.Program != null ? se.StudentAdmission.Program.ProgramName : null,
+            CollegeName = se.StudentAdmission!.College != null ? se.StudentAdmission.College.Name : null,
+            SemesterName = se.Semester != null ? se.Semester.Name : null,
+            AcademicYearName = se.StudentAdmission != null && se.StudentAdmission.AcademicYear != null ? se.StudentAdmission.AcademicYear.AcademicYearCode : null,
+            EnrollmentStatus = se.EnrollmentStatus,
+            EnrollmentType = se.EnrollmentType,
+            PaymentStatus = se.PaymentStatus,
+            ResultStatus = se.ResultStatus,
+            TotalFee = se.TotalFee,
+            TotalCredits = se.TotalCredits
+        };
 
     private static Expression<Func<SemesterEnrollment, object>> GetSortProperty(string sort)
     {
         return sort.ToLower() switch
         {
             "semester" => se => se.Semester!.Name!,
+            "studentname" => se => se.StudentAdmission!.CollegeRollNumber!,
             "enrollmentstatus" => se => se.EnrollmentStatus,
             "enrollmenttype" => se => se.EnrollmentType,
             "enrolleddate" => se => se.EnrolledDate,

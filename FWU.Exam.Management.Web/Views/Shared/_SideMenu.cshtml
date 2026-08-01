@@ -89,6 +89,7 @@
     var isRegActive = IsActive(controllerName: "StudentRegistrations", areaName: "Students") ||
                       IsActive(controllerName: "StudentCategories") ||
                       IsActive(controllerName: "StudentAdmissions", areaName: "Students") ||
+                      IsActive(controllerName: "SemesterEnrollments", areaName: "Students") ||
                       IsActive(controllerName: "Section", actionName: "Registration");
     var isExamActive = IsActive(controllerName: "Entrance", areaName: "Exams") ||
                         IsActive(controllerName: "ExamSchedules", areaName: "Exams") ||
@@ -252,10 +253,11 @@
                 </button>
             </div>
             <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 400px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
                 @if (HasPerm("students.view")) { <li><a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "StudentRegistrations", actionName: "Index", areaName: "Students"))"><i class="fas fa-user-plus w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Registrations</span></a></li> }
                 @if (HasPerm("studentcategories.view")) { <li><a asp-area="" asp-controller="StudentCategories" asp-action="Index" class="@ChildClass(IsActive(controllerName: "StudentCategories", actionName: "Index"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Categories</span></a></li> }
                 @if (HasPerm("studentadmissions.view")) { <li><a asp-area="Students" asp-controller="StudentAdmissions" asp-action="Index" class="@ChildClass(IsActive(controllerName: "StudentAdmissions", actionName: "Index", areaName: "Students"))"><i class="fas fa-user-graduate w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Admissions</span></a></li> }
+                @if (HasPerm("studentadmissions.view")) { <li><a asp-area="Students" asp-controller="SemesterEnrollments" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SemesterEnrollments", actionName: "Index", areaName: "Students"))"><i class="fas fa-user-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Semester Enrollments</span></a></li> }
             </ul>
         </li>
     }
