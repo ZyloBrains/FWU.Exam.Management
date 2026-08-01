@@ -1,11 +1,14 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Domain.Interfaces;
 
 namespace FWU.Exam.Management.Domain.Entities.Payments;
 
-public class ESewaConfiguration
+public class ESewaConfiguration : ITenantScoped
 {
     public int Id { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 
     [Required]
     [MaxLength(256)]

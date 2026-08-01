@@ -223,6 +223,9 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         {
             try
             {
+                var existing = await context.ESewaConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                if (existing is null) return NotFound();
+                eSewaConfiguration.TenantId = existing.TenantId;
                 context.Update(eSewaConfiguration);
                 await context.SaveChangesAsync();
             }

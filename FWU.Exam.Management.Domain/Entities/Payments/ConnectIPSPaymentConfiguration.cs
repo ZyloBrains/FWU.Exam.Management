@@ -1,11 +1,14 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Domain.Interfaces;
 
 namespace FWU.Exam.Management.Domain.Entities.Payments;
 
-public class ConnectIpsPaymentConfiguration
+public class ConnectIpsPaymentConfiguration : ITenantScoped
 {
     public int Id { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 
     [Required, MaxLength(1024)]
     [Display(Name = "Gateway URL")]

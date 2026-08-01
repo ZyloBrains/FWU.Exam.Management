@@ -13,7 +13,8 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        var existingTypes = await context.Set<PaymentType>().ToListAsync();
+        var tenants = await context.Tenants.IgnoreQueryFilters().ToListAsync();
+        var existingTypes = await context.Set<PaymentType>().IgnoreQueryFilters().ToListAsync();
         var seedTypes = new Dictionary<string, (string logoUrl, bool isActive)>
         {
             ["eSewa"] = ("https://upload.wikimedia.org/wikipedia/commons/5/5c/ESewa_Logo.png", true),
@@ -21,21 +22,27 @@ public static class ReferenceDataSeeder
             ["ConnectIPS"] = ("https://www.connectips.com/wp-content/uploads/2021/07/connect-ips-logo.png", true),
         };
 
-        foreach (var (name, (logoUrl, isActive)) in seedTypes)
+        foreach (var tenant in tenants)
         {
-            var existing = existingTypes.FirstOrDefault(pt => string.Equals(pt.PaymentTypeName, name, StringComparison.OrdinalIgnoreCase));
-            if (existing == null)
+            foreach (var (name, (logoUrl, isActive)) in seedTypes)
             {
-                context.Set<PaymentType>().Add(new PaymentType
+                var existing = existingTypes.FirstOrDefault(pt =>
+                    pt.TenantId == tenant.Id &&
+                    string.Equals(pt.PaymentTypeName, name, StringComparison.OrdinalIgnoreCase));
+                if (existing == null)
                 {
-                    PaymentTypeName = name,
-                    LogoUrl = logoUrl,
-                    IsActive = isActive
-                });
-            }
-            else if (string.IsNullOrEmpty(existing.LogoUrl))
-            {
-                existing.LogoUrl = logoUrl;
+                    context.Set<PaymentType>().Add(new PaymentType
+                    {
+                        TenantId = tenant.Id,
+                        PaymentTypeName = name,
+                        LogoUrl = logoUrl,
+                        IsActive = isActive
+                    });
+                }
+                else if (string.IsNullOrEmpty(existing.LogoUrl))
+                {
+                    existing.LogoUrl = logoUrl;
+                }
             }
         }
         await context.SaveChangesAsync();
@@ -140,19 +147,25 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.ESewaConfigurations.AnyAsync())
-            return;
+        var tenants = await context.Tenants.IgnoreQueryFilters().ToListAsync();
 
-        var eSewaConfig = new ESewaConfiguration
+        foreach (var tenant in tenants)
         {
-            PostUrl = "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
-            ProductCode = "EPAYTEST",
-            SecretKey = "8gBm/:&EnhH.1/q",
-            SuccessUrl = "https://localhost:44333/Payment/Success",
-            VerifyUrl = "https://rc-epay.esewa.com.np/api/epay/transaction/status/",
-            ServiceChargeAmount = 0m,
-        };
-        context.ESewaConfigurations.Add(eSewaConfig);
+            if (await context.ESewaConfigurations.IgnoreQueryFilters().AnyAsync(c => c.TenantId == tenant.Id))
+                continue;
+
+            var eSewaConfig = new ESewaConfiguration
+            {
+                TenantId = tenant.Id,
+                PostUrl = "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
+                ProductCode = "EPAYTEST",
+                SecretKey = "8gBm/:&EnhH.1/q",
+                SuccessUrl = "https://localhost:44333/Payment/Success",
+                VerifyUrl = "https://rc-epay.esewa.com.np/api/epay/transaction/status/",
+                ServiceChargeAmount = 0m,
+            };
+            context.ESewaConfigurations.Add(eSewaConfig);
+        }
         await context.SaveChangesAsync();
     }
 
@@ -160,21 +173,27 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.KhaltiConfigurations.AnyAsync())
-            return;
+        var tenants = await context.Tenants.IgnoreQueryFilters().ToListAsync();
 
-        var khaltiConfig = new KhaltiConfiguration
+        foreach (var tenant in tenants)
         {
-            ReturnUrl = "https://localhost:44333/Payment/KhaltiCallback",
-            WebsiteUrl = "https://example.com",
-            Amount = 0m,
-            ProductName = "Exam Fee",
-            AuthorizationKey = "test_secret_key",
-            ServiceCharge = 0,
-            PostUrl = "https://rc-epay.khalti.com/api/v2/epayment/initiate/",
-            VerifyUrl = "https://rc-epay.khalti.com/api/v2/epayment/lookup/",
-        };
-        context.KhaltiConfigurations.Add(khaltiConfig);
+            if (await context.KhaltiConfigurations.IgnoreQueryFilters().AnyAsync(c => c.TenantId == tenant.Id))
+                continue;
+
+            var khaltiConfig = new KhaltiConfiguration
+            {
+                TenantId = tenant.Id,
+                ReturnUrl = "https://localhost:44333/Payment/KhaltiCallback",
+                WebsiteUrl = "https://example.com",
+                Amount = 0m,
+                ProductName = "Exam Fee",
+                AuthorizationKey = "test_secret_key",
+                ServiceCharge = 0,
+                PostUrl = "https://rc-epay.khalti.com/api/v2/epayment/initiate/",
+                VerifyUrl = "https://rc-epay.khalti.com/api/v2/epayment/lookup/",
+            };
+            context.KhaltiConfigurations.Add(khaltiConfig);
+        }
         await context.SaveChangesAsync();
     }
 
@@ -182,22 +201,28 @@ public static class ReferenceDataSeeder
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
 
-        if (await context.ConnectIpsPaymentConfigurations.AnyAsync())
-            return;
+        var tenants = await context.Tenants.IgnoreQueryFilters().ToListAsync();
 
-        var connectIpsConfig = new ConnectIpsPaymentConfiguration
+        foreach (var tenant in tenants)
         {
-            GatewayUrl = "https://connectips.example.com/gateway",
-            MerchantId = "TEST_MERCHANT",
-            AppId = "TEST_APP_ID",
-            AppName = "Exam Management",
-            ValidationApiUrl = "https://connectips.example.com/api/validate",
-            UsernameForValidationApi = "test_user",
-            PasswordForValidationApi = "test_pass",
-            PasswordForCreditorPfx = "test_pfx_pass",
-            TransactionCurrency = "NPR",
-        };
-        context.ConnectIpsPaymentConfigurations.Add(connectIpsConfig);
+            if (await context.ConnectIpsPaymentConfigurations.IgnoreQueryFilters().AnyAsync(c => c.TenantId == tenant.Id))
+                continue;
+
+            var connectIpsConfig = new ConnectIpsPaymentConfiguration
+            {
+                TenantId = tenant.Id,
+                GatewayUrl = "https://connectips.example.com/gateway",
+                MerchantId = "TEST_MERCHANT",
+                AppId = "TEST_APP_ID",
+                AppName = "Exam Management",
+                ValidationApiUrl = "https://connectips.example.com/api/validate",
+                UsernameForValidationApi = "test_user",
+                PasswordForValidationApi = "test_pass",
+                PasswordForCreditorPfx = "test_pfx_pass",
+                TransactionCurrency = "NPR",
+            };
+            context.ConnectIpsPaymentConfigurations.Add(connectIpsConfig);
+        }
         await context.SaveChangesAsync();
     }
 

@@ -32,6 +32,7 @@ public class SemesterService(AppDbContext context) : ISemesterService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Include(s => s.Faculty)
             .ToListAsync();
 
         return (items, totalCount);

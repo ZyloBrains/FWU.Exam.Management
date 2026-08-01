@@ -918,7 +918,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ProvinceCode] IS NOT NULL");
 
         builder.Entity<Bank>()
-            .HasIndex(b => b.BankCode)
+            .HasIndex(b => new { b.TenantId, b.BankCode })
             .IsUnique()
             .HasFilter("[BankCode] IS NOT NULL");
 
@@ -958,7 +958,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[PeriodTypeName] IS NOT NULL");
 
         builder.Entity<PaymentType>()
-            .HasIndex(pt => pt.PaymentTypeName)
+            .HasIndex(pt => new { pt.TenantId, pt.PaymentTypeName })
             .IsUnique()
             .HasFilter("[PaymentTypeName] IS NOT NULL");
 
