@@ -128,7 +128,8 @@
             $('#programSwitcher').on('change', function () {
                 var id = this.value;
                 if (id) {
-                    window.location.href = '@Url.Action("Semesters")' + '?id=' + encodeURIComponent(id);
+                    var url = '@Url.Action("Semesters", new { id = "__programId__" })';
+                    window.location.href = url.replace('__programId__', encodeURIComponent(id));
                 }
             });
 
