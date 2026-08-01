@@ -40,10 +40,6 @@ public class Semester
     public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
 
-    [Display(Name = "Faculty")]
-    public int? FacultyId { get; set; }
-    public virtual Faculty? Faculty { get; set; }
-
     public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
     public virtual ICollection<SemesterEnrollment>? SemesterEnrollments { get; set; }
     public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }

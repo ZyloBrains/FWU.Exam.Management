@@ -21,5 +21,4 @@ public class ProgramSemesterItem
 {
     public int SemesterId { get; set; }
     public string? Display { get; set; }
-    public string? FacultyName { get; set; }
 }

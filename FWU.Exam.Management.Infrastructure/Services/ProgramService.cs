@@ -3,7 +3,6 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
-using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -83,43 +82,6 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
     {
         context.Programs.Add(program);
         await context.SaveChangesAsync();
-
-        await AutoLinkFacultySemestersAsync(program.Id, program.FacultyId);
-    }
-
-    private async Task AutoLinkFacultySemestersAsync(int programId, int? facultyId)
-    {
-        if (!facultyId.HasValue) return;
-
-        var semesterIds = await context.Semesters
-            .AsNoTracking()
-            .Where(s => s.FacultyId == facultyId.Value)
-            .Select(s => s.Id)
-            .ToListAsync();
-        if (semesterIds.Count == 0) return;
-
-        var assigned = await context.ProgramSemesters
-            .AsNoTracking()
-            .Where(ps => ps.ProgramId == programId)
-            .Select(ps => ps.SemesterId)
-            .ToHashSetAsync();
-
-        var toAdd = semesterIds
-            .Where(id => !assigned.Contains(id))
-            .Select(id => new ProgramSemester
-            {
-                ProgramId = programId,
-                SemesterId = id,
-                IsActive = true,
-                DisplayOrder = 0
-            })
-            .ToList();
-
-        if (toAdd.Count > 0)
-        {
-            await context.ProgramSemesters.AddRangeAsync(toAdd);
-            await context.SaveChangesAsync();
-        }
     }
 
     public async Task UpdateProgramAsync(Program program)

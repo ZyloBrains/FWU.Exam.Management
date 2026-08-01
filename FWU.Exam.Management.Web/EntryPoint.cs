@@ -261,7 +261,6 @@ public partial class EntryPoint
             await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
             await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
             await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
-            await RunSeederAsync(services, ProgramSemesterSeeder.SeedProgramSemestersAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedPaymentTypesAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedESewaConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedKhaltiConfigurationAsync);

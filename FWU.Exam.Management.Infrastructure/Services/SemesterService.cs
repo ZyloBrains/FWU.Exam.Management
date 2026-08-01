@@ -32,7 +32,6 @@ public class SemesterService(AppDbContext context) : ISemesterService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Include(s => s.Faculty)
             .ToListAsync();
 
         return (items, totalCount);
@@ -55,16 +54,6 @@ public class SemesterService(AppDbContext context) : ISemesterService
             : query.OrderBy(GetSortProperty(sort));
 
         return await query.ToListAsync();
-    }
-
-    public async Task<List<Semester>> GetSemestersByFacultyAsync(int? facultyId)
-    {
-        if (facultyId == null) return new List<Semester>();
-        return await context.Semesters
-            .AsNoTracking()
-            .Where(s => s.FacultyId == facultyId.Value)
-            .OrderBy(s => s.Number)
-            .ToListAsync();
     }
 
     public async Task<List<Semester>> GetSemestersByProgramAsync(int programId)
@@ -91,7 +80,6 @@ public class SemesterService(AppDbContext context) : ISemesterService
         return await context.Semesters
             .AsNoTracking()
             .Include(s => s.AcademicYear)
-            .Include(s => s.Faculty)
             .ApplyScope(userContext)
             .OrderBy(s => s.AcademicYearId)
             .ThenBy(s => s.Number)
@@ -139,54 +127,6 @@ public class SemesterService(AppDbContext context) : ISemesterService
         return await context.ProgramSemesters
             .AsNoTracking()
             .AnyAsync(ps => ps.SemesterId == semesterId);
-    }
-
-    public async Task AutoLinkProgramSemestersAsync()
-    {
-        var programs = await context.Programs
-            .AsNoTracking()
-            .Where(p => p.FacultyId.HasValue && p.IsActive)
-            .Select(p => new { p.Id, p.FacultyId })
-            .ToListAsync();
-
-        var existing = await context.ProgramSemesters
-            .AsNoTracking()
-            .Select(ps => new { ps.ProgramId, ps.SemesterId })
-            .ToListAsync();
-        var existingSet = existing
-            .Select(x => (x.ProgramId, x.SemesterId))
-            .ToHashSet();
-
-        var semestersByFaculty = await context.Semesters
-            .AsNoTracking()
-            .Where(s => s.FacultyId.HasValue)
-            .GroupBy(s => s.FacultyId!.Value)
-            .ToDictionaryAsync(g => g.Key, g => g.Select(s => s.Id).ToList());
-
-        var toAdd = new List<ProgramSemester>();
-        foreach (var program in programs)
-        {
-            if (!program.FacultyId.HasValue) continue;
-            if (!semestersByFaculty.TryGetValue(program.FacultyId.Value, out var semesterIds)) continue;
-            foreach (var semesterId in semesterIds)
-            {
-                if (existingSet.Contains((program.Id, semesterId))) continue;
-                toAdd.Add(new ProgramSemester
-                {
-                    ProgramId = program.Id,
-                    SemesterId = semesterId,
-                    IsActive = true,
-                    DisplayOrder = 0
-                });
-                existingSet.Add((program.Id, semesterId));
-            }
-        }
-
-        if (toAdd.Count > 0)
-        {
-            await context.ProgramSemesters.AddRangeAsync(toAdd);
-            await context.SaveChangesAsync();
-        }
     }
 
     public async Task<Semester?> GetSemesterByIdAsync(int id)

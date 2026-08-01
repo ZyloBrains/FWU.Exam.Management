@@ -1006,15 +1006,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ExamScheduleCode] IS NOT NULL");
 
         builder.Entity<Semester>()
-            .HasOne(s => s.Faculty)
-            .WithMany()
-            .HasForeignKey(s => s.FacultyId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<Semester>()
-            .HasIndex(s => new { s.FacultyId, s.AcademicYearId, s.Number })
+            .HasIndex(s => s.Code)
             .IsUnique()
-            .HasFilter("[AcademicYearId] IS NOT NULL");
+            .HasFilter("[Code] IS NOT NULL");
 
         builder.Entity<ProgramSemester>()
             .HasOne(ps => ps.Program)

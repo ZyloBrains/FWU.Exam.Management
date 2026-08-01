@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -260,6 +261,13 @@ public class ProgramsController(IProgramService programService, ISemesterService
         var program = await programService.GetProgramByIdAsync(id.Value);
         if (program == null) return NotFound();
 
+        ViewBag.Programs = new SelectList(
+            await context.Programs.AsNoTracking().ApplyScope(userContext)
+                .Select(p => new { p.Id, p.ProgramName, p.ProgramCode })
+                .OrderBy(p => p.ProgramName)
+                .ToListAsync(),
+            "Id", "ProgramName", program.Id);
+
         var assignedIds = await semesterService.GetAssignedSemesterIdsAsync(id.Value);
         var assignableSemesters = await semesterService.GetAssignableSemestersAsync(userContext);
 
@@ -272,8 +280,7 @@ public class ProgramsController(IProgramService programService, ISemesterService
                 Semesters = g.OrderBy(s => s.Number).Select(s => new ProgramSemesterItem
                 {
                     SemesterId = s.Id,
-                    Display = SemesterDisplayHelper.Format(s),
-                    FacultyName = s.Faculty?.Name
+                    Display = SemesterDisplayHelper.Format(s)
                 }).ToList()
             })
             .ToList();

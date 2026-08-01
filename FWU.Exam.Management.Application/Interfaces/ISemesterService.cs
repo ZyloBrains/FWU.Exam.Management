@@ -9,7 +9,6 @@ public interface ISemesterService
 {
     Task<(List<Semester> Items, int TotalCount)> GetSemestersAsync(int page, int pageSize, string? search, string sort, string sortDir, IUserContext userContext);
     Task<List<Semester>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, IUserContext userContext);
-    Task<List<Semester>> GetSemestersByFacultyAsync(int? facultyId);
     Task<Semester?> GetSemesterByIdAsync(int id);
     Task CreateSemesterAsync(Semester semester);
     Task UpdateSemesterAsync(Semester semester);
@@ -22,5 +21,4 @@ public interface ISemesterService
     Task SetProgramSemestersAsync(int programId, IEnumerable<int> semesterIds);
     Task<bool> IsSemesterAssignedToProgramAsync(int programId, int semesterId);
     Task<bool> IsSemesterAssignedToAnyProgramAsync(int semesterId);
-    Task AutoLinkProgramSemestersAsync();
 }

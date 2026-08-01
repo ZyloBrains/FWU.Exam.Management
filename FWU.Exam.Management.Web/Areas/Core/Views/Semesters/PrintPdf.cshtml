@@ -70,7 +70,6 @@
                 <th>Year</th>
                 <th>Start Date</th>
                 <th>End Date</th>
-                <th>Faculty</th>
                 <th>Remark</th>
             </tr>
         </thead>
@@ -84,7 +83,6 @@
                     <td>@item.Year</td>
                     <td>@item.StartDate.ToString("yyyy-MM-dd")</td>
                     <td>@item.EndDate.ToString("yyyy-MM-dd")</td>
-                    <td>@(item.Faculty?.Name ?? "-")</td>
                     <td>@item.Remark</td>
                 </tr>
             }

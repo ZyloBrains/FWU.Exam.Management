@@ -151,9 +151,6 @@ public class FacultyService(
         var programs = await context.Programs.CountAsync(p => p.FacultyId == id);
         if (programs > 0) reasons.Add($"{programs} Program(s)");
 
-        var semesters = await context.Semesters.CountAsync(s => s.FacultyId == id);
-        if (semesters > 0) reasons.Add($"{semesters} Semester(s)");
-
         var users = await context.Users.CountAsync(u => u.FacultyId == id);
         if (users > 0) reasons.Add($"{users} User account(s)");
 
