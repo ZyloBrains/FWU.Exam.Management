@@ -208,6 +208,12 @@
                                         <i class="fas fa-edit text-xs"></i>
                                     </a>
                                 }
+                                @if (HasPerm("programs.edit"))
+                                {
+                                    <a asp-action="Semesters" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-cyan-600 hover:bg-cyan-50 rounded-md" title="Assign Semesters">
+                                        <i class="fas fa-calendar-check text-xs"></i>
+                                    </a>
+                                }
                                 @if (HasPerm("programs.delete"))
                                 {
                                     <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
@@ -294,6 +300,12 @@
                     {
                         <a asp-action="Edit" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">
                             Edit
+                        </a>
+                    }
+                    @if (HasPerm("programs.edit"))
+                    {
+                        <a asp-action="Semesters" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-cyan-600 bg-cyan-50 rounded-lg hover:bg-cyan-100">
+                            Semesters
                         </a>
                     }
                     @if (HasPerm("programs.delete"))

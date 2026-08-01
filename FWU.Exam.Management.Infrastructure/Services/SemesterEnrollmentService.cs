@@ -104,10 +104,11 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
 
     public async Task<List<Semester>> GetSemestersByProgramAsync(int programId)
     {
-        return await context.SubjectOfferings
-            .Where(so => so.ProgramId == programId)
-            .Select(so => so.Semester!)
-            .Distinct()
+        return await context.ProgramSemesters
+            .Include(ps => ps.Semester)
+                .ThenInclude(s => s!.AcademicYear)
+            .Where(ps => ps.ProgramId == programId && ps.IsActive)
+            .Select(ps => ps.Semester!)
             .OrderBy(s => s.Number)
             .AsNoTracking()
             .ToListAsync();

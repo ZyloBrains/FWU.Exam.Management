@@ -245,6 +245,15 @@ public partial class EntryPoint
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
         var app = builder.Build();
 
+        if (app.Environment.IsDevelopment())
+        {
+            using var scope = app.Services.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+            await UserSeeder.SeedRolesAsync(serviceProvider);
+            await PermissionSeeder.SeedAllAsync(serviceProvider);
+            await UserSeeder.SeedUsersAsync(serviceProvider);
+        }
+
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
 
         // Configure the HTTP request pipeline.

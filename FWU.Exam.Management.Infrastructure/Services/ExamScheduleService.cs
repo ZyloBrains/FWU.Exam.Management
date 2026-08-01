@@ -200,14 +200,17 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext);
         if (examSchedule != null && examSchedule.AcademicYearId > 0)
             semestersQuery = semestersQuery.Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
-        var semesters = await semestersQuery.OrderBy(s => s.Number).ToListAsync();
+        var semesters = await semestersQuery
+            .Include(s => s.AcademicYear)
+            .OrderBy(s => s.Number)
+            .ToListAsync();
 
         return new ExamScheduleSelectListsDto
         {
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
             Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
-            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name }).ToList()
+            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")" }).ToList()
         };
     }
 
@@ -217,7 +220,11 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .ApplyScope(userContext)
             .Where(s => s.AcademicYearId == academicYearId)
             .OrderBy(s => s.Number)
-            .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
+            .Select(s => new SelectOption
+            {
+                Id = s.Id,
+                Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+            })
             .ToListAsync();
     }
 

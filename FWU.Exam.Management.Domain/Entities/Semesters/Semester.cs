@@ -47,5 +47,6 @@ public class Semester
     public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
     public virtual ICollection<SemesterEnrollment>? SemesterEnrollments { get; set; }
     public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }
+    public virtual ICollection<ProgramSemester>? ProgramSemesters { get; set; }
 }
 

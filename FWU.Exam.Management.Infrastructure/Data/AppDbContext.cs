@@ -70,6 +70,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<PeriodType>? PeriodTypes { get; set; }
     public DbSet<PreviousLevel>? PreviousLevels { get; set; }
     public DbSet<Program>? Programs { get; set; }
+    public DbSet<ProgramSemester>? ProgramSemesters { get; set; }
     public DbSet<QuestionSet>? QuestionSets { get; set; }
     public DbSet<ResultRecord>? ResultRecords { get; set; }
     public DbSet<SchoolType>? SchoolTypes { get; set; }
@@ -991,9 +992,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<Semester>()
-            .HasIndex(s => new { s.FacultyId, s.Code })
+            .HasIndex(s => new { s.FacultyId, s.AcademicYearId, s.Number })
             .IsUnique()
-            .HasFilter("[Code] IS NOT NULL");
+            .HasFilter("[AcademicYearId] IS NOT NULL");
+
+        builder.Entity<ProgramSemester>()
+            .HasOne(ps => ps.Program)
+            .WithMany(p => p.ProgramSemesters)
+            .HasForeignKey(ps => ps.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ProgramSemester>()
+            .HasOne(ps => ps.Semester)
+            .WithMany(s => s.ProgramSemesters)
+            .HasForeignKey(ps => ps.SemesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ProgramSemester>()
+            .HasIndex(ps => new { ps.ProgramId, ps.SemesterId })
+            .IsUnique();
 
         builder.Entity<StudentRegistration>()
             .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })

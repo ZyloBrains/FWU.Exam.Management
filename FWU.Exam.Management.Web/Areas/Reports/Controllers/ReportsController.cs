@@ -114,9 +114,13 @@ public class ReportsController(AppDbContext context) : Controller
         ViewData["SemesterId"] = new SelectList(
             await context.Semesters.AsNoTracking()
                 .OrderBy(s => s.Code)
-                .Select(s => new { s.Id, s.Code })
+                .Select(s => new
+                {
+                    s.Id,
+                    Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+                })
                 .ToListAsync(),
-            "Id", "Code", filter.SemesterId);
+            "Id", "Name", filter.SemesterId);
 
         ViewData["ExamTypeId"] = new SelectList(
             await context.ExamTypes.AsNoTracking()

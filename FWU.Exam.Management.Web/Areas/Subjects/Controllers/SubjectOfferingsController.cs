@@ -1,7 +1,9 @@
 using System.Text;
 using System.Text.Json;
 using ClosedXML.Excel;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
@@ -23,6 +25,17 @@ public class SubjectOfferingsController : Controller
     public SubjectOfferingsController(ISubjectOfferingService subjectOfferingService)
     {
         _subjectOfferingService = subjectOfferingService;
+    }
+
+    private static SelectList SemesterSelectList(IEnumerable<Semester> semesters, int? selectedId = null)
+    {
+        return new SelectList(
+            semesters.Select(s => new SelectListItem
+            {
+                Value = s.Id.ToString(),
+                Text = SemesterDisplayHelper.Format(s)
+            }),
+            "Value", "Text", selectedId?.ToString());
     }
 
     public async Task<IActionResult> Index(int? academicYearId, int? programId, int? semesterId)
@@ -174,7 +187,7 @@ public class SubjectOfferingsController : Controller
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
         ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name");
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
-        ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name");
+        ViewData["SemesterId"] = SemesterSelectList(semesters);
 
         var subjectsData = subjectCatalogs.Select(s => new
         {
@@ -219,6 +232,12 @@ public class SubjectOfferingsController : Controller
             var semester = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId);
             if (!semester.Any(s => s.Id == model.SemesterId))
                 ModelState.AddModelError(nameof(model.SemesterId), "The selected semester does not belong to the selected academic year.");
+        }
+
+        if (model.ProgramId > 0 && model.SemesterId > 0)
+        {
+            if (!await _subjectOfferingService.IsSemesterAssignedToProgramAsync(model.ProgramId, model.SemesterId))
+                ModelState.AddModelError(nameof(model.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs → Semesters.");
         }
 
         if (ModelState.IsValid)
@@ -267,7 +286,7 @@ public class SubjectOfferingsController : Controller
                 var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync();
                 ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
                 ViewData["ProgramId"] = new SelectList(progs, "Id", "ProgramName", model.ProgramId);
-                ViewData["SemesterId"] = new SelectList(sems, "Id", "Name", model.SemesterId);
+                ViewData["SemesterId"] = SemesterSelectList(sems, model.SemesterId);
                 ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(cats.Select(s => new
                 {
                     id = s.Id,
@@ -285,7 +304,7 @@ public class SubjectOfferingsController : Controller
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
         ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", model.ProgramId);
-        ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", model.SemesterId);
+        ViewData["SemesterId"] = SemesterSelectList(semesters, model.SemesterId);
 
         var subjectsData = subjectCatalogs.Select(s => new
         {
@@ -312,7 +331,7 @@ public class SubjectOfferingsController : Controller
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
         ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", subjectOffering.Semester?.AcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
-        ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
+        ViewData["SemesterId"] = SemesterSelectList(semesters, subjectOffering.SemesterId);
         return View(subjectOffering);
     }
 
@@ -334,6 +353,12 @@ public class SubjectOfferingsController : Controller
             var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);
             if (!yearSemesters.Any(s => s.Id == subjectOffering.SemesterId))
                 ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester does not belong to the selected academic year.");
+        }
+
+        if (subjectOffering.ProgramId > 0 && subjectOffering.SemesterId > 0)
+        {
+            if (!await _subjectOfferingService.IsSemesterAssignedToProgramAsync(subjectOffering.ProgramId, subjectOffering.SemesterId))
+                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs → Semesters.");
         }
 
         if (ModelState.IsValid && subjectChanged)
@@ -364,7 +389,7 @@ public class SubjectOfferingsController : Controller
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
         ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", academicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
-        ViewData["SemesterId"] = new SelectList(semesters, "Id", "Name", subjectOffering.SemesterId);
+        ViewData["SemesterId"] = SemesterSelectList(semesters, subjectOffering.SemesterId);
         return View(subjectOffering);
     }
 
