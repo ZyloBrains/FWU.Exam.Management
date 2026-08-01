@@ -428,6 +428,8 @@
                     form.action = '@Url.Action("ESewaPayment", "StudentDashboard", new { area = "Students" })';
                 } else if (method === 'khalti') {
                     form.action = '@Url.Action("KhaltiPayment", "StudentDashboard", new { area = "Students" })';
+                } else if (method === 'connectips') {
+                    form.action = '@Url.Action("ConnectIPSPayment", "StudentDashboard", new { area = "Students" })';
                 } else {
                     form.action = '@Url.Action("ProcessPayment", "StudentDashboard", new { area = "Students" })';
                 }

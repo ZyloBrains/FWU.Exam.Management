@@ -1,22 +1,27 @@
 using System.Text;
 using System.Text.Json;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities.Payments;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class KhaltiService(HttpClient httpClient, IConfiguration configuration, ILogger<KhaltiService> logger) : IKhaltiService
+public class KhaltiService(HttpClient httpClient, AppDbContext context, IConfiguration configuration, ILogger<KhaltiService> logger) : IKhaltiService
 {
-    private string BaseUrl => configuration["Khalti:BaseUrl"] ?? "https://dev.khalti.com/api/v2";
-    private string SecretKey => configuration["Khalti:SecretKey"] ?? "";
+    private const string InitiatePath = "/epayment/initiate/";
 
     public async Task<KhaltiInitiateResponse?> InitiatePaymentAsync(KhaltiInitiateRequest request)
     {
-            var payload = new
-            {
-                return_url = request.ReturnUrl,
-                website_url = string.IsNullOrEmpty(request.WebsiteUrl) ? (configuration["Khalti:WebsiteUrl"] ?? "") : request.WebsiteUrl,
+        var config = await GetConfigAsync();
+        var baseUrl = config != null ? TrimSuffix(config.PostUrl, InitiatePath) : (configuration["Khalti:BaseUrl"] ?? "https://dev.khalti.com/api/v2");
+        var secretKey = config?.AuthorizationKey ?? configuration["Khalti:SecretKey"] ?? "";
+
+        var payload = new
+        {
+            return_url = request.ReturnUrl,
+            website_url = string.IsNullOrEmpty(request.WebsiteUrl) ? (config?.WebsiteUrl ?? configuration["Khalti:WebsiteUrl"] ?? "") : request.WebsiteUrl,
             amount = request.Amount,
             purchase_order_id = request.PurchaseOrderId,
             purchase_order_name = request.PurchaseOrderName,
@@ -31,13 +36,13 @@ public class KhaltiService(HttpClient httpClient, IConfiguration configuration, 
         var json = JsonSerializer.Serialize(payload);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/epayment/initiate/")
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}{InitiatePath}")
         {
             Content = content
         };
-        requestMessage.Headers.Add("Authorization", $"Key {SecretKey}");
+        requestMessage.Headers.Add("Authorization", $"Key {secretKey}");
 
-        logger.LogInformation("Sending Khalti initiate request to {Url} with amount {Amount} paisa", $"{BaseUrl}/epayment/initiate/", request.Amount);
+        logger.LogInformation("Sending Khalti initiate request to {Url} with amount {Amount} paisa", $"{baseUrl}{InitiatePath}", request.Amount);
 
         var response = await httpClient.SendAsync(requestMessage);
         var responseJson = await response.Content.ReadAsStringAsync();
@@ -56,15 +61,19 @@ public class KhaltiService(HttpClient httpClient, IConfiguration configuration, 
 
     public async Task<KhaltiLookupResponse?> LookupPaymentAsync(string pidx)
     {
+        var config = await GetConfigAsync();
+        var baseUrl = config != null ? TrimSuffix(config.PostUrl, InitiatePath) : (configuration["Khalti:BaseUrl"] ?? "https://dev.khalti.com/api/v2");
+        var secretKey = config?.AuthorizationKey ?? configuration["Khalti:SecretKey"] ?? "";
+
         var payload = new { pidx };
         var json = JsonSerializer.Serialize(payload);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/epayment/lookup/")
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/epayment/lookup/")
         {
             Content = content
         };
-        requestMessage.Headers.Add("Authorization", $"Key {SecretKey}");
+        requestMessage.Headers.Add("Authorization", $"Key {secretKey}");
 
         logger.LogInformation("Sending Khalti lookup request for pidx={Pidx}", pidx);
 
@@ -81,5 +90,22 @@ public class KhaltiService(HttpClient httpClient, IConfiguration configuration, 
         logger.LogInformation("Khalti lookup succeeded: {Response}", responseJson);
         return JsonSerializer.Deserialize<KhaltiLookupResponse>(responseJson,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+    private async Task<KhaltiConfiguration?> GetConfigAsync()
+    {
+        return await context.KhaltiConfigurations!.AsNoTracking().OrderBy(c => c.Id).FirstOrDefaultAsync();
+    }
+
+    private static string TrimSuffix(string? url, string suffix)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return "";
+
+        var trimmed = url.TrimEnd('/');
+        if (trimmed.EndsWith(suffix.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            return trimmed[..^suffix.TrimEnd('/').Length];
+
+        return trimmed;
     }
 }

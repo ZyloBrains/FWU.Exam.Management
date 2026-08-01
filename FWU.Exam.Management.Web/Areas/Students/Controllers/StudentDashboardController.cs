@@ -28,6 +28,7 @@ public class StudentDashboardController(
     IEmailSender emailSender,
     IESewaService esewaService,
     IKhaltiService khaltiService,
+    IConnectIPSService connectIpsService,
     IConfiguration configuration,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
@@ -591,7 +592,7 @@ public class StudentDashboardController(
         logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
             amount, transactionUuid, successUrl, failureUrl);
 
-        var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
+        var formData = await esewaService.GeneratePaymentFormDataAsync(amount, transactionUuid, successUrl!, failureUrl!);
 
         HttpContext.Session.SetInt32("ESewaLogId", logId);
         ViewBag.LogId = logId;
@@ -659,7 +660,7 @@ public class StudentDashboardController(
             logger.LogInformation("ESewaCallback: txCode={TxCode}, status={Status}, totalAmount={Amount}, uuid={Uuid}, productCode={ProductCode}",
                 response.TransactionCode, response.Status, response.TotalAmount, response.TransactionUuid, response.ProductCode);
 
-            var sigValid = esewaService.VerifyResponseSignature(response, decodedJson);
+            var sigValid = await esewaService.VerifyResponseSignatureAsync(response, decodedJson);
             logger.LogInformation("ESewaCallback: signatureValid={SigValid}", sigValid);
 
             if (!sigValid)
@@ -803,6 +804,133 @@ public class StudentDashboardController(
             logger.LogError(ex, "Khalti payment initiation failed");
             TempData["ErrorMessage"] = $"Khalti payment failed: {ex.Message}";
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConnectIPSPayment(int examScheduleId, decimal amount, string? selectedSubjectIds)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        if (registration == null) return NotFound("Student registration not found.");
+
+        var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
+        var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
+            ? new List<int>()
+            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
+
+        int logId;
+        if (subjectIds.Count == 0)
+        {
+            logId = await dashboardService.CreatePaymentRequestLogAsync(
+                examScheduleId, registration.Id, amount, "connectips", invoiceNumber,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
+        else
+        {
+            logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
+                examScheduleId, registration.Id, amount, "connectips", invoiceNumber, subjectIds,
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+        }
+
+        logger.LogInformation("ConnectIPSPayment: amount={Amount}, invoice={Invoice}, scheduleId={ScheduleId}",
+            amount, invoiceNumber, examScheduleId);
+
+        var particulars = $"Exam Fee - {schedule?.ExamScheduleName ?? ""}";
+        var formData = await connectIpsService.GeneratePaymentFormDataAsync(
+            amount, invoiceNumber, invoiceNumber, "Exam Fee Payment", particulars);
+
+        if (formData == null)
+        {
+            TempData["ErrorMessage"] = "ConnectIPS is not configured yet. Please choose another payment method.";
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
+
+        HttpContext.Session.SetInt32("ConnectIpsLogId", logId);
+        TempData["ConnectIpsAmount"] = amount.ToString("F2");
+        TempData["ConnectIpsTxnId"] = invoiceNumber;
+
+        return View(formData);
+    }
+
+    public async Task<IActionResult> ConnectIPSCallback(string? txnId, string? referenceId, long? txnAmt, string? status, string? statusDesc)
+    {
+        var sessionLogId = HttpContext.Session.GetInt32("ConnectIpsLogId");
+        HttpContext.Session.Remove("ConnectIpsLogId");
+
+        logger.LogInformation("ConnectIPSCallback hit: sessionLogId={SessionLogId}, txnId={TxnId}, referenceId={ReferenceId}, txnAmt={TxnAmt}, status={Status}",
+            sessionLogId, txnId, referenceId, txnAmt, status);
+
+        if (string.IsNullOrEmpty(txnId))
+        {
+            if (sessionLogId.HasValue)
+                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, "No txnId received from ConnectIPS.", "No transaction id received from ConnectIPS.");
+
+            TempData["ErrorMessage"] = "No transaction identifier received from ConnectIPS.";
+            return RedirectToAction(nameof(PaymentFailure));
+        }
+
+        try
+        {
+            var resolvedLogId = sessionLogId;
+            if (!resolvedLogId.HasValue && !string.IsNullOrEmpty(referenceId))
+            {
+                logger.LogWarning("ConnectIPSCallback: Session log ID lost. Attempting fallback lookup by txnId={TxnId}", txnId);
+                var invoiceLog = await dashboardService.GetPaymentLogByInvoiceNumberAsync(txnId);
+                if (invoiceLog != null)
+                    resolvedLogId = invoiceLog.Id;
+            }
+
+            var log = resolvedLogId.HasValue ? await dashboardService.GetPaymentLogByIdAsync(resolvedLogId.Value) : null;
+            if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
+
+            var amount = log?.Amount ?? 0m;
+            var verification = await connectIpsService.ValidateTransactionAsync(txnId, amount);
+            var responseData = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                callback_txnId = txnId,
+                callback_referenceId = referenceId,
+                callback_txnAmt = txnAmt,
+                callback_status = status,
+                callback_statusDesc = statusDesc,
+                verification
+            });
+
+            if (verification == null || !string.Equals(verification.Status, "SUCCESS", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning("ConnectIPS payment verification failed: txnId={TxnId}, status={VerifyStatus}, callback_status={CallbackStatus}",
+                    txnId, verification?.Status, status);
+                if (resolvedLogId.HasValue)
+                    await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, txnId, false, responseData, "Payment verification failed via ConnectIPS.");
+
+                TempData["ErrorMessage"] = $"Payment verification failed. Status: {verification?.Status ?? "Unknown"}";
+                return RedirectToAction(nameof(PaymentFailure));
+            }
+
+            logger.LogInformation("ConnectIPS payment successful: txnId={TxnId}, referenceId={ReferenceId}", txnId, referenceId);
+            if (resolvedLogId.HasValue)
+            {
+                await HandlePostPaymentRegistration(resolvedLogId.Value);
+                await dashboardService.UpdatePaymentRequestLogAsync(resolvedLogId.Value, txnId, true, responseData, "Payment verified via ConnectIPS.");
+            }
+
+            TempData["SuccessMessage"] = "Payment successful!";
+            TempData["TransactionCode"] = txnId;
+            TempData["TransactionUuid"] = referenceId ?? txnId;
+
+            return RedirectToAction(nameof(PaymentSuccess));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "ConnectIPS callback processing failed");
+            TempData["ErrorMessage"] = "Failed to process ConnectIPS callback.";
+            return RedirectToAction(nameof(PaymentFailure));
         }
     }
 

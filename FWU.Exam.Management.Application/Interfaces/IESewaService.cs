@@ -39,9 +39,8 @@ public class ESewaVerifyResponse
 
 public interface IESewaService
 {
-    ESewaPaymentFormData GeneratePaymentFormData(decimal totalAmount, string transactionUuid, string successUrl, string failureUrl);
-    string GenerateSignature(string message);
-    bool VerifyResponseSignature(ESewaVerifyResponse response, string rawJson);
+    Task<ESewaPaymentFormData> GeneratePaymentFormDataAsync(decimal totalAmount, string transactionUuid, string successUrl, string failureUrl);
+    Task<bool> VerifyResponseSignatureAsync(ESewaVerifyResponse response, string rawJson);
     string GenerateTransactionUuid();
     Task<ESewaVerifyResponse?> VerifyTransactionAsync(string transactionUuid, decimal totalAmount);
 }

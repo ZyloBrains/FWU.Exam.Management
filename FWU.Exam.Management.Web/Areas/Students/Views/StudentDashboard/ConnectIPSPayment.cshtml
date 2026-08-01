@@ -1,0 +1,40 @@
+@model FWU.Exam.Management.Application.Interfaces.ConnectIpsFormData
+
+@{
+    ViewData["Title"] = "Redirecting to ConnectIPS";
+}
+
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-10 max-w-md w-full text-center">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-5 sm:mb-6">
+            <i class="fas fa-spinner fa-spin text-3xl sm:text-4xl text-blue-600"></i>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Redirecting to ConnectIPS</h2>
+        <p class="text-sm sm:text-base text-gray-500 mb-4">Please wait while we redirect you to ConnectIPS's secure bank payment page...</p>
+        <p class="text-sm text-gray-400 bg-gray-50 rounded-xl p-3 sm:p-4">
+            Total Amount: <strong class="text-gray-800">Rs @((decimal.Parse(Model.TxnAmt) / 100).ToString("N0"))</strong>
+        </p>
+
+        <form id="connectIpsForm" action="@Model.FormActionUrl" method="POST" class="hidden">
+            <input type="text" name="MERCHANTID" value="@Model.MerchantId" />
+            <input type="text" name="APPID" value="@Model.AppId" />
+            <input type="text" name="APPNAME" value="@Model.AppName" />
+            <input type="text" name="TXNID" value="@Model.TxnId" />
+            <input type="text" name="TXNDATE" value="@Model.TxnDate" />
+            <input type="text" name="TXNCRNCY" value="@Model.TxnCurrency" />
+            <input type="text" name="TXNAMT" value="@Model.TxnAmt" />
+            <input type="text" name="REFERENCEID" value="@Model.ReferenceId" />
+            <input type="text" name="REMARKS" value="@Model.Remarks" />
+            <input type="text" name="PARTICULARS" value="@Model.Particulars" />
+            <input type="text" name="TOKEN" value="@Model.Token" />
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('connectIpsForm').submit();
+        });
+    </script>
+}
