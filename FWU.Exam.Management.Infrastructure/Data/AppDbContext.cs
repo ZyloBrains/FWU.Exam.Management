@@ -46,6 +46,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<College>? Colleges { get; set; }
     public DbSet<CollegeProgram>? CollegePrograms { get; set; }
     public DbSet<CollegeType>? CollegeTypes { get; set; }
+    public DbSet<TenantCollege>? TenantColleges { get; set; }
     public DbSet<Country>? Countries { get; set; }
     public DbSet<District>? Districts { get; set; }
     public DbSet<EntryFormat>? EntryFormats { get; set; }
@@ -146,6 +147,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 .HasForeignKey("TenantId")
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
+        builder.Entity<College>()
+            .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
+                c.TenantColleges!.Any(tc => tc.TenantId == AppDbContext.GetCurrentTenantId()));
+
+        builder.Entity<TenantCollege>()
+            .HasKey(tc => new { tc.TenantId, tc.CollegeId });
+
+        builder.Entity<TenantCollege>()
+            .HasOne(tc => tc.College)
+            .WithMany(c => c.TenantColleges)
+            .HasForeignKey(tc => tc.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<TenantCollege>()
+            .HasOne(tc => tc.Tenant)
+            .WithMany(t => t.TenantColleges)
+            .HasForeignKey(tc => tc.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<BillTitle>()
             .HasOne(e => e.Tenant)
@@ -968,7 +988,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         // Unique indexes - Tenant-scoped composite (TenantId, Code)
         builder.Entity<College>()
-            .HasIndex(c => new { c.TenantId, c.Code })
+            .HasIndex(c => c.Code)
             .IsUnique();
 
         builder.Entity<AcademicYear>()

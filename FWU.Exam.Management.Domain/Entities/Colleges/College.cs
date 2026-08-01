@@ -2,16 +2,13 @@
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
-using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Colleges;
-public class College : ITenantScoped
+public class College
 {
     public int Id { get; set; }
-    public int TenantId { get; set; }
-    public virtual Tenant? Tenant { get; set; }
 
     [Required, MaxLength(30)]
     [Display(Name = "Code")]
@@ -94,6 +91,7 @@ public class College : ITenantScoped
     public virtual CollegeProfile? CollegeProfile { get; set; }
 
     public virtual ICollection<CollegeProgram>? CollegePrograms { get; set; }
+    public virtual ICollection<TenantCollege>? TenantColleges { get; set; }
     public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
     public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
     public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
