@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
@@ -113,6 +114,22 @@ public static class ReferenceDataSeeder
             });
             await context.SaveChangesAsync();
         }
+    }
+
+    public static async Task SeedCollegeTypesAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        if (await context.CollegeTypes.AnyAsync())
+            return;
+
+        var collegeTypes = new[]
+        {
+            new CollegeType { Code = "UNI", Name = "University Campus", IsDefault = true, IsActive = true },
+            new CollegeType { Code = "AFF", Name = "Affiliated College", IsActive = true },
+        };
+        await context.CollegeTypes.AddRangeAsync(collegeTypes);
+        await context.SaveChangesAsync();
     }
 
     public static async Task SeedAdditionalReferenceDataAsync(IServiceProvider serviceProvider)
