@@ -247,50 +247,27 @@ public partial class EntryPoint
 
         if (app.Environment.IsDevelopment())
         {
-            using var scope = app.Services.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
+            var services = app.Services;
 
-            var tenantContext = serviceProvider.GetRequiredService<ITenantContext>();
-            tenantContext.SetTenant(1, "OCE", TenantType.Central);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-
-            await ReferenceDataSeeder.SeedTenantsAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await UserSeeder.SeedRolesAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await PermissionSeeder.SeedAllAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await LocationSeeder.SeedLocationDataAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedReferenceDataAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedCollegeTypesAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await AcademicYearSeeder.SeedAcademicYearsAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await FacultySeeder.SeedFacultiesAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ProgramSeeder.SeedProgramsAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await CollegeSeeder.SeedCollegesAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await CollegeProgramSeeder.SeedCollegeProgramsAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await GradingSeeder.SeedGradingDataAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ProgramSemesterSeeder.SeedProgramSemestersAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedPaymentTypesAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedESewaConfigurationAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedKhaltiConfigurationAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedConnectIPSConfigurationAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await ReferenceDataSeeder.SeedSmsConfigurationAsync(serviceProvider);
-            AppDbContext.SetAmbientForSeeding(tenantContext);
-            await UserSeeder.SeedUsersAsync(serviceProvider);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedTenantsAsync);
+            await RunSeederAsync(services, UserSeeder.SeedRolesAsync);
+            await RunSeederAsync(services, PermissionSeeder.SeedAllAsync);
+            await RunSeederAsync(services, LocationSeeder.SeedLocationDataAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedReferenceDataAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedCollegeTypesAsync);
+            await RunSeederAsync(services, AcademicYearSeeder.SeedAcademicYearsAsync);
+            await RunSeederAsync(services, FacultySeeder.SeedFacultiesAsync);
+            await RunSeederAsync(services, ProgramSeeder.SeedProgramsAsync);
+            await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
+            await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
+            await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
+            await RunSeederAsync(services, ProgramSemesterSeeder.SeedProgramSemestersAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedPaymentTypesAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedESewaConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedKhaltiConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedConnectIPSConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedSmsConfigurationAsync);
+            await RunSeederAsync(services, UserSeeder.SeedUsersAsync);
         }
 
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
@@ -342,6 +319,17 @@ public partial class EntryPoint
         app.MapRazorPages();
 
         app.Run();
+    }
+
+    private static async Task RunSeederAsync(IServiceProvider appServices, Func<IServiceProvider, Task> seeder)
+    {
+        using var scope = appServices.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+
+        var tenantContext = serviceProvider.GetRequiredService<ITenantContext>();
+        tenantContext.SetTenant(1, "OCE", TenantType.Central);
+
+        await seeder(serviceProvider);
     }
 
     private static bool IsAjaxRequest(HttpRequest request)

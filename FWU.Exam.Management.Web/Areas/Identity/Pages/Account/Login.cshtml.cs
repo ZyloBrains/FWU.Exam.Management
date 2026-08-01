@@ -185,6 +185,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         {
             var faculty = await context.Faculties
                 .AsNoTracking()
+                .IgnoreQueryFilters()
                 .Include(f => f.Tenant)
                 .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
 
@@ -195,6 +196,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         {
             var college = await context.Colleges
                 .AsNoTracking()
+                .IgnoreQueryFilters()
                 .Include(c => c.Tenant)
                 .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
 
