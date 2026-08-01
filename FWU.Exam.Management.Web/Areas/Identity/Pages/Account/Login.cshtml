@@ -145,12 +145,6 @@
             display: none;
         }
 
-        .extra-links a {
-            font-size: 0.8rem;
-            display: inline-block;
-            padding: 4px 0;
-        }
-
         @@media (min-width: 768px) {
             .logo-circle {
                 width: 9rem;
@@ -166,16 +160,6 @@
 
             .right-panel {
                 display: none !important;
-            }
-
-            .extra-links {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-
-            .extra-links .divider {
-                display: none;
             }
         }
 
@@ -202,8 +186,8 @@
                         <img src="~/images/fwu-logo.jpg" class="mobile-logo" alt="FWU Logo" />
                     </div>
 
-                    <h1 class="fs-5 fs-md-4 fw-bold text-dark mb-1">Welcome to FWU - EMIS</h1>
-                    <p class="text-muted small mb-3 mb-md-4">Examination Management Information System</p>
+                    <h1 class="fs-5 fs-md-4 fw-bold text-dark mb-1 text-center text-md-start">Welcome to FWU - EMIS</h1>
+                    <p class="text-muted small mb-3 mb-md-4 text-center text-md-start">Examination Management Information System</p>
 
                     @* Session / TempData Status Message *@
                     @if (TempData["StatusMessage"] != null)
@@ -228,7 +212,7 @@
                                    inputmode="text"
                                    autocomplete="username"
                                    aria-required="true"
-                                   placeholder="you@example.com or SC-2021-1-1-0282" />
+                                   placeholder="Email or Registration Number" />
                             <span asp-validation-for="Input.EmailOrRegNumber" class="text-danger small"></span>
                         </div>
 
@@ -243,7 +227,7 @@
                                        inputmode="text"
                                        autocomplete="current-password"
                                        aria-required="true"
-                                       placeholder="Password or Date of Birth (YYYY-MM-DD)" />
+                                       placeholder="Password" />
                                 <button type="button" class="password-toggle" id="toggle-password" aria-label="Toggle password visibility">
                                     <i class="bi bi-eye-slash" id="toggle-icon"></i>
                                 </button>
@@ -271,14 +255,6 @@
                             Log in
                         </button>
 
-                        <!-- Extra Links -->
-                        <div class="extra-links mt-3 text-center small text-muted">
-                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl"
-                               class="text-primary text-decoration-none">Register as a new user</a>
-                            <span class="divider">&nbsp;|&nbsp;</span>
-                            <a id="resend-confirmation" asp-page="./ResendEmailConfirmation"
-                               class="text-primary text-decoration-none">Resend email confirmation</a>
-                        </div>
                     </form>
 
                     @* External Login Providers (hidden if none configured) *@
