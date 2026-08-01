@@ -8,11 +8,27 @@
 }
 
 <div class="min-h-screen pb-24 sm:pb-6">
+    <style>
+        .fee-header, .fee-row { display: grid; grid-template-columns: 2.5rem 3rem minmax(0,1fr) 5.5rem 4rem 4.5rem 7.5rem; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; }
+        .fee-row { transition: background-color .15s ease; }
+        .c-check { display: flex; justify-content: center; }
+        .c-fee { text-align: right; }
+        .c-theory, .c-prac { text-align: center; }
+        @@media (max-width: 767px) {
+            .fee-header { display: none; }
+            .fee-row { display: flex; align-items: center; gap: 0.75rem; margin: 0 0.75rem; border: 1px solid #f1f5f9; border-radius: 0.75rem; padding: 0.75rem; }
+            .fee-row + .fee-row { margin-top: 0.5rem; }
+            .fee-row:hover { background: transparent; }
+            .c-sn, .c-code, .c-theory, .c-prac { display: none; }
+            .c-sub { flex: 1 1 auto; min-width: 0; }
+            .c-fee { margin-left: auto; }
+        }
+    </style>
     @await Html.PartialAsync("_AlertMessages")
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 mb-6 sm:mb-8">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
         <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
-        <div class="relative px-5 py-8 sm:px-10 sm:py-10">
+        <div class="relative px-5 py-6 sm:px-10 sm:py-10">
             <div class="flex items-start gap-4">
                 <div class="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20 shrink-0">
                     <svg class="h-7 w-7 sm:h-8 sm:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,56 +125,58 @@
 
         @if (compulsorySubjects.Any())
         {
-            <div class="px-6 py-3 bg-blue-50 border-b border-gray-200">
+            <div class="px-4 sm:px-6 py-3 bg-blue-50 border-b border-gray-200">
                 <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wider">Compulsory Subjects</h4>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600 w-10"></th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Code</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
-                            <th class="text-right px-4 py-3 font-semibold text-gray-600">Practical Fee</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @for (int i = 0; i < compulsorySubjects.Count; i++)
-                        {
-                            var subj = compulsorySubjects[i];
-                            <tr class="subject-row hover:bg-gray-50 transition-colors @(subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-blue-50/30") : "")">
-                                <td class="px-4 py-3">
-                                    <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                           data-practical-fee="@subj.PracticalFee"
-                                           class="subject-checkbox rounded border-gray-300"
-                                           onchange="updateTotals()"
-                                           @(Model.IsRegular ? "checked disabled" : (subj.IsSelected ? "checked" : null)) />
-                                </td>
-                                <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
-                                <td class="px-4 py-3 text-gray-800 font-medium">@subj.SubjectName</td>
-                                <td class="px-4 py-3 text-gray-600">@subj.SubjectCode</td>
-                                <td class="px-4 py-3 text-center">
-                                    @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
-                                    else { <i class="fas fa-times text-gray-300"></i> }
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
-                                    else { <i class="fas fa-times text-gray-300"></i> }
-                                </td>
-                                <td class="px-4 py-3 text-right text-gray-800">Rs @subj.PracticalFee.ToString("N0")</td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="bg-gray-50 border-t border-gray-200">
-                        <tr class="text-sm font-semibold text-gray-700">
-                            <td colspan="6" class="px-4 py-3 text-right">Compulsory Subtotal:</td>
-                            <td class="px-4 py-3 text-right" id="compPracticalFee">Rs @compulsorySubjects.Sum(s => s.PracticalFee).ToString("N0")</td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="fee-header">
+                <span></span>
+                <span class="text-left text-xs font-semibold text-gray-500">SN</span>
+                <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
+                <span class="text-left text-xs font-semibold text-gray-500">Code</span>
+                <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
+                <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
+                <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+            </div>
+            @for (int i = 0; i < compulsorySubjects.Count; i++)
+            {
+                var subj = compulsorySubjects[i];
+                var rowBg = subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-blue-50/30") : "bg-white";
+                <div class="fee-row subject-card @rowBg hover:bg-gray-50">
+                    <div class="c-check">
+                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                               data-practical-fee="@subj.PracticalFee"
+                               class="subject-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
+                               onchange="updateTotals()"
+                               @(Model.IsRegular ? "checked disabled" : (subj.IsSelected ? "checked" : null)) />
+                    </div>
+                    <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
+                    <div class="c-sub">
+                        <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
+                        <div class="mt-1 md:hidden flex items-center gap-1.5 flex-wrap">
+                            <span class="text-xs text-gray-500">@subj.SubjectCode</span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasTheory ? "text-green-600" : "text-gray-400")">
+                                <i class="fas fa-@(subj.HasTheory ? "check" : "times")"></i> T
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasPractical ? "text-green-600" : "text-gray-400")">
+                                <i class="fas fa-@(subj.HasPractical ? "check" : "times")"></i> P
+                            </span>
+                        </div>
+                    </div>
+                    <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
+                    <div class="c-theory">
+                        @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
+                        else { <i class="fas fa-times text-gray-300"></i> }
+                    </div>
+                    <div class="c-prac">
+                        @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
+                        else { <i class="fas fa-times text-gray-300"></i> }
+                    </div>
+                    <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                </div>
+            }
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <span class="text-sm font-semibold text-gray-700">Compulsory Subtotal:</span>
+                <span class="text-sm font-semibold text-gray-700" id="compPracticalFee">Rs @compulsorySubjects.Sum(s => s.PracticalFee).ToString("N0")</span>
             </div>
         }
 
@@ -168,85 +186,93 @@
             {
                 var groupName = group.First().SubjectTypeName ?? "Elective Subjects";
                 var groupSubjects = group.ToList();
-                <div class="px-6 py-3 bg-purple-50 border-b border-gray-200">
-                    <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects - @groupName</h4>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-10">
-                                    <input type="checkbox" onchange="toggleAllElec(this)" class="rounded border-gray-300" />
-                                </th>
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Code</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
-                                <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
-                                <th class="text-right px-4 py-3 font-semibold text-gray-600">Practical Fee</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @for (int i = 0; i < groupSubjects.Count; i++)
-                            {
-                                var subj = groupSubjects[i];
-                                <tr class="subject-row hover:bg-gray-50 transition-colors @(subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "")">
-                                    <td class="px-4 py-3">
-                                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                               data-practical-fee="@subj.PracticalFee"
-                                               data-subject-type-id="@subj.SubjectTypeId"
-                                               class="subject-checkbox elective-checkbox rounded border-gray-300"
-                                               onchange="onSubjectChange(this)" checked="@(subj.IsSelected ? "checked" : null)" />
-                                    </td>
-                                    <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
-                                    <td class="px-4 py-3 text-gray-800 font-medium">
-                                        @subj.SubjectName
-                                        @if (!Model.IsRegular && subj.IsFailed)
-                                        {
-                                            <p class="text-xs font-semibold text-gray-900">Rs @subj.PracticalFee.ToString("N0")</p>
-                                        }
-                                    </td>
-                                    <td class="px-4 py-3 text-gray-600">@subj.SubjectCode</td>
-                                    <td class="px-4 py-3 text-center">
-                                        @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
-                                        else { <i class="fas fa-times text-gray-300"></i> }
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
-                                        else { <i class="fas fa-times text-gray-300"></i> }
-                                    </td>
-                                    <td class="px-4 py-3 text-right text-gray-800">Rs @subj.PracticalFee.ToString("N0")</td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot class="bg-gray-50 border-t border-gray-200">
-                            <tr class="text-sm font-semibold text-gray-700">
-                                <td colspan="6" class="px-4 py-3 text-right">Elective Subtotal:</td>
-                                <td class="px-4 py-3 text-right">Rs @groupSubjects.Sum(s => s.PracticalFee).ToString("N0")</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="elective-group">
+                    <div class="px-4 sm:px-6 py-3 bg-purple-50 border-b border-gray-200">
+                        <div class="flex items-center justify-between gap-2">
+                            <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects - @groupName</h4>
+                            <label class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 cursor-pointer select-none">
+                                <input type="checkbox" onchange="toggleAllElec(this)" class="rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4" />
+                                Select One
+                            </label>
+                        </div>
+                    </div>
+                    <div class="fee-header">
+                        <span></span>
+                        <span class="text-left text-xs font-semibold text-gray-500">SN</span>
+                        <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
+                        <span class="text-left text-xs font-semibold text-gray-500">Code</span>
+                        <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
+                        <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
+                        <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                    </div>
+                    @for (int i = 0; i < groupSubjects.Count; i++)
+                    {
+                        var subj = groupSubjects[i];
+                        var rowBg = subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "bg-white";
+                        <div class="fee-row subject-card @rowBg hover:bg-gray-50">
+                            <div class="c-check">
+                                <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                                       data-practical-fee="@subj.PracticalFee"
+                                       data-subject-type-id="@subj.SubjectTypeId"
+                                       class="subject-checkbox elective-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
+                                       onchange="onSubjectChange(this)" checked="@(subj.IsSelected ? "checked" : null)" />
+                            </div>
+                            <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
+                            <div class="c-sub">
+                                <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
+                                @if (!Model.IsRegular && subj.IsFailed)
+                                {
+                                    <p class="text-xs font-semibold text-gray-900 hidden md:block">Rs @subj.PracticalFee.ToString("N0")</p>
+                                }
+                                <div class="mt-1 md:hidden flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-xs text-gray-500">@subj.SubjectCode</span>
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasTheory ? "text-green-600" : "text-gray-400")">
+                                        <i class="fas fa-@(subj.HasTheory ? "check" : "times")"></i> T
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasPractical ? "text-green-600" : "text-gray-400")">
+                                        <i class="fas fa-@(subj.HasPractical ? "check" : "times")"></i> P
+                                    </span>
+                                    @if (!Model.IsRegular && subj.IsFailed)
+                                    {
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">
+                                            <i class="fas fa-exclamation-circle"></i> Failed
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
+                            <div class="c-theory">
+                                @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
+                                else { <i class="fas fa-times text-gray-300"></i> }
+                            </div>
+                            <div class="c-prac">
+                                @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
+                                else { <i class="fas fa-times text-gray-300"></i> }
+                            </div>
+                            <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                        </div>
+                    }
+                    <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+                        <span class="text-sm font-semibold text-gray-700">Elective Subtotal:</span>
+                        <span class="text-sm font-semibold text-gray-700">Rs @groupSubjects.Sum(s => s.PracticalFee).ToString("N0")</span>
+                    </div>
                 </div>
             }
         }
 
-        <div class="border-t-2 border-gray-200 bg-gray-50">
-            <table class="w-full text-sm">
-                <tfoot>
-                    <tr class="text-sm text-gray-700">
-                        <td colspan="6" class="px-4 py-3 text-right">Exam Fee (Flat):</td>
-                        <td class="px-4 py-3 text-right font-semibold text-gray-800" id="totalExamFee">Rs @Model.TotalExamFee.ToString("N0")</td>
-                    </tr>
-                    <tr class="text-sm text-gray-700">
-                        <td colspan="6" class="px-4 py-3 text-right">Practical Fee:</td>
-                        <td class="px-4 py-3 text-right font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</td>
-                    </tr>
-                    <tr class="bg-blue-50 font-bold">
-                        <td colspan="6" class="px-4 py-3 text-right text-gray-800">Grand Total:</td>
-                        <td class="px-4 py-3 text-right text-blue-700 text-base" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <div class="border-t-2 border-gray-200 bg-gray-50 divide-y divide-gray-100">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3">
+                <span class="text-sm text-gray-600">Exam Fee (Flat):</span>
+                <span class="text-sm font-semibold text-gray-800" id="totalExamFee">Rs @Model.TotalExamFee.ToString("N0")</span>
+            </div>
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3">
+                <span class="text-sm text-gray-600">Practical Fee:</span>
+                <span class="text-sm font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</span>
+            </div>
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-blue-50">
+                <span class="text-sm font-bold text-gray-800">Grand Total:</span>
+                <span class="text-base font-bold text-blue-700" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</span>
+            </div>
         </div>
     </div>
 
@@ -536,9 +562,9 @@
             var sheetTotal = document.getElementById('sheetTotal');
             if (sheetTotal) sheetTotal.innerText = 'Rs ' + formatted;
             document.getElementById('stickyCount').innerText = selectedCount + ' selected';
-            document.querySelectorAll('table').forEach(function(table) {
-                var box = table.querySelector('input[type="checkbox"][onchange="toggleAllElec(this)"]');
-                var groupBoxes = table.querySelectorAll('.subject-checkbox.elective-checkbox');
+            document.querySelectorAll('.elective-group').forEach(function(group) {
+                var box = group.querySelector('input[type="checkbox"][onchange="toggleAllElec(this)"]');
+                var groupBoxes = group.querySelectorAll('.subject-checkbox.elective-checkbox');
                 if (box && groupBoxes.length > 0) {
                     var anyChecked = Array.prototype.some.call(groupBoxes, function(cb) { return cb.checked; });
                     box.checked = anyChecked;
@@ -547,8 +573,8 @@
         }
 
         function toggleAllElec(source) {
-            var table = source.closest('table');
-            var electives = table ? Array.prototype.slice.call(table.querySelectorAll('.subject-checkbox.elective-checkbox')) : [];
+            var group = source.closest('.elective-group');
+            var electives = group ? Array.prototype.slice.call(group.querySelectorAll('.subject-checkbox.elective-checkbox')) : [];
             if (source.checked) {
                 var hasSelection = electives.some(function(cb) { return cb.checked; });
                 if (hasSelection) {
@@ -591,6 +617,8 @@
             }
             var sheet = document.getElementById('paymentSheet');
             var backdrop = document.getElementById('paymentSheetBackdrop');
+            sheet.classList.remove('hidden');
+            sheet.offsetHeight;
             sheet.classList.remove('translate-y-full');
             backdrop.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -600,6 +628,7 @@
             var sheet = document.getElementById('paymentSheet');
             var backdrop = document.getElementById('paymentSheetBackdrop');
             sheet.classList.add('translate-y-full');
+            setTimeout(function() { sheet.classList.add('hidden'); }, 300);
             backdrop.classList.add('hidden');
             document.body.style.overflow = '';
         }
