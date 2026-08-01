@@ -385,7 +385,7 @@ public class StudentDashboardController(
             return NotFound("No program assigned.");
         }
 
-        var subjects = await dashboardService.GetSubjectOfferingsByProgramAsync(programId);
+        var subjects = await dashboardService.GetSubjectOfferingsForStudentAsync(user.Id, programId);
 
         return View(subjects);
     }

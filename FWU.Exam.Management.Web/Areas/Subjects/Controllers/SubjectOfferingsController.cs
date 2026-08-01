@@ -140,9 +140,9 @@ public class SubjectOfferingsController : Controller
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId)
+    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? programId = null)
     {
-        var semesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);
+        var semesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId, programId);
         return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 
@@ -216,7 +216,7 @@ public class SubjectOfferingsController : Controller
 
         if (model.AcademicYearId > 0 && model.SemesterId > 0)
         {
-            var semester = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId);
+            var semester = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId, model.ProgramId);
             if (!semester.Any(s => s.Id == model.SemesterId))
                 ModelState.AddModelError(nameof(model.SemesterId), "The selected semester does not belong to the selected academic year.");
         }

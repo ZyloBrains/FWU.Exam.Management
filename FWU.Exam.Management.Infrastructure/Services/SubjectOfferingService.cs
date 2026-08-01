@@ -157,12 +157,16 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
     }
 
-    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId)
+    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
     {
+        var allowUpperSemesters = programId is > 0
+                                  && await _context.Programs.AsNoTracking().AnyAsync(p => p.Id == programId.Value && p.Duration >= 10);
+
         return await _context.Semesters
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(s => s.AcademicYearId == academicYearId)
+            .Where(s => s.AcademicYearId == academicYearId
+                        && (s.Number <= 8 || allowUpperSemesters))
             .OrderBy(s => s.Number)
             .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
             .ToListAsync();

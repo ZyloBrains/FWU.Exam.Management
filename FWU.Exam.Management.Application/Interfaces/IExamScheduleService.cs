@@ -16,5 +16,5 @@ public interface IExamScheduleService
     Task<bool> ExamScheduleExistsAsync(int id);
     Task DeactivateExpiredSchedulesAsync();
     Task<ExamScheduleSelectListsDto> GetSelectListDataAsync(ExamSchedule? examSchedule = null);
-    Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId);
+    Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null);
 }

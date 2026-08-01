@@ -200,6 +200,11 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext);
         if (examSchedule != null && examSchedule.AcademicYearId > 0)
             semestersQuery = semestersQuery.Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
+        var allowUpperSemesters = examSchedule != null
+                                  && examSchedule.ProgramId > 0
+                                  && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == examSchedule.ProgramId && p.Duration >= 10);
+        if (!allowUpperSemesters)
+            semestersQuery = semestersQuery.Where(s => s.Number <= 8);
         var semesters = await semestersQuery.OrderBy(s => s.Number).ToListAsync();
 
         return new ExamScheduleSelectListsDto
@@ -211,11 +216,15 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         };
     }
 
-    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId)
+    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
     {
+        var allowUpperSemesters = programId is > 0
+                                  && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == programId.Value && p.Duration >= 10);
+
         return await context.Semesters.AsNoTracking()
             .ApplyScope(userContext)
-            .Where(s => s.AcademicYearId == academicYearId)
+            .Where(s => s.AcademicYearId == academicYearId
+                        && (s.Number <= 8 || allowUpperSemesters))
             .OrderBy(s => s.Number)
             .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
             .ToListAsync();

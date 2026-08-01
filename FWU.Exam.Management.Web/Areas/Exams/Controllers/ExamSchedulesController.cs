@@ -410,9 +410,9 @@ public class ExamSchedulesController(
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId)
+    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? programId = null)
     {
-        var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId);
+        var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId, programId);
         return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 

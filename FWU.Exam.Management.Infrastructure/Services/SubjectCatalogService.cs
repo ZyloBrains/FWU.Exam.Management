@@ -81,11 +81,11 @@ public class SubjectCatalogService : ISubjectCatalogService
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
-    public async Task<List<string?>> GetExistingSubjectCodesAsync()
+    public async Task<List<SubjectCatalog>> GetExistingSubjectCatalogsAsync()
     {
         return await _context.SubjectCatalogs
             .Where(s => s.SubjectCode != null)
-            .Select(s => s.SubjectCode)
+            .Select(s => new SubjectCatalog { Id = s.Id, SubjectCode = s.SubjectCode, SubjectName = s.SubjectName })
             .AsNoTracking()
             .ToListAsync();
     }

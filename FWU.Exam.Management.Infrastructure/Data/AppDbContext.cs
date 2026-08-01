@@ -471,8 +471,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<Program>().ToTable("Programs");
 
         builder.Entity<SubjectCatalog>()
-            .HasIndex(sc => sc.SubjectCode)
-            .IsUnique();
+            .HasIndex(sc => sc.SubjectCode);
 
         builder.Entity<SubjectCatalog>()
             .HasOne(sc => sc.SubjectType)

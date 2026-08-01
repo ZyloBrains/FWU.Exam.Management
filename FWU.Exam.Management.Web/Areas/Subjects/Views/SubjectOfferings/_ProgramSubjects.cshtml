@@ -69,10 +69,11 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        @foreach (var item in semesterGroup.Offerings)
+                        @for (var i = 0; i < semesterGroup.Offerings.Count; i++)
                         {
+                            var item = semesterGroup.Offerings[i];
                             <tr class="hover:bg-gray-50/50 transition-colors" style="cursor: pointer" onclick="window.location.href='@Url.Action("Details", new { id = item.Id })'">
-                                <td class="px-4 py-2.5 text-xs text-gray-400">@item.DisplayOrder</td>
+                                <td class="px-4 py-2.5 text-xs text-gray-400">@(i + 1)</td>
                                 <td class="px-4 py-2.5">
                                     <div class="text-sm font-medium text-gray-800">@(item.SubjectCatalog?.SubjectName ?? "-")</div>
                                     <div class="text-xs text-gray-400">@(item.SubjectCatalog?.SubjectCode ?? "-")</div>
