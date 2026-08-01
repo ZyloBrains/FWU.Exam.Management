@@ -325,7 +325,7 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var selectLists = await examScheduleService.GetSelectListDataAsync();
+        var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -349,7 +349,7 @@ public class ExamSchedulesController(
             catch (InvalidOperationException ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
-                var retrySelectLists = await examScheduleService.GetSelectListDataAsync();
+                var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
                 PopulateDropdowns(retrySelectLists, examSchedule);
                 return View(examSchedule);
             }
@@ -362,7 +362,7 @@ public class ExamSchedulesController(
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = await examScheduleService.GetSelectListDataAsync();
+        var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }

@@ -481,9 +481,11 @@ public class StudentDashboardController(
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
             PracticalFee = s.HasPractical ? practicalFee : 0,
-            IsSelected = isRegular || failedSet.Contains(s.Id),
+            IsSelected = isRegular ? s.IsCompulsory : failedSet.Contains(s.Id),
             IsFailed = failedSet.Contains(s.Id),
-            IsCompulsory = s.IsCompulsory
+            IsCompulsory = s.IsCompulsory,
+            SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+            SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
         }).ToList();
 
         var vm = new ExamPaymentViewModel
@@ -533,6 +535,13 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
+
         int logId;
         if (subjectIds.Count == 0)
         {
@@ -566,6 +575,13 @@ public class StudentDashboardController(
         var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
 
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
@@ -743,6 +759,13 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
+
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
@@ -889,6 +912,37 @@ public class StudentDashboardController(
     public IActionResult PaymentFailure()
     {
         return View();
+    }
+
+    private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
+    {
+        if (subjectIds.Count == 0) return (true, null);
+
+        var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
+        var offeringLookup = offerings.ToDictionary(o => o.Id);
+        foreach (var id in subjectIds)
+        {
+            if (!offeringLookup.ContainsKey(id))
+                return (false, "Selected subject is not part of this exam schedule.");
+        }
+
+        var selectedByType = subjectIds
+            .Select(id => offeringLookup[id].SubjectCatalog?.SubjectTypeId ?? 0)
+            .GroupBy(typeId => typeId)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        if (selectedByType.Count > 0)
+        {
+            var groupNames = offerings
+                .Where(o => selectedByType.Contains(o.SubjectCatalog?.SubjectTypeId ?? 0))
+                .Select(o => o.SubjectCatalog?.SubjectType?.Name ?? o.SubjectCatalog?.SubjectTypeId.ToString() ?? "Unknown")
+                .Distinct();
+            return (false, $"Only one subject can be selected from each elective group ({string.Join(", ", groupNames)}).");
+        }
+
+        return (true, null);
     }
 
     private async Task HandlePostPaymentRegistration(int logId)

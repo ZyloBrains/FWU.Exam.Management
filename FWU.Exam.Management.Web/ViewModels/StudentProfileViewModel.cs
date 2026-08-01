@@ -59,6 +59,8 @@ public class SubjectFeeDetail
     public bool IsSelected { get; set; }
     public bool IsFailed { get; set; }
     public bool IsCompulsory { get; set; }
+    public int SubjectTypeId { get; set; }
+    public string? SubjectTypeName { get; set; }
 }
 
 public class PaymentTypeDetail
