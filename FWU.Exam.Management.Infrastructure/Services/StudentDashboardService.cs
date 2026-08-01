@@ -33,20 +33,22 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
         var studentAdmission = await ResolveStudentAdmissionAsync(userId, student.Email);
+        if (studentAdmission == null) return [];
 
-        int programId;
-        if (studentAdmission != null)
-        {
-            programId = studentAdmission.ProgramsId;
-        }
-        else if (student.ProgramId.HasValue)
-        {
-            programId = student.ProgramId.Value;
-        }
-        else
-        {
-            return [];
-        }
+        var currentEnrollment = await context.SemesterEnrollments!
+            .AsNoTracking()
+            .Include(se => se.Semester)
+            .Where(se => se.StudentAdmissionId == studentAdmission.Id
+                      && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
+            .OrderByDescending(se => se.Semester!.Year)
+            .ThenByDescending(se => se.Semester!.Number)
+            .ThenByDescending(se => se.EnrolledDate)
+            .FirstOrDefaultAsync();
+
+        if (currentEnrollment?.Semester == null) return [];
+
+        var currentSemesterId = currentEnrollment.Semester.Id;
+        int programId = studentAdmission.ProgramsId;
 
         var query = context.ExamSchedules!
             .AsNoTracking()
@@ -75,14 +77,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 if (!hasFailed)
                     continue;
             }
-            else
+            else if (schedule.SemesterId != currentSemesterId)
             {
-                if (schedule.Semester != null && schedule.Semester.Number > 1)
-                {
-                    var prevSubmitted = await HasSubmittedPreviousSemesterExamFormAsync(userId, schedule.SemesterId, programId);
-                    if (!prevSubmitted)
-                        continue;
-                }
+                continue;
             }
 
             filtered.Add(schedule);
@@ -415,6 +412,18 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var academicYearId = schedule.AcademicYearId;
 
+        int? semesterEnrollmentId = null;
+        if (admission != null)
+        {
+            semesterEnrollmentId = await context.SemesterEnrollments!
+                .AsNoTracking()
+                .Where(se => se.StudentAdmissionId == admission.Id
+                          && se.SemesterId == schedule.SemesterId
+                          && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
+                .Select(se => (int?)se.Id)
+                .FirstOrDefaultAsync();
+        }
+
         var registration = new ExamRegistration
         {
             ExamScheduleId = examScheduleId,
@@ -430,6 +439,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         };
 
         context.ExamRegistrations!.Add(registration);
+        if (semesterEnrollmentId.HasValue)
+        {
+            context.Entry(registration).Property("SemesterEnrollmentId").CurrentValue = semesterEnrollmentId.Value;
+        }
         await context.SaveChangesAsync();
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);
 
@@ -498,57 +511,20 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .ToList();
     }
 
-    public async Task<bool> HasSubmittedPreviousSemesterExamFormAsync(string userId, int currentSemesterId, int programId)
+    public async Task<int?> GetCurrentSemesterIdForStudentAsync(string userId)
     {
-        var currentSemester = await context.Semesters!
+        var admission = await ResolveStudentAdmissionAsync(userId);
+        if (admission == null) return null;
+
+        return await context.SemesterEnrollments!
             .AsNoTracking()
-            .Select(s => new { s.Id, s.Year, s.Number })
-            .FirstOrDefaultAsync(s => s.Id == currentSemesterId);
-
-        if (currentSemester == null) return false;
-
-        int? previousSemesterId;
-        if (currentSemester.Number > 1)
-        {
-            previousSemesterId = await context.Semesters!
-                .AsNoTracking()
-                .Where(s => s.Year == currentSemester.Year
-                         && s.Number == currentSemester.Number - 1)
-                .Select(s => (int?)s.Id)
-                .FirstOrDefaultAsync();
-        }
-        else
-        {
-            previousSemesterId = await context.Semesters!
-                .AsNoTracking()
-                .Where(s => s.Year == currentSemester.Year - 1)
-                .OrderByDescending(s => s.Number)
-                .Select(s => (int?)s.Id)
-                .FirstOrDefaultAsync();
-        }
-
-        if (previousSemesterId == null) return true;
-
-        var previousScheduleIds = await context.ExamSchedules!
-            .AsNoTracking()
-            .Where(es => es.IsActive
-                      && es.ProgramId == programId
-                      && es.SemesterId == previousSemesterId
-                      && es.ExamType != null
-                      && es.ExamType.Name != "Entrance")
-            .Select(es => es.Id)
-            .ToListAsync();
-
-        if (previousScheduleIds.Count == 0) return true;
-
-        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
-        if (studentErIds.Count == 0) return false;
-
-        return await context.ExamRegistrations!
-            .AsNoTracking()
-            .AnyAsync(er => studentErIds.Contains(er.Id)
-                         && previousScheduleIds.Contains(er.ExamScheduleId)
-                         && er.IsAppliedByStudent == true);
+            .Where(se => se.StudentAdmissionId == admission.Id
+                      && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
+            .OrderByDescending(se => se.Semester!.Year)
+            .ThenByDescending(se => se.Semester!.Number)
+            .ThenByDescending(se => se.EnrolledDate)
+            .Select(se => (int?)se.SemesterId)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> HasFailedSubjectsInSemesterAsync(string userId, int semesterId)

@@ -444,14 +444,11 @@ public class StudentDashboardController(
         }
         else
         {
-            if (schedule.Semester != null && schedule.Semester.Number > 1)
+            var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
+            if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
             {
-                var prevSubmitted = await dashboardService.HasSubmittedPreviousSemesterExamFormAsync(user.Id, schedule.SemesterId, programId);
-                if (!prevSubmitted)
-                {
-                    TempData["ErrorMessage"] = "Please submit the previous semester exam form first.";
-                    return RedirectToAction(nameof(ExamForms));
-                }
+                TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
+                return RedirectToAction(nameof(ExamForms));
             }
         }
 
