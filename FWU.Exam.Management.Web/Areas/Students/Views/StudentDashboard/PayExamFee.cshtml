@@ -357,6 +357,48 @@
     <script>
         var flatExamFee = @Model.TotalExamFee;
 
+        var errorToastTimer = null;
+
+        function showErrorToast(message) {
+            var container = document.getElementById('errorToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'errorToastContainer';
+                container.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;width:auto;max-width:36rem;';
+                document.body.appendChild(container);
+            }
+            container.innerHTML = '';
+            var toast = document.createElement('div');
+            toast.style.cssText = 'display:flex;align-items:flex-start;background-color:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:0.5rem;padding:1rem;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;';
+            toast.innerHTML =
+                '<svg style="width:1.25rem;height:1.25rem;color:#f87171;margin-right:0.75rem;margin-top:0.125rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' +
+                '<div class="toast-msg" style="font-size:0.875rem;font-weight:500;white-space:pre-line;flex:1;color:#991b1b"></div>' +
+                '<button type="button" aria-label="Close" style="margin-left:0.75rem;flex-shrink:0;background:none;border:none;cursor:pointer;color:#ef4444">' +
+                '<svg style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>';
+            toast.querySelector('.toast-msg').textContent = message;
+            toast.querySelector('button').addEventListener('click', function() {
+                hideErrorToast(toast);
+            });
+            container.appendChild(toast);
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    toast.style.opacity = '1';
+                });
+            });
+            if (errorToastTimer) clearTimeout(errorToastTimer);
+            errorToastTimer = setTimeout(function() { hideErrorToast(toast); }, 4000);
+        }
+
+        function hideErrorToast(toast) {
+            if (!toast || !toast.parentNode) return;
+            toast.style.opacity = '0';
+            setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }
+
         function onSubjectChange(cb) {
             var typeId = cb.getAttribute('data-subject-type-id');
             if (typeId) {
@@ -373,7 +415,7 @@
                     });
                     if (!anyChecked) {
                         cb.checked = true;
-                        alert('At least one elective must be selected from this group.');
+                        showErrorToast('At least one elective must be selected from this group.');
                     }
                 }
             }
@@ -419,24 +461,44 @@
             var formatted = parseFloat(document.getElementById('hfAmount').value).toLocaleString();
             document.getElementById('stickyTotal').innerText = 'Rs ' + formatted;
             document.getElementById('stickyCount').innerText = selectedCount + ' selected';
+            document.querySelectorAll('table').forEach(function(table) {
+                var box = table.querySelector('input[type="checkbox"][onchange="toggleAllElec(this)"]');
+                var groupBoxes = table.querySelectorAll('.subject-checkbox.elective-checkbox');
+                if (box && groupBoxes.length > 0) {
+                    var anyChecked = Array.prototype.some.call(groupBoxes, function(cb) { return cb.checked; });
+                    box.checked = anyChecked;
+                }
+            });
         }
 
         function toggleAllElec(source) {
             var table = source.closest('table');
             var electives = table ? Array.prototype.slice.call(table.querySelectorAll('.subject-checkbox.elective-checkbox')) : [];
             if (source.checked) {
-                var done = {};
-                electives.forEach(function(cb) {
-                    var typeId = cb.getAttribute('data-subject-type-id');
-                    if (typeId && !done[typeId]) {
-                        cb.checked = true;
-                        done[typeId] = true;
-                    } else {
-                        cb.checked = false;
-                    }
-                });
+                var hasSelection = electives.some(function(cb) { return cb.checked; });
+                if (hasSelection) {
+                    var kept = false;
+                    electives.forEach(function(cb) {
+                        if (cb.checked && !kept) {
+                            kept = true;
+                        } else {
+                            cb.checked = false;
+                        }
+                    });
+                } else {
+                    electives.forEach(function(cb, idx) { cb.checked = idx === 0; });
+                }
             } else {
-                electives.forEach(function(cb) { cb.checked = false; });
+                var checkedBox = null;
+                electives.forEach(function(cb) {
+                    if (cb.checked && !checkedBox) checkedBox = cb;
+                    cb.checked = false;
+                });
+                if (checkedBox) {
+                    checkedBox.checked = true;
+                    updateTotals();
+                    showErrorToast('At least one elective must be selected from this group.');
+                }
             }
             updateTotals();
         }
@@ -455,12 +517,12 @@
             updateTotals();
             var groupError = validateElectiveGroups();
             if (groupError) {
-                alert(groupError);
+                showErrorToast(groupError);
                 return;
             }
             var amount = document.getElementById('hfAmount').value;
             if (amount == 0 || amount === '0') {
-                alert('Please select at least one subject to proceed with payment.');
+                showErrorToast('Please select at least one subject to proceed with payment.');
                 return;
             }
             if (confirm('Pay Rs ' + parseFloat(amount).toLocaleString() + ' via ' + method.charAt(0).toUpperCase() + method.slice(1) + '?')) {
