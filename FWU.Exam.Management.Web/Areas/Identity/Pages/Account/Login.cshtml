@@ -31,23 +31,29 @@
         }
 
         body {
-            background-image: url('@Url.Content("~/images/college.jpg")');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
             min-height: 100vh;
             min-height: 100dvh;
             padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
         }
 
+            /* Fixed pseudo-element keeps the background iOS-friendly
+               (position:fixed avoids the background-attachment scroll jank). */
             body::before {
                 content: '';
                 position: fixed;
                 inset: 0;
-                background: rgba(0, 0, 0, 0.40);
                 z-index: 0;
+                background:
+                    linear-gradient(rgba(0, 0, 0, 0.40), rgba(0, 0, 0, 0.40)),
+                    url('@Url.Content("~/images/college.jpg")') center center / cover no-repeat;
             }
+
+        .mobile-logo {
+            width: 5.5rem;
+            height: 5.5rem;
+            border-radius: 50%;
+            object-fit: cover;
+        }
 
         .login-wrapper {
             position: relative;
@@ -191,6 +197,11 @@
                 <!-- LEFT SECTION -->
                 <div class="col-12 col-md-6 px-4 px-sm-5 py-4 py-md-5 d-flex flex-column justify-content-center">
 
+                    @* Mobile-only logo (right branding panel is hidden below md) *@
+                    <div class="d-md-none text-center mb-4">
+                        <img src="~/images/fwu-logo.jpg" class="mobile-logo" alt="FWU Logo" />
+                    </div>
+
                     <h1 class="fs-5 fs-md-4 fw-bold text-dark mb-1">Welcome to FWU - EMIS</h1>
                     <p class="text-muted small mb-3 mb-md-4">Examination Management Information System</p>
 
@@ -217,8 +228,7 @@
                                    inputmode="text"
                                    autocomplete="username"
                                    aria-required="true"
-                                   placeholder="you@example.com or SC-2021-1-1-0282"
-                                   autofocus />
+                                   placeholder="you@example.com or SC-2021-1-1-0282" />
                             <span asp-validation-for="Input.EmailOrRegNumber" class="text-danger small"></span>
                         </div>
 
@@ -242,7 +252,7 @@
                         </div>
 
                         <!-- Remember Me & Forgot Password -->
-                        <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" asp-for="Input.RememberMe" />
                                 <label asp-for="Input.RememberMe" class="form-check-label small text-secondary">
@@ -320,6 +330,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // Auto-focus only on desktop so the keyboard doesn't pop open on mobile
+        if (window.matchMedia('(min-width: 768px)').matches) {
+            var emailInput = document.getElementById('Input_EmailOrRegNumber');
+            if (emailInput) {
+                emailInput.focus();
+            }
+        }
+
         document.getElementById('toggle-password').addEventListener('click', function () {
             var input = document.getElementById('password-input');
             var icon = document.getElementById('toggle-icon');
