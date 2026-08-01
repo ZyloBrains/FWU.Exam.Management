@@ -215,6 +215,17 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RunPromotion()
+    {
+        var count = await enrollmentService.PromoteCompletedSemestersAsync();
+        TempData["SuccessMessage"] = count > 0
+            ? $"{count} student(s) promoted to the next semester."
+            : "No students were eligible for promotion right now.";
+        return RedirectToAction(nameof(Index));
+    }
+
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null)
     {
         var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId);

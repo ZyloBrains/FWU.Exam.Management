@@ -113,6 +113,96 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .ToListAsync();
     }
 
+    public async Task<int> PromoteCompletedSemestersAsync()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var created = 0;
+
+        var activeEnrollments = await context.SemesterEnrollments
+            .AsNoTracking()
+            .Include(se => se.StudentAdmission)
+            .Include(se => se.Semester)
+            .Where(se => se.EnrollmentStatus == StudentEnrollmentStatus.Active)
+            .ToListAsync();
+
+        foreach (var enrollment in activeEnrollments)
+        {
+            var admission = enrollment.StudentAdmission;
+            var semester = enrollment.Semester;
+            if (admission == null || semester == null) continue;
+
+            var mainSchedule = await GetMainExamScheduleAsync(admission.ProgramsId, semester.Id);
+            if (mainSchedule == null) continue;
+
+            var endedDate = mainSchedule.EndDate;
+            if (mainSchedule.ExtendedDate.HasValue)
+            {
+                var extended = DateOnly.FromDateTime(mainSchedule.ExtendedDate.Value);
+                if (endedDate == null || extended > endedDate)
+                    endedDate = extended;
+            }
+
+            if (endedDate == null || endedDate >= today) continue;
+            if (mainSchedule.AdmissionCardReleaseDate == null ||
+                mainSchedule.AdmissionCardReleaseDate.Value.Date >= DateTime.UtcNow.Date)
+            {
+                continue;
+            }
+
+            var programSemesters = await GetSemestersByProgramAsync(admission.ProgramsId);
+            var nextSemester = programSemesters
+                .FirstOrDefault(s => s.Year == semester.Year && s.Number == semester.Number + 1)
+                ?? programSemesters
+                    .FirstOrDefault(s => s.Year == semester.Year + 1 && s.Number == 1);
+            if (nextSemester == null) continue;
+
+            var alreadyEnrolled = await context.SemesterEnrollments
+                .AnyAsync(se => se.StudentAdmissionId == admission.Id && se.SemesterId == nextSemester.Id);
+            if (alreadyEnrolled) continue;
+
+            context.SemesterEnrollments.Add(new SemesterEnrollment
+            {
+                TenantId = admission.TenantId,
+                StudentAdmissionId = admission.Id,
+                SemesterId = nextSemester.Id,
+                EnrollmentStatus = StudentEnrollmentStatus.Active,
+                EnrollmentType = enrollment.EnrollmentType,
+                PaymentStatus = PaymentStatus.Pending,
+                ResultStatus = ResultStatus.Incomplete,
+                EnrolledDate = DateTime.UtcNow,
+                TotalCredits = 0,
+                GradePoints = 0,
+                TotalFee = 0,
+                PaidAmount = 0,
+                Deficiency = false
+            });
+            created++;
+        }
+
+        if (created > 0)
+            await context.SaveChangesAsync();
+
+        return created;
+    }
+
+    private async Task<Domain.Entities.Exams.ExamSchedule?> GetMainExamScheduleAsync(int programId, int semesterId)
+    {
+        var schedules = await context.ExamSchedules
+            .AsNoTracking()
+            .Include(es => es.ExamType)
+            .Where(es => es.IsActive
+                      && es.ProgramId == programId
+                      && es.SemesterId == semesterId
+                      && es.ExamType != null
+                      && es.ExamType.Name != "Entrance"
+                      && es.ExamType.Name != "Supplementary")
+            .OrderBy(es => es.ExamType!.Name == "Regular" ? 0 : 1)
+            .ThenByDescending(es => es.Id)
+            .ToListAsync();
+
+        return schedules.FirstOrDefault();
+    }
+
     private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null)
     {
         var query = context.SemesterEnrollments

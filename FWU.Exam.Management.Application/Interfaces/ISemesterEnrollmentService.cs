@@ -13,4 +13,5 @@ public interface ISemesterEnrollmentService
     Task<bool> EnrollmentExistsAsync(int id);
     Task<List<Domain.Entities.Students.StudentAdmission>> GetActiveAdmissionsAsync();
     Task<List<Semester>> GetSemestersByProgramAsync(int programId);
+    Task<int> PromoteCompletedSemestersAsync();
 }
