@@ -157,6 +157,22 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
     }
 
+    public async Task<int?> GetDefaultAcademicYearIdAsync()
+    {
+        var latestYearWithOfferings = await _context.SubjectOfferings
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(so => so.Semester != null
+                         && so.Semester.AcademicYear != null
+                         && so.Semester.AcademicYear.IsActive)
+            .Select(so => so.Semester!.AcademicYearId)
+            .Distinct()
+            .OrderByDescending(id => id)
+            .FirstOrDefaultAsync();
+
+        return latestYearWithOfferings == 0 ? null : latestYearWithOfferings;
+    }
+
     public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId)
     {
         return await _context.Semesters

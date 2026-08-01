@@ -19,6 +19,7 @@ public interface ISubjectOfferingService
     Task<bool> SubjectOfferingExistsAsync(int id);
     Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId);
     Task<List<SelectOption>> GetAcademicYearsAsync();
+    Task<int?> GetDefaultAcademicYearIdAsync();
     Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId);
     Task<List<ProgramOfferingSummary>> GetProgramsByAcademicYearAsync(int academicYearId);
     Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId);

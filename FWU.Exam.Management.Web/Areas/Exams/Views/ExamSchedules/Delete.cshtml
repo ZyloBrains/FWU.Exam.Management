@@ -58,12 +58,24 @@
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.AcademicYear.AcademicYearName)</p>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Level</p>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Faculty</p>
+                        <p class="text-gray-800 font-medium">@(Model.Faculty?.Name ?? "-")</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Program</p>
                         <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Program.ProgramName)</p>
                     </div>
                     <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</p>
+                        <p class="text-gray-800 font-medium">@(Model.Semester?.Name ?? "-")</p>
+                    </div>
+                    <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Type</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExamType.Name)</p>
+                        <p class="text-gray-800 font-medium">@(!string.IsNullOrWhiteSpace(Model.ExamTypeNames) ? Model.ExamTypeNames : Model.ExamType?.Name)</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Subjects</p>
+                        <p class="text-gray-800 font-medium">@Model.SubjectOfferingNames</p>
                     </div>
                 </div>
             </div>

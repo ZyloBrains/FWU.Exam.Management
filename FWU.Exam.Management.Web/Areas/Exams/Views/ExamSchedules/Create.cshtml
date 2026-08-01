@@ -48,32 +48,50 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <select asp-for="AcademicYearId" id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
                             <option value="">-- Select Academic Year --</option>
                         </select>
                         <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
+                        <label asp-for="FacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="FacultyId" id="FacultyId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.FacultyId">
+                            <option value="">-- Select Faculty --</option>
+                        </select>
+                        <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
                         <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
+                        <select asp-for="ProgramId" id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="ExamTypeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ExamTypeId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ExamTypeId">
-                            <option value="">-- Select Exam Type --</option>
-                        </select>
-                        <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
                         <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="SemesterId" disabled="@(Model != null && Model.AcademicYearId > 0 ? null : "disabled")" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                        <select asp-for="SemesterId" id="SemesterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
                             <option value="">-- Select Semester --</option>
                         </select>
                         <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>                    
+                    </div>
+                    <div class="md:col-span-2">
+                        <label asp-for="SelectedSubjectOfferingIds" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject Offerings</label>
+                        <select asp-for="SelectedSubjectOfferingIds" id="SubjectOfferingIds" multiple class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SubjectOfferingIds">
+                        </select>
+                        <span asp-validation-for="SelectedSubjectOfferingIds" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label asp-for="SelectedPracticalSubjectOfferingIds" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Practical Subjects</label>
+                        <select asp-for="SelectedPracticalSubjectOfferingIds" id="PracticalSubjectOfferingIds" multiple class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.PracticalSubjectOfferingIds">
+                        </select>
+                        <span asp-validation-for="SelectedPracticalSubjectOfferingIds" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label asp-for="SelectedExamTypeIds" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Exam Types</label>
+                        <select asp-for="SelectedExamTypeIds" id="ExamTypeId" multiple class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ExamTypeId">
+                        </select>
+                        <span asp-validation-for="SelectedExamTypeIds" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
                 </div>
             </div>
 
@@ -200,6 +218,21 @@
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 36px;
         }
+        .select2-container--default .select2-selection--multiple {
+            min-height: 38px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.18rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #e0e7ff;
+            border: 1px solid #c7d2fe;
+            color: #3730a3;
+            border-radius: 9999px;
+            padding: 0 0.55rem;
+            margin-top: 0.2rem;
+        }
         .select2-container--default .select2-selection--single:focus,
         .select2-container--default.select2-container--focus .select2-selection--single {
             border-color: #6366f1;
@@ -218,33 +251,93 @@
             $('.select2').select2({ width: 'resolve' });
         });
 
-        function loadSemesters(academicYearId) {
+        function loadPrograms(facultyId) {
+            var programDropdown = $("#ProgramId");
+            programDropdown.select2('destroy');
+            programDropdown.empty().append('<option value="">-- Select Program --</option>');
+            programDropdown.trigger('change');
+
+            if (!facultyId) {
+                programDropdown.select2({ width: 'resolve' });
+                return;
+            }
+
+            $.get(tenantUrl("/Exams/ExamSchedules/GetProgramsByFaculty"), { facultyId: facultyId }, function (data) {
+                $.each(data, function (index, item) {
+                    programDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                programDropdown.select2({ width: 'resolve' });
+            });
+        }
+
+        function loadSemesters(programId) {
             $('#SemesterId').select2('destroy');
             var semesterDropdown = $("#SemesterId");
             semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+            semesterDropdown.prop('disabled', false);
 
-            if (!academicYearId) {
+            if (!programId) {
                 semesterDropdown.prop('disabled', true);
                 $('#SemesterId').select2({ width: 'resolve' });
                 return;
             }
 
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId }, function (data) {
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByProgram"), { programId: programId }, function (data) {
                 $.each(data, function (index, item) {
                     semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
-                semesterDropdown.prop('disabled', false);
                 semesterDropdown.select2({ width: 'resolve' });
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val());
+        var subjectLoadRequestId = 0;
+
+        function clearSubjectOfferings() {
+            subjectLoadRequestId++;
+            var subjectDropdown = $("#SubjectOfferingIds");
+            var practicalDropdown = $("#PracticalSubjectOfferingIds");
+            subjectDropdown.select2('destroy');
+            practicalDropdown.select2('destroy');
+            subjectDropdown.empty();
+            practicalDropdown.empty();
+            subjectDropdown.select2({ width: 'resolve' });
+            practicalDropdown.select2({ width: 'resolve' });
+        }
+
+        function loadSubjectOfferings(programId, semesterId) {
+            clearSubjectOfferings();
+
+            if (!programId || !semesterId) {
+                return;
+            }
+
+            var subjectDropdown = $("#SubjectOfferingIds");
+            var practicalDropdown = $("#PracticalSubjectOfferingIds");
+            var requestId = ++subjectLoadRequestId;
+
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSubjectOfferingsByProgramAndSemester"), { programId: programId, semesterId: semesterId }, function (data) {
+                if (requestId !== subjectLoadRequestId) return;
+                $.each(data, function (index, item) {
+                    subjectDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    practicalDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                subjectDropdown.select2({ width: 'resolve' });
+                practicalDropdown.select2({ width: 'resolve' });
+            });
+        }
+
+        $("#FacultyId").change(function () {
+            loadPrograms($(this).val());
         });
 
-        if (!$("#AcademicYearId").val()) {
-            loadSemesters('');
-        }
+        $("#ProgramId").change(function () {
+            loadSemesters($(this).val());
+            clearSubjectOfferings();
+        });
+
+        $("#SemesterId").change(function () {
+            loadSubjectOfferings($("#ProgramId").val(), $(this).val());
+        });
 
         var convertTimer;
         $("#StartDateBs").on("input", function () {

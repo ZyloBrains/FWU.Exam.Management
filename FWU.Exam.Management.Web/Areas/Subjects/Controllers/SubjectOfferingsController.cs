@@ -28,7 +28,9 @@ public class SubjectOfferingsController : Controller
     public async Task<IActionResult> Index(int? academicYearId, int? programId, int? semesterId)
     {
         var academicYears = await _subjectOfferingService.GetAcademicYearsAsync();
-        var selectedYear = academicYearId ?? academicYears.FirstOrDefault()?.Id;
+        var selectedYear = academicYearId
+            ?? await _subjectOfferingService.GetDefaultAcademicYearIdAsync()
+            ?? academicYears.FirstOrDefault()?.Id;
         ViewData["AcademicYearId"] = new SelectList(academicYears, "Id", "Name", selectedYear);
         ViewBag.SelectedAcademicYearId = selectedYear;
         ViewBag.InitialProgramId = programId;

@@ -36,6 +36,17 @@ public class StudentDashboardController(
     IWebHostEnvironment env)
     : Controller
 {
+    private static List<int> ParseCsvIds(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return [];
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(value => int.TryParse(value, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+    }
+
     public async Task<IActionResult> Profile()
     {
         var user = await userManager.GetUserAsync(User);
@@ -472,6 +483,9 @@ public class StudentDashboardController(
         var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
         var isRegular = failedSubjectIds.Count == 0;
 
+        var schedulePracticalIds = ParseCsvIds(schedule.PracticalSubjectOfferingIds);
+        var hasSchedulePracticalOverride = schedulePracticalIds.Count > 0;
+
         var failedSet = new HashSet<int>(failedSubjectIds);
         var subjectList = subjects.Select(s => new SubjectFeeDetail
         {
@@ -479,8 +493,8 @@ public class StudentDashboardController(
             SubjectName = s.SubjectCatalog?.SubjectName,
             SubjectCode = s.SubjectCatalog?.SubjectCode,
             HasTheory = s.HasTheory,
-            HasPractical = s.HasPractical,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
+            HasPractical = hasSchedulePracticalOverride ? schedulePracticalIds.Contains(s.Id) : s.HasPractical,
+            PracticalFee = (hasSchedulePracticalOverride ? schedulePracticalIds.Contains(s.Id) : s.HasPractical) ? practicalFee : 0,
             IsSelected = isRegular || failedSet.Contains(s.Id),
             IsFailed = failedSet.Contains(s.Id),
             IsCompulsory = s.IsCompulsory

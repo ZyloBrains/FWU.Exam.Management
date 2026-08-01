@@ -44,6 +44,10 @@
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear.AcademicYearName)</p>
                 </div>
                 <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Faculty</p>
+                    <p class="mt-1 text-gray-800">@(Model.Faculty?.Name ?? "-")</p>
+                </div>
+                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Program.ProgramName)</p>
                 </div>
@@ -53,7 +57,11 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamType.Name)</p>
+                    <p class="mt-1 text-gray-800">@(!string.IsNullOrWhiteSpace(Model.ExamTypeNames) ? Model.ExamTypeNames : Model.ExamType?.Name)</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Subjects</p>
+                    <p class="mt-1 text-gray-800">@Model.SubjectOfferingNames</p>
                 </div>
             </div>
         </div>

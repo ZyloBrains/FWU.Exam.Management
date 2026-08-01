@@ -247,6 +247,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(es => es.ExamTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<ExamSchedule>()
+            .HasOne(es => es.Faculty)
+            .WithMany()
+            .HasForeignKey(es => es.FacultyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<ExamCenter>()
             .HasOne(ec => ec.ExamSchedule)
             .WithMany(es => es.ExamCenters)

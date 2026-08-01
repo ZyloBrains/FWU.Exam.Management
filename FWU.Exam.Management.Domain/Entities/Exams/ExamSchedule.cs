@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel;
 
 namespace FWU.Exam.Management.Domain.Entities.Exams;
@@ -87,17 +88,48 @@ public class ExamSchedule : ITenantScoped
 
     public virtual Program? Program { get; set; }
 
+    [Display(Name = "Faculty")]
+    public int? FacultyId { get; set; }
+
+    public virtual Faculty? Faculty { get; set; }
+
     [Range(1, int.MaxValue)]
     [Display(Name = "Semester")]
     public int SemesterId { get; set; }
 
     public virtual Semester? Semester { get; set; }
 
-    [Range(1, int.MaxValue)]
     [Display(Name = "Exam Type")]
     public int ExamTypeId { get; set; }
 
     public virtual ExamType? ExamType { get; set; }
+
+    [MaxLength(200)]
+    [Display(Name = "Exam Type Ids")]
+    public string? ExamTypeIds { get; set; }
+
+    [MaxLength(1000)]
+    [Display(Name = "Subject Offering Ids")]
+    public string? SubjectOfferingIds { get; set; }
+
+    [MaxLength(1000)]
+    [Display(Name = "Practical Subject Offering Ids")]
+    public string? PracticalSubjectOfferingIds { get; set; }
+
+    [NotMapped]
+    public List<int> SelectedExamTypeIds { get; set; } = [];
+
+    [NotMapped]
+    public List<int> SelectedSubjectOfferingIds { get; set; } = [];
+
+    [NotMapped]
+    public List<int>? SelectedPracticalSubjectOfferingIds { get; set; }
+
+    [NotMapped]
+    public string? ExamTypeNames { get; set; }
+
+    [NotMapped]
+    public string? SubjectOfferingNames { get; set; }
 
     [Display(Name = "Level")]
     public int? LevelId { get; set; }
