@@ -1,0 +1,154 @@
+@model FWU.Exam.Management.Web.ViewModels.ProgramSemestersViewModel
+
+@{
+    ViewData["Title"] = "Program Semester Assignments";
+    var assignedSet = new HashSet<int>(Model.AssignedSemesterIds);
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-cyan-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Program Semester Assignments</h1>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">@Model.ProgramCode - @Model.ProgramName</p>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_AlertMessages")
+
+    <!-- Toolbar: Program switcher + Academic Year filter -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+        <div class="flex-1">
+            <label for="programSwitcher" class="block text-xs font-medium text-gray-500 mb-1">Program</label>
+            <select id="programSwitcher" asp-items="ViewBag.Programs" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                <option value="">-- Select Program --</option>
+            </select>
+        </div>
+        <div class="sm:w-72">
+            <label for="yearFilter" class="block text-xs font-medium text-gray-500 mb-1">Academic Year</label>
+            <select id="yearFilter" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                <option value="">All Years</option>
+                @foreach (var g in Model.Groups)
+                {
+                    <option value="@g.Title">@g.Title</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6 sm:p-8">
+        <form asp-action="Semesters" asp-route-id="@Model.ProgramId" method="post" class="space-y-6">
+            <input type="hidden" asp-for="ProgramId" />
+
+            @if (Model.Groups.Count == 0)
+            {
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-calendar-alt text-4xl mb-3 opacity-50"></i>
+                    <p>No semesters available. Create semesters first.</p>
+                </div>
+            }
+            else
+            {
+                foreach (var group in Model.Groups)
+                {
+                    <div data-year-group data-year-name="@group.Title">
+                        <h2 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
+                            <label class="inline-flex items-center gap-2 cursor-pointer select-none" title="Select all semesters in this academic year">
+                                <input type="checkbox" class="year-select-all h-4 w-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500" />
+                                <span>Academic Year: @group.Title</span>
+                            </label>
+                            <span class="text-xs font-normal text-gray-400"><span class="year-count">0 / @group.Semesters.Count</span> selected</span>
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach (var item in group.Semesters)
+                            {
+                                var isChecked = assignedSet.Contains(item.SemesterId);
+                                <label class="flex items-start gap-3 border @(isChecked ? "border-cyan-400 bg-cyan-50" : "border-gray-200") rounded-lg px-4 py-3 cursor-pointer hover:border-cyan-300 transition-colors">
+                                    <input type="checkbox" name="semesterIds" value="@item.SemesterId" @(isChecked ? "checked" : "")
+                                           class="mt-0.5 h-4 w-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500" />
+                                    <div class="min-w-0">
+                                        <div class="text-sm font-medium text-gray-800">@item.Display</div>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <a asp-action="Index" class="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition shadow-sm">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-cyan-600 text-white text-sm font-semibold rounded-lg hover:bg-cyan-700 transition shadow-md">
+                    <i class="fas fa-save text-xs mr-1"></i> Save Assignments
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.5rem; padding-left: 0.5rem; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+    </style>
+
+    <script>
+        function refreshSemesterCounts() {
+            $('[data-year-group]').each(function () {
+                var $group = $(this);
+                var $boxes = $group.find('input[name="semesterIds"]');
+                var total = $boxes.length;
+                var selected = $boxes.filter(':checked').length;
+                $group.find('.year-count').text(selected + ' / ' + total);
+                var $master = $group.find('.year-select-all');
+                $master.prop('checked', total > 0 && selected === total);
+                $master.prop('indeterminate', selected > 0 && selected < total);
+            });
+        }
+
+        $(function () {
+            $('.select2').select2({ width: 'resolve' });
+
+            $('#programSwitcher').on('change', function () {
+                var id = this.value;
+                if (id) {
+                    var url = '@Url.Action("Semesters", new { id = "__programId__" })';
+                    window.location.href = url.replace('__programId__', encodeURIComponent(id));
+                }
+            });
+
+            $('#yearFilter').on('change', function () {
+                var value = this.value;
+                $('[data-year-group]').each(function () {
+                    $(this).toggle(value === '' || $(this).attr('data-year-name') === value);
+                });
+            });
+
+            $('.year-select-all').on('change', function () {
+                var $group = $(this).closest('[data-year-group]');
+                $group.find('input[name="semesterIds"]').prop('checked', this.checked);
+                refreshSemesterCounts();
+            });
+
+            $('[data-year-group] input[name="semesterIds"]').on('change', refreshSemesterCounts);
+
+            refreshSemesterCounts();
+        });
+    </script>
+}

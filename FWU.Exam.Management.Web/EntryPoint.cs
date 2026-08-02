@@ -246,6 +246,30 @@ public partial class EntryPoint
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
         var app = builder.Build();
 
+        if (app.Environment.IsDevelopment())
+        {
+            var services = app.Services;
+
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedTenantsAsync);
+            await RunSeederAsync(services, UserSeeder.SeedRolesAsync);
+            await RunSeederAsync(services, PermissionSeeder.SeedAllAsync);
+            await RunSeederAsync(services, LocationSeeder.SeedLocationDataAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedReferenceDataAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedCollegeTypesAsync);
+            await RunSeederAsync(services, AcademicYearSeeder.SeedAcademicYearsAsync);
+            await RunSeederAsync(services, FacultySeeder.SeedFacultiesAsync);
+            await RunSeederAsync(services, ProgramSeeder.SeedProgramsAsync);
+            await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
+            await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
+            await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedPaymentTypesAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedESewaConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedKhaltiConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedConnectIPSConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedSmsConfigurationAsync);
+            await RunSeederAsync(services, UserSeeder.SeedUsersAsync);
+        }
+
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
 
         // Configure the HTTP request pipeline.
@@ -295,6 +319,17 @@ public partial class EntryPoint
         app.MapRazorPages();
 
         app.Run();
+    }
+
+    private static async Task RunSeederAsync(IServiceProvider appServices, Func<IServiceProvider, Task> seeder)
+    {
+        using var scope = appServices.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+
+        var tenantContext = serviceProvider.GetRequiredService<ITenantContext>();
+        tenantContext.SetTenant(1, "OCE", TenantType.Central);
+
+        await seeder(serviceProvider);
     }
 
     private static bool IsAjaxRequest(HttpRequest request)

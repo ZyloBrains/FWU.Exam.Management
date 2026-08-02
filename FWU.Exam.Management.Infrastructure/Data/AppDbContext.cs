@@ -46,6 +46,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<College>? Colleges { get; set; }
     public DbSet<CollegeProgram>? CollegePrograms { get; set; }
     public DbSet<CollegeType>? CollegeTypes { get; set; }
+    public DbSet<TenantCollege>? TenantColleges { get; set; }
     public DbSet<Country>? Countries { get; set; }
     public DbSet<District>? Districts { get; set; }
     public DbSet<EntryFormat>? EntryFormats { get; set; }
@@ -70,6 +71,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<PeriodType>? PeriodTypes { get; set; }
     public DbSet<PreviousLevel>? PreviousLevels { get; set; }
     public DbSet<Program>? Programs { get; set; }
+    public DbSet<ProgramSemester>? ProgramSemesters { get; set; }
     public DbSet<QuestionSet>? QuestionSets { get; set; }
     public DbSet<ResultRecord>? ResultRecords { get; set; }
     public DbSet<SchoolType>? SchoolTypes { get; set; }
@@ -145,6 +147,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 .HasForeignKey("TenantId")
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
+        builder.Entity<College>()
+            .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
+                c.TenantColleges!.Any(tc => tc.TenantId == AppDbContext.GetCurrentTenantId()));
+
+        builder.Entity<TenantCollege>()
+            .HasKey(tc => new { tc.TenantId, tc.CollegeId });
+
+        builder.Entity<TenantCollege>()
+            .HasOne(tc => tc.College)
+            .WithMany(c => c.TenantColleges)
+            .HasForeignKey(tc => tc.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<TenantCollege>()
+            .HasOne(tc => tc.Tenant)
+            .WithMany(t => t.TenantColleges)
+            .HasForeignKey(tc => tc.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<BillTitle>()
             .HasOne(e => e.Tenant)
@@ -916,7 +937,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ProvinceCode] IS NOT NULL");
 
         builder.Entity<Bank>()
-            .HasIndex(b => b.BankCode)
+            .HasIndex(b => new { b.TenantId, b.BankCode })
             .IsUnique()
             .HasFilter("[BankCode] IS NOT NULL");
 
@@ -956,7 +977,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[PeriodTypeName] IS NOT NULL");
 
         builder.Entity<PaymentType>()
-            .HasIndex(pt => pt.PaymentTypeName)
+            .HasIndex(pt => new { pt.TenantId, pt.PaymentTypeName })
             .IsUnique()
             .HasFilter("[PaymentTypeName] IS NOT NULL");
 
@@ -966,7 +987,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         // Unique indexes - Tenant-scoped composite (TenantId, Code)
         builder.Entity<College>()
-            .HasIndex(c => new { c.TenantId, c.Code })
+            .HasIndex(c => c.Code)
             .IsUnique();
 
         builder.Entity<AcademicYear>()
@@ -984,15 +1005,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasFilter("[ExamScheduleCode] IS NOT NULL");
 
         builder.Entity<Semester>()
-            .HasOne(s => s.Faculty)
-            .WithMany()
-            .HasForeignKey(s => s.FacultyId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<Semester>()
-            .HasIndex(s => new { s.FacultyId, s.Code })
+            .HasIndex(s => s.Code)
             .IsUnique()
             .HasFilter("[Code] IS NOT NULL");
+
+        builder.Entity<ProgramSemester>()
+            .HasOne(ps => ps.Program)
+            .WithMany(p => p.ProgramSemesters)
+            .HasForeignKey(ps => ps.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ProgramSemester>()
+            .HasOne(ps => ps.Semester)
+            .WithMany(s => s.ProgramSemesters)
+            .HasForeignKey(ps => ps.SemesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ProgramSemester>()
+            .HasIndex(ps => new { ps.ProgramId, ps.SemesterId })
+            .IsUnique();
 
         builder.Entity<StudentRegistration>()
             .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })

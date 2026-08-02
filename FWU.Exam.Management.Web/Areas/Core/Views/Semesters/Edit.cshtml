@@ -62,13 +62,6 @@
                     </select>
                     <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
-                <div>
-                    <label for="FacultyId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Faculty <span class="text-red-500">*</span></label>
-                    <select id="FacultyId" name="FacultyId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" asp-items="ViewBag.FacultyId">
-                        <option value="">-- Select Faculty --</option>
-                    </select>
-                    <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
                 <div class="md:col-span-2">
                     <label asp-for="Remark" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <textarea asp-for="Remark" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Enter remark (optional)"></textarea>

@@ -229,6 +229,9 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         {
             try
             {
+                var existing = await context.KhaltiConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                if (existing is null) return NotFound();
+                khaltiConfiguration.TenantId = existing.TenantId;
                 context.Update(khaltiConfiguration);
                 await context.SaveChangesAsync();
             }

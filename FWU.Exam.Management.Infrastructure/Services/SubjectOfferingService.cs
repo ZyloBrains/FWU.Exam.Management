@@ -168,7 +168,11 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Where(s => s.AcademicYearId == academicYearId
                         && (s.Number <= 8 || allowUpperSemesters))
             .OrderBy(s => s.Number)
-            .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
+            .Select(s => new SelectOption
+            {
+                Id = s.Id,
+                Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+            })
             .ToListAsync();
     }
 
@@ -208,21 +212,23 @@ public class SubjectOfferingService : ISubjectOfferingService
 
     public async Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId)
     {
-        return await _context.SubjectOfferings
+        var assignedSemesterIds = _context.ProgramSemesters
+            .AsNoTracking()
+            .Where(ps => ps.ProgramId == programId && ps.IsActive)
+            .Select(ps => ps.SemesterId);
+
+        return await _context.Semesters
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.ProgramId == programId
-                         && so.Semester != null
-                         && so.Semester.AcademicYearId == academicYearId)
-            .GroupBy(so => new { so.SemesterId, SemesterNumber = so.Semester!.Number, SemesterName = so.Semester!.Name })
-            .Select(g => new SemesterOfferingSummary
+            .Where(s => assignedSemesterIds.Contains(s.Id) && s.AcademicYearId == academicYearId)
+            .OrderBy(s => s.Number)
+            .Select(s => new SemesterOfferingSummary
             {
-                SemesterId = g.Key.SemesterId,
-                SemesterNumber = g.Key.SemesterNumber,
-                SemesterName = g.Key.SemesterName,
-                SubjectCount = g.Count()
+                SemesterId = s.Id,
+                SemesterNumber = s.Number,
+                SemesterName = s.Name!,
+                SubjectCount = _context.SubjectOfferings.Count(so => so.ProgramId == programId && so.SemesterId == s.Id)
             })
-            .OrderBy(s => s.SemesterNumber)
             .ToListAsync();
     }
 
@@ -262,11 +268,19 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
 
         var semesters = await _context.Semesters
+            .Include(s => s.AcademicYear)
             .OrderByDescending(s => s.Id)
             .AsNoTracking()
             .ToListAsync();
 
         return (subjectCatalogs, programs, semesters);
+    }
+
+    public async Task<bool> IsSemesterAssignedToProgramAsync(int programId, int semesterId)
+    {
+        return await _context.ProgramSemesters
+            .AsNoTracking()
+            .AnyAsync(ps => ps.ProgramId == programId && ps.SemesterId == semesterId && ps.IsActive);
     }
 
     private static Expression<Func<SubjectOffering, object>> GetSortProperty(string sort)

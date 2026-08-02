@@ -226,6 +226,9 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         {
             try
             {
+                var existing = await context.ConnectIpsPaymentConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                if (existing is null) return NotFound();
+                configuration.TenantId = existing.TenantId;
                 context.Update(configuration);
                 await context.SaveChangesAsync();
             }

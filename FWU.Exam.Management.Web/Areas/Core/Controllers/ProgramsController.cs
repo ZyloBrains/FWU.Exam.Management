@@ -1,9 +1,12 @@
 using System.Text;
 using ClosedXML.Excel;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +18,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("programs.view")]
-public class ProgramsController(IProgramService programService, IUserContext userContext, AppDbContext context) : Controller
+public class ProgramsController(IProgramService programService, ISemesterService semesterService, IUserContext userContext, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
     {
@@ -248,6 +251,63 @@ public class ProgramsController(IProgramService programService, IUserContext use
     public async Task<IActionResult> DeleteAjax(int id)
     {
         try { await programService.DeleteProgramAsync(id); return Json(new { success = true, message = "Program deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+    }
+
+    [RequirePermission("programs.edit")]
+    public async Task<IActionResult> Semesters(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var program = await programService.GetProgramByIdAsync(id.Value);
+        if (program == null) return NotFound();
+
+        ViewBag.Programs = new SelectList(
+            await context.Programs.AsNoTracking().ApplyScope(userContext)
+                .Select(p => new { p.Id, p.ProgramName, p.ProgramCode })
+                .OrderBy(p => p.ProgramName)
+                .ToListAsync(),
+            "Id", "ProgramName", program.Id);
+
+        var assignedIds = await semesterService.GetAssignedSemesterIdsAsync(id.Value);
+        var assignableSemesters = await semesterService.GetAssignableSemestersAsync(userContext);
+
+        var groups = assignableSemesters
+            .GroupBy(s => s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "Other")
+            .OrderByDescending(g => g.Key)
+            .Select(g => new ProgramSemesterGroup
+            {
+                Title = g.Key,
+                Semesters = g.OrderBy(s => s.Number).Select(s => new ProgramSemesterItem
+                {
+                    SemesterId = s.Id,
+                    Display = SemesterDisplayHelper.Format(s)
+                }).ToList()
+            })
+            .ToList();
+
+        var viewModel = new ProgramSemestersViewModel
+        {
+            ProgramId = program.Id,
+            ProgramCode = program.ProgramCode,
+            ProgramName = program.ProgramName,
+            AssignedSemesterIds = assignedIds,
+            Groups = groups
+        };
+
+        return View(viewModel);
+    }
+
+    [RequirePermission("programs.edit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Semesters(int id, List<int> semesterIds)
+    {
+        if (await programService.GetProgramByIdAsync(id) == null)
+            return NotFound();
+
+        await semesterService.SetProgramSemestersAsync(id, semesterIds ?? new List<int>());
+        TempData["SuccessMessage"] = "Program semester assignments updated successfully.";
+        return RedirectToAction(nameof(Semesters), new { id });
     }
 
 }

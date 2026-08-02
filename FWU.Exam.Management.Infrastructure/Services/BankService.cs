@@ -64,6 +64,9 @@ public class BankService(AppDbContext context) : IBankService
 
     public async Task UpdateBankAsync(Bank bank)
     {
+        var existing = await context.Banks.AsNoTracking().FirstOrDefaultAsync(b => b.Id == bank.Id);
+        if (existing is null) throw new InvalidOperationException("Bank not found.");
+        bank.TenantId = existing.TenantId;
         context.Banks.Update(bank);
         await context.SaveChangesAsync();
     }

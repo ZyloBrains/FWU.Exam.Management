@@ -60,6 +60,9 @@ public class PaymentTypeService(AppDbContext context) : IPaymentTypeService
 
     public async Task UpdatePaymentTypeAsync(PaymentType paymentType)
     {
+        var existing = await context.Set<PaymentType>().AsNoTracking().FirstOrDefaultAsync(pt => pt.Id == paymentType.Id);
+        if (existing is null) throw new InvalidOperationException("Payment type not found.");
+        paymentType.TenantId = existing.TenantId;
         context.Set<PaymentType>().Update(paymentType);
         await context.SaveChangesAsync();
     }

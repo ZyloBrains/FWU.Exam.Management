@@ -75,6 +75,7 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         }
 
         context.Colleges.Add(college);
+        context.TenantColleges.Add(new TenantCollege { College = college });
         await context.SaveChangesAsync();
         return college.Id;
     }

@@ -185,6 +185,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         {
             var faculty = await context.Faculties
                 .AsNoTracking()
+                .IgnoreQueryFilters()
                 .Include(f => f.Tenant)
                 .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
 
@@ -193,12 +194,14 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (user.CollegeId != null)
         {
-            var college = await context.Colleges
+            var collegeTenant = await context.TenantColleges
                 .AsNoTracking()
-                .Include(c => c.Tenant)
-                .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
+                .IgnoreQueryFilters()
+                .Where(tc => tc.CollegeId == user.CollegeId.Value && tc.Tenant != null && tc.Tenant.IsActive)
+                .Select(tc => tc.Tenant!.OfficeCode)
+                .FirstOrDefaultAsync();
 
-            return college?.Tenant?.OfficeCode;
+            return collegeTenant;
         }
 
         var centralTenant = await context.Tenants
