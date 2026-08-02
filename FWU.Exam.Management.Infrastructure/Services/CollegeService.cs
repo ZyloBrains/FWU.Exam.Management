@@ -173,10 +173,9 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
             query = query.Where(c =>
                 c.Code.ToString().Contains(search) ||
                 c.Name.Contains(search) ||
-                c.CollegeNameNepali.Contains(search) ||
                 (c.ShortName ?? "").Contains(search) ||
                 c.Email.Contains(search) ||
-                c.Phone1.Contains(search) ||
+                (c.Phone1 ?? "").Contains(search) ||
                 (c.Phone2 ?? "").Contains(search) ||
                 c.PrincipalName.Contains(search) ||
                 (c.Remarks ?? "").Contains(search) ||

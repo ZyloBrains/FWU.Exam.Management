@@ -41,7 +41,7 @@
     // Get user and permissions
     var sideMenuUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var sideMenuTenantCode = Context.Items["TenantCode"] as string;
-    var isSuperAdmin = sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, "SuperAdmin");
+    var isSuperAdmin = sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, Role.SuperAdmin);
 
     // Get permissions for the current user
     var sideMenuPermissions = sideMenuUser != null

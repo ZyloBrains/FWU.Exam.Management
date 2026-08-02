@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -192,7 +193,7 @@ public class BulkUserCreationService(
                             user.PasswordHash = new PasswordHasher<AppUser>().HashPassword(user, password);
                         }
 
-                        await scopedUserManager.AddToRoleAsync(user, "Student");
+                        await scopedUserManager.AddToRoleAsync(user, Role.Student);
                         await scopedUserManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
 
                         // Add to pre-loaded sets so duplicates within same batch are caught

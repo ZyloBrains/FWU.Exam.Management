@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
@@ -244,7 +245,7 @@ public class SemesterEnrollmentServiceTests
         });
 
         var uc = new TestUserContext();
-        uc.SetUser(UserId, null, TestData.CollegeId, [], ["CollegeAdmin"]);
+        uc.SetUser(UserId, null, TestData.CollegeId, [], [Role.CollegeAdmin]);
         var service = CreateService(db, uc);
 
         var (created, skipped) = await service.BulkCreateEnrollmentsAsync([1, 2], 2);
@@ -308,7 +309,7 @@ public class SemesterEnrollmentServiceTests
         });
 
         var uc = new TestUserContext();
-        uc.SetUser(UserId, null, TestData.CollegeId, [], ["CollegeAdmin"]);
+        uc.SetUser(UserId, null, TestData.CollegeId, [], [Role.CollegeAdmin]);
         var service = CreateService(db, uc);
 
         var (created, skipped) = await service.BulkCreateAllEnrollmentsAsync(null, null, null, null, 2);

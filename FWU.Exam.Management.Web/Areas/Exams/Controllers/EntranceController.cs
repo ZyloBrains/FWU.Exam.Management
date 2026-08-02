@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
@@ -491,7 +492,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
@@ -553,7 +554,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConvertToAdmission(int id)
     {

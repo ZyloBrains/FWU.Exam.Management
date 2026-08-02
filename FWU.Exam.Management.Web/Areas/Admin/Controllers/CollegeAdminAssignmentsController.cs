@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -105,7 +106,7 @@ public class CollegeAdminAssignmentsController(
 
     private async Task PopulateDropdowns(CollegeAdminSubjectAssignment? model = null)
     {
-        var collegeAdmins = await userManager.GetUsersInRoleAsync("CollegeAdmin");
+        var collegeAdmins = await userManager.GetUsersInRoleAsync(Role.CollegeAdmin);
         ViewBag.CollegeAdminUserId = new SelectList(collegeAdmins.Select(t => new { t.Id, Name = t.FullName ?? t.Email }), "Id", "Name", model?.CollegeAdminUserId);
 
         var programsQuery = context.Programs.AsNoTracking();
