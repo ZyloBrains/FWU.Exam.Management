@@ -347,6 +347,165 @@ public class UserController(
         TempData["SuccessMessage"] = "User roles updated successfully!";
         return RedirectToAction(nameof(Index));
     }
+    [RequirePermission("users.edit")]
+    public async Task<IActionResult> ResetPassword(string? userId, string? search, int page = 1, int pageSize = 10)
+    {
+        UserResetPasswordViewModel? selectedUser = null;
+
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            selectedUser = await LoadSelectedUserAsync(userId);
+            if (selectedUser == null)
+                TempData["ErrorMessage"] = "User not found or you do not have access to this user.";
+        }
+
+        var model = await BuildResetPasswordPageAsync(selectedUser, search, page, pageSize);
+        return View(model);
+    }
+
+    [RequirePermission("users.edit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(UserResetPasswordPageViewModel model)
+    {
+        var userId = model.SelectedUser?.UserId;
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            TempData["ErrorMessage"] = "Please select a user to reset.";
+            return RedirectToAction(nameof(ResetPassword), new { search = model.Search, page = model.Page, pageSize = model.PageSize });
+        }
+
+        var selectedUser = await LoadSelectedUserAsync(userId);
+        if (selectedUser == null)
+        {
+            TempData["ErrorMessage"] = "User not found or you do not have access to this user.";
+            return RedirectToAction(nameof(ResetPassword), new { search = model.Search, page = model.Page, pageSize = model.PageSize });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var pageModel = await BuildResetPasswordPageAsync(selectedUser, model.Search, model.Page, model.PageSize);
+            return View(pageModel);
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User not found.";
+            return RedirectToAction(nameof(ResetPassword), new { search = model.Search, page = model.Page, pageSize = model.PageSize });
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, token, model.SelectedUser!.NewPassword);
+
+        if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = $"Password reset successfully for '{(user.FullName ?? user.Email)}'. The user must use the new password on their next login.";
+            return RedirectToAction(nameof(ResetPassword), new { userId = user.Id, search = model.Search, page = model.Page, pageSize = model.PageSize });
+        }
+
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(string.Empty, error.Description);
+
+        var reloaded = await BuildResetPasswordPageAsync(selectedUser, model.Search, model.Page, model.PageSize);
+        return View(reloaded);
+    }
+
+    private async Task<UserResetPasswordViewModel?> LoadSelectedUserAsync(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            return null;
+
+        var user = await userManager.Users
+            .Include(u => u.Faculty)
+            .Include(u => u.College)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+            return null;
+
+        var accessibleIds = await userManager.Users
+            .ApplyScope(userContext)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        if (!accessibleIds.Contains(user.Id))
+            return null;
+
+        return new UserResetPasswordViewModel
+        {
+            UserId = user.Id,
+            UserEmail = user.Email ?? string.Empty,
+            FullName = user.FullName,
+            FacultyName = user.Faculty?.Name,
+            CollegeName = user.College?.Name,
+            IsActive = user.IsActive
+        };
+    }
+
+    private async Task<UserResetPasswordPageViewModel> BuildResetPasswordPageAsync(
+        UserResetPasswordViewModel? selectedUser, string? search, int page, int pageSize)
+    {
+        IQueryable<AppUser> usersQuery = userManager.Users
+            .Include(u => u.Faculty)
+            .Include(u => u.College)
+            .ApplyScope(userContext);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            usersQuery = usersQuery.Where(u =>
+                (u.Email != null && u.Email.ToLower().Contains(s)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
+                (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
+                (u.College != null && u.College.Name != null && u.College.Name.ToLower().Contains(s)));
+        }
+
+        var totalCount = await usersQuery.CountAsync();
+
+        var users = await usersQuery
+            .OrderBy(u => u.Email ?? "")
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var userIds = users.Select(u => u.Id).ToList();
+        var userRoles = await context.UserRoles
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .ToListAsync();
+
+        var roleLookup = userRoles
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => (IList<string>)g.Select(x => x.Name).ToList());
+
+        var items = users.Select(u => new UserListItemViewModel
+        {
+            Id = u.Id,
+            Email = u.Email ?? string.Empty,
+            FullName = u.FullName,
+            FacultyName = u.Faculty?.Name,
+            CollegeName = u.College?.Name,
+            IsActive = u.IsActive,
+            Roles = roleLookup.GetValueOrDefault(u.Id, new List<string>())
+        }).ToList();
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search ?? string.Empty;
+
+        return new UserResetPasswordPageViewModel
+        {
+            SelectedUser = selectedUser,
+            Users = items,
+            Search = search,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
     [RequirePermission("users.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
