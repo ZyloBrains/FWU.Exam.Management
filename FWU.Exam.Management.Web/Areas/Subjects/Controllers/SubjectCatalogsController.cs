@@ -134,21 +134,25 @@ public class SubjectCatalogsController : Controller
 
                     if (catalogs.Count > 0)
                     {
-                        var existingCodes = await _subjectCatalogService.GetExistingSubjectCodesAsync();
+                        var existingCatalogs = await _subjectCatalogService.GetExistingSubjectCatalogsAsync();
+                        var existingPairs = existingCatalogs
+                            .Select(c => $"{c.SubjectCode?.Trim()}\u0001{c.SubjectName?.Trim()}")
+                            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                        var seenCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        var seenPairs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                         var deduplicated = new List<SubjectCatalog>();
 
                         foreach (var c in catalogs)
                         {
-                            if (existingCodes.Contains(c.SubjectCode, StringComparer.OrdinalIgnoreCase))
+                            var pair = $"{c.SubjectCode?.Trim()}\u0001{c.SubjectName?.Trim()}";
+                            if (existingPairs.Contains(pair))
                             {
-                                errors.Add($"SubjectCode '{c.SubjectCode}' already exists in the system");
+                                errors.Add($"SubjectCode '{c.SubjectCode}' with name '{c.SubjectName}' already exists in the system");
                                 continue;
                             }
-                            if (!seenCodes.Add(c.SubjectCode))
+                            if (!seenPairs.Add(pair))
                             {
-                                errors.Add($"Duplicate SubjectCode '{c.SubjectCode}' in Excel");
+                                errors.Add($"Duplicate SubjectCode '{c.SubjectCode}' with name '{c.SubjectName}' in Excel");
                                 continue;
                             }
                             deduplicated.Add(c);

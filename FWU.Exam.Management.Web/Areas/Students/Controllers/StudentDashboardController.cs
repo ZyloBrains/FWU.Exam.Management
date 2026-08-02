@@ -385,7 +385,7 @@ public class StudentDashboardController(
             return NotFound("No program assigned.");
         }
 
-        var subjects = await dashboardService.GetSubjectOfferingsByProgramAsync(programId);
+        var subjects = await dashboardService.GetSubjectOfferingsForStudentAsync(user.Id, programId);
 
         return View(subjects);
     }
@@ -444,14 +444,11 @@ public class StudentDashboardController(
         }
         else
         {
-            if (schedule.Semester != null && schedule.Semester.Number > 1)
+            var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
+            if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
             {
-                var prevSubmitted = await dashboardService.HasSubmittedPreviousSemesterExamFormAsync(user.Id, schedule.SemesterId, programId);
-                if (!prevSubmitted)
-                {
-                    TempData["ErrorMessage"] = "Please submit the previous semester exam form first.";
-                    return RedirectToAction(nameof(ExamForms));
-                }
+                TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
+                return RedirectToAction(nameof(ExamForms));
             }
         }
 
@@ -481,9 +478,11 @@ public class StudentDashboardController(
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
             PracticalFee = s.HasPractical ? practicalFee : 0,
-            IsSelected = isRegular || failedSet.Contains(s.Id),
+            IsSelected = isRegular ? s.IsCompulsory : failedSet.Contains(s.Id),
             IsFailed = failedSet.Contains(s.Id),
-            IsCompulsory = s.IsCompulsory
+            IsCompulsory = s.IsCompulsory,
+            SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+            SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
         }).ToList();
 
         var vm = new ExamPaymentViewModel
@@ -533,6 +532,13 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
+
         int logId;
         if (subjectIds.Count == 0)
         {
@@ -566,6 +572,13 @@ public class StudentDashboardController(
         var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
 
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
@@ -743,6 +756,13 @@ public class StudentDashboardController(
             ? new List<int>()
             : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
 
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+        }
+
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
 
@@ -889,6 +909,33 @@ public class StudentDashboardController(
     public IActionResult PaymentFailure()
     {
         return View();
+    }
+
+    private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
+    {
+        var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
+        var offeringLookup = offerings.ToDictionary(o => o.Id);
+        foreach (var id in subjectIds)
+        {
+            if (!offeringLookup.ContainsKey(id))
+                return (false, "Selected subject is not part of this exam schedule.");
+        }
+
+        var electiveGroups = offerings
+            .Where(o => !o.IsCompulsory && o.SubjectCatalog != null)
+            .GroupBy(o => o.SubjectCatalog!.SubjectTypeId);
+
+        foreach (var group in electiveGroups)
+        {
+            var groupName = group.First().SubjectCatalog?.SubjectType?.Name ?? group.Key.ToString();
+            var selectedCount = group.Count(o => subjectIds.Contains(o.Id));
+            if (selectedCount == 0)
+                return (false, $"Please select at least one elective subject from {groupName}.");
+            if (selectedCount > 1)
+                return (false, $"Only one subject can be selected from {groupName}.");
+        }
+
+        return (true, null);
     }
 
     private async Task HandlePostPaymentRegistration(int logId)

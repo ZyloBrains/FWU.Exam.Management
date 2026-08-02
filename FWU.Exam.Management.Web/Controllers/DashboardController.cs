@@ -108,7 +108,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         var examSchedules = await studentDashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
         vm.ExamSchedules = examSchedules;
 
-        var allSubjectOfferings = await studentDashboardService.GetSubjectOfferingsByProgramAsync(programId);
+        var allSubjectOfferings = await studentDashboardService.GetSubjectOfferingsForStudentAsync(user.Id, programId);
 
         vm.SubjectOfferings = allSubjectOfferings;
     }

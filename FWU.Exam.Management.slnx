@@ -4,4 +4,5 @@
   <Project Path="FWU.Exam.Management.Domain/FWU.Exam.Management.Domain.csproj" />
   <Project Path="FWU.Exam.Management.Infrastructure/FWU.Exam.Management.Infrastructure.csproj" />
   <Project Path="FWU.Exam.Management.Web/FWU.Exam.Management.Web.csproj" />
+  <Project Path="tests/FWU.Exam.Management.Infrastructure.Tests/FWU.Exam.Management.Infrastructure.Tests.csproj" />
 </Solution>

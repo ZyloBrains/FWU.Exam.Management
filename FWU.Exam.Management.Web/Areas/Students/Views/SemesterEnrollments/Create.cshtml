@@ -17,6 +17,13 @@
                 <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                    <select id="AcademicYearId" asp-items="ViewBag.AcademicYearId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
+                        <option value="">All Academic Years</option>
+                    </select>
+                </div>
+
+                <div>
                     <label asp-for="StudentAdmissionId" class="block text-sm font-medium text-gray-700 mb-1">Student Admission *</label>
                     <select asp-for="StudentAdmissionId" asp-items="ViewBag.StudentAdmissionId" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500">
                         <option value="">Select Admission</option>
@@ -81,7 +88,34 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         $(function () {
-            $('.select2').select2({ width: 'resolve' });
+            $('.select2:not(#StudentAdmissionId)').select2({ width: 'resolve' });
+
+            $('#StudentAdmissionId').select2({
+                width: 'resolve',
+                placeholder: 'Type to search by student name, registration no, roll number...',
+                minimumInputLength: 1,
+                ajax: {
+                    url: tenantUrl('/Students/SemesterEnrollments/SearchAdmissions'),
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            academicYearId: $('#AcademicYearId').val() || null
+                        };
+                    },
+                    processResults: function (data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                }
+            });
+
+            $('#AcademicYearId').change(function () {
+                $('#StudentAdmissionId').val(null).trigger('change');
+                $("#SemesterId").empty().append('<option value="">Select Semester</option>');
+                $("#SemesterId").select2('destroy').select2();
+            });
 
             $("#StudentAdmissionId").change(function () {
                 var admissionId = $(this).val();

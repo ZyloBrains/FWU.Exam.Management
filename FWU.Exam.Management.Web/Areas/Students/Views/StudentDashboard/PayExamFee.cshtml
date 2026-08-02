@@ -3,15 +3,32 @@
 @{
     ViewData["Title"] = "Pay Exam Fee";
     var compulsorySubjects = Model.Subjects.Where(s => s.IsCompulsory).ToList();
-    var electiveSubjects = Model.Subjects.Where(s => !s.IsCompulsory).ToList();
+    var electiveGroups = Model.Subjects.Where(s => !s.IsCompulsory).GroupBy(s => s.SubjectTypeId).ToList();
+    var electiveSubjects = electiveGroups.SelectMany(g => g).ToList();
 }
 
 <div class="min-h-screen pb-24 sm:pb-6">
+    <style>
+        .fee-header, .fee-row { display: grid; grid-template-columns: 2.5rem 3rem minmax(0,1fr) 5.5rem 4rem 4.5rem 7.5rem; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; }
+        .fee-row { transition: background-color .15s ease; }
+        .c-check { display: flex; justify-content: center; }
+        .c-fee { text-align: right; }
+        .c-theory, .c-prac { text-align: center; }
+        @@media (max-width: 767px) {
+            .fee-header { display: none; }
+            .fee-row { display: flex; align-items: center; gap: 0.75rem; margin: 0 0.75rem; border: 1px solid #f1f5f9; border-radius: 0.75rem; padding: 0.75rem; }
+            .fee-row + .fee-row { margin-top: 0.5rem; }
+            .fee-row:hover { background: transparent; }
+            .c-sn, .c-code, .c-theory, .c-prac { display: none; }
+            .c-sub { flex: 1 1 auto; min-width: 0; }
+            .c-fee { margin-left: auto; }
+        }
+    </style>
     @await Html.PartialAsync("_AlertMessages")
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 mb-6 sm:mb-8">
         <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
         <div class="absolute top-0 right-0 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
-        <div class="relative px-5 py-8 sm:px-10 sm:py-10">
+        <div class="relative px-5 py-6 sm:px-10 sm:py-10">
             <div class="flex items-start gap-4">
                 <div class="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20 shrink-0">
                     <svg class="h-7 w-7 sm:h-8 sm:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,149 +125,154 @@
 
         @if (compulsorySubjects.Any())
         {
-            <div class="px-6 py-3 bg-blue-50 border-b border-gray-200">
+            <div class="px-4 sm:px-6 py-3 bg-blue-50 border-b border-gray-200">
                 <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wider">Compulsory Subjects</h4>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            @if (!Model.IsRegular)
-                            {
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-10"></th>
-                            }
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Code</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
-                            <th class="text-right px-4 py-3 font-semibold text-gray-600">Practical Fee</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @for (int i = 0; i < compulsorySubjects.Count; i++)
-                        {
-                            var subj = compulsorySubjects[i];
-                            <tr class="subject-row hover:bg-gray-50 transition-colors @(subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-blue-50/30") : "")">
-                                @if (!Model.IsRegular)
-                                {
-                                    <td class="px-4 py-3">
-                                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                               data-practical-fee="@subj.PracticalFee"
-                                               class="subject-checkbox rounded border-gray-300"
-                                               onchange="updateTotals()" checked="@(subj.IsSelected ? "checked" : null)" />
-                                    </td>
-                                }
-                                <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
-                                <td class="px-4 py-3 text-gray-800 font-medium">@subj.SubjectName</td>
-                                <td class="px-4 py-3 text-gray-600">@subj.SubjectCode</td>
-                                <td class="px-4 py-3 text-center">
-                                    @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
-                                    else { <i class="fas fa-times text-gray-300"></i> }
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
-                                    else { <i class="fas fa-times text-gray-300"></i> }
-                                </td>
-                                <td class="px-4 py-3 text-right text-gray-800">Rs @subj.PracticalFee.ToString("N0")</td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="bg-gray-50 border-t border-gray-200">
-                        <tr class="text-sm font-semibold text-gray-700">
-                            <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Compulsory Subtotal:</td>
-                            <td class="px-4 py-3 text-right" id="compPracticalFee">Rs @compulsorySubjects.Sum(s => s.PracticalFee).ToString("N0")</td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="fee-header">
+                <span></span>
+                <span class="text-left text-xs font-semibold text-gray-500">SN</span>
+                <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
+                <span class="text-left text-xs font-semibold text-gray-500">Code</span>
+                <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
+                <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
+                <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+            </div>
+            @for (int i = 0; i < compulsorySubjects.Count; i++)
+            {
+                var subj = compulsorySubjects[i];
+                var rowBg = subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-blue-50/30") : "bg-white";
+                <div class="fee-row subject-card @rowBg hover:bg-gray-50">
+                    <div class="c-check">
+                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                               data-practical-fee="@subj.PracticalFee"
+                               class="subject-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
+                               onchange="updateTotals()"
+                               @(Model.IsRegular ? "checked disabled" : (subj.IsSelected ? "checked" : null)) />
+                    </div>
+                    <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
+                    <div class="c-sub">
+                        <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
+                        <div class="mt-1 md:hidden flex items-center gap-1.5 flex-wrap">
+                            <span class="text-xs text-gray-500">@subj.SubjectCode</span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasTheory ? "text-green-600" : "text-gray-400")">
+                                <i class="fas fa-@(subj.HasTheory ? "check" : "times")"></i> T
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasPractical ? "text-green-600" : "text-gray-400")">
+                                <i class="fas fa-@(subj.HasPractical ? "check" : "times")"></i> P
+                            </span>
+                        </div>
+                    </div>
+                    <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
+                    <div class="c-theory">
+                        @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
+                        else { <i class="fas fa-times text-gray-300"></i> }
+                    </div>
+                    <div class="c-prac">
+                        @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
+                        else { <i class="fas fa-times text-gray-300"></i> }
+                    </div>
+                    <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                </div>
+            }
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <span class="text-sm font-semibold text-gray-700">Compulsory Subtotal:</span>
+                <span class="text-sm font-semibold text-gray-700" id="compPracticalFee">Rs @compulsorySubjects.Sum(s => s.PracticalFee).ToString("N0")</span>
             </div>
         }
 
-        @if (electiveSubjects.Any())
+        @if (electiveGroups.Any())
         {
-            <div class="px-6 py-3 bg-purple-50 border-b border-gray-200">
-                <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects</h4>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            @if (!Model.IsRegular)
-                            {
-                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-10">
-                                    <input type="checkbox" id="selectAll" onchange="toggleAllElec(this)" class="rounded border-gray-300" />
-                                </th>
-                            }
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">SN</th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Subject</th>
-                            <th class="text-left px-4 py-3 font-semibold text-gray-600">Code</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Theory</th>
-                            <th class="text-center px-4 py-3 font-semibold text-gray-600">Practical</th>
-                            <th class="text-right px-4 py-3 font-semibold text-gray-600">Practical Fee</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @for (int i = 0; i < electiveSubjects.Count; i++)
-                        {
-                            var subj = electiveSubjects[i];
-                            <tr class="subject-row hover:bg-gray-50 transition-colors @(subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "")">
-                                @if (!Model.IsRegular)
+            @foreach (var group in electiveGroups)
+            {
+                var groupName = group.First().SubjectTypeName ?? "Elective Subjects";
+                var groupSubjects = group.ToList();
+                <div class="elective-group">
+                    <div class="px-4 sm:px-6 py-3 bg-purple-50 border-b border-gray-200">
+                        <div class="flex items-center justify-between gap-2">
+                            <h4 class="text-sm font-semibold text-purple-700 uppercase tracking-wider">Elective Subjects - @groupName</h4>
+                            <label class="inline-flex items-center gap-1.5 text-xs font-medium text-purple-700 cursor-pointer select-none">
+                                <input type="checkbox" onchange="toggleAllElec(this)" class="rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4" />
+                                Select One
+                            </label>
+                        </div>
+                    </div>
+                    <div class="fee-header">
+                        <span></span>
+                        <span class="text-left text-xs font-semibold text-gray-500">SN</span>
+                        <span class="text-left text-xs font-semibold text-gray-500">Subject</span>
+                        <span class="text-left text-xs font-semibold text-gray-500">Code</span>
+                        <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
+                        <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
+                        <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                    </div>
+                    @for (int i = 0; i < groupSubjects.Count; i++)
+                    {
+                        var subj = groupSubjects[i];
+                        var rowBg = subj.IsSelected ? (subj.IsFailed ? "bg-red-50/30" : "bg-purple-50/30") : "bg-white";
+                        <div class="fee-row subject-card @rowBg hover:bg-gray-50">
+                            <div class="c-check">
+                                <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
+                                       data-practical-fee="@subj.PracticalFee"
+                                       data-subject-type-id="@subj.SubjectTypeId"
+                                       class="subject-checkbox elective-checkbox rounded border-gray-300 h-5 w-5 sm:h-4 sm:w-4"
+                                       onchange="onSubjectChange(this)" checked="@(subj.IsSelected ? "checked" : null)" />
+                            </div>
+                            <div class="c-sn text-sm text-gray-700">@(i + 1)</div>
+                            <div class="c-sub">
+                                <p class="text-sm font-medium text-gray-800 truncate">@subj.SubjectName</p>
+                                @if (!Model.IsRegular && subj.IsFailed)
                                 {
-                                    <td class="px-4 py-3">
-                                        <input type="checkbox" name="subjectCheckbox" value="@subj.SubjectOfferingId"
-                                               data-practical-fee="@subj.PracticalFee"
-                                               class="subject-checkbox rounded border-gray-300"
-                                               onchange="updateTotals()" checked="@(subj.IsSelected ? "checked" : null)" />
-                                    </td>
+                                    <p class="text-xs font-semibold text-gray-900 hidden md:block">Rs @subj.PracticalFee.ToString("N0")</p>
                                 }
-                                <td class="px-4 py-3 text-gray-800">@(i + 1)</td>
-                                <td class="px-4 py-3 text-gray-800 font-medium">
-                                    @subj.SubjectName
+                                <div class="mt-1 md:hidden flex items-center gap-1.5 flex-wrap">
+                                    <span class="text-xs text-gray-500">@subj.SubjectCode</span>
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasTheory ? "text-green-600" : "text-gray-400")">
+                                        <i class="fas fa-@(subj.HasTheory ? "check" : "times")"></i> T
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-medium @(subj.HasPractical ? "text-green-600" : "text-gray-400")">
+                                        <i class="fas fa-@(subj.HasPractical ? "check" : "times")"></i> P
+                                    </span>
                                     @if (!Model.IsRegular && subj.IsFailed)
                                     {
-                                        <p class="text-xs font-semibold text-gray-900">Rs @subj.PracticalFee.ToString("N0")</p>
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-100 text-[10px] font-semibold text-red-600">
+                                            <i class="fas fa-exclamation-circle"></i> Failed
+                                        </span>
                                     }
-                                </td>
-                                <td class="px-4 py-3 text-gray-600">@subj.SubjectCode</td>
-                                <td class="px-4 py-3 text-center">
-                                    @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
-                                    else { <i class="fas fa-times text-gray-300"></i> }
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
-                                    else { <i class="fas fa-times text-gray-300"></i> }
-                                </td>
-                                <td class="px-4 py-3 text-right text-gray-800">Rs @subj.PracticalFee.ToString("N0")</td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="bg-gray-50 border-t border-gray-200">
-                        <tr class="text-sm font-semibold text-gray-700">
-                            <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Elective Subtotal:</td>
-                            <td class="px-4 py-3 text-right" id="elecPracticalFee">Rs @electiveSubjects.Sum(s => s.PracticalFee).ToString("N0")</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                                </div>
+                            </div>
+                            <div class="c-code text-sm text-gray-500">@subj.SubjectCode</div>
+                            <div class="c-theory">
+                                @if (subj.HasTheory) { <i class="fas fa-check text-green-500"></i> }
+                                else { <i class="fas fa-times text-gray-300"></i> }
+                            </div>
+                            <div class="c-prac">
+                                @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
+                                else { <i class="fas fa-times text-gray-300"></i> }
+                            </div>
+                            <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                        </div>
+                    }
+                    <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+                        <span class="text-sm font-semibold text-gray-700">Elective Subtotal:</span>
+                        <span class="text-sm font-semibold text-gray-700">Rs @groupSubjects.Sum(s => s.PracticalFee).ToString("N0")</span>
+                    </div>
+                </div>
+            }
         }
 
-        <div class="border-t-2 border-gray-200 bg-gray-50">
-            <table class="w-full text-sm">
-                <tfoot>
-                    <tr class="text-sm text-gray-700">
-                        <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Exam Fee (Flat):</td>
-                        <td class="px-4 py-3 text-right font-semibold text-gray-800" id="totalExamFee">Rs @Model.TotalExamFee.ToString("N0")</td>
-                    </tr>
-                    <tr class="text-sm text-gray-700">
-                        <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right">Practical Fee:</td>
-                        <td class="px-4 py-3 text-right font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</td>
-                    </tr>
-                    <tr class="bg-blue-50 font-bold">
-                        <td colspan="@(Model.IsRegular ? 5 : 6)" class="px-4 py-3 text-right text-gray-800">Grand Total:</td>
-                        <td class="px-4 py-3 text-right text-blue-700 text-base" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <div class="border-t-2 border-gray-200 bg-gray-50 divide-y divide-gray-100">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3">
+                <span class="text-sm text-gray-600">Exam Fee (Flat):</span>
+                <span class="text-sm font-semibold text-gray-800" id="totalExamFee">Rs @Model.TotalExamFee.ToString("N0")</span>
+            </div>
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3">
+                <span class="text-sm text-gray-600">Practical Fee:</span>
+                <span class="text-sm font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</span>
+            </div>
+            <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-blue-50">
+                <span class="text-sm font-bold text-gray-800">Grand Total:</span>
+                <span class="text-base font-bold text-blue-700" id="grandTotal">Rs @Model.GrandTotal.ToString("N0")</span>
+            </div>
         </div>
     </div>
 
@@ -271,7 +293,7 @@
     </div>
 
         <!-- Payment Method -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div id="paymentMethodSection" class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20">
@@ -340,11 +362,84 @@
                 <p class="text-lg font-extrabold text-gray-900" id="stickyTotal">Rs @Model.GrandTotal.ToString("N0")</p>
                 <p class="text-[10px] text-gray-400" id="stickyCount">@Model.Subjects.Count(s => s.IsSelected) selected</p>
             </div>
-            <button type="button" onclick="scrollToPayment()"
+            <button type="button" onclick="openPaymentModal()"
                     class="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold hover:from-blue-700 hover:to-blue-800 active:scale-[0.97] transition-all shadow-lg shadow-blue-600/30">
                 <i class="fas fa-arrow-right"></i>
                 Continue
             </button>
+        </div>
+    </div>
+
+    <!-- Payment Method Bottom Sheet (Mobile) -->
+    <div id="paymentSheetBackdrop" class="fixed inset-0 bg-black/50 hidden md:hidden" style="z-index:70"></div>
+    <div id="paymentSheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl shadow-black/30 hidden md:hidden transition-transform duration-300 translate-y-full" style="z-index:80">
+        <div class="px-4 py-5">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20">
+                        <i class="fas fa-credit-card text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-gray-900">Choose Payment Method</h2>
+                        <p class="text-xs text-gray-500">Complete your transaction securely</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wider">Total</p>
+                        <p class="text-lg font-extrabold text-gray-900" id="sheetTotal">Rs @Model.GrandTotal.ToString("N0")</p>
+                    </div>
+                    <button type="button" onclick="closePaymentModal()" aria-label="Close"
+                            class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95 transition-all">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-5">
+                @if (Model.PaymentTypes.Count > 0)
+                {
+                    <div class="grid grid-cols-1 gap-3">
+                        @foreach (var pt in Model.PaymentTypes)
+                        {
+                            var key = pt.Name?.ToLowerInvariant() ?? "";
+                            var (bg, border, text, hoverBorder) = key switch
+                            {
+                                "esewa" => ("bg-green-50", "border-green-200", "text-green-700", "hover:border-green-400"),
+                                "khalti" => ("bg-purple-50", "border-purple-200", "text-purple-700", "hover:border-purple-400"),
+                                "connectips" => ("bg-blue-50", "border-blue-200", "text-blue-700", "hover:border-blue-400"),
+                                _ => ("bg-gray-50", "border-gray-200", "text-gray-700", "hover:border-gray-400")
+                            };
+
+                            <button type="button" onclick="processPayment('@key')"
+                                    class="flex items-center gap-4 p-4 @bg border-2 @border rounded-xl @hoverBorder transition-all duration-200 active:scale-[0.98] text-left">
+                                <div class="w-12 h-12 shrink-0 rounded-xl flex items-center justify-center @bg @border">
+                                    @if (!string.IsNullOrEmpty(pt.LogoUrl))
+                                    {
+                                        <img src="@pt.LogoUrl" alt="@pt.Name" class="w-8 h-8 object-contain" onerror="this.parentElement.innerHTML='<i class=\'fas fa-credit-card text-xl @text\'></i>'" />
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-credit-card text-xl @text"></i>
+                                    }
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold @text">@pt.Name</p>
+                                    <p class="text-xs @(text.Replace("700", "500")) mt-0.5">Pay with @pt.Name</p>
+                                </div>
+                                <i class="fas fa-chevron-right @text text-sm"></i>
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-credit-card text-3xl mb-3 block"></i>
+                        <p class="text-sm font-medium text-gray-500">No payment gateways configured</p>
+                        <p class="text-xs text-gray-400 mt-1">Please contact your administrator.</p>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -361,64 +456,193 @@
     <script>
         var flatExamFee = @Model.TotalExamFee;
 
-        function updateTotals() {
-            @if (!Model.IsRegular)
-            {
-                <text>
-                var totalPractical = 0;
-                var selectedIds = [];
-                var selectedCount = 0;
-                document.querySelectorAll('.subject-checkbox:checked').forEach(function(cb) {
-                    totalPractical += parseFloat(cb.getAttribute('data-practical-fee'));
-                    selectedIds.push(cb.value);
-                    selectedCount++;
+        var errorToastTimer = null;
+
+        function showErrorToast(message) {
+            var container = document.getElementById('errorToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'errorToastContainer';
+                container.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;width:auto;max-width:36rem;';
+                document.body.appendChild(container);
+            }
+            container.innerHTML = '';
+            var toast = document.createElement('div');
+            toast.style.cssText = 'display:flex;align-items:flex-start;background-color:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:0.5rem;padding:1rem;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1);opacity:0;transition:opacity 0.3s ease;';
+            toast.innerHTML =
+                '<svg style="width:1.25rem;height:1.25rem;color:#f87171;margin-right:0.75rem;margin-top:0.125rem;flex-shrink:0" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' +
+                '<div class="toast-msg" style="font-size:0.875rem;font-weight:500;white-space:pre-line;flex:1;color:#991b1b"></div>' +
+                '<button type="button" aria-label="Close" style="margin-left:0.75rem;flex-shrink:0;background:none;border:none;cursor:pointer;color:#ef4444">' +
+                '<svg style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>';
+            toast.querySelector('.toast-msg').textContent = message;
+            toast.querySelector('button').addEventListener('click', function() {
+                hideErrorToast(toast);
+            });
+            container.appendChild(toast);
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    toast.style.opacity = '1';
                 });
-                var grandTotal = flatExamFee + totalPractical;
-                document.getElementById('totalExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
-                document.getElementById('totalPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
-                document.getElementById('grandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();
-                document.getElementById('breakupExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
-                document.getElementById('breakupPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
-                document.getElementById('breakupGrandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();
-                document.getElementById('hfSelectedSubjectIds').value = selectedIds.join(',');
-                document.getElementById('hfAmount').value = grandTotal;
-                </text>
-            }
-            else
-            {
-                <text>
-                var selectedCount = @Model.Subjects.Count(s => s.IsSelected);
-                document.getElementById('hfAmount').value = @Model.GrandTotal;
-                document.getElementById('hfSelectedSubjectIds').value = '@string.Join(",", Model.SelectedSubjectIds)';
-                </text>
-            }
-            var formatted = parseFloat(document.getElementById('hfAmount').value).toLocaleString();
-            document.getElementById('stickyTotal').innerText = 'Rs ' + formatted;
-            document.getElementById('stickyCount').innerText = selectedCount + ' selected';
+            });
+            if (errorToastTimer) clearTimeout(errorToastTimer);
+            errorToastTimer = setTimeout(function() { hideErrorToast(toast); }, 4000);
         }
 
-        function toggleAllElec(source) {
-            document.querySelectorAll('.elective-checkbox').forEach(function(cb) {
-                cb.checked = source.checked;
-            });
+        function hideErrorToast(toast) {
+            if (!toast || !toast.parentNode) return;
+            toast.style.opacity = '0';
+            setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 300);
+        }
+
+        function onSubjectChange(cb) {
+            var typeId = cb.getAttribute('data-subject-type-id');
+            if (typeId) {
+                var group = document.querySelectorAll('.subject-checkbox[data-subject-type-id="' + typeId + '"]');
+                if (cb.checked) {
+                    group.forEach(function(other) {
+                        if (other !== cb && other.checked) {
+                            other.checked = false;
+                        }
+                    });
+                } else {
+                    var anyChecked = Array.prototype.some.call(group, function(other) {
+                        return other !== cb && other.checked;
+                    });
+                    if (!anyChecked) {
+                        cb.checked = true;
+                        showErrorToast('At least one elective must be selected from this group.');
+                    }
+                }
+            }
             updateTotals();
         }
 
-        function scrollToPayment() {
-            var paymentSection = document.querySelector('.bg-white.rounded-2xl.shadow-sm.border.border-gray-100.overflow-hidden');
-            if (paymentSection) {
-                paymentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                setTimeout(function() {
-                    paymentSection.querySelector('button')?.focus();
-                }, 500);
+        function validateElectiveGroups() {
+            var groups = {};
+            document.querySelectorAll('.subject-checkbox.elective-checkbox').forEach(function(cb) {
+                var typeId = cb.getAttribute('data-subject-type-id');
+                if (typeId && !(typeId in groups)) groups[typeId] = 0;
+            });
+            document.querySelectorAll('.subject-checkbox.elective-checkbox:checked').forEach(function(cb) {
+                var typeId = cb.getAttribute('data-subject-type-id');
+                if (typeId && (typeId in groups)) groups[typeId]++;
+            });
+            for (var typeId in groups) {
+                if (groups[typeId] === 0) {
+                    return 'Please select at least one elective subject from each elective group.';
+                }
             }
+            return null;
+        }
+
+        function updateTotals() {
+            var totalPractical = 0;
+            var selectedIds = [];
+            var selectedCount = 0;
+            document.querySelectorAll('.subject-checkbox:checked').forEach(function(cb) {
+                totalPractical += parseFloat(cb.getAttribute('data-practical-fee') || 0);
+                selectedIds.push(cb.value);
+                selectedCount++;
+            });
+            var grandTotal = flatExamFee + totalPractical;
+            document.getElementById('totalExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
+            document.getElementById('totalPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
+            document.getElementById('grandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();
+            document.getElementById('breakupExamFee').innerText = 'Rs ' + flatExamFee.toLocaleString();
+            document.getElementById('breakupPracticalFee').innerText = 'Rs ' + totalPractical.toLocaleString();
+            document.getElementById('breakupGrandTotal').innerText = 'Rs ' + grandTotal.toLocaleString();
+            document.getElementById('hfSelectedSubjectIds').value = selectedIds.join(',');
+            document.getElementById('hfAmount').value = grandTotal;
+            var formatted = parseFloat(document.getElementById('hfAmount').value).toLocaleString();
+            document.getElementById('stickyTotal').innerText = 'Rs ' + formatted;
+            var sheetTotal = document.getElementById('sheetTotal');
+            if (sheetTotal) sheetTotal.innerText = 'Rs ' + formatted;
+            document.getElementById('stickyCount').innerText = selectedCount + ' selected';
+            document.querySelectorAll('.elective-group').forEach(function(group) {
+                var box = group.querySelector('input[type="checkbox"][onchange="toggleAllElec(this)"]');
+                var groupBoxes = group.querySelectorAll('.subject-checkbox.elective-checkbox');
+                if (box && groupBoxes.length > 0) {
+                    var anyChecked = Array.prototype.some.call(groupBoxes, function(cb) { return cb.checked; });
+                    box.checked = anyChecked;
+                }
+            });
+        }
+
+        function toggleAllElec(source) {
+            var group = source.closest('.elective-group');
+            var electives = group ? Array.prototype.slice.call(group.querySelectorAll('.subject-checkbox.elective-checkbox')) : [];
+            if (source.checked) {
+                var hasSelection = electives.some(function(cb) { return cb.checked; });
+                if (hasSelection) {
+                    var kept = false;
+                    electives.forEach(function(cb) {
+                        if (cb.checked && !kept) {
+                            kept = true;
+                        } else {
+                            cb.checked = false;
+                        }
+                    });
+                } else {
+                    electives.forEach(function(cb, idx) { cb.checked = idx === 0; });
+                }
+            } else {
+                var checkedBox = null;
+                electives.forEach(function(cb) {
+                    if (cb.checked && !checkedBox) checkedBox = cb;
+                    cb.checked = false;
+                });
+                if (checkedBox) {
+                    checkedBox.checked = true;
+                    updateTotals();
+                    showErrorToast('At least one elective must be selected from this group.');
+                }
+            }
+            updateTotals();
+        }
+
+        function openPaymentModal() {
+            var groupError = validateElectiveGroups();
+            if (groupError) {
+                showErrorToast(groupError);
+                return;
+            }
+            var amount = document.getElementById('hfAmount').value;
+            if (amount == 0 || amount === '0') {
+                showErrorToast('Please select at least one subject to proceed with payment.');
+                return;
+            }
+            var sheet = document.getElementById('paymentSheet');
+            var backdrop = document.getElementById('paymentSheetBackdrop');
+            sheet.classList.remove('hidden');
+            sheet.offsetHeight;
+            sheet.classList.remove('translate-y-full');
+            backdrop.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePaymentModal() {
+            var sheet = document.getElementById('paymentSheet');
+            var backdrop = document.getElementById('paymentSheetBackdrop');
+            sheet.classList.add('translate-y-full');
+            setTimeout(function() { sheet.classList.add('hidden'); }, 300);
+            backdrop.classList.add('hidden');
+            document.body.style.overflow = '';
         }
 
         function processPayment(method) {
             updateTotals();
+            var groupError = validateElectiveGroups();
+            if (groupError) {
+                showErrorToast(groupError);
+                return;
+            }
             var amount = document.getElementById('hfAmount').value;
             if (amount == 0 || amount === '0') {
-                alert('Please select at least one subject to proceed with payment.');
+                showErrorToast('Please select at least one subject to proceed with payment.');
                 return;
             }
             if (confirm('Pay Rs ' + parseFloat(amount).toLocaleString() + ' via ' + method.charAt(0).toUpperCase() + method.slice(1) + '?')) {
@@ -437,6 +661,20 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             updateTotals();
+
+            var paymentSheetBackdrop = document.getElementById('paymentSheetBackdrop');
+            if (paymentSheetBackdrop) {
+                paymentSheetBackdrop.addEventListener('click', closePaymentModal);
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    var sheet = document.getElementById('paymentSheet');
+                    if (sheet && !sheet.classList.contains('translate-y-full')) {
+                        closePaymentModal();
+                    }
+                }
+            });
 
             document.querySelectorAll('.subject-card').forEach(function(card) {
                 card.addEventListener('click', function(e) {

@@ -218,7 +218,7 @@
             $('.select2').select2({ width: 'resolve' });
         });
 
-        function loadSemesters(academicYearId) {
+        function loadSemesters(academicYearId, programId) {
             $('#SemesterId').select2('destroy');
             var semesterDropdown = $("#SemesterId");
             semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
@@ -229,7 +229,7 @@
                 return;
             }
 
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId }, function (data) {
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
                 $.each(data, function (index, item) {
                     semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
@@ -239,7 +239,13 @@
         }
 
         $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val());
+            loadSemesters($(this).val(), $("#ProgramId").val());
+        });
+
+        $("#ProgramId").change(function () {
+            if ($("#AcademicYearId").val()) {
+                loadSemesters($("#AcademicYearId").val(), $(this).val());
+            }
         });
 
         if (!$("#AcademicYearId").val()) {
