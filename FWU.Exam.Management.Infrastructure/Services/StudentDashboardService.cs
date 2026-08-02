@@ -223,6 +223,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(rr => rr.ExamType)
             .Include(rr => rr.College)
             .Include(rr => rr.ExamSchedule)
+                .ThenInclude(es => es.Semester)
+            .Include(rr => rr.ExamSchedule)
+                .ThenInclude(es => es.Level)
             .Where(rr => rr.RegistrationNumber != null && rr.RegistrationNumber == registrationNumber)
             .ToListAsync();
     }
@@ -260,6 +263,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return await context.ExamRegistrations!
             .AsNoTracking()
             .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es.Semester)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es.Level)
             .Include(er => er.ExamSubjectResults!)
                 .ThenInclude(esr => esr.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
