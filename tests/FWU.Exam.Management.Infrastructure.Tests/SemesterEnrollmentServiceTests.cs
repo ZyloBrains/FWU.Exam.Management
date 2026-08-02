@@ -222,7 +222,6 @@ public class SemesterEnrollmentServiceTests
             ctx.Colleges.Add(new College
             {
                 Id = 2,
-                TenantId = TestData.TenantId,
                 Code = "CLG2",
                 Name = "Other College",
                 Email = "c2@c.com",
@@ -287,7 +286,6 @@ public class SemesterEnrollmentServiceTests
             ctx.Colleges.Add(new College
             {
                 Id = 2,
-                TenantId = TestData.TenantId,
                 Code = "CLG2",
                 Name = "Other College",
                 Email = "c2@c.com",

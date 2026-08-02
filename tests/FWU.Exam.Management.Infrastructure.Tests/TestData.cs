@@ -41,7 +41,6 @@ public static class TestData
         ctx.Colleges.Add(new College
         {
             Id = CollegeId,
-            TenantId = TenantId,
             Code = "CLG",
             Name = "Test College",
             Email = "c@c.com",
