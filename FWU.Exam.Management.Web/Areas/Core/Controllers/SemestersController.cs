@@ -16,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("semesters.view")]
 public class SemestersController(ISemesterService semesterService, IAcademicYearService academicYearService, IUserContext userContext) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await semesterService.GetSemestersAsync(page, pageSize, search, sort, sortDir, userContext);
 
@@ -31,7 +31,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -39,7 +39,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, userContext);
 
@@ -62,7 +62,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var (items, totalCount) = await semesterService.GetSemestersAsync(page, pageSize, search, sort, sortDir, userContext);
 
@@ -77,7 +77,7 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var items = await semesterService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, userContext);
 

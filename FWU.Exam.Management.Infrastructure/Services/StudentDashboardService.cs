@@ -99,7 +99,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return await context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
-            .ThenInclude(sc => sc.SubjectType)
+            .ThenInclude(sc => sc!.SubjectType)
             .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId)
             .OrderBy(so => so.DisplayOrder)
             .ToListAsync();

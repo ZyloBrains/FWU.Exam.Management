@@ -95,7 +95,7 @@ public class NoticeService(AppDbContext context) : INoticeService
         return sort.ToLower() switch
         {
             "noticetitle" => n => n.NoticeTitle,
-            _ => n => n.PublishedDate
+            _ => n => n.PublishedDate ?? DateTime.MinValue
         };
     }
 }

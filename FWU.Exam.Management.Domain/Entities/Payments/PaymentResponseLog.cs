@@ -14,10 +14,10 @@ public class PaymentResponseLog : ITenantScoped
     public bool IsSuccess { get; set; }
 
     [Required, MaxLength(1024)]
-    public string? ResponseMessage { get; set; }
+    public string ResponseMessage { get; set; } = string.Empty;
 
     [Required]
-    public string? FullResponse { get; set; }
+    public string FullResponse { get; set; } = string.Empty;
 
     public virtual PaymentRequestLog? PaymentRequestLog { get; set; }
 }

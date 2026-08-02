@@ -16,10 +16,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class BulkUserCreationService(
     AppDbContext context,
-    UserManager<AppUser> userManager,
     IServiceScopeFactory scopeFactory,
-    ITenantContext tenantContext,
-    ILogger<BulkUserCreationService> logger) : IBulkUserCreationService
+    ITenantContext tenantContext) : IBulkUserCreationService
 {
     private const int BatchSize = 50;
 

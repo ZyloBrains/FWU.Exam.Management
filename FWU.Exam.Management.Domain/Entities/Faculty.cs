@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -29,6 +29,6 @@ public class Faculty : ITenantScoped
     public string? LogoPath { get; set; }
     public int? TenantId { get; set; }
     public Tenant? Tenant { get; set; }
-    public virtual ICollection<College>? Colleges { get; set; }
+    public virtual ICollection<College> Colleges { get; set; } = [];
 }
 

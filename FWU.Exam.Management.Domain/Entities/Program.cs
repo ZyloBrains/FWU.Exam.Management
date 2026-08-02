@@ -25,15 +25,15 @@ public class Program
 
     [Required, MaxLength(50)]
     [Display(Name = "Program Code")]
-    public string? ProgramCode { get; set; }
+    public string ProgramCode { get; set; } = string.Empty;
 
     [Required, MaxLength(255)]
     [Display(Name = "Program Name")]
-    public string? ProgramName { get; set; }
+    public string ProgramName { get; set; } = string.Empty;
 
     [Required, MaxLength(50)]
     [Display(Name = "Short Name")]
-    public string? ShortName { get; set; }
+    public string ShortName { get; set; } = string.Empty;
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Duration")]
@@ -65,8 +65,8 @@ public class Program
 
     public virtual Board? Board { get; set; }
 
-    public virtual ICollection<CollegeProgram>? CollegePrograms { get; set; }
-    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
-    public virtual ICollection<ProgramSemester>? ProgramSemesters { get; set; }
+    public virtual ICollection<CollegeProgram> CollegePrograms { get; set; } = [];
+    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
+    public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; } = [];
+    public virtual ICollection<ProgramSemester> ProgramSemesters { get; set; } = [];
 }

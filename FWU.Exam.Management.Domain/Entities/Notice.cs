@@ -12,16 +12,16 @@ public class Notice : ITenantScoped
 
     [Required, MaxLength(1024)]
     [Display(Name = "Notice Title")]
-    public string? NoticeTitle { get; set; }
+    public string NoticeTitle { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Notice Preview")]
-    public string? NoticePreview { get; set; }
+    public string NoticePreview { get; set; } = string.Empty;
 
     [Display(Name = "Published Date")]
     public DateTime? PublishedDate { get; set; }
 
     [Required]
     [Display(Name = "Notice Content")]
-    public string? NoticeContent { get; set; }
+    public string NoticeContent { get; set; } = string.Empty;
 }

@@ -78,7 +78,7 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
             .Join(context.Roles, rp => rp.RoleId, r => r.Id, (rp, r) => new { r.Id, r.Name })
             .ToListAsync();
 
-        return result.Select(x => (x.Id, x.Name)).ToList();
+        return result.Select(x => (x.Id, x.Name ?? "")).ToList();
     }
 
     public async Task UpdateRolePermissionsAsync(string roleId, List<int> permissionIds)

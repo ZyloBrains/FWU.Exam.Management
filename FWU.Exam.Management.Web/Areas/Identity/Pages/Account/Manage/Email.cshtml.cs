@@ -17,7 +17,6 @@ namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account.Manage;
 
 public class EmailModel(
     UserManager<AppUser> userManager,
-    SignInManager<AppUser> signInManager,
     IEmailSender emailSender) : PageModel
 {
 

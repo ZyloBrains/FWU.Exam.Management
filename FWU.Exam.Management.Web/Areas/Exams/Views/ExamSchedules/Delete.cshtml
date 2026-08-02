@@ -55,15 +55,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.AcademicYear.AcademicYearName)</p>
+                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.AcademicYear!.AcademicYearName)</p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Level</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Program.ProgramName)</p>
+                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Program!.ProgramName)</p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Exam Type</p>
-                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExamType.Name)</p>
+                        <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.ExamType!.Name)</p>
                     </div>
                 </div>
             </div>

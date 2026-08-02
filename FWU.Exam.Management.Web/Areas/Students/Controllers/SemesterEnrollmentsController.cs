@@ -507,7 +507,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             "Id", "AcademicYearCode", selectedId);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))

@@ -10,7 +10,7 @@ public class PreviousLevel
 
     [Required, MaxLength(100)]
     [Display(Name = "Previous Level Name")]
-    public string? PreviousLevelName { get; set; }
+    public string PreviousLevelName { get; set; } = string.Empty;
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Level Id")]
@@ -27,6 +27,6 @@ public class PreviousLevel
     public bool IsActive { get; set; }
 
     public virtual Level? Level { get; set; }
-    public virtual ICollection<SchoolType>? SchoolTypes { get; set; }
-    public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
+    public virtual ICollection<SchoolType> SchoolTypes { get; set; } = [];
+    public virtual ICollection<StudentQualification> StudentQualifications { get; set; } = [];
 }

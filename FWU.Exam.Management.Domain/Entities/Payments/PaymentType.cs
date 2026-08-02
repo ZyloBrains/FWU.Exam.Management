@@ -12,7 +12,7 @@ public class PaymentType : ITenantScoped
 
     [Required, MaxLength(255)]
     [Display(Name = "Payment Type Name")]
-    public string? PaymentTypeName { get; set; }
+    public string PaymentTypeName { get; set; } = string.Empty;
 
     [MaxLength(500)]
     [Display(Name = "Logo URL")]
@@ -20,5 +20,5 @@ public class PaymentType : ITenantScoped
 
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
-    public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
+    public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; } = [];
 }

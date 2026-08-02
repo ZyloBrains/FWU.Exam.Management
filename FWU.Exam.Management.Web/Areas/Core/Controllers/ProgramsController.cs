@@ -20,7 +20,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("programs.view")]
 public class ProgramsController(IProgramService programService, ISemesterService semesterService, IUserContext userContext, AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ProgramCode", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
 
@@ -35,7 +35,7 @@ public class ProgramsController(IProgramService programService, ISemesterService
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -43,7 +43,7 @@ public class ProgramsController(IProgramService programService, ISemesterService
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
         var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -72,7 +72,7 @@ public class ProgramsController(IProgramService programService, ISemesterService
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
         var (items, totalCount) = await programService.GetProgramsAsync(page, pageSize, search, sort, sortDir);
 
@@ -87,7 +87,7 @@ public class ProgramsController(IProgramService programService, ISemesterService
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ProgramCode", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
         var items = await programService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 

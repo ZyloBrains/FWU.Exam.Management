@@ -16,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
 [RequirePermission("studentadmissions.view")]
-public class StudentAdmissionsController(IStudentAdmissionService admissionService, IStudentRegistrationService studentService, UserManager<AppUser> userManager, AppDbContext context, IUserContext userContext) : Controller
+public class StudentAdmissionsController(IStudentAdmissionService admissionService, UserManager<AppUser> userManager, AppDbContext context, IUserContext userContext) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
@@ -43,7 +43,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return new List<int>();
     }
 
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "AdmissionDate", string sortDir = "desc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "AdmissionDate", string sortDir = "desc", int pageSize = 10)
     {
         var (items, totalCount) = await admissionService.GetAdmissionsAsync(page, pageSize, search, sort, sortDir);
 
@@ -234,7 +234,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         }
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -242,7 +242,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
         var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -266,7 +266,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
         var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -281,7 +281,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "AdmissionDate", string sortDir = "desc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
         var items = await admissionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 

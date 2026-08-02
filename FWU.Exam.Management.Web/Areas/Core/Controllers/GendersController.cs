@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("genders.view")]
 public class GendersController(IGenderService genderService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await genderService.GetGendersAsync(page, pageSize, search, sort, sortDir);
 

@@ -18,7 +18,7 @@ public class PaymentRequestLog : ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Invoice Number")]
-    public string? InvoiceNumber { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
 
     [Display(Name = "Forwarded Timestamp")]
     public DateTime ForwardedTimestamp { get; set; }
@@ -36,14 +36,14 @@ public class PaymentRequestLog : ITenantScoped
 
     [Required, MaxLength(255)]
     [Display(Name = "Full Name")]
-    public string? FullName { get; set; }
+    public string FullName { get; set; } = string.Empty;
 
     [Display(Name = "Amount")]
     public decimal Amount { get; set; }
 
     [Required]
     [Display(Name = "Full Request Content")]
-    public string? FullRequestContent { get; set; }
+    public string FullRequestContent { get; set; } = string.Empty;
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Payment Type")]
@@ -77,6 +77,6 @@ public class PaymentRequestLog : ITenantScoped
     public virtual ExamSchedule? ExamSchedule { get; set; }
 
     public virtual College? College { get; set; }
-    public virtual ICollection<PaymentResponseLog>? PaymentResponseLog { get; set; }
-    public virtual ICollection<PaymentPracticalSubjects>? PaymentPracticalSubjects { get; set; }
+    public virtual ICollection<PaymentResponseLog> PaymentResponseLog { get; set; } = [];
+    public virtual ICollection<PaymentPracticalSubjects> PaymentPracticalSubjects { get; set; } = [];
 }

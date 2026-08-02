@@ -25,7 +25,7 @@ public class StudentQualification : ITenantScoped
 
     [Required, MaxLength(255)]
     [Display(Name = "Institute Name")]
-    public string? InstituteName { get; set; }
+    public string InstituteName { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Passed Year")]

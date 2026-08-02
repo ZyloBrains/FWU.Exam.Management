@@ -17,7 +17,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
 {
 
     // GET: Districts with pagination, search, and sorting
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DistrictName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "DistrictName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await districtService.GetDistrictsAsync(page, pageSize, search, sort, sortDir);
 
@@ -43,7 +43,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // Helper method to escape CSV fields
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -52,7 +52,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // Export to CSV (Current Page with pagination)
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "DistrictName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "DistrictName", string sortDir = "asc")
     {
         var items = await districtService.GetFilteredDistrictsAsync(page, pageSize, search, sort, sortDir);
 
@@ -74,7 +74,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // Export to PDF (Current Page with pagination)
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "DistrictName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "DistrictName", string sortDir = "asc")
     {
         var (items, totalCount) = await districtService.GetDistrictsAsync(page, pageSize, search, sort, sortDir);
 
@@ -90,7 +90,7 @@ public class DistrictsController(IDistrictService districtService) : Controller
 
     // Export to Excel (Current Page with pagination)
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "DistrictName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "DistrictName", string sortDir = "asc")
     {
         var items = await districtService.GetFilteredDistrictsAsync(page, pageSize, search, sort, sortDir);
 

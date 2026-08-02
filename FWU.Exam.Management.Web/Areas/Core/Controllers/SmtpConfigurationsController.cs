@@ -17,7 +17,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
     {
 
     // GET: SmtpConfigurations1 with pagination, search, and sorting
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Host", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Host", string sortDir = "asc", int pageSize = 10)
         {
             var query = context.SmtpConfigurations.AsNoTracking();
 
@@ -69,7 +69,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // Helper to get filtered items for export (with pagination)
-        private async Task<(List<SmtpConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+        private async Task<(List<SmtpConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string? search, string sort, string sortDir)
         {
             var query = context.SmtpConfigurations.AsNoTracking();
 
@@ -101,7 +101,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // Helper method to escape CSV fields
-        private string EscapeCsv(string field)
+        private string EscapeCsv(string? field)
         {
             if (string.IsNullOrEmpty(field)) return "";
             if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -110,7 +110,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // Export to CSV (Current Page with pagination)
-        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Host", string sortDir = "asc")
+        public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Host", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -138,7 +138,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // Export to PDF (Current Page with pagination)
-        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Host", string sortDir = "asc")
+        public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Host", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -153,7 +153,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Host", string sortDir = "asc")
+        public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Host", string sortDir = "asc")
         {
             var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 

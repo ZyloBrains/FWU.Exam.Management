@@ -35,11 +35,11 @@ public class ResultRecord : ITenantScoped
 
     [Required, MaxLength(3)]
     [Display(Name = "Year")]
-    public string? Year { get; set; }
+    public string Year { get; set; } = string.Empty;
 
     [Required, MaxLength(2)]
     [Display(Name = "Part")]
-    public string? Part { get; set; }
+    public string Part { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Registration Number")]
@@ -47,7 +47,7 @@ public class ResultRecord : ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Symbol Number")]
-    public string? SymbolNumber { get; set; }
+    public string SymbolNumber { get; set; } = string.Empty;
 
     [MaxLength(1)]
     [Display(Name = "Alphabet")]
@@ -55,7 +55,7 @@ public class ResultRecord : ITenantScoped
 
     [Required, MaxLength(10)]
     [Display(Name = "Date of Birth (BS)")]
-    public string? DateOfBirthBs { get; set; }
+    public string DateOfBirthBs { get; set; } = string.Empty;
 
     [MaxLength(10)]
     [Display(Name = "Sex")]

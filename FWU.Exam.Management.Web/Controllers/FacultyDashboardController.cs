@@ -14,7 +14,6 @@ namespace FWU.Exam.Management.Web.Controllers;
 [Route("faculty/{officeCode}")]
 public class FacultyDashboardController(
     IFacultyService facultyService,
-    IFacultyResolver facultyResolver,
     IDashboardService dashboardService,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller

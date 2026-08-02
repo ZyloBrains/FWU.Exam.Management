@@ -39,7 +39,7 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
         {
             query = query.Where(bt =>
                 bt.BillTitleName.Contains(search) ||
-                bt.Category.Contains(search));
+                (bt.Category ?? "").Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"
@@ -85,7 +85,7 @@ public class BillTitleService(AppDbContext context, IUserContext userContext) : 
         {
             query = query.Where(bt =>
                 bt.BillTitleName.Contains(search) ||
-                bt.Category.Contains(search));
+                (bt.Category ?? "").Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"

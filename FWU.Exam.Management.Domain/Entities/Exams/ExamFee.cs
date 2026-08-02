@@ -13,7 +13,7 @@ public class ExamFee : ITenantScoped
 
     [Required, MaxLength(400)]
     [Display(Name = "Name")]
-    public string? Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Exam Schedule")]

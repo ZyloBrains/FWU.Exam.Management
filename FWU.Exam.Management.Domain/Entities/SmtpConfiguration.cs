@@ -9,11 +9,11 @@ public class SmtpConfiguration
 
     [Required, MaxLength(1024)]
     [Display(Name = "Host")]
-    public string? Host { get; set; }
+    public string Host { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "From")]
-    public string? From { get; set; }
+    public string From { get; set; } = string.Empty;
 
     [Range(1, 65535)]
     [Display(Name = "Port")]
@@ -21,11 +21,11 @@ public class SmtpConfiguration
 
     [Required, MaxLength(1024)]
     [Display(Name = "User Name")]
-    public string? UserName { get; set; }
+    public string UserName { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Password")]
-    public string? Password { get; set; }
+    public string Password { get; set; } = string.Empty;
 
     [Display(Name = "Enable SSL")]
     public bool EnableSsl { get; set; }

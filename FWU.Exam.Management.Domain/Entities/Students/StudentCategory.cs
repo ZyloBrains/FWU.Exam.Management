@@ -9,7 +9,7 @@ public class StudentCategory
 
     [Required, MaxLength(50)]
     [Display(Name = "Student Category Name")]
-    public string? StudentCategoryName { get; set; }
+    public string StudentCategoryName { get; set; } = string.Empty;
 
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
@@ -18,5 +18,5 @@ public class StudentCategory
     [Display(Name = "Remarks")]
     public string? Remarks { get; set; }
 
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }

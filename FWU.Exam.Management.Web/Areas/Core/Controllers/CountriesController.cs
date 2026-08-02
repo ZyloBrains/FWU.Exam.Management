@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("countries.view")]
 public class CountriesController(ICountryService countryService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await countryService.GetCountriesAsync(page, pageSize, search, sort, sortDir);
 

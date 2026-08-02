@@ -18,7 +18,6 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("resultrecords.view")]
 public class ResultRecordsController(
     IResultRecordService resultRecordService,
-    UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? collegeId = null, int? facultyId = null)
@@ -73,7 +72,7 @@ public class ResultRecordsController(
         return View("PrintPdf", items);
     }
 
-    private static string EscapeCsv(string field)
+    private static string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))

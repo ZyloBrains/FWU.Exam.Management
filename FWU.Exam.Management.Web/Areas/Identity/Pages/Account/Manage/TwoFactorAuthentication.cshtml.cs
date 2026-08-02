@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account.Manage;
 
 public class TwoFactorAuthenticationModel(
-    UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<TwoFactorAuthenticationModel> logger) : PageModel
+    UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : PageModel
 {
 
     /// <summary>

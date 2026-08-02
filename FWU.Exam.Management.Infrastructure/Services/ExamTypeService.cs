@@ -18,7 +18,7 @@ public class ExamTypeService(AppDbContext context) : IExamTypeService
         {
             query = query.Where(e =>
                 e.Name.Contains(search) ||
-                e.Remarks.Contains(search));
+                (e.Remarks ?? "").Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"
@@ -42,7 +42,7 @@ public class ExamTypeService(AppDbContext context) : IExamTypeService
         {
             query = query.Where(e =>
                 e.Name.Contains(search) ||
-                e.Remarks.Contains(search));
+                (e.Remarks ?? "").Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"

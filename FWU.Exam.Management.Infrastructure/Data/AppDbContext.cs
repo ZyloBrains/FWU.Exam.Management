@@ -38,80 +38,80 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     internal static int GetCurrentTenantId() => AmbientTenantContext.Value?.TenantId ?? 0;
     internal static bool IsCurrentTenantCentral() => AmbientTenantContext.Value?.IsCentralTenant ?? false;
 
-    public DbSet<AcademicYear>? AcademicYears { get; set; }
-    public DbSet<Address>? Addresses { get; set; }
-    public DbSet<Bank>? Banks { get; set; }
-    public DbSet<Batch>? Batches { get; set; }
-    public DbSet<Board>? Boards { get; set; }
-    public DbSet<College>? Colleges { get; set; }
-    public DbSet<CollegeProgram>? CollegePrograms { get; set; }
-    public DbSet<CollegeType>? CollegeTypes { get; set; }
-    public DbSet<TenantCollege>? TenantColleges { get; set; }
-    public DbSet<Country>? Countries { get; set; }
-    public DbSet<District>? Districts { get; set; }
-    public DbSet<EntryFormat>? EntryFormats { get; set; }
-    public DbSet<Ethnicity>? Ethnicities { get; set; }
-    public DbSet<ExamCenter>? ExamCenters { get; set; }
-    public DbSet<ExamFee>? ExamFees { get; set; }
-    public DbSet<ExamRegistration>? ExamRegistrations { get; set; }
-    public DbSet<ExamRollNumberSetup>? ExamRollNumberSetup { get; set; }
-    public DbSet<ExamSchedule>? ExamSchedules { get; set; }
-    public DbSet<ExamSubjectResult>? ExamSubjectResults { get; set; }
-    public DbSet<ExamSlot>? ExamSlots { get; set; }
-    public DbSet<ExamType>? ExamTypes { get; set; }
-    public DbSet<AdmitCard>? AdmitCards { get; set; }
-    public DbSet<RetotalRequest>? RetotalRequests { get; set; }
-    public DbSet<FiscalYear>? FiscalYears { get; set; }
-    public DbSet<Gender>? Genders { get; set; }
-    public DbSet<IndexGroup>? IndexGroups { get; set; }
-    public DbSet<Level>? Levels { get; set; }
-    public DbSet<LocalLevel>? LocalLevels { get; set; }
-    public DbSet<NepaliDate>? NepaliDates { get; set; }
-    public DbSet<Notice>? Notices { get; set; }
-    public DbSet<PeriodType>? PeriodTypes { get; set; }
-    public DbSet<PreviousLevel>? PreviousLevels { get; set; }
-    public DbSet<Program>? Programs { get; set; }
-    public DbSet<ProgramSemester>? ProgramSemesters { get; set; }
-    public DbSet<QuestionSet>? QuestionSets { get; set; }
-    public DbSet<ResultRecord>? ResultRecords { get; set; }
-    public DbSet<SchoolType>? SchoolTypes { get; set; }
-    public DbSet<Semester>? Semesters { get; set; }
-    public DbSet<SemesterEnrollment>? SemesterEnrollments { get; set; }
-    public DbSet<StudentAdmission>? StudentAdmissions { get; set; }
-    public DbSet<StudentCategory>? StudentCategories { get; set; }
-    public DbSet<StudentGuardian>? StudentGuardians { get; set; }
-    public DbSet<StudentQualification>? StudentQualifications { get; set; }
-    public DbSet<StudentRegistration>? StudentRegistrations { get; set; }
-    public DbSet<SubjectCatalog>? SubjectCatalogs { get; set; }
-    public DbSet<SubjectOffering>? SubjectOfferings { get; set; }
-    public DbSet<SubjectType>? SubjectTypes { get; set; }
-    public DbSet<CurriculumVersion>? CurriculumVersions { get; set; }
-    public DbSet<Province>? Provinces { get; set; }
-    public DbSet<Faculty>? Faculties { get; set; }
-    public DbSet<Tenant>? Tenants { get; set; }
-    public DbSet<SmtpConfiguration>? SmtpConfigurations { get; set; }
-    public DbSet<SmsConfiguration>? SmsConfigurations { get; set; }
-    public DbSet<GumpNowEmailConfiguration>? GumpNowEmailConfigurations { get; set; }
-    public DbSet<CollegeProfile>? CollegeProfiles { get; set; }
-    public DbSet<UserAttachment>? UserAttachments { get; set; }
-    public DbSet<GradingScheme>? GradingSchemes { get; set; }
-    public DbSet<GradeDefinition>? GradeDefinitions { get; set; }
-    public DbSet<EntranceExamApplication>? EntranceExamApplications { get; set; }
-    public DbSet<ApplicationVoucher>? ApplicationVouchers { get; set; }
-    public DbSet<PaymentRequestLog>? PaymentRequestLogs { get; set; }
-    public DbSet<PaymentResponseLog>? PaymentResponseLogs { get; set; }
-    public DbSet<PaymentPracticalSubjects>? PaymentPracticalSubjects { get; set; }
-    public DbSet<ESewaConfiguration>? ESewaConfigurations { get; set; }
-    public DbSet<KhaltiConfiguration>? KhaltiConfigurations { get; set; }
-    public DbSet<ConnectIpsPaymentConfiguration>? ConnectIpsPaymentConfigurations { get; set; }
-    public DbSet<Permission>? Permissions { get; set; }
-    public DbSet<RolePermission>? RolePermissions { get; set; }
-    public DbSet<ExamCenterCollege>? ExamCenterColleges { get; set; }
-    public DbSet<ExamCenterVenue>? ExamCenterVenues { get; set; }
-    public DbSet<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
-    public DbSet<CollegeAdminSubjectAssignment>? CollegeAdminSubjectAssignments { get; set; }
-    public DbSet<AuditLog>? AuditLogs { get; set; }
-    public DbSet<BulkUserCreationJob>? BulkUserCreationJobs { get; set; }
+    public DbSet<AcademicYear> AcademicYears { get; set; } = null!;
+    public DbSet<Address> Addresses { get; set; } = null!;
+    public DbSet<Bank> Banks { get; set; } = null!;
+    public DbSet<Batch> Batches { get; set; } = null!;
+    public DbSet<Board> Boards { get; set; } = null!;
+    public DbSet<College> Colleges { get; set; } = null!;
+    public DbSet<CollegeProgram> CollegePrograms { get; set; } = null!;
+    public DbSet<CollegeType> CollegeTypes { get; set; } = null!;
+    public DbSet<TenantCollege> TenantColleges { get; set; } = null!;
+    public DbSet<Country> Countries { get; set; } = null!;
+    public DbSet<District> Districts { get; set; } = null!;
+    public DbSet<EntryFormat> EntryFormats { get; set; } = null!;
+    public DbSet<Ethnicity> Ethnicities { get; set; } = null!;
+    public DbSet<ExamCenter> ExamCenters { get; set; } = null!;
+    public DbSet<ExamFee> ExamFees { get; set; } = null!;
+    public DbSet<ExamRegistration> ExamRegistrations { get; set; } = null!;
+    public DbSet<ExamRollNumberSetup> ExamRollNumberSetup { get; set; } = null!;
+    public DbSet<ExamSchedule> ExamSchedules { get; set; } = null!;
+    public DbSet<ExamSubjectResult> ExamSubjectResults { get; set; } = null!;
+    public DbSet<ExamSlot> ExamSlots { get; set; } = null!;
+    public DbSet<ExamType> ExamTypes { get; set; } = null!;
+    public DbSet<AdmitCard> AdmitCards { get; set; } = null!;
+    public DbSet<RetotalRequest> RetotalRequests { get; set; } = null!;
+    public DbSet<FiscalYear> FiscalYears { get; set; } = null!;
+    public DbSet<Gender> Genders { get; set; } = null!;
+    public DbSet<IndexGroup> IndexGroups { get; set; } = null!;
+    public DbSet<Level> Levels { get; set; } = null!;
+    public DbSet<LocalLevel> LocalLevels { get; set; } = null!;
+    public DbSet<NepaliDate> NepaliDates { get; set; } = null!;
+    public DbSet<Notice> Notices { get; set; } = null!;
+    public DbSet<PeriodType> PeriodTypes { get; set; } = null!;
+    public DbSet<PreviousLevel> PreviousLevels { get; set; } = null!;
+    public DbSet<Program> Programs { get; set; } = null!;
+    public DbSet<ProgramSemester> ProgramSemesters { get; set; } = null!;
+    public DbSet<QuestionSet> QuestionSets { get; set; } = null!;
+    public DbSet<ResultRecord> ResultRecords { get; set; } = null!;
+    public DbSet<SchoolType> SchoolTypes { get; set; } = null!;
+    public DbSet<Semester> Semesters { get; set; } = null!;
+    public DbSet<SemesterEnrollment> SemesterEnrollments { get; set; } = null!;
+    public DbSet<StudentAdmission> StudentAdmissions { get; set; } = null!;
+    public DbSet<StudentCategory> StudentCategories { get; set; } = null!;
+    public DbSet<StudentGuardian> StudentGuardians { get; set; } = null!;
+    public DbSet<StudentQualification> StudentQualifications { get; set; } = null!;
+    public DbSet<StudentRegistration> StudentRegistrations { get; set; } = null!;
+    public DbSet<SubjectCatalog> SubjectCatalogs { get; set; } = null!;
+    public DbSet<SubjectOffering> SubjectOfferings { get; set; } = null!;
+    public DbSet<SubjectType> SubjectTypes { get; set; } = null!;
+    public DbSet<CurriculumVersion> CurriculumVersions { get; set; } = null!;
+    public DbSet<Province> Provinces { get; set; } = null!;
+    public DbSet<Faculty> Faculties { get; set; } = null!;
+    public DbSet<Tenant> Tenants { get; set; } = null!;
+    public DbSet<SmtpConfiguration> SmtpConfigurations { get; set; } = null!;
+    public DbSet<SmsConfiguration> SmsConfigurations { get; set; } = null!;
+    public DbSet<GumpNowEmailConfiguration> GumpNowEmailConfigurations { get; set; } = null!;
+    public DbSet<CollegeProfile> CollegeProfiles { get; set; } = null!;
+    public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
+    public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
+    public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
+    public DbSet<EntranceExamApplication> EntranceExamApplications { get; set; } = null!;
+    public DbSet<ApplicationVoucher> ApplicationVouchers { get; set; } = null!;
+    public DbSet<PaymentRequestLog> PaymentRequestLogs { get; set; } = null!;
+    public DbSet<PaymentResponseLog> PaymentResponseLogs { get; set; } = null!;
+    public DbSet<PaymentPracticalSubjects> PaymentPracticalSubjects { get; set; } = null!;
+    public DbSet<ESewaConfiguration> ESewaConfigurations { get; set; } = null!;
+    public DbSet<KhaltiConfiguration> KhaltiConfigurations { get; set; } = null!;
+    public DbSet<ConnectIpsPaymentConfiguration> ConnectIpsPaymentConfigurations { get; set; } = null!;
+    public DbSet<Permission> Permissions { get; set; } = null!;
+    public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+    public DbSet<ExamCenterCollege> ExamCenterColleges { get; set; } = null!;
+    public DbSet<ExamCenterVenue> ExamCenterVenues { get; set; } = null!;
+    public DbSet<ExamCenterSymbolRange> ExamCenterSymbolRanges { get; set; } = null!;
+    public DbSet<CollegeAdminSubjectAssignment> CollegeAdminSubjectAssignments { get; set; } = null!;
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+    public DbSet<BulkUserCreationJob> BulkUserCreationJobs { get; set; } = null!;
 
 
     protected override void OnModelCreating(ModelBuilder builder)

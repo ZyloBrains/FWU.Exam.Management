@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 
 namespace FWU.Exam.Management.Domain.Entities.Subjects;
@@ -24,6 +24,6 @@ public class SubjectType
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-    public virtual ICollection<SubjectCatalog>? SubjectCatalogs { get; set; }
+    public virtual ICollection<SubjectCatalog> SubjectCatalogs { get; set; } = [];
 }
 

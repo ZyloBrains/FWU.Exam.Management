@@ -9,7 +9,7 @@ public class PeriodType
 
     [Required, MaxLength(50)]
     [Display(Name = "Period Type Name")]
-    public string? PeriodTypeName { get; set; }
+    public string PeriodTypeName { get; set; } = string.Empty;
 
     [Range(0, double.MaxValue)]
     [Display(Name = "Number Of Months")]

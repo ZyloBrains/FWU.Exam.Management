@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("sms.view")]
 public class SmsConfigurationsController(AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ApiUrl", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ApiUrl", string sortDir = "asc", int pageSize = 10)
     {
         var query = context.SmsConfigurations.AsNoTracking();
 
@@ -20,8 +20,8 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         {
             query = query.Where(s =>
                 s.ApiUrl.Contains(search) ||
-                s.Mode.Contains(search) ||
-                s.Tags.Contains(search)
+                (s.Mode ?? "").Contains(search) ||
+                (s.Tags ?? "").Contains(search)
             );
         }
 
@@ -51,14 +51,14 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         return sort.ToLower() switch
         {
             "apiurl" => s => s.ApiUrl,
-            "mode" => s => s.Mode,
-            "tags" => s => s.Tags,
+            "mode" => s => s.Mode ?? "",
+            "tags" => s => s.Tags ?? "",
             "isactive" => s => s.IsActive,
             _ => s => s.Id
         };
     }
 
-    private async Task<(List<SmsConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+    private async Task<(List<SmsConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.SmsConfigurations.AsNoTracking();
 
@@ -66,8 +66,8 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         {
             query = query.Where(s =>
                 s.ApiUrl.Contains(search) ||
-                s.Mode.Contains(search) ||
-                s.Tags.Contains(search)
+                (s.Mode ?? "").Contains(search) ||
+                (s.Tags ?? "").Contains(search)
             );
         }
 
@@ -85,7 +85,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -93,7 +93,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ApiUrl", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -113,7 +113,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ApiUrl", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -128,7 +128,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ApiUrl", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 

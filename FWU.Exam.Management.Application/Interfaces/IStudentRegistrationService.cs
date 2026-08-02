@@ -25,7 +25,7 @@ public interface IStudentRegistrationService
     Task<List<Province>> GetProvincesAsync();
     Task SaveQualificationsAsync(int studentRegistrationId, List<StudentQualification> qualifications);
     Task<List<StudentQualification>> GetQualificationsByRegistrationAsync(int studentRegistrationId);
-    Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian guardian);
+    Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian? guardian);
     Task<StudentGuardian?> GetGuardianByRegistrationAsync(int studentRegistrationId);
     Task<string?> GenerateRegistrationNumberAsync(int studentRegistrationId);
 }

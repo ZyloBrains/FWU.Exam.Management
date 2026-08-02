@@ -25,7 +25,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     private readonly UserManager<AppUser> _userManager = userManager;
     private readonly IFileUploadHelper _fileUploadHelper = fileUploadHelper;
 
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
         var query = _context.Tenants.AsQueryable();
 

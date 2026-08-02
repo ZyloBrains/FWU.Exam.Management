@@ -96,7 +96,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
         return await context.CollegePrograms
             .Where(cp => cp.CollegeId == collegeId && cp.IsActive)
             .Include(cp => cp.Program)
-            .Select(cp => cp.Program)
+            .Select(cp => cp.Program!)
             .AsNoTracking()
             .ToListAsync();
     }
@@ -160,9 +160,9 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(sa =>
-                sa.CollegeRollNumber.Contains(search) ||
-                sa.College.Name.Contains(search) ||
-                sa.Program.ProgramName.Contains(search));
+                (sa.CollegeRollNumber ?? "").Contains(search) ||
+                sa.College!.Name.Contains(search) ||
+                sa.Program!.ProgramName.Contains(search));
         }
 
         return query;
@@ -172,9 +172,9 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
     {
         return sort.ToLower() switch
         {
-            "program" => sa => sa.Program.ProgramName,
-            "college" => sa => sa.College.Name,
-            "collegerollnumber" => sa => sa.CollegeRollNumber,
+            "program" => sa => sa.Program != null ? sa.Program.ProgramName : "",
+            "college" => sa => sa.College != null ? sa.College.Name : "",
+            "collegerollnumber" => sa => sa.CollegeRollNumber ?? "",
             "admissiondate" => sa => sa.AdmissionDate,
             "iscompleted" => sa => sa.IsCompleted,
             "isactive" => sa => sa.IsActive,

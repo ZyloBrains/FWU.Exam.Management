@@ -80,10 +80,10 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
         return await context.RetotalRequests
             .AsNoTracking()
             .Include(r => r.ExamSubjectResult)
-                .ThenInclude(esr => esr.SubjectOffering)
+                .ThenInclude(esr => esr!.SubjectOffering)
             .Include(r => r.StudentRegistration)
             .Include(r => r.ExamRegistration)
-                .ThenInclude(er => er.ExamSchedule)
+                .ThenInclude(er => er!.ExamSchedule)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 

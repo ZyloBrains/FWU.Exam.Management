@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -9,11 +9,11 @@ public class CollegeType
 
     [Required, MaxLength(30)]
     [Display(Name = "Code")]
-    public string? Code { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     [Required, MaxLength(50)]
     [Display(Name = "Name")]
-    public string? Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [MaxLength(1024)]
     [Display(Name = "Remarks")]
@@ -25,7 +25,7 @@ public class CollegeType
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-    public virtual ICollection<College>? Colleges { get; set; }
-    public virtual ICollection<ExamFee>? ExamFees { get; set; }
+    public virtual ICollection<College> Colleges { get; set; } = [];
+    public virtual ICollection<ExamFee> ExamFees { get; set; } = [];
 }
 

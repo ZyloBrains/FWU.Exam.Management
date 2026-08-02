@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -14,7 +14,7 @@ public class College
     [Display(Name = "Code")]
     public string Code { get; set; } = string.Empty;
 
-    public virtual ICollection<Faculty>? Faculties { get; set; }
+    public virtual ICollection<Faculty> Faculties { get; set; } = [];
 
     [Required, MaxLength(500)]
     [Display(Name = "Name")]
@@ -90,11 +90,11 @@ public class College
     public int? CollegeProfileId { get; set; }
     public virtual CollegeProfile? CollegeProfile { get; set; }
 
-    public virtual ICollection<CollegeProgram>? CollegePrograms { get; set; }
-    public virtual ICollection<TenantCollege>? TenantColleges { get; set; }
-    public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
-    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
-    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+    public virtual ICollection<CollegeProgram> CollegePrograms { get; set; } = [];
+    public virtual ICollection<TenantCollege> TenantColleges { get; set; } = [];
+    public virtual ICollection<ExamCenter> ExamCenters { get; set; } = [];
+    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
+    public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; } = [];
+    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }
 

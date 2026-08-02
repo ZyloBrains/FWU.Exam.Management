@@ -28,9 +28,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .Include(s => s.PermanentAddress)
-                .ThenInclude(a => a.LocalLevel)
-                .ThenInclude(ll => ll.District)
-                .ThenInclude(d => d.Province)
+                .ThenInclude(a => a!.LocalLevel)
+                .ThenInclude(ll => ll!.District)
+                .ThenInclude(d => d!.Province)
             .Include(s => s.StudentGuardians)
             .Include(s => s.StudentQualifications)
                 .ThenInclude(q => q.Board)
@@ -61,9 +61,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress)
-                .ThenInclude(a => a.LocalLevel)
-                .ThenInclude(ll => ll.District)
-                .ThenInclude(d => d.Province)
+                .ThenInclude(a => a!.LocalLevel)
+                .ThenInclude(ll => ll!.District)
+                .ThenInclude(d => d!.Province)
             .Include(s => s.CurrentAddress)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
@@ -434,7 +434,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
-    public async Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian guardian)
+    public async Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian? guardian)
     {
         var existing = await context.StudentGuardians
             .Where(g => g.StudentRegistrationId == studentRegistrationId)
@@ -609,7 +609,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, studentRegistration.RegistrationNumber, college, program, studentRegistration.Email, password);
+                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, studentRegistration.RegistrationNumber ?? "", college ?? "", program ?? "", studentRegistration.Email, password);
                 await emailService.SendEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
             }
             catch (Exception ex)

@@ -15,7 +15,7 @@ public class LocalLevel
 
     [Required, MaxLength(100)]
     [Display(Name = "Local Level Name")]
-    public string? LocalLevelName { get; set; }
+    public string LocalLevelName { get; set; } = string.Empty;
 
     [Required]
     [Display(Name = "Local Level Type")]
@@ -25,6 +25,6 @@ public class LocalLevel
     public bool IsActive { get; set; } = true;
 
     public virtual District? District { get; set; }
-    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
-    public virtual ICollection<Address>? Addresses { get; set; }
+    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
+    public virtual ICollection<Address> Addresses { get; set; } = [];
 }

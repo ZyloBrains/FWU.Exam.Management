@@ -49,9 +49,9 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         return await context.Colleges
             .Include(c => c.CollegeType)
             .Include(c => c.Address)
-            .ThenInclude(a => a.LocalLevel)
-            .ThenInclude(ll => ll.District)
-            .ThenInclude(d => d.Province)
+            .ThenInclude(a => a!.LocalLevel)
+            .ThenInclude(ll => ll!.District)
+            .ThenInclude(d => d!.Province)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id);
     }
@@ -164,8 +164,8 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         var query = context.Colleges
             .Include(c => c.CollegeType)
             .Include(c => c.Address)
-            .ThenInclude(a => a.LocalLevel)
-            .ThenInclude(ll => ll.District)
+            .ThenInclude(a => a!.LocalLevel)
+            .ThenInclude(ll => ll!.District)
             .AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
@@ -174,12 +174,12 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
                 c.Code.ToString().Contains(search) ||
                 c.Name.Contains(search) ||
                 c.CollegeNameNepali.Contains(search) ||
-                c.ShortName.Contains(search) ||
+                (c.ShortName ?? "").Contains(search) ||
                 c.Email.Contains(search) ||
                 c.Phone1.Contains(search) ||
-                c.Phone2.Contains(search) ||
+                (c.Phone2 ?? "").Contains(search) ||
                 c.PrincipalName.Contains(search) ||
-                c.Remarks.Contains(search) ||
+                (c.Remarks ?? "").Contains(search) ||
                 (c.Address != null && c.Address.LocalLevel != null && c.Address.LocalLevel.District != null && c.Address.LocalLevel.District.DistrictName.Contains(search)) ||
                 (c.CollegeType != null && c.CollegeType.Code.Contains(search)));
         }
@@ -193,12 +193,12 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         {
             "code" => c => c.Code,
             "name" => c => c.Name,
-            "shortname" => c => c.ShortName,
-            "district" => c => c.Address.LocalLevel.District.DistrictName,
-            "collegetype" => c => c.CollegeType.Code,
-            "displayorder" => c => c.DisplayOrder,
+            "shortname" => c => c.ShortName ?? "",
+            "district" => c => (c.Address != null && c.Address.LocalLevel != null && c.Address.LocalLevel.District != null) ? c.Address.LocalLevel.District.DistrictName : "",
+            "collegetype" => c => c.CollegeType != null ? c.CollegeType.Code : "",
+            "displayorder" => c => c.DisplayOrder ?? 0,
             "isactive" => c => c.IsActive,
-            _ => c => c.DisplayOrder
+            _ => c => c.DisplayOrder ?? 0
         };
     }
 

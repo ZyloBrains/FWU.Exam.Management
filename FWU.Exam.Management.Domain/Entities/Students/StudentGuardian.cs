@@ -15,7 +15,7 @@ public class StudentGuardian: IAuditable, ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Father Name")]
-    public string? FatherName { get; set; }
+    public string FatherName { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Father Contact Number")]
@@ -51,7 +51,7 @@ public class StudentGuardian: IAuditable, ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Mother Name")]
-    public string? MotherName { get; set; }
+    public string MotherName { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Mother Contact Number")]
@@ -87,7 +87,7 @@ public class StudentGuardian: IAuditable, ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Guardian Name")]
-    public string? GuardianName { get; set; }
+    public string GuardianName { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Guardian Contact Number")]

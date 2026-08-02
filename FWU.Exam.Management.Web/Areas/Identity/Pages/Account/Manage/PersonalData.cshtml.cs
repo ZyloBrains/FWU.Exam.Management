@@ -8,8 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account.Manage;
 
 public class PersonalDataModel(
-    UserManager<AppUser> userManager,
-    ILogger<PersonalDataModel> logger) : PageModel
+    UserManager<AppUser> userManager) : PageModel
 {
     public async Task<IActionResult> OnGet()
     {

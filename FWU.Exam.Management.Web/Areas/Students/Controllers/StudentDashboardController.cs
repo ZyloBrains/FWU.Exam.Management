@@ -31,9 +31,7 @@ public class StudentDashboardController(
     IConfiguration configuration,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
-    IRetotalRequestService retotalRequestService,
-    AppDbContext context,
-    IWebHostEnvironment env)
+    AppDbContext context)
     : Controller
 {
     public async Task<IActionResult> Profile()
@@ -193,7 +191,7 @@ public class StudentDashboardController(
             await emailSender.SendEmailAsync(
                 newEmail,
                 "Confirm your email",
-                EmailTemplateHelper.ChangeEmail(user.FullName ?? newEmail, callbackUrl));
+                EmailTemplateHelper.ChangeEmail(user.FullName ?? newEmail, callbackUrl ?? ""));
 
             TempData["SuccessMessage"] = "A verification link has been sent to your new email address. Please check your inbox and verify. You can continue using your current email to login until verification is complete.";
         }
@@ -285,7 +283,7 @@ public class StudentDashboardController(
             await emailSender.SendEmailAsync(
                 email,
                 "Confirm your email",
-                EmailTemplateHelper.ConfirmEmail(user.FullName ?? email, callbackUrl));
+                EmailTemplateHelper.ConfirmEmail(user.FullName ?? email, callbackUrl ?? ""));
 
             TempData["SuccessMessage"] = "Verification email sent. Please check your inbox.";
         }
@@ -1131,10 +1129,10 @@ public class StudentDashboardController(
             .AsNoTracking()
             .Where(r => r.StudentRegistrationId == registration.Id && r.IsActive)
             .Include(r => r.ExamSubjectResult)
-                .ThenInclude(esr => esr.SubjectOffering)
-                    .ThenInclude(so => so.SubjectCatalog)
+                .ThenInclude(esr => esr!.SubjectOffering)
+                    .ThenInclude(so => so!.SubjectCatalog)
             .Include(r => r.ExamRegistration)
-                .ThenInclude(er => er.ExamSchedule)
+                .ThenInclude(er => er!.ExamSchedule)
             .OrderByDescending(r => r.RequestedDate)
             .ToListAsync();
 
@@ -1154,9 +1152,9 @@ public class StudentDashboardController(
             var result = await context.ExamSubjectResults
                 .AsNoTracking()
                 .Include(esr => esr.SubjectOffering)
-                    .ThenInclude(so => so.SubjectCatalog)
+                    .ThenInclude(so => so!.SubjectCatalog)
                 .Include(esr => esr.ExamRegistration)
-                    .ThenInclude(er => er.ExamSchedule)
+                    .ThenInclude(er => er!.ExamSchedule)
                 .FirstOrDefaultAsync(esr => esr.Id == examSubjectResultId.Value);
 
             if (result != null)

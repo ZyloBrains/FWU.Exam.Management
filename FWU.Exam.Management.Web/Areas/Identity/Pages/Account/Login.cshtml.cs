@@ -179,7 +179,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         return Page();
     }
 
-    private async Task<string?> ResolveUserTenantCodeAsync(AppUser user)
+    private async Task<string> ResolveUserTenantCodeAsync(AppUser user)
     {
         if (user.FacultyId != null)
         {
@@ -223,7 +223,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         });
     }
 
-    private async Task<AppUser?> ResolveUserAsync(string emailOrRegNumber)
+    private async Task<AppUser> ResolveUserAsync(string emailOrRegNumber)
     {
         if (string.IsNullOrWhiteSpace(emailOrRegNumber))
             return null;

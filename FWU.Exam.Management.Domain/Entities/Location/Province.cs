@@ -9,7 +9,7 @@ public class Province
 
     [Required, MaxLength(50)]
     [Display(Name = "Province Name")]
-    public string? ProvinceName { get; set; }
+    public string ProvinceName { get; set; } = string.Empty;
 
     [MaxLength(10)]
     public string? ProvinceCode { get; set; }
@@ -21,5 +21,5 @@ public class Province
     [Display(Name = "Remarks")]
     public string? Remarks { get; set; }
 
-    public virtual ICollection<District>? Districts { get; set; }
+    public virtual ICollection<District> Districts { get; set; } = [];
 }

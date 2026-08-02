@@ -15,8 +15,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("retotaling.view")]
 public class RetotalRequestsController(
     IRetotalRequestService retotalRequestService,
-    UserManager<AppUser> userManager,
-    AppDbContext context) : Controller
+    UserManager<AppUser> userManager) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
@@ -142,7 +141,7 @@ public class RetotalRequestsController(
         return File(csvBytes, "text/csv", "RetotalRequests.csv");
     }
 
-    private static string EscapeCsv(string field)
+    private static string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))

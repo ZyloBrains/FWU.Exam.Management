@@ -50,7 +50,7 @@ public class SubjectOfferingsController : Controller
         return View();
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -58,7 +58,7 @@ public class SubjectOfferingsController : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
     {
         var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -82,7 +82,7 @@ public class SubjectOfferingsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
     {
         var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -121,7 +121,7 @@ public class SubjectOfferingsController : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Subject", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
     {
         var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
 
@@ -237,13 +237,13 @@ public class SubjectOfferingsController : Controller
         if (model.ProgramId > 0 && model.SemesterId > 0)
         {
             if (!await _subjectOfferingService.IsSemesterAssignedToProgramAsync(model.ProgramId, model.SemesterId))
-                ModelState.AddModelError(nameof(model.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs → Semesters.");
+                ModelState.AddModelError(nameof(model.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs â†’ Semesters.");
         }
 
         if (ModelState.IsValid)
         {
             var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId, model.SemesterId);
-            var duplicateIds = model.Subjects
+            var duplicateIds = model.Subjects!
                 .Where(s => existingIds.Contains(s.SubjectCatalogId))
                 .Select(s => s.SubjectCatalogId)
                 .ToList();
@@ -256,7 +256,7 @@ public class SubjectOfferingsController : Controller
 
         if (ModelState.IsValid)
         {
-            var offerings = model.Subjects.Select(s => new SubjectOffering
+            var offerings = model.Subjects!.Select(s => new SubjectOffering
             {
                 SubjectCatalogId = s.SubjectCatalogId,
                 ProgramId = model.ProgramId,
@@ -358,7 +358,7 @@ public class SubjectOfferingsController : Controller
         if (subjectOffering.ProgramId > 0 && subjectOffering.SemesterId > 0)
         {
             if (!await _subjectOfferingService.IsSemesterAssignedToProgramAsync(subjectOffering.ProgramId, subjectOffering.SemesterId))
-                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs → Semesters.");
+                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs â†’ Semesters.");
         }
 
         if (ModelState.IsValid && subjectChanged)

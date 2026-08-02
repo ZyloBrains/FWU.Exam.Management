@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -12,7 +12,7 @@ public class AcademicYear
 
     [Display(Name = "Academic Year Code")]
     [Required, MaxLength(30)]
-    public string? AcademicYearCode { get; set; }
+    public string AcademicYearCode { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Academic Year Code Nepali")]
@@ -20,11 +20,11 @@ public class AcademicYear
 
     [Required, MaxLength(50)]
     [Display(Name = "Academic Year Name")]
-    public string? AcademicYearName { get; set; }
+    public string AcademicYearName { get; set; } = string.Empty;
 
     [Required, MaxLength(50)]
     [Display(Name = "Academic Year Name Nepali")]
-    public string? AcademicYearNameNepali { get; set; }
+    public string AcademicYearNameNepali { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Remark")]
@@ -34,9 +34,9 @@ public class AcademicYear
     public bool IsRunning { get; set; }
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
-        public virtual ICollection<Batch>? Batches { get; set; }
-        public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-        public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+        public virtual ICollection<Batch> Batches { get; set; } = [];
+        public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
+        public virtual ICollection<ExamSchedule> ExamSchedules { get; set; } = [];
+        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }
 

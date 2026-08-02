@@ -105,11 +105,11 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(cp =>
-                cp.College.Code.ToString().Contains(search) ||
-                cp.College.Name.Contains(search) ||
-                cp.Program.ProgramCode.Contains(search) ||
-                cp.Program.ProgramName.Contains(search) ||
-                cp.Remarks.Contains(search) ||
+                cp.College!.Code.ToString().Contains(search) ||
+                cp.College!.Name.Contains(search) ||
+                cp.Program!.ProgramCode.Contains(search) ||
+                cp.Program!.ProgramName.Contains(search) ||
+                (cp.Remarks ?? "").Contains(search) ||
                 cp.NumberOfStudents.ToString().Contains(search));
         }
 
@@ -120,11 +120,11 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
     {
         return sort.ToLower() switch
         {
-            "collegecode" => cp => cp.College.Code,
-            "collegename" => cp => cp.College.Name,
-            "programcode" => cp => cp.Program.ProgramCode,
-            "programname" => cp => cp.Program.ProgramName,
-            "affiliationdate" => cp => cp.AffiliationDate,
+            "collegecode" => cp => cp.College != null ? cp.College.Code : "",
+            "collegename" => cp => cp.College != null ? cp.College.Name : "",
+            "programcode" => cp => cp.Program != null ? cp.Program.ProgramCode : "",
+            "programname" => cp => cp.Program != null ? cp.Program.ProgramName : "",
+            "affiliationdate" => cp => cp.AffiliationDate ?? DateTime.MinValue,
             "numberofstudents" => cp => cp.NumberOfStudents,
             "isactive" => cp => cp.IsActive,
             "remarks" => cp => cp.Remarks ?? "",

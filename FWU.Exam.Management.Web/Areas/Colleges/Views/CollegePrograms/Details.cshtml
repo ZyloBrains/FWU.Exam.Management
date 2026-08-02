@@ -34,13 +34,13 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">College</p>
-                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.College.Name)</p>
-                    <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.College.Code)</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.College!.Name)</p>
+                    <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.College!.Code)</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
-                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Program.ProgramName)</p>
-                    <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.Program.ProgramCode)</p>
+                    <p class="mt-1 text-gray-800 font-semibold">@Html.DisplayFor(model => model.Program!.ProgramName)</p>
+                    <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.Program!.ProgramCode)</p>
                 </div>
             </div>
         </div>

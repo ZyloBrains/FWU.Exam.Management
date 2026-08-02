@@ -13,7 +13,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("academicyears.view")]
 public class AcademicYearsController(IAcademicYearService academicYearService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, int pageSize = 10)
     {
         // The service currently returns a List<AcademicYear>. Do not attempt to deconstruct it.
         var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
@@ -34,7 +34,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
 
 
     // Helper to escape CSV fields
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -44,7 +44,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
 
     // Export to PDF (browser print)
     // Export to CSV - only the current page
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null)
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null)
     {
         var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize,search);
 
@@ -67,7 +67,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
     }
 
     // Export to PDF - only the current page (using browser print)
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null)
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null)
     {
         var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page,pageSize,search);
 
@@ -82,7 +82,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null)
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null)
     {
         var (Items, TotalCount) = await academicYearService.GetAllAcademicYearsAsync(page, pageSize, search);
 

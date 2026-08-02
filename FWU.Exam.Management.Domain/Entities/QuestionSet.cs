@@ -12,12 +12,12 @@ public class QuestionSet : ITenantScoped
     public virtual Tenant? Tenant { get; set; }
     [Required, MaxLength(255)]
     [Display(Name = "Question Set Name")]
-    public string? QuestionSetName { get; set; }
+    public string QuestionSetName { get; set; } = string.Empty;
     [MaxLength(1024)]
     [Display(Name = "Description")]
     public string? Description { get; set; }
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-        public virtual ICollection<College>? Colleges { get; set; }
+        public virtual ICollection<College> Colleges { get; set; } = [];
 }

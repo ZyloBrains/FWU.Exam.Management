@@ -17,7 +17,6 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("admitcards.view")]
 public class AdmitCardsController(
     IAdmitCardService admitCardService,
-    UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
@@ -174,7 +173,7 @@ public class AdmitCardsController(
         return File(csvBytes, "text/csv", "AdmitCards.csv");
     }
 
-    private static string EscapeCsv(string field)
+    private static string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))

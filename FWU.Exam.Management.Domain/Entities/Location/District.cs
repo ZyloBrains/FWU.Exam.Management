@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -19,7 +19,7 @@ public class District
 
     [Required, MaxLength(50)]
     [Display(Name = "District Name")]
-    public string? DistrictName { get; set; }
+    public string DistrictName { get; set; } = string.Empty;
 
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; } = true;
@@ -30,8 +30,8 @@ public class District
 
     public virtual Province? Province { get; set; }
 
-    public virtual ICollection<College?>? Colleges { get; set; }
-    public virtual ICollection<LocalLevel?>? LocalLevels { get; set; }
-    public virtual ICollection<StudentRegistration?>? StudentRegistrations { get; set; }
+    public virtual ICollection<College> Colleges { get; set; } = [];
+    public virtual ICollection<LocalLevel> LocalLevels { get; set; } = [];
+    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }
 

@@ -13,7 +13,7 @@ public class SchoolType
 
     [Required, MaxLength(255)]
     [Display(Name = "School Type Name")]
-    public string? SchoolTypeName { get; set; }
+    public string SchoolTypeName { get; set; } = string.Empty;
 
     public virtual PreviousLevel? PreviousLevel { get; set; }
 }

@@ -32,7 +32,7 @@ public class StudentRegistration : ITenantScoped
 
     [Required, MaxLength(80)]
     [Display(Name = "First Name")]
-    public string? FirstName { get; set; }
+    public string FirstName { get; set; } = string.Empty;
 
     [MaxLength(30)]
     [Display(Name = "Middle Name")]
@@ -40,7 +40,7 @@ public class StudentRegistration : ITenantScoped
 
     [Required, MaxLength(30)]
     [Display(Name = "Last Name")]
-    public string? LastName { get; set; }
+    public string LastName { get; set; } = string.Empty;
 
     [MaxLength(100)]
     [Display(Name = "Nepali Name")]
@@ -132,8 +132,8 @@ public class StudentRegistration : ITenantScoped
     public virtual Address? PermanentAddress { get; set; }
     public virtual Address? CurrentAddress { get; set; }
     public virtual StudentAdmission? StudentAdmission { get; set; }
-    public virtual ICollection<ApplicationVoucher>? ApplicationVouchers { get; set; }
-    public virtual ICollection<PaymentRequestLog>? PaymentRequestLogs { get; set; }
-    public virtual ICollection<StudentGuardian>? StudentGuardians { get; set; }
-    public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
+    public virtual ICollection<ApplicationVoucher> ApplicationVouchers { get; set; } = [];
+    public virtual ICollection<PaymentRequestLog> PaymentRequestLogs { get; set; } = [];
+    public virtual ICollection<StudentGuardian> StudentGuardians { get; set; } = [];
+    public virtual ICollection<StudentQualification> StudentQualifications { get; set; } = [];
 }

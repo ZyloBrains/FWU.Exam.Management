@@ -15,8 +15,8 @@ public class BankService(AppDbContext context) : IBankService
         {
             query = query.Where(b =>
                 b.BankName.Contains(search) ||
-                b.BankCode.Contains(search) ||
-                b.Remarks.Contains(search));
+                (b.BankCode ?? "").Contains(search) ||
+                (b.Remarks ?? "").Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"
@@ -40,8 +40,8 @@ public class BankService(AppDbContext context) : IBankService
         {
             query = query.Where(b =>
                 b.BankName.Contains(search) ||
-                b.BankCode.Contains(search) ||
-                b.Remarks.Contains(search));
+                (b.BankCode ?? "").Contains(search) ||
+                (b.Remarks ?? "").Contains(search));
         }
 
         query = sortDir.ToLower() == "desc"

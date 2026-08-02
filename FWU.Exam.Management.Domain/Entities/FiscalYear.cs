@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities;
@@ -9,15 +9,15 @@ public class FiscalYear
 
     [Required, MaxLength(50)]
     [Display(Name = "Fiscal Year Name")]
-    public string? FiscalYearName { get; set; }
+    public string FiscalYearName { get; set; } = string.Empty;
 
     [Required, MaxLength(10)]
     [Display(Name = "Start Date")]
-    public string? StartDate { get; set; }
+    public string StartDate { get; set; } = string.Empty;
 
     [Required, MaxLength(10)]
     [Display(Name = "End Date")]
-    public string? EndDate { get; set; }
+    public string EndDate { get; set; } = string.Empty;
 
     [Display(Name = "Is Running")]
     public bool IsRunning { get; set; }

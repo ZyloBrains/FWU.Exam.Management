@@ -17,7 +17,6 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examsubjectresults.view")]
 public class ExamSubjectResultsController(
     IExamSubjectResultService examSubjectResultService,
-    IUserContext userContext,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)

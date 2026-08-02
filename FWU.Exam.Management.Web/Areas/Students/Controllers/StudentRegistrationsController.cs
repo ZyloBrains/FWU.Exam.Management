@@ -578,7 +578,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             PreviousLevelId = previousLevelId,
             BoardId = boardId,
-            InstituteName = string.IsNullOrWhiteSpace(instituteName) ? null : instituteName,
+            InstituteName = string.IsNullOrWhiteSpace(instituteName) ? "" : instituteName,
             PassedYear = string.IsNullOrWhiteSpace(passedYear) ? null : passedYear,
             Percentage = decimal.TryParse(percentageStr, out var pct) ? pct : null,
             ExamRollNumber = string.IsNullOrWhiteSpace(examRollNumber) ? null : examRollNumber,
@@ -819,9 +819,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
             var q = new StudentQualification
             {
-                PreviousLevelId = int.Parse(previousLevelIds[i]),
-                BoardId = int.Parse(boardIds[i]),
-                InstituteName = instituteNames[i],
+                PreviousLevelId = int.Parse(previousLevelIds[i]!),
+                BoardId = int.Parse(boardIds[i]!),
+                InstituteName = instituteNames[i] ?? "",
                 PassedYear = passedYears[i],
                 Percentage = decimal.TryParse(percentages[i], out var pct) ? pct : null,
                 ExamRollNumber = examRollNumbers[i],
