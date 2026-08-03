@@ -434,7 +434,7 @@ public class StudentDashboardController(
         var isSupplementary = schedule.ExamType?.Name == "Supplementary";
         if (isSupplementary)
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId);
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId, programId);
             if (!hasFailed)
             {
                 TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
