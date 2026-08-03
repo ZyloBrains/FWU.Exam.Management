@@ -112,6 +112,7 @@ public class MarksheetViewModel
     public string? Result { get; set; }
     public string? TheoryGrade { get; set; }
     public string? PracticalGrade { get; set; }
+    public string? SymbolNumber { get; set; }
     public int ExamScheduleId { get; set; }
     public int TotalPassed => Subjects.Count(s => s.IsPassed);
     public int TotalFailed => Subjects.Count(s => s.Status == "Fail");

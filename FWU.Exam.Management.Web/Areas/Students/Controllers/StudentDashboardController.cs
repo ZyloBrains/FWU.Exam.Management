@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -1029,6 +1028,7 @@ public class StudentDashboardController(
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
                 PracticalGrade = rr.PracticalObtainedGrade,
+                SymbolNumber = examRegistrations.FirstOrDefault(er => er.ExamScheduleId == scheduleId.Value)?.SymbolNumber,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1050,6 +1050,7 @@ public class StudentDashboardController(
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
+                    SymbolNumber = er.SymbolNumber,
                     Result = "Pending",
                     Subjects = subjects
                 });
@@ -1059,12 +1060,11 @@ public class StudentDashboardController(
         var sorted = marksheets.OrderByDescending(m => m.ExamScheduleId).ToList();
 
         ViewBag.StudentRegistration = registration;
-        ViewBag.SymbolNumber = sorted.Count > 0 ? examRegistrations.FirstOrDefault(er => er.ExamScheduleId == sorted.First().ExamScheduleId)?.SymbolNumber : null;
 
         return View(sorted);
     }
 
-    public async Task<IActionResult> Marksheet(int? semesterId)
+    public async Task<IActionResult> Marksheet()
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -1108,6 +1108,7 @@ public class StudentDashboardController(
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
                 PracticalGrade = rr.PracticalObtainedGrade,
+                SymbolNumber = allExamRegistrations.FirstOrDefault(er => er.ExamScheduleId == scheduleId.Value)?.SymbolNumber,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1130,42 +1131,20 @@ public class StudentDashboardController(
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
+                    SymbolNumber = er.SymbolNumber,
                     Result = "Pending",
                     Subjects = subjects
                 });
             }
         }
 
-        var semesters = allMarksheets
-            .Where(m => m.SemesterId.HasValue)
-            .GroupBy(m => m.SemesterId!.Value)
-            .Select(g => g.First())
-            .OrderBy(m => m.SemesterYear)
-            .ThenBy(m => m.SemesterNumber)
-            .Select(m => new SelectListItem
-            {
-                Value = m.SemesterId!.Value.ToString(),
-                Text = $"Year {m.SemesterYear} - {m.Semester}"
-            })
-            .ToList();
-
-        ViewBag.Semesters = semesters;
-        ViewBag.SelectedSemesterId = semesterId;
-
-        var filtered = allMarksheets;
-        if (semesterId.HasValue)
-        {
-            filtered = filtered.Where(m => m.SemesterId == semesterId.Value).ToList();
-        }
-
-        var sorted = filtered
+        var sorted = allMarksheets
             .OrderBy(m => m.SemesterYear)
             .ThenBy(m => m.SemesterNumber)
             .ThenBy(m => m.ExamScheduleId)
             .ToList();
 
         ViewBag.StudentRegistration = registration;
-        ViewBag.SymbolNumber = allExamRegistrations.FirstOrDefault()?.SymbolNumber;
 
         return View(sorted);
     }

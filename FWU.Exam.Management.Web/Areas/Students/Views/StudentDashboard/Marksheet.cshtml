@@ -4,7 +4,6 @@
     ViewData["Title"] = "Marksheet";
     var totalCount = Model.Count;
     var registration = ViewBag.StudentRegistration as FWU.Exam.Management.Domain.Entities.Students.StudentRegistration;
-    var symbolNumber = ViewBag.SymbolNumber as string;
 }
 
 <div x-data="{ expandedMarksheet: null, printScheduleId: null }">
@@ -21,20 +20,6 @@
                 </p>
             </div>
         </div>
-        @if (ViewBag.Semesters is IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> semOptions && semOptions.Any())
-        {
-            <form method="get" class="flex items-center gap-2 shrink-0">
-                <label for="semesterFilter" class="text-xs font-medium text-gray-500 whitespace-nowrap">Semester:</label>
-                <select id="semesterFilter" name="semesterId" onchange="this.form.submit()"
-                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All Semesters</option>
-                    @foreach (var sem in semOptions)
-                    {
-                        <option value="@sem.Value" selected="@(Convert.ToString(ViewBag.SelectedSemesterId) == sem.Value)">@sem.Text</option>
-                    }
-                </select>
-            </form>
-        }
     </div>
 
     @if (Model.Count == 0)
@@ -97,10 +82,6 @@
                             @if (!string.IsNullOrEmpty(marksheet.College))
                             {
                                 <span><i class="fas fa-university text-gray-400 mr-1"></i>@marksheet.College</span>
-                            }
-                            @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
-                            {
-                                <span class="font-semibold text-indigo-600">SGPA: @marksheet.TotalGpa</span>
                             }
                             <span class="text-gray-400">@marksheet.Subjects.Count() subject@(marksheet.Subjects.Count() != 1 ? "s" : "")</span>
                         </div>
@@ -270,7 +251,7 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">RollNo:</span>
-                    <span class="info-value">@(symbolNumber ?? "-")</span>
+                    <span class="info-value">@(marksheet.SymbolNumber ?? "-")</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Campus:</span>

@@ -2,7 +2,6 @@
 @{
     Layout = null;
     var registration = ViewBag.StudentRegistration as FWU.Exam.Management.Domain.Entities.Students.StudentRegistration;
-    var symbolNumber = ViewBag.SymbolNumber as string;
 }
 
 <!DOCTYPE html>
@@ -326,7 +325,7 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">RollNo:</span>
-                        <span class="info-value">@(symbolNumber ?? "-")</span>
+                        <span class="info-value">@(marksheet.SymbolNumber ?? "-")</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Campus:</span>
