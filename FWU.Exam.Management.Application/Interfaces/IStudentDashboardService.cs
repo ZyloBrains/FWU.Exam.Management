@@ -19,6 +19,7 @@ public interface IStudentDashboardService
     Task<List<ResultRecord>> GetResultRecordsAsync(string registrationNumber);
     Task<List<ExamSubjectResult>> GetExamSubjectResultsAsync(int examRegistrationId);
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId);
+    Task<List<ExamSchedule>> GetExamSchedulesByIdsAsync(IEnumerable<int> ids);
     Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId);
     Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null);
     Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null);

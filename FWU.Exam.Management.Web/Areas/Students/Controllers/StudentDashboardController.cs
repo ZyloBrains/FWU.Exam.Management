@@ -1145,9 +1145,16 @@ public class StudentDashboardController(
                 .ThenInclude(esr => esr!.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
             .Include(r => r.ExamRegistration)
-                .ThenInclude(er => er!.ExamSchedule)
             .OrderByDescending(r => r.RequestedDate)
             .ToListAsync();
+
+        var schedules = await dashboardService.GetExamSchedulesByIdsAsync(
+            requests.Where(r => r.ExamRegistration != null).Select(r => r.ExamRegistration!.ExamScheduleId));
+        foreach (var request in requests)
+        {
+            if (request.ExamRegistration != null)
+                request.ExamRegistration.ExamSchedule = schedules.FirstOrDefault(s => s.Id == request.ExamRegistration.ExamScheduleId);
+        }
 
         return View(requests);
     }
@@ -1167,7 +1174,6 @@ public class StudentDashboardController(
                 .Include(esr => esr.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
                 .Include(esr => esr.ExamRegistration)
-                    .ThenInclude(er => er!.ExamSchedule)
                 .FirstOrDefaultAsync(esr => esr.Id == examSubjectResultId.Value);
 
             if (result != null)
@@ -1175,6 +1181,13 @@ public class StudentDashboardController(
                 ViewBag.SubjectName = result.SubjectOffering?.SubjectCatalog?.SubjectName;
                 ViewBag.OriginalGrade = result.GradeLetter;
                 ViewBag.OriginalMarks = result.ObtainedMarks;
+
+                if (result.ExamRegistration != null)
+                {
+                    var schedule = await dashboardService.GetExamScheduleByIdAsync(result.ExamRegistration.ExamScheduleId);
+                    result.ExamRegistration.ExamSchedule = schedule;
+                }
+
                 ViewBag.ExamScheduleName = result.ExamRegistration?.ExamSchedule?.ExamScheduleName;
             }
         }
@@ -1235,12 +1248,17 @@ public class StudentDashboardController(
 
     private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(List<ExamRegistration> examRegistrations, int examScheduleId)
     {
-        var registration = examRegistrations.FirstOrDefault(er => er.ExamScheduleId == examScheduleId);
-        if (registration?.ExamSubjectResults == null || !registration.ExamSubjectResults.Any())
-            return new();
-
-        return registration.ExamSubjectResults
+        var results = examRegistrations
+            .Where(er => er.ExamScheduleId == examScheduleId)
+            .SelectMany(er => er.ExamSubjectResults ?? Enumerable.Empty<ExamSubjectResult>())
             .Where(esr => esr.IsActive)
+            .GroupBy(esr => esr.SubjectOfferingId)
+            .Select(g => g.OrderByDescending(esr => esr.Id).First())
+            .ToList();
+
+        if (results.Count == 0) return new();
+
+        return results
             .Select(esr =>
             {
                 var gradeLetter = esr.GradeLetter?.Trim().ToUpperInvariant();
