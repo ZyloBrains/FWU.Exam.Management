@@ -209,10 +209,10 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         return new ExamScheduleSelectListsDto
         {
-            AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
-            ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
-            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
-            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")" }).ToList()
+            AcademicYears = [.. academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName })],
+            ExamTypes = [.. examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name })],
+            Programs = [.. programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName })],
+            Semesters = [.. semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + ")" })]
         };
     }
 
@@ -229,7 +229,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .Select(s => new SelectOption
             {
                 Id = s.Id,
-                Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+                Name = s.Name + " (" + s.Code + ")"
             })
             .ToListAsync();
     }
