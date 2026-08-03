@@ -38,7 +38,7 @@
             </div>
         </a>
 
-        <a href="@(Context.Items["TenantCode"] as string != null ? $"/tenant/{Context.Items["TenantCode"]}/Identity/Account/ForgotPassword" : "/Identity/Account/ForgotPassword")" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+        <a href="@(Context.Items["TenantCode"] as string != null ? $"/tenant/{Context.Items["TenantCode"]}/User/ResetPassword" : "/User/ResetPassword")" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
                     <i class="fas fa-key text-teal-600 text-xl"></i>
