@@ -50,6 +50,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var query = context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(es => es.ExamType)
             .Include(es => es.Program)
             .Include(es => es.Level)
@@ -85,6 +86,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
         if (schedule == null) return new List<SubjectOffering>();
@@ -166,6 +168,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
         return schedule?.ExamFee ?? 0;
@@ -175,6 +178,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
         return schedule?.PracticalSubjectFee ?? 0;
@@ -209,18 +213,23 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
     public async Task<List<ResultRecord>> GetResultRecordsAsync(string registrationNumber)
     {
-        return await context.ResultRecords!
+        var resultRecords = await context.ResultRecords!
             .AsNoTracking()
             .Include(rr => rr.AcademicYear)
             .Include(rr => rr.Program)
             .Include(rr => rr.ExamType)
             .Include(rr => rr.College)
-            .Include(rr => rr.ExamSchedule)
-                .ThenInclude(es => es.Semester)
-            .Include(rr => rr.ExamSchedule)
-                .ThenInclude(es => es.Level)
             .Where(rr => rr.RegistrationNumber != null && rr.RegistrationNumber == registrationNumber)
             .ToListAsync();
+
+        var schedules = await LoadExamSchedulesByIdsAsync(resultRecords.Select(rr => rr.ExamScheduleId).OfType<int>());
+        foreach (var rr in resultRecords)
+        {
+            if (rr.ExamScheduleId.HasValue)
+                rr.ExamSchedule = schedules.FirstOrDefault(s => s.Id == rr.ExamScheduleId.Value);
+        }
+
+        return resultRecords;
     }
 
     public async Task<List<ExamSubjectResult>> GetExamSubjectResultsAsync(int examRegistrationId)
@@ -241,6 +250,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         return await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(es => es.Program)
             .Include(es => es.Semester)
             .Include(es => es.Level)
@@ -248,23 +258,32 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
+    public async Task<List<ExamSchedule>> GetExamSchedulesByIdsAsync(IEnumerable<int> ids)
+    {
+        return await LoadExamSchedulesByIdsAsync(ids);
+    }
+
     public async Task<List<ExamRegistration>> GetStudentExamRegistrationsAsync(string userId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
         if (studentErIds.Count == 0) return new();
 
-        return await context.ExamRegistrations!
+        var registrations = await context.ExamRegistrations!
             .AsNoTracking()
-            .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es.Semester)
-            .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es.Level)
             .Include(er => er.ExamSubjectResults!)
                 .ThenInclude(esr => esr.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
             .Where(er => studentErIds.Contains(er.Id) && er.IsActive)
             .OrderByDescending(er => er.RegistrationDate)
             .ToListAsync();
+
+        var schedules = await LoadExamSchedulesByIdsAsync(registrations.Select(er => er.ExamScheduleId));
+        foreach (var er in registrations)
+        {
+            er.ExamSchedule = schedules.FirstOrDefault(s => s.Id == er.ExamScheduleId);
+        }
+
+        return registrations;
     }
 
     public async Task<List<ExamSubjectResult>> GetExamSubjectResultsForStudentAsync(string userId, int examScheduleId)
@@ -321,6 +340,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(es => es.Semester)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
@@ -479,6 +499,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == admission.ProgramsId
                       && es.SemesterId != semesterId
@@ -537,6 +558,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var scheduleIds = await context.ExamSchedules!
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == programId
                       && es.SemesterId == semesterId)
@@ -625,6 +647,23 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                       && voucherIds.Contains(er.ApplicationVoucherId!.Value)
                       && er.IsActive)
             .Select(er => er.Id)
+            .ToListAsync();
+    }
+
+    private async Task<List<ExamSchedule>> LoadExamSchedulesByIdsAsync(IEnumerable<int> scheduleIds)
+    {
+        var ids = scheduleIds.Distinct().ToList();
+        if (ids.Count == 0) return new();
+
+        return await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Include(es => es.Semester)
+            .Include(es => es.Level)
+            .Include(es => es.ExamType)
+            .Include(es => es.AcademicYear)
+            .Include(es => es.Program)
+            .Where(es => ids.Contains(es.Id))
             .ToListAsync();
     }
 
@@ -722,15 +761,21 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
 
-        return await context.Set<AdmitCard>()
+        var admitCards = await context.Set<AdmitCard>()
             .AsNoTracking()
-            .Include(ac => ac.ExamSchedule)
-                .ThenInclude(es => es!.Semester)
             .Where(ac => ac.IsActive
                       && (studentErIds.Contains(ac.ExamRegistrationId)
                           || ac.StudentRegistrationId == studentRegistrationId))
             .OrderByDescending(ac => ac.GeneratedDate)
             .ToListAsync();
+
+        var schedules = await LoadExamSchedulesByIdsAsync(admitCards.Select(ac => ac.ExamScheduleId));
+        foreach (var ac in admitCards)
+        {
+            ac.ExamSchedule = schedules.FirstOrDefault(s => s.Id == ac.ExamScheduleId);
+        }
+
+        return admitCards;
     }
 
     public async Task<bool> HasAdmitCardForScheduleAsync(int examScheduleId, string userId, int studentRegistrationId)
@@ -764,13 +809,17 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     {
         var payments = await context.Set<PaymentRequestLog>()
             .AsNoTracking()
-            .Include(prl => prl.ExamSchedule)
-                .ThenInclude(es => es!.Semester)
             .Include(prl => prl.PaymentType)
             .Where(prl => prl.StudentRegistrationId == studentRegistrationId
                        && prl.PaymentRequestLogStatus == 1)
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .ToListAsync();
+
+        var schedules = await LoadExamSchedulesByIdsAsync(payments.Select(prl => prl.ExamScheduleId));
+        foreach (var payment in payments)
+        {
+            payment.ExamSchedule = schedules.FirstOrDefault(s => s.Id == payment.ExamScheduleId);
+        }
 
         logger.LogInformation("GetPaymentHistoryForStudentAsync: studentRegId={StudentRegId}, paymentCount={Count}", studentRegistrationId, payments.Count);
         return payments;
