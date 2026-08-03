@@ -340,6 +340,10 @@
                         <span class="info-value">@(marksheet.ExamSchedule ?? "-")</span>
                     </div>
                     <div class="info-row">
+                        <span class="info-label">Semester:</span>
+                        <span class="info-value">@(marksheet.Semester ?? "-")</span>
+                    </div>
+                    <div class="info-row">
                         <span class="info-label">Academic Year:</span>
                         <span class="info-value">@(marksheet.AcademicYear ?? "-")</span>
                     </div>
@@ -358,41 +362,28 @@
                     <table class="marks-table">
                         <thead>
                             <tr>
+                                <th>S.N</th>
                                 <th>Course Code</th>
                                 <th>Course Title</th>
-                                <th colspan="3">Obtained Marks</th>
-                                <th>Total Obtained Marks</th>
+                                <th>Grade</th>
                                 <th>Remarks</th>
-                            </tr>
-                            <tr>
-                                <th colspan="2"></th>
-                                <th>IR</th>
-                                <th>PR</th>
-                                <th>TH</th>
-                                <th></th>
-                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
+                            @{ int printIdx = 0; }
                             @foreach (var subject in marksheet.Subjects)
                             {
+                                printIdx++;
                                 <tr>
+                                    <td>@printIdx</td>
                                     <td>@(subject.SubjectCode ?? "-")</td>
                                     <td>@(subject.SubjectName ?? "-")</td>
-                                    <td>@(subject.InternalMarks?.ToString("N2") ?? "")</td>
-                                    <td>@(subject.PracticalMarks?.ToString("N2") ?? "")</td>
-                                    <td>@(subject.TheoryMarks?.ToString("N2") ?? "")</td>
-                                    <td>@(subject.TotalMarks?.ToString("N2") ?? "0")</td>
                                     <td>@(subject.Grade ?? "")</td>
+                                    <td>@subject.Status</td>
                                 </tr>
                             }
-                            <tr class="total-row">
-                                <td colspan="5" style="text-align:right;">Total</td>
-                                <td>@(marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2"))</td>
-                                <td></td>
-                            </tr>
                             <tr class="result-row @(marksheet.Result == "Fail" ? "fail" : "")">
-                                <td colspan="5" style="text-align:right;">Result:</td>
+                                <td colspan="3" style="text-align:right;">Result:</td>
                                 <td colspan="2">
                                     @if (marksheet.Result == "Pass")
                                     {

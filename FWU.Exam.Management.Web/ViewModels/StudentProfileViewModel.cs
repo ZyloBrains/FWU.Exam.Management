@@ -99,6 +99,9 @@ public class MarksheetViewModel
     public string? StudentName { get; set; }
     public string? Program { get; set; }
     public string? ExamSchedule { get; set; }
+    public string? Semester { get; set; }
+    public string? Level { get; set; }
+    public string? ExamType { get; set; }
     public string? AcademicYear { get; set; }
     public string? College { get; set; }
     public List<MarksheetSubjectViewModel> Subjects { get; set; } = new();

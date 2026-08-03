@@ -67,6 +67,18 @@
                         </div>
                         <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-0.5 text-xs text-gray-500">
                             <span><i class="far fa-calendar-alt text-gray-400 mr-1"></i>@marksheet.AcademicYear</span>
+                            @if (!string.IsNullOrEmpty(marksheet.Semester))
+                            {
+                                <span><i class="fas fa-layer-group text-gray-400 mr-1"></i>@marksheet.Semester</span>
+                            }
+                            @if (!string.IsNullOrEmpty(marksheet.Level))
+                            {
+                                <span><i class="fas fa-graduation-cap text-gray-400 mr-1"></i>@marksheet.Level</span>
+                            }
+                            @if (!string.IsNullOrEmpty(marksheet.ExamType))
+                            {
+                                <span><i class="fas fa-clipboard-list text-gray-400 mr-1"></i>@marksheet.ExamType</span>
+                            }
                             <span><i class="far fa-building text-gray-400 mr-1"></i>@marksheet.Program</span>
                             @if (!string.IsNullOrEmpty(marksheet.College))
                             {
@@ -106,9 +118,6 @@
                                 <tr class="border-b border-gray-100">
                                     <th class="px-5 py-2 text-xs font-medium text-gray-400 uppercase w-8">#</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-left">Subject</th>
-                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Theory</th>
-                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Practical</th>
-                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Total</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Grade</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Status</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Action</th>
@@ -139,9 +148,6 @@
                                             <div class="text-xs sm:text-sm font-medium text-gray-800">@subject.SubjectName</div>
                                             <div class="text-xs text-gray-400 font-mono">@subject.SubjectCode</div>
                                         </td>
-                                        <td class="px-4 py-2.5 text-center text-xs sm:text-sm text-gray-700">@(subject.TheoryMarks?.ToString("N2") ?? "-")</td>
-                                        <td class="px-4 py-2.5 text-center text-xs sm:text-sm text-gray-700">@(subject.PracticalMarks?.ToString("N2") ?? "-")</td>
-                                        <td class="px-4 py-2.5 text-center text-sm font-semibold text-gray-800">@(subject.TotalMarks?.ToString("N2") ?? "-")</td>
                                         <td class="px-4 py-2.5 text-center">
                                             @if (subject.Status == "Pending")
                                             {
@@ -167,13 +173,6 @@
                                     </tr>
                                 }
                             </tbody>
-                            <tfoot>
-                                <tr class="bg-gray-50 border-t-2 border-gray-200">
-                                    <td colspan="4" class="px-5 py-2.5 text-right text-sm font-semibold text-gray-600">Total Marks</td>
-                                    <td class="px-4 py-2.5 text-center text-sm font-bold text-gray-800">@marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2")</td>
-                                    <td colspan="3"></td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
 
@@ -203,9 +202,6 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3 ml-8 text-xs text-gray-500">
-                                    <span>TH: <span class="font-medium text-gray-700">@(subject.TheoryMarks?.ToString("N2") ?? "-")</span></span>
-                                    <span>PR: <span class="font-medium text-gray-700">@(subject.PracticalMarks?.ToString("N2") ?? "-")</span></span>
-                                    <span class="font-semibold text-gray-800">= @(subject.TotalMarks?.ToString("N2") ?? "-")</span>
                                     @if (subject.Status == "Fail" && subject.ExamSubjectResultId > 0)
                                     {
                                         <a asp-action="RequestRetotal" asp-area="Students" asp-route-examSubjectResultId="@subject.ExamSubjectResultId"
@@ -216,10 +212,6 @@
                                 </div>
                             </div>
                         }
-                        <div class="px-4 py-2.5 bg-gray-50 flex items-center justify-between text-sm">
-                            <span class="font-semibold text-gray-600">Total Marks</span>
-                            <span class="font-bold text-gray-800">@marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2")</span>
-                        </div>
                     </div>
                 }
                 else
@@ -283,6 +275,10 @@
                     <span class="info-value">@(marksheet.ExamSchedule ?? "-")</span>
                 </div>
                 <div class="info-row">
+                    <span class="info-label">Semester:</span>
+                    <span class="info-value">@(marksheet.Semester ?? "-")</span>
+                </div>
+                <div class="info-row">
                     <span class="info-label">Academic Year:</span>
                     <span class="info-value">@(marksheet.AcademicYear ?? "-")</span>
                 </div>
@@ -300,39 +296,28 @@
                 <table class="marks-table">
                     <thead>
                         <tr>
+                            <th>S.N</th>
                             <th>Course Code</th>
                             <th>Course Title</th>
-                            <th colspan="2">Obtained Marks</th>
-                            <th>Total Obtained Marks</th>
+                            <th>Grade</th>
                             <th>Remarks</th>
-                        </tr>
-                        <tr>
-                            <th colspan="2"></th>
-                            <th>TH</th>
-                            <th>PR</th>
-                            <th></th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
+                        @{ int printIdx = 0; }
                         @foreach (var subject in marksheet.Subjects)
                         {
+                            printIdx++;
                             <tr>
+                                <td>@printIdx</td>
                                 <td>@(subject.SubjectCode ?? "-")</td>
                                 <td>@(subject.SubjectName ?? "-")</td>
-                                <td>@(subject.TheoryMarks?.ToString("N2") ?? "")</td>
-                                <td>@(subject.PracticalMarks?.ToString("N2") ?? "")</td>
-                                <td>@(subject.TotalMarks?.ToString("N2") ?? "0")</td>
                                 <td>@(subject.Grade ?? "")</td>
+                                <td>@subject.Status</td>
                             </tr>
                         }
-                        <tr class="total-row">
-                            <td colspan="4" style="text-align:right;">Total</td>
-                            <td>@(marksheet.Subjects.Sum(s => s.TotalMarks ?? 0).ToString("N2"))</td>
-                            <td></td>
-                        </tr>
                         <tr class="result-row @(marksheet.Result == "Fail" ? "fail" : "")">
-                            <td colspan="4" style="text-align:right;">Result:</td>
+                            <td colspan="3" style="text-align:right;">Result:</td>
                             <td colspan="2">
                                 @if (marksheet.Result == "Pass")
                                 {
