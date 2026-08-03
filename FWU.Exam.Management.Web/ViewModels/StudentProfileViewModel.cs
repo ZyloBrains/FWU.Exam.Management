@@ -100,6 +100,9 @@ public class MarksheetViewModel
     public string? Program { get; set; }
     public string? ExamSchedule { get; set; }
     public string? Semester { get; set; }
+    public int? SemesterId { get; set; }
+    public int SemesterYear { get; set; }
+    public int SemesterNumber { get; set; }
     public string? Level { get; set; }
     public string? ExamType { get; set; }
     public string? AcademicYear { get; set; }

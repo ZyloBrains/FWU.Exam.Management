@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -1063,7 +1064,7 @@ public class StudentDashboardController(
         return View(sorted);
     }
 
-    public async Task<IActionResult> Marksheet()
+    public async Task<IActionResult> Marksheet(int? semesterId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -1096,6 +1097,9 @@ public class StudentDashboardController(
                 Program = rr.Program?.ProgramName,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
                 Semester = rr.ExamSchedule?.Semester?.Name,
+                SemesterId = rr.ExamSchedule?.Semester?.Id,
+                SemesterYear = rr.ExamSchedule?.Semester?.Year ?? 0,
+                SemesterNumber = rr.ExamSchedule?.Semester?.Number ?? 0,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
@@ -1120,6 +1124,9 @@ public class StudentDashboardController(
                     StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
+                    SemesterId = er.ExamSchedule?.Semester?.Id,
+                    SemesterYear = er.ExamSchedule?.Semester?.Year ?? 0,
+                    SemesterNumber = er.ExamSchedule?.Semester?.Number ?? 0,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
@@ -1129,10 +1136,38 @@ public class StudentDashboardController(
             }
         }
 
+        var semesters = allMarksheets
+            .Where(m => m.SemesterId.HasValue)
+            .GroupBy(m => m.SemesterId!.Value)
+            .Select(g => g.First())
+            .OrderBy(m => m.SemesterYear)
+            .ThenBy(m => m.SemesterNumber)
+            .Select(m => new SelectListItem
+            {
+                Value = m.SemesterId!.Value.ToString(),
+                Text = $"Year {m.SemesterYear} - {m.Semester}"
+            })
+            .ToList();
+
+        ViewBag.Semesters = semesters;
+        ViewBag.SelectedSemesterId = semesterId;
+
+        var filtered = allMarksheets;
+        if (semesterId.HasValue)
+        {
+            filtered = filtered.Where(m => m.SemesterId == semesterId.Value).ToList();
+        }
+
+        var sorted = filtered
+            .OrderBy(m => m.SemesterYear)
+            .ThenBy(m => m.SemesterNumber)
+            .ThenBy(m => m.ExamScheduleId)
+            .ToList();
+
         ViewBag.StudentRegistration = registration;
         ViewBag.SymbolNumber = allExamRegistrations.FirstOrDefault()?.SymbolNumber;
 
-        return View(allMarksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
+        return View(sorted);
     }
 
     public async Task<IActionResult> RetotalRequests()

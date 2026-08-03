@@ -21,6 +21,20 @@
                 </p>
             </div>
         </div>
+        @if (ViewBag.Semesters is IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> semOptions && semOptions.Any())
+        {
+            <form method="get" class="flex items-center gap-2 shrink-0">
+                <label for="semesterFilter" class="text-xs font-medium text-gray-500 whitespace-nowrap">Semester:</label>
+                <select id="semesterFilter" name="semesterId" onchange="this.form.submit()"
+                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Semesters</option>
+                    @foreach (var sem in semOptions)
+                    {
+                        <option value="@sem.Value" selected="@(Convert.ToString(ViewBag.SelectedSemesterId) == sem.Value)">@sem.Text</option>
+                    }
+                </select>
+            </form>
+        }
     </div>
 
     @if (Model.Count == 0)
