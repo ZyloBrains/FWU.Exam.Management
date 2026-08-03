@@ -1028,7 +1028,7 @@ public class StudentDashboardController(
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
                 PracticalGrade = rr.PracticalObtainedGrade,
-                SymbolNumber = examRegistrations.FirstOrDefault(er => er.ExamScheduleId == scheduleId.Value)?.SymbolNumber,
+                SymbolNumber = rr.SymbolNumber,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1050,7 +1050,7 @@ public class StudentDashboardController(
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
-                    SymbolNumber = er.SymbolNumber,
+                    SymbolNumber = MarksheetSymbolNumber(er),
                     Result = "Pending",
                     Subjects = subjects
                 });
@@ -1063,6 +1063,9 @@ public class StudentDashboardController(
 
         return View(sorted);
     }
+
+    private static string? MarksheetSymbolNumber(ExamRegistration? er)
+        => !string.IsNullOrEmpty(er?.ExamRollNumber) ? er.ExamRollNumber : er?.SymbolNumber;
 
     public async Task<IActionResult> Marksheet()
     {
@@ -1108,7 +1111,7 @@ public class StudentDashboardController(
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
                 PracticalGrade = rr.PracticalObtainedGrade,
-                SymbolNumber = allExamRegistrations.FirstOrDefault(er => er.ExamScheduleId == scheduleId.Value)?.SymbolNumber,
+                SymbolNumber = rr.SymbolNumber,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1131,7 +1134,7 @@ public class StudentDashboardController(
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
-                    SymbolNumber = er.SymbolNumber,
+                    SymbolNumber = MarksheetSymbolNumber(er),
                     Result = "Pending",
                     Subjects = subjects
                 });
