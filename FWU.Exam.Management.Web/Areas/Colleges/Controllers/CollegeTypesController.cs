@@ -14,7 +14,7 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 [RequirePermission("collegetypes.view")]
 public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await collegeTypeService.GetCollegeTypesAsync(page, pageSize, search, sort, sortDir);
 
@@ -29,7 +29,7 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -37,7 +37,7 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var items = await collegeTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -58,7 +58,7 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var (items, totalCount) = await collegeTypeService.GetCollegeTypesAsync(page, pageSize, search, sort, sortDir);
 
@@ -73,7 +73,7 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var items = await collegeTypeService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 

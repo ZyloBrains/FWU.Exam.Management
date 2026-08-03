@@ -17,7 +17,7 @@ public class StudentCategoriesController : Controller
         _studentCategoryService = studentCategoryService;
     }
 
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "StudentCategoryName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StudentCategoryName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await _studentCategoryService.GetStudentCategoriesAsync(page, pageSize, search, sort, sortDir);
 

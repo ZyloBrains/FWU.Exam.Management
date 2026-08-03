@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
@@ -17,7 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = Role.BackOfficeRoles)]
 public class StudentRegistrationsController(IStudentRegistrationService studentRegistrationService, UserManager<AppUser> userManager, AppDbContext context, IFileUploadHelper fileUploadHelper, IUserContext userContext) : Controller
 {
     private async Task<List<int>> GetUserCollegeIdsAsync()
@@ -578,7 +579,7 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
         {
             PreviousLevelId = previousLevelId,
             BoardId = boardId,
-            InstituteName = string.IsNullOrWhiteSpace(instituteName) ? null : instituteName,
+            InstituteName = string.IsNullOrWhiteSpace(instituteName) ? "" : instituteName,
             PassedYear = string.IsNullOrWhiteSpace(passedYear) ? null : passedYear,
             Percentage = decimal.TryParse(percentageStr, out var pct) ? pct : null,
             ExamRollNumber = string.IsNullOrWhiteSpace(examRollNumber) ? null : examRollNumber,
@@ -819,9 +820,9 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
             var q = new StudentQualification
             {
-                PreviousLevelId = int.Parse(previousLevelIds[i]),
-                BoardId = int.Parse(boardIds[i]),
-                InstituteName = instituteNames[i],
+                PreviousLevelId = int.Parse(previousLevelIds[i]!),
+                BoardId = int.Parse(boardIds[i]!),
+                InstituteName = instituteNames[i] ?? "",
                 PassedYear = passedYears[i],
                 Percentage = decimal.TryParse(percentages[i], out var pct) ? pct : null,
                 ExamRollNumber = examRollNumbers[i],

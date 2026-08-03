@@ -10,7 +10,7 @@ public class Ethnicity
 
     [Required, MaxLength(50)]
     [Display(Name = "Ethnicity Name")]
-    public string? EthnicityName { get; set; }
+    public string EthnicityName { get; set; } = string.Empty;
 
     [Display(Name = "Is Default")]
     public bool IsDefault { get; set; }
@@ -18,5 +18,5 @@ public class Ethnicity
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }

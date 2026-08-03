@@ -19,7 +19,7 @@ public class DistrictService(AppDbContext context) : IDistrictService
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(d =>
-                d.DistrictCode.Contains(search) ||
+                (d.DistrictCode ?? "").Contains(search) ||
                 d.DistrictName.Contains(search) ||
                 (d.Province != null && d.Province.ProvinceName.Contains(search)));
         }
@@ -46,7 +46,7 @@ public class DistrictService(AppDbContext context) : IDistrictService
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(d =>
-                d.DistrictCode.Contains(search) ||
+                (d.DistrictCode ?? "").Contains(search) ||
                 d.DistrictName.Contains(search) ||
                 (d.Province != null && d.Province.ProvinceName.Contains(search)));
         }

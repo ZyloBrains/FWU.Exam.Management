@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +15,7 @@ public class PermissionHandler(IPermissionService permissionService, UserManager
             return;
 
         // SuperAdmin bypass: SuperAdmin has all permissions without checking the database
-        if (context.User.IsInRole("SuperAdmin"))
+        if (context.User.IsInRole(Role.SuperAdmin))
         {
             context.Succeed(requirement);
             return;

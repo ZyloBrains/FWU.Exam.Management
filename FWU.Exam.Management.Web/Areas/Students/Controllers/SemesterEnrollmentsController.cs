@@ -1,7 +1,9 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -16,9 +18,19 @@ using System.Text;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+[Authorize(Roles = Role.BackOfficeRoles)]
 public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, IUserContext userContext, AppDbContext context) : Controller
 {
+    private static SelectList SemesterSelectList(IEnumerable<Semester> semesters, string? programShortName, int? selectedId = null)
+    {
+        return new SelectList(
+            semesters.Select(s => new SelectListItem
+            {
+                Value = s.Id.ToString(),
+                Text = SemesterDisplayHelper.FormatForProgram(s, programShortName)
+            }),
+            "Value", "Text", selectedId?.ToString());
+    }
     private async Task<List<int>> GetUserCollegeIdsAsync()
     {
         var user = await userManager.GetUserAsync(User);
@@ -89,8 +101,8 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
                 .FirstOrDefaultAsync(a => a.Id == studentAdmissionId.Value);
             if (admission?.Program != null)
             {
-                var semesters = await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId, admission.AcademicYearId);
-                ViewBag.SemesterId = new SelectList(semesters, "Id", "Name");
+                var semesters = await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId);
+                ViewBag.SemesterId = SemesterSelectList(semesters, admission.Program.ShortName);
             }
         }
 
@@ -111,11 +123,9 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         ViewBag.StudentAdmissionId = await GetAdmissionSelectListAsync(enrollment.StudentAdmissionId);
         ViewBag.AcademicYearId = await GetAcademicYearsAsync();
 
-        var admission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
-        var semesters = admission != null
-            ? await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId, admission.AcademicYearId)
-            : new List<Semester>();
-        ViewBag.SemesterId = new SelectList(semesters, "Id", "Name", enrollment.SemesterId);
+        var selectedAdmission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
+        var semesters = await enrollmentService.GetSemestersByProgramAsync(selectedAdmission?.ProgramsId ?? 0);
+        ViewBag.SemesterId = SemesterSelectList(semesters, selectedAdmission?.Program?.ShortName, enrollment.SemesterId);
         ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);
 
         return View(enrollment);
@@ -204,7 +214,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         var semesters = admission != null
             ? await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId, admission.AcademicYearId)
             : await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
-        ViewBag.SemesterId = new SelectList(semesters, "Id", "Name", enrollment.SemesterId);
+        ViewBag.SemesterId = SemesterSelectList(semesters, admission?.Program?.ShortName, enrollment.SemesterId);
         ViewBag.EnrollmentStatusList = new SelectList(Enum.GetValues<StudentEnrollmentStatus>(), enrollment.EnrollmentStatus);
         ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);
         ViewBag.PaymentStatusList = new SelectList(Enum.GetValues<PaymentStatus>(), enrollment.PaymentStatus);
@@ -273,12 +283,13 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
     {
         var admission = await context.StudentAdmissions
             .AsNoTracking()
+            .Include(a => a.Program)
             .FirstOrDefaultAsync(a => a.Id == admissionId);
 
         if (admission == null) return Json(new List<object>());
 
-        var semesters = await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId, admission.AcademicYearId);
-        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
+        var semesters = await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId);
+        return Json(semesters.Select(s => new { id = s.Id, name = SemesterDisplayHelper.FormatForProgram(s, admission.Program?.ShortName) }));
     }
 
     [HttpGet]
@@ -497,7 +508,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             "Id", "AcademicYearCode", selectedId);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))

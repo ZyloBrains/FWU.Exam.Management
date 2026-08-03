@@ -27,7 +27,7 @@ Faculty (academic + administrative body)
 - **Exam Management**: Exam schedules, centers, roll numbers, subject results
 - **Online Payments**: eSewa, Khalti, ConnectIPS payment gateway integrations
 - **Entrance Exam Applications**: Public application + admin review workflow
-- **Role-Based Access**: Admin, FacultyAdmin, CollegeAdmin, Student roles with permissions
+- **Role-Based Access**: SuperAdmin, FacultyAdmin, CollegeAdmin, Student roles with permissions
 - **Result Processing**: Grade schemes, grade definitions, result records (view-based)
 - **File Uploads**: Student documents, bank vouchers, college profiles
 

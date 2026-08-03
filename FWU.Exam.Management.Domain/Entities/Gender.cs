@@ -10,10 +10,10 @@ public class Gender
 
     [Required, MaxLength(50)]
     [Display(Name = "Gender Name")]
-    public string? GenderName { get; set; }
+    public string GenderName { get; set; } = string.Empty;
 
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }

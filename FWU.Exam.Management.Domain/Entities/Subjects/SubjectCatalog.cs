@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Subjects;
@@ -9,7 +9,7 @@ public class SubjectCatalog
 
     [Required, MaxLength(30)]
     [Display(Name = "Subject Code")]
-    public string? SubjectCode { get; set; }
+    public string SubjectCode { get; set; } = string.Empty;
 
     [Required, MaxLength(150)]
     [Display(Name = "Subject Name")]
@@ -35,6 +35,6 @@ public class SubjectCatalog
     public bool IsActive { get; set; }
 
     public virtual SubjectType? SubjectType { get; set; }
-    public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }
+    public virtual ICollection<SubjectOffering> SubjectOfferings { get; set; } = [];
 }
 

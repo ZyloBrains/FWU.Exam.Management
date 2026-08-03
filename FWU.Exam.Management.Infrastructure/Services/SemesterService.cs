@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using FWU.Exam.Management.Application.Interfaces;
@@ -55,14 +56,77 @@ public class SemesterService(AppDbContext context) : ISemesterService
         return await query.ToListAsync();
     }
 
-    public async Task<List<Semester>> GetSemestersByFacultyAsync(int? facultyId)
+    public async Task<List<Semester>> GetSemestersByProgramAsync(int programId)
     {
-        if (facultyId == null) return new List<Semester>();
-        return await context.Semesters
+        return await context.ProgramSemesters
             .AsNoTracking()
-            .Where(s => s.FacultyId == facultyId.Value)
+            .Where(ps => ps.ProgramId == programId && ps.IsActive)
+            .Select(ps => ps.Semester!)
             .OrderBy(s => s.Number)
             .ToListAsync();
+    }
+
+    public async Task<List<int>> GetAssignedSemesterIdsAsync(int programId)
+    {
+        return await context.ProgramSemesters
+            .AsNoTracking()
+            .Where(ps => ps.ProgramId == programId)
+            .Select(ps => ps.SemesterId)
+            .ToListAsync();
+    }
+
+    public async Task<List<Semester>> GetAssignableSemestersAsync(IUserContext userContext)
+    {
+        return await context.Semesters
+            .AsNoTracking()
+            .Include(s => s.AcademicYear)
+            .ApplyScope(userContext)
+            .OrderBy(s => s.AcademicYearId)
+            .ThenBy(s => s.Number)
+            .ToListAsync();
+    }
+
+    public async Task SetProgramSemestersAsync(int programId, IEnumerable<int> semesterIds)
+    {
+        var ids = (semesterIds ?? Enumerable.Empty<int>()).Distinct().ToList();
+        var existing = await context.ProgramSemesters
+            .Where(ps => ps.ProgramId == programId)
+            .ToListAsync();
+
+        var existingIds = existing.Select(ps => ps.SemesterId).ToHashSet();
+        var toAdd = ids.Where(id => !existingIds.Contains(id)).ToList();
+        var toRemove = existing.Where(ps => !ids.Contains(ps.SemesterId)).ToList();
+
+        if (toRemove.Count > 0)
+            context.ProgramSemesters.RemoveRange(toRemove);
+
+        foreach (var semesterId in toAdd)
+        {
+            context.ProgramSemesters.Add(new ProgramSemester
+            {
+                ProgramId = programId,
+                SemesterId = semesterId,
+                IsActive = true,
+                DisplayOrder = 0
+            });
+        }
+
+        if (toAdd.Count > 0 || toRemove.Count > 0)
+            await context.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsSemesterAssignedToProgramAsync(int programId, int semesterId)
+    {
+        return await context.ProgramSemesters
+            .AsNoTracking()
+            .AnyAsync(ps => ps.ProgramId == programId && ps.SemesterId == semesterId && ps.IsActive);
+    }
+
+    public async Task<bool> IsSemesterAssignedToAnyProgramAsync(int semesterId)
+    {
+        return await context.ProgramSemesters
+            .AsNoTracking()
+            .AnyAsync(ps => ps.SemesterId == semesterId);
     }
 
     public async Task<Semester?> GetSemesterByIdAsync(int id)

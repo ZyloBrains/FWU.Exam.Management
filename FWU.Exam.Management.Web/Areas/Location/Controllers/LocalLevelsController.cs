@@ -17,7 +17,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
 {
 
     // GET: LocalLevels with pagination, search, and sorting
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "LocalLevelName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "LocalLevelName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await localLevelService.GetLocalLevelsAsync(page, pageSize, search, sort, sortDir);
 
@@ -33,7 +33,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // Helper method to escape CSV fields
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -42,7 +42,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // Export to CSV (Current Page with pagination)
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "LocalLevelName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "LocalLevelName", string sortDir = "asc")
     {
         var items = await localLevelService.GetFilteredLocalLevelsAsync(page, pageSize, search, sort, sortDir);
 
@@ -65,7 +65,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // Export to PDF (Current Page with pagination)
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "LocalLevelName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "LocalLevelName", string sortDir = "asc")
     {
         var (items, totalCount) = await localLevelService.GetLocalLevelsAsync(page, pageSize, search, sort, sortDir);
 
@@ -81,7 +81,7 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
 
     // Export to Excel (Current Page with pagination)
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "LocalLevelName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "LocalLevelName", string sortDir = "asc")
     {
         var items = await localLevelService.GetFilteredLocalLevelsAsync(page, pageSize, search, sort, sortDir);
 

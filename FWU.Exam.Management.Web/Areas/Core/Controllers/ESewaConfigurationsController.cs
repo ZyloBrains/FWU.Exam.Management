@@ -14,7 +14,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("esewa.view")]
 public class ESewaConfigurationsController(AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ProductCode", string sortDir = "asc", int pageSize = 10)
     {
         var query = context.ESewaConfigurations.AsNoTracking();
 
@@ -62,7 +62,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         };
     }
 
-    private async Task<(List<ESewaConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+    private async Task<(List<ESewaConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.ESewaConfigurations.AsNoTracking();
 
@@ -90,7 +90,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -98,7 +98,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProductCode", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductCode", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -119,7 +119,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProductCode", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductCode", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -134,7 +134,7 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ProductCode", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductCode", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -223,6 +223,9 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         {
             try
             {
+                var existing = await context.ESewaConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                if (existing is null) return NotFound();
+                eSewaConfiguration.TenantId = existing.TenantId;
                 context.Update(eSewaConfiguration);
                 await context.SaveChangesAsync();
             }

@@ -103,5 +103,5 @@ public class ExamRegistration : ITenantScoped
 
     public virtual ApplicationVoucher? ApplicationVoucher { get; set; }
 
-    public virtual ICollection<ExamSubjectResult>? ExamSubjectResults { get; set; }
+    public virtual ICollection<ExamSubjectResult> ExamSubjectResults { get; set; } = [];
 }

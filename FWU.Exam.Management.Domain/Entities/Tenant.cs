@@ -1,4 +1,5 @@
-﻿using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Enums;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -31,5 +32,7 @@ public class Tenant
     public TenantType TenantType { get; set; } = TenantType.Standard;
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; } = true;
+
+    public virtual ICollection<TenantCollege> TenantColleges { get; set; } = [];
 }
 

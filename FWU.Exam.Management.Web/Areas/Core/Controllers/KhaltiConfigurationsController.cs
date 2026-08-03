@@ -15,7 +15,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission(Permissions.KhaltiView)]
 public class KhaltiConfigurationsController(AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ProductName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ProductName", string sortDir = "asc", int pageSize = 10)
     {
         var query = context.KhaltiConfigurations.AsNoTracking();
 
@@ -65,7 +65,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         };
     }
 
-    private async Task<(List<KhaltiConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+    private async Task<(List<KhaltiConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.KhaltiConfigurations.AsNoTracking();
 
@@ -94,7 +94,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -102,7 +102,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ProductName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductName", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -124,7 +124,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ProductName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductName", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -139,7 +139,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ProductName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductName", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -229,6 +229,9 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         {
             try
             {
+                var existing = await context.KhaltiConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                if (existing is null) return NotFound();
+                khaltiConfiguration.TenantId = existing.TenantId;
                 context.Update(khaltiConfiguration);
                 await context.SaveChangesAsync();
             }

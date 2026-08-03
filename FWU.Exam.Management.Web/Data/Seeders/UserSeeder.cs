@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -20,10 +21,13 @@ public static class UserSeeder
 
     private static readonly (string Email, string FullName, string Role, string? FacultyCode, string? CollegeCode)[] SeedUsers =
     [
-        ("admin@gmail.com", "Super Admin", Role.SuperAdmin, null, null),
+        ("admin@fwu.edu.np", "Super Admin", Role.SuperAdmin, null, null),
+        ("facultyadmin@fwu.edu.np", "Faculty Admin", Role.FacultyAdmin, "L001", null),
+        ("collegeadmin@fwu.edu.np", "College Admin", Role.CollegeAdmin, null, "SCH001"),
+        ("student@fwu.edu.np", "Student", Role.Student, null, "SCH001"),
     ];
 
-    public static async Task SeedSuperAdminAsync(IServiceProvider serviceProvider)
+    public static async Task SeedUsersAsync(IServiceProvider serviceProvider)
     {
         var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
         var context = serviceProvider.GetRequiredService<AppDbContext>();
@@ -66,8 +70,6 @@ public static class UserSeeder
             }
             else
             {
-                var token = await userManager.GeneratePasswordResetTokenAsync(user);
-                await userManager.ResetPasswordAsync(user, token, "Admin@123");
                 user.FacultyId = facultyId;
                 user.CollegeId = collegeId;
                 user.IsActive = true;

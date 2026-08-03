@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -15,7 +15,7 @@ public class Level
 
     [Required, MaxLength(50)]
     [Display(Name = "Level Name")]
-    public string? LevelName { get; set; }
+    public string LevelName { get; set; } = string.Empty;
 
     [Display(Name = "Level Display Order")]
     public int? LevelDisplayOrder { get; set; }
@@ -30,8 +30,8 @@ public class Level
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-    public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
-    public virtual ICollection<Program>? Programs { get; set; }
-    public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+    public virtual ICollection<ExamSchedule> ExamSchedules { get; set; } = [];
+    public virtual ICollection<Program> Programs { get; set; } = [];
+    public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }
 

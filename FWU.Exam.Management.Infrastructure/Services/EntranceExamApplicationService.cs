@@ -305,7 +305,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                 return existingAdmission.Id;
             }
 
-            var appUser = await userManager.FindByEmailAsync(application.Email);
+            var appUser = await userManager.FindByEmailAsync(application.Email ?? "");
             var admission = new StudentAdmission
             {
                 TenantId = application.TenantId,
@@ -500,7 +500,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         {
             if (!string.IsNullOrWhiteSpace(application.Email))
             {
-                var emailBody = EmailTemplateHelper.EntranceApplicationSubmitted(fullName, college, program, application.Id, application.CreatedAt.ToString("yyyy-MM-dd"));
+                var emailBody = EmailTemplateHelper.EntranceApplicationSubmitted(fullName, college ?? "", program ?? "", application.Id, application.CreatedAt.ToString("yyyy-MM-dd"));
                 await emailService.SendEmailAsync(application.Email, "Entrance Exam Application Submitted", emailBody);
             }
         }
@@ -736,7 +736,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         {
             PaymentRequestLogId = logId,
             IsSuccess = isSuccess,
-            ResponseMessage = responseMessage,
+            ResponseMessage = responseMessage ?? "",
             FullResponse = responseData,
             ResponseTimestamp = DateTime.UtcNow
         });
@@ -768,7 +768,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             TenantId = schedule.TenantId,
             VoucherNumber = voucherNumber,
             StudentName = log.FullName,
-            ContactNumber = log.MobileNumber,
+            ContactNumber = log.MobileNumber ?? "",
             Amount = amount,
             VoucherDate = DateTime.UtcNow,
             Timestamp = DateTime.UtcNow,

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class AdmitCardService(AppDbContext context, IUserContext userContext) : IAdmitCardService
+public class AdmitCardService(AppDbContext context, IUserContext userContext, ITenantContext tenantContext) : IAdmitCardService
 {
     public async Task<(List<AdmitCard> Items, int TotalCount)> GetAdmitCardsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? examScheduleId = null)
     {
@@ -63,25 +63,25 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         var admitCard = await context.AdmitCards
             .AsNoTracking()
             .Include(e => e.ExamRegistration)
-                .ThenInclude(er => er.College)
+                .ThenInclude(er => er!.College)
             .Include(e => e.ExamRegistration)
-                .ThenInclude(er => er.ExamCenter)
+                .ThenInclude(er => er!.ExamCenter)
             .Include(e => e.ExamRegistration)
-                .ThenInclude(er => er.Program)
+                .ThenInclude(er => er!.Program)
             .Include(e => e.ExamRegistration)
-                .ThenInclude(er => er.ApplicationVoucher)
+                .ThenInclude(er => er!.ApplicationVoucher)
                     .ThenInclude(v => v!.StudentRegistration)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s.Semester)
+                .ThenInclude(s => s!.Semester)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s.Program)
+                .ThenInclude(s => s!.Program)
                     .ThenInclude(p => p!.Level)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s.Level)
+                .ThenInclude(s => s!.Level)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s.ExamType)
+                .ThenInclude(s => s!.ExamType)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s.AcademicYear)
+                .ThenInclude(s => s!.AcademicYear)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -158,13 +158,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
 
         if (string.IsNullOrEmpty(admitCard.ControllerSignaturePath) && admitCard.ExamRegistration?.CollegeId != null)
         {
-            var college = await context.Colleges.AsNoTracking().FirstOrDefaultAsync(c => c.Id == admitCard.ExamRegistration.CollegeId);
-            if (college != null)
-            {
-                var tenant = await context.Tenants.FindAsync(college.TenantId);
-                if (!string.IsNullOrEmpty(tenant?.ControllerSignaturePath))
-                    admitCard.ControllerSignaturePath = tenant.ControllerSignaturePath;
-            }
+            var tenant = await context.Tenants.FindAsync(tenantContext.TenantId);
+            if (!string.IsNullOrEmpty(tenant?.ControllerSignaturePath))
+                admitCard.ControllerSignaturePath = tenant.ControllerSignaturePath;
         }
 
         return admitCard;
@@ -218,7 +214,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         }
 
         var studentUser = await ResolveStudentUserAsync(registration);
-        var controllerSignaturePath = await ResolveControllerSignatureAsync(registration.CollegeId);
+        var controllerSignaturePath = await ResolveControllerSignatureAsync();
 
         int? resolvedSrId = null;
         string? resolvedStudentRegNumber = null;
@@ -287,13 +283,8 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             : [];
         var srLookup = studentRegistrations.ToDictionary(sr => sr.Id);
 
-        var colleges = await context.Colleges
-            .Where(c => c.Id == registrations.First().CollegeId)
-            .ToListAsync();
-        var collegeTenantLookup = colleges.ToDictionary(c => c.Id, c => c.TenantId);
-        var tenantIds = colleges.Select(c => c.TenantId).Distinct().ToList();
-        var tenants = await context.Tenants.Where(t => tenantIds.Contains(t.Id)).ToListAsync();
-        var tenantSignatureLookup = tenants.ToDictionary(t => t.Id, t => t.ControllerSignaturePath);
+        var currentTenant = await context.Tenants.FindAsync(tenantContext.TenantId);
+        var currentTenantSignature = currentTenant?.ControllerSignaturePath;
 
         var admitCards = new List<AdmitCard>();
         foreach (var registration in registrations)
@@ -301,12 +292,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
             if (existingRegistrationIds.Contains(registration.Id))
                 continue;
 
-            string? controllerSignaturePath = null;
-            if (collegeTenantLookup.TryGetValue(registration.CollegeId, out var tenantId) &&
-                tenantSignatureLookup.TryGetValue(tenantId, out var sig))
-            {
-                controllerSignaturePath = sig;
-            }
+            string? controllerSignaturePath = currentTenantSignature;
 
             string? photoPath = null;
             string? signaturePath = null;
@@ -368,13 +354,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext) : 
         return await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
     }
 
-    private async Task<string?> ResolveControllerSignatureAsync(int collegeId)
+    private async Task<string?> ResolveControllerSignatureAsync()
     {
-        var college = await context.Colleges
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == collegeId);
-        if (college == null) return null;
-        var tenant = await context.Tenants.FindAsync(college.TenantId);
+        var tenant = await context.Tenants.FindAsync(tenantContext.TenantId);
         return tenant?.ControllerSignaturePath;
     }
 

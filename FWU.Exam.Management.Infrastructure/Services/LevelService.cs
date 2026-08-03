@@ -17,7 +17,7 @@ public class LevelService(AppDbContext context) : ILevelService
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(l =>
-                l.LevelCode.Contains(search) ||
+                (l.LevelCode ?? "").Contains(search) ||
                 l.LevelName.Contains(search) ||
                 (l.Remarks != null && l.Remarks.Contains(search)));
         }
@@ -42,7 +42,7 @@ public class LevelService(AppDbContext context) : ILevelService
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(l =>
-                l.LevelCode.Contains(search) ||
+                (l.LevelCode ?? "").Contains(search) ||
                 l.LevelName.Contains(search) ||
                 (l.Remarks != null && l.Remarks.Contains(search)));
         }
@@ -90,13 +90,13 @@ public class LevelService(AppDbContext context) : ILevelService
     {
         return sort.ToLower() switch
         {
-            "levelcode" => l => l.LevelCode,
+            "levelcode" => l => l.LevelCode ?? "",
             "levelname" => l => l.LevelName,
-            "leveldisplayorder" => l => l.LevelDisplayOrder,
-            "remarks" => l => l.Remarks,
-            "isrunning" => l => l.IsRunning,
+            "leveldisplayorder" => l => l.LevelDisplayOrder ?? 0,
+            "remarks" => l => l.Remarks ?? "",
+            "isrunning" => l => l.IsRunning ?? false,
             "isactive" => l => l.IsActive,
-            _ => l => l.LevelDisplayOrder
+            _ => l => l.LevelDisplayOrder ?? 0
         };
     }
 }

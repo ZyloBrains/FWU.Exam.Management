@@ -10,7 +10,7 @@ public class EntryFormat
 
     [Required, MaxLength(100)]
     [Display(Name = "Entry Format Name")]
-    public string? EntryFormatName { get; set; }
+    public string EntryFormatName { get; set; } = string.Empty;
 
     [MaxLength(255)]
     [Display(Name = "Remarks")]
@@ -19,5 +19,5 @@ public class EntryFormat
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }

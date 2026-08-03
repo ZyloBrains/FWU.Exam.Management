@@ -23,7 +23,7 @@ public class SubjectCatalogsController : Controller
         _subjectCatalogService = subjectCatalogService;
     }
 
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "SubjectName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "SubjectName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir);
 
@@ -188,7 +188,7 @@ public class SubjectCatalogsController : Controller
         }
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -196,7 +196,7 @@ public class SubjectCatalogsController : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "SubjectName", string sortDir = "asc")
     {
         var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -219,7 +219,7 @@ public class SubjectCatalogsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "SubjectName", string sortDir = "asc")
     {
         var items = await _subjectCatalogService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -257,7 +257,7 @@ public class SubjectCatalogsController : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "SubjectName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "SubjectName", string sortDir = "asc")
     {
         var (items, totalCount) = await _subjectCatalogService.GetSubjectCatalogsAsync(page, pageSize, search, sort, sortDir);
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
@@ -16,7 +17,7 @@ using Microsoft.AspNetCore.Identity;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IKhaltiService khaltiService, IFileUploadHelper fileUploadHelper, UserManager<AppUser> userManager, IUserContext userContext, ILogger<EntranceController> logger) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -435,7 +436,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     // --- Admin actions ---
 
     [RequirePermission("entrance.view")]
-    public async Task<IActionResult> AdminList(int page = 1, string search = null, string status = null, int? programId = null, int? academicYearId = null, int pageSize = 10)
+    public async Task<IActionResult> AdminList(int page = 1, string? search = null, string? status = null, int? programId = null, int? academicYearId = null, int pageSize = 10)
     {
         ApplicationStatus? statusFilter = null;
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
@@ -491,7 +492,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
@@ -502,7 +503,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
 
     [HttpGet]
     [RequirePermission("entrance.export")]
-    public async Task<IActionResult> ExportToExcel(string search = null, string status = null, int? programId = null, int? academicYearId = null)
+    public async Task<IActionResult> ExportToExcel(string? search = null, string? status = null, int? programId = null, int? academicYearId = null)
     {
         ApplicationStatus? statusFilter = null;
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
@@ -553,7 +554,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConvertToAdmission(int id)
     {
@@ -573,7 +574,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     // --- Entrance Schedule Management (Admin) ---
 
     [RequirePermission("examschedules.view")]
-    public async Task<IActionResult> ManageSchedule(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> ManageSchedule(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 

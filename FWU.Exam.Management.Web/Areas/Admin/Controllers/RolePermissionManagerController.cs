@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Permissions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -25,11 +26,11 @@ public class RolePermissionManagerController(
 
         var user = await userManager.GetUserAsync(User);
         var userRoles = user != null ? await userManager.GetRolesAsync(user) : [];
-        var isSuperAdmin = userRoles.Any(r => r == "SuperAdmin" || r == "SystemAdmin");
+        var isSuperAdmin = userRoles.Contains(Role.SuperAdmin);
 
         var allowedRoles = isSuperAdmin
             ? roles
-            : roles.Where(r => r.Name != "SuperAdmin" && r.Name != "SystemAdmin" && r.Name != "CollegeAdmin" && r.Name != "Admin").ToList();
+            : roles.Where(r => r.Name != Role.SuperAdmin && r.Name != Role.CollegeAdmin).ToList();
 
         var rolePermCounts = new Dictionary<string, int>();
         foreach (var role in allowedRoles)
@@ -50,9 +51,9 @@ public class RolePermissionManagerController(
 
         var user = await userManager.GetUserAsync(User);
         var userRoles = user != null ? await userManager.GetRolesAsync(user) : [];
-        var isSuperAdmin = userRoles.Any(r => r == "SuperAdmin" || r == "SystemAdmin");
+        var isSuperAdmin = userRoles.Contains(Role.SuperAdmin);
 
-        if (!isSuperAdmin && (role.Name == "SuperAdmin" || role.Name == "SystemAdmin" || role.Name == "CollegeAdmin" || role.Name == "Admin"))
+        if (!isSuperAdmin && (role.Name == Role.SuperAdmin || role.Name == Role.CollegeAdmin))
             return Forbid();
 
         var allPermissions = await permissionService.GetAllPermissionsAsync();
@@ -103,9 +104,9 @@ public class RolePermissionManagerController(
 
         var user = await userManager.GetUserAsync(User);
         var userRoles = user != null ? await userManager.GetRolesAsync(user) : [];
-        var isSuperAdmin = userRoles.Any(r => r == "SuperAdmin" || r == "SystemAdmin");
+        var isSuperAdmin = userRoles.Contains(Role.SuperAdmin);
 
-        if (!isSuperAdmin && (role.Name == "SuperAdmin" || role.Name == "SystemAdmin" || role.Name == "CollegeAdmin" || role.Name == "Admin"))
+        if (!isSuperAdmin && (role.Name == Role.SuperAdmin || role.Name == Role.CollegeAdmin))
             return Forbid();
 
         var ids = permissionIds ?? [];

@@ -1,21 +1,24 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Domain.Interfaces;
 
 namespace FWU.Exam.Management.Domain.Entities.Payments;
 
-public class KhaltiConfiguration
+public class KhaltiConfiguration : ITenantScoped
 {
     public int Id { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 
     [Required]
     [MaxLength(400)]
     [Display(Name = "Return URL")]
-    public string? ReturnUrl { get; set; }
+    public string ReturnUrl { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(400)]
     [Display(Name = "Website URL")]
-    public string? WebsiteUrl { get; set; }
+    public string WebsiteUrl { get; set; } = string.Empty;
 
     [Range(0, double.MaxValue)]
     [Display(Name = "Amount")]
@@ -24,12 +27,12 @@ public class KhaltiConfiguration
     [Required]
     [MaxLength(400)]
     [Display(Name = "Product Name")]
-    public string? ProductName { get; set; }
+    public string ProductName { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(400)]
     [Display(Name = "Authorization Key")]
-    public string? AuthorizationKey { get; set; }
+    public string AuthorizationKey { get; set; } = string.Empty;
 
     [Range(0, int.MaxValue)]
     [Display(Name = "Service Charge")]
@@ -38,10 +41,10 @@ public class KhaltiConfiguration
     [Required]
     [MaxLength(400)]
     [Display(Name = "Post URL")]
-    public string? PostUrl { get; set; }
+    public string PostUrl { get; set; } = string.Empty;
 
     [Required]
     [MaxLength(400)]
     [Display(Name = "Verify URL")]
-    public string? VerifyUrl { get; set; }
+    public string VerifyUrl { get; set; } = string.Empty;
 }

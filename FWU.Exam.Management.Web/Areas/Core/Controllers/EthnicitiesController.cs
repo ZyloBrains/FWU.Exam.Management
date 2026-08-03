@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("ethnicities.view")]
 public class EthnicitiesController(IEthnicityService ethnicityService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await ethnicityService.GetEthnicitiesAsync(page, pageSize, search, sort, sortDir);
 

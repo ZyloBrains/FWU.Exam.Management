@@ -6,7 +6,7 @@
 
 @{
     // Helper to detect active route (works for both MVC and Razor Pages)
-    bool IsActive(string controllerName = null, string actionName = null, string areaName = null, string page = null)
+    bool IsActive(string? controllerName = null, string? actionName = null, string? areaName = null, string? page = null)
     {
         var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
@@ -41,7 +41,7 @@
     // Get user and permissions
     var sideMenuUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var sideMenuTenantCode = Context.Items["TenantCode"] as string;
-    var isSuperAdmin = sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, "SuperAdmin");
+    var isSuperAdmin = sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, Role.SuperAdmin);
 
     // Get permissions for the current user
     var sideMenuPermissions = sideMenuUser != null

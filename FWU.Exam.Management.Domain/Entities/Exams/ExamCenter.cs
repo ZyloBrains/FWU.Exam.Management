@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -27,15 +27,15 @@ public class ExamCenter : ITenantScoped
 
     [Required, MaxLength(30)]
     [Display(Name = "Code")]
-    public string? Code { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     public virtual ExamSchedule? ExamSchedule { get; set; }
 
     public virtual College? College { get; set; }
-    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
-    public virtual ICollection<ExamCenterCollege>? ExamCenterColleges { get; set; }
-    public virtual ICollection<ExamCenterVenue>? ExamCenterVenues { get; set; }
-    public virtual ICollection<ExamCenterSymbolRange>? ExamCenterSymbolRanges { get; set; }
+    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
+    public virtual ICollection<ExamSlot> ExamSlots { get; set; } = [];
+    public virtual ICollection<ExamCenterCollege> ExamCenterColleges { get; set; } = [];
+    public virtual ICollection<ExamCenterVenue> ExamCenterVenues { get; set; } = [];
+    public virtual ICollection<ExamCenterSymbolRange> ExamCenterSymbolRanges { get; set; } = [];
 }
 

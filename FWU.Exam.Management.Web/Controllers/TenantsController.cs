@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -25,7 +26,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     private readonly UserManager<AppUser> _userManager = userManager;
     private readonly IFileUploadHelper _fileUploadHelper = fileUploadHelper;
 
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
         var query = _context.Tenants.AsQueryable();
 
@@ -212,6 +213,9 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
 
         try
         {
+            var tenantColleges = await _context.TenantColleges.Where(tc => tc.TenantId == id).ToListAsync();
+            _context.TenantColleges.RemoveRange(tenantColleges);
+
             var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
             _context.Faculties.RemoveRange(faculties);
 
@@ -232,7 +236,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         return new Dictionary<string, int>
         {
             ["Faculties"] = await _context.Faculties.CountAsync(f => f.TenantId == tenantId),
-            ["Colleges"] = await _context.Set<College>().CountAsync(c => c.TenantId == tenantId),
+            ["Colleges"] = await _context.TenantColleges.CountAsync(tc => tc.TenantId == tenantId),
             ["College Programs"] = await _context.Set<CollegeProgram>().CountAsync(cp => cp.TenantId == tenantId),
             ["Academic Years"] = await _context.AcademicYears.CountAsync(),
             ["Students"] = await _context.StudentRegistrations.CountAsync(s => s.TenantId == tenantId),
@@ -285,6 +289,9 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
             var tenant = await _context.Tenants.FindAsync(id);
             if (tenant == null)
                 return Json(new { success = false, message = "Tenant not found." });
+
+            var tenantColleges = await _context.TenantColleges.Where(tc => tc.TenantId == id).ToListAsync();
+            _context.TenantColleges.RemoveRange(tenantColleges);
 
             var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
             _context.Faculties.RemoveRange(faculties);

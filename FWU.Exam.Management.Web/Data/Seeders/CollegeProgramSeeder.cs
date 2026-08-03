@@ -154,7 +154,6 @@ public static class CollegeProgramSeeder
                 {
                     CollegeId = college.Id,
                     ProgramId = program.Id,
-                    TenantId = college.TenantId,
                     IsActive = true,
                 });
             }

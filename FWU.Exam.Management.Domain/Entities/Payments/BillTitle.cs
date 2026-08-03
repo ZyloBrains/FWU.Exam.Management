@@ -13,7 +13,7 @@ public class BillTitle : ITenantScoped
 
     [Required, MaxLength(255)]
     [Display(Name = "Bill Title Name")]
-    public string? BillTitleName { get; set; }
+    public string BillTitleName { get; set; } = string.Empty;
 
     [MaxLength(1024)]
     [Display(Name = "Category")]

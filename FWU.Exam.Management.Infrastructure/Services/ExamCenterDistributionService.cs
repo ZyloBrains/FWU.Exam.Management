@@ -12,7 +12,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
         var registrations = await context.ExamRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered)
             .Include(er => er.College)
-                .ThenInclude(c => c.Faculties)
+                .ThenInclude(c => c!.Faculties)
             .Include(er => er.ExamSchedule)
                 .ThenInclude(es => es!.AcademicYear)
             .OrderBy(er => er.Id)

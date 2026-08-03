@@ -21,7 +21,7 @@ public class ExamSchedule : ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Exam Schedule Name")]
-    public string? ExamScheduleName { get; set; }
+    public string ExamScheduleName { get; set; } = string.Empty;
 
     [MaxLength(10)]
     [Display(Name = "Start Date (BS)")]
@@ -103,8 +103,8 @@ public class ExamSchedule : ITenantScoped
     public int? LevelId { get; set; }
     public virtual Level? Level { get; set; }
 
-    public virtual ICollection<ExamCenter>? ExamCenters { get; set; }
-    public virtual ICollection<ExamRegistration>? ExamRegistrations { get; set; }
-    public virtual ICollection<ExamSubjectResult>? ExamSubjectResults { get; set; }
-    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
+    public virtual ICollection<ExamCenter> ExamCenters { get; set; } = [];
+    public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
+    public virtual ICollection<ExamSubjectResult> ExamSubjectResults { get; set; } = [];
+    public virtual ICollection<ExamSlot> ExamSlots { get; set; } = [];
 }

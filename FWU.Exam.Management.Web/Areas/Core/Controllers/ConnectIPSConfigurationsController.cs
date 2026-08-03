@@ -15,7 +15,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission(Permissions.ConnectIPSView)]
 public class ConnectIPSConfigurationsController(AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "MerchantId", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "MerchantId", string sortDir = "asc", int pageSize = 10)
     {
         var query = context.ConnectIpsPaymentConfigurations.AsNoTracking();
 
@@ -63,7 +63,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         };
     }
 
-    private async Task<(List<ConnectIpsPaymentConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+    private async Task<(List<ConnectIpsPaymentConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.ConnectIpsPaymentConfigurations.AsNoTracking();
 
@@ -91,7 +91,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -99,7 +99,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "MerchantId", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "MerchantId", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -121,7 +121,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "MerchantId", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "MerchantId", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -136,7 +136,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "MerchantId", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "MerchantId", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -226,6 +226,9 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         {
             try
             {
+                var existing = await context.ConnectIpsPaymentConfigurations.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+                if (existing is null) return NotFound();
+                configuration.TenantId = existing.TenantId;
                 context.Update(configuration);
                 await context.SaveChangesAsync();
             }

@@ -28,5 +28,5 @@ public class GradingScheme : IAuditable
 
     public virtual Program? Program { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
-    public virtual ICollection<GradeDefinition>? GradeDefinitions { get; set; }
+    public virtual ICollection<GradeDefinition> GradeDefinitions { get; set; } = [];
 }

@@ -9,15 +9,15 @@ public class GumpNowEmailConfiguration
 
     [Required, MaxLength(1024)]
     [Display(Name = "Api Url")]
-    public string? ApiUrl { get; set; }
+    public string ApiUrl { get; set; } = string.Empty;
 
     [Required, MaxLength(2048)]
     [Display(Name = "Api Key")]
-    public string? ApiKey { get; set; }
+    public string ApiKey { get; set; } = string.Empty;
 
     [Required, MaxLength(500)]
     [Display(Name = "From Address")]
-    public string? FromAddr { get; set; }
+    public string FromAddr { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Mode")]

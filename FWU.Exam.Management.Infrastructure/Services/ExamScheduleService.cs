@@ -212,7 +212,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
             ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
             Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
-            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name }).ToList()
+            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")" }).ToList()
         };
     }
 
@@ -226,7 +226,11 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .Where(s => s.AcademicYearId == academicYearId
                         && (s.Number <= 8 || allowUpperSemesters))
             .OrderBy(s => s.Number)
-            .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
+            .Select(s => new SelectOption
+            {
+                Id = s.Id,
+                Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+            })
             .ToListAsync();
     }
 

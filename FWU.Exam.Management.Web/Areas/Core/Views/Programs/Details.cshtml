@@ -69,11 +69,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Level</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Level.LevelName)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Level!.LevelName)</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Board</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Board.BoardName)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Board!.BoardName)</p>
                 </div>
             </div>
         </div>

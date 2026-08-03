@@ -24,4 +24,5 @@ public interface ISubjectOfferingService
     Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId);
     Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null);
     Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null);
+    Task<bool> IsSemesterAssignedToProgramAsync(int programId, int semesterId);
 }

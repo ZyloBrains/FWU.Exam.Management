@@ -35,14 +35,14 @@
             <!-- College -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">College</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.College.Name)</p>
-                <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.College.Code)</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.College!.Name)</p>
+                <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.College!.Code)</p>
             </div>
             <!-- Program -->
             <div>
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Program</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Program.ProgramName)</p>
-                <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.Program.ProgramCode)</p>
+                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Program!.ProgramName)</p>
+                <p class="text-xs text-gray-500">Code: @Html.DisplayFor(model => model.Program!.ProgramCode)</p>
             </div>
             <!-- Affiliation Date -->
             <div>

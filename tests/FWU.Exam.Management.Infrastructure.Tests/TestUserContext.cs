@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 
 namespace FWU.Exam.Management.Infrastructure.Tests;
@@ -22,8 +23,8 @@ public class TestUserContext : IUserContext
         FacultyCollegeIds = facultyCollegeIds;
         Roles = roles;
         IsAuthenticated = !string.IsNullOrEmpty(userId);
-        IsSuperAdmin = roles.Contains("SuperAdmin");
-        IsFacultyAdmin = roles.Contains("FacultyAdmin");
-        IsCollegeAdmin = roles.Contains("CollegeAdmin");
+        IsSuperAdmin = roles.Contains(Role.SuperAdmin);
+        IsFacultyAdmin = roles.Contains(Role.FacultyAdmin);
+        IsCollegeAdmin = roles.Contains(Role.CollegeAdmin);
     }
 }

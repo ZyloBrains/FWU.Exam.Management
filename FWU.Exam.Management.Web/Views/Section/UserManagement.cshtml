@@ -38,6 +38,18 @@
             </div>
         </a>
 
+        <a href="@(Context.Items["TenantCode"] as string != null ? $"/tenant/{Context.Items["TenantCode"]}/Identity/Account/ForgotPassword" : "/Identity/Account/ForgotPassword")" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
+                    <i class="fas fa-key text-teal-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Reset Password</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Reset a user's password</p>
+                </div>
+            </div>
+        </a>
+
         <a asp-area="" asp-controller="Role" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">

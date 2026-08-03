@@ -16,9 +16,9 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("collegeprograms.view")]
-public class CollegeProgramsController(ICollegeProgramService collegeProgramService, IUserContext userContext) : Controller
+public class CollegeProgramsController(ICollegeProgramService collegeProgramService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "collegename", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await collegeProgramService.GetCollegeProgramsAsync(page, pageSize, search, sort, sortDir);
 
@@ -33,7 +33,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -41,7 +41,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
     {
         var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
@@ -65,7 +65,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
     {
         var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
@@ -80,7 +80,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "Id", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
     {
         var (items, totalCount) = await collegeProgramService.GetFilteredItemsForExportAsync(page, pageSize, search, sort, sortDir);
 
@@ -173,7 +173,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         if (ModelState.IsValid)
         {
             var existingIds = await collegeProgramService.GetExistingProgramIdsAsync(model.CollegeId);
-            var duplicateIds = model.Programs
+            var duplicateIds = model.Programs!
                 .Where(p => existingIds.Contains(p.ProgramId))
                 .Select(p => p.ProgramId)
                 .ToList();
@@ -186,7 +186,7 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
         if (ModelState.IsValid)
         {
-            var collegePrograms = model.Programs.Select(p => new CollegeProgram
+            var collegePrograms = model.Programs!.Select(p => new CollegeProgram
             {
                 CollegeId = model.CollegeId,
                 ProgramId = p.ProgramId,

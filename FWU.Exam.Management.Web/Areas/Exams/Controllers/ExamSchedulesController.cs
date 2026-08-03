@@ -21,10 +21,9 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
-    UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
@@ -49,7 +48,7 @@ public class ExamSchedulesController(
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -57,7 +56,7 @@ public class ExamSchedulesController(
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(string search = null)
+    public async Task<IActionResult> ExportToCsv(string? search = null)
     {
         var items = await examScheduleService.GetFilteredItemsAsync(search);
 
@@ -90,14 +89,14 @@ public class ExamSchedulesController(
         return File(csvBytes, "text/csv", "ExamSchedules.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(string search = null)
+    public async Task<IActionResult> ExportToPdf(string? search = null)
     {
         var items = await examScheduleService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(string search = null)
+    public async Task<IActionResult> ExportToExcel(string? search = null)
     {
         var items = await examScheduleService.GetFilteredItemsAsync(search);
 

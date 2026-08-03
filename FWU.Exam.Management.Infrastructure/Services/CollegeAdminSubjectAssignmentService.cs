@@ -13,11 +13,11 @@ public class CollegeAdminSubjectAssignmentService(AppDbContext context, IUserCon
         var query = context.CollegeAdminSubjectAssignments
             .AsNoTracking()
             .Include(tsa => tsa.SubjectOffering)
-                .ThenInclude(so => so.SubjectCatalog)
+                .ThenInclude(so => so!.SubjectCatalog)
             .Include(tsa => tsa.SubjectOffering)
-                .ThenInclude(so => so.Program)
+                .ThenInclude(so => so!.Program)
             .Include(tsa => tsa.SubjectOffering)
-                .ThenInclude(so => so.Semester)
+                .ThenInclude(so => so!.Semester)
             .Include(tsa => tsa.ExamSchedule)
             .AsQueryable();
 

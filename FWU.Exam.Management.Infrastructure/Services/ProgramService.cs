@@ -120,11 +120,11 @@ public class ProgramService(AppDbContext context, IUserContext userContext) : IP
             "programcode" => p => p.ProgramCode,
             "programname" => p => p.ProgramName,
             "shortname" => p => p.ShortName,
-            "level" => p => p.Level.LevelName,
-            "board" => p => p.Board.BoardName,
+            "level" => p => p.Level != null ? p.Level.LevelName : "",
+            "board" => p => p.Board != null ? p.Board.BoardName : "",
             "duration" => p => p.Duration,
-            "grandtotalmarks" => p => p.GrandTotalMarks,
-            "numberofseats" => p => p.NumberOfSeats,
+            "grandtotalmarks" => p => p.GrandTotalMarks ?? 0,
+            "numberofseats" => p => p.NumberOfSeats ?? "",
             "isactive" => p => p.IsActive,
             _ => p => p.ProgramCode
         };

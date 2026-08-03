@@ -1,43 +1,46 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Domain.Interfaces;
 
 namespace FWU.Exam.Management.Domain.Entities.Payments;
 
-public class ConnectIpsPaymentConfiguration
+public class ConnectIpsPaymentConfiguration : ITenantScoped
 {
     public int Id { get; set; }
+    public int? TenantId { get; set; }
+    public Tenant? Tenant { get; set; }
 
     [Required, MaxLength(1024)]
     [Display(Name = "Gateway URL")]
-    public string? GatewayUrl { get; set; }
+    public string GatewayUrl { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Merchant ID")]
-    public string? MerchantId { get; set; }
+    public string MerchantId { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "App ID")]
-    public string? AppId { get; set; }
+    public string AppId { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "App Name")]
-    public string? AppName { get; set; }
+    public string AppName { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Validation API URL")]
-    public string? ValidationApiUrl { get; set; }
+    public string ValidationApiUrl { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Username For Validation API")]
-    public string? UsernameForValidationApi { get; set; }
+    public string UsernameForValidationApi { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Password For Validation API")]
-    public string? PasswordForValidationApi { get; set; }
+    public string PasswordForValidationApi { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Password For Creditor PFX")]
-    public string? PasswordForCreditorPfx { get; set; }
+    public string PasswordForCreditorPfx { get; set; } = string.Empty;
 
     [MaxLength(10)]
     [Display(Name = "Transaction Currency")]

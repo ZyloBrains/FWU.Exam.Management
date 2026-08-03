@@ -15,7 +15,7 @@ public class Batch
 
     [Required, MaxLength(50)]
     [Display(Name = "Batch Name")]
-    public string? BatchName { get; set; }
+    public string BatchName { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Remarks")]
@@ -26,6 +26,6 @@ public class Batch
 
     [ForeignKey(nameof(AcademicYearId))]
     public virtual AcademicYear? AcademicYear { get; set; }
-    public virtual ICollection<StudentAdmission>? StudentAdmissions { get; set; }
-    public virtual ICollection<ExamSlot>? ExamSlots { get; set; }
+    public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; } = [];
+    public virtual ICollection<ExamSlot> ExamSlots { get; set; } = [];
 }

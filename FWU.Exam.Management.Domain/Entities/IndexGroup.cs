@@ -10,7 +10,7 @@ public class IndexGroup
 
     [Required, MaxLength(100)]
     [Display(Name = "Index Group Name")]
-    public string? IndexGroupName { get; set; }
+    public string IndexGroupName { get; set; } = string.Empty;
 
     [MaxLength(255)]
     [Display(Name = "Remarks")]
@@ -19,5 +19,5 @@ public class IndexGroup
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
 
-        public virtual ICollection<StudentRegistration>? StudentRegistrations { get; set; }
+        public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }

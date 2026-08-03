@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -26,7 +27,7 @@ public class UserController(
     IUserContext userContext,
     IBulkUserCreationService bulkUserCreationService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
         IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
@@ -232,7 +233,9 @@ public class UserController(
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        var roles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(id));
+        var editUser = await userManager.FindByIdAsync(id);
+        if (editUser == null) return NotFound();
+        var roles = await userManager.GetRolesAsync(editUser);
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);

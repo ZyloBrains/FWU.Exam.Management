@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -28,9 +29,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.Gender)
             .Include(s => s.StudentCategory)
             .Include(s => s.PermanentAddress)
-                .ThenInclude(a => a.LocalLevel)
-                .ThenInclude(ll => ll.District)
-                .ThenInclude(d => d.Province)
+                .ThenInclude(a => a!.LocalLevel)
+                .ThenInclude(ll => ll!.District)
+                .ThenInclude(d => d!.Province)
             .Include(s => s.StudentGuardians)
             .Include(s => s.StudentQualifications)
                 .ThenInclude(q => q.Board)
@@ -61,9 +62,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .Include(s => s.StudentCategory)
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress)
-                .ThenInclude(a => a.LocalLevel)
-                .ThenInclude(ll => ll.District)
-                .ThenInclude(d => d.Province)
+                .ThenInclude(a => a!.LocalLevel)
+                .ThenInclude(ll => ll!.District)
+                .ThenInclude(d => d!.Province)
             .Include(s => s.CurrentAddress)
             .FirstOrDefaultAsync(m => m.Id == id);
     }
@@ -434,7 +435,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .ToListAsync();
     }
 
-    public async Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian guardian)
+    public async Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian? guardian)
     {
         var existing = await context.StudentGuardians
             .Where(g => g.StudentRegistrationId == studentRegistrationId)
@@ -509,8 +510,8 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             SetPasswordHashDirectly(user, password);
             await userManager.UpdateAsync(user);
 
-            if (!await userManager.IsInRoleAsync(user, "Student"))
-                await userManager.AddToRoleAsync(user, "Student");
+            if (!await userManager.IsInRoleAsync(user, Role.Student))
+                await userManager.AddToRoleAsync(user, Role.Student);
 
             await userManager.AddClaimAsync(user, new Claim(MustChangePasswordClaimType, "true"));
 
@@ -565,10 +566,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 }
             }
 
-            var isStudent = await userManager.IsInRoleAsync(user, "Student");
+            var isStudent = await userManager.IsInRoleAsync(user, Role.Student);
             if (!isStudent)
             {
-                var addToRoleResult = await userManager.AddToRoleAsync(user, "Student");
+                var addToRoleResult = await userManager.AddToRoleAsync(user, Role.Student);
                 if (!addToRoleResult.Succeeded)
                 {
                     var errors = string.Join("; ", addToRoleResult.Errors.Select(e => e.Description));
@@ -609,7 +610,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, studentRegistration.RegistrationNumber, college, program, studentRegistration.Email, password);
+                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, studentRegistration.RegistrationNumber ?? "", college ?? "", program ?? "", studentRegistration.Email, password);
                 await emailService.SendEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
             }
             catch (Exception ex)

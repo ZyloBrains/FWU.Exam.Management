@@ -15,10 +15,9 @@ namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 [Area("Payments")]
 [RequirePermission("billtitles.view")]
 public class BillTitlesController(
-    IBillTitleService billTitleService,
-    IUserContext userContext) : Controller
+    IBillTitleService billTitleService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BillTitleName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "BillTitleName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir);
 
@@ -33,7 +32,7 @@ public class BillTitlesController(
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -41,7 +40,7 @@ public class BillTitlesController(
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
         var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -64,7 +63,7 @@ public class BillTitlesController(
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
         var (items, totalCount) = await billTitleService.GetBillTitlesAsync(page, pageSize, search, sort, sortDir);
 
@@ -79,7 +78,7 @@ public class BillTitlesController(
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BillTitleName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
         var items = await billTitleService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 

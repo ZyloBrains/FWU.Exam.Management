@@ -13,27 +13,27 @@ public class CollegeProfile : ITenantScoped
 
     [Required, MaxLength(1024)]
     [Display(Name = "Bank Name")]
-    public string? BankName { get; set; }
+    public string BankName { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Bank Branch Name")]
-    public string? BankBranchName { get; set; }
+    public string BankBranchName { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Bank Account Number")]
-    public string? BankAccountNumber { get; set; }
+    public string BankAccountNumber { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Contact Person Name")]
-    public string? ContactPersonName { get; set; }
+    public string ContactPersonName { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Contact Person Mobile Number")]
-    public string? ContactPersonMobileNumber { get; set; }
+    public string ContactPersonMobileNumber { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Contact Person Email")]
-    public string? ContactPersonEmail { get; set; }
+    public string ContactPersonEmail { get; set; } = string.Empty;
 
     [Display(Name = "Status")]
     public int? Status { get; set; }

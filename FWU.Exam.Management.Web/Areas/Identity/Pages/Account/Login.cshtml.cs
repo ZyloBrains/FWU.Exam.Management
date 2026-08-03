@@ -4,6 +4,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Enums;
@@ -179,12 +180,13 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         return Page();
     }
 
-    private async Task<string?> ResolveUserTenantCodeAsync(AppUser user)
+    private async Task<string> ResolveUserTenantCodeAsync(AppUser user)
     {
         if (user.FacultyId != null)
         {
             var faculty = await context.Faculties
                 .AsNoTracking()
+                .IgnoreQueryFilters()
                 .Include(f => f.Tenant)
                 .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
 
@@ -193,12 +195,14 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (user.CollegeId != null)
         {
-            var college = await context.Colleges
+            var collegeTenant = await context.TenantColleges
                 .AsNoTracking()
-                .Include(c => c.Tenant)
-                .FirstOrDefaultAsync(c => c.Id == user.CollegeId.Value);
+                .IgnoreQueryFilters()
+                .Where(tc => tc.CollegeId == user.CollegeId.Value && tc.Tenant != null && tc.Tenant.IsActive)
+                .Select(tc => tc.Tenant!.OfficeCode)
+                .FirstOrDefaultAsync();
 
-            return college?.Tenant?.OfficeCode;
+            return collegeTenant;
         }
 
         var centralTenant = await context.Tenants
@@ -220,7 +224,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         });
     }
 
-    private async Task<AppUser?> ResolveUserAsync(string emailOrRegNumber)
+    private async Task<AppUser> ResolveUserAsync(string emailOrRegNumber)
     {
         if (string.IsNullOrWhiteSpace(emailOrRegNumber))
             return null;

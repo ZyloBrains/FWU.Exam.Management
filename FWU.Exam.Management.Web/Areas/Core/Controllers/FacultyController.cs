@@ -14,7 +14,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("faculties.view")]
 public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await facultyService.GetFacultiesPagedAsync(page, pageSize, search, sort, sortDir);
 
@@ -66,7 +66,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -74,7 +74,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var faculties = await facultyService.GetAllFacultiesAsync();
 
@@ -115,7 +115,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(string search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(string? search = null, string sort = "Name", string sortDir = "asc")
     {
         var faculties = await facultyService.GetAllFacultiesAsync();
 

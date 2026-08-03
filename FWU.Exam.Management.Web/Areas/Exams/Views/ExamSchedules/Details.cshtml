@@ -41,11 +41,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear.AcademicYearName)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear!.AcademicYearName)</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Program.ProgramName)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Program!.ProgramName)</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Semester</p>
@@ -53,7 +53,7 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamType.Name)</p>
+                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExamType!.Name)</p>
                 </div>
             </div>
         </div>
@@ -163,7 +163,7 @@
         <div>
             <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
             <div class="mt-1">
-                @if (Model.IsActive)
+                @if (Model!.IsActive)
                 {
                     <span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
                         <i class="fas fa-check-circle mr-1"></i> Active

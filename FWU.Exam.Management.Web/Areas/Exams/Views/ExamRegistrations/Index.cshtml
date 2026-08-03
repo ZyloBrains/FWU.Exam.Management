@@ -43,7 +43,7 @@
                     <option value="">All Schedules</option>
                     @if (ViewData["ExamScheduleId"] is SelectList sl)
                     {
-                        foreach (var item in sl.Items as IEnumerable<dynamic>)
+                        foreach (var item in (sl.Items as IEnumerable<dynamic>)!)
                         {
                             <option value="@item.Id" selected="@(item.Id.ToString() == ViewBag.ExamScheduleId?.ToString())">@item.ExamScheduleName</option>
                         }

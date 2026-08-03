@@ -12,7 +12,7 @@ public class Board
 
     [Required, MaxLength(50)]
     [Display(Name = "Board Name")]
-    public string? BoardName { get; set; }
+    public string BoardName { get; set; } = string.Empty;
 
     [MaxLength(255)]
     [Display(Name = "Remarks")]
@@ -20,6 +20,6 @@ public class Board
 
     [Display(Name = "Is Active")]
     public bool IsActive { get; set; }
-        public virtual ICollection<Program>? Programs { get; set; }
-        public virtual ICollection<StudentQualification>? StudentQualifications { get; set; }
+        public virtual ICollection<Program> Programs { get; set; } = [];
+        public virtual ICollection<StudentQualification> StudentQualifications { get; set; } = [];
 }

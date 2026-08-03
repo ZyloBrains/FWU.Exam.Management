@@ -12,7 +12,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 [RequirePermission("gumpnowemail.view")]
 public class GumpNowEmailConfigurationsController(AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "ApiUrl", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ApiUrl", string sortDir = "asc", int pageSize = 10)
     {
         var query = context.GumpNowEmailConfigurations.AsNoTracking();
 
@@ -21,7 +21,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
             query = query.Where(s =>
                 s.ApiUrl.Contains(search) ||
                 s.FromAddr.Contains(search) ||
-                s.Mode.Contains(search)
+                (s.Mode ?? "").Contains(search)
             );
         }
 
@@ -52,14 +52,14 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         {
             "apiurl" => s => s.ApiUrl,
             "fromaddr" => s => s.FromAddr,
-            "mode" => s => s.Mode,
+            "mode" => s => s.Mode ?? "",
             "overrideunsubscription" => s => s.OverrideUnsubscription,
             "isactive" => s => s.IsActive,
             _ => s => s.Id
         };
     }
 
-    private async Task<(List<GumpNowEmailConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string search, string sort, string sortDir)
+    private async Task<(List<GumpNowEmailConfiguration> Items, int TotalCount)> GetFilteredItemsForExport(int page, int pageSize, string? search, string sort, string sortDir)
     {
         var query = context.GumpNowEmailConfigurations.AsNoTracking();
 
@@ -68,7 +68,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
             query = query.Where(s =>
                 s.ApiUrl.Contains(search) ||
                 s.FromAddr.Contains(search) ||
-                s.Mode.Contains(search)
+                (s.Mode ?? "").Contains(search)
             );
         }
 
@@ -86,7 +86,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -94,7 +94,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "ApiUrl", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -115,7 +115,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "ApiUrl", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 
@@ -130,7 +130,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "ApiUrl", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredItemsForExport(page, pageSize, search, sort, sortDir);
 

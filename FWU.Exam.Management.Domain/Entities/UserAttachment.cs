@@ -9,11 +9,11 @@ public class UserAttachment
 
     [Required, MaxLength(255)]
     [Display(Name = "File Name")]
-    public string? FileName { get; set; }
+    public string FileName { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "File Path")]
-    public string? FilePath { get; set; }
+    public string FilePath { get; set; } = string.Empty;
 
     [MaxLength(100)]
     [Display(Name = "Content Type")]

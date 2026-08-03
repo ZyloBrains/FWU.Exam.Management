@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
@@ -14,7 +15,6 @@ namespace FWU.Exam.Management.Web.Controllers;
 [Route("faculty/{officeCode}")]
 public class FacultyDashboardController(
     IFacultyService facultyService,
-    IFacultyResolver facultyResolver,
     IDashboardService dashboardService,
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager) : Controller
@@ -69,7 +69,7 @@ public class FacultyDashboardController(
         var stats = await dashboardService.GetFacultyDashboardStatsAsync(faculty.Id);
         var vm = new DashboardViewModel
         {
-            CurrentRole = "FacultyAdmin",
+            CurrentRole = Role.FacultyAdmin,
             UserName = User.Identity?.Name ?? "User",
             TotalFaculties = stats.TotalFaculties,
             TotalUsers = stats.TotalUsers,
@@ -155,8 +155,8 @@ public class FacultyDashboardController(
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                if (await roleManager.RoleExistsAsync("Student") && !await userManager.IsInRoleAsync(user, "Student"))
-                    await userManager.AddToRoleAsync(user, "Student");
+                if (await roleManager.RoleExistsAsync(Role.Student) && !await userManager.IsInRoleAsync(user, Role.Student))
+                    await userManager.AddToRoleAsync(user, Role.Student);
 
                 return RedirectToAction(nameof(Users), new { officeCode });
             }

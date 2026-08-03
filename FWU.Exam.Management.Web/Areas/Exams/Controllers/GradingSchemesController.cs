@@ -17,9 +17,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [Area("Exams")]
 [RequirePermission("gradingschemes.view")]
 public class GradingSchemesController(
-    IGradingSchemeService gradingSchemeService,
-    IUserContext userContext,
-    AppDbContext context) : Controller
+    IGradingSchemeService gradingSchemeService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
@@ -199,7 +197,7 @@ public class GradingSchemesController(
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
     }
 
-    private static string EscapeCsv(string field)
+    private static string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))

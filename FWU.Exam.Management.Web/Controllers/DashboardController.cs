@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
@@ -18,7 +19,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         if (user == null) return Challenge();
 
         var roles = await userManager.GetRolesAsync(user);
-        var primaryRole = roles.FirstOrDefault() ?? "Student";
+        var primaryRole = roles.FirstOrDefault() ?? Role.Student;
 
         if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
         {
@@ -28,7 +29,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         }
 
         DashboardStats stats;
-        if ((primaryRole == "CollegeAdmin" || primaryRole == "Admin") && user.CollegeId.HasValue)
+        if (primaryRole == Role.CollegeAdmin && user.CollegeId.HasValue)
         {
             stats = await dashboardService.GetCollegeDashboardStatsAsync(user.CollegeId.Value);
         }
@@ -60,17 +61,17 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
             ActiveExamSchedules = stats.ActiveExamSchedules
         };
 
-        if (primaryRole == "Student")
+        if (primaryRole == Role.Student)
         {
             await PopulateStudentData(vm, user);
         }
 
         return primaryRole switch
         {
-            "SuperAdmin" or "SystemAdmin" => View("SuperAdmin", vm),
-            "FacultyAdmin" => View("FacultyAdmin", vm),
-            "CollegeAdmin" or "Admin" => View("CollegeAdmin", vm),
-            "Student" => View("Student", vm),
+            Role.SuperAdmin => View("SuperAdmin", vm),
+            Role.FacultyAdmin => View("FacultyAdmin", vm),
+            Role.CollegeAdmin => View("CollegeAdmin", vm),
+            Role.Student => View("Student", vm),
             _ => View("Student", vm)
         };
     }

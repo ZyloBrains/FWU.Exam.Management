@@ -1,6 +1,7 @@
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -47,7 +48,7 @@ public class IndexModel(
             PhoneNumber = phoneNumber
         };
 
-        IsStudent = await userManager.IsInRoleAsync(user, "Student");
+        IsStudent = await userManager.IsInRoleAsync(user, Role.Student);
 
         if (IsStudent && !string.IsNullOrWhiteSpace(user.Email))
         {
@@ -75,7 +76,7 @@ public class IndexModel(
         if (user == null)
             return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
 
-        if (await userManager.IsInRoleAsync(user, "Student"))
+        if (await userManager.IsInRoleAsync(user, Role.Student))
         {
             await LoadAsync(user);
             StatusMessage = "Students cannot update profile here.";

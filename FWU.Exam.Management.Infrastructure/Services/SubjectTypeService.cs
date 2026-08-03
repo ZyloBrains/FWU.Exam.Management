@@ -112,7 +112,7 @@ public class SubjectTypeService(AppDbContext context) : ISubjectTypeService
         {
             "name" => s => s.Name,
             "code" => s => s.Code ?? "",
-            "maxallowedsubjects" => s => s.MaxAllowedSubjects,
+            "maxallowedsubjects" => s => s.MaxAllowedSubjects ?? 0,
             "isdefault" => s => s.IsDefault,
             "isactive" => s => s.IsActive,
             _ => s => s.Name

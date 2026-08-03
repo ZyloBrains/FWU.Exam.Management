@@ -21,8 +21,8 @@ public class AcademicYearService(AppDbContext context) : IAcademicYearService
             query = query.Where(a => a.AcademicYearName.Contains(search) ||
                                      a.AcademicYearCode.ToString().Contains(search) ||
                                      a.AcademicYearNameNepali.Contains(search) ||
-                                     a.AcademicYearCodeNepali.Contains(search) ||
-                                     a.Remark.Contains(search));
+                                     (a.AcademicYearCodeNepali ?? "").Contains(search) ||
+                                     (a.Remark ?? "").Contains(search));
         }
         var totalCount = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();

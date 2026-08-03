@@ -20,7 +20,7 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 [RequirePermission("colleges.view")]
 public class CollegesController(ICollegeService collegeService, IUserContext userContext, AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await collegeService.GetCollegesAsync(page, pageSize, search, sort, sortDir);
 
@@ -35,7 +35,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -43,7 +43,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(string? search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
         var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
 
@@ -82,14 +82,14 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         return File(csvBytes, "text/csv", $"Colleges_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(string? search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
         var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(string search = null, string sort = "DisplayOrder", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(string? search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
         var items = await collegeService.GetFilteredItemsAsync(search, sort, sortDir);
 

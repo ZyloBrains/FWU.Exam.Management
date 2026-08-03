@@ -1,4 +1,4 @@
-﻿using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -19,11 +19,11 @@ public class Semester
 
     [Required, MaxLength(50)]
     [Display(Name = "Name")]
-    public string? Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     [Required, MaxLength(30)]
     [Display(Name = "Code")]
-    public string? Code { get; set; }
+    public string Code { get; set; } = string.Empty;
 
     [MaxLength(50)]
     [Display(Name = "Remark")]
@@ -40,12 +40,9 @@ public class Semester
     public int AcademicYearId { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
 
-    [Display(Name = "Faculty")]
-    public int? FacultyId { get; set; }
-    public virtual Faculty? Faculty { get; set; }
-
-    public virtual ICollection<ExamSchedule>? ExamSchedules { get; set; }
-    public virtual ICollection<SemesterEnrollment>? SemesterEnrollments { get; set; }
-    public virtual ICollection<SubjectOffering>? SubjectOfferings { get; set; }
+    public virtual ICollection<ExamSchedule> ExamSchedules { get; set; } = [];
+    public virtual ICollection<SemesterEnrollment> SemesterEnrollments { get; set; } = [];
+    public virtual ICollection<SubjectOffering> SubjectOfferings { get; set; } = [];
+    public virtual ICollection<ProgramSemester> ProgramSemesters { get; set; } = [];
 }
 

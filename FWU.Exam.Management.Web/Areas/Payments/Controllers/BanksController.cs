@@ -14,7 +14,7 @@ namespace FWU.Exam.Management.Web.Areas.Payments.Controllers;
 [RequirePermission("banks.view")]
 public class BanksController(IBankService bankService) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "BankName", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "BankName", string sortDir = "asc", int pageSize = 10)
     {
         var (items, totalCount) = await bankService.GetBanksAsync(page, pageSize, search, sort, sortDir);
 
@@ -29,7 +29,7 @@ public class BanksController(IBankService bankService) : Controller
         return View(items);
     }
 
-    private string EscapeCsv(string field)
+    private string EscapeCsv(string? field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -37,7 +37,7 @@ public class BanksController(IBankService bankService) : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string search = null, string sort = "BankName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "BankName", string sortDir = "asc")
     {
         var items = await bankService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -57,7 +57,7 @@ public class BanksController(IBankService bankService) : Controller
         return File(csvBytes, "text/csv", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = null, string sort = "BankName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "BankName", string sortDir = "asc")
     {
         var (items, totalCount) = await bankService.GetBanksAsync(page, pageSize, search, sort, sortDir);
 
@@ -72,7 +72,7 @@ public class BanksController(IBankService bankService) : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = null, string sort = "BankName", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "BankName", string sortDir = "asc")
     {
         var items = await bankService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 

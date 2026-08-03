@@ -13,11 +13,11 @@ public class ApplicationVoucher : ITenantScoped
 
     [Required, MaxLength(50)]
     [Display(Name = "Voucher Number")]
-    public string? VoucherNumber { get; set; }
+    public string VoucherNumber { get; set; } = string.Empty;
 
     [Required, MaxLength(1024)]
     [Display(Name = "Student Name")]
-    public string? StudentName { get; set; }
+    public string StudentName { get; set; } = string.Empty;
 
     [Display(Name = "Date Of Birth Ad")]
     public DateOnly? DateOfBirthAd { get; set; }
@@ -36,7 +36,7 @@ public class ApplicationVoucher : ITenantScoped
 
     [Required, MaxLength(1024)]
     [Display(Name = "Contact Number")]
-    public string? ContactNumber { get; set; }
+    public string ContactNumber { get; set; } = string.Empty;
 
     [MaxLength(1024)]
     [Display(Name = "Branch")]

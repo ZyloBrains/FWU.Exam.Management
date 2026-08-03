@@ -52,7 +52,7 @@ public static class CollegeSeeder
                 ShortName = d.ShortName,
                 Website = d.Website,
                 Email = string.IsNullOrWhiteSpace(d.Email) ? $"{d.Code}@fwu.edu.np" : d.Email,
-                Phone1 = d.Phone1,
+                Phone1 = d.Phone1 ?? "",
                 Phone2 = d.Phone2,
                 Fax = d.Fax,
                 PrincipalName = string.IsNullOrWhiteSpace(d.PrincipalName) ? "TBD" : d.PrincipalName,
@@ -60,8 +60,8 @@ public static class CollegeSeeder
                 Remarks = d.Remarks,
                 IsActive = d.IsActive,
                 IsExamCenterOnly = d.IsCentreOnly,
-                TenantId = 1,
                 AddressId = addressId,
+                TenantColleges = [new TenantCollege()],
             });
         }
 

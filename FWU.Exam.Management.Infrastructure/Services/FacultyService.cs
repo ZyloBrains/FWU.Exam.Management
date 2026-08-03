@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -114,8 +115,8 @@ public class FacultyService(
                 throw new InvalidOperationException($"Failed to create user account for {faculty.Email}: {errors}");
             }
 
-            if (!await userManager.IsInRoleAsync(user, "FacultyAdmin"))
-                await userManager.AddToRoleAsync(user, "FacultyAdmin");
+            if (!await userManager.IsInRoleAsync(user, Role.FacultyAdmin))
+                await userManager.AddToRoleAsync(user, Role.FacultyAdmin);
 
             await userManager.AddClaimAsync(user, new Claim(MustChangePasswordClaimType, "true"));
 
@@ -150,9 +151,6 @@ public class FacultyService(
 
         var programs = await context.Programs.CountAsync(p => p.FacultyId == id);
         if (programs > 0) reasons.Add($"{programs} Program(s)");
-
-        var semesters = await context.Semesters.CountAsync(s => s.FacultyId == id);
-        if (semesters > 0) reasons.Add($"{semesters} Semester(s)");
 
         var users = await context.Users.CountAsync(u => u.FacultyId == id);
         if (users > 0) reasons.Add($"{users} User account(s)");
