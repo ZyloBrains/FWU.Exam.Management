@@ -1000,6 +1000,7 @@ public class StudentDashboardController(
 
         var resultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var examRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
+        var gradePointMap = await GetGradePointMapAsync();
 
         var marksheets = new List<MarksheetViewModel>();
 
@@ -1010,7 +1011,7 @@ public class StudentDashboardController(
 
             if (examScheduleId.HasValue && scheduleId.Value != examScheduleId.Value) continue;
 
-            var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value);
+            var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value, gradePointMap);
 
             marksheets.Add(new MarksheetViewModel
             {
@@ -1025,6 +1026,8 @@ public class StudentDashboardController(
                 College = rr.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
+                TheoryGrade = rr.TheoryObtainedGrade,
+                PracticalGrade = rr.PracticalObtainedGrade,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1036,7 +1039,7 @@ public class StudentDashboardController(
 
             if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
-                var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId);
+                var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId, gradePointMap);
                 marksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
@@ -1075,6 +1078,7 @@ public class StudentDashboardController(
 
         var allResultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var allExamRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
+        var gradePointMap = await GetGradePointMapAsync();
 
         var allMarksheets = new List<MarksheetViewModel>();
 
@@ -1083,7 +1087,7 @@ public class StudentDashboardController(
             var scheduleId = rr.ExamScheduleId;
             if (scheduleId == null) continue;
 
-            var subjects = GetMarksheetSubjects(allExamRegistrations, scheduleId.Value);
+            var subjects = GetMarksheetSubjects(allExamRegistrations, scheduleId.Value, gradePointMap);
 
             allMarksheets.Add(new MarksheetViewModel
             {
@@ -1098,6 +1102,8 @@ public class StudentDashboardController(
                 College = rr.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
+                TheoryGrade = rr.TheoryObtainedGrade,
+                PracticalGrade = rr.PracticalObtainedGrade,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1107,7 +1113,7 @@ public class StudentDashboardController(
         {
             if (!allMarksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
-                var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId);
+                var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId, gradePointMap);
                 allMarksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
@@ -1246,7 +1252,10 @@ public class StudentDashboardController(
         return RedirectToAction(nameof(RetotalRequests));
     }
 
-    private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(List<ExamRegistration> examRegistrations, int examScheduleId)
+    private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(
+        List<ExamRegistration> examRegistrations,
+        int examScheduleId,
+        IReadOnlyDictionary<string, decimal> gradePointByLetter)
     {
         var results = examRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId)
@@ -1266,16 +1275,27 @@ public class StudentDashboardController(
                 var isSubmitted = esr.IsSubmitted;
                 var hasGrade = !string.IsNullOrEmpty(gradeLetter);
 
+                var creditHours = esr.SubjectOffering?.SubjectCatalog?.CreditHours;
+                var gradeValue = hasGrade && gradePointByLetter.TryGetValue(gradeLetter!, out var gradeValueRaw)
+                    ? gradeValueRaw
+                    : (decimal?)null;
+                var gradePoint = gradeValue.HasValue
+                    ? (creditHours.HasValue ? gradeValue.Value * creditHours.Value : gradeValue.Value)
+                    : (decimal?)null;
+
                 return new MarksheetSubjectViewModel
                 {
                     ExamSubjectResultId = esr.Id,
                     SubjectName = esr.SubjectOffering?.SubjectCatalog?.SubjectName,
                     SubjectCode = esr.SubjectOffering?.SubjectCatalog?.SubjectCode,
+                    CreditHours = creditHours,
                     TheoryMarks = esr.ObtainedMarksTheory,
                     PracticalMarks = esr.ObtainedMarksPractical,
                     InternalMarks = esr.ObtainedMarksTheoryInternal,
                     TotalMarks = esr.ObtainedMarks,
                     Grade = gradeLetter,
+                    GradeValue = gradeValue,
+                    GradePoint = gradePoint,
                     IsPassed = hasGrade && !isFailed,
                     Status = !hasGrade ? "Pending"
                         : isSubmitted && isFailed ? "Fail"
@@ -1286,6 +1306,47 @@ public class StudentDashboardController(
             .OrderBy(s => s.SubjectName)
             .ToList();
     }
+
+    private async Task<Dictionary<string, decimal>> GetGradePointMapAsync()
+    {
+        var map = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+
+        var definitions = await context.GradingSchemes
+            .AsNoTracking()
+            .Include(gs => gs.GradeDefinitions)
+            .Where(gs => gs.IsActive)
+            .SelectMany(gs => gs.GradeDefinitions)
+            .ToListAsync();
+
+        foreach (var gd in definitions.OrderBy(gd => gd.DisplayOrder))
+        {
+            var letter = gd.GradeLetter?.Trim().ToUpperInvariant();
+            if (!string.IsNullOrEmpty(letter))
+            {
+                map.TryAdd(letter, gd.GradePoint);
+            }
+        }
+
+        foreach (var standard in StandardGradePoints)
+        {
+            map.TryAdd(standard.Key, standard.Value);
+        }
+
+        return map;
+    }
+
+    private static readonly IReadOnlyDictionary<string, decimal> StandardGradePoints = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["A+"] = 4.0m,
+        ["A"] = 3.7m,
+        ["B+"] = 3.3m,
+        ["B"] = 3.0m,
+        ["C+"] = 2.7m,
+        ["C"] = 2.3m,
+        ["D"] = 2.0m,
+        ["F"] = 0.0m,
+        ["NG"] = 0.0m
+    };
 
     private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
     {

@@ -282,43 +282,69 @@
                     <span class="info-label">Academic Year:</span>
                     <span class="info-value">@(marksheet.AcademicYear ?? "-")</span>
                 </div>
-                @if (!string.IsNullOrEmpty(marksheet.TotalGpa))
-                {
-                    <div class="info-row">
-                        <span class="info-label">SGPA:</span>
-                        <span class="info-value">@marksheet.TotalGpa</span>
-                    </div>
-                }
             </div>
 
             @if (marksheet.Subjects.Count > 0)
             {
+                var totalCredits = marksheet.Subjects.Sum(s => s.CreditHours ?? 0f);
+                var totalGradePoints = marksheet.Subjects.Sum(s => s.GradePoint ?? 0m);
+
                 <table class="marks-table">
                     <thead>
                         <tr>
-                            <th>S.N</th>
-                            <th>Course Code</th>
-                            <th>Course Title</th>
-                            <th>Grade</th>
-                            <th>Remarks</th>
+                            <th rowspan="2">Course Code</th>
+                            <th rowspan="2">Course Title</th>
+                            <th rowspan="2">Credit Hrs</th>
+                            <th colspan="2">Obtained Marks</th>
+                            <th rowspan="2">Final Grade</th>
+                            <th rowspan="2">Grade Value</th>
+                            <th rowspan="2">Grade Point</th>
+                            <th rowspan="2">Remarks</th>
+                        </tr>
+                        <tr>
+                            <th>TH</th>
+                            <th>PR</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @{ int printIdx = 0; }
                         @foreach (var subject in marksheet.Subjects)
                         {
-                            printIdx++;
                             <tr>
-                                <td>@printIdx</td>
                                 <td>@(subject.SubjectCode ?? "-")</td>
                                 <td>@(subject.SubjectName ?? "-")</td>
+                                <td>@(subject.CreditHours?.ToString("0.#") ?? "-")</td>
+                                <td>@(string.IsNullOrEmpty(marksheet.TheoryGrade) ? "-" : marksheet.TheoryGrade)</td>
+                                <td>@(string.IsNullOrEmpty(marksheet.PracticalGrade) ? "-" : marksheet.PracticalGrade)</td>
                                 <td>@(subject.Grade ?? "")</td>
+                                <td>@(subject.GradeValue?.ToString("0.00") ?? "-")</td>
+                                <td>@(subject.GradePoint?.ToString("0.00") ?? "-")</td>
                                 <td>@subject.Status</td>
                             </tr>
                         }
+                        <tr class="total-row">
+                            <td></td>
+                            <td style="text-align:right;">Total</td>
+                            <td>@totalCredits.ToString("0.#")</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>@totalGradePoints.ToString("0.00")</td>
+                            <td></td>
+                        </tr>
+                        <tr class="gpa-row">
+                            <td colspan="2" style="text-align:right;">GPA (Grade Point Average)</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>@(string.IsNullOrEmpty(marksheet.TotalGpa) ? "-" : marksheet.TotalGpa)</td>
+                            <td></td>
+                        </tr>
                         <tr class="result-row @(marksheet.Result == "Fail" ? "fail" : "")">
-                            <td colspan="3" style="text-align:right;">Result:</td>
-                            <td colspan="2">
+                            <td colspan="8" style="text-align:right;">Result:</td>
+                            <td>
                                 @if (marksheet.Result == "Pass")
                                 {
                                     <span class="result-pass">Pass</span>
@@ -409,6 +435,7 @@
     .marks-table tbody td:not(:first-child):not(:nth-child(2)) { text-align: center; }
     .marks-table tbody tr:nth-child(even) { background: #fafafa; }
     .marks-table tbody tr.total-row { font-weight: 700; background: #f9fafb; }
+    .marks-table tbody tr.gpa-row { font-weight: 700; background: #eef2ff; }
     .marks-table tbody tr.result-row { font-weight: 700; background: #f0fdf4; }
     .marks-table tbody tr.result-row.fail { background: #fef2f2; }
     .result-pass { color: #16a34a; }
