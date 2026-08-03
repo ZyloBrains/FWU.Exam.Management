@@ -1,50 +1,37 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using FWU.Exam.Management.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using FWU.Exam.Management.Domain.Entities.Payments;
+using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ESewaService(IConfiguration configuration, HttpClient httpClient) : IESewaService
+public class ESewaService(AppDbContext context, HttpClient httpClient) : IESewaService
 {
-    private string PostUrl => configuration["ESewa:PostUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
-    private string ProductCode => configuration["ESewa:ProductCode"] ?? "EPAYTEST";
-    private string SecretKey => configuration["ESewa:SecretKey"] ?? throw new InvalidOperationException("ESewa:SecretKey is not configured");
-    private string ServiceChargeAmount => configuration["ESewa:ServiceChargeAmount"] ?? "0";
-    private string VerifyUrl => configuration["ESewa:VerifyUrl"] ?? "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
-
     public string GenerateTransactionUuid()
     {
         return $"{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}";
     }
 
-    public string GenerateSignature(string message)
+    public async Task<ESewaPaymentFormData> GeneratePaymentFormDataAsync(decimal totalAmount, string transactionUuid, string successUrl, string failureUrl)
     {
-        var keyBytes = Encoding.UTF8.GetBytes(SecretKey);
-        var messageBytes = Encoding.UTF8.GetBytes(message);
-
-        using var hmac = new HMACSHA256(keyBytes);
-        var hashBytes = hmac.ComputeHash(messageBytes);
-        return Convert.ToBase64String(hashBytes);
-    }
-
-    public ESewaPaymentFormData GeneratePaymentFormData(decimal totalAmount, string transactionUuid, string successUrl, string failureUrl)
-    {
-        var totalAmountStr = totalAmount.ToString("F0");
+        var config = await GetConfigAsync();
+        var totalAmountStr = totalAmount.ToString("F0", CultureInfo.InvariantCulture);
         var signedFieldNames = "total_amount,transaction_uuid,product_code";
-        var message = $"total_amount={totalAmountStr},transaction_uuid={transactionUuid},product_code={ProductCode}";
-        var signature = GenerateSignature(message);
+        var message = $"total_amount={totalAmountStr},transaction_uuid={transactionUuid},product_code={config.ProductCode}";
+        var signature = GenerateSignature(message, config.SecretKey);
 
         return new ESewaPaymentFormData
         {
-            PostUrl = PostUrl,
+            PostUrl = config.PostUrl,
             Amount = totalAmountStr,
             TaxAmount = "0",
             TotalAmount = totalAmountStr,
             TransactionUuid = transactionUuid,
-            ProductCode = ProductCode,
-            ProductServiceCharge = ServiceChargeAmount,
+            ProductCode = config.ProductCode,
+            ProductServiceCharge = config.ServiceChargeAmount.ToString("0", CultureInfo.InvariantCulture),
             ProductDeliveryCharge = "0",
             SuccessUrl = successUrl,
             FailureUrl = failureUrl,
@@ -53,11 +40,12 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
         };
     }
 
-    public bool VerifyResponseSignature(ESewaVerifyResponse response, string rawJson)
+    public async Task<bool> VerifyResponseSignatureAsync(ESewaVerifyResponse response, string rawJson)
     {
         if (response.SignedFieldNames == null || response.Signature == null)
             return false;
 
+        var config = await GetConfigAsync();
         var fieldNames = response.SignedFieldNames.Split(',', StringSplitOptions.TrimEntries);
         var messageParts = new List<string>();
 
@@ -84,12 +72,14 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
         }
 
         var message = string.Join(",", messageParts);
-        var expectedSignature = GenerateSignature(message);
+        var expectedSignature = GenerateSignature(message, config.SecretKey);
         return expectedSignature == response.Signature;
     }
 
     public async Task<ESewaVerifyResponse?> VerifyTransactionAsync(string transactionUuid, decimal totalAmount)
     {
+        var config = await GetConfigAsync();
+
         if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
         {
             return new ESewaVerifyResponse
@@ -97,13 +87,13 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
                 TransactionUuid = transactionUuid,
                 TotalAmount = totalAmount,
                 Status = "COMPLETE",
-                ProductCode = ProductCode
+                ProductCode = config.ProductCode
             };
         }
 
         try
         {
-            var url = $"{VerifyUrl}?product_code={ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
+            var url = $"{config.VerifyUrl}?product_code={config.ProductCode}&total_amount={totalAmount:F0}&transaction_uuid={transactionUuid}";
             var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -114,5 +104,27 @@ public class ESewaService(IConfiguration configuration, HttpClient httpClient) :
         {
             return null;
         }
+    }
+
+    private static string GenerateSignature(string message, string secretKey)
+    {
+        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        var messageBytes = Encoding.UTF8.GetBytes(message);
+
+        using var hmac = new HMACSHA256(keyBytes);
+        var hashBytes = hmac.ComputeHash(messageBytes);
+        return Convert.ToBase64String(hashBytes);
+    }
+
+    private async Task<ESewaConfiguration> GetConfigAsync()
+    {
+        var config = await context.ESewaConfigurations
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+
+        if (config == null)
+            throw new InvalidOperationException("eSewa configuration is not set up for this tenant.");
+
+        return config;
     }
 }

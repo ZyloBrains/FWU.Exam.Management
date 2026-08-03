@@ -29,7 +29,6 @@ public class StudentDashboardController(
     IEmailSender emailSender,
     IESewaService esewaService,
     IKhaltiService khaltiService,
-    IConfiguration configuration,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     AppDbContext context)
@@ -462,7 +461,7 @@ public class StudentDashboardController(
 
         if (paymentTypes.Count == 0)
         {
-            hasESewa = !string.IsNullOrEmpty(configuration["ESewa:PostUrl"]);
+            hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
         var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
@@ -597,13 +596,13 @@ public class StudentDashboardController(
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
-        var successUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:SuccessUrl"]) ? configuration["ESewa:SuccessUrl"]! : defaultCallbackUrl;
-        var failureUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:FailureUrl"]) ? configuration["ESewa:FailureUrl"]! : defaultCallbackUrl;
+        var successUrl = defaultCallbackUrl;
+        var failureUrl = defaultCallbackUrl;
 
         logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
             amount, transactionUuid, successUrl, failureUrl);
 
-        var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
+        var formData = await esewaService.GeneratePaymentFormDataAsync(amount, transactionUuid, successUrl!, failureUrl!);
 
         HttpContext.Session.SetInt32("ESewaLogId", logId);
         ViewBag.LogId = logId;
@@ -671,7 +670,7 @@ public class StudentDashboardController(
             logger.LogInformation("ESewaCallback: txCode={TxCode}, status={Status}, totalAmount={Amount}, uuid={Uuid}, productCode={ProductCode}",
                 response.TransactionCode, response.Status, response.TotalAmount, response.TransactionUuid, response.ProductCode);
 
-            var sigValid = esewaService.VerifyResponseSignature(response, decodedJson);
+            var sigValid = await esewaService.VerifyResponseSignatureAsync(response, decodedJson);
             logger.LogInformation("ESewaCallback: signatureValid={SigValid}", sigValid);
 
             if (!sigValid)
