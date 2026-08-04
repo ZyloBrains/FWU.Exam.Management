@@ -34,6 +34,8 @@ public partial class EntryPoint
             .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
+            .Enrich.WithProperty("MachineName", Environment.MachineName)
             .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
@@ -273,21 +275,33 @@ public partial class EntryPoint
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
 
         // Configure the HTTP request pipeline.
+        // Trust proxy headers from load balancers (must be before HTTPS redirection)
+        app.UseForwardedHeaders();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.UseDeveloperExceptionPage();
         }
         else
         {
-            app.UseExceptionHandler("/Home/Error");
+            // Production error handling
+            app.UseExceptionHandler("/Error");
+
+            // Enable HSTS (HTTP Strict Transport Security)
+            // 30 days is the minimum recommended value
             app.UseHsts();
-            app.UseForwardedHeaders();
+
+            // Force HTTPS redirect in production
+            app.UseHttpsRedirection();
         }
 
         app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseRateLimiter();
+
+        app.UseStartupValidation();
 
         app.UseMiddleware<TenantResolutionMiddleware>();
 
