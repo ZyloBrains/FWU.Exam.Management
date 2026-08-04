@@ -119,6 +119,12 @@ public class ResultRecord : ITenantScoped
     [Display(Name = "Created Date")]
     public DateTime? CreatedDate { get; set; }
 
+    [Display(Name = "Is Published")]
+    public bool IsPublished { get; set; }
+
+    [Display(Name = "Published Date")]
+    public DateTime? PublishedDate { get; set; }
+
     public virtual AcademicYear? AcademicYear { get; set; }
     public virtual Program? Program { get; set; }
     public virtual ExamType? ExamType { get; set; }

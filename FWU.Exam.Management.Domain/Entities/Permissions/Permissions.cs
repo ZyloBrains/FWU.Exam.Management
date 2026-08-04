@@ -133,6 +133,7 @@ public static class Permissions
     public const string ExamSchedulesCreate = "examschedules.create";
     public const string ExamSchedulesEdit = "examschedules.edit";
     public const string ExamSchedulesDelete = "examschedules.delete";
+    public const string ExamSchedulesNotify = "examschedules.notify";
 
     // Exam Types
     public const string ExamTypesView = "examtypes.view";
@@ -325,8 +326,9 @@ public static class Permissions
     public const string ExamSubjectResultsEdit = "examsubjectresults.edit";
     public const string ExamSubjectResultsDelete = "examsubjectresults.delete";
 
-    // Result Records (read-only)
+    // Result Records
     public const string ResultRecordsView = "resultrecords.view";
+    public const string ResultRecordsPublish = "resultrecords.publish";
 
     // Exam Centers
     public const string ExamCentersView = "examcenters.view";
@@ -433,6 +435,7 @@ public static class Permissions
         (ExamSchedulesCreate, "Create Exam Schedules", GroupExamSchedules, "Create new exam schedules"),
         (ExamSchedulesEdit, "Edit Exam Schedules", GroupExamSchedules, "Edit existing exam schedules"),
         (ExamSchedulesDelete, "Delete Exam Schedules", GroupExamSchedules, "Delete exam schedules"),
+        (ExamSchedulesNotify, "Send Exam Schedule Notifications", GroupExamSchedules, "Send SMS/Email notifications to students for published exam schedules"),
 
         (ExamTypesView, "View Exam Types", GroupExamTypes, "View exam type list"),
         (ExamTypesCreate, "Create Exam Types", GroupExamTypes, "Create new exam types"),
@@ -595,6 +598,7 @@ public static class Permissions
         (ExamSubjectResultsDelete, "Delete Subject Results", GroupExamSubjectResults, "Delete subject results"),
 
         (ResultRecordsView, "View Result Records", GroupResultRecords, "View published result records"),
+        (ResultRecordsPublish, "Publish Results", GroupResultRecords, "Publish result records and notify students"),
 
         (ExamCentersView, "View Exam Centers", GroupExamCenters, "View exam center list"),
         (ExamCentersCreate, "Create Exam Centers", GroupExamCenters, "Create new exam centers"),
@@ -663,6 +667,7 @@ public static class Permissions
             CurriculumVersionsView,
 
             ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit,
+            ExamSchedulesNotify,
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
@@ -670,6 +675,7 @@ public static class Permissions
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
             ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
             ResultRecordsView,
+            ResultRecordsPublish,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
 
@@ -712,6 +718,7 @@ public static class Permissions
             AcademicYearsView,
 
             ExamSchedulesView,
+            ExamSchedulesNotify,
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
@@ -719,6 +726,7 @@ public static class Permissions
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit,
             ExamSubjectResultsView,
             ResultRecordsView,
+            ResultRecordsPublish,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
 

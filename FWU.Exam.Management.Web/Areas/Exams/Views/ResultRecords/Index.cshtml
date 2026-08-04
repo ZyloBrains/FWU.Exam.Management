@@ -1,4 +1,7 @@
 @model IEnumerable<FWU.Exam.Management.Domain.Entities.ResultRecord>
+@using FWU.Exam.Management.Domain.Entities.Permissions
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Result Records";
@@ -9,6 +12,11 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "Id";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
 }
 
 <div class="space-y-6">
@@ -23,15 +31,28 @@
                 <p class="text-sm text-gray-500 mt-0.5">View published result records. (Read-only)</p>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <a asp-action="ExportToCsv" asp-area="Exams" asp-route-search="@currentSearch" asp-route-collegeId="@ViewBag.CollegeId" asp-route-facultyId="@ViewBag.FacultyId"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                <i class="fas fa-file-csv text-xs"></i> Export CSV
-            </a>
-            <a asp-action="ExportToPdf" asp-area="Exams" asp-route-search="@currentSearch" asp-route-collegeId="@ViewBag.CollegeId" asp-route-facultyId="@ViewBag.FacultyId"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-                <i class="fas fa-file-pdf text-xs"></i> Export PDF
-            </a>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            @if (HasPerm(Permissions.ResultRecordsPublish))
+            {
+                <form method="post" asp-action="Publish" asp-area="Exams" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    @Html.AntiForgeryToken()
+                    @Html.DropDownList("examScheduleId", ViewData["ExamScheduleId"] as SelectList, "All Exam Schedules", new { @class = "border border-gray-300 rounded-md px-3 py-2 text-sm" })
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                            onclick="return confirm('Publish all selected result records? Students will be notified via email and SMS.')">
+                        <i class="fas fa-bullhorn text-xs"></i> Publish Results
+                    </button>
+                </form>
+            }
+            <div class="flex items-center gap-3">
+                <a asp-action="ExportToCsv" asp-area="Exams" asp-route-search="@currentSearch" asp-route-collegeId="@ViewBag.CollegeId" asp-route-facultyId="@ViewBag.FacultyId"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                    <i class="fas fa-file-csv text-xs"></i> Export CSV
+                </a>
+                <a asp-action="ExportToPdf" asp-area="Exams" asp-route-search="@currentSearch" asp-route-collegeId="@ViewBag.CollegeId" asp-route-facultyId="@ViewBag.FacultyId"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                    <i class="fas fa-file-pdf text-xs"></i> Export PDF
+                </a>
+            </div>
         </div>
     </div>
 

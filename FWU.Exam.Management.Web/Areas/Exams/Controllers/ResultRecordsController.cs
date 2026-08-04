@@ -36,8 +36,37 @@ public class ResultRecordsController(
 
         ViewData["CollegeId"] = new SelectList(context.Colleges.AsNoTracking().Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
         ViewData["FacultyId"] = new SelectList(context.Faculties.AsNoTracking().Select(f => new { f.Id, f.Name }), "Id", "Name", facultyId);
+        ViewData["ExamScheduleId"] = new SelectList(
+            context.ExamSchedules.AsNoTracking()
+                .Select(es => new { es.Id, es.ExamScheduleName })
+                .OrderByDescending(es => es.Id)
+                .ToList(),
+            "Id", "ExamScheduleName");
 
         return View(items);
+    }
+
+    [HttpPost]
+    [RequirePermission("resultrecords.publish")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Publish(int? examScheduleId)
+    {
+        var result = await resultRecordService.PublishResultsAsync(examScheduleId);
+
+        if (result.Published == 0)
+        {
+            TempData["ErrorMessage"] = "No unpublished result records found to publish.";
+        }
+        else if (result.Failed > 0)
+        {
+            TempData["ErrorMessage"] = $"Published {result.Published} result(s). {result.Notified} student(s) notified, {result.Failed} failed. {string.Join(" ", result.Errors.Take(3))}";
+        }
+        else
+        {
+            TempData["SuccessMessage"] = $"Published {result.Published} result(s) and notified {result.Notified} student(s).";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Details(int? id)

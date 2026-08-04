@@ -195,7 +195,36 @@ public class ExamSchedulesController(
 
         ViewBag.RemainingSubjectCount = subjectOfferings.Count(so => !existingSlotSubjectIds.Contains(so.Id));
 
+        var recipients = await examScheduleService.GetScheduleNotificationRecipientsAsync(id.Value);
+        ViewBag.Recipients = recipients;
+        ViewBag.HasRecipients = recipients.Count > 0;
+
         return View(examSchedule);
+    }
+
+    [HttpPost]
+    [RequirePermission("examschedules.notify")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendNotifications(int examScheduleId, List<int>? studentRegistrationIds)
+    {
+        if (studentRegistrationIds == null || studentRegistrationIds.Count == 0)
+        {
+            TempData["ErrorMessage"] = "No students selected for notification.";
+            return RedirectToAction(nameof(Details), new { id = examScheduleId });
+        }
+
+        var result = await examScheduleService.SendExamScheduleNotificationsAsync(examScheduleId, studentRegistrationIds);
+
+        if (result.Failed > 0)
+        {
+            TempData["ErrorMessage"] = $"Notifications sent to {result.EmailSent} email(s) and {result.SmsSent} SMS. {result.Failed} failed.";
+        }
+        else
+        {
+            TempData["SuccessMessage"] = $"Notifications sent to {result.EmailSent} email(s) and {result.SmsSent} SMS for {result.Attempted} student(s).";
+        }
+
+        return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
 
     [HttpPost]

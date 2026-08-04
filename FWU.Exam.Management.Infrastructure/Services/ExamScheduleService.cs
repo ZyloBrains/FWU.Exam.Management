@@ -2,14 +2,21 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class ExamScheduleService(AppDbContext context, IUserContext userContext) : IExamScheduleService
+public class ExamScheduleService(
+    AppDbContext context,
+    IUserContext userContext,
+    IEmailService emailService,
+    ISmsService smsService,
+    ILogger<ExamScheduleService> logger) : IExamScheduleService
 {
     public async Task<(List<ExamSchedule> Items, int TotalCount)> GetExamSchedulesAsync(int page, int pageSize, string? search, string sort, string sortDir, string? examTypeName = null)
     {
@@ -231,6 +238,207 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 Id = s.Id,
                 Name = s.Name + " (" + s.Code + ")"
             })
+            .ToListAsync();
+    }
+
+    public async Task<List<ScheduleNotificationRecipientDto>> GetScheduleNotificationRecipientsAsync(int examScheduleId)
+    {
+        var schedule = await context.ExamSchedules
+            .AsNoTracking()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+        if (schedule == null) return [];
+
+        var recipients = await GetSemesterEnrolledRecipientsAsync(schedule);
+        if (recipients.Count > 0) return recipients;
+
+        return await GetExamRegisteredRecipientsAsync(examScheduleId);
+    }
+
+    public async Task<NotificationSendResult> SendExamScheduleNotificationsAsync(int examScheduleId, List<int> studentRegistrationIds)
+    {
+        var result = new NotificationSendResult();
+
+        if (studentRegistrationIds == null || studentRegistrationIds.Count == 0)
+            return result;
+
+        var ids = studentRegistrationIds.Distinct().ToList();
+
+        var schedule = await context.ExamSchedules
+            .AsNoTracking()
+            .Include(es => es.Program)
+            .Include(es => es.Semester)
+            .Include(es => es.AcademicYear)
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+        if (schedule == null)
+            throw new InvalidOperationException("Exam schedule not found.");
+
+        var recipients = await context.StudentRegistrations
+            .AsNoTracking()
+            .Where(sr => ids.Contains(sr.Id) && sr.IsActive)
+            .Select(sr => new ScheduleNotificationRecipientDto
+            {
+                StudentRegistrationId = sr.Id,
+                FullName = (sr.FirstName + " " + sr.LastName).Trim(),
+                RegistrationNumber = sr.RegistrationNumber,
+                Email = sr.Email,
+                Phone = sr.ContactNumber ?? sr.Phone
+            })
+            .ToListAsync();
+
+        foreach (var recipient in recipients)
+        {
+            result.Attempted++;
+            var emailSent = false;
+            var smsSent = false;
+
+            if (!string.IsNullOrWhiteSpace(recipient.Email))
+            {
+                try
+                {
+                    var emailBody = EmailTemplateHelper.ExamSchedulePublished(
+                        schedule.ExamScheduleName,
+                        schedule.Program?.ProgramName ?? "",
+                        schedule.Semester?.Name ?? "",
+                        schedule.AcademicYear?.AcademicYearName ?? "",
+                        schedule.StartDateBs ?? "",
+                        schedule.EndDateBs ?? "",
+                        schedule.StartTime.ToString("HH:mm"),
+                        schedule.EndTime.ToString("HH:mm"),
+                        schedule.Remarks ?? "");
+                    await emailService.SendEmailAsync(recipient.Email, "Exam Schedule Published", emailBody);
+                    emailSent = true;
+                }
+                catch (Exception ex)
+                {
+                    result.Failed++;
+                    result.Errors.Add($"{recipient.FullName} (email): {ex.Message}");
+                    logger.LogWarning(ex, "Failed to send exam schedule email to {Email}", recipient.Email);
+                }
+            }
+
+            var phone = recipient.Phone;
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                try
+                {
+                    var smsMessage = $"Dear {recipient.FullName}, the exam schedule {schedule.ExamScheduleName} for {schedule.Program?.ProgramName ?? ""} ({schedule.Semester?.Name ?? ""}) is published. Dates: {schedule.StartDateBs ?? ""} - {schedule.EndDateBs ?? ""}, Time: {schedule.StartTime.ToString("HH:mm")}-{schedule.EndTime.ToString("HH:mm")}. - FWU";
+                    await smsService.SendSmsAsync(phone, smsMessage);
+                    smsSent = true;
+                }
+                catch (Exception ex)
+                {
+                    result.Failed++;
+                    result.Errors.Add($"{recipient.FullName} (sms): {ex.Message}");
+                    logger.LogWarning(ex, "Failed to send exam schedule SMS to {Phone}", phone);
+                }
+            }
+
+            result.EmailSent += emailSent ? 1 : 0;
+            result.SmsSent += smsSent ? 1 : 0;
+        }
+
+        return result;
+    }
+
+    private async Task<List<ScheduleNotificationRecipientDto>> GetSemesterEnrolledRecipientsAsync(ExamSchedule schedule)
+    {
+        var enrollments = await context.Set<SemesterEnrollment>()
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(se => se.SemesterId == schedule.SemesterId && se.StudentAdmission != null)
+            .Select(se => new
+            {
+                AdmissionId = se.StudentAdmission!.Id,
+                ProgramId = se.StudentAdmission.ProgramsId,
+                IsActive = se.StudentAdmission.IsActive,
+                AppUserId = se.StudentAdmission.AppUserId
+            })
+            .ToListAsync();
+
+        var matched = enrollments
+            .Where(e => e.ProgramId == schedule.ProgramId && e.IsActive)
+            .DistinctBy(e => e.AdmissionId)
+            .ToList();
+
+        if (matched.Count == 0) return [];
+
+        var admissionIds = matched.Select(m => m.AdmissionId).ToList();
+        var appUserIds = matched.Where(m => !string.IsNullOrEmpty(m.AppUserId)).Select(m => m.AppUserId!).Distinct().ToList();
+
+        var appUserEmails = new Dictionary<string, string>();
+        if (appUserIds.Count > 0)
+        {
+            appUserEmails = await context.Users
+                .AsNoTracking()
+                .Where(u => appUserIds.Contains(u.Id) && u.Email != null)
+                .ToDictionaryAsync(u => u.Id, u => u.Email!);
+        }
+
+        var admissionAppUser = matched.ToDictionary(m => m.AdmissionId, m => m.AppUserId);
+
+        var registrations = await context.StudentRegistrations
+            .AsNoTracking()
+            .Where(sr => sr.StudentAdmissionId.HasValue && admissionIds.Contains(sr.StudentAdmissionId.Value) && sr.IsActive)
+            .Select(sr => new
+            {
+                sr.Id,
+                sr.StudentAdmissionId,
+                FullName = (sr.FirstName + " " + sr.LastName).Trim(),
+                sr.RegistrationNumber,
+                sr.Email,
+                Phone = sr.ContactNumber ?? sr.Phone
+            })
+            .ToListAsync();
+
+        return registrations
+            .Select(r =>
+            {
+                var email = r.Email;
+                if (string.IsNullOrWhiteSpace(email) && r.StudentAdmissionId.HasValue
+                    && admissionAppUser.TryGetValue(r.StudentAdmissionId.Value, out var auid)
+                    && !string.IsNullOrEmpty(auid))
+                {
+                    if (appUserEmails.TryGetValue(auid, out var ae))
+                        email = ae;
+                }
+
+                return new ScheduleNotificationRecipientDto
+                {
+                    StudentRegistrationId = r.Id,
+                    FullName = r.FullName,
+                    RegistrationNumber = r.RegistrationNumber,
+                    Email = email,
+                    Phone = r.Phone
+                };
+            })
+            .OrderBy(r => r.FullName)
+            .ToList();
+    }
+
+    private async Task<List<ScheduleNotificationRecipientDto>> GetExamRegisteredRecipientsAsync(int examScheduleId)
+    {
+        var srIds = await context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive
+                         && er.ApplicationVoucher != null && er.ApplicationVoucher.StudentRegistrationId != null)
+            .Select(er => er.ApplicationVoucher!.StudentRegistrationId!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        if (srIds.Count == 0) return [];
+
+        return await context.StudentRegistrations
+            .AsNoTracking()
+            .Where(sr => srIds.Contains(sr.Id) && sr.IsActive)
+            .Select(sr => new ScheduleNotificationRecipientDto
+            {
+                StudentRegistrationId = sr.Id,
+                FullName = (sr.FirstName + " " + sr.LastName).Trim(),
+                RegistrationNumber = sr.RegistrationNumber,
+                Email = sr.Email,
+                Phone = sr.ContactNumber ?? sr.Phone
+            })
+            .OrderBy(r => r.FullName)
             .ToListAsync();
     }
 

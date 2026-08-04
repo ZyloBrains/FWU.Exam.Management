@@ -182,6 +182,44 @@ public static class EmailTemplateHelper
         </p>
     ");
 
+    public static string ExamSchedulePublished(string scheduleName, string program, string semester, string academicYear, string startDateBs, string endDateBs, string startTime, string endTime, string remarks) => Layout("Exam Schedule Published", $@"
+        <h2 style=""color:#2c3e50;margin:0 0 8px;font-size:20px;"" class=""content-heading"">Dear Student,</h2>
+        <p style=""color:#555;line-height:1.7;margin:0 0 20px;font-size:14px;"" class=""content-text"">
+            The exam schedule for your program has been published. Please find the schedule details below and prepare accordingly.
+        </p>
+        <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f8f9fa;border-radius:8px;padding:16px 20px;margin:20px 0;"" class=""details-table"">
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Exam Schedule:</strong> <span style=""color:#555;font-size:13px;"">{scheduleName}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Program:</strong> <span style=""color:#555;font-size:13px;"">{program}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Semester:</strong> <span style=""color:#555;font-size:13px;"">{semester}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Academic Year:</strong> <span style=""color:#555;font-size:13px;"">{academicYear}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Start Date (BS):</strong> <span style=""color:#555;font-size:13px;"">{startDateBs}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">End Date (BS):</strong> <span style=""color:#555;font-size:13px;"">{endDateBs}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Time:</strong> <span style=""color:#555;font-size:13px;"">{startTime} - {endTime}</span></td></tr>
+        </table>
+        <p style=""color:#555;line-height:1.7;margin:0 0 12px;font-size:14px;"">Remarks: {remarks}</p>
+        <p style=""color:#555;line-height:1.7;margin:20px 0 0;font-size:14px;"">
+            Please visit the exam management portal for the complete schedule and exam registration details.
+        </p>
+    ");
+
+    public static string ResultPublished(string fullName, string registrationNumber, string symbolNumber, string program, string gpa, string result, string college) => Layout("Result Published", $@"
+        <h2 style=""color:#2c3e50;margin:0 0 8px;font-size:20px;"" class=""content-heading"">Dear {fullName},</h2>
+        <p style=""color:#555;line-height:1.7;margin:0 0 20px;font-size:14px;"" class=""content-text"">
+            Your exam result has been published. Please find your result details below.
+        </p>
+        <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#f8f9fa;border-radius:8px;padding:16px 20px;margin:20px 0;"" class=""details-table"">
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Registration No:</strong> <span style=""color:#555;font-size:13px;"">{registrationNumber}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Symbol Number:</strong> <span style=""color:#555;font-size:13px;"">{symbolNumber}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Program:</strong> <span style=""color:#555;font-size:13px;"">{program}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">College:</strong> <span style=""color:#555;font-size:13px;"">{college}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">GPA:</strong> <span style=""color:#555;font-size:13px;"">{gpa}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Result:</strong> <span style=""color:#555;font-size:13px;"">{result}</span></td></tr>
+        </table>
+        <p style=""color:#555;line-height:1.7;margin:20px 0 0;font-size:14px;"">
+            You can view your full marksheet from the student portal.
+        </p>
+    ");
+
     public static string TenantAccountCreated(string fullName, string tenantName, string officeCode, string adminEmail) => Layout("Tenant Account Created", $@"
         <h2 style=""color:#2c3e50;margin:0 0 8px;font-size:20px;"" class=""content-heading"">Dear {fullName},</h2>
         <p style=""color:#555;line-height:1.7;margin:0 0 20px;font-size:14px;"" class=""content-text"">
