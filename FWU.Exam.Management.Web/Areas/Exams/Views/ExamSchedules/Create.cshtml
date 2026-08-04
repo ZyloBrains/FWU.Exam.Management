@@ -86,31 +86,8 @@
                         <input asp-for="PublishedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="PublishedDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
-                    <div>
-                        <label asp-for="CollegeApprovalDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="CollegeApprovalDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                        <span asp-validation-for="CollegeApprovalDate" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="AdmissionCardReleaseDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="AdmissionCardReleaseDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                        <span asp-validation-for="AdmissionCardReleaseDate" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="ExtendedDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="ExtendedDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                        <span asp-validation-for="ExtendedDate" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="StartDateBs" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (BS)</label>
-                        <input asp-for="StartDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2081-10-01" />
-                        <span asp-validation-for="StartDateBs" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
-                    <div>
-                        <label asp-for="EndDateBs" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">End Date (BS)</label>
-                        <input asp-for="EndDateBs" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 2081-10-15" />
-                        <span asp-validation-for="EndDateBs" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
+                    <input type="hidden" asp-for="StartDateBs" />
+                    <input type="hidden" asp-for="EndDateBs" />
                     <div>
                         <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
                         <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
@@ -253,28 +230,6 @@
         }
 
         var convertTimer;
-        $("#StartDateBs").on("input", function () {
-            var bs = $(this).val().trim();
-            if (bs.length === 10) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
-                    $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                        if (data.adDate) $("#StartDate").val(data.adDate);
-                    });
-                }, 300);
-            }
-        });
-        $("#EndDateBs").on("input", function () {
-            var bs = $(this).val().trim();
-            if (bs.length === 10) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
-                    $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
-                        if (data.adDate) $("#EndDate").val(data.adDate);
-                    });
-                }, 300);
-            }
-        });
         $("#StartDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
