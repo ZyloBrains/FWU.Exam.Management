@@ -320,11 +320,29 @@ public partial class EntryPoint
 
         app.MapStaticAssets();
 
+        // Tenant-based routes (highest priority - mapped first)
+        // Pattern: /tenant/{tenantCode}/area/{controller}/{action}/{id?}
+        app.MapControllerRoute(
+            name: "tenant-areas",
+            pattern: "tenant/{tenantCode}/{area:exists}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        // Tenant-based default route
+        // Pattern: /tenant/{tenantCode}/{controller}/{action}/{id?}
+        app.MapControllerRoute(
+            name: "tenant-default",
+            pattern: "tenant/{tenantCode}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        // Standard area routes (no tenant)
+        // Pattern: /area/{controller}/{action}/{id?}
         app.MapControllerRoute(
             name: "areas",
             pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets();
 
+        // Standard default route (no tenant)
+        // Pattern: /{controller}/{action}/{id?}
         app.MapControllerRoute(
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}")
