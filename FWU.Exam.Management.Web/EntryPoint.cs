@@ -34,6 +34,8 @@ public partial class EntryPoint
             .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
             .Enrich.FromLogContext()
+            .Enrich.WithProperty("Environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
+            .Enrich.WithProperty("MachineName", Environment.MachineName)
             .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
@@ -273,21 +275,33 @@ public partial class EntryPoint
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
 
         // Configure the HTTP request pipeline.
+        // Trust proxy headers from load balancers (must be before HTTPS redirection)
+        app.UseForwardedHeaders();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.UseDeveloperExceptionPage();
         }
         else
         {
-            app.UseExceptionHandler("/Home/Error");
+            // Production error handling
+            app.UseExceptionHandler("/Error");
+
+            // Enable HSTS (HTTP Strict Transport Security)
+            // 30 days is the minimum recommended value
             app.UseHsts();
-            app.UseForwardedHeaders();
+
+            // Force HTTPS redirect in production
+            app.UseHttpsRedirection();
         }
 
         app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseRateLimiter();
+
+        app.UseStartupValidation();
 
         app.UseMiddleware<TenantResolutionMiddleware>();
 
@@ -306,11 +320,29 @@ public partial class EntryPoint
 
         app.MapStaticAssets();
 
+        // Tenant-based routes (highest priority - mapped first)
+        // Pattern: /tenant/{tenantCode}/area/{controller}/{action}/{id?}
+        app.MapControllerRoute(
+            name: "tenant-areas",
+            pattern: "tenant/{tenantCode}/{area:exists}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        // Tenant-based default route
+        // Pattern: /tenant/{tenantCode}/{controller}/{action}/{id?}
+        app.MapControllerRoute(
+            name: "tenant-default",
+            pattern: "tenant/{tenantCode}/{controller=Home}/{action=Index}/{id?}")
+            .WithStaticAssets();
+
+        // Standard area routes (no tenant)
+        // Pattern: /area/{controller}/{action}/{id?}
         app.MapControllerRoute(
             name: "areas",
             pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}")
             .WithStaticAssets();
 
+        // Standard default route (no tenant)
+        // Pattern: /{controller}/{action}/{id?}
         app.MapControllerRoute(
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}")
