@@ -25,10 +25,10 @@ public class SecurityHeadersMiddleware(RequestDelegate next, IWebHostEnvironment
 
             if (!env.IsDevelopment())
             {
-                // Strict Content Security Policy for production
+                // Content Security Policy for production - allows Alpine.js, jQuery UI, and Tailwind CSS
                 headers.Append("Content-Security-Policy",
                     "default-src 'self'; " +
-                    "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://code.jquery.com/ui; " +
+                    "script-src 'self' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://code.jquery.com/ui; " +
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com/ui; " +
                     "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
                     "img-src 'self' data: https:; " +
