@@ -442,12 +442,12 @@ public class StudentDashboardController(
         }
         else
         {
-            var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
-            if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
-            {
-                TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
-                return RedirectToAction(nameof(ExamForms));
-            }
+            //var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
+            //if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
+            //{
+            //    TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
+            //    return RedirectToAction(nameof(ExamForms));
+            //}
         }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
