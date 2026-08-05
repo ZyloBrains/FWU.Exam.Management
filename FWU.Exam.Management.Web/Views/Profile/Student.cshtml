@@ -24,6 +24,51 @@
 
     @await Html.PartialAsync("_ProfileHeader", Model)
 
+    <!-- Academic Information -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800">Academic Information</h3>
+                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Enrollment and program details</p>
+                </div>
+                <span class="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full"><i class="fas fa-graduation-cap mr-1"></i>@(string.IsNullOrEmpty(Model.AcademicYear) ? "—" : Model.AcademicYear)</span>
+            </div>
+        </div>
+        <div class="p-6">
+            <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6">
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Registration No.</dt>
+                    <dd class="text-sm font-semibold text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.RegistrationNumber) ? "—" : Model.RegistrationNumber)</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">College Roll No.</dt>
+                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.CollegeRollNumber) ? "—" : Model.CollegeRollNumber)</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Level</dt>
+                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.Level) ? "—" : Model.Level)</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program</dt>
+                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.Program) ? "—" : Model.Program)</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program Code</dt>
+                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.ProgramCode) ? "—" : Model.ProgramCode)</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">College</dt>
+                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.College) ? "—" : Model.College)</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission Date</dt>
+                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.AdmissionDate) ? "—" : Model.AdmissionDate)</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
@@ -92,92 +137,6 @@
                     <span class="text-xs text-gray-500 font-medium"><i class="fas fa-calendar-alt mr-1"></i>Active enrollment</span>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Photo & Signature -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800">Profile Photo</h3>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Your photo used on admit cards</p>
-            </div>
-            <div class="p-6 flex items-center justify-center">
-                <div class="w-36 h-36 rounded-full overflow-hidden border-4 border-gray-100 bg-gray-50 flex items-center justify-center shadow-sm">
-                    @if (!string.IsNullOrEmpty(Model.ProfilePath))
-                    {
-                        <img src="@Model.ProfilePath" alt="Profile Photo" class="w-full h-full object-cover" />
-                    }
-                    else
-                    {
-                        <span class="text-gray-400 text-sm">No photo</span>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-800">Signature</h3>
-                <p class="text-xs sm:text-sm text-gray-500 mt-1">Your signature used on admit cards</p>
-            </div>
-            <div class="p-6 flex items-center justify-center">
-                <div class="h-24 w-full max-w-xs border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
-                    @if (!string.IsNullOrEmpty(Model.SignaturePath))
-                    {
-                        <img src="@Model.SignaturePath" alt="Signature" class="max-h-full max-w-full object-contain" />
-                    }
-                    else
-                    {
-                        <span class="text-gray-400 text-sm">No signature</span>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Academic Information -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-base sm:text-lg font-semibold text-gray-800">Academic Information</h3>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Enrollment and program details</p>
-                </div>
-                <span class="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full"><i class="fas fa-graduation-cap mr-1"></i>@(string.IsNullOrEmpty(Model.AcademicYear) ? "—" : Model.AcademicYear)</span>
-            </div>
-        </div>
-        <div class="p-6">
-            <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6">
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Registration No.</dt>
-                    <dd class="text-sm font-semibold text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.RegistrationNumber) ? "—" : Model.RegistrationNumber)</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">College Roll No.</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.CollegeRollNumber) ? "—" : Model.CollegeRollNumber)</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Level</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.Level) ? "—" : Model.Level)</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.Program) ? "—" : Model.Program)</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program Code</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.ProgramCode) ? "—" : Model.ProgramCode)</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">College</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.College) ? "—" : Model.College)</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission Date</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.AdmissionDate) ? "—" : Model.AdmissionDate)</dd>
-                </div>
-            </dl>
         </div>
     </div>
 
@@ -256,6 +215,26 @@
                         </div>
                     </dl>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signature -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800">Signature</h3>
+            <p class="text-xs sm:text-sm text-gray-500 mt-1">Your signature used on admit cards</p>
+        </div>
+        <div class="p-6 flex items-center justify-center">
+            <div class="h-24 w-full max-w-xs border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
+                @if (!string.IsNullOrEmpty(Model.SignaturePath))
+                {
+                    <img src="@Model.SignaturePath" alt="Signature" class="max-h-full max-w-full object-contain" />
+                }
+                else
+                {
+                    <span class="text-gray-400 text-sm">No signature</span>
+                }
             </div>
         </div>
     </div>
