@@ -26,6 +26,9 @@ public class Tenant
     [MaxLength(500)]
     [Display(Name = "Logo Path")]
     public string? LogoPath { get; set; }
+    [MaxLength(500)]
+    [Display(Name = "Banner Image Path")]
+    public string? BannerImagePath { get; set; }
     [Display(Name = "Controller Signature Path")]
     public string? ControllerSignaturePath { get; set; }
     [Display(Name = "Tenant Type")]

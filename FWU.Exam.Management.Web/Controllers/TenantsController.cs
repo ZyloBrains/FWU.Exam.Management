@@ -66,7 +66,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [RequirePermission("tenants.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TenantCreateViewModel viewModel)
+    public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? bannerImage)
     {
         viewModel.FacultyList = await GetAvailableFacultiesAsync();
 
@@ -78,6 +78,13 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         if (ModelState.IsValid)
         {
             var tenant = viewModel.Tenant;
+
+            if (bannerImage != null && bannerImage.Length > 0)
+            {
+                var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
+                if (bannerPath != null)
+                    tenant.BannerImagePath = bannerPath;
+            }
 
             _context.Add(tenant);
             await _context.SaveChangesAsync();
@@ -165,7 +172,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [RequirePermission("tenants.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Tenant tenant)
+    public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? bannerImage)
     {
         if (id != tenant.Id) return NotFound();
 
@@ -173,6 +180,13 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         {
             try
             {
+                if (bannerImage != null && bannerImage.Length > 0)
+                {
+                    var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
+                    if (bannerPath != null)
+                        tenant.BannerImagePath = bannerPath;
+                }
+
                 _context.Update(tenant);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Tenant updated successfully!";

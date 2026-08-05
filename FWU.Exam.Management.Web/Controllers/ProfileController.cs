@@ -127,6 +127,7 @@ public class ProfileController(
         string? tenantLogo = null;
         string? orgName = null;
         string? orgLogo = null;
+        string? bannerImagePath = null;
 
         if (!string.IsNullOrEmpty(tenantCode))
         {
@@ -139,6 +140,7 @@ public class ProfileController(
                 tenantLogo = tenant.LogoPath;
                 orgName = tenant.Name;
                 orgLogo = tenant.LogoPath;
+                bannerImagePath = tenant.BannerImagePath;
             }
         }
 
@@ -182,7 +184,7 @@ public class ProfileController(
             TenantLogo = tenantLogo,
             OrganizationName = orgName,
             OrganizationLogo = orgLogo,
-            CoverImagePath = "/images/oce.png",
+            CoverImagePath = string.IsNullOrEmpty(bannerImagePath) ? "/images/oce.png" : bannerImagePath,
             CanUploadSignature = primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin,
         };
     }

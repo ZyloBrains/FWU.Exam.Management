@@ -105,6 +105,7 @@ public static class ReferenceDataSeeder
                     ContactNumber = "01-2345678",
                     Address = "Kathmandu, Nepal",
                     Email = "info@oce.gov.np",
+                    BannerImagePath = "/images/oce.png",
                     TenantType = TenantType.Central,
                     IsActive = true,
                 },
