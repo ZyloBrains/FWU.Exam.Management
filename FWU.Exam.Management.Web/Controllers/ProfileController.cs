@@ -80,7 +80,7 @@ public class ProfileController(
         }
 
         if (signature != null && signature.Length > 0
-            && (primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin))
+            && (primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin || primaryRole == Role.Student))
         {
             try
             {
@@ -185,7 +185,7 @@ public class ProfileController(
             OrganizationName = orgName,
             OrganizationLogo = orgLogo,
             CoverImagePath = string.IsNullOrEmpty(bannerImagePath) ? "/images/oce.png" : bannerImagePath,
-            CanUploadSignature = primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin,
+            CanUploadSignature = primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin || primaryRole == Role.Student,
         };
     }
 

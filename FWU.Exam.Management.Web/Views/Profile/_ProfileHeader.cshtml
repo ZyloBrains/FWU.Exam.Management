@@ -47,7 +47,11 @@
 
             <!-- Identity -->
             <div class="flex-1 min-w-0 sm:pb-1">
-                @if (!string.IsNullOrEmpty(Model.Designation))
+                @if (Model.Roles.Contains("Student"))
+                {
+                    <p class="text-xl sm:text-2xl font-bold text-gray-900 mt-0.5">@Model.FullName</p>
+                }
+                else if (!string.IsNullOrEmpty(Model.Designation))
                 {
                     <p class="text-sm text-gray-600 mt-0.5">@Model.Designation</p>
                 }
@@ -184,7 +188,7 @@
             @if (Model.CanUploadSignature)
             {
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Controller Signature</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
                     <div class="flex items-center gap-4 mb-2">
                         <div class="w-28 h-12 border border-gray-200 rounded-lg bg-white flex items-center justify-center overflow-hidden">
                             @if (!string.IsNullOrEmpty(Model.SignaturePath))
