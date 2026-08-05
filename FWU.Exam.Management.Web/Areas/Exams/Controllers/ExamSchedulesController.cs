@@ -3,9 +3,11 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -21,9 +23,107 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
-    AppDbContext context) : Controller
+    UserManager<AppUser> userManager,
+    AppDbContext context,
+    IUserContext userContext) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
+    private static List<int> ParseCsvIds(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return [];
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(value => int.TryParse(value, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+    }
+
+    private static string? JoinCsvIds(IEnumerable<int>? ids)
+    {
+        var values = ids?.Where(id => id > 0).Distinct().ToList();
+        return values == null || values.Count == 0 ? null : string.Join(",", values);
+    }
+
+    private async Task<List<SelectListItem>> GetFacultyItemsAsync()
+    {
+        return await context.Faculties
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .OrderBy(f => f.Name)
+            .Select(f => new SelectListItem
+            {
+                Value = f.Id.ToString(),
+                Text = string.IsNullOrWhiteSpace(f.ShortName) ? f.Name : $"{f.Name} ({f.ShortName})"
+            })
+            .ToListAsync();
+    }
+
+    private async Task<List<SelectListItem>> GetProgramItemsAsync(int? facultyId = null)
+    {
+        var query = context.Programs
+            .AsNoTracking()
+            .ApplyScope(userContext);
+
+        if (facultyId.HasValue && facultyId.Value > 0)
+            query = query.Where(program => program.FacultyId == facultyId.Value);
+
+        return await query
+            .OrderBy(program => program.ProgramName)
+            .Select(program => new SelectListItem
+            {
+                Value = program.Id.ToString(),
+                Text = program.ProgramName ?? string.Empty
+            })
+            .ToListAsync();
+    }
+
+    private async Task<List<SelectListItem>> GetSemesterItemsAsync(int? academicYearId = null, int? facultyId = null)
+    {
+        var query = context.Semesters
+            .AsNoTracking()
+            .ApplyScope(userContext);
+
+        if (academicYearId.HasValue && academicYearId.Value > 0)
+            query = query.Where(semester => semester.AcademicYearId == academicYearId.Value);
+
+        if (facultyId.HasValue && facultyId.Value > 0)
+            query = query.Where(semester => semester.FacultyId == facultyId.Value);
+
+        return await query
+            .OrderBy(semester => semester.Number)
+            .Select(semester => new SelectListItem
+            {
+                Value = semester.Id.ToString(),
+                Text = semester.Name ?? string.Empty
+            })
+            .ToListAsync();
+    }
+
+    private async Task<List<SelectListItem>> GetSubjectOfferingItemsAsync(int? programId = null, int? semesterId = null)
+    {
+        IQueryable<SubjectOffering> query = context.SubjectOfferings
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Include(subjectOffering => subjectOffering.SubjectCatalog);
+
+        if (programId.HasValue && programId.Value > 0)
+            query = query.Where(subjectOffering => subjectOffering.ProgramId == programId.Value);
+
+        if (semesterId.HasValue && semesterId.Value > 0)
+            query = query.Where(subjectOffering => subjectOffering.SemesterId == semesterId.Value);
+
+        return await query
+            .OrderBy(subjectOffering => subjectOffering.DisplayOrder)
+            .ThenBy(subjectOffering => subjectOffering.SubjectCatalog != null ? subjectOffering.SubjectCatalog.SubjectCode : string.Empty)
+            .Select(subjectOffering => new SelectListItem
+            {
+                Value = subjectOffering.Id.ToString(),
+                Text = $"{subjectOffering.SubjectCatalog!.SubjectCode} - {subjectOffering.SubjectCatalog.SubjectName}"
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IActionResult> Index(int page = 1, string search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
         await examScheduleService.DeactivateExpiredSchedulesAsync();
 
@@ -48,7 +148,7 @@ public class ExamSchedulesController(
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
+    private string EscapeCsv(string field)
     {
         if (string.IsNullOrEmpty(field)) return "";
         if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
@@ -56,7 +156,7 @@ public class ExamSchedulesController(
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(string? search = null)
+    public async Task<IActionResult> ExportToCsv(string search = null)
     {
         var items = await examScheduleService.GetFilteredItemsAsync(search);
 
@@ -89,14 +189,14 @@ public class ExamSchedulesController(
         return File(csvBytes, "text/csv", "ExamSchedules.csv");
     }
 
-    public async Task<IActionResult> ExportToPdf(string? search = null)
+    public async Task<IActionResult> ExportToPdf(string search = null)
     {
         var items = await examScheduleService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(string? search = null)
+    public async Task<IActionResult> ExportToExcel(string search = null)
     {
         var items = await examScheduleService.GetFilteredItemsAsync(search);
 
@@ -303,10 +403,20 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,FacultyId,SelectedExamTypeIds,SelectedSubjectOfferingIds,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
+        if (examSchedule.FacultyId is null or 0)
+            ModelState.AddModelError(nameof(examSchedule.FacultyId), "Faculty is required.");
+
+        if (examSchedule.SelectedExamTypeIds == null || examSchedule.SelectedExamTypeIds.Count == 0)
+            ModelState.AddModelError(nameof(examSchedule.SelectedExamTypeIds), "Select at least one exam type.");
+
         if (ModelState.IsValid)
         {
+            examSchedule.ExamTypeId = examSchedule.SelectedExamTypeIds.FirstOrDefault();
+            examSchedule.ExamTypeIds = JoinCsvIds(examSchedule.SelectedExamTypeIds);
+            examSchedule.SubjectOfferingIds = JoinCsvIds(examSchedule.SelectedSubjectOfferingIds);
+
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
@@ -324,7 +434,12 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
+        examSchedule.SelectedExamTypeIds = ParseCsvIds(examSchedule.ExamTypeIds);
+        if (examSchedule.SelectedExamTypeIds.Count == 0 && examSchedule.ExamTypeId > 0)
+            examSchedule.SelectedExamTypeIds = [examSchedule.ExamTypeId];
+        examSchedule.SelectedSubjectOfferingIds = ParseCsvIds(examSchedule.SubjectOfferingIds);
+
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -332,9 +447,15 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,FacultyId,SelectedExamTypeIds,SelectedSubjectOfferingIds,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
+
+        if (examSchedule.FacultyId is null or 0)
+            ModelState.AddModelError(nameof(examSchedule.FacultyId), "Faculty is required.");
+
+        if (examSchedule.SelectedExamTypeIds == null || examSchedule.SelectedExamTypeIds.Count == 0)
+            ModelState.AddModelError(nameof(examSchedule.SelectedExamTypeIds), "Select at least one exam type.");
 
         if (ModelState.IsValid)
         {
@@ -343,12 +464,15 @@ public class ExamSchedulesController(
                 var existing = await examScheduleService.GetExamScheduleByIdAsync(id);
                 if (existing is null) return NotFound();
                 examSchedule.TenantId = existing.TenantId;
+                examSchedule.ExamTypeId = examSchedule.SelectedExamTypeIds.FirstOrDefault();
+                examSchedule.ExamTypeIds = JoinCsvIds(examSchedule.SelectedExamTypeIds);
+                examSchedule.SubjectOfferingIds = JoinCsvIds(examSchedule.SelectedSubjectOfferingIds);
                 await examScheduleService.UpdateExamScheduleAsync(examSchedule);
             }
             catch (InvalidOperationException ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
-                var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
+                var retrySelectLists = await examScheduleService.GetSelectListDataAsync();
                 PopulateDropdowns(retrySelectLists, examSchedule);
                 return View(examSchedule);
             }
@@ -361,7 +485,7 @@ public class ExamSchedulesController(
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
+        var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
     }
@@ -402,17 +526,35 @@ public class ExamSchedulesController(
 
     private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)
     {
+        var selectedFacultyId = examSchedule?.FacultyId ?? examSchedule?.Program?.FacultyId;
+
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
-        ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
-        ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
-        ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
+        ViewData["FacultyId"] = new SelectList(GetFacultyItemsAsync().GetAwaiter().GetResult(), "Value", "Text", selectedFacultyId);
+        ViewData["ProgramId"] = new SelectList(GetProgramItemsAsync(selectedFacultyId).GetAwaiter().GetResult(), "Value", "Text", examSchedule?.ProgramId);
+        ViewData["SemesterId"] = new SelectList(GetSemesterItemsAsync(examSchedule?.AcademicYearId, selectedFacultyId).GetAwaiter().GetResult(), "Value", "Text", examSchedule?.SemesterId);
+        ViewData["ExamTypeId"] = new MultiSelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.SelectedExamTypeIds.Count > 0 ? examSchedule.SelectedExamTypeIds : ParseCsvIds(examSchedule?.ExamTypeIds));
+        ViewData["SubjectOfferingIds"] = new MultiSelectList(GetSubjectOfferingItemsAsync(examSchedule?.ProgramId, examSchedule?.SemesterId).GetAwaiter().GetResult(), "Value", "Text", examSchedule?.SelectedSubjectOfferingIds.Count > 0 ? examSchedule.SelectedSubjectOfferingIds : ParseCsvIds(examSchedule?.SubjectOfferingIds));
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? programId = null)
+    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? facultyId = null)
     {
-        var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId, programId);
-        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
+        var semesters = await GetSemesterItemsAsync(academicYearId, facultyId);
+        return Json(semesters.Select(s => new { id = s.Value, name = s.Text }));
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByFaculty(int facultyId)
+    {
+        var programs = await GetProgramItemsAsync(facultyId);
+        return Json(programs.Select(program => new { id = program.Value, name = program.Text }));
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetSubjectOfferingsByProgramAndSemester(int programId, int semesterId)
+    {
+        var subjects = await GetSubjectOfferingItemsAsync(programId, semesterId);
+        return Json(subjects.Select(subject => new { id = subject.Value, name = subject.Text }));
     }
 
     [HttpGet]

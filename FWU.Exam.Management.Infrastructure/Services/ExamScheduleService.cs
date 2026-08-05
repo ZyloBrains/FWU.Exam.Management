@@ -24,7 +24,10 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 Id = e.Id,
                 AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
+                FacultyId = e.FacultyId,
                 ExamTypeId = e.ExamTypeId,
+                ExamTypeIds = e.ExamTypeIds,
+                SubjectOfferingIds = e.SubjectOfferingIds,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
                 EndDateBs = e.EndDateBs,
@@ -44,12 +47,63 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
+                Faculty = e.Faculty,
                 ExamType = e.ExamType
             })
             .Take(pageSize)
             .ToListAsync();
 
+        await ResolveDisplayNamesAsync(items);
+
         return (items, totalCount);
+    }
+
+    private static List<int> ParseCsvIds(string? csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return [];
+
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(value => int.TryParse(value, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+    }
+
+    private static string JoinNames(List<int> ids, IReadOnlyDictionary<int, string> names)
+    {
+        return string.Join(", ", ids.Where(names.ContainsKey).Select(id => names[id]));
+    }
+
+    private async Task ResolveDisplayNamesAsync(List<ExamSchedule> items)
+    {
+        if (items.Count == 0) return;
+
+        var examTypeIds = items.SelectMany(i => ParseCsvIds(i.ExamTypeIds)).Distinct().ToList();
+        var subjectOfferingIds = items.SelectMany(i => ParseCsvIds(i.SubjectOfferingIds)).Distinct().ToList();
+
+        var examTypeNames = await context.ExamTypes
+            .Where(t => examTypeIds.Contains(t.Id))
+            .ToDictionaryAsync(t => t.Id, t => t.Name ?? string.Empty);
+
+        var subjectNames = new Dictionary<int, string>();
+        if (subjectOfferingIds.Count > 0)
+        {
+            subjectNames = await context.SubjectOfferings
+                .AsNoTracking()
+                .Where(so => subjectOfferingIds.Contains(so.Id))
+                .Include(so => so.SubjectCatalog)
+                .ToDictionaryAsync(so => so.Id, so => $"{so.SubjectCatalog!.SubjectCode} - {so.SubjectCatalog.SubjectName}");
+        }
+
+        foreach (var item in items)
+        {
+            var selectedExamTypeIds = ParseCsvIds(item.ExamTypeIds);
+            if (selectedExamTypeIds.Count == 0 && item.ExamTypeId > 0)
+                selectedExamTypeIds = [item.ExamTypeId];
+
+            item.ExamTypeNames = JoinNames(selectedExamTypeIds, examTypeNames);
+            item.SubjectOfferingNames = JoinNames(ParseCsvIds(item.SubjectOfferingIds), subjectNames);
+        }
     }
 
     public async Task DeactivateExpiredSchedulesAsync()
@@ -71,13 +125,16 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
     public async Task<List<ExamSchedule>> GetFilteredItemsAsync(string? search, string? examTypeName = null)
     {
         var query = BuildQuery(search, "Id", "asc", examTypeName).ApplyScope(userContext);
-        return await query
+        var items = await query
             .Select(e => new ExamSchedule
             {
                 Id = e.Id,
                 AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
+                FacultyId = e.FacultyId,
                 ExamTypeId = e.ExamTypeId,
+                ExamTypeIds = e.ExamTypeIds,
+                SubjectOfferingIds = e.SubjectOfferingIds,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
                 EndDateBs = e.EndDateBs,
@@ -97,14 +154,18 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
+                Faculty = e.Faculty,
                 ExamType = e.ExamType
             })
             .ToListAsync();
+
+        await ResolveDisplayNamesAsync(items);
+        return items;
     }
 
     public async Task<ExamSchedule?> GetExamScheduleByIdAsync(int id)
     {
-        return await context.ExamSchedules
+        var examSchedule = await context.ExamSchedules
             .AsNoTracking()
             .Where(e => e.Id == id)
             .Select(e => new ExamSchedule
@@ -114,7 +175,10 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
                 SemesterId = e.SemesterId,
+                FacultyId = e.FacultyId,
                 ExamTypeId = e.ExamTypeId,
+                ExamTypeIds = e.ExamTypeIds,
+                SubjectOfferingIds = e.SubjectOfferingIds,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
                 EndDateBs = e.EndDateBs,
@@ -135,9 +199,15 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
                 Semester = e.Semester,
+                Faculty = e.Faculty,
                 ExamType = e.ExamType
             })
             .FirstOrDefaultAsync();
+
+        if (examSchedule != null)
+            await ResolveDisplayNamesAsync([examSchedule]);
+
+        return examSchedule;
     }
 
     public async Task CreateExamScheduleAsync(ExamSchedule examSchedule)
@@ -200,37 +270,24 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext);
         if (examSchedule != null && examSchedule.AcademicYearId > 0)
             semestersQuery = semestersQuery.Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
-        var allowUpperSemesters = examSchedule != null
-                                  && examSchedule.ProgramId > 0
-                                  && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == examSchedule.ProgramId && p.Duration >= 10);
-        if (!allowUpperSemesters)
-            semestersQuery = semestersQuery.Where(s => s.Number <= 8);
         var semesters = await semestersQuery.OrderBy(s => s.Number).ToListAsync();
 
         return new ExamScheduleSelectListsDto
         {
-            AcademicYears = [.. academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName })],
-            ExamTypes = [.. examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name })],
-            Programs = [.. programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName })],
-            Semesters = [.. semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + ")" })]
+            AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
+            ExamTypes = examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name }).ToList(),
+            Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
+            Semesters = semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name }).ToList()
         };
     }
 
-    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
+    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId)
     {
-        var allowUpperSemesters = programId is > 0
-                                  && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == programId.Value && p.Duration >= 10);
-
         return await context.Semesters.AsNoTracking()
             .ApplyScope(userContext)
-            .Where(s => s.AcademicYearId == academicYearId
-                        && (s.Number <= 8 || allowUpperSemesters))
+            .Where(s => s.AcademicYearId == academicYearId)
             .OrderBy(s => s.Number)
-            .Select(s => new SelectOption
-            {
-                Id = s.Id,
-                Name = s.Name + " (" + s.Code + ")"
-            })
+            .Select(s => new SelectOption { Id = s.Id, Name = s.Name })
             .ToListAsync();
     }
 
