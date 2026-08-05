@@ -47,18 +47,6 @@
 
             <!-- Identity -->
             <div class="flex-1 min-w-0 sm:pb-1">
-                <div class="flex flex-wrap items-center gap-2">
-                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">@Model.FullName</h1>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-admin-blue/10 text-admin-blue border border-admin-blue/20">
-                        <i class="fas fa-user-shield mr-1"></i>@Model.RoleLabel
-                    </span>
-                    @if (!Model.IsActive)
-                    {
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
-                            <i class="fas fa-ban mr-1"></i>Inactive
-                        </span>
-                    }
-                </div>
                 @if (!string.IsNullOrEmpty(Model.Designation))
                 {
                     <p class="text-sm text-gray-600 mt-0.5">@Model.Designation</p>
