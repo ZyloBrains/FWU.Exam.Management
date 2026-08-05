@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = Role.Student + "," + Role.SuperAdmin)]
+[Authorize(Roles = Role.Student + "," + Role.SuperAdmin + "," + Role.FacultyAdmin)]
 public class StudentDashboardController(
     IStudentDashboardService dashboardService,
     UserManager<AppUser> userManager,

@@ -1,0 +1,111 @@
+@model FWU.Exam.Management.Web.ViewModels.FacultyAdminProfileViewModel
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div x-data="{ editProfileOpen: false }" class="max-w-6xl mx-auto space-y-6">
+    @if (TempData["SuccessMessage"] is string successMsg)
+    {
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm" x-data="{ show: true }" x-show="show">
+            <i class="fas fa-circle-check"></i>
+            <span class="flex-1">@successMsg</span>
+            <button type="button" x-on:click="show = false" class="text-green-500 hover:text-green-700"><i class="fas fa-times"></i></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMsg)
+    {
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm" x-data="{ show: true }" x-show="show">
+            <i class="fas fa-circle-exclamation"></i>
+            <span class="flex-1">@errorMsg</span>
+            <button type="button" x-on:click="show = false" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button>
+        </div>
+    }
+
+    @await Html.PartialAsync("_ProfileHeader", Model)
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col items-center justify-center text-center">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-admin-blue flex items-center justify-center mb-2"><i class="fas fa-school"></i></div>
+            <span class="text-xl font-bold text-gray-900">@Model.CollegeCount</span>
+            <span class="text-xs text-gray-500 font-medium mt-0.5">Affiliated Colleges</span>
+        </div>
+        <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col items-center justify-center text-center">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2"><i class="fas fa-stream"></i></div>
+            <span class="text-xl font-bold text-gray-900">@Model.ProgramCount</span>
+            <span class="text-xs text-gray-500 font-medium mt-0.5">Programs</span>
+        </div>
+        <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col items-center justify-center text-center">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2"><i class="fas fa-users"></i></div>
+            <span class="text-xl font-bold text-gray-900">@Model.StaffCount</span>
+            <span class="text-xs text-gray-500 font-medium mt-0.5">Staff Members</span>
+        </div>
+        <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col items-center justify-center text-center">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-2"><i class="fas fa-calendar-check"></i></div>
+            <span class="text-xl font-bold text-gray-900">@Model.ActiveExamScheduleCount</span>
+            <span class="text-xs text-gray-500 font-medium mt-0.5">Active Exam Schedules</span>
+        </div>
+    </div>
+
+    <!-- Details -->
+    <div class="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div class="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <i class="fas fa-user text-admin-blue"></i>
+                <h2 class="font-semibold text-gray-900">Personal Information</h2>
+            </div>
+            <dl class="divide-y divide-gray-50">
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Full Name</dt>
+                    <dd class="text-sm text-gray-900 font-medium">@Model.FullName</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Designation</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.Designation) ? "—" : Model.Designation)</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Email</dt>
+                    <dd class="text-sm text-gray-900">@Model.Email</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Phone</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "—" : Model.PhoneNumber)</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <i class="fas fa-building text-admin-blue"></i>
+                <h2 class="font-semibold text-gray-900">Faculty Information</h2>
+            </div>
+            <dl class="divide-y divide-gray-50">
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Faculty</dt>
+                    <dd class="text-sm text-gray-900 font-medium">@(string.IsNullOrEmpty(Model.FacultyName) ? "—" : Model.FacultyName)</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Short Name</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.FacultyShortName) ? "—" : Model.FacultyShortName)</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Office Code</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.OfficeCode) ? "—" : Model.OfficeCode)</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Email</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.FacultyEmail) ? "—" : Model.FacultyEmail)</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Contact</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.FacultyContactNumber) ? "—" : Model.FacultyContactNumber)</dd>
+                </div>
+                <div class="flex items-start gap-4 px-5 py-3">
+                    <dt class="w-32 text-sm text-gray-500 shrink-0">Address</dt>
+                    <dd class="text-sm text-gray-900">@(string.IsNullOrEmpty(Model.FacultyAddress) ? "—" : Model.FacultyAddress)</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>

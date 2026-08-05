@@ -1,0 +1,214 @@
+@model FWU.Exam.Management.Web.ViewModels.ProfileBaseViewModel
+
+@{
+    var initials = string.Join("", Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2)
+        .Select(w => w[0]))
+        .ToUpperInvariant();
+    var fallbackColor = "bg-gradient-to-br from-admin-blue-light to-admin-blue-dark";
+}
+
+<!-- Profile Header Card -->
+<div class="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
+    <!-- Cover Banner -->
+    <div class="h-36 sm:h-44 bg-gradient-to-r from-admin-blue via-admin-blue-light to-indigo-500 relative">
+        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.35) 1px, transparent 0); background-size: 24px 24px;"></div>
+        <div class="absolute bottom-4 right-5 hidden sm:flex items-center gap-2">
+            @if (!string.IsNullOrEmpty(Model.OrganizationLogo))
+            {
+                <img src="@Model.OrganizationLogo" alt="@Model.OrganizationName" class="h-10 w-10 object-contain rounded-lg bg-white/90 p-1 shadow" />
+            }
+            @if (!string.IsNullOrEmpty(Model.OrganizationName))
+            {
+                <span class="text-white/90 text-sm font-medium drop-shadow px-2 py-1 rounded-lg bg-black/10 backdrop-blur-sm">@Model.OrganizationName</span>
+            }
+        </div>
+    </div>
+
+    <div class="px-5 sm:px-8 pb-6">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
+            <!-- Avatar -->
+            <div class="relative shrink-0">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white shadow-lg overflow-hidden @(string.IsNullOrEmpty(Model.ProfilePath) ? fallbackColor : "bg-white") flex items-center justify-center">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePath))
+                    {
+                        <img src="@Model.ProfilePath" alt="@Model.FullName" class="w-full h-full object-cover" />
+                    }
+                    else
+                    {
+                        <span class="text-white text-3xl font-bold">@initials</span>
+                    }
+                </div>
+                <div class="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-white shadow flex items-center justify-center">
+                    <i class="fas fa-circle-check text-green-500 text-sm"></i>
+                </div>
+            </div>
+
+            <!-- Identity -->
+            <div class="flex-1 min-w-0 sm:pb-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">@Model.FullName</h1>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-admin-blue/10 text-admin-blue border border-admin-blue/20">
+                        <i class="fas fa-user-shield mr-1"></i>@Model.RoleLabel
+                    </span>
+                    @if (!Model.IsActive)
+                    {
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
+                            <i class="fas fa-ban mr-1"></i>Inactive
+                        </span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Designation))
+                {
+                    <p class="text-sm text-gray-600 mt-0.5">@Model.Designation</p>
+                }
+
+                <!-- Meta row -->
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-3 text-sm text-gray-600">
+                    @if (!string.IsNullOrEmpty(Model.Email))
+                    {
+                        <span class="inline-flex items-center gap-1.5 min-w-0">
+                            <i class="fas fa-envelope text-gray-400 w-4 shrink-0"></i>
+                            <span class="truncate">@Model.Email</span>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                    {
+                        <span class="inline-flex items-center gap-1.5">
+                            <i class="fas fa-phone text-gray-400 w-4 shrink-0"></i>
+                            <span>@Model.PhoneNumber</span>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.TenantName))
+                    {
+                        <span class="inline-flex items-center gap-1.5">
+                            <i class="fas fa-building text-gray-400 w-4 shrink-0"></i>
+                            <span>@Model.TenantName</span>
+                        </span>
+                    }
+                    @if (Model.ValidFrom.HasValue || Model.ValidTo.HasValue)
+                    {
+                        <span class="inline-flex items-center gap-1.5">
+                            <i class="fas fa-calendar-check text-gray-400 w-4 shrink-0"></i>
+                            <span>@(Model.ValidFrom?.ToString("MMM yyyy") ?? "—") – @(Model.ValidTo?.ToString("MMM yyyy") ?? "Present")</span>
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 sm:pb-1">
+                <button type="button" x-on:click="editProfileOpen = true"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-admin-blue text-white text-sm font-medium hover:bg-admin-blue-dark transition-colors shadow-sm">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- Account status badges -->
+        <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-gray-100">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium @(Model.EmailConfirmed ? "bg-green-50 text-green-700 border border-green-200" : "bg-amber-50 text-amber-700 border border-amber-200")">
+                <i class="fas fa-envelope-circle-check"></i> Email @(Model.EmailConfirmed ? "Verified" : "Not Verified")
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium @(Model.TwoFactorEnabled ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-600 border border-gray-200")">
+                <i class="fas fa-shield-halved"></i> Two-Factor @(Model.TwoFactorEnabled ? "On" : "Off")
+            </span>
+            @if (Model.Roles.Count > 1)
+            {
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <i class="fas fa-users-gear"></i> Roles: @string.Join(", ", Model.Roles)
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div x-show="editProfileOpen" x-cloak
+     x-transition:enter="transition ease-out duration-150"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-100"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+     x-on:keydown.escape.window="editProfileOpen = false">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" x-on:click="editProfileOpen = false"></div>
+    <div class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="transform opacity-0 scale-95"
+         x-transition:enter-end="transform opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="transform opacity-100 scale-100"
+         x-transition:leave-end="transform opacity-0 scale-95">
+        <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-admin-blue to-admin-blue-light">
+            <h3 class="text-white font-semibold text-lg"><i class="fas fa-user-edit mr-2"></i>Edit Profile</h3>
+            <button type="button" x-on:click="editProfileOpen = false" class="text-white/80 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <form asp-controller="Profile" asp-action="UpdateProfile" method="post" enctype="multipart/form-data" class="p-6 space-y-4">
+            @Html.AntiForgeryToken()
+
+            <div class="flex items-center gap-4">
+                <div class="relative shrink-0">
+                    <div class="w-20 h-20 rounded-full ring-2 ring-admin-blue/30 overflow-hidden @(string.IsNullOrEmpty(Model.ProfilePath) ? fallbackColor : "bg-white") flex items-center justify-center">
+                        @if (!string.IsNullOrEmpty(Model.ProfilePath))
+                        {
+                            <img src="@Model.ProfilePath" alt="avatar" class="w-full h-full object-cover" id="editAvatarPreview" />
+                        }
+                        else
+                        {
+                            <span class="text-white text-2xl font-bold" id="editAvatarInitials">@initials</span>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
+                    <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
+                        <i class="fas fa-camera"></i> Choose Photo
+                        <input type="file" name="photo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
+                               x-on:change="
+                                   const f = $event.target.files[0];
+                                   if (f) {
+                                       const r = new FileReader();
+                                       r.onload = e => { const img = document.getElementById('editAvatarPreview'); if (img) { img.src = e.target.result; } };
+                                       r.readAsDataURL(f);
+                                   }" />
+                    </label>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB</p>
+                </div>
+            </div>
+
+            <div>
+                <label asp-for="FullName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input name="fullName" value="@Model.FullName" required maxlength="50"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none" />
+            </div>
+
+            <div>
+                <label for="designation" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                <input name="designation" id="designation" value="@Model.Designation" maxlength="100"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none" />
+            </div>
+
+            <div>
+                <label for="phoneNumber" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input name="phoneNumber" id="phoneNumber" value="@Model.PhoneNumber" maxlength="20"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none" />
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" x-on:click="editProfileOpen = false"
+                        class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 rounded-lg bg-admin-blue text-white text-sm font-medium hover:bg-admin-blue-dark transition-colors shadow-sm">
+                    <i class="fas fa-save mr-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
