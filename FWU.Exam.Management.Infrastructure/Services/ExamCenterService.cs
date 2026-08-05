@@ -176,11 +176,21 @@ public class ExamCenterService(AppDbContext context, IUserContext userContext) :
         if (!userContext.IsSuperAdmin)
         {
             if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
-                query = query.Where(ec => ec.College != null && ec.College.CollegePrograms!.Any(cp => cp.Program != null && cp.Program.FacultyId == userContext.FacultyId.Value));
+                query = query.Where(ec =>
+                    ec.ExamSchedule != null && ec.ExamSchedule.Program != null &&
+                    ec.ExamSchedule.Program.FacultyId == userContext.FacultyId.Value);
             else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
-                query = query.Where(ec => ec.CollegeId == userContext.CollegeId.Value);
+            {
+                var collegeId = userContext.CollegeId.Value;
+                query = query.Where(ec =>
+                    ec.CollegeId == collegeId ||
+                    (ec.ExamCenterVenues != null && ec.ExamCenterVenues.Any(ecv => ecv.CollegeId == collegeId)) ||
+                    (ec.ExamCenterColleges != null && ec.ExamCenterColleges.Any(ecc => ecc.CollegeId == collegeId)));
+            }
             else
+            {
                 query = query.Where(ec => false);
+            }
         }
 
         if (!string.IsNullOrEmpty(search))

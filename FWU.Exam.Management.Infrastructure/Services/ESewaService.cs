@@ -118,8 +118,11 @@ public class ESewaService(AppDbContext context, HttpClient httpClient) : IESewaS
 
     private async Task<ESewaConfiguration> GetConfigAsync()
     {
+        var currentTenantId = AppDbContext.GetCurrentTenantId();
         var config = await context.ESewaConfigurations
             .AsNoTracking()
+            .OrderBy(c => c.TenantId != currentTenantId)
+            .ThenBy(c => c.Id)
             .FirstOrDefaultAsync();
 
         if (config == null)
