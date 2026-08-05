@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
@@ -120,7 +121,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [AllowAnonymous]
-    public IActionResult ESewaPayment()
+    public async Task<IActionResult> ESewaPayment()
     {
         var amount = decimal.TryParse(TempData["EsewaAmount"] as string, out var amt) ? amt : 1000m;
         var transactionUuid = TempData["EsewaTransactionUuid"] as string ?? esewaService.GenerateTransactionUuid();
@@ -128,7 +129,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var successUrl = Url.Action(nameof(ESewaSuccess), "Entrance", new { area = "Exams" }, Request.Scheme);
         var failureUrl = Url.Action(nameof(ESewaFailure), "Entrance", new { area = "Exams" }, Request.Scheme);
 
-        var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
+        var formData = await esewaService.GeneratePaymentFormDataAsync(amount, transactionUuid, successUrl!, failureUrl!);
 
         return View(formData);
     }
@@ -155,7 +156,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
                 return RedirectToAction(nameof(VerifyPayment));
             }
 
-            if (!esewaService.VerifyResponseSignature(response, decodedJson))
+            if (!await esewaService.VerifyResponseSignatureAsync(response, decodedJson))
             {
                 await LogEsewaCallback(null, response.TransactionCode, false, decodedJson, "Signature verification failed");
                 TempData["ErrorMessage"] = "Signature verification failed.";
@@ -491,7 +492,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkUnderReview(int id)
     {
@@ -553,7 +554,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     }
 
     [HttpPost]
-    [Authorize(Roles = "SuperAdmin,FacultyAdmin,CollegeAdmin")]
+    [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConvertToAdmission(int id)
     {

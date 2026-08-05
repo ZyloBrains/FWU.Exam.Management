@@ -65,14 +65,14 @@ Khalti redirects to `ReturnUrl` with query params: `pidx`, `status`, `transactio
 
 ## 7. Key configuration
 
-**`appsettings.json`:**
+Khalti credentials are **per-tenant, stored in the database** (`KhaltiConfigurations` table, tenant-scoped). Configure each tenant's gateway settings via the admin UI: **Core > Khalti Configurations**.
 
-```json
-"Khalti": {
-    "BaseUrl": "https://dev.khalti.com/api/v2",
-    "SecretKey": "your-secret-key"
-}
-```
+- `PostUrl` — initiate endpoint, e.g. `https://dev.khalti.com/api/v2/epayment/initiate/`
+- `VerifyUrl` — lookup endpoint, e.g. `https://dev.khalti.com/api/v2/epayment/lookup/`
+- `AuthorizationKey` — secret key used in the `Authorization: Key {key}` header
+- `WebsiteUrl` — fallback website URL used when a request doesn't supply one
+
+Runtime reads the current tenant's row; if none exists, payment initiation throws "Khalti configuration is not set up for this tenant."
 
 ## 8. Response model (must use JsonPropertyName)
 

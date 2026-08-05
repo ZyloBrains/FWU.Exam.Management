@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="dotnet-tools.json" />
+    <File Path="README.md" />
+  </Folder>
   <Project Path="FWU.Exam.Management.Api/FWU.Exam.Management.Api.csproj" />
   <Project Path="FWU.Exam.Management.Application/FWU.Exam.Management.Application.csproj" />
   <Project Path="FWU.Exam.Management.Domain/FWU.Exam.Management.Domain.csproj" />

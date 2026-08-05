@@ -99,11 +99,20 @@ public class MarksheetViewModel
     public string? StudentName { get; set; }
     public string? Program { get; set; }
     public string? ExamSchedule { get; set; }
+    public string? Semester { get; set; }
+    public int? SemesterId { get; set; }
+    public int SemesterYear { get; set; }
+    public int SemesterNumber { get; set; }
+    public string? Level { get; set; }
+    public string? ExamType { get; set; }
     public string? AcademicYear { get; set; }
     public string? College { get; set; }
     public List<MarksheetSubjectViewModel> Subjects { get; set; } = new();
     public string? TotalGpa { get; set; }
     public string? Result { get; set; }
+    public string? TheoryGrade { get; set; }
+    public string? PracticalGrade { get; set; }
+    public string? SymbolNumber { get; set; }
     public int ExamScheduleId { get; set; }
     public int TotalPassed => Subjects.Count(s => s.IsPassed);
     public int TotalFailed => Subjects.Count(s => s.Status == "Fail");
@@ -115,12 +124,14 @@ public class MarksheetSubjectViewModel
     public int ExamSubjectResultId { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }
+    public float? CreditHours { get; set; }
     public float? TheoryMarks { get; set; }
     public float? PracticalMarks { get; set; }
     public float? InternalMarks { get; set; }
     public float? TotalMarks { get; set; }
     public string? Grade { get; set; }
-    public string? GradePoint { get; set; }
+    public decimal? GradeValue { get; set; }
+    public decimal? GradePoint { get; set; }
     public bool IsPassed { get; set; }
     public string? Status { get; set; }
 }

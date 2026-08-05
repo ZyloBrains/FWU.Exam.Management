@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Permissions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -23,14 +24,14 @@ public class ManagePermissionsController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var isSuperAdmin = await userManager.IsInRoleAsync(user, "SuperAdmin");
+        var isSuperAdmin = await userManager.IsInRoleAsync(user, Role.SuperAdmin);
         var userPermissions = await permissionService.GetUserPermissionsAsync(user.Id);
         var userPermSet = new HashSet<string>(userPermissions);
 
         // Roles this user can manage (SuperAdmin sees all, CollegeAdmin sees FacultyAdmin + Student)
         var targetRoleNames = isSuperAdmin
-            ? new[] { "FacultyAdmin", "CollegeAdmin", "Student" }
-            : new[] { "FacultyAdmin", "Student" };
+            ? new[] { Role.FacultyAdmin, Role.CollegeAdmin, Role.Student }
+            : new[] { Role.FacultyAdmin, Role.Student };
 
         var targetRoles = await roleManager.Roles
             .Where(r => targetRoleNames.Contains(r.Name ?? ""))
@@ -59,12 +60,12 @@ public class ManagePermissionsController(
         var role = await roleManager.FindByIdAsync(id);
         if (role == null) return NotFound();
 
-        var isSuperAdmin = await userManager.IsInRoleAsync(user, "SuperAdmin");
+        var isSuperAdmin = await userManager.IsInRoleAsync(user, Role.SuperAdmin);
         var userPermissions = await permissionService.GetUserPermissionsAsync(user.Id);
         var userPermSet = new HashSet<string>(userPermissions);
 
         // Only allow managing FacultyAdmin or Student for CollegeAdmin
-        if (!isSuperAdmin && role.Name != "FacultyAdmin" && role.Name != "Student")
+        if (!isSuperAdmin && role.Name != Role.FacultyAdmin && role.Name != Role.Student)
             return Forbid();
 
         var allPermissions = await permissionService.GetAllPermissionsAsync();
@@ -109,9 +110,9 @@ public class ManagePermissionsController(
         var role = await roleManager.FindByIdAsync(id);
         if (role == null) return NotFound();
 
-        var isSuperAdmin = await userManager.IsInRoleAsync(user, "SuperAdmin");
+        var isSuperAdmin = await userManager.IsInRoleAsync(user, Role.SuperAdmin);
 
-        if (!isSuperAdmin && role.Name != "FacultyAdmin" && role.Name != "Student")
+        if (!isSuperAdmin && role.Name != Role.FacultyAdmin && role.Name != Role.Student)
             return Forbid();
 
         // CollegeAdmin can only grant permissions they themselves have

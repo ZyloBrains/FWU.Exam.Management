@@ -378,6 +378,3 @@ FWU.Exam.Management.Web/tailwindcss.exe
 # Logs
 logs/
 *.log
-
-/learning
-/Plan

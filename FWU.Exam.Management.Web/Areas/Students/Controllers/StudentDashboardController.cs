@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
@@ -20,7 +21,7 @@ using Microsoft.Extensions.Logging;
 namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 
 [Area("Students")]
-[Authorize(Roles = "Student,SuperAdmin,SystemAdmin")]
+[Authorize(Roles = Role.Student + "," + Role.SuperAdmin)]
 public class StudentDashboardController(
     IStudentDashboardService dashboardService,
     UserManager<AppUser> userManager,
@@ -28,7 +29,6 @@ public class StudentDashboardController(
     IEmailSender emailSender,
     IESewaService esewaService,
     IKhaltiService khaltiService,
-    IConfiguration configuration,
     ILogger<StudentDashboardController> logger,
     FWU.Exam.Management.Web.Helpers.IFileUploadHelper fileUploadHelper,
     AppDbContext context)
@@ -433,7 +433,7 @@ public class StudentDashboardController(
         var isSupplementary = schedule.ExamType?.Name == "Supplementary";
         if (isSupplementary)
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId);
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId, programId);
             if (!hasFailed)
             {
                 TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
@@ -442,12 +442,12 @@ public class StudentDashboardController(
         }
         else
         {
-            var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
-            if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
-            {
-                TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
-                return RedirectToAction(nameof(ExamForms));
-            }
+            //var currentSemesterId = await dashboardService.GetCurrentSemesterIdForStudentAsync(user.Id);
+            //if (!currentSemesterId.HasValue || schedule.SemesterId != currentSemesterId.Value)
+            //{
+            //    TempData["ErrorMessage"] = "You are not eligible for this exam schedule.";
+            //    return RedirectToAction(nameof(ExamForms));
+            //}
         }
 
         var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
@@ -461,7 +461,7 @@ public class StudentDashboardController(
 
         if (paymentTypes.Count == 0)
         {
-            hasESewa = !string.IsNullOrEmpty(configuration["ESewa:PostUrl"]);
+            hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
         var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
@@ -596,13 +596,13 @@ public class StudentDashboardController(
 
         var transactionUuid = esewaService.GenerateTransactionUuid();
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
-        var successUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:SuccessUrl"]) ? configuration["ESewa:SuccessUrl"]! : defaultCallbackUrl;
-        var failureUrl = !string.IsNullOrWhiteSpace(configuration["ESewa:FailureUrl"]) ? configuration["ESewa:FailureUrl"]! : defaultCallbackUrl;
+        var successUrl = defaultCallbackUrl;
+        var failureUrl = defaultCallbackUrl;
 
         logger.LogInformation("ESewaPayment: amount={Amount}, transactionUuid={Uuid}, successUrl={SuccessUrl}, failureUrl={FailureUrl}",
             amount, transactionUuid, successUrl, failureUrl);
 
-        var formData = esewaService.GeneratePaymentFormData(amount, transactionUuid, successUrl!, failureUrl!);
+        var formData = await esewaService.GeneratePaymentFormDataAsync(amount, transactionUuid, successUrl!, failureUrl!);
 
         HttpContext.Session.SetInt32("ESewaLogId", logId);
         ViewBag.LogId = logId;
@@ -670,7 +670,7 @@ public class StudentDashboardController(
             logger.LogInformation("ESewaCallback: txCode={TxCode}, status={Status}, totalAmount={Amount}, uuid={Uuid}, productCode={ProductCode}",
                 response.TransactionCode, response.Status, response.TotalAmount, response.TransactionUuid, response.ProductCode);
 
-            var sigValid = esewaService.VerifyResponseSignature(response, decodedJson);
+            var sigValid = await esewaService.VerifyResponseSignatureAsync(response, decodedJson);
             logger.LogInformation("ESewaCallback: signatureValid={SigValid}", sigValid);
 
             if (!sigValid)
@@ -999,6 +999,7 @@ public class StudentDashboardController(
 
         var resultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var examRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
+        var gradePointMap = await GetGradePointMapAsync();
 
         var marksheets = new List<MarksheetViewModel>();
 
@@ -1009,7 +1010,7 @@ public class StudentDashboardController(
 
             if (examScheduleId.HasValue && scheduleId.Value != examScheduleId.Value) continue;
 
-            var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value);
+            var subjects = GetMarksheetSubjects(examRegistrations, scheduleId.Value, gradePointMap);
 
             marksheets.Add(new MarksheetViewModel
             {
@@ -1017,10 +1018,16 @@ public class StudentDashboardController(
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
+                Semester = rr.ExamSchedule?.Semester?.Name,
+                Level = rr.ExamSchedule?.Level?.LevelName,
+                ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
                 College = rr.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
+                TheoryGrade = rr.TheoryObtainedGrade,
+                PracticalGrade = rr.PracticalObtainedGrade,
+                SymbolNumber = rr.SymbolNumber,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1032,13 +1039,17 @@ public class StudentDashboardController(
 
             if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
-                var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId);
+                var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId, gradePointMap);
                 marksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
+                    Semester = er.ExamSchedule?.Semester?.Name,
+                    Level = er.ExamSchedule?.Level?.LevelName,
+                    ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
+                    SymbolNumber = MarksheetSymbolNumber(er),
                     Result = "Pending",
                     Subjects = subjects
                 });
@@ -1048,10 +1059,12 @@ public class StudentDashboardController(
         var sorted = marksheets.OrderByDescending(m => m.ExamScheduleId).ToList();
 
         ViewBag.StudentRegistration = registration;
-        ViewBag.SymbolNumber = sorted.Count > 0 ? examRegistrations.FirstOrDefault(er => er.ExamScheduleId == sorted.First().ExamScheduleId)?.SymbolNumber : null;
 
         return View(sorted);
     }
+
+    private static string? MarksheetSymbolNumber(ExamRegistration? er)
+        => !string.IsNullOrEmpty(er?.ExamRollNumber) ? er.ExamRollNumber : er?.SymbolNumber;
 
     public async Task<IActionResult> Marksheet()
     {
@@ -1068,6 +1081,7 @@ public class StudentDashboardController(
 
         var allResultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var allExamRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
+        var gradePointMap = await GetGradePointMapAsync();
 
         var allMarksheets = new List<MarksheetViewModel>();
 
@@ -1076,7 +1090,7 @@ public class StudentDashboardController(
             var scheduleId = rr.ExamScheduleId;
             if (scheduleId == null) continue;
 
-            var subjects = GetMarksheetSubjects(allExamRegistrations, scheduleId.Value);
+            var subjects = GetMarksheetSubjects(allExamRegistrations, scheduleId.Value, gradePointMap);
 
             allMarksheets.Add(new MarksheetViewModel
             {
@@ -1084,10 +1098,19 @@ public class StudentDashboardController(
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
+                Semester = rr.ExamSchedule?.Semester?.Name,
+                SemesterId = rr.ExamSchedule?.Semester?.Id,
+                SemesterYear = rr.ExamSchedule?.Semester?.Year ?? 0,
+                SemesterNumber = rr.ExamSchedule?.Semester?.Number ?? 0,
+                Level = rr.ExamSchedule?.Level?.LevelName,
+                ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
                 College = rr.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
+                TheoryGrade = rr.TheoryObtainedGrade,
+                PracticalGrade = rr.PracticalObtainedGrade,
+                SymbolNumber = rr.SymbolNumber,
                 ExamScheduleId = scheduleId.Value,
                 Subjects = subjects
             });
@@ -1097,23 +1120,35 @@ public class StudentDashboardController(
         {
             if (!allMarksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
-                var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId);
+                var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId, gradePointMap);
                 allMarksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
+                    Semester = er.ExamSchedule?.Semester?.Name,
+                    SemesterId = er.ExamSchedule?.Semester?.Id,
+                    SemesterYear = er.ExamSchedule?.Semester?.Year ?? 0,
+                    SemesterNumber = er.ExamSchedule?.Semester?.Number ?? 0,
+                    Level = er.ExamSchedule?.Level?.LevelName,
+                    ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
+                    SymbolNumber = MarksheetSymbolNumber(er),
                     Result = "Pending",
                     Subjects = subjects
                 });
             }
         }
 
-        ViewBag.StudentRegistration = registration;
-        ViewBag.SymbolNumber = allExamRegistrations.FirstOrDefault()?.SymbolNumber;
+        var sorted = allMarksheets
+            .OrderBy(m => m.SemesterYear)
+            .ThenBy(m => m.SemesterNumber)
+            .ThenBy(m => m.ExamScheduleId)
+            .ToList();
 
-        return View(allMarksheets.OrderByDescending(m => m.ExamScheduleId).ToList());
+        ViewBag.StudentRegistration = registration;
+
+        return View(sorted);
     }
 
     public async Task<IActionResult> RetotalRequests()
@@ -1132,9 +1167,16 @@ public class StudentDashboardController(
                 .ThenInclude(esr => esr!.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
             .Include(r => r.ExamRegistration)
-                .ThenInclude(er => er!.ExamSchedule)
             .OrderByDescending(r => r.RequestedDate)
             .ToListAsync();
+
+        var schedules = await dashboardService.GetExamSchedulesByIdsAsync(
+            requests.Where(r => r.ExamRegistration != null).Select(r => r.ExamRegistration!.ExamScheduleId));
+        foreach (var request in requests)
+        {
+            if (request.ExamRegistration != null)
+                request.ExamRegistration.ExamSchedule = schedules.FirstOrDefault(s => s.Id == request.ExamRegistration.ExamScheduleId);
+        }
 
         return View(requests);
     }
@@ -1154,7 +1196,6 @@ public class StudentDashboardController(
                 .Include(esr => esr.SubjectOffering)
                     .ThenInclude(so => so!.SubjectCatalog)
                 .Include(esr => esr.ExamRegistration)
-                    .ThenInclude(er => er!.ExamSchedule)
                 .FirstOrDefaultAsync(esr => esr.Id == examSubjectResultId.Value);
 
             if (result != null)
@@ -1162,6 +1203,13 @@ public class StudentDashboardController(
                 ViewBag.SubjectName = result.SubjectOffering?.SubjectCatalog?.SubjectName;
                 ViewBag.OriginalGrade = result.GradeLetter;
                 ViewBag.OriginalMarks = result.ObtainedMarks;
+
+                if (result.ExamRegistration != null)
+                {
+                    var schedule = await dashboardService.GetExamScheduleByIdAsync(result.ExamRegistration.ExamScheduleId);
+                    result.ExamRegistration.ExamSchedule = schedule;
+                }
+
                 ViewBag.ExamScheduleName = result.ExamRegistration?.ExamSchedule?.ExamScheduleName;
             }
         }
@@ -1220,14 +1268,22 @@ public class StudentDashboardController(
         return RedirectToAction(nameof(RetotalRequests));
     }
 
-    private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(List<ExamRegistration> examRegistrations, int examScheduleId)
+    private static List<MarksheetSubjectViewModel> GetMarksheetSubjects(
+        List<ExamRegistration> examRegistrations,
+        int examScheduleId,
+        IReadOnlyDictionary<string, decimal> gradePointByLetter)
     {
-        var registration = examRegistrations.FirstOrDefault(er => er.ExamScheduleId == examScheduleId);
-        if (registration?.ExamSubjectResults == null || !registration.ExamSubjectResults.Any())
-            return new();
-
-        return registration.ExamSubjectResults
+        var results = examRegistrations
+            .Where(er => er.ExamScheduleId == examScheduleId)
+            .SelectMany(er => er.ExamSubjectResults ?? Enumerable.Empty<ExamSubjectResult>())
             .Where(esr => esr.IsActive)
+            .GroupBy(esr => esr.SubjectOfferingId)
+            .Select(g => g.OrderByDescending(esr => esr.Id).First())
+            .ToList();
+
+        if (results.Count == 0) return new();
+
+        return results
             .Select(esr =>
             {
                 var gradeLetter = esr.GradeLetter?.Trim().ToUpperInvariant();
@@ -1235,16 +1291,27 @@ public class StudentDashboardController(
                 var isSubmitted = esr.IsSubmitted;
                 var hasGrade = !string.IsNullOrEmpty(gradeLetter);
 
+                var creditHours = esr.SubjectOffering?.SubjectCatalog?.CreditHours;
+                var gradeValue = hasGrade && gradePointByLetter.TryGetValue(gradeLetter!, out var gradeValueRaw)
+                    ? gradeValueRaw
+                    : (decimal?)null;
+                var gradePoint = gradeValue.HasValue
+                    ? (creditHours.HasValue ? gradeValue.Value * creditHours.Value : gradeValue.Value)
+                    : (decimal?)null;
+
                 return new MarksheetSubjectViewModel
                 {
                     ExamSubjectResultId = esr.Id,
                     SubjectName = esr.SubjectOffering?.SubjectCatalog?.SubjectName,
                     SubjectCode = esr.SubjectOffering?.SubjectCatalog?.SubjectCode,
+                    CreditHours = creditHours,
                     TheoryMarks = esr.ObtainedMarksTheory,
                     PracticalMarks = esr.ObtainedMarksPractical,
                     InternalMarks = esr.ObtainedMarksTheoryInternal,
                     TotalMarks = esr.ObtainedMarks,
                     Grade = gradeLetter,
+                    GradeValue = gradeValue,
+                    GradePoint = gradePoint,
                     IsPassed = hasGrade && !isFailed,
                     Status = !hasGrade ? "Pending"
                         : isSubmitted && isFailed ? "Fail"
@@ -1255,6 +1322,47 @@ public class StudentDashboardController(
             .OrderBy(s => s.SubjectName)
             .ToList();
     }
+
+    private async Task<Dictionary<string, decimal>> GetGradePointMapAsync()
+    {
+        var map = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+
+        var definitions = await context.GradingSchemes
+            .AsNoTracking()
+            .Include(gs => gs.GradeDefinitions)
+            .Where(gs => gs.IsActive)
+            .SelectMany(gs => gs.GradeDefinitions)
+            .ToListAsync();
+
+        foreach (var gd in definitions.OrderBy(gd => gd.DisplayOrder))
+        {
+            var letter = gd.GradeLetter?.Trim().ToUpperInvariant();
+            if (!string.IsNullOrEmpty(letter))
+            {
+                map.TryAdd(letter, gd.GradePoint);
+            }
+        }
+
+        foreach (var standard in StandardGradePoints)
+        {
+            map.TryAdd(standard.Key, standard.Value);
+        }
+
+        return map;
+    }
+
+    private static readonly IReadOnlyDictionary<string, decimal> StandardGradePoints = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["A+"] = 4.0m,
+        ["A"] = 3.7m,
+        ["B+"] = 3.3m,
+        ["B"] = 3.0m,
+        ["C+"] = 2.7m,
+        ["C"] = 2.3m,
+        ["D"] = 2.0m,
+        ["F"] = 0.0m,
+        ["NG"] = 0.0m
+    };
 
     private static bool IsScheduleDeadlinePassed(ExamSchedule schedule)
     {

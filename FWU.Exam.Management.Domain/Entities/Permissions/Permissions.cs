@@ -1,3 +1,5 @@
+using FWU.Exam.Management.Domain.Constants;
+
 namespace FWU.Exam.Management.Domain.Entities.Permissions;
 
 public static class Permissions
@@ -641,9 +643,9 @@ public static class Permissions
     // Permission set per role
     public static readonly Dictionary<string, string[]> RolePermissions = new()
     {
-        ["SuperAdmin"] = All.Select(p => p.Name).ToArray(),
+        [Role.SuperAdmin] = All.Select(p => p.Name).ToArray(),
 
-        ["FacultyAdmin"] =
+        [Role.FacultyAdmin] =
         [
             DashboardView,
 
@@ -699,7 +701,7 @@ public static class Permissions
             BackupRestoreManage,
         ],
 
-        ["CollegeAdmin"] =
+        [Role.CollegeAdmin] =
         [
             DashboardView,
 
@@ -735,7 +737,7 @@ public static class Permissions
             BillTitlesView, BillTitlesCreate, BillTitlesEdit, BillTitlesDelete,
         ],
 
-        ["Student"] =
+        [Role.Student] =
         [
             DashboardView,
             StudentPortalProfile,

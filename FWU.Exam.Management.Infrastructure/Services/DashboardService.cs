@@ -53,11 +53,20 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
 
     public async Task<DashboardStats> GetFacultyDashboardStatsAsync(int facultyId)
     {
-        var collegeIds = await context.CollegePrograms
+        var tenantCollegeIds = await context.Colleges
+            .AsNoTracking()
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var collegeIds = (await context.CollegePrograms
+            .IgnoreQueryFilters()
+            .AsNoTracking()
             .Where(cp => cp.Program != null && cp.Program.FacultyId == facultyId)
             .Select(cp => cp.CollegeId)
             .Distinct()
-            .ToListAsync();
+            .ToListAsync())
+            .Intersect(tenantCollegeIds)
+            .ToList();
 
         var facultyUserIds = await userManager.Users
             .Where(u => u.FacultyId == facultyId)
@@ -74,8 +83,8 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
         var totalBatches = await context.Batches.CountAsync();
         var activePrograms = await context.Programs.CountAsync(p => p.FacultyId == facultyId && p.IsActive);
         var activeExamSchedules = await context.ExamSchedules.CountAsync(es => es.Program != null && es.Program.FacultyId == facultyId && es.IsActive);
-        var totalColleges = await context.CollegePrograms.Where(cp => cp.Program != null && cp.Program.FacultyId == facultyId).Select(cp => cp.CollegeId).Distinct().CountAsync();
-        var activeColleges = await context.CollegePrograms.Where(cp => cp.Program != null && cp.Program.FacultyId == facultyId && cp.College != null && cp.College.IsActive).Select(cp => cp.CollegeId).Distinct().CountAsync();
+        var totalColleges = collegeIds.Count;
+        var activeColleges = await context.Colleges.CountAsync(c => collegeIds.Contains(c.Id) && c.IsActive);
         var totalStudents = await context.StudentRegistrations.CountAsync(s => s.FacultyId == facultyId);
         var totalExamRegistrations = await context.ExamRegistrations.CountAsync(e => e.Program != null && e.Program.FacultyId == facultyId);
         var activeStudents = await context.StudentRegistrations.CountAsync(s => s.FacultyId == facultyId && s.IsActive);

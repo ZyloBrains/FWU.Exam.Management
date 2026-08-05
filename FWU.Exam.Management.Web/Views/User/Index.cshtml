@@ -119,10 +119,10 @@
                                         {
                                             var badgeClass = role switch
                                             {
-                                                "SuperAdmin" => "bg-purple-100 text-purple-700",
-                                                "FacultyAdmin" => "bg-blue-100 text-blue-700",
-                                                "CollegeAdmin" => "bg-amber-100 text-amber-700",
-                                                "Student" => "bg-green-100 text-green-700",
+                                                Role.SuperAdmin => "bg-purple-100 text-purple-700",
+                                                Role.FacultyAdmin => "bg-blue-100 text-blue-700",
+                                                Role.CollegeAdmin => "bg-amber-100 text-amber-700",
+                                                Role.Student => "bg-green-100 text-green-700",
                                                 _ => "bg-gray-100 text-gray-700"
                                             };
                                             <span class="inline-block px-2 py-0.5 text-xs font-medium @badgeClass rounded">@role</span>
@@ -216,10 +216,10 @@
                             {
                                 var badgeClass = role switch
                                 {
-                                    "SuperAdmin" => "bg-purple-100 text-purple-700",
-                                    "FacultyAdmin" => "bg-blue-100 text-blue-700",
-                                    "CollegeAdmin" => "bg-amber-100 text-amber-700",
-                                    "Student" => "bg-green-100 text-green-700",
+                                    Role.SuperAdmin => "bg-purple-100 text-purple-700",
+                                    Role.FacultyAdmin => "bg-blue-100 text-blue-700",
+                                    Role.CollegeAdmin => "bg-amber-100 text-amber-700",
+                                    Role.Student => "bg-green-100 text-green-700",
                                     _ => "bg-gray-100 text-gray-700"
                                 };
                                 <span class="inline-block px-2 py-0.5 text-xs font-medium @badgeClass rounded">@role</span>

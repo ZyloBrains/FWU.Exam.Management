@@ -1,4 +1,7 @@
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -182,5 +185,138 @@ public class StudentDashboardServiceTests
         var semesterId = await service.GetCurrentSemesterIdForStudentAsync(UserId);
 
         Assert.Null(semesterId);
+    }
+
+    [Fact]
+    public async Task GetResultRecordsAsync_LoadsExamScheduleBelongingToAnotherTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(2), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Tenants.Add(new Tenant
+            {
+                Id = 2,
+                Name = "EEO",
+                OfficeCode = "EEO",
+                ContactNumber = "0",
+                Address = "Mahendranagar",
+                Email = "eng@test.com",
+                TenantType = TenantType.Standard,
+                IsActive = true
+            });
+
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
+
+            ctx.TenantColleges.Add(new TenantCollege { TenantId = 2, CollegeId = TestData.CollegeId });
+
+            ctx.ResultRecords.Add(new ResultRecord
+            {
+                Id = 1,
+                TenantId = 2,
+                AcademicYearId = TestData.AcademicYearId,
+                ProgramsId = TestData.ProgramId,
+                ExamTypeId = TestData.Regular,
+                CollegeId = TestData.CollegeId,
+                ExamScheduleId = 21,
+                RegistrationNumber = "REG10",
+                SymbolNumber = "SYM1",
+                Year = "I",
+                Part = "I",
+                DateOfBirthBs = "2050-01-01",
+                ResultRecordMasterId = 1,
+                TotalObtainedGrade = "B",
+                Gpa = "3.00",
+                Result = "Pass",
+                StudentName = "Test Student"
+            });
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.GetResultRecordsAsync("REG10");
+
+        var rr = Assert.Single(result);
+        Assert.Equal(21, rr.ExamScheduleId);
+        Assert.NotNull(rr.ExamSchedule);
+        Assert.Equal("Schedule 21", rr.ExamSchedule!.ExamScheduleName);
+        Assert.NotNull(rr.ExamSchedule.Semester);
+        Assert.Equal(1, rr.ExamSchedule.Semester!.Year);
+    }
+
+    [Fact]
+    public async Task GetStudentExamRegistrationsAsync_KeepsRegistrationsWhenScheduleBelongsToAnotherTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(2), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Tenants.Add(new Tenant
+            {
+                Id = 2,
+                Name = "EEO",
+                OfficeCode = "EEO",
+                ContactNumber = "0",
+                Address = "Mahendranagar",
+                Email = "eng@test.com",
+                TenantType = TenantType.Standard,
+                IsActive = true
+            });
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
+            ctx.TenantColleges.Add(new TenantCollege { TenantId = 2, CollegeId = TestData.CollegeId });
+
+            ctx.SubjectCatalogs.Add(new SubjectCatalog
+            {
+                Id = 7,
+                SubjectCode = "SUB7",
+                SubjectName = "Subject 7",
+                SubjectTypeId = 1,
+                IsActive = true
+            });
+            ctx.SubjectOfferings.Add(new SubjectOffering
+            {
+                Id = 301,
+                TenantId = 2,
+                SubjectCatalogId = 7,
+                ProgramId = TestData.ProgramId,
+                SemesterId = 1,
+                IsCompulsory = true,
+                DisplayOrder = 1,
+                HasTheory = true,
+                HasPractical = false,
+                HasInternal = true,
+                TheoryFullMarks = 100,
+                TheoryPassMarks = 40
+            });
+
+            ctx.Users.Add(TestData.User(UserId, Email));
+
+            var sr = TestData.StudentRegistration(2, Email);
+            sr.TenantId = 2;
+            ctx.StudentRegistrations.Add(sr);
+
+            var voucher = TestData.Voucher(2, 2, 21);
+            voucher.TenantId = 2;
+            ctx.ApplicationVouchers.Add(voucher);
+
+            var examRegistration = TestData.ExamRegistration(2, 21, 2);
+            examRegistration.TenantId = 2;
+            ctx.ExamRegistrations.Add(examRegistration);
+
+            var subjectResult = TestData.Result(2, 2, 301, TestData.Regular, "B", 21);
+            subjectResult.TenantId = 2;
+            ctx.ExamSubjectResults.Add(subjectResult);
+        });
+
+        var service = CreateService(db);
+
+        var result = await service.GetStudentExamRegistrationsAsync(UserId);
+
+        var registration = Assert.Single(result);
+        Assert.Equal(21, registration.ExamScheduleId);
+        Assert.NotNull(registration.ExamSchedule);
+        Assert.Equal("Schedule 21", registration.ExamSchedule!.ExamScheduleName);
+
+        var subject = Assert.Single(registration.ExamSubjectResults!);
+        Assert.NotNull(subject.SubjectOffering?.SubjectCatalog);
+        Assert.Equal("Subject 7", subject.SubjectOffering!.SubjectCatalog!.SubjectName);
     }
 }
