@@ -54,6 +54,13 @@
                     <span asp-validation-for="Tenant.BannerImagePath" class="text-xs text-red-500 mt-1 block"></span>
                     <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Shown as the profile cover banner for this tenant.</p>
                 </div>
+                <div class="md:col-span-2">
+                    <label asp-for="Tenant.LogoPath" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Logo</label>
+                    <input type="file" name="logoImage" accept=".jpg,.jpeg,.png,.gif,.webp"
+                           class="w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                    <span asp-validation-for="Tenant.LogoPath" class="text-xs text-red-500 mt-1 block"></span>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Shown as the organization logo on this tenant's profile.</p>
+                </div>
                 <div>
                     <label asp-for="Tenant.TenantType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
                     <select asp-for="Tenant.TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" id="TenantTypeSelect"></select>

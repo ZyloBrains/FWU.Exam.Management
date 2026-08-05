@@ -62,6 +62,20 @@
                     <span asp-validation-for="BannerImagePath" class="text-xs text-red-500 mt-1 block"></span>
                     <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Leave empty to keep the current banner.</p>
                 </div>
+                <div class="md:col-span-2">
+                    <label asp-for="LogoPath" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Logo</label>
+                    <input type="hidden" asp-for="LogoPath" />
+                    @if (!string.IsNullOrEmpty(Model.LogoPath))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.LogoPath" alt="Logo" class="h-16 w-40 object-contain border border-gray-200 rounded-md bg-gray-50" />
+                        </div>
+                    }
+                    <input type="file" name="logoImage" accept=".jpg,.jpeg,.png,.gif,.webp"
+                           class="w-full text-sm text-gray-600 file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                    <span asp-validation-for="LogoPath" class="text-xs text-red-500 mt-1 block"></span>
+                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB. Leave empty to keep the current logo.</p>
+                </div>
                 <div>
                     <label asp-for="TenantType" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Tenant Type</label>
                     <select asp-for="TenantType" asp-items="Html.GetEnumSelectList<FWU.Exam.Management.Domain.Enums.TenantType>()" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></select>

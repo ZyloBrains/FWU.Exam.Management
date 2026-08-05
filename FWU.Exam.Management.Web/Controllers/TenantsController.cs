@@ -66,7 +66,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [RequirePermission("tenants.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? bannerImage)
+    public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? bannerImage, IFormFile? logoImage)
     {
         viewModel.FacultyList = await GetAvailableFacultiesAsync();
 
@@ -84,6 +84,13 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
                 var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
                 if (bannerPath != null)
                     tenant.BannerImagePath = bannerPath;
+            }
+
+            if (logoImage != null && logoImage.Length > 0)
+            {
+                var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos");
+                if (logoPath != null)
+                    tenant.LogoPath = logoPath;
             }
 
             _context.Add(tenant);
@@ -172,7 +179,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [RequirePermission("tenants.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? bannerImage)
+    public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? bannerImage, IFormFile? logoImage)
     {
         if (id != tenant.Id) return NotFound();
 
@@ -185,6 +192,13 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
                     var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
                     if (bannerPath != null)
                         tenant.BannerImagePath = bannerPath;
+                }
+
+                if (logoImage != null && logoImage.Length > 0)
+                {
+                    var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos");
+                    if (logoPath != null)
+                        tenant.LogoPath = logoPath;
                 }
 
                 _context.Update(tenant);
