@@ -48,10 +48,14 @@ public class ProfileController(
         string? fullName,
         string? designation,
         string? phoneNumber,
-        IFormFile? photo)
+        IFormFile? photo,
+        IFormFile? signature)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
+
+        var roles = await userManager.GetRolesAsync(user);
+        var primaryRole = roles.FirstOrDefault() ?? Role.Student;
 
         if (!string.IsNullOrWhiteSpace(fullName))
             user.FullName = fullName.Trim();
@@ -75,6 +79,23 @@ public class ProfileController(
             }
         }
 
+        if (signature != null && signature.Length > 0
+            && (primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin))
+        {
+            try
+            {
+                var path = await fileUploadHelper.UploadAsync(signature, "uploads/signatures");
+                if (path != null)
+                    user.SignaturePath = path;
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogWarning("Signature upload rejected: {Message}", ex.Message);
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -84,7 +105,6 @@ public class ProfileController(
             return RedirectToAction(nameof(Index));
         }
 
-        var roles = await userManager.GetRolesAsync(user);
         if (roles.Contains(Role.Student))
         {
             var registration = await context.StudentRegistrations
@@ -162,6 +182,8 @@ public class ProfileController(
             TenantLogo = tenantLogo,
             OrganizationName = orgName,
             OrganizationLogo = orgLogo,
+            CoverImagePath = "/images/oce.png",
+            CanUploadSignature = primaryRole == Role.SuperAdmin || primaryRole == Role.FacultyAdmin,
         };
     }
 
@@ -189,6 +211,8 @@ public class ProfileController(
             TenantLogo = baseVm.TenantLogo,
             OrganizationName = baseVm.OrganizationName,
             OrganizationLogo = baseVm.OrganizationLogo,
+            CoverImagePath = baseVm.CoverImagePath,
+            CanUploadSignature = baseVm.CanUploadSignature,
             TotalTenants = await context.Tenants.CountAsync(),
             TotalUsers = await userManager.Users.CountAsync(),
             TotalColleges = await context.Colleges.CountAsync(),
@@ -222,6 +246,8 @@ public class ProfileController(
             TenantLogo = baseVm.TenantLogo,
             OrganizationName = baseVm.OrganizationName,
             OrganizationLogo = baseVm.OrganizationLogo,
+            CoverImagePath = baseVm.CoverImagePath,
+            CanUploadSignature = baseVm.CanUploadSignature,
         };
 
         if (user.FacultyId.HasValue)
@@ -282,6 +308,8 @@ public class ProfileController(
             TenantLogo = baseVm.TenantLogo,
             OrganizationName = baseVm.OrganizationName,
             OrganizationLogo = baseVm.OrganizationLogo,
+            CoverImagePath = baseVm.CoverImagePath,
+            CanUploadSignature = baseVm.CanUploadSignature,
         };
 
         if (user.CollegeId.HasValue)
@@ -342,6 +370,8 @@ public class ProfileController(
             TenantLogo = baseVm.TenantLogo,
             OrganizationName = baseVm.OrganizationName,
             OrganizationLogo = baseVm.OrganizationLogo,
+            CoverImagePath = baseVm.CoverImagePath,
+            CanUploadSignature = baseVm.CanUploadSignature,
         };
 
         var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");

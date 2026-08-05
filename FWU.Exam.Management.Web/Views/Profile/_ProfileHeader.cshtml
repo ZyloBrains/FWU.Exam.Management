@@ -11,8 +11,9 @@
 <!-- Profile Header Card -->
 <div class="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
     <!-- Cover Banner -->
-    <div class="h-36 sm:h-44 bg-gradient-to-r from-admin-blue via-admin-blue-light to-indigo-500 relative">
-        <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.35) 1px, transparent 0); background-size: 24px 24px;"></div>
+    <div class="h-36 sm:h-44 relative">
+        <img src="@Model.CoverImagePath" alt="@Model.OrganizationName" class="absolute inset-0 w-full h-full object-contain" />
+        <div class="absolute inset-0 bg-black/10"></div>
         <div class="absolute bottom-4 right-5 hidden sm:flex items-center gap-2">
             @if (!string.IsNullOrEmpty(Model.OrganizationLogo))
             {
@@ -84,13 +85,6 @@
                         <span class="inline-flex items-center gap-1.5">
                             <i class="fas fa-building text-gray-400 w-4 shrink-0"></i>
                             <span>@Model.TenantName</span>
-                        </span>
-                    }
-                    @if (Model.ValidFrom.HasValue || Model.ValidTo.HasValue)
-                    {
-                        <span class="inline-flex items-center gap-1.5">
-                            <i class="fas fa-calendar-check text-gray-400 w-4 shrink-0"></i>
-                            <span>@(Model.ValidFrom?.ToString("MMM yyyy") ?? "—") – @(Model.ValidTo?.ToString("MMM yyyy") ?? "Present")</span>
                         </span>
                     }
                 </div>
@@ -198,6 +192,42 @@
                 <input name="phoneNumber" id="phoneNumber" value="@Model.PhoneNumber" maxlength="20"
                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none" />
             </div>
+
+            @if (Model.CanUploadSignature)
+            {
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Controller Signature</label>
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="w-28 h-12 border border-gray-200 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+                            @if (!string.IsNullOrEmpty(Model.SignaturePath))
+                            {
+                                <img src="@Model.SignaturePath" alt="Signature" class="max-h-full max-w-full object-contain" id="editSignaturePreview" />
+                            }
+                            else
+                            {
+                                <span class="text-xs text-gray-400" id="editSignatureEmpty">No signature</span>
+                            }
+                        </div>
+                        <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
+                            <i class="fas fa-pen-nib"></i> @(string.IsNullOrEmpty(Model.SignaturePath) ? "Upload" : "Change")
+                            <input type="file" name="signature" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
+                                   x-on:change="
+                                       const f = $event.target.files[0];
+                                       if (f) {
+                                           const r = new FileReader();
+                                           r.onload = e => {
+                                               const img = document.getElementById('editSignaturePreview');
+                                               const empty = document.getElementById('editSignatureEmpty');
+                                               if (empty) empty.style.display = 'none';
+                                               if (img) { img.src = e.target.result; img.style.display = ''; }
+                                           };
+                                           r.readAsDataURL(f);
+                                       }" />
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-400">JPG, PNG, GIF or WebP up to 5 MB</p>
+                </div>
+            }
 
             <div class="flex justify-end gap-3 pt-2">
                 <button type="button" x-on:click="editProfileOpen = false"

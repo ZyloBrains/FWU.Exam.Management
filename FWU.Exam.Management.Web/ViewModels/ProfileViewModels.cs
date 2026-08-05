@@ -22,6 +22,8 @@ public class ProfileBaseViewModel
     public string? TenantLogo { get; set; }
     public string? OrganizationName { get; set; }
     public string? OrganizationLogo { get; set; }
+    public string? CoverImagePath { get; set; }
+    public bool CanUploadSignature { get; set; }
 }
 
 public class SuperAdminProfileViewModel : ProfileBaseViewModel

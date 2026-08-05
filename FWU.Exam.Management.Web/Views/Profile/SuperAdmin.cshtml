@@ -178,8 +178,17 @@
                         <dd class="text-sm text-gray-800 mt-1">@Model.RoleLabel</dd>
                     </div>
                     <div>
-                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Validity</dt>
-                        <dd class="text-sm text-gray-800 mt-1">@(Model.ValidFrom?.ToString("yyyy-MM-dd") ?? "—") to @(Model.ValidTo?.ToString("yyyy-MM-dd") ?? "—")</dd>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Controller Signature</dt>
+                        <dd class="mt-1">
+                            @if (!string.IsNullOrEmpty(Model.SignaturePath))
+                            {
+                                <img src="@Model.SignaturePath" alt="Controller Signature" class="h-12 object-contain border border-gray-200 rounded-lg p-1 bg-white" />
+                            }
+                            else
+                            {
+                                <span class="text-sm text-gray-400">Not set</span>
+                            }
+                        </dd>
                     </div>
                 </dl>
             </div>
