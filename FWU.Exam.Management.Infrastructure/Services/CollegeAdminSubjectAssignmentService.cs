@@ -98,9 +98,32 @@ public class CollegeAdminSubjectAssignmentService(AppDbContext context, IUserCon
 
     public async Task<bool> IsCollegeAdminAssignedToSubjectAsync(string collegeAdminUserId, int subjectOfferingId)
     {
-        return await context.CollegeAdminSubjectAssignments
+        if (await context.CollegeAdminSubjectAssignments
             .AnyAsync(tsa => tsa.CollegeAdminUserId == collegeAdminUserId
                           && tsa.SubjectOfferingId == subjectOfferingId
-                          && tsa.IsActive);
+                          && tsa.IsActive))
+            return true;
+
+        if (userContext.IsSuperAdmin)
+            return true;
+
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            return await context.SubjectOfferings
+                .AnyAsync(so => so.Id == subjectOfferingId
+                             && so.Program != null
+                             && so.Program.FacultyId == userContext.FacultyId.Value);
+
+        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        {
+            var collegeProgramIds = await context.CollegePrograms
+                .AsNoTracking()
+                .Where(cp => cp.CollegeId == userContext.CollegeId.Value)
+                .Select(cp => cp.ProgramId)
+                .ToListAsync();
+            return await context.SubjectOfferings
+                .AnyAsync(so => so.Id == subjectOfferingId && collegeProgramIds.Contains(so.ProgramId));
+        }
+
+        return false;
     }
 }
