@@ -30,10 +30,10 @@
         <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
             <!-- Avatar -->
             <div class="relative shrink-0">
-                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full ring-4 ring-white shadow-lg overflow-hidden @(string.IsNullOrEmpty(Model.ProfilePath) ? fallbackColor : "bg-white") flex items-center justify-center">
+                <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-xl border-2 border-gray-200 shadow-lg overflow-hidden @(string.IsNullOrEmpty(Model.ProfilePath) ? fallbackColor : "bg-white") flex items-center justify-center">
                     @if (!string.IsNullOrEmpty(Model.ProfilePath))
                     {
-                        <img src="@Model.ProfilePath" alt="@Model.FullName" class="w-full h-full object-cover" />
+                        <img src="@Model.ProfilePath" alt="@Model.FullName" class="w-full h-full object-contain" />
                     }
                     else
                     {
