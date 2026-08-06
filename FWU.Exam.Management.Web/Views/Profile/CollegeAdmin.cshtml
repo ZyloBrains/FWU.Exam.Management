@@ -27,13 +27,13 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Programs</p>
                         <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.ProgramCount</p>
                     </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-stream text-purple-600 text-xl"></i>
                     </div>
                 </div>
@@ -44,13 +44,13 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Students</p>
                         <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.StudentCount</p>
                     </div>
-                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-graduation-cap text-amber-600 text-xl"></i>
                     </div>
                 </div>
@@ -61,13 +61,13 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Staff</p>
                         <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.StaffCount</p>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-users text-green-600 text-xl"></i>
                     </div>
                 </div>
@@ -81,11 +81,11 @@
     <!-- Details -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <h3 class="text-base sm:text-lg font-semibold text-gray-800">Personal Information</h3>
                 <p class="text-xs sm:text-sm text-gray-500 mt-1">Basic personal details</p>
             </div>
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
                 <dl class="grid grid-cols-1 gap-x-8 gap-y-5">
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Full Name</dt>
@@ -108,11 +108,11 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <h3 class="text-base sm:text-lg font-semibold text-gray-800">College Information</h3>
                 <p class="text-xs sm:text-sm text-gray-500 mt-1">Details of the college</p>
             </div>
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
                 <dl class="grid grid-cols-1 gap-x-8 gap-y-5">
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">College</dt>
@@ -128,7 +128,7 @@
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</dt>
-                        <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.CollegeEmail) ? "—" : Model.CollegeEmail)</dd>
+                        <dd class="text-sm text-gray-800 mt-1 break-words">@(string.IsNullOrEmpty(Model.CollegeEmail) ? "—" : Model.CollegeEmail)</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone</dt>
@@ -136,7 +136,7 @@
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Website</dt>
-                        <dd class="text-sm text-blue-600 mt-1">@(string.IsNullOrEmpty(Model.CollegeWebsite) ? "—" : Model.CollegeWebsite)</dd>
+                        <dd class="text-sm text-blue-600 mt-1 break-words">@(string.IsNullOrEmpty(Model.CollegeWebsite) ? "—" : Model.CollegeWebsite)</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Principal</dt>
@@ -144,7 +144,7 @@
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Address</dt>
-                        <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.CollegeAddress) ? "—" : Model.CollegeAddress)</dd>
+                        <dd class="text-sm text-gray-800 mt-1 break-words">@(string.IsNullOrEmpty(Model.CollegeAddress) ? "—" : Model.CollegeAddress)</dd>
                     </div>
                 </dl>
             </div>

@@ -26,7 +26,7 @@
 
     <!-- Academic Information -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-base sm:text-lg font-semibold text-gray-800">Academic Information</h3>
@@ -35,7 +35,7 @@
                 <span class="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full"><i class="fas fa-graduation-cap mr-1"></i>@(string.IsNullOrEmpty(Model.AcademicYear) ? "—" : Model.AcademicYear)</span>
             </div>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
             <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6">
                 <div>
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Registration No.</dt>
@@ -54,12 +54,8 @@
                     <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.Program) ? "—" : Model.Program)</dd>
                 </div>
                 <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Program Code</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.ProgramCode) ? "—" : Model.ProgramCode)</dd>
-                </div>
-                <div>
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">College</dt>
-                    <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.College) ? "—" : Model.College)</dd>
+                    <dd class="text-sm text-gray-800 mt-1 break-words">@(string.IsNullOrEmpty(Model.College) ? "—" : Model.College)</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission Date</dt>
@@ -72,13 +68,13 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Exam Registrations</p>
                         <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.ExamRegistrationCount</p>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-clipboard-list text-blue-600 text-xl"></i>
                     </div>
                 </div>
@@ -89,13 +85,13 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Admit Cards</p>
                         <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.AdmitCardCount</p>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-ticket-alt text-green-600 text-xl"></i>
                     </div>
                 </div>
@@ -106,13 +102,13 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Payments</p>
                         <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.PaymentCount</p>
                     </div>
-                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-credit-card text-amber-600 text-xl"></i>
                     </div>
                 </div>
@@ -123,13 +119,13 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
+            <div class="p-4 sm:p-5">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-xs sm:text-sm font-medium text-gray-500">Current Semester</p>
                         <p class="text-sm sm:text-base font-bold text-gray-800 mt-1 leading-tight">@(string.IsNullOrEmpty(Model.CurrentSemester) ? "—" : Model.CurrentSemester)</p>
                     </div>
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center">
                         <i class="fas fa-layer-group text-purple-600 text-xl"></i>
                     </div>
                 </div>
@@ -143,11 +139,11 @@
     <!-- Personal Details -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <h3 class="text-base sm:text-lg font-semibold text-gray-800">Personal Information</h3>
                 <p class="text-xs sm:text-sm text-gray-500 mt-1">Basic personal details</p>
             </div>
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
                 <dl class="grid grid-cols-1 gap-x-8 gap-y-5">
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Full Name</dt>
@@ -187,15 +183,15 @@
 
         <div class="space-y-6">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div class="p-6 border-b border-gray-200">
+                <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
                     <h3 class="text-base sm:text-lg font-semibold text-gray-800">Other Details</h3>
                     <p class="text-xs sm:text-sm text-gray-500 mt-1">Contact and demographic information</p>
                 </div>
-                <div class="p-6">
+                <div class="p-4 sm:p-6">
                     <dl class="grid grid-cols-1 gap-x-8 gap-y-5">
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Email</dt>
-                            <dd class="text-sm text-gray-800 mt-1">@Model.Email</dd>
+                            <dd class="text-sm text-gray-800 mt-1 break-words">@Model.Email</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone</dt>
@@ -203,7 +199,7 @@
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Address</dt>
-                            <dd class="text-sm text-gray-800 mt-1">@(string.IsNullOrEmpty(Model.Address) ? "—" : Model.Address)</dd>
+                            <dd class="text-sm text-gray-800 mt-1 break-words">@(string.IsNullOrEmpty(Model.Address) ? "—" : Model.Address)</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ethnicity</dt>
@@ -221,11 +217,11 @@
 
     <!-- Signature -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h3 class="text-base sm:text-lg font-semibold text-gray-800">Signature</h3>
             <p class="text-xs sm:text-sm text-gray-500 mt-1">Your signature used on admit cards</p>
         </div>
-        <div class="p-6 flex items-center justify-center">
+        <div class="p-4 sm:p-6 flex items-center justify-center">
             <div class="h-24 w-full max-w-xs border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
                 @if (!string.IsNullOrEmpty(Model.SignaturePath))
                 {
@@ -241,7 +237,7 @@
 
     <!-- Guardians -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-base sm:text-lg font-semibold text-gray-800">Guardian Information</h3>
@@ -250,7 +246,7 @@
                 <i class="fas fa-people-roof text-gray-300 text-xl"></i>
             </div>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
             @if (Model.Guardians.Any())
             {
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -292,7 +288,7 @@
 
     <!-- Qualifications -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-base sm:text-lg font-semibold text-gray-800">Academic Qualifications</h3>
@@ -301,7 +297,7 @@
                 <i class="fas fa-school-circle-check text-gray-300 text-xl"></i>
             </div>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
             @if (Model.Qualifications.Any())
             {
                 <div class="overflow-x-auto">
