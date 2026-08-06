@@ -624,7 +624,17 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, registrationNumber ?? "", college ?? "", program ?? "", studentRegistration.Email, password);
+                var loginUrl = EmailTemplateHelper.SiteUrl;
+                if (string.IsNullOrWhiteSpace(loginUrl))
+                {
+                    loginUrl = "/Identity/Account/Login";
+                }
+                else if (!loginUrl.Contains("/Identity/Account/Login", StringComparison.OrdinalIgnoreCase))
+                {
+                    loginUrl = loginUrl.Trim().TrimEnd('/') + "/Identity/Account/Login";
+                }
+
+                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, registrationNumber ?? "", college ?? "", program ?? "", studentRegistration.Email, password, loginUrl);
                 await gumpEmailService.SendHtmlEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
                 results.Add($"Email sent to {studentRegistration.Email}.");
             }

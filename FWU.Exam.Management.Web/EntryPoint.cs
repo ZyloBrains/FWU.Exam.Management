@@ -271,6 +271,7 @@ public partial class EntryPoint
         }
 
         EmailTemplateHelper.LogoUrl = builder.Configuration["EmailSettings:LogoUrl"];
+        EmailTemplateHelper.SiteUrl = builder.Configuration["EmailSettings:SiteUrl"];
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
