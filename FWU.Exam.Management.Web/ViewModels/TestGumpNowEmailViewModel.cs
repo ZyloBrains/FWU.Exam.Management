@@ -17,8 +17,8 @@ public class TestGumpNowEmailViewModel
     [Required]
     public string SendMode { get; set; } = "html";
 
-    [Display(Name = "Template ID")]
-    public int? TemplateId { get; set; }
+    [Display(Name = "Template Code")]
+    public string? TemplateId { get; set; }
 
     [Display(Name = "Context Variables (key=value, one per line)")]
     public string? ContextVariables { get; set; }
