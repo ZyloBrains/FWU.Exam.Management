@@ -28,4 +28,5 @@ public interface IStudentRegistrationService
     Task SaveGuardiansAsync(int studentRegistrationId, StudentGuardian? guardian);
     Task<StudentGuardian?> GetGuardianByRegistrationAsync(int studentRegistrationId);
     Task<string?> GenerateRegistrationNumberAsync(int studentRegistrationId);
+    Task<string?> SendRegistrationNotificationsAsync(int studentRegistrationId);
 }

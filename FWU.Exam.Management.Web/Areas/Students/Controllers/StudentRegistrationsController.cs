@@ -962,4 +962,16 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
             return Json(new { success = false, message = ex.Message });
         }
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendNotifications(int id)
+    {
+        var result = await studentRegistrationService.SendRegistrationNotificationsAsync(id);
+        if (result == null)
+            return NotFound();
+
+        TempData["SuccessMessage"] = result;
+        return RedirectToAction(nameof(Details), new { id });
+    }
 }
