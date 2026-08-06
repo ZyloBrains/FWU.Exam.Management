@@ -129,9 +129,9 @@
             {
                 displayName = tenant.Name;
                 orgName = tenant.OfficeCode;
-                if (!string.IsNullOrWhiteSpace(tenant.LogoPath))
+                if (!string.IsNullOrWhiteSpace(tenant.BannerImagePath))
                 {
-                    sidebarLogoPath = tenant.LogoPath;
+                    sidebarLogoPath = tenant.BannerImagePath;
                 }
             }
         }
@@ -280,6 +280,11 @@
                                 var tenantPrefix = !string.IsNullOrEmpty(tenantCode) ? $"/tenant/{tenantCode}" : "";
                                 var identityBase = $"{tenantPrefix}/Identity/Account";
                             }
+                            <a asp-area="" asp-controller="Profile" asp-action="Index" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
+                                <i class="fas fa-id-badge w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
+                                <span class="ml-2 font-medium">My Profile</span>
+                            </a>
+
                             <a href="@identityBase/Manage/ChangePassword" class="group flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors">
                                 <i class="fas fa-key w-5 text-gray-400 group-hover:text-admin-blue transition-colors"></i>
                                 <span class="ml-2 font-medium">Update Password</span>

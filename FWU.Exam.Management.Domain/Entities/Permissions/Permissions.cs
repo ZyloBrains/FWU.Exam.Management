@@ -682,6 +682,8 @@ public static class Permissions
             StudentsView, StudentsCreate, StudentsEdit, StudentsDelete,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
+            StudentPortalProfile,
+
             UsersView, UsersCreate, UsersEdit, UsersAssignRoles,
 
             BanksView, BanksCreate, BanksEdit, BanksDelete,
