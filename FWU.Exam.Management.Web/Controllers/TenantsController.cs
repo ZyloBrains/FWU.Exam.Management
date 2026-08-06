@@ -66,7 +66,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [RequirePermission("tenants.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TenantCreateViewModel viewModel)
+    public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? bannerImage, IFormFile? logoImage)
     {
         viewModel.FacultyList = await GetAvailableFacultiesAsync();
 
@@ -78,6 +78,20 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         if (ModelState.IsValid)
         {
             var tenant = viewModel.Tenant;
+
+            if (bannerImage != null && bannerImage.Length > 0)
+            {
+                var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
+                if (bannerPath != null)
+                    tenant.BannerImagePath = bannerPath;
+            }
+
+            if (logoImage != null && logoImage.Length > 0)
+            {
+                var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos");
+                if (logoPath != null)
+                    tenant.LogoPath = logoPath;
+            }
 
             _context.Add(tenant);
             await _context.SaveChangesAsync();
@@ -165,7 +179,7 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [RequirePermission("tenants.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Tenant tenant)
+    public async Task<IActionResult> Edit(int id, Tenant tenant, IFormFile? bannerImage, IFormFile? logoImage)
     {
         if (id != tenant.Id) return NotFound();
 
@@ -173,6 +187,20 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         {
             try
             {
+                if (bannerImage != null && bannerImage.Length > 0)
+                {
+                    var bannerPath = await _fileUploadHelper.UploadAsync(bannerImage, "uploads/banners");
+                    if (bannerPath != null)
+                        tenant.BannerImagePath = bannerPath;
+                }
+
+                if (logoImage != null && logoImage.Length > 0)
+                {
+                    var logoPath = await _fileUploadHelper.UploadAsync(logoImage, "uploads/logos");
+                    if (logoPath != null)
+                        tenant.LogoPath = logoPath;
+                }
+
                 _context.Update(tenant);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Tenant updated successfully!";
