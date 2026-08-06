@@ -72,7 +72,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
             if (isSupplementary)
             {
-                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterId, student.ProgramId.Value);
+                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterId, student.ProgramId ?? 0);
                 if (!hasFailed)
                     continue;
             }
