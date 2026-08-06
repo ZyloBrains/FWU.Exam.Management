@@ -92,6 +92,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<SmtpConfiguration> SmtpConfigurations { get; set; } = null!;
     public DbSet<SmsConfiguration> SmsConfigurations { get; set; } = null!;
     public DbSet<GumpNowEmailConfiguration> GumpNowEmailConfigurations { get; set; } = null!;
+    public DbSet<GumpNowEmailLog> GumpNowEmailLogs { get; set; } = null!;
+    public DbSet<SmsLog> SmsLogs { get; set; } = null!;
     public DbSet<CollegeProfile> CollegeProfiles { get; set; } = null!;
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;

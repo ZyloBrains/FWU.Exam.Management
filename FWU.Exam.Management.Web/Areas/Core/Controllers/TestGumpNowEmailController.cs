@@ -32,7 +32,7 @@ public class TestGumpNowEmailController(IGumpNowEmailService gumpNowEmailService
             else
             {
                 var context = ParseContextVariables(model.ContextVariables ?? "");
-                await gumpNowEmailService.SendEmailAsync(model.ToEmail, model.Subject, model.TemplateId!.Value, context);
+                await gumpNowEmailService.SendEmailAsync(model.ToEmail, model.Subject, model.TemplateId!, context);
             }
             TempData["Success"] = "GumpNow email sent successfully!";
         }

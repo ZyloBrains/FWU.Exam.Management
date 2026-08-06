@@ -3,6 +3,7 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public static class EmailTemplateHelper
 {
     public static string? LogoUrl { get; set; }
+    public static string? SiteUrl { get; set; }
 
     private static string LogoImg()
     {
@@ -163,7 +164,7 @@ public static class EmailTemplateHelper
         </p>
     ");
 
-    public static string StudentRegistrationCredentials(string fullName, string registrationNumber, string college, string program, string email, string password) => Layout("Registration Successful - Login Credentials", $@"
+    public static string StudentRegistrationCredentials(string fullName, string registrationNumber, string college, string program, string email, string password, string loginUrl) => Layout("Registration Successful - Login Credentials", $@"
         <h2 style=""color:#2c3e50;margin:0 0 8px;font-size:20px;"" class=""content-heading"">Dear {fullName},</h2>
         <p style=""color:#555;line-height:1.7;margin:0 0 20px;font-size:14px;"" class=""content-text"">
             Your student registration has been created successfully. Please find your registration details and login credentials below.
@@ -177,6 +178,20 @@ public static class EmailTemplateHelper
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Username (Email):</strong> <span style=""color:#2980b9;font-size:13px;"">{email}</span></td></tr>
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Password:</strong> <span style=""color:#555;font-size:13px;"">{password}</span></td></tr>
         </table>
+        <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"" class=""btn-table"">
+            <tr>
+                <td align=""center"" style=""background:#2980b9;border-radius:6px;"" class=""btn-td"">
+                    <a href=""{loginUrl}"" style=""display:inline-block;padding:12px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:500;"" class=""btn-link"">Login to Your Account</a>
+                </td>
+            </tr>
+        </table>
+        <p style=""color:#888;line-height:1.6;margin:0 0 12px;font-size:12px;"" class=""content-text"">
+            If the button above does not work, copy and paste the following link into your browser:<br>
+            <a href=""{loginUrl}"" style=""color:#2980b9;word-break:break-all;"" class=""fallback-link"">{loginUrl}</a>
+        </p>
+        <p style=""color:#555;line-height:1.6;margin:0 0 12px;font-size:13px;"" class=""content-text"">
+            You can sign in using your email address <strong>{email}</strong> or your registration number <strong>{registrationNumber}</strong> along with the password above.
+        </p>
         <p style=""color:#e74c3c;line-height:1.6;margin:16px 0 0;font-size:13px;font-weight:500;"">
             For security reasons, please change your password after your first login.
         </p>
