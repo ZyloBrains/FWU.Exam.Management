@@ -324,7 +324,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     {
         var academicYears = await context.AcademicYears.Where(ay => ay.AcademicYearName != null).AsNoTracking().ToListAsync();
         var levels = await context.Levels.Where(l => l.LevelName != null).AsNoTracking().ToListAsync();
-        var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ToListAsync();
+        var colleges = await context.Colleges.Where(c => c.Name != null).AsNoTracking().ApplyScope(userContext).ToListAsync();
         var genders = await context.Genders.Where(g => g.GenderName != null).AsNoTracking().ToListAsync();
         var studentCategories = await context.StudentCategories.Where(sc => sc.StudentCategoryName != null).AsNoTracking().ToListAsync();
         var ethnicities = await context.Ethnicities.Where(e => e.EthnicityName != null).AsNoTracking().ToListAsync();

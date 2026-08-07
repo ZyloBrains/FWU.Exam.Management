@@ -37,6 +37,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
     internal static int GetCurrentTenantId() => AmbientTenantContext.Value?.TenantId ?? 0;
     internal static bool IsCurrentTenantCentral() => AmbientTenantContext.Value?.IsCentralTenant ?? false;
+    internal static bool IsCurrentUserCollegeAdmin() => AmbientTenantContext.Value?.IsCollegeAdmin ?? false;
+    internal static int? GetCurrentCollegeId() => AmbientTenantContext.Value?.CollegeId;
+    internal static IReadOnlyList<int> GetCurrentCollegeTenantIds() => AmbientTenantContext.Value?.CollegeTenantIds ?? [];
 
     public DbSet<AcademicYear> AcademicYears { get; set; } = null!;
     public DbSet<Address> Addresses { get; set; } = null!;
@@ -138,9 +141,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
             var tenantIdMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentTenantId), BindingFlags.NonPublic | BindingFlags.Static);
             var isCentralMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentTenantCentral), BindingFlags.NonPublic | BindingFlags.Static);
+            var isCollegeAdminMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentUserCollegeAdmin), BindingFlags.NonPublic | BindingFlags.Static);
+            var collegeTenantIdsMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentCollegeTenantIds), BindingFlags.NonPublic | BindingFlags.Static);
             var tenantIdValue = Expression.Call(null, tenantIdMethod!);
             var isCentral = Expression.Call(null, isCentralMethod!);
-            var body = Expression.OrElse(isCentral, Expression.Equal(tenantIdProp, tenantIdValue));
+            var isCollegeAdmin = Expression.Call(null, isCollegeAdminMethod!);
+            var collegeTenantIds = Expression.Call(null, collegeTenantIdsMethod!);
+            var collegeAdminTenants = Expression.Call(
+                typeof(Enumerable), nameof(Enumerable.Contains), [typeof(int)], collegeTenantIds, tenantIdProp);
+            var collegeAdminBranch = Expression.AndAlso(isCollegeAdmin, collegeAdminTenants);
+            var tenantBranch = Expression.Equal(tenantIdProp, tenantIdValue);
+            var body = Expression.OrElse(isCentral, Expression.OrElse(collegeAdminBranch, tenantBranch));
             var lambda = Expression.Lambda(body, param);
             entityType.SetQueryFilter(lambda);
 
@@ -153,6 +164,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         builder.Entity<College>()
             .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
+                (AppDbContext.IsCurrentUserCollegeAdmin() && c.Id == AppDbContext.GetCurrentCollegeId()) ||
                 c.TenantColleges!.Any(tc => tc.TenantId == AppDbContext.GetCurrentTenantId()));
 
         builder.Entity<TenantCollege>()

@@ -62,7 +62,7 @@
     var showResults = HasPerm("examsubjectresults.view") || HasPerm("resultrecords.view");
     var showPayments = HasPerm("banks.view") || HasPerm("paymenttypes.view") || HasPerm("billtitles.view");
     var showLocation = HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view");
-    var showStudentPortal = HasPerm("student.portal.profile") || HasPerm("student.portal.examforms") || HasPerm("student.portal.marksheet") || HasPerm("student.portal.payment") || HasPerm("retotaling.view");
+    var showStudentPortal = isSuperAdmin || (sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, Role.Student));
     var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("sms.view") || HasPerm("gumpnowemail.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view") || HasPerm("auditlog.view") || HasPerm("backuprestore.manage");
     var showReports = HasPerm("reports.collegepayments") || HasPerm("reports.subjectcount") || HasPerm("reports.examtriplicate") || HasPerm("reports.summary") ||
                       HasPerm("reports.tabulationtriplicate") || HasPerm("reports.programwisestudent") || HasPerm("reports.attendanceheet") || HasPerm("reports.marksfoil") ||

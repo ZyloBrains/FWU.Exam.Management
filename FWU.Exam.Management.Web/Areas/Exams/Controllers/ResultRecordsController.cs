@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -18,6 +19,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("resultrecords.view")]
 public class ResultRecordsController(
     IResultRecordService resultRecordService,
+    IUserContext userContext,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? collegeId = null, int? facultyId = null)
@@ -34,8 +36,8 @@ public class ResultRecordsController(
         ViewBag.CollegeId = collegeId;
         ViewBag.FacultyId = facultyId;
 
-        ViewData["CollegeId"] = new SelectList(context.Colleges.AsNoTracking().Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
-        ViewData["FacultyId"] = new SelectList(context.Faculties.AsNoTracking().Select(f => new { f.Id, f.Name }), "Id", "Name", facultyId);
+        ViewData["CollegeId"] = new SelectList(context.Colleges.AsNoTracking().ApplyScope(userContext).OrderBy(c => c.Name).Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
+        ViewData["FacultyId"] = new SelectList(context.Faculties.AsNoTracking().ApplyScope(userContext).OrderBy(f => f.Name).Select(f => new { f.Id, f.Name }), "Id", "Name", facultyId);
 
         return View(items);
     }

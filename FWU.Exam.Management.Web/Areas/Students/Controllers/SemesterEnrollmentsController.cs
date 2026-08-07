@@ -435,7 +435,13 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         var collegeQuery = context.Colleges.AsNoTracking().AsQueryable();
         var programQuery = context.Programs.AsNoTracking().AsQueryable();
 
-        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+        {
+            var fid = userContext.FacultyId.Value;
+            collegeQuery = collegeQuery.Where(c => c.CollegePrograms.Any(cp => cp.Program != null && cp.Program.FacultyId == fid));
+            programQuery = programQuery.Where(p => p.FacultyId == fid);
+        }
+        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
             var cid = userContext.CollegeId.Value;
             collegeQuery = collegeQuery.Where(c => c.Id == cid);

@@ -720,7 +720,6 @@ public static class Permissions
         [
             DashboardView,
 
-            CollegesView,
             ProgramsView,
             SubjectsView,
             SemestersView,
@@ -742,11 +741,9 @@ public static class Permissions
             AdmitCardsView, AdmitCardsDownload,
             RetotalingView,
 
-            StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
             UsersView, UsersCreate, UsersEdit,
-            PermissionsManage,
 
             BanksView, BanksCreate, BanksEdit,
             PaymentTypesView, PaymentTypesCreate, PaymentTypesEdit, PaymentTypesDelete,
