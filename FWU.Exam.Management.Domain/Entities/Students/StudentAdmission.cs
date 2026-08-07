@@ -49,4 +49,5 @@ public class StudentAdmission : IAuditable, ITenantScoped
     public virtual Program? Program { get; set; }
     public virtual College? College { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
+    public virtual StudentRegistration? StudentRegistration { get; set; }
 }

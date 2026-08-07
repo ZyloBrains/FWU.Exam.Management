@@ -9,7 +9,7 @@ public interface IStudentAdmissionService
     Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<List<StudentAdmission>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<StudentAdmission?> GetAdmissionByIdAsync(int id);
-    Task CreateAdmissionAsync(StudentAdmission admission);
+    Task<int> CreateAdmissionAsync(StudentAdmission admission);
     Task UpdateAdmissionAsync(StudentAdmission admission);
     Task DeleteAdmissionAsync(int id);
     Task<bool> AdmissionExistsAsync(int id);

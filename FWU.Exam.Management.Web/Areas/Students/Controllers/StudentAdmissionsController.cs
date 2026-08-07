@@ -138,7 +138,19 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
         if (ModelState.IsValid)
         {
-            await admissionService.CreateAdmissionAsync(admission);
+            var admissionId = await admissionService.CreateAdmissionAsync(admission);
+
+            if (studentRegistrationId.HasValue)
+            {
+                var registrationToLink = await context.StudentRegistrations
+                    .FirstOrDefaultAsync(r => r.Id == studentRegistrationId.Value);
+                if (registrationToLink != null)
+                {
+                    registrationToLink.StudentAdmissionId = admissionId;
+                    await context.SaveChangesAsync();
+                }
+            }
+
             TempData["SuccessMessage"] = "Student admission created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -333,6 +345,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             .AsNoTracking()
             .Include(s => s.Program)
             .Where(s => s.CollegeId == collegeId && s.IsActive)
+            .Where(s => s.StudentAdmissionId == null)
             .Where(s => (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearch))
                      || (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearch))
                      || (s.LastName != null && s.LastName.ToLower().Contains(lowerSearch))

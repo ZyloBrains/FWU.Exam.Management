@@ -53,10 +53,11 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
             .FirstOrDefaultAsync(sa => sa.Id == id);
     }
 
-    public async Task CreateAdmissionAsync(StudentAdmission admission)
+    public async Task<int> CreateAdmissionAsync(StudentAdmission admission)
     {
         context.StudentAdmissions.Add(admission);
         await context.SaveChangesAsync();
+        return admission.Id;
     }
 
     public async Task UpdateAdmissionAsync(StudentAdmission admission)
@@ -133,6 +134,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
             .AsNoTracking()
             .Include(sr => sr.Program)
             .Where(sr => sr.CollegeId == collegeId && sr.IsActive)
+            .Where(sr => sr.StudentAdmissionId == null)
             .Where(sr => sr.Email != null && !admittedEmails.Contains(sr.Email))
             .OrderBy(sr => sr.RegistrationNumber)
             .ToListAsync();
