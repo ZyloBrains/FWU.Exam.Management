@@ -22,7 +22,7 @@
 
     <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
-        <form asp-action="Edit" asp-area="Exams" method="post" class="space-y-6">
+        <form asp-action="Edit" asp-area="Exams" method="post" id="examScheduleForm" class="space-y-6">
             <input type="hidden" asp-for="Id" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 
@@ -184,6 +184,30 @@
     <script>
         $(function () {
             $('.select2').select2({ width: 'resolve' });
+        });
+
+        var todayStr = '@DateTime.Today.ToString("yyyy-MM-dd")';
+        var originalStart = '@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")';
+        var originalEnd = '@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")';
+        $('#examScheduleForm').on('submit', function (e) {
+            var start = $('#StartDate').val();
+            var end = $('#EndDate').val();
+
+            if (start && end && start > end) {
+                e.preventDefault();
+                alert('Start date cannot be after end date.');
+                return;
+            }
+            if (start && start !== originalStart && start < todayStr) {
+                e.preventDefault();
+                alert('Start date cannot be in the past.');
+                return;
+            }
+            if (end && end !== originalEnd && end < todayStr) {
+                e.preventDefault();
+                alert('End date cannot be in the past.');
+                return;
+            }
         });
 
         function loadSemesters(academicYearId, programId, selectedId) {

@@ -619,9 +619,16 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
             model.ExamScheduleCode ??= $"ENT-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-            await examScheduleService.CreateExamScheduleAsync(model);
-            TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
-            return RedirectToAction(nameof(ManageSchedule));
+            try
+            {
+                await examScheduleService.CreateExamScheduleAsync(model);
+                TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
+                return RedirectToAction(nameof(ManageSchedule));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
         }
 
         PopulateScheduleDropdowns(sl, model);
@@ -655,9 +662,16 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
-            await examScheduleService.UpdateExamScheduleAsync(model);
-            TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
-            return RedirectToAction(nameof(ManageSchedule));
+            try
+            {
+                await examScheduleService.UpdateExamScheduleAsync(model);
+                TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
+                return RedirectToAction(nameof(ManageSchedule));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
         }
 
         PopulateScheduleDropdowns(sl, model);
