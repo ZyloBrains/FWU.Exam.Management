@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260807180334_LinkSubjectOfferingsToCurriculumVersion")]
+    partial class LinkSubjectOfferingsToCurriculumVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1416,9 +1419,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int?>("CollegeId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CurriculumVersionId")
-                        .HasColumnType("int");
-
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
@@ -1493,8 +1493,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("AcademicYearId");
 
                     b.HasIndex("CollegeId");
-
-                    b.HasIndex("CurriculumVersionId");
 
                     b.HasIndex("ExamTypeId");
 
@@ -5139,11 +5137,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("CollegeId");
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion", "CurriculumVersion")
-                        .WithMany()
-                        .HasForeignKey("CurriculumVersionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamType", "ExamType")
                         .WithMany()
                         .HasForeignKey("ExamTypeId")
@@ -5175,8 +5168,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("AcademicYear");
 
                     b.Navigation("College");
-
-                    b.Navigation("CurriculumVersion");
 
                     b.Navigation("ExamType");
 

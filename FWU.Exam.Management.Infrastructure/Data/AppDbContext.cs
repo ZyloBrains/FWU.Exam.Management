@@ -270,6 +270,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(es => es.ExamTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<ExamSchedule>()
+            .HasOne(es => es.CurriculumVersion)
+            .WithMany()
+            .HasForeignKey(es => es.CurriculumVersionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamSchedule>()
+            .HasIndex(es => es.CurriculumVersionId);
+
         builder.Entity<ExamCenter>()
             .HasOne(ec => ec.ExamSchedule)
             .WithMany(es => es.ExamCenters)
@@ -521,7 +530,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SubjectOffering>()
-            .HasIndex(so => new { so.SubjectCatalogId, so.ProgramId, so.SemesterId })
+            .HasOne(so => so.CurriculumVersion)
+            .WithMany(cv => cv.SubjectOfferings)
+            .HasForeignKey(so => so.CurriculumVersionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SubjectOffering>()
+            .HasIndex(so => new { so.CurriculumVersionId, so.SubjectCatalogId, so.ProgramId, so.SemesterId })
             .IsUnique();
 
         builder.Entity<CurriculumVersion>()

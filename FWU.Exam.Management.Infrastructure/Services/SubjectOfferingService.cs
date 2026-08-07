@@ -139,10 +139,12 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.SubjectOfferings.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId)
+    public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null)
     {
         return await _context.SubjectOfferings
-            .Where(so => so.ProgramId == programId && so.SemesterId == semesterId)
+            .Where(so => so.ProgramId == programId
+                         && so.SemesterId == semesterId
+                         && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId))
             .Select(so => so.SubjectCatalogId)
             .ToListAsync();
     }
@@ -281,6 +283,49 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.ProgramSemesters
             .AsNoTracking()
             .AnyAsync(ps => ps.ProgramId == programId && ps.SemesterId == semesterId && ps.IsActive);
+    }
+
+    public async Task<List<SelectOption>> GetCurriculumVersionsAsync(int? programId = null)
+    {
+        var query = _context.CurriculumVersions
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(cv => cv.IsActive);
+
+        if (programId.HasValue && programId.Value > 0)
+            query = query.Where(cv => cv.ProgramId == programId.Value);
+
+        return await query
+            .OrderBy(cv => cv.Program != null ? cv.Program.ProgramName : "")
+            .ThenByDescending(cv => cv.EffectiveAcademicYearId)
+            .Select(cv => new SelectOption
+            {
+                Id = cv.Id,
+                Name = cv.Name + (cv.EffectiveAcademicYear != null ? " (" + cv.EffectiveAcademicYear.AcademicYearName + ")" : "")
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId)
+    {
+        return await _context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .ThenInclude(sc => sc.SubjectType)
+            .Include(so => so.Semester)
+            .AsNoTracking()
+            .ApplyScope(_userContext)
+            .Where(so => so.CurriculumVersionId == curriculumVersionId)
+            .OrderBy(so => so.Semester != null ? so.Semester.Number : 0)
+            .ThenBy(so => so.DisplayOrder)
+            .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
+            .ToListAsync();
+    }
+
+    public async Task<bool> IsCurriculumVersionForProgramAsync(int curriculumVersionId, int programId)
+    {
+        return await _context.CurriculumVersions
+            .AsNoTracking()
+            .AnyAsync(cv => cv.Id == curriculumVersionId && cv.ProgramId == programId);
     }
 
     private static Expression<Func<SubjectOffering, object>> GetSortProperty(string sort)

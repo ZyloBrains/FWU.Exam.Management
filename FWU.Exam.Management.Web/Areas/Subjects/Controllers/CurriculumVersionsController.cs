@@ -16,10 +16,12 @@ namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 public class CurriculumVersionsController : Controller
 {
     private readonly ICurriculumVersionService _curriculumVersionService;
+    private readonly ISubjectOfferingService _subjectOfferingService;
 
-    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService)
+    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService, ISubjectOfferingService subjectOfferingService)
     {
         _curriculumVersionService = curriculumVersionService;
+        _subjectOfferingService = subjectOfferingService;
     }
 
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
@@ -123,7 +125,56 @@ public class CurriculumVersionsController : Controller
         var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
         if (curriculumVersion == null) return NotFound();
 
+        var offerings = await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(id.Value);
+        ViewBag.SubjectCount = offerings.Count;
+        ViewBag.SubjectOfferings = offerings;
+
         return View(curriculumVersion);
+    }
+
+    [HttpGet]
+    [RequirePermission("curriculumversions.create")]
+    public async Task<IActionResult> Copy(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (curriculumVersion == null) return NotFound();
+
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName");
+        ViewData["SourceName"] = curriculumVersion.Name;
+        ViewData["SourceProgram"] = curriculumVersion.Program?.ProgramName ?? "-";
+
+        return View(curriculumVersion);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.create")]
+    public async Task<IActionResult> Copy(int id, int effectiveAcademicYearId, string name)
+    {
+        if (id <= 0 || effectiveAcademicYearId <= 0 || string.IsNullOrWhiteSpace(name))
+        {
+            ModelState.AddModelError("", "Please provide a version name and target academic year.");
+            var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id);
+            if (curriculumVersion == null) return NotFound();
+            var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+            ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName", effectiveAcademicYearId);
+            ViewData["SourceName"] = curriculumVersion.Name;
+            ViewData["SourceProgram"] = curriculumVersion.Program?.ProgramName ?? "-";
+            return View(curriculumVersion);
+        }
+
+        var newVersion = await _curriculumVersionService.CopyCurriculumVersionAsync(id, effectiveAcademicYearId, name.Trim());
+        if (newVersion == null)
+        {
+            TempData["ErrorMessage"] = "Copy failed. Source curriculum version not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["SuccessMessage"] = $"Curriculum version \"{newVersion.Name}\" copied successfully.";
+        return RedirectToAction(nameof(Details), new { id = newVersion.Id });
     }
 
     [RequirePermission("curriculumversions.create")]

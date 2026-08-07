@@ -23,11 +23,11 @@
         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
 
         <div class="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Program</label>
                     <select asp-for="ProgramId" asp-items="ViewBag.ProgramId"
-                            x-on:change="initExistingSubjects()"
+                            x-on:change="loadCurriculumVersions(); initExistingSubjects()"
                             class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">-- Select Program --</option>
                     </select>
@@ -50,6 +50,14 @@
                         <option value="">-- Select Semester --</option>
                     </select>
                     <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Curriculum Version</label>
+                    <select asp-for="CurriculumVersionId" id="CurriculumVersionId"
+                            class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Select Curriculum Version --</option>
+                    </select>
+                    <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
             </div>
         </div>
@@ -332,12 +340,30 @@
                 async initExistingSubjects() {
                     const programId = document.getElementById('ProgramId').value;
                     const semesterId = document.getElementById('SemesterId').value;
-                    if (programId && semesterId) {
-                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjects?programId=${programId}&semesterId=${semesterId}`));
+                    const curriculumVersionId = document.getElementById('CurriculumVersionId').value;
+                    if (programId && semesterId && curriculumVersionId) {
+                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjects?programId=${programId}&semesterId=${semesterId}&curriculumVersionId=${curriculumVersionId}`));
                         this.existingSubjectIds = await resp.json();
                     } else {
                         this.existingSubjectIds = [];
                     }
+                },
+
+                async loadCurriculumVersions() {
+                    const programId = document.getElementById('ProgramId').value;
+                    const versionSelect = document.getElementById('CurriculumVersionId');
+                    $(versionSelect).select2('destroy');
+                    versionSelect.innerHTML = '<option value="">-- Select Curriculum Version --</option>';
+                    if (!programId) {
+                        $(versionSelect).select2({ width: 'resolve' });
+                        return;
+                    }
+                    const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetCurriculumVersionsByProgram?programId=${programId}`));
+                    const data = await resp.json();
+                    $.each(data, function (index, item) {
+                        versionSelect.appendChild(new Option(item.name, item.id, false, false));
+                    });
+                    $(versionSelect).select2({ width: 'resolve' });
                 },
 
                 get filteredSubjects() {

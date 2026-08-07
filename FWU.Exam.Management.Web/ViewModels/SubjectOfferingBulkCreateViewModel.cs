@@ -17,6 +17,10 @@ public class SubjectOfferingBulkCreateViewModel
     [Range(1, int.MaxValue, ErrorMessage = "Academic Year is required.")]
     public int AcademicYearId { get; set; }
 
+    [Display(Name = "Curriculum Version")]
+    [Range(1, int.MaxValue, ErrorMessage = "Curriculum Version is required.")]
+    public int CurriculumVersionId { get; set; }
+
     public List<SubjectOfferingItemViewModel> Subjects { get; set; } = new();
 }
 
