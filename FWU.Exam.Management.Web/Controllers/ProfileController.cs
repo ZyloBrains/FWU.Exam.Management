@@ -56,12 +56,47 @@ public class ProfileController(
 
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? Role.Student;
+        var isStudent = roles.Contains(Role.Student);
 
-        if (!string.IsNullOrWhiteSpace(fullName))
+        if (!isStudent)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                TempData["ErrorMessage"] = "Full name is required.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (fullName.Length > 50)
+            {
+                TempData["ErrorMessage"] = "Full name cannot exceed 50 characters.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (designation != null && designation.Length > 100)
+            {
+                TempData["ErrorMessage"] = "Designation cannot exceed 100 characters.";
+                return RedirectToAction(nameof(Index));
+            }
+
             user.FullName = fullName.Trim();
+            user.Designation = string.IsNullOrWhiteSpace(designation) ? null : designation.Trim();
+        }
 
-        user.Designation = string.IsNullOrWhiteSpace(designation) ? null : designation.Trim();
-        user.PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
+        if (!string.IsNullOrWhiteSpace(phoneNumber))
+        {
+            var trimmedPhone = phoneNumber.Trim();
+            if (trimmedPhone.Length is < 7 or > 15 || !System.Text.RegularExpressions.Regex.IsMatch(trimmedPhone, @"^\+?[0-9\s\-()]+$"))
+            {
+                TempData["ErrorMessage"] = "Phone number must be 7–15 digits and may include +, -, ( ) and spaces.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            user.PhoneNumber = trimmedPhone;
+        }
+        else
+        {
+            user.PhoneNumber = null;
+        }
 
         if (photo != null && photo.Length > 0)
         {

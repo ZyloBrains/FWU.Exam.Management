@@ -34,49 +34,9 @@ public class StudentDashboardController(
     AppDbContext context)
     : Controller
 {
-    public async Task<IActionResult> Profile()
+    public IActionResult Profile()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null) return Challenge();
-
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
-        if (registration == null)
-        {
-            return View(new StudentProfileViewModel
-            {
-                FullName = user.FullName ?? user.Email,
-                Email = user.Email
-            });
-        }
-
-        var vm = new StudentProfileViewModel
-        {
-            RegistrationId = registration.Id,
-            PermanentAddressId = registration.PermanentAddressId,
-            RegistrationNumber = registration.RegistrationNumber,
-            FullName = string.Join(" ", new[] { registration.FirstName, registration.MiddleName, registration.LastName }.Where(x => !string.IsNullOrEmpty(x))),
-            NepaliName = registration.NepaliName,
-            Gender = registration.Gender?.GenderName,
-            DateOfBirthBS = registration.DateOfBirthBS,
-            DateOfBirthAD = registration.DateOfBirthAD,
-            Ethnicity = registration.Ethnicity?.EthnicityName,
-            Category = registration.StudentCategory?.StudentCategoryName,
-            ContactNumber = registration.ContactNumber,
-            Email = registration.Email,
-            IsEmailConfirmed = await userManager.IsEmailConfirmedAsync(user),
-            PhotoPath = user.ProfilePath,
-            SignaturePath = user.SignaturePath,
-            BloodGroup = registration.BloodGroup,
-            Nationality = registration.Nationality,
-            Religion = registration.Religion,
-            AcademicYear = registration.AcademicYear?.AcademicYearName,
-            College = registration.College?.Name,
-            Level = registration.Level?.LevelName,
-            Address = registration.PermanentAddress?.FullAddress
-                ?? registration.PermanentAddress?.ToleStreet
-        };
-
-        return View(vm);
+        return RedirectToAction("Index", "Profile");
     }
 
     [HttpPost]

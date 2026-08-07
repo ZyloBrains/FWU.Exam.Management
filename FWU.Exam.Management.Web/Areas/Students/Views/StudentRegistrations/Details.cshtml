@@ -21,6 +21,17 @@
             <h1 class="text-xl font-bold text-gray-800">Student Details</h1>
         </div>
         <div class="ml-auto flex gap-3">
+            @{
+                var hasContactInfo = !string.IsNullOrEmpty(Model?.Email) || !string.IsNullOrEmpty(Model?.ContactNumber) || !string.IsNullOrEmpty(Model?.Phone);
+            }
+            <form asp-action="SendNotifications" asp-route-id="@Model?.Id" method="post" class="inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" disabled="@(!hasContactInfo)"
+                        class="px-6 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="@(hasContactInfo ? "Send email and SMS to this student" : "No email or phone number on file")">
+                    <i class="fas fa-paper-plane mr-1"></i> Send Email & SMS
+                </button>
+            </form>
             <a asp-action="Edit" asp-route-id="@Model?.Id" class="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm">
                 <i class="fas fa-edit mr-1"></i> Edit
             </a>

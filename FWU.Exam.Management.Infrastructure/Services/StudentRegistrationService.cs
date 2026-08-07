@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
-public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IEmailService emailService, ISmsService smsService, IUserContext userContext) : IStudentRegistrationService
+public class StudentRegistrationService(AppDbContext context, UserManager<AppUser> userManager, ILogger<StudentRegistrationService> logger, IGumpNowEmailService gumpEmailService, ISmsService smsService, IUserContext userContext) : IStudentRegistrationService
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -95,11 +95,12 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             context.StudentRegistrations.Add(studentRegistration);
             await context.SaveChangesAsync();
 
-            var isNewUser = await EnsureStudentAppUserAsync(studentRegistration);
+            await EnsureStudentAppUserAsync(studentRegistration);
 
             await transaction.CommitAsync();
 
-            await SendStudentRegistrationNotificationsAsync(studentRegistration, isNewUser);
+            var registrationNumber = await GenerateRegistrationNumberAsync(studentRegistration.Id);
+            await SendStudentRegistrationNotificationsAsync(studentRegistration, registrationNumber);
 
             return studentRegistration.Id;
         }
@@ -599,8 +600,21 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         user.PasswordHash = hasher.HashPassword(user, password);
     }
 
-    private async Task SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, bool isNewUser)
+    public async Task<string?> SendRegistrationNotificationsAsync(int studentRegistrationId)
     {
+        var studentRegistration = await context.StudentRegistrations.FirstOrDefaultAsync(s => s.Id == studentRegistrationId);
+        if (studentRegistration == null)
+            return null;
+
+        var registrationNumber = await GenerateRegistrationNumberAsync(studentRegistrationId);
+        var results = await SendStudentRegistrationNotificationsAsync(studentRegistration, registrationNumber);
+
+        return results.Count > 0 ? string.Join(" ", results) : "Student has no email or phone number on file; nothing sent.";
+    }
+
+    private async Task<List<string>> SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, string? registrationNumber)
+    {
+        var results = new List<string>();
         var fullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim();
         var program = await context.Programs.Where(p => p.Id == studentRegistration.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
         var college = await context.Colleges.Where(c => c.Id == studentRegistration.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
@@ -610,12 +624,24 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, studentRegistration.RegistrationNumber ?? "", college ?? "", program ?? "", studentRegistration.Email, password);
-                await emailService.SendEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
+                var loginUrl = EmailTemplateHelper.SiteUrl;
+                if (string.IsNullOrWhiteSpace(loginUrl))
+                {
+                    loginUrl = "/Identity/Account/Login";
+                }
+                else if (!loginUrl.Contains("/Identity/Account/Login", StringComparison.OrdinalIgnoreCase))
+                {
+                    loginUrl = loginUrl.Trim().TrimEnd('/') + "/Identity/Account/Login";
+                }
+
+                var emailBody = EmailTemplateHelper.StudentRegistrationCredentials(fullName, registrationNumber ?? "", college ?? "", program ?? "", studentRegistration.Email, password, loginUrl);
+                await gumpEmailService.SendHtmlEmailAsync(studentRegistration.Email, "Student Registration - Login Credentials", emailBody);
+                results.Add($"Email sent to {studentRegistration.Email}.");
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to send registration email to {Email}", studentRegistration.Email);
+                results.Add($"Email to {studentRegistration.Email} failed.");
             }
         }
 
@@ -624,13 +650,17 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var smsMessage = $"Dear {fullName}, your registration is complete. Reg No: {studentRegistration.RegistrationNumber}, Username: {studentRegistration.Email}, Password: {password}. Please change password on first login. - FWU";
+                var smsMessage = $"Dear {fullName}, your registration is complete. Reg No: {registrationNumber}, Username: {studentRegistration.Email}, Password: {password}. Please change password on first login. - FWU";
                 await smsService.SendSmsAsync(phone, smsMessage);
+                results.Add($"SMS sent to {phone}.");
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "Failed to send registration SMS to {Phone}", phone);
+                results.Add($"SMS to {phone} failed.");
             }
         }
+
+        return results;
     }
 }
