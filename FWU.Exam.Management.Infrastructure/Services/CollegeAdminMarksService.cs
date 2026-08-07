@@ -13,7 +13,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class CollegeAdminMarksService(
     AppDbContext context,
     ICollegeAdminSubjectAssignmentService assignmentService,
-    IGradeCalculationService gradeCalculationService) : ICollegeAdminMarksService
+    IGradeCalculationService gradeCalculationService,
+    IExamScheduleApprovalService approvalService) : ICollegeAdminMarksService
 {
     public async Task<CollegeAdminDashboardDto> GetCollegeAdminDashboardAsync(string collegeAdminUserId)
     {
@@ -29,6 +30,16 @@ public class CollegeAdminMarksService(
             .ToListAsync();
 
         var result = new CollegeAdminDashboardDto();
+
+        var collegeId = await context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == collegeAdminUserId)
+            .Select(u => u.CollegeId)
+            .FirstOrDefaultAsync();
+
+        result.PendingApprovalCount = collegeId.HasValue
+            ? await approvalService.GetPendingCountForCollegeAsync(collegeId.Value)
+            : 0;
 
         foreach (var so in subjectOfferings)
         {

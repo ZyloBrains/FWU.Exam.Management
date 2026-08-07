@@ -21,6 +21,7 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
+    IExamScheduleApprovalService examScheduleApprovalService,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
@@ -154,6 +155,11 @@ public class ExamSchedulesController(
         var registrations = await context.ExamRegistrations
             .Where(r => r.ExamScheduleId == id.Value)
             .ToListAsync();
+
+        var scheduleApprovals = await examScheduleApprovalService.GetApprovalsForScheduleAsync(id.Value);
+        ViewBag.ScheduleApprovals = scheduleApprovals;
+        ViewBag.HasRejectedApprovals = scheduleApprovals.Any(a => a.Status == Domain.Enums.ExamScheduleApprovalStatus.Rejected);
+        ViewBag.HasApprovals = scheduleApprovals.Count > 0;
 
         var examSlots = await context.ExamSlots
             .Where(es => es.ExamScheduleId == id.Value)
@@ -308,6 +314,20 @@ public class ExamSchedulesController(
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
+
+            // College approval workflow: if the creator set a CollegeApprovalDate,
+            // open Pending approval rows for every college that offers this program.
+            // ===== ALTERNATIVE SEMANTIC (UNCOMMENT IF NEEDED) =====
+            // If CollegeApprovalDate is a *deadline* instead of a proposed date,
+            // validate here that it is in the future before creating approvals.
+            //   if (examSchedule.CollegeApprovalDate.HasValue
+            //       && examSchedule.CollegeApprovalDate.Value <= DateTime.UtcNow)
+            //       ModelState.AddModelError("CollegeApprovalDate", "Approval date must be in the future.");
+            if (examSchedule.CollegeApprovalDate.HasValue)
+            {
+                await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
+            }
+
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -358,12 +378,38 @@ public class ExamSchedulesController(
                     return NotFound();
                 throw;
             }
+
+            // Keep the approval rows in sync: add any newly-affiliated colleges and
+            // refresh the requested date for rows awaiting (re)approval.
+            if (examSchedule.CollegeApprovalDate.HasValue)
+            {
+                await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
+            }
+
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
+    }
+
+    [RequirePermission("examapproval.resubmit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Resubmit(int id)
+    {
+        try
+        {
+            await examScheduleApprovalService.ResubmitAsync(id);
+            TempData["SuccessMessage"] = "Exam schedule resubmitted for college approval.";
+        }
+        catch (KeyNotFoundException)
+        {
+            TempData["ErrorMessage"] = "Exam schedule not found.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [RequirePermission("examschedules.delete")]
@@ -386,6 +432,11 @@ public class ExamSchedulesController(
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
             TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateException)
@@ -439,7 +490,23 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await examScheduleService.DeleteExamScheduleAsync(id); return Json(new { success = true, message = "Exam schedule deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            return Json(new { success = true, message = "Exam schedule deleted successfully!" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Json(new { success = false, message = "Cannot delete this exam schedule because it is referenced by other records." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = $"An error occurred while deleting: {ex.Message}" });
+        }
     }
 
 }

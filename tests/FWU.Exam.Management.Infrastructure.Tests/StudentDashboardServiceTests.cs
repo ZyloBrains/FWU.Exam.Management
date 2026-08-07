@@ -188,6 +188,81 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenCollegeHasNotApproved()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                ExamScheduleId = 11,
+                CollegeId = TestData.CollegeId,
+                Status = ExamScheduleApprovalStatus.Pending,
+                IsActive = true
+            });
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenCollegeApproved()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                ExamScheduleId = 11,
+                CollegeId = TestData.CollegeId,
+                Status = ExamScheduleApprovalStatus.Approved,
+                ApprovedDate = DateTime.UtcNow,
+                IsActive = true
+            });
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        var schedule = Assert.Single(result);
+        Assert.Equal(11, schedule.Id);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenNoApprovalRequested()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        var schedule = Assert.Single(result);
+        Assert.Equal(11, schedule.Id);
+    }
+
+    [Fact]
     public async Task GetResultRecordsAsync_LoadsExamScheduleBelongingToAnotherTenant()
     {
         using var db = new TestDb(TestTenantContext.Standard(2), ctx =>
