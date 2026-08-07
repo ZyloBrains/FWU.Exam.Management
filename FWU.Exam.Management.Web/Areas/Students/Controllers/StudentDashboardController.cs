@@ -745,6 +745,15 @@ public class StudentDashboardController(
         var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
             new { area = "Students" }, scheme)!;
 
+        var customerEmail = registration.Email;
+        if (string.IsNullOrWhiteSpace(customerEmail))
+            customerEmail = null;
+        else
+        {
+            try { _ = new System.Net.Mail.MailAddress(customerEmail); }
+            catch { customerEmail = null; }
+        }
+
         var khaltiRequest = new KhaltiInitiateRequest
         {
             ReturnUrl = returnUrl,
@@ -754,9 +763,9 @@ public class StudentDashboardController(
             PurchaseOrderName = $"Exam Fee - {schedule?.ExamScheduleName ?? ""}",
             CustomerInfo = new KhaltiCustomerInfo
             {
-                Name = fullName,
-                Email = registration.Email,
-                Phone = registration.ContactNumber
+                Name = string.IsNullOrWhiteSpace(fullName) ? null : fullName,
+                Email = customerEmail,
+                Phone = string.IsNullOrWhiteSpace(registration.ContactNumber) ? null : registration.ContactNumber
             }
         };
 

@@ -4,6 +4,7 @@ using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace FWU.Exam.Management.Web.Data.Seeders;
 
@@ -173,6 +174,8 @@ public static class ReferenceDataSeeder
     public static async Task SeedKhaltiConfigurationAsync(IServiceProvider serviceProvider)
     {
         var context = serviceProvider.GetRequiredService<AppDbContext>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        var authKey = configuration["KhaltiConfig:AuthorizationKey"];
 
         var tenants = await context.Tenants.IgnoreQueryFilters().ToListAsync();
 
@@ -188,10 +191,10 @@ public static class ReferenceDataSeeder
                 WebsiteUrl = "https://example.com",
                 Amount = 0m,
                 ProductName = "Exam Fee",
-                AuthorizationKey = "test_secret_key",
+                AuthorizationKey = string.IsNullOrWhiteSpace(authKey) ? "test_secret_key" : authKey,
                 ServiceCharge = 0,
-                PostUrl = "https://rc-epay.khalti.com/api/v2/epayment/initiate/",
-                VerifyUrl = "https://rc-epay.khalti.com/api/v2/epayment/lookup/",
+                PostUrl = "https://dev.khalti.com/api/v2/epayment/initiate/",
+                VerifyUrl = "https://dev.khalti.com/api/v2/epayment/lookup/",
             };
             context.KhaltiConfigurations.Add(khaltiConfig);
         }
