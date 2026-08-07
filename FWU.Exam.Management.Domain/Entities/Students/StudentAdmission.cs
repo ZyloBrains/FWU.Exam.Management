@@ -40,6 +40,46 @@ public class StudentAdmission : IAuditable, ITenantScoped
     [Display(Name = "College Roll Number")]
     public string? CollegeRollNumber { get; set; }
 
+    [Required, MaxLength(80)]
+    [Display(Name = "First Name")]
+    public string FirstName { get; set; } = string.Empty;
+
+    [MaxLength(30)]
+    [Display(Name = "Middle Name")]
+    public string? MiddleName { get; set; }
+
+    [Required, MaxLength(30)]
+    [Display(Name = "Last Name")]
+    public string LastName { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    [Display(Name = "Nepali Name")]
+    public string? NepaliName { get; set; }
+
+    [MaxLength(10)]
+    [Display(Name = "Date of Birth (BS)")]
+    public string? DateOfBirthBS { get; set; }
+
+    [MaxLength(20)]
+    [Display(Name = "Date of Birth (AD)")]
+    public string? DateOfBirthAD { get; set; }
+
+    [Display(Name = "Gender")]
+    public int? GenderId { get; set; }
+
+    [MaxLength(15)]
+    [Display(Name = "Contact Number")]
+    public string? ContactNumber { get; set; }
+
+    [MaxLength(15)]
+    [Display(Name = "Phone")]
+    public string? Phone { get; set; }
+
+    [EmailAddress]
+    [MaxLength(50)]
+    [Display(Name = "Email")]
+    public string? Email { get; set; }
+
     [Display(Name = "Has Fee Exemption")]
     public bool HasFeeExemption { get; set; }
 

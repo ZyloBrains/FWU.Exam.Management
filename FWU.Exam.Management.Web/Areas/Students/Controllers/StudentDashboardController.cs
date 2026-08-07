@@ -267,7 +267,7 @@ public class StudentDashboardController(
             return View(new ExamFormsListViewModel());
         }
 
-        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration);
         schedules = schedules.Where(s => !IsScheduleDeadlinePassed(s)).ToList();
 
         var forms = new List<ExamFormViewModel>();

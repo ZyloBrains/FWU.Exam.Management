@@ -322,6 +322,16 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                 IsActive = true,
                 IsCompleted = false,
                 AppUserId = appUser?.Id,
+                FirstName = application.FirstName ?? string.Empty,
+                MiddleName = application.MiddleName,
+                LastName = application.LastName ?? string.Empty,
+                NepaliName = application.NepaliName,
+                DateOfBirthBS = application.DateOfBirthBS,
+                DateOfBirthAD = application.DateOfBirthAD,
+                GenderId = application.GenderId,
+                ContactNumber = application.ContactNumber,
+                Phone = application.Phone,
+                Email = application.Email,
                 CollegeRollNumber = await GenerateCollegeRollNumberAsync(application.CollegeId, application.ProgramId)
             };
 

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext) : IStudentAdmissionService
+public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext, ISemesterEnrollmentService semesterEnrollmentService) : IStudentAdmissionService
 {
     public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
@@ -83,11 +83,15 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
 
     public async Task CompleteAdmissionAsync(int id, string userId)
     {
-        var admission = await context.StudentAdmissions.FindAsync(id);
+        var admission = await context.StudentAdmissions
+            .FirstOrDefaultAsync(sa => sa.Id == id);
         if (admission != null)
         {
             admission.IsCompleted = true;
             admission.CheckedBy = int.TryParse(userId, out var parsed) ? parsed : null;
+
+            await semesterEnrollmentService.EnrollInFirstSemesterAsync(admission.Id);
+
             await context.SaveChangesAsync();
         }
     }
