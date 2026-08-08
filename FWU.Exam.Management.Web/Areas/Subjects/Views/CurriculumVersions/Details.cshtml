@@ -87,8 +87,8 @@
             </div>
             @if (HasPerm("subjectofferings.create"))
             {
-                <a asp-area="Subjects" asp-controller="SubjectOfferings" asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
-                    <i class="fas fa-plus text-xs"></i> Add Subjects
+                <a asp-area="Subjects" asp-controller="CurriculumVersions" asp-action="Manage" asp-route-id="@Model!.Id" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    <i class="fas fa-pen text-xs"></i> Manage Subjects
                 </a>
             }
         </div>
@@ -166,7 +166,7 @@
             <div class="text-center py-10 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
                 <i class="fas fa-book-open text-2xl mb-2 block text-gray-300"></i>
                 <p>No subjects assigned to this curriculum version yet.</p>
-                <p class="text-xs mt-1">Use "Add Subjects" to create subject offerings under this version.</p>
+                <p class="text-xs mt-1">Use "Manage Subjects" to add subject offerings under this version.</p>
             </div>
         }
     </div>

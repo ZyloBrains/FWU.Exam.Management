@@ -162,9 +162,16 @@ public class SubjectOfferingsController : Controller
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetCurriculumVersionsByProgram(int programId)
+    public async Task<JsonResult> GetExistingSubjectsBySemesters(int programId, int curriculumVersionId, int academicYearId)
     {
-        var versions = await _subjectOfferingService.GetCurriculumVersionsAsync(programId);
+        var result = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(programId, curriculumVersionId, academicYearId);
+        return Json(result);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetCurriculumVersionsByProgram(int programId, int? academicYearId = null)
+    {
+        var versions = await _subjectOfferingService.GetCurriculumVersionsAsync(programId, academicYearId);
         return Json(versions.Select(v => new { id = v.Id, name = v.Name }));
     }
 
@@ -189,23 +196,51 @@ public class SubjectOfferingsController : Controller
         return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
     }
 
-    public async Task<IActionResult> Create()
+    [HttpGet]
+    public async Task<JsonResult> GetSemestersForCreate(int programId, int academicYearId)
     {
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
-        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name");
-        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName");
-        ViewData["SemesterId"] = SemesterSelectList(semesters);
-        ViewData["CurriculumVersionId"] = new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(), "Id", "Name");
+        var semesters = await _subjectOfferingService.GetSemestersForOfferingAsync(programId, academicYearId);
+        return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
+    }
 
-        var subjectsData = subjectCatalogs.Select(s => new
+    public async Task<IActionResult> Create(int? curriculumVersionId)
+    {
+        var (subjectCatalogs, programs, _) = await _subjectOfferingService.GetSelectListsAsync();
+
+        var version = curriculumVersionId is > 0
+            ? await _subjectOfferingService.GetCurriculumVersionByIdAsync(curriculumVersionId.Value)
+            : null;
+
+        ViewData["AcademicYearId"] = new SelectList(
+            await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", version?.EffectiveAcademicYearId);
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", version?.ProgramId);
+        ViewData["CurriculumVersionId"] = version != null
+            ? new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(version.ProgramId, version.EffectiveAcademicYearId), "Id", "Name", version.Id)
+            : new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
+
+        var semesterJson = new List<object>();
+        var initialExisting = new Dictionary<int, List<int>>();
+        if (version != null)
+        {
+            var yearSemesters = await _subjectOfferingService.GetSemestersForOfferingAsync(version.ProgramId, version.EffectiveAcademicYearId);
+            foreach (var s in yearSemesters)
+            {
+                semesterJson.Add(new { semesterId = s.SemesterId, semesterName = s.SemesterName, subjects = Array.Empty<object>() });
+            }
+            initialExisting = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(version.ProgramId, version.Id, version.EffectiveAcademicYearId);
+        }
+
+        ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
+        ViewBag.InitialExistingJson = JsonSerializer.Serialize(initialExisting);
+
+        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectCatalogs.Select(s => new
         {
             id = s.Id,
             code = s.SubjectCode,
             name = s.SubjectName,
             type = s.SubjectType?.Name ?? "",
             credits = s.CreditHours
-        });
-        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectsData);
+        }));
 
         return View();
     }
@@ -221,34 +256,42 @@ public class SubjectOfferingsController : Controller
         if (model.AcademicYearId <= 0)
             ModelState.AddModelError(nameof(model.AcademicYearId), "Academic Year is required.");
 
-        if (model.SemesterId <= 0)
-            ModelState.AddModelError(nameof(model.SemesterId), "Semester is required.");
-
-        if (model.CurriculumVersionId <= 0)
-            ModelState.AddModelError(nameof(model.CurriculumVersionId), "Curriculum Version is required.");
-
-        if (model.Subjects == null || model.Subjects.Count == 0)
-            ModelState.AddModelError("", "Please add at least one subject.");
-        else
+        if (model.ProgramId > 0 && model.AcademicYearId > 0 && model.CurriculumVersionId <= 0)
         {
-            for (var i = 0; i < model.Subjects.Count; i++)
+            var autoVersion = await _subjectOfferingService.GetOrCreateDefaultCurriculumVersionAsync(model.ProgramId, model.AcademicYearId);
+            if (autoVersion != null)
+                model.CurriculumVersionId = autoVersion.Id;
+            else
+                ModelState.AddModelError(nameof(model.CurriculumVersionId), "Curriculum Version is required.");
+        }
+
+        var groups = model.Semesters ?? new List<SemesterSubjectOfferingGroup>();
+        var populated = groups.Where(g => g.Subjects is { Count: > 0 }).ToList();
+
+        if (populated.Count == 0)
+            ModelState.AddModelError("", "Please add at least one subject to at least one semester.");
+
+        for (var g = 0; g < groups.Count; g++)
+        {
+            var group = groups[g];
+            if (group.Subjects == null || group.Subjects.Count == 0) continue;
+
+            for (var i = 0; i < group.Subjects.Count; i++)
             {
-                if (model.Subjects[i].SubjectCatalogId <= 0)
-                    ModelState.AddModelError($"Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Please select a valid subject.");
+                if (group.Subjects[i].SubjectCatalogId <= 0)
+                    ModelState.AddModelError($"Semesters[{g}].Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Please select a valid subject.");
             }
         }
 
-        if (model.AcademicYearId > 0 && model.SemesterId > 0)
+        if (model.AcademicYearId > 0 && model.ProgramId > 0)
         {
-            var semester = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId, model.ProgramId);
-            if (!semester.Any(s => s.Id == model.SemesterId))
-                ModelState.AddModelError(nameof(model.SemesterId), "The selected semester does not belong to the selected academic year.");
-        }
-
-        if (model.ProgramId > 0 && model.SemesterId > 0)
-        {
-            if (!await _subjectOfferingService.IsSemesterAssignedToProgramAsync(model.ProgramId, model.SemesterId))
-                ModelState.AddModelError(nameof(model.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs â†’ Semesters.");
+            var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId, model.ProgramId);
+            var yearIds = yearSemesters.Select(s => s.Id).ToHashSet();
+            foreach (var group in populated)
+            {
+                if (!yearIds.Contains(group.SemesterId))
+                    ModelState.AddModelError(nameof(model.AcademicYearId), $"Semester \"{group.SemesterName}\" does not belong to the selected academic year.");
+            }
         }
 
         if (model.ProgramId > 0 && model.CurriculumVersionId > 0)
@@ -257,86 +300,134 @@ public class SubjectOfferingsController : Controller
                 ModelState.AddModelError(nameof(model.CurriculumVersionId), "The selected curriculum version does not belong to the selected program.");
         }
 
+        if (model.CurriculumVersionId > 0 && model.AcademicYearId > 0)
+        {
+            var version = await _subjectOfferingService.GetCurriculumVersionByIdAsync(model.CurriculumVersionId);
+            if (version is not null && version.EffectiveAcademicYearId != model.AcademicYearId)
+                ModelState.AddModelError(nameof(model.AcademicYearId), "The academic year must match the curriculum version's effective academic year.");
+        }
+
         if (ModelState.IsValid)
         {
-            var existingIds = await _subjectOfferingService.GetExistingSubjectCatalogIdsAsync(model.ProgramId, model.SemesterId, model.CurriculumVersionId);
-            var duplicateIds = model.Subjects!
-                .Where(s => existingIds.Contains(s.SubjectCatalogId))
-                .Select(s => s.SubjectCatalogId)
-                .ToList();
-
-            if (duplicateIds.Any())
+            var existingBySemester = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId, model.AcademicYearId);
+            foreach (var group in populated)
             {
-                ModelState.AddModelError("", $"{duplicateIds.Count} subject(s) already exist in this semester for the selected program and curriculum version.");
+                if (existingBySemester.TryGetValue(group.SemesterId, out var existing))
+                {
+                    var duplicateCount = group.Subjects!.Count(s => existing.Contains(s.SubjectCatalogId));
+                    if (duplicateCount > 0)
+                        ModelState.AddModelError("", $"{duplicateCount} subject(s) already exist in semester \"{group.SemesterName}\" for the selected program and curriculum version.");
+                }
             }
         }
 
         if (ModelState.IsValid)
         {
-            var offerings = model.Subjects!.Select(s => new SubjectOffering
+            var offerings = new List<SubjectOffering>();
+            foreach (var group in populated)
             {
-                SubjectCatalogId = s.SubjectCatalogId,
-                ProgramId = model.ProgramId,
-                SemesterId = model.SemesterId,
-                CurriculumVersionId = model.CurriculumVersionId,
-                IsCompulsory = s.IsCompulsory,
-                DisplayOrder = s.DisplayOrder,
-                HasTheory = s.HasTheory,
-                HasPractical = s.HasPractical,
-                HasInternal = s.HasInternal,
-                TheoryFullMarks = s.TheoryFullMarks,
-                TheoryPassMarks = s.TheoryPassMarks,
-                PracticalFullMarks = s.PracticalFullMarks,
-                PracticalPassMarks = s.PracticalPassMarks,
-                InternalTheoryFullMarks = s.InternalTheoryFullMarks,
-                InternalTheoryPassMarks = s.InternalTheoryPassMarks,
-                InternalPracticalFullMarks = s.InternalPracticalFullMarks,
-                InternalPracticalPassMarks = s.InternalPracticalPassMarks
-            }).ToList();
+                offerings.AddRange(group.Subjects!.Select(s => new SubjectOffering
+                {
+                    SubjectCatalogId = s.SubjectCatalogId,
+                    ProgramId = model.ProgramId,
+                    SemesterId = group.SemesterId,
+                    CurriculumVersionId = model.CurriculumVersionId,
+                    IsCompulsory = s.IsCompulsory,
+                    DisplayOrder = s.DisplayOrder,
+                    HasTheory = s.HasTheory,
+                    HasPractical = s.HasPractical,
+                    HasInternal = s.HasInternal,
+                    TheoryFullMarks = s.TheoryFullMarks,
+                    TheoryPassMarks = s.TheoryPassMarks,
+                    PracticalFullMarks = s.PracticalFullMarks,
+                    PracticalPassMarks = s.PracticalPassMarks,
+                    InternalTheoryFullMarks = s.InternalTheoryFullMarks,
+                    InternalTheoryPassMarks = s.InternalTheoryPassMarks,
+                    InternalPracticalFullMarks = s.InternalPracticalFullMarks,
+                    InternalPracticalPassMarks = s.InternalPracticalPassMarks
+                }));
+            }
 
             try
             {
+                foreach (var group in populated)
+                    await _subjectOfferingService.EnsureSemesterAssignedToProgramAsync(model.ProgramId, group.SemesterId);
+
                 await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
             }
             catch (DbUpdateException)
             {
-                ModelState.AddModelError("", "A database error occurred. The subject offering may already exist.");
-                var (cats, progs, sems) = await _subjectOfferingService.GetSelectListsAsync();
-                ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
-                ViewData["ProgramId"] = new SelectList(progs, "Id", "ProgramName", model.ProgramId);
-                ViewData["SemesterId"] = SemesterSelectList(sems, model.SemesterId);
-                ViewData["CurriculumVersionId"] = new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(model.ProgramId), "Id", "Name", model.CurriculumVersionId);
-                ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(cats.Select(s => new
-                {
-                    id = s.Id,
-                    code = s.SubjectCode,
-                    name = s.SubjectName,
-                    type = s.SubjectType?.Name ?? "",
-                    credits = s.CreditHours
-                }));
+                ModelState.AddModelError("", "A database error occurred. One or more subject offerings may already exist.");
+                await PopulateCreateViewDataOnErrorAsync(model);
                 return View(model);
             }
             TempData["SuccessMessage"] = $"{offerings.Count} subject offering(s) created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
-        var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync();
+        await PopulateCreateViewDataOnErrorAsync(model);
+        return View(model);
+    }
+
+    private async Task PopulateCreateViewDataOnErrorAsync(SubjectOfferingBulkCreateViewModel model)
+    {
+        var (subjectCatalogs, programs, _) = await _subjectOfferingService.GetSelectListsAsync();
         ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", model.ProgramId);
-        ViewData["SemesterId"] = SemesterSelectList(semesters, model.SemesterId);
-        ViewData["CurriculumVersionId"] = new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(model.ProgramId), "Id", "Name", model.CurriculumVersionId);
+        ViewData["CurriculumVersionId"] = model.ProgramId > 0
+            ? new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(model.ProgramId, model.AcademicYearId > 0 ? model.AcademicYearId : null), "Id", "Name", model.CurriculumVersionId)
+            : new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
 
-        var subjectsData = subjectCatalogs.Select(s => new
+        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectCatalogs.Select(s => new
         {
             id = s.Id,
             code = s.SubjectCode,
             name = s.SubjectName,
             type = s.SubjectType?.Name ?? "",
             credits = s.CreditHours
-        });
-        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectsData);
+        }));
 
-        return View(model);
+        var catalogMap = subjectCatalogs.ToDictionary(s => s.Id);
+        var semesterJson = new List<object>();
+        foreach (var group in model.Semesters ?? new List<SemesterSubjectOfferingGroup>())
+        {
+            semesterJson.Add(new
+            {
+                semesterId = group.SemesterId,
+                semesterName = group.SemesterName ?? "",
+                subjects = group.Subjects?.Select(s =>
+                {
+                    catalogMap.TryGetValue(s.SubjectCatalogId, out var cat);
+                    return new
+                    {
+                        id = s.SubjectCatalogId,
+                        code = cat?.SubjectCode ?? "",
+                        name = cat?.SubjectName ?? "",
+                        isCompulsory = s.IsCompulsory,
+                        displayOrder = s.DisplayOrder,
+                        hasTheory = s.HasTheory,
+                        hasPractical = s.HasPractical,
+                        hasInternal = s.HasInternal,
+                        theoryFullMarks = s.TheoryFullMarks,
+                        theoryPassMarks = s.TheoryPassMarks,
+                        practicalFullMarks = s.PracticalFullMarks,
+                        practicalPassMarks = s.PracticalPassMarks,
+                        internalTheoryFullMarks = s.InternalTheoryFullMarks,
+                        internalTheoryPassMarks = s.InternalTheoryPassMarks,
+                        internalPracticalFullMarks = s.InternalPracticalFullMarks,
+                        internalPracticalPassMarks = s.InternalPracticalPassMarks
+                    };
+                }).ToList()
+            });
+        }
+        ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
+
+        ViewBag.InitialExistingJson = "{}";
+        if (model.ProgramId > 0 && model.CurriculumVersionId > 0 && model.AcademicYearId > 0)
+        {
+            var existing = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId, model.AcademicYearId);
+            ViewBag.InitialExistingJson = JsonSerializer.Serialize(existing);
+        }
     }
 
     [RequirePermission("subjectofferings.edit")]

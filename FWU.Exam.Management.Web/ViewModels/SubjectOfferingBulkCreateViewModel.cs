@@ -9,17 +9,23 @@ public class SubjectOfferingBulkCreateViewModel
     [Range(1, int.MaxValue, ErrorMessage = "Program is required.")]
     public int ProgramId { get; set; }
 
-    [Display(Name = "Semester")]
-    [Range(1, int.MaxValue, ErrorMessage = "Semester is required.")]
-    public int SemesterId { get; set; }
-
     [Display(Name = "Academic Year")]
     [Range(1, int.MaxValue, ErrorMessage = "Academic Year is required.")]
     public int AcademicYearId { get; set; }
 
     [Display(Name = "Curriculum Version")]
-    [Range(1, int.MaxValue, ErrorMessage = "Curriculum Version is required.")]
     public int CurriculumVersionId { get; set; }
+
+    public List<SemesterSubjectOfferingGroup> Semesters { get; set; } = new();
+
+    public List<int> RemovedOfferingIds { get; set; } = new();
+}
+
+public class SemesterSubjectOfferingGroup
+{
+    public int SemesterId { get; set; }
+
+    public string? SemesterName { get; set; }
 
     public List<SubjectOfferingItemViewModel> Subjects { get; set; } = new();
 }
