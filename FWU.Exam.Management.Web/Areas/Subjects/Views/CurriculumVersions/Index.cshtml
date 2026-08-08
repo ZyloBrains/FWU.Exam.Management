@@ -9,8 +9,8 @@
     var totalPages = ViewBag.TotalPages ?? 1;
     var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
-    var currentSort = ViewBag.Sort as string ?? "Name";
-    var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentSort = ViewBag.Sort as string ?? "id";
+    var currentSortDir = ViewBag.SortDir as string ?? "desc";
     var currentUser = await UserManager.GetUserAsync(User);
     var userPerms = currentUser != null
         ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
@@ -111,6 +111,10 @@
 
     <div class="flex flex-wrap items-center gap-2 text-sm">
         <span class="text-gray-500">Sort by:</span>
+        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="id" asp-route-sortDir="@(currentSort.ToLower() == "id" && currentSortDir == "desc" ? "asc" : "desc")"
+               class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "id" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600") hover:bg-orange-50">
+            Newest @(currentSort.ToLower() == "id" ? (currentSortDir == "desc" ? "?" : "?") : "")
+        </a>
         <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="name" asp-route-sortDir="@(currentSort.ToLower() == "name" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "name" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600") hover:bg-orange-50">
             Name @(currentSort.ToLower() == "name" ? (currentSortDir == "asc" ? "?" : "?") : "")

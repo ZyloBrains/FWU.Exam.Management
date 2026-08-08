@@ -24,7 +24,7 @@ public class CurriculumVersionsController : Controller
         _subjectOfferingService = subjectOfferingService;
     }
 
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "id", string sortDir = "desc", int pageSize = 10)
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
 
@@ -47,7 +47,7 @@ public class CurriculumVersionsController : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -68,7 +68,7 @@ public class CurriculumVersionsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -104,7 +104,7 @@ public class CurriculumVersionsController : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
 

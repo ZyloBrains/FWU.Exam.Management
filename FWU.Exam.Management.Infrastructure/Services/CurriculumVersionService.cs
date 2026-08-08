@@ -236,6 +236,7 @@ public class CurriculumVersionService : ICurriculumVersionService
     {
         return sort.ToLower() switch
         {
+            "id" => c => c.Id,
             "name" => c => c.Name ?? "",
             "program" => c => c.Program != null ? c.Program.ProgramName : "",
             "academicyear" => c => c.EffectiveAcademicYear != null ? c.EffectiveAcademicYear.AcademicYearName : "",

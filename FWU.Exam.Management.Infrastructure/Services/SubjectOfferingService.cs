@@ -328,6 +328,30 @@ public class SubjectOfferingService : ISubjectOfferingService
             .AnyAsync(cv => cv.Id == curriculumVersionId && cv.ProgramId == programId);
     }
 
+    public async Task<List<SubjectOffering>> GetSearchResultsAsync(int? academicYearId, int? programId, int? semesterId)
+    {
+        var query = _context.SubjectOfferings
+            .Include(so => so.SubjectCatalog)
+            .Include(so => so.Program)
+            .Include(so => so.Semester)
+            .AsNoTracking()
+            .ApplyScope(_userContext);
+
+        if (academicYearId is > 0)
+            query = query.Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId.Value);
+        if (programId is > 0)
+            query = query.Where(so => so.ProgramId == programId.Value);
+        if (semesterId is > 0)
+            query = query.Where(so => so.SemesterId == semesterId.Value);
+
+        return await query
+            .OrderBy(so => so.Program != null ? so.Program.ProgramName : "")
+            .ThenBy(so => so.Semester != null ? so.Semester.Number : 0)
+            .ThenBy(so => so.DisplayOrder)
+            .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
+            .ToListAsync();
+    }
+
     private static Expression<Func<SubjectOffering, object>> GetSortProperty(string sort)
     {
         return sort.ToLower() switch

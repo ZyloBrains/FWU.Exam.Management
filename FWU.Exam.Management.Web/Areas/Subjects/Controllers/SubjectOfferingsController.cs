@@ -46,8 +46,19 @@ public class SubjectOfferingsController : Controller
         ViewBag.SelectedAcademicYearId = selectedYear;
         ViewBag.InitialProgramId = programId;
         ViewBag.InitialSemesterId = semesterId;
+        ViewBag.CurrentAcademicYearId = academicYearId;
+        ViewBag.CurrentProgramId = programId;
+        ViewBag.CurrentSemesterId = semesterId;
 
-        return View();
+        var searched = academicYearId is > 0 || programId is > 0 || semesterId is > 0;
+        ViewBag.Searched = searched;
+
+        var items = searched
+            ? await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId)
+            : new List<SubjectOffering>();
+        ViewBag.ResultCount = items.Count;
+
+        return View(items);
     }
 
     private string EscapeCsv(string? field)
@@ -58,9 +69,9 @@ public class SubjectOfferingsController : Controller
         return field;
     }
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int? academicYearId, int? programId, int? semesterId)
     {
-        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
 
         var sb = new StringBuilder();
         sb.AppendLine("Subject,Program,Semester,Compulsory,Theory Marks,Practical Marks,Internal Marks");
@@ -76,15 +87,15 @@ public class SubjectOfferingsController : Controller
                            $"{(s.InternalTheoryFullMarks ?? 0) + (s.InternalPracticalFullMarks ?? 0)}");
         }
 
-        var fileName = $"SubjectOfferings_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var fileName = $"SubjectOfferings_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", fileName);
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int? academicYearId, int? programId, int? semesterId)
     {
-        var items = await _subjectOfferingService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
+        var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Subject Offerings");
@@ -117,20 +128,18 @@ public class SubjectOfferingsController : Controller
         workbook.SaveAs(stream);
         var content = stream.ToArray();
 
-        var fileName = $"SubjectOfferings_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        var fileName = $"SubjectOfferings_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int? academicYearId, int? programId, int? semesterId)
     {
-        var (items, totalCount) = await _subjectOfferingService.GetSubjectOfferingsAsync(page, pageSize, search, sort, sortDir);
+        var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
 
-        ViewBag.CurrentPage = page;
-        ViewBag.PageSize = pageSize;
-        ViewBag.TotalCount = totalCount;
-        ViewBag.Search = search;
-        ViewBag.Sort = sort;
-        ViewBag.SortDir = sortDir;
+        ViewBag.CurrentPage = 1;
+        ViewBag.PageSize = items.Count;
+        ViewBag.TotalCount = items.Count;
+        ViewBag.Search = null;
 
         return View("PrintPdf", items);
     }
@@ -178,15 +187,6 @@ public class SubjectOfferingsController : Controller
     {
         var semesters = await _subjectOfferingService.GetSemestersByProgramAsync(programId, academicYearId);
         return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetProgramSubjects(int programId, int? semesterId)
-    {
-        var offerings = await _subjectOfferingService.GetSubjectOfferingsAsync(programId, semesterId);
-        ViewBag.ProgramName = offerings.FirstOrDefault()?.Program?.ProgramName ?? "Program";
-        ViewBag.SemesterName = semesterId.HasValue ? offerings.FirstOrDefault()?.Semester?.Name : null;
-        return PartialView("_ProgramSubjects", offerings);
     }
 
     public async Task<IActionResult> Create()
