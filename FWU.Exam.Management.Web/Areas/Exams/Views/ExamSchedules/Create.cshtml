@@ -22,7 +22,7 @@
 
     <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
-        <form asp-action="Create" asp-area="Exams" method="post" class="space-y-6">
+        <form asp-action="Create" asp-area="Exams" method="post" id="examScheduleForm" class="space-y-6">
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 
             <!-- Section: Basic Information -->
@@ -90,12 +90,12 @@
                     <input type="hidden" asp-for="EndDateBs" />
                     <div>
                         <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
-                        <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input asp-for="StartDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="EndDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
-                        <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <input asp-for="EndDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
@@ -193,6 +193,28 @@
     <script>
         $(function () {
             $('.select2').select2({ width: 'resolve' });
+        });
+
+        var todayStr = '@DateTime.Today.ToString("yyyy-MM-dd")';
+        $('#examScheduleForm').on('submit', function (e) {
+            var start = $('#StartDate').val();
+            var end = $('#EndDate').val();
+
+            if (start && end && start > end) {
+                e.preventDefault();
+                alert('Start date cannot be after end date.');
+                return;
+            }
+            if (start && start < todayStr) {
+                e.preventDefault();
+                alert('Start date cannot be in the past.');
+                return;
+            }
+            if (end && end < todayStr) {
+                e.preventDefault();
+                alert('End date cannot be in the past.');
+                return;
+            }
         });
 
         function loadSemesters(academicYearId, programId) {

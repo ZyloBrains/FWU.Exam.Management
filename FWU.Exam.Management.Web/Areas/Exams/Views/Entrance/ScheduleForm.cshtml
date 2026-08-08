@@ -17,7 +17,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-4 sm:p-8">
-        <form asp-action="@(Model.Id == 0 ? "CreateSchedule" : "EditSchedule")" method="post" class="space-y-6">
+        <form asp-action="@(Model.Id == 0 ? "CreateSchedule" : "EditSchedule")" method="post" id="entranceScheduleForm" class="space-y-6">
             @if (Model.Id != 0) { <input type="hidden" asp-for="Id" /> }
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 
@@ -65,12 +65,12 @@
                     </div>
                     <div>
                         <label asp-for="StartDate" class="text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
-                        <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+                        <input asp-for="StartDate" type="date" min="@(Model.Id == 0 ? DateTime.Today.ToString("yyyy-MM-dd") : "")" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
                         <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="EndDate" class="text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
-                        <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+                        <input asp-for="EndDate" type="date" min="@(Model.Id == 0 ? DateTime.Today.ToString("yyyy-MM-dd") : "")" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
                         <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
@@ -135,5 +135,32 @@
     </style>
 
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script>$(function () { $('.select2').select2({ width: 'resolve' }); });</script>
+    <script>
+        $(function () { $('.select2').select2({ width: 'resolve' }); });
+
+        var todayStr = '@DateTime.Today.ToString("yyyy-MM-dd")';
+        var isEdit = @(Model.Id == 0 ? "false" : "true");
+        var originalStart = '@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")';
+        var originalEnd = '@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")';
+        $('#entranceScheduleForm').on('submit', function (e) {
+            var start = $('#StartDate').val();
+            var end = $('#EndDate').val();
+
+            if (start && end && start > end) {
+                e.preventDefault();
+                alert('Start date cannot be after end date.');
+                return;
+            }
+            if (start && (!isEdit || start !== originalStart) && start < todayStr) {
+                e.preventDefault();
+                alert('Start date cannot be in the past.');
+                return;
+            }
+            if (end && (!isEdit || end !== originalEnd) && end < todayStr) {
+                e.preventDefault();
+                alert('End date cannot be in the past.');
+                return;
+            }
+        });
+    </script>
 }
