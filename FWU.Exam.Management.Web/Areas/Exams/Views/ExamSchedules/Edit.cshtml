@@ -184,16 +184,19 @@
     <script>
         var initialSemesterId = '@(Model?.SemesterId ?? 0)';
 
-        function resetSelect2($el) {
-            $el.select2('destroy').empty().append('<option value="">-- Select --</option>').prop('disabled', true).select2({ width: 'resolve' });
-        }
-
-        function loadSemesters(academicYearId, programId, selectedId) {
+        function renderSemesters(academicYearId, programId, selectedId) {
             var semesterSelect = $('#SemesterId');
 
-            resetSelect2(semesterSelect);
+            if (semesterSelect.data('select2')) {
+                semesterSelect.select2('destroy');
+            }
 
-            if (!academicYearId) return;
+            semesterSelect.empty().append('<option value="">-- Select Semester --</option>');
+
+            if (!academicYearId) {
+                semesterSelect.prop('disabled', true).select2({ width: 'resolve' });
+                return;
+            }
 
             $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
                 $.each(data, function (index, item) {
@@ -206,20 +209,16 @@
         }
 
         $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val(), $("#ProgramId").val());
+            renderSemesters($(this).val(), $("#ProgramId").val());
         });
 
         $("#ProgramId").change(function () {
             if ($("#AcademicYearId").val()) {
-                loadSemesters($("#AcademicYearId").val(), $(this).val());
+                renderSemesters($("#AcademicYearId").val(), $(this).val());
             }
         });
 
-        if ($("#AcademicYearId").val()) {
-            loadSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
-        } else {
-            loadSemesters('');
-        }
+        renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
 
         var convertTimer;
         $("#StartDateBs").on("input", function () {

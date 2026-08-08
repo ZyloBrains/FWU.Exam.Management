@@ -49,7 +49,7 @@
                     <div>
                         <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                         <select asp-for="AcademicYearId" id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
-                            <option value="">-- Select Academic Year --</option>
+                            <option value="">-- Select Batch Year --</option>
                         </select>
                         <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
@@ -197,16 +197,19 @@
 
         var initialSemesterId = '@(Model?.SemesterId ?? 0)';
 
-        function resetSelect2($el) {
-            $el.select2('destroy').empty().append('<option value="">-- Select --</option>').prop('disabled', true).select2({ width: 'resolve' });
-        }
-
-        function loadSemesters(academicYearId, programId, selectedId) {
+        function renderSemesters(academicYearId, programId, selectedId) {
             var semesterSelect = $('#SemesterId');
 
-            resetSelect2(semesterSelect);
+            if (semesterSelect.data('select2')) {
+                semesterSelect.select2('destroy');
+            }
 
-            if (!academicYearId) return;
+            semesterSelect.empty().append('<option value="">-- Select Semester --</option>');
+
+            if (!academicYearId) {
+                semesterSelect.prop('disabled', true).select2({ width: 'resolve' });
+                return;
+            }
 
             $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
                 $.each(data, function (index, item) {
@@ -219,18 +222,16 @@
         }
 
         $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val(), $("#ProgramId").val());
+            renderSemesters($(this).val(), $("#ProgramId").val());
         });
 
         $("#ProgramId").change(function () {
             if ($("#AcademicYearId").val()) {
-                loadSemesters($("#AcademicYearId").val(), $(this).val());
+                renderSemesters($("#AcademicYearId").val(), $(this).val());
             }
         });
 
-        if (!$("#AcademicYearId").val()) {
-            loadSemesters('');
-        }
+        renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
 
         var convertTimer;
         $("#StartDate").on("input", function () {

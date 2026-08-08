@@ -76,7 +76,7 @@ public class ExamSchedule : ITenantScoped
     public string? ExamScheduleCode { get; set; }
 
     [Range(1, int.MaxValue)]
-    [Display(Name = "Academic Year")]
+    [Display(Name = "Batch Year")]
     public int AcademicYearId { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }
