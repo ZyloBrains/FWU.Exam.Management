@@ -157,16 +157,6 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var smsConfig = await context.SmsConfigurations.FirstOrDefaultAsync(m => m.Id == id);
-        if (smsConfig == null) return NotFound();
-
-        return View(smsConfig);
-    }
-
     [RequirePermission("sms.create")]
     public IActionResult Create()
     {

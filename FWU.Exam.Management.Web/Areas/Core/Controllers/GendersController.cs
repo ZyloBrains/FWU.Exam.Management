@@ -27,16 +27,6 @@ public class GendersController(IGenderService genderService) : Controller
         return View(items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var gender = await genderService.GetGenderByIdAsync(id.Value);
-        if (gender == null) return NotFound();
-
-        return View(gender);
-    }
-
     [RequirePermission("genders.create")]
     public IActionResult Create()
     {

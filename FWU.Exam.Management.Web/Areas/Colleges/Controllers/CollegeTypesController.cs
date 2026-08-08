@@ -102,16 +102,6 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"CollegeTypes_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var collegeType = await collegeTypeService.GetCollegeTypeByIdAsync(id.Value);
-        if (collegeType == null) return NotFound();
-
-        return View(collegeType);
-    }
-
     [RequirePermission("collegetypes.create")]
     public IActionResult Create()
     {

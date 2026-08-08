@@ -110,23 +110,6 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    // GET: LocalLevels/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var localLevel = await localLevelService.GetLocalLevelByIdAsync(id.Value);
-        if (localLevel == null)
-        {
-            return NotFound();
-        }
-
-        return View(localLevel);
-    }
-
     // GET: LocalLevels/Create
     [RequirePermission("locallevels.create")]
     public async Task<IActionResult> Create()

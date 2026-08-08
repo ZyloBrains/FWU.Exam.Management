@@ -265,16 +265,6 @@ public class SubjectCatalogsController : Controller
         return View("PrintPdf", items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var subjectCatalog = await _subjectCatalogService.GetSubjectCatalogByIdAsync(id.Value);
-        if (subjectCatalog == null) return NotFound();
-
-        return View(subjectCatalog);
-    }
-
     [RequirePermission("subjects.create")]
     public async Task<IActionResult> Create()
     {

@@ -113,23 +113,6 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "AcademicYears.xlsx");
     }
 
-    // GET: AcademicYears/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var academicYear = await academicYearService.GetAcademicYearByIdAsync(id.Value);
-        if (academicYear == null)
-        {
-            return NotFound();
-        }
-
-        return View(academicYear);
-    }
-
     [RequirePermission("academicyears.create")]
     public IActionResult Create()
     {

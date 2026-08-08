@@ -160,16 +160,6 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var config = await context.GumpNowEmailConfigurations.FirstOrDefaultAsync(m => m.Id == id);
-        if (config == null) return NotFound();
-
-        return View(config);
-    }
-
     [RequirePermission("gumpnowemail.create")]
     public IActionResult Create()
     {

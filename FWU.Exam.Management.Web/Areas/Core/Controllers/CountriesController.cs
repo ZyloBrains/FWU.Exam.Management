@@ -27,16 +27,6 @@ public class CountriesController(ICountryService countryService) : Controller
         return View(items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var country = await countryService.GetCountryByIdAsync(id.Value);
-        if (country == null) return NotFound();
-
-        return View(country);
-    }
-
     [RequirePermission("countries.create")]
     public IActionResult Create()
     {

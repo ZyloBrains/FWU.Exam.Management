@@ -27,16 +27,6 @@ public class EthnicitiesController(IEthnicityService ethnicityService) : Control
         return View(items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var ethnicity = await ethnicityService.GetEthnicityByIdAsync(id.Value);
-        if (ethnicity == null) return NotFound();
-
-        return View(ethnicity);
-    }
-
     [RequirePermission("ethnicities.create")]
     public IActionResult Create()
     {
