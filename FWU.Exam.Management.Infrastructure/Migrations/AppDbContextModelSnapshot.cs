@@ -1416,9 +1416,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int?>("CollegeId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CurriculumVersionId")
-                        .HasColumnType("int");
-
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
@@ -1493,8 +1490,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("AcademicYearId");
 
                     b.HasIndex("CollegeId");
-
-                    b.HasIndex("CurriculumVersionId");
 
                     b.HasIndex("ExamTypeId");
 
@@ -5184,11 +5179,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("CollegeId");
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion", "CurriculumVersion")
-                        .WithMany()
-                        .HasForeignKey("CurriculumVersionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamType", "ExamType")
                         .WithMany()
                         .HasForeignKey("ExamTypeId")
@@ -5220,8 +5210,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("AcademicYear");
 
                     b.Navigation("College");
-
-                    b.Navigation("CurriculumVersion");
 
                     b.Navigation("ExamType");
 

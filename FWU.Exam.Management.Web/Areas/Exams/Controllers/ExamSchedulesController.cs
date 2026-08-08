@@ -165,8 +165,6 @@ public class ExamSchedulesController(
 
         var offeringQuery = context.SubjectOfferings
             .Where(so => so.ProgramId == examSchedule.ProgramId && so.SemesterId == examSchedule.SemesterId);
-        if (examSchedule.CurriculumVersionId is > 0)
-            offeringQuery = offeringQuery.Where(so => so.CurriculumVersionId == examSchedule.CurriculumVersionId);
         var subjectOfferings = await offeringQuery
             .Include(so => so.SubjectCatalog)
             .OrderBy(so => so.DisplayOrder)
@@ -201,8 +199,6 @@ public class ExamSchedulesController(
 
         var validOfferingQuery = context.SubjectOfferings
             .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
-        if (schedule.CurriculumVersionId is > 0)
-            validOfferingQuery = validOfferingQuery.Where(so => so.CurriculumVersionId == schedule.CurriculumVersionId);
         var validOfferingIds = await validOfferingQuery.Select(so => so.Id).ToHashSetAsync();
 
         var existingSlots = await context.ExamSlots
@@ -287,25 +283,10 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,CurriculumVersionId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (ModelState.IsValid)
         {
-            if (!await ValidateCurriculumVersionAsync(examSchedule))
-            {
-                var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
-                PopulateDropdowns(retrySelectLists, examSchedule);
-                return View(examSchedule);
-            }
-
-            if (examSchedule.CurriculumVersionId is > 0)
-            {
-                var version = await context.CurriculumVersions.AsNoTracking()
-                    .FirstOrDefaultAsync(cv => cv.Id == examSchedule.CurriculumVersionId);
-                if (version != null)
-                    examSchedule.AcademicYearId = version.EffectiveAcademicYearId;
-            }
-
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
@@ -331,27 +312,12 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,CurriculumVersionId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
 
         if (ModelState.IsValid)
         {
-            if (!await ValidateCurriculumVersionAsync(examSchedule))
-            {
-                var retrySelectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
-                PopulateDropdowns(retrySelectLists, examSchedule);
-                return View(examSchedule);
-            }
-
-            if (examSchedule.CurriculumVersionId is > 0)
-            {
-                var version = await context.CurriculumVersions.AsNoTracking()
-                    .FirstOrDefaultAsync(cv => cv.Id == examSchedule.CurriculumVersionId);
-                if (version != null)
-                    examSchedule.AcademicYearId = version.EffectiveAcademicYearId;
-            }
-
             try
             {
                 var existing = await examScheduleService.GetExamScheduleByIdAsync(id);
@@ -425,69 +391,12 @@ public class ExamSchedulesController(
         ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
-        ViewData["CurriculumVersionId"] = new SelectList(selectLists.CurriculumVersions, "Id", "Name", examSchedule?.CurriculumVersionId);
-    }
-
-    private async Task<bool> ValidateCurriculumVersionAsync(ExamSchedule examSchedule)
-    {
-        if (examSchedule.CurriculumVersionId is not > 0)
-            return true;
-
-        var version = await context.CurriculumVersions.AsNoTracking()
-            .FirstOrDefaultAsync(cv => cv.Id == examSchedule.CurriculumVersionId);
-
-        if (version == null)
-        {
-            ModelState.AddModelError("CurriculumVersionId", "The selected curriculum version does not exist.");
-            return false;
-        }
-
-        if (version.ProgramId != examSchedule.ProgramId)
-        {
-            ModelState.AddModelError("CurriculumVersionId", "The selected curriculum version does not belong to the chosen program.");
-            return false;
-        }
-
-        var semesterBelongsToVersion = await context.SubjectOfferings
-            .AnyAsync(so => so.CurriculumVersionId == examSchedule.CurriculumVersionId && so.SemesterId == examSchedule.SemesterId);
-
-        if (!semesterBelongsToVersion)
-        {
-            ModelState.AddModelError("SemesterId", "The selected semester does not belong to the chosen curriculum version.");
-            return false;
-        }
-
-        return true;
     }
 
     [HttpGet]
     public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? programId = null)
     {
         var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId, programId);
-        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
-    }
-
-    [HttpGet]
-    public async Task<JsonResult> GetCurriculumVersionsByProgram(int programId)
-    {
-        var versions = await examScheduleService.GetCurriculumVersionsByProgramAsync(programId);
-        var versionIds = versions.Select(v => v.Id).ToList();
-        var academicYearMap = await context.CurriculumVersions.AsNoTracking()
-            .Where(cv => versionIds.Contains(cv.Id))
-            .Select(cv => new { cv.Id, cv.EffectiveAcademicYearId })
-            .ToDictionaryAsync(x => x.Id, x => x.EffectiveAcademicYearId);
-        return Json(versions.Select(v => new
-        {
-            id = v.Id,
-            name = v.Name,
-            academicYearId = academicYearMap.GetValueOrDefault(v.Id, 0)
-        }));
-    }
-
-    [HttpGet]
-    public async Task<JsonResult> GetSemestersByCurriculumVersion(int curriculumVersionId)
-    {
-        var semesters = await examScheduleService.GetSemestersByCurriculumVersionAsync(curriculumVersionId);
         return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 

@@ -38,9 +38,11 @@
                     <span asp-validation-for="ExamScheduleCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <input type="hidden" asp-for="AcademicYearId" id="AcademicYearId" />
-                    <label class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Academic Year (Auto)</label>
-                    <p id="AcademicYearDisplay" class="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">@(Model.AcademicYear?.AcademicYearName ?? "--")</p>
+                    <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="AcademicYearId" id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <option value="">-- Select Academic Year --</option>
+                    </select>
+                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
@@ -48,13 +50,6 @@
                         <option value="">-- Select Program --</option>
                     </select>
                     <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
-                <div>
-                    <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="CurriculumVersionId" id="CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.CurriculumVersionId">
-                        <option value="">-- Select Curriculum Version --</option>
-                    </select>
-                    <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="ExamTypeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
@@ -187,65 +182,20 @@
     }
 
     <script>
-        var initialVersionId = '@(Model?.CurriculumVersionId ?? 0)';
         var initialSemesterId = '@(Model?.SemesterId ?? 0)';
-
-        var academicYearMap = {};
-        @if (ViewBag.AcademicYearId != null)
-        {
-            foreach (var ay in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.AcademicYearId)
-            {
-                <text>academicYearMap[@ay.Value] = '@ay.Text';</text>
-            }
-        }
 
         function resetSelect2($el) {
             $el.select2('destroy').empty().append('<option value="">-- Select --</option>').prop('disabled', true).select2({ width: 'resolve' });
         }
 
-        function loadCurriculumVersions(selectedId) {
-            var programId = $('#ProgramId').val();
-            var versionSelect = $('#CurriculumVersionId');
-
-            versionSelect.select2('destroy').empty().append('<option value="">-- Select Curriculum Version --</option>');
-            $('#AcademicYearDisplay').text('--');
-
-            if (!programId) {
-                versionSelect.prop('disabled', true).select2({ width: 'resolve' });
-                resetSelect2($('#SemesterId'));
-                return;
-            }
-
-            versionSelect.prop('disabled', false);
-            $.get(tenantUrl("/Exams/ExamSchedules/GetCurriculumVersionsByProgram"), { programId: programId }, function (data) {
-                $.each(data, function (index, item) {
-                    versionSelect.append('<option value="' + item.id + '" data-ay="' + item.academicYearId + '">' + item.name + '</option>');
-                });
-                if (selectedId) versionSelect.val(selectedId);
-                versionSelect.select2({ width: 'resolve' });
-                loadSemestersByVersion(initialSemesterId);
-            });
-        }
-
-        function loadSemestersByVersion(selectedId) {
-            var versionId = $('#CurriculumVersionId').val();
+        function loadSemesters(academicYearId, programId, selectedId) {
             var semesterSelect = $('#SemesterId');
 
             resetSelect2(semesterSelect);
 
-            if (!versionId) {
-                $('#AcademicYearDisplay').text('--');
-                return;
-            }
+            if (!academicYearId) return;
 
-            var ay = $('#CurriculumVersionId option:selected').attr('data-ay');
-            if (ay) {
-                var ayName = academicYearMap[ay];
-                $('#AcademicYearDisplay').text(ayName || ay);
-                $('#AcademicYearId').val(ay);
-            }
-
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByCurriculumVersion"), { curriculumVersionId: versionId }, function (data) {
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
                 $.each(data, function (index, item) {
                     semesterSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
@@ -255,16 +205,21 @@
             });
         }
 
+        $("#AcademicYearId").change(function () {
+            loadSemesters($(this).val(), $("#ProgramId").val());
+        });
+
         $("#ProgramId").change(function () {
-            $('#CurriculumVersionId').val('');
-            loadCurriculumVersions('');
+            if ($("#AcademicYearId").val()) {
+                loadSemesters($("#AcademicYearId").val(), $(this).val());
+            }
         });
 
-        $("#CurriculumVersionId").change(function () {
-            loadSemestersByVersion('');
-        });
-
-        loadCurriculumVersions(initialVersionId);
+        if ($("#AcademicYearId").val()) {
+            loadSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
+        } else {
+            loadSemesters('');
+        }
 
         var convertTimer;
         $("#StartDateBs").on("input", function () {

@@ -78,9 +78,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .ThenInclude(sc => sc!.SubjectType)
             .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
 
-        if (schedule.CurriculumVersionId is > 0)
-            query = query.Where(so => so.CurriculumVersionId == schedule.CurriculumVersionId);
-
         return await query
             .OrderBy(so => so.DisplayOrder)
             .ToListAsync();
