@@ -28,9 +28,14 @@ public static class UserScopeExtensions
     public static IQueryable<College> ApplyScope(this IQueryable<College> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+        {
+            var collegeIds = user.FacultyCollegeIds;
+            return query.Where(c => collegeIds.Contains(c.Id));
+        }
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(c => c.Id == user.CollegeId.Value);
-        return query;
+        return query.Where(c => false);
     }
 
     public static IQueryable<Program> ApplyScope(this IQueryable<Program> query, IUserContext user)

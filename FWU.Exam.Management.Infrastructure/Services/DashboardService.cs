@@ -59,7 +59,6 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
             .ToListAsync();
 
         var collegeIds = (await context.CollegePrograms
-            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(cp => cp.Program != null && cp.Program.FacultyId == facultyId)
             .Select(cp => cp.CollegeId)

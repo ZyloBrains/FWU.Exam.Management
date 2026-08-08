@@ -7,7 +7,6 @@ using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -21,13 +20,6 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
 
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? Role.Student;
-
-        if (primaryRole == Role.FacultyAdmin && user.FacultyId != null)
-        {
-            var faculty = await context.Faculties.FindAsync(user.FacultyId.Value);
-            if (faculty?.OfficeCode != null)
-                return RedirectToAction("Index", "FacultyDashboard", new { officeCode = faculty.OfficeCode });
-        }
 
         DashboardStats stats;
         if (primaryRole == Role.CollegeAdmin && user.CollegeId.HasValue)
