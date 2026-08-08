@@ -355,12 +355,6 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
 
     private async Task<Domain.Entities.Exams.ExamSchedule?> GetMainExamScheduleAsync(int programId, int semesterId)
     {
-        var activeVersionId = await context.CurriculumVersions
-            .AsNoTracking()
-            .Where(cv => cv.ProgramId == programId && cv.IsActive)
-            .Select(cv => (int?)cv.Id)
-            .FirstOrDefaultAsync();
-
         var schedules = await context.ExamSchedules
             .AsNoTracking()
             .Include(es => es.ExamType)
@@ -371,7 +365,6 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                       && es.ExamType.Name != "Entrance"
                       && es.ExamType.Name != "Supplementary")
             .OrderBy(es => es.ExamType!.Name == "Regular" ? 0 : 1)
-            .ThenByDescending(es => activeVersionId.HasValue && es.CurriculumVersionId == activeVersionId.Value ? 1 : 0)
             .ThenByDescending(es => es.Id)
             .ToListAsync();
 

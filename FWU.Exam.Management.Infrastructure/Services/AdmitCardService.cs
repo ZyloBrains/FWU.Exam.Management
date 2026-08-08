@@ -95,9 +95,6 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 .Where(so => so.ProgramId == admitCard.ExamSchedule.ProgramId
                           && so.SemesterId == admitCard.ExamSchedule.SemesterId);
 
-            if (admitCard.ExamSchedule.CurriculumVersionId is > 0)
-                offeringQuery = offeringQuery.Where(so => so.CurriculumVersionId == admitCard.ExamSchedule.CurriculumVersionId);
-
             var subjectOfferings = await offeringQuery
                 .OrderBy(so => so.DisplayOrder)
                 .ToListAsync();

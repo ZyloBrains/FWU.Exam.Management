@@ -1,6 +1,5 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Semesters;
-using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
@@ -77,7 +76,7 @@ public class ExamSchedule : ITenantScoped
     public string? ExamScheduleCode { get; set; }
 
     [Range(1, int.MaxValue)]
-    [Display(Name = "Academic Year")]
+    [Display(Name = "Batch Year")]
     public int AcademicYearId { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }
@@ -103,10 +102,6 @@ public class ExamSchedule : ITenantScoped
     [Display(Name = "Level")]
     public int? LevelId { get; set; }
     public virtual Level? Level { get; set; }
-
-    [Display(Name = "Curriculum Version")]
-    public int? CurriculumVersionId { get; set; }
-    public virtual CurriculumVersion? CurriculumVersion { get; set; }
 
     public virtual ICollection<ExamCenter> ExamCenters { get; set; } = [];
     public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
