@@ -103,6 +103,7 @@
                         IsActive(controllerName: "AdmitCards", areaName: "Exams") ||
                         IsActive(controllerName: "RetotalRequests", areaName: "Exams") ||
                         IsActive(controllerName: "CollegeAdminMarks", areaName: "Exams") ||
+                        IsActive(controllerName: "InternalMarks", areaName: "Exams") ||
                         IsActive(controllerName: "Section", actionName: "Examination");
     var isResultActive = IsActive(controllerName: "ExamSubjectResults", areaName: "Exams") ||
                           IsActive(controllerName: "ResultRecords", areaName: "Exams") ||
@@ -288,7 +289,7 @@
                 @if (HasPerm("examcenters.view")) { <li><a asp-area="Exams" asp-controller="ExamCenters" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamCenters", actionName: "Index", areaName: "Exams"))"><i class="fas fa-map-marker-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Centers</span></a></li> }
                 @if (HasPerm("examcenters.view")) { <li><a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamCenterDistribution", actionName: "Index", areaName: "Exams"))"><i class="fas fa-people-arrows w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Center Distribution</span></a></li> }
                 @if (HasPerm("admitcards.view")) { <li><a asp-area="Exams" asp-controller="AdmitCards" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AdmitCards", actionName: "Index", areaName: "Exams"))"><i class="fas fa-ticket-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Admit Cards</span></a></li> }
-                @if (HasPerm("marksentry.view")) { <li><a asp-area="Exams" asp-controller="CollegeAdminMarks" asp-action="Dashboard" class="@ChildClass(IsActive(controllerName: "CollegeAdminMarks", actionName: "Dashboard", areaName: "Exams"))"><i class="fas fa-table w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marks Entry</span></a></li> }
+                @if (HasPerm("marksentry.view")) { <li><a asp-area="Exams" asp-controller="InternalMarks" asp-action="Create" class="@ChildClass(IsActive(controllerName: "InternalMarks", actionName: "Create", areaName: "Exams"))"><i class="fas fa-table w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Internal Marks Entry</span></a></li> }
             </ul>
         </li>
     }

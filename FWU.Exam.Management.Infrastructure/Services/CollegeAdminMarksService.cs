@@ -223,6 +223,29 @@ public class CollegeAdminMarksService(
         if (!await assignmentService.IsCollegeAdminAssignedToSubjectAsync(collegeAdminUserId, dto.SubjectOfferingId))
             throw new UnauthorizedAccessException("You are not assigned to this subject.");
 
+        return await SaveMarksCoreAsync(dto);
+    }
+
+    public async Task<BulkSaveResult> SaveCollegeMarksBulkAsync(BulkMarksSaveDto dto, int collegeId, string collegeAdminUserId)
+    {
+        var subjectOffering = await context.SubjectOfferings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId)
+            ?? throw new KeyNotFoundException("Subject offering not found.");
+
+        var belongsToCollege = await context.CollegePrograms
+            .AnyAsync(cp => cp.CollegeId == collegeId
+                         && cp.ProgramId == subjectOffering.ProgramId
+                         && cp.IsActive);
+
+        if (!belongsToCollege)
+            throw new UnauthorizedAccessException("This subject is not offered at your college.");
+
+        return await SaveMarksCoreAsync(dto);
+    }
+
+    private async Task<BulkSaveResult> SaveMarksCoreAsync(BulkMarksSaveDto dto)
+    {
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId)
             ?? throw new KeyNotFoundException("Subject offering not found.");

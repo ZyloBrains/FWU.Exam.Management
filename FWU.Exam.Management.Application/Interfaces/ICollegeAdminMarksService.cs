@@ -7,6 +7,7 @@ public interface ICollegeAdminMarksService
     Task<CollegeAdminDashboardDto> GetCollegeAdminDashboardAsync(string collegeAdminUserId);
     Task<MarksEntryViewModel> GetMarksEntryViewAsync(int subjectOfferingId, int examScheduleId, string collegeAdminUserId);
     Task<BulkSaveResult> SaveMarksBulkAsync(BulkMarksSaveDto dto, string collegeAdminUserId);
+    Task<BulkSaveResult> SaveCollegeMarksBulkAsync(BulkMarksSaveDto dto, int collegeId, string collegeAdminUserId);
     Task<ExcelImportResultDto> ImportMarksFromExcelAsync(Stream excelStream, int subjectOfferingId, int examScheduleId, string collegeAdminUserId);
     Task<byte[]> ExportMarksTemplateAsync(int subjectOfferingId, int examScheduleId);
     Task<byte[]> ExportMarksAsync(int subjectOfferingId, int examScheduleId);
