@@ -1,8 +1,11 @@
 using System.Text;
+using System.Text.Json;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Extensions;
+using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +20,15 @@ namespace FWU.Exam.Management.Web.Areas.Subjects.Controllers;
 public class CurriculumVersionsController : Controller
 {
     private readonly ICurriculumVersionService _curriculumVersionService;
+    private readonly ISubjectOfferingService _subjectOfferingService;
 
-    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService)
+    public CurriculumVersionsController(ICurriculumVersionService curriculumVersionService, ISubjectOfferingService subjectOfferingService)
     {
         _curriculumVersionService = curriculumVersionService;
+        _subjectOfferingService = subjectOfferingService;
     }
 
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "id", string sortDir = "desc", int pageSize = 10)
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
 
@@ -39,7 +44,7 @@ public class CurriculumVersionsController : Controller
     }
 
 
-    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -60,7 +65,7 @@ public class CurriculumVersionsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var items = await _curriculumVersionService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir);
 
@@ -96,7 +101,7 @@ public class CurriculumVersionsController : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string sort = "id", string sortDir = "desc")
     {
         var (items, totalCount) = await _curriculumVersionService.GetCurriculumVersionsAsync(page, pageSize, search, sort, sortDir);
 
@@ -117,7 +122,288 @@ public class CurriculumVersionsController : Controller
         var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
         if (curriculumVersion == null) return NotFound();
 
+        var offerings = await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(id.Value);
+        ViewBag.SubjectCount = offerings.Count;
+        ViewBag.SubjectOfferings = offerings;
+
         return View(curriculumVersion);
+    }
+
+    [RequirePermission("subjectofferings.create")]
+    public async Task<IActionResult> Manage(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var version = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (version == null) return NotFound();
+
+        await PopulateManageViewDataAsync(version);
+
+        return View(new SubjectOfferingBulkCreateViewModel
+        {
+            ProgramId = version.ProgramId,
+            AcademicYearId = version.EffectiveAcademicYearId,
+            CurriculumVersionId = version.Id
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequirePermission("subjectofferings.create")]
+    public async Task<IActionResult> Manage(SubjectOfferingBulkCreateViewModel model)
+    {
+        var version = await _curriculumVersionService.GetCurriculumVersionByIdAsync(model.CurriculumVersionId);
+        if (version == null) return NotFound();
+
+        var groups = model.Semesters ?? new List<SemesterSubjectOfferingGroup>();
+        var populated = groups.Where(g => g.Subjects is { Count: > 0 }).ToList();
+        var removedIds = model.RemovedOfferingIds ?? new List<int>();
+
+        if (populated.Count == 0 && removedIds.Count == 0)
+            ModelState.AddModelError("", "No changes to save. Add or remove at least one subject.");
+
+        for (var g = 0; g < groups.Count; g++)
+        {
+            var group = groups[g];
+            if (group.Subjects == null || group.Subjects.Count == 0) continue;
+
+            for (var i = 0; i < group.Subjects.Count; i++)
+            {
+                if (group.Subjects[i].SubjectCatalogId <= 0)
+                    ModelState.AddModelError($"Semesters[{g}].Subjects[{i}].{nameof(SubjectOfferingItemViewModel.SubjectCatalogId)}", "Please select a valid subject.");
+            }
+        }
+
+        if (populated.Count > 0)
+        {
+            var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(version.EffectiveAcademicYearId, version.ProgramId);
+            var yearIds = yearSemesters.Select(s => s.Id).ToHashSet();
+            foreach (var group in populated)
+            {
+                if (!yearIds.Contains(group.SemesterId))
+                    ModelState.AddModelError(nameof(model.AcademicYearId), $"Semester \"{group.SemesterName}\" does not belong to the selected academic year.");
+            }
+        }
+
+        if (ModelState.IsValid && populated.Count > 0)
+        {
+            var existingBySemester = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId, model.AcademicYearId);
+            foreach (var group in populated)
+            {
+                if (existingBySemester.TryGetValue(group.SemesterId, out var existing))
+                {
+                    var duplicateCount = group.Subjects!.Count(s => existing.Contains(s.SubjectCatalogId));
+                    if (duplicateCount > 0)
+                        ModelState.AddModelError("", $"{duplicateCount} subject(s) already exist in semester \"{group.SemesterName}\" for this curriculum version.");
+                }
+            }
+        }
+
+        if (ModelState.IsValid)
+        {
+            var offerings = new List<SubjectOffering>();
+            foreach (var group in populated)
+            {
+                offerings.AddRange(group.Subjects!.Select(s => new SubjectOffering
+                {
+                    SubjectCatalogId = s.SubjectCatalogId,
+                    ProgramId = model.ProgramId,
+                    SemesterId = group.SemesterId,
+                    CurriculumVersionId = model.CurriculumVersionId,
+                    IsCompulsory = s.IsCompulsory,
+                    DisplayOrder = s.DisplayOrder,
+                    HasTheory = s.HasTheory,
+                    HasPractical = s.HasPractical,
+                    HasInternal = s.HasInternal,
+                    TheoryFullMarks = s.TheoryFullMarks,
+                    TheoryPassMarks = s.TheoryPassMarks,
+                    PracticalFullMarks = s.PracticalFullMarks,
+                    PracticalPassMarks = s.PracticalPassMarks,
+                    InternalTheoryFullMarks = s.InternalTheoryFullMarks,
+                    InternalTheoryPassMarks = s.InternalTheoryPassMarks,
+                    InternalPracticalFullMarks = s.InternalPracticalFullMarks,
+                    InternalPracticalPassMarks = s.InternalPracticalPassMarks
+                }));
+            }
+
+            try
+            {
+                foreach (var group in populated)
+                    await _subjectOfferingService.EnsureSemesterAssignedToProgramAsync(model.ProgramId, group.SemesterId);
+
+                if (offerings.Count > 0)
+                    await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
+
+                var removed = 0;
+                if (removedIds.Count > 0)
+                {
+                    var toRemove = await _subjectOfferingService.GetSubjectOfferingsForDeletionAsync(removedIds);
+                    foreach (var o in toRemove.Where(o => o.CurriculumVersionId == model.CurriculumVersionId).ToList())
+                    {
+                        await _subjectOfferingService.DeleteSubjectOfferingAsync(o.Id);
+                        removed++;
+                    }
+                }
+
+                TempData["SuccessMessage"] = $"{offerings.Count} subject(s) added, {removed} removed.";
+                return RedirectToAction(nameof(Details), new { id = model.CurriculumVersionId });
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("", "A database error occurred. Some subjects may already exist or are referenced by exam schedules.");
+                await PopulateManageViewDataOnErrorAsync(model);
+                return View(model);
+            }
+        }
+
+        await PopulateManageViewDataOnErrorAsync(model);
+        return View(model);
+    }
+
+    private async Task PopulateManageViewDataAsync(CurriculumVersion version)
+    {
+        var subjectCatalogs = (await _subjectOfferingService.GetSelectListsAsync()).SubjectCatalogs;
+        var semesters = await _subjectOfferingService.GetSemestersForOfferingAsync(version.ProgramId, version.EffectiveAcademicYearId);
+        var offerings = await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(version.Id);
+
+        ViewBag.VersionName = version.Name;
+        ViewBag.ProgramName = version.Program?.ProgramName ?? "-";
+        ViewBag.AcademicYearName = version.EffectiveAcademicYear?.AcademicYearName ?? "-";
+
+        var semesterJson = new List<object>();
+        var existingCatalogIds = new Dictionary<int, List<int>>();
+        foreach (var s in semesters)
+        {
+            var semOfferings = offerings.Where(o => o.SemesterId == s.SemesterId).ToList();
+            existingCatalogIds[s.SemesterId] = semOfferings.Select(o => o.SubjectCatalogId).ToList();
+            semesterJson.Add(new
+            {
+                semesterId = s.SemesterId,
+                semesterName = s.SemesterName,
+                existing = semOfferings.Select(o => new
+                {
+                    offeringId = o.Id,
+                    id = o.SubjectCatalogId,
+                    code = o.SubjectCatalog?.SubjectCode ?? "",
+                    name = o.SubjectCatalog?.SubjectName ?? ""
+                }).ToList(),
+                subjects = Array.Empty<object>()
+            });
+        }
+
+        ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
+        ViewBag.InitialExistingJson = JsonSerializer.Serialize(existingCatalogIds);
+        ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectCatalogs.Select(s => new
+        {
+            id = s.Id,
+            code = s.SubjectCode,
+            name = s.SubjectName,
+            type = s.SubjectType?.Name ?? "",
+            credits = s.CreditHours
+        }));
+    }
+
+    private async Task PopulateManageViewDataOnErrorAsync(SubjectOfferingBulkCreateViewModel model)
+    {
+        var version = await _curriculumVersionService.GetCurriculumVersionByIdAsync(model.CurriculumVersionId);
+        if (version == null) return;
+
+        await PopulateManageViewDataAsync(version);
+
+        var catalogMap = (await _subjectOfferingService.GetSelectListsAsync()).SubjectCatalogs.ToDictionary(s => s.Id);
+        var offerings = await _subjectOfferingService.GetSubjectOfferingsByCurriculumVersionAsync(model.CurriculumVersionId);
+        var bySemester = offerings.GroupBy(o => o.SemesterId).ToDictionary(g => g.Key, g => g.ToList());
+
+        var semesterJson = new List<object>();
+        var existingCatalogIds = new Dictionary<int, List<int>>();
+        foreach (var group in model.Semesters ?? new List<SemesterSubjectOfferingGroup>())
+        {
+            var existing = bySemester.TryGetValue(group.SemesterId, out var ex) ? ex : new List<SubjectOffering>();
+            existingCatalogIds[group.SemesterId] = existing.Select(o => o.SubjectCatalogId).ToList();
+            semesterJson.Add(new
+            {
+                semesterId = group.SemesterId,
+                semesterName = group.SemesterName ?? "",
+                existing = existing.Select(o => new
+                {
+                    offeringId = o.Id,
+                    id = o.SubjectCatalogId,
+                    code = o.SubjectCatalog?.SubjectCode ?? "",
+                    name = o.SubjectCatalog?.SubjectName ?? ""
+                }).ToList(),
+                subjects = group.Subjects?.Select(s =>
+                {
+                    catalogMap.TryGetValue(s.SubjectCatalogId, out var cat);
+                    return new
+                    {
+                        id = s.SubjectCatalogId,
+                        code = cat?.SubjectCode ?? "",
+                        name = cat?.SubjectName ?? "",
+                        isCompulsory = s.IsCompulsory,
+                        displayOrder = s.DisplayOrder,
+                        hasTheory = s.HasTheory,
+                        hasPractical = s.HasPractical,
+                        hasInternal = s.HasInternal,
+                        theoryFullMarks = s.TheoryFullMarks,
+                        theoryPassMarks = s.TheoryPassMarks,
+                        practicalFullMarks = s.PracticalFullMarks,
+                        practicalPassMarks = s.PracticalPassMarks,
+                        internalTheoryFullMarks = s.InternalTheoryFullMarks,
+                        internalTheoryPassMarks = s.InternalTheoryPassMarks,
+                        internalPracticalFullMarks = s.InternalPracticalFullMarks,
+                        internalPracticalPassMarks = s.InternalPracticalPassMarks
+                    };
+                }).ToList()
+            });
+        }
+
+        ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
+        ViewBag.InitialExistingJson = JsonSerializer.Serialize(existingCatalogIds);
+    }
+
+    [HttpGet]
+    [RequirePermission("curriculumversions.create")]
+    public async Task<IActionResult> Copy(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id.Value);
+        if (curriculumVersion == null) return NotFound();
+
+        var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+        ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName");
+        ViewData["SourceName"] = curriculumVersion.Name;
+        ViewData["SourceProgram"] = curriculumVersion.Program?.ProgramName ?? "-";
+
+        return View(curriculumVersion);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequirePermission("curriculumversions.create")]
+    public async Task<IActionResult> Copy(int id, int effectiveAcademicYearId, string name)
+    {
+        if (id <= 0 || effectiveAcademicYearId <= 0 || string.IsNullOrWhiteSpace(name))
+        {
+            ModelState.AddModelError("", "Please provide a version name and target academic year.");
+            var curriculumVersion = await _curriculumVersionService.GetCurriculumVersionByIdAsync(id);
+            if (curriculumVersion == null) return NotFound();
+            var (programs, academicYears) = await _curriculumVersionService.GetSelectListsAsync();
+            ViewData["EffectiveAcademicYearId"] = new SelectList(academicYears, "Id", "AcademicYearName", effectiveAcademicYearId);
+            ViewData["SourceName"] = curriculumVersion.Name;
+            ViewData["SourceProgram"] = curriculumVersion.Program?.ProgramName ?? "-";
+            return View(curriculumVersion);
+        }
+
+        var newVersion = await _curriculumVersionService.CopyCurriculumVersionAsync(id, effectiveAcademicYearId, name.Trim());
+        if (newVersion == null)
+        {
+            TempData["ErrorMessage"] = "Copy failed. Source curriculum version not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["SuccessMessage"] = $"Curriculum version \"{newVersion.Name}\" copied successfully.";
+        return RedirectToAction(nameof(Details), new { id = newVersion.Id });
     }
 
     [RequirePermission("curriculumversions.create")]

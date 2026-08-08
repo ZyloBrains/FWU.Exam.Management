@@ -1,0 +1,304 @@
+@model FWU.Exam.Management.Web.ViewModels.SubjectOfferingBulkCreateViewModel
+
+@{
+    ViewData["Title"] = "Manage Subjects";
+}
+
+<div class="space-y-6 overflow-auto max-w-full"
+     x-data="curriculumVersionManageForm()"
+     x-init="init()">
+    <div class="flex items-center gap-3">
+        <a asp-action="Details" asp-route-id="@Model.CurriculumVersionId" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+            <i class="fas fa-arrow-left text-gray-600"></i>
+        </a>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-book-open text-emerald-600"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Manage Subjects</h1>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+                <p class="text-xs font-medium text-gray-500">Curriculum Version</p>
+                <p class="mt-0.5 font-semibold text-gray-800">@(ViewBag.VersionName ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-gray-500">Program</p>
+                <p class="mt-0.5 font-semibold text-gray-800">@(ViewBag.ProgramName ?? "-")</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-gray-500">Academic Year</p>
+                <p class="mt-0.5 font-semibold text-gray-800">@(ViewBag.AcademicYearName ?? "-")</p>
+            </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">
+            Add new subjects per semester, or click an existing subject to remove it from this curriculum version.
+        </p>
+    </div>
+
+    <form asp-action="Manage" method="post" @@submit.prevent="submitForm()">
+        <input type="hidden" asp-for="ProgramId" />
+        <input type="hidden" asp-for="AcademicYearId" />
+        <input type="hidden" asp-for="CurriculumVersionId" />
+
+        <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
+
+        <template x-for="(r, i) in flatRemoved" :key="i">
+            <input type="hidden" :name="'RemovedOfferingIds[' + i + ']'" :value="r.id" />
+        </template>
+
+        <template x-if="semesters.length === 0">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-10 text-center text-sm text-gray-400">
+                <i class="fas fa-calendar-alt text-3xl mb-2 block text-gray-300"></i>
+                <p>No semesters were found for this curriculum version's academic year.</p>
+            </div>
+        </template>
+
+        <template x-for="(sem, semIndex) in semesters" :key="sem.semesterId">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-lg flex items-center justify-center text-xs font-bold">
+                            <span x-text="semIndex + 1"></span>
+                        </span>
+                        <span x-text="sem.semesterName"></span>
+                    </h3>
+                    <input type="hidden" :name="'Semesters[' + semIndex + '].SemesterId'" :value="sem.semesterId" />
+                    <input type="hidden" :name="'Semesters[' + semIndex + '].SemesterName'" :value="sem.semesterName" />
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-gray-100 text-gray-600 font-medium px-2.5 py-1 rounded-full"
+                              x-show="sem.existingSubjects.length > 0"
+                              x-text="sem.existingSubjects.length + ' existing'"></span>
+                        <span class="text-xs bg-emerald-100 text-emerald-700 font-medium px-2.5 py-1 rounded-full"
+                              x-show="sem.selectedSubjects.length > 0"
+                              x-text="sem.selectedSubjects.length + ' new'"></span>
+                        <span class="text-xs bg-red-100 text-red-700 font-medium px-2.5 py-1 rounded-full"
+                              x-show="sem.removedIds.length > 0"
+                              x-text="sem.removedIds.length + ' to remove'"></span>
+                    </div>
+                </div>
+
+                <div class="relative mb-4" @@click.away="sem.showDropdown = false">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text"
+                               x-model="sem.search"
+                               @@focus="sem.showDropdown = true"
+                               @@input="sem.showDropdown = true"
+                               placeholder="Search and add subjects by code or name..."
+                               class="w-full border border-gray-300 rounded-lg pl-9 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
+                        <button type="button"
+                                x-show="sem.search.length > 0"
+                                @@click="sem.search = ''; sem.showDropdown = false"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div x-show="sem.showDropdown && filteredSubjectsFor(sem).length > 0"
+                         class="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        <template x-for="subject in filteredSubjectsFor(sem)" :key="subject.id">
+                            <div class="flex items-center justify-between px-4 py-2.5 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition"
+                                 @@click="addSubject(sem, subject)">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">
+                                        <span class="font-mono text-emerald-600" x-text="subject.code"></span>
+                                        <span class="text-gray-400 mx-1">-</span>
+                                        <span x-text="subject.name"></span>
+                                    </p>
+                                    <p class="text-xs text-gray-400" x-text="subject.type + (subject.credits ? ' | ' + subject.credits + ' cr' : '')"></p>
+                                </div>
+                                <i class="fas fa-plus text-xs text-emerald-400"></i>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div x-show="sem.showDropdown && sem.search.length > 0 && filteredSubjectsFor(sem).length === 0"
+                         class="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center text-sm text-gray-400">
+                        No subjects match "<span x-text="sem.search"></span>"
+                    </div>
+                </div>
+
+                <div x-show="sem.existingSubjects.length > 0" class="mb-4">
+                    <p class="text-xs font-medium text-gray-500 mb-2">Existing subjects in this semester</p>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="ex in sem.existingSubjects" :key="ex.offeringId">
+                            <button type="button"
+                                    @@click="toggleRemove(sem, ex)"
+                                    :class="isRemoved(sem, ex.offeringId)
+                                        ? 'bg-red-50 border-red-300 text-red-500 line-through'
+                                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-red-300'"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 border rounded-full text-xs font-medium transition">
+                                <span class="font-mono" x-text="ex.code"></span>
+                                <span x-text="ex.name"></span>
+                                <i x-show="isRemoved(sem, ex.offeringId)" class="fas fa-undo text-[10px]"></i>
+                                <i x-show="!isRemoved(sem, ex.offeringId)" class="fas fa-times text-[10px] text-red-400"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <template x-if="sem.selectedSubjects.length === 0 && sem.existingSubjects.length === 0">
+                    <div class="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                        <i class="fas fa-search text-2xl mb-2 block text-gray-300"></i>
+                        <p>Search and add subjects for this semester</p>
+                    </div>
+                </template>
+
+                <div class="space-y-3">
+                    <template x-for="(subject, index) in sem.selectedSubjects" :key="subject.id">
+                        @{
+                            await Html.RenderPartialAsync("_SubjectOfferingSelectedCard");
+                        }
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <div class="flex items-center gap-4">
+            <button type="submit"
+                    class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    x-bind:disabled="totalSelected === 0 && totalRemoved === 0">
+                <i class="fas fa-save mr-1.5"></i>
+                Save <span x-text="totalSelected"></span> added / <span x-text="totalRemoved"></span> removed
+            </button>
+            <a asp-action="Details" asp-route-id="@Model.CurriculumVersionId" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function curriculumVersionManageForm() {
+            return {
+                allSubjects: [],
+                semesters: [],
+
+                init() {
+                    this.allSubjects = @Html.Raw(ViewBag.SubjectCatalogsJson ?? "[]");
+                    const initial = @Html.Raw(ViewBag.InitialSemestersJson ?? "[]");
+                    const existing = @Html.Raw(ViewBag.InitialExistingJson ?? "{}");
+                    this.semesters = initial.map(s => ({
+                        semesterId: s.semesterId,
+                        semesterName: s.semesterName,
+                        search: '',
+                        showDropdown: false,
+                        existingSubjects: (s.existing || []).map(e => ({ offeringId: e.offeringId, id: e.id, code: e.code, name: e.name })),
+                        existingSubjectIds: existing[s.semesterId] || [],
+                        removedIds: [],
+                        selectedSubjects: (s.subjects || []).map(sub => ({
+                            id: sub.id,
+                            code: sub.code,
+                            name: sub.name,
+                            isCompulsory: !!sub.isCompulsory,
+                            displayOrder: sub.displayOrder || 1,
+                            hasTheory: !!sub.hasTheory,
+                            hasPractical: !!sub.hasPractical,
+                            hasInternal: !!sub.hasInternal,
+                            theoryFullMarks: sub.theoryFullMarks,
+                            theoryPassMarks: sub.theoryPassMarks,
+                            practicalFullMarks: sub.practicalFullMarks,
+                            practicalPassMarks: sub.practicalPassMarks,
+                            internalTheoryFullMarks: sub.internalTheoryFullMarks,
+                            internalTheoryPassMarks: sub.internalTheoryPassMarks,
+                            internalPracticalFullMarks: sub.internalPracticalFullMarks,
+                            internalPracticalPassMarks: sub.internalPracticalPassMarks
+                        }))
+                    }));
+                },
+
+                get totalSelected() {
+                    return this.semesters.reduce(function (sum, sem) { return sum + sem.selectedSubjects.length; }, 0);
+                },
+
+                get totalRemoved() {
+                    return this.semesters.reduce(function (sum, sem) { return sum + sem.removedIds.length; }, 0);
+                },
+
+                get flatRemoved() {
+                    const acc = [];
+                    this.semesters.forEach(function (sem) {
+                        sem.removedIds.forEach(function (id) { acc.push({ id: id }); });
+                    });
+                    return acc;
+                },
+
+                filteredSubjectsFor(sem) {
+                    if (!sem.search.trim()) return [];
+                    const q = sem.search.toLowerCase().trim();
+                    const selectedIds = new Set(sem.selectedSubjects.map(s => s.id));
+                    const existingIdsSet = new Set(sem.existingSubjectIds);
+                    return this.allSubjects.filter(s =>
+                        !selectedIds.has(s.id) &&
+                        !existingIdsSet.has(s.id) && (
+                            (s.code && s.code.toLowerCase().includes(q)) ||
+                            (s.name && s.name.toLowerCase().includes(q)) ||
+                            (s.type && s.type.toLowerCase().includes(q))
+                        )
+                    );
+                },
+
+                addSubject(sem, subject) {
+                    if (sem.selectedSubjects.some(s => s.id === subject.id)) return;
+                    if (sem.existingSubjectIds.includes(subject.id)) {
+                        alert(`Already exists: "${subject.code} - ${subject.name}" is already offered in ${sem.semesterName} for this curriculum version.`);
+                        sem.search = '';
+                        sem.showDropdown = false;
+                        return;
+                    }
+                    sem.selectedSubjects.push({
+                        id: subject.id,
+                        code: subject.code,
+                        name: subject.name,
+                        isCompulsory: true,
+                        displayOrder: sem.selectedSubjects.length + 1,
+                        hasTheory: true,
+                        hasPractical: false,
+                        hasInternal: false,
+                        theoryFullMarks: 75,
+                        theoryPassMarks: 27,
+                        practicalFullMarks: null,
+                        practicalPassMarks: null,
+                        internalTheoryFullMarks: null,
+                        internalTheoryPassMarks: null,
+                        internalPracticalFullMarks: null,
+                        internalPracticalPassMarks: null
+                    });
+                    sem.search = '';
+                    sem.showDropdown = false;
+                },
+
+                removeSubject(sem, index) {
+                    sem.selectedSubjects.splice(index, 1);
+                    sem.selectedSubjects.forEach(function (s, i) { s.displayOrder = i + 1; });
+                },
+
+                isRemoved(sem, offeringId) {
+                    return sem.removedIds.indexOf(offeringId) >= 0;
+                },
+
+                toggleRemove(sem, ex) {
+                    const idx = sem.removedIds.indexOf(ex.offeringId);
+                    if (idx >= 0) {
+                        sem.removedIds.splice(idx, 1);
+                    } else {
+                        sem.removedIds.push(ex.offeringId);
+                    }
+                },
+
+                submitForm() {
+                    if (this.totalSelected === 0 && this.totalRemoved === 0) {
+                        alert('No changes to save. Add or remove at least one subject.');
+                        return;
+                    }
+                    this.$el.submit();
+                }
+            };
+        }
+    </script>
+}

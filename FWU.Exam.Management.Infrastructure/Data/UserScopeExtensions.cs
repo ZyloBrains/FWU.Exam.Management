@@ -72,6 +72,16 @@ public static class UserScopeExtensions
         return query.Where(so => false);
     }
 
+    public static IQueryable<CurriculumVersion> ApplyScope(this IQueryable<CurriculumVersion> query, IUserContext user)
+    {
+        if (user.IsSuperAdmin) return query;
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return query.Where(cv => cv.Program != null && cv.Program.FacultyId == user.FacultyId.Value);
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+            return query.Where(cv => cv.Program != null && cv.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value));
+        return query.Where(cv => false);
+    }
+
     public static IQueryable<StudentRegistration> ApplyScope(this IQueryable<StudentRegistration> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
