@@ -79,13 +79,6 @@ public class FacultyService(
         return await context.Faculties.FindAsync(id);
     }
 
-    public async Task<Faculty?> GetFacultyByOfficeCodeAsync(string officeCode)
-    {
-        return await context.Faculties
-            .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.OfficeCode == officeCode);
-    }
-
     public async Task<string> CreateFacultyAsync(Faculty faculty, string adminPassword)
     {
         context.Faculties.Add(faculty);

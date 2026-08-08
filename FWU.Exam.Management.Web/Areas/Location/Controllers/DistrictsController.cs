@@ -33,16 +33,6 @@ public class DistrictsController(IDistrictService districtService) : Controller
         return View(items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var district = await districtService.GetDistrictByIdAsync(id.Value);
-        if (district == null) return NotFound();
-
-        return View(district);
-    }
-
     // Helper method to escape CSV fields
 
     // Export to CSV (Current Page with pagination)

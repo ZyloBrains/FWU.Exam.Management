@@ -171,11 +171,11 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
     {
         if (id == null) return NotFound();
 
-        var configuration = await context.ConnectIpsPaymentConfigurations
+        var connectIPSConfiguration = await context.ConnectIpsPaymentConfigurations
             .FirstOrDefaultAsync(m => m.Id == id);
-        if (configuration == null) return NotFound();
+        if (connectIPSConfiguration == null) return NotFound();
 
-        return View(configuration);
+        return View(connectIPSConfiguration);
     }
 
     [RequirePermission(Permissions.ConnectIPSCreate)]

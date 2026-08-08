@@ -145,16 +145,6 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
     }
 
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var faculty = await facultyService.GetFacultyByIdAsync(id.Value);
-        if (faculty == null) return NotFound();
-
-        return View(faculty);
-    }
-
     [RequirePermission("faculties.create")]
     public IActionResult Create()
     {

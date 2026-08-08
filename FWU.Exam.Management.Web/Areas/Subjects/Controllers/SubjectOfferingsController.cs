@@ -138,16 +138,6 @@ public class SubjectOfferingsController : Controller
         return View("PrintPdf", items);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var subjectOffering = await _subjectOfferingService.GetSubjectOfferingByIdAsync(id.Value);
-        if (subjectOffering == null) return NotFound();
-
-        return View(subjectOffering);
-    }
-
     [HttpGet]
     public async Task<JsonResult> GetExistingSubjects(int programId, int semesterId, int? curriculumVersionId = null)
     {

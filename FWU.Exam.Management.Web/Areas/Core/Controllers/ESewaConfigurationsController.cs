@@ -164,17 +164,6 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var eSewaConfiguration = await context.ESewaConfigurations
-            .FirstOrDefaultAsync(m => m.Id == id);
-        if (eSewaConfiguration == null) return NotFound();
-
-        return View(eSewaConfiguration);
-    }
-
     [RequirePermission("esewa.create")]
     public IActionResult Create()
     {

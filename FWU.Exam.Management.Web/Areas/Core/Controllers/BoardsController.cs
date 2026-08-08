@@ -107,23 +107,6 @@ public class BoardsController(IBoardService boardService, ICountryService countr
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    // GET: Boards/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var board = await boardService.GetBoardByIdAsync(id.Value);
-        if (board == null)
-        {
-            return NotFound();
-        }
-
-        return View(board);
-    }
-
     // GET: Boards/Create
     [RequirePermission("boards.create")]
     public async Task<IActionResult> Create()

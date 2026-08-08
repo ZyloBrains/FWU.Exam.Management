@@ -106,23 +106,6 @@ public class ProvincesController(IProvinceService provinceService) : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    // GET: Provinces/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var province = await provinceService.GetProvinceByIdAsync(id.Value);
-        if (province == null)
-        {
-            return NotFound();
-        }
-
-        return View(province);
-    }
-
     // GET: Provinces/Create
     [RequirePermission("provinces.create")]
     public IActionResult Create()
