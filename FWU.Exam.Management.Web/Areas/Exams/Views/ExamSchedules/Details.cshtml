@@ -198,6 +198,17 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="examScheduleId" value="@Model.Id" />
 
+                    <div class="flex flex-wrap items-center gap-3 mb-3">
+                        <label class="text-xs font-medium text-gray-600">Batch (applies to all subjects)</label>
+                        <select name="batchId" class="w-48 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="0">-- Select Batch --</option>
+                            @foreach (var item in batches)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <thead>
@@ -205,11 +216,9 @@
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Center</th>
-                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Batch</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date (BS)</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">Start</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">End</th>
-                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Room</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Remarks</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">Action</th>
                                 </tr>
@@ -246,22 +255,6 @@
                                             </select>
                                         </td>
                                         <td class="px-3 py-2">
-                                            <select name="batchId" class="w-32 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                                <option value="0">-- Select --</option>
-                                                @foreach (var item in batches)
-                                                {
-                                                    if (slot?.BatchId.ToString() == item.Value)
-                                                    {
-                                                        <option value="@item.Value" selected>@item.Text</option>
-                                                    }
-                                                    else
-                                                    {
-                                                        <option value="@item.Value">@item.Text</option>
-                                                    }
-                                                }
-                                            </select>
-                                        </td>
-                                        <td class="px-3 py-2">
                                             <input type="text" name="examDate" value="@(slot?.ExamDate)" placeholder="YYYY-MM-DD" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                                         </td>
                                         <td class="px-3 py-2">
@@ -269,9 +262,6 @@
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="time" name="endTime" value="@(slot?.EndTime.ToString("HH:mm") ?? Model.EndTime.ToString("HH:mm"))" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                                        </td>
-                                        <td class="px-3 py-2">
-                                            <input type="text" name="roomNumber" value="@(slot?.RoomNumber)" placeholder="Room" class="w-24 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="text" name="remarks" value="@(slot?.Remarks)" placeholder="Remarks" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
@@ -296,7 +286,7 @@
 
                     <div class="mt-4 flex items-center justify-between gap-3">
                         <p class="text-xs text-gray-500">
-                            Select an exam center and batch to schedule a subject; subjects without a center are left unscheduled. Times default to the schedule's start/end.
+                            Pick the batch above (applies to all subjects) and an exam center per subject to schedule it; subjects without a center are left unscheduled. Times default to the schedule's start/end.
                         </p>
                         <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
                             <i class="fas fa-save mr-1"></i> Save All Subjects

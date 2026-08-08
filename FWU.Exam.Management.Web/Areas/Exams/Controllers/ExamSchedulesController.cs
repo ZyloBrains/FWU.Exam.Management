@@ -200,7 +200,7 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveExamSlots(int examScheduleId, int[] subjectOfferingId, int[] examCenterId, int[] batchId, string[]? examDate, string[]? startTime, string[]? endTime, string[]? roomNumber, string[]? remarks)
+    public async Task<IActionResult> SaveExamSlots(int examScheduleId, int batchId, int[] subjectOfferingId, int[] examCenterId, string[]? examDate, string[]? startTime, string[]? endTime, string[]? remarks)
     {
         var schedule = await context.ExamSchedules.FindAsync(examScheduleId);
         if (schedule == null) return NotFound();
@@ -224,11 +224,9 @@ public class ExamSchedulesController(
             if (!validOfferingIds.Contains(offeringId)) continue;
 
             var centerId = i < examCenterId.Length ? examCenterId[i] : 0;
-            var batch = i < batchId.Length ? batchId[i] : 0;
             var date = (i < (examDate?.Length ?? 0) ? examDate![i] : null)?.Trim();
             var startText = i < (startTime?.Length ?? 0) ? startTime![i] : null;
             var endText = i < (endTime?.Length ?? 0) ? endTime![i] : null;
-            var room = (i < (roomNumber?.Length ?? 0) ? roomNumber![i] : null)?.Trim();
             var remark = (i < (remarks?.Length ?? 0) ? remarks![i] : null)?.Trim();
 
             var start = TimeOnly.TryParse(startText, out var startParsed) ? startParsed : schedule.StartTime;
@@ -237,26 +235,24 @@ public class ExamSchedulesController(
             if (existingSlots.TryGetValue(offeringId, out var slot))
             {
                 if (centerId > 0) slot.ExamCenterId = centerId;
-                if (batch > 0) slot.BatchId = batch;
+                if (batchId > 0) slot.BatchId = batchId;
                 slot.ExamDate = string.IsNullOrEmpty(date) ? null : date;
                 slot.StartTime = start;
                 slot.EndTime = end;
-                slot.RoomNumber = string.IsNullOrEmpty(room) ? null : room;
                 slot.Remarks = string.IsNullOrEmpty(remark) ? null : remark;
                 updated++;
             }
-            else if (centerId > 0 && batch > 0)
+            else if (centerId > 0 && batchId > 0)
             {
                 context.ExamSlots.Add(new ExamSlot
                 {
                     ExamScheduleId = examScheduleId,
                     SubjectOfferingId = offeringId,
                     ExamCenterId = centerId,
-                    BatchId = batch,
+                    BatchId = batchId,
                     ExamDate = string.IsNullOrEmpty(date) ? null : date,
                     StartTime = start,
                     EndTime = end,
-                    RoomNumber = string.IsNullOrEmpty(room) ? null : room,
                     Remarks = string.IsNullOrEmpty(remark) ? null : remark,
                     TenantId = schedule.TenantId
                 });
