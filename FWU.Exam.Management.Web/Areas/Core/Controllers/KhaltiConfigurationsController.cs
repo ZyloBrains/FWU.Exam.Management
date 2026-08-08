@@ -8,6 +8,7 @@ using FWU.Exam.Management.Domain.Entities.Payments;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using FWU.Exam.Management.Domain.Entities.Permissions;
+using FWU.Exam.Management.Domain.Extensions;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
@@ -94,13 +95,6 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductName", string sortDir = "asc")
     {
@@ -111,11 +105,11 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.ProductName)}," +
-                          $"{EscapeCsv(s.ReturnUrl)}," +
-                          $"{EscapeCsv(s.WebsiteUrl)}," +
-                          $"{EscapeCsv(s.PostUrl)}," +
-                          $"{EscapeCsv(s.VerifyUrl)}," +
+            sb.AppendLine($"{s.ProductName.EscapeCsv()}," +
+                          $"{s.ReturnUrl.EscapeCsv()}," +
+                          $"{s.WebsiteUrl.EscapeCsv()}," +
+                          $"{s.PostUrl.EscapeCsv()}," +
+                          $"{s.VerifyUrl.EscapeCsv()}," +
                           $"{s.ServiceCharge}");
         }
 

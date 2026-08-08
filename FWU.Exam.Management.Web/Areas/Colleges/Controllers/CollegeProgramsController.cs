@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
@@ -33,13 +34,6 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Id", string sortDir = "asc")
     {
@@ -50,13 +44,13 @@ public class CollegeProgramsController(ICollegeProgramService collegeProgramServ
 
         foreach (var cp in items)
         {
-            sb.AppendLine($"{EscapeCsv(cp.College?.Code.ToString())}," +
-                          $"{EscapeCsv(cp.College?.Name)}," +
-                          $"{EscapeCsv(cp.Program?.ProgramCode)}," +
-                          $"{EscapeCsv(cp.Program?.ProgramName)}," +
+            sb.AppendLine($"{cp.College?.Code.ToString().EscapeCsv()}," +
+                          $"{cp.College?.Name.EscapeCsv()}," +
+                          $"{cp.Program?.ProgramCode.EscapeCsv()}," +
+                          $"{cp.Program?.ProgramName.EscapeCsv()}," +
                           $"{cp.AffiliationDate?.ToString("yyyy-MM-dd")}," +
                           $"{cp.NumberOfStudents}," +
-                          $"{EscapeCsv(cp.Remarks)}," +
+                          $"{cp.Remarks.EscapeCsv()}," +
                           $"{(cp.IsActive ? "Active" : "Inactive")}");
         }
 

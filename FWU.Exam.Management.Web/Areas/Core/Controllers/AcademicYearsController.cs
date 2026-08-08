@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -34,13 +35,6 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
 
 
     // Helper to escape CSV fields
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     // Export to PDF (browser print)
     // Export to CSV - only the current page
@@ -54,10 +48,10 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
         foreach (var item in Items)
         {
             sb.AppendLine($"{item.AcademicYearCode}," +
-                          $"{EscapeCsv(item.AcademicYearCodeNepali)}," +
-                          $"{EscapeCsv(item.AcademicYearName)}," +
-                          $"{EscapeCsv(item.AcademicYearNameNepali)}," +
-                          $"{EscapeCsv(item.Remark)}," +
+                          $"{item.AcademicYearCodeNepali.EscapeCsv()}," +
+                          $"{item.AcademicYearName.EscapeCsv()}," +
+                          $"{item.AcademicYearNameNepali.EscapeCsv()}," +
+                          $"{item.Remark.EscapeCsv()}," +
                           $"{(item.IsRunning ? "Yes" : "No")}," +
                           $"{(item.IsActive ? "Active" : "Inactive")}");
         }

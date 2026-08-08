@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
@@ -166,18 +167,11 @@ public class AdmitCardsController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.AdmitCardNumber ?? "")},{EscapeCsv(item.ExamSchedule?.ExamScheduleName ?? "")},{item.GeneratedDate:yyyy-MM-dd},{(item.IsDownloaded ? "Yes" : "No")},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{(item.AdmitCardNumber ?? "").EscapeCsv()},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{item.GeneratedDate:yyyy-MM-dd},{(item.IsDownloaded ? "Yes" : "No")},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", "AdmitCards.csv");
     }
 
-    private static string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 }

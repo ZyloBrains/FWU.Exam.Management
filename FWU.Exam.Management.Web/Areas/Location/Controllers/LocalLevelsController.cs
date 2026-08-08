@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -33,13 +34,6 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
     }
 
     // Helper method to escape CSV fields
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     // Export to CSV (Current Page with pagination)
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "LocalLevelName", string sortDir = "asc")
@@ -53,9 +47,9 @@ public class LocalLevelsController(ILocalLevelService localLevelService) : Contr
 
         foreach (var ll in items)
         {
-            sb.AppendLine($"{EscapeCsv(ll.LocalLevelName)}," +
-                           $"{EscapeCsv(ll.LocalLevelType.ToString())}," +
-                           $"{EscapeCsv(ll.District?.DistrictName ?? "")}," +
+            sb.AppendLine($"{ll.LocalLevelName.EscapeCsv()}," +
+                           $"{ll.LocalLevelType.ToString().EscapeCsv()}," +
+                           $"{(ll.District?.DistrictName ?? "").EscapeCsv()}," +
                            $"{(ll.IsActive ? "Active" : "Inactive")}");
         }
 

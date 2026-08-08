@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.Authorization;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
@@ -86,13 +87,6 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ApiUrl", string sortDir = "asc")
     {
@@ -103,9 +97,9 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.ApiUrl)}," +
-                          $"{EscapeCsv(s.FromAddr)}," +
-                          $"{EscapeCsv(s.Mode)}," +
+            sb.AppendLine($"{s.ApiUrl.EscapeCsv()}," +
+                          $"{s.FromAddr.EscapeCsv()}," +
+                          $"{s.Mode.EscapeCsv()}," +
                           $"{(s.OverrideUnsubscription ? "Yes" : "No")}," +
                           $"{(s.IsActive ? "Yes" : "No")}");
         }

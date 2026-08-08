@@ -6,6 +6,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -50,13 +51,6 @@ public class SubjectOfferingsController : Controller
         return View();
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Subject", string sortDir = "asc")
     {
@@ -67,9 +61,9 @@ public class SubjectOfferingsController : Controller
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.SubjectCatalog?.SubjectName ?? "-")}," +
-                           $"{EscapeCsv(s.Program?.ProgramName ?? "-")}," +
-                           $"{EscapeCsv(s.Semester?.Name ?? "-")}," +
+            sb.AppendLine($"{(s.SubjectCatalog?.SubjectName ?? "-").EscapeCsv()}," +
+                           $"{(s.Program?.ProgramName ?? "-").EscapeCsv()}," +
+                           $"{(s.Semester?.Name ?? "-").EscapeCsv()}," +
                            $"{(s.IsCompulsory ? "Yes" : "No")}," +
                            $"{s.TheoryFullMarks}," +
                            $"{s.PracticalFullMarks ?? 0}," +

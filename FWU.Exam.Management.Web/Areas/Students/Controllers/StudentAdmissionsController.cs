@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -264,13 +265,6 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         }
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
@@ -283,9 +277,9 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         foreach (var a in items)
         {
             sb.AppendLine($"{sn++}," +
-                          $"{EscapeCsv(a.CollegeRollNumber)}," +
-                          $"{EscapeCsv(a.College?.Name)}," +
-                          $"{EscapeCsv(a.Program?.ProgramName)}," +
+                          $"{a.CollegeRollNumber.EscapeCsv()}," +
+                          $"{a.College?.Name.EscapeCsv()}," +
+                          $"{a.Program?.ProgramName.EscapeCsv()}," +
                           $"{a.AdmissionDate:yyyy-MM-dd}," +
                           $"{(a.IsCompleted ? "Completed" : "Pending")}," +
                           $"{(a.IsActive ? "Active" : "Inactive")}");

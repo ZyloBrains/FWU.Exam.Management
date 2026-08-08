@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -173,7 +174,7 @@ public class BulkUserCreationService(
                             UserName = loginId,
                             Email = loginId,
                             EmailConfirmed = true,
-                            FullName = $"{reg.FirstName} {reg.LastName}".Trim(),
+                            FullName = reg.FirstName.GetFullName(reg.LastName),
                             IsActive = true,
                             FacultyId = reg.FacultyId,
                             CollegeId = reg.CollegeId

@@ -8,6 +8,7 @@ using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -515,7 +516,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
     private async Task SendEntranceSubmissionNotificationsAsync(EntranceExamApplication application)
     {
-        var fullName = $"{application.FirstName} {application.LastName}".Trim();
+        var fullName = application.FirstName.GetFullName(application.LastName);
         var program = await context.Programs.Where(p => p.Id == application.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
         var college = await context.Colleges.Where(c => c.Id == application.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
 

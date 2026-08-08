@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -48,13 +49,6 @@ public class ExamSchedulesController(
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
@@ -65,24 +59,24 @@ public class ExamSchedulesController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{EscapeCsv(item.Id.ToString())}," +
-                          $"{EscapeCsv(item.ExamScheduleName ?? string.Empty)}," +
-                          $"{EscapeCsv(item.ExamScheduleCode ?? string.Empty)}," +
-                          $"{EscapeCsv(item.AcademicYear?.AcademicYearName ?? string.Empty)}," +
-                          $"{EscapeCsv(item.ExamType?.Name ?? string.Empty)}," +
-                          $"{EscapeCsv(item.StartDateBs ?? string.Empty)}," +
-                          $"{EscapeCsv(item.EndDateBs ?? string.Empty)}," +
-                          $"{EscapeCsv(item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.StartTime.ToString())}," +
-                          $"{EscapeCsv(item.EndTime.ToString())}," +
+            sb.AppendLine($"{item.Id.ToString().EscapeCsv()}," +
+                          $"{(item.ExamScheduleName ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.ExamScheduleCode ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.AcademicYear?.AcademicYearName ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.ExamType?.Name ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.StartDateBs ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.EndDateBs ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{item.StartTime.ToString().EscapeCsv()}," +
+                          $"{item.EndTime.ToString().EscapeCsv()}," +
                           $"{(item.IsActive ? "Yes" : "No")}," +
-                          $"{EscapeCsv(item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
+                          $"{(item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
                           $"{item.ExtendedDateCharge}," +
-                          $"{EscapeCsv(item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.Remarks ?? string.Empty)}");
+                          $"{(item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.Remarks ?? string.Empty).EscapeCsv()}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -395,6 +389,11 @@ public class ExamSchedulesController(
             TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Index));
+        }
         catch (DbUpdateException)
         {
             TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
@@ -442,11 +441,42 @@ public class ExamSchedulesController(
     }
 
     [RequirePermission("examschedules.delete")]
+    [HttpGet]
+    public async Task<IActionResult> GetDeletePreview(int id)
+    {
+        try
+        {
+            var preview = await examScheduleService.GetDeletePreviewAsync(id);
+            return Json(new { success = true, scheduleName = preview.ScheduleName, items = preview.Items.Select(i => new { label = i.Label, count = i.Count }) });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [RequirePermission("examschedules.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await examScheduleService.DeleteExamScheduleAsync(id); return Json(new { success = true, message = "Exam schedule deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            return Json(new { success = true, message = "Exam schedule deleted successfully!" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Json(new { success = false, message = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first." });
+        }
+        catch (Exception)
+        {
+            return Json(new { success = false, message = "An error occurred while deleting the exam schedule." });
+        }
     }
 
 }
