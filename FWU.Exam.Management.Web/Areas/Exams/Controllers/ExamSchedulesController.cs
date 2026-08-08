@@ -395,6 +395,11 @@ public class ExamSchedulesController(
             TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Index));
+        }
         catch (DbUpdateException)
         {
             TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
@@ -442,11 +447,42 @@ public class ExamSchedulesController(
     }
 
     [RequirePermission("examschedules.delete")]
+    [HttpGet]
+    public async Task<IActionResult> GetDeletePreview(int id)
+    {
+        try
+        {
+            var preview = await examScheduleService.GetDeletePreviewAsync(id);
+            return Json(new { success = true, scheduleName = preview.ScheduleName, items = preview.Items.Select(i => new { label = i.Label, count = i.Count }) });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [RequirePermission("examschedules.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await examScheduleService.DeleteExamScheduleAsync(id); return Json(new { success = true, message = "Exam schedule deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try
+        {
+            await examScheduleService.DeleteExamScheduleAsync(id);
+            return Json(new { success = true, message = "Exam schedule deleted successfully!" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return Json(new { success = false, message = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first." });
+        }
+        catch (Exception)
+        {
+            return Json(new { success = false, message = "An error occurred while deleting the exam schedule." });
+        }
     }
 
 }
