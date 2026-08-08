@@ -1,10 +1,8 @@
 @model FWU.Exam.Management.Web.ViewModels.ProfileBaseViewModel
+@using FWU.Exam.Management.Domain.Extensions
 
 @{
-    var initials = string.Join("", Model.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-        .Take(2)
-        .Select(w => w[0]))
-        .ToUpperInvariant();
+    var initials = Model.FullName.GetInitials();
     var fallbackColor = "bg-gradient-to-br from-admin-blue-light to-admin-blue-dark";
 }
 

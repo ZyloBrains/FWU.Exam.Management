@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -48,13 +49,6 @@ public class ExamSchedulesController(
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(string? search = null)
     {
@@ -65,24 +59,24 @@ public class ExamSchedulesController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{EscapeCsv(item.Id.ToString())}," +
-                          $"{EscapeCsv(item.ExamScheduleName ?? string.Empty)}," +
-                          $"{EscapeCsv(item.ExamScheduleCode ?? string.Empty)}," +
-                          $"{EscapeCsv(item.AcademicYear?.AcademicYearName ?? string.Empty)}," +
-                          $"{EscapeCsv(item.ExamType?.Name ?? string.Empty)}," +
-                          $"{EscapeCsv(item.StartDateBs ?? string.Empty)}," +
-                          $"{EscapeCsv(item.EndDateBs ?? string.Empty)}," +
-                          $"{EscapeCsv(item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.StartTime.ToString())}," +
-                          $"{EscapeCsv(item.EndTime.ToString())}," +
+            sb.AppendLine($"{item.Id.ToString().EscapeCsv()}," +
+                          $"{(item.ExamScheduleName ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.ExamScheduleCode ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.AcademicYear?.AcademicYearName ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.ExamType?.Name ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.StartDateBs ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.EndDateBs ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.StartDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.PublishedDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{item.StartTime.ToString().EscapeCsv()}," +
+                          $"{item.EndTime.ToString().EscapeCsv()}," +
                           $"{(item.IsActive ? "Yes" : "No")}," +
-                          $"{EscapeCsv(item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
+                          $"{(item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
                           $"{item.ExtendedDateCharge}," +
-                          $"{EscapeCsv(item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty)}," +
-                          $"{EscapeCsv(item.Remarks ?? string.Empty)}");
+                          $"{(item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.Remarks ?? string.Empty).EscapeCsv()}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());

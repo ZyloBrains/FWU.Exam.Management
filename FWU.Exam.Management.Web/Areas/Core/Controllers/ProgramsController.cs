@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Web.ViewModels;
@@ -35,13 +36,6 @@ public class ProgramsController(IProgramService programService, ISemesterService
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ProgramCode", string sortDir = "asc")
     {
@@ -52,18 +46,18 @@ public class ProgramsController(IProgramService programService, ISemesterService
 
         foreach (var p in items)
         {
-            sb.AppendLine($"{EscapeCsv(p.ProgramCode)}," +
-                           $"{EscapeCsv(p.ProgramName)}," +
-                           $"{EscapeCsv(p.ShortName)}," +
-                           $"{EscapeCsv(p.Level?.LevelName)}," +
-                           $"{EscapeCsv(p.Board?.BoardName)}," +
+            sb.AppendLine($"{p.ProgramCode.EscapeCsv()}," +
+                           $"{p.ProgramName.EscapeCsv()}," +
+                           $"{p.ShortName.EscapeCsv()}," +
+                           $"{p.Level?.LevelName.EscapeCsv()}," +
+                           $"{p.Board?.BoardName.EscapeCsv()}," +
                            $"{p.Duration}," +
                            $"{p.GrandTotalMarks}," +
                            $"{(p.HasMultipleIntakes ? "Yes" : "No")}," +
                            $"{p.NumberOfSeats}," +
                            $"{p.ScholarshipSeats}," +
-                           $"{EscapeCsv(p.RollNumberPrefix)}," +
-                           $"{EscapeCsv(p.Remarks)}," +
+                           $"{p.RollNumberPrefix.EscapeCsv()}," +
+                           $"{p.Remarks.EscapeCsv()}," +
                            $"{(p.IsActive ? "Active" : "Inactive")}");
         }
 

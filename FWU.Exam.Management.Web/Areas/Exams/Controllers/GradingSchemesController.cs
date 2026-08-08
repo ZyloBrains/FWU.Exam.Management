@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -162,7 +163,7 @@ public class GradingSchemesController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.Name)},{EscapeCsv(item.Program?.ProgramName ?? "")},{EscapeCsv(item.AcademicYear?.AcademicYearName ?? "")},{EscapeCsv(item.Description ?? "")},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{item.Name.EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.Description ?? "").EscapeCsv()},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -197,13 +198,6 @@ public class GradingSchemesController(
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
     }
 
-    private static string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     private static List<GradeDefinition> GetDefaultGradeDefinitions()
     {

@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -37,13 +38,6 @@ public class CurriculumVersionsController : Controller
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
@@ -54,9 +48,9 @@ public class CurriculumVersionsController : Controller
 
         foreach (var c in items)
         {
-            sb.AppendLine($"{EscapeCsv(c.Name)}," +
-                           $"{EscapeCsv(c.Program?.ProgramName ?? "-")}," +
-                           $"{EscapeCsv(c.EffectiveAcademicYear?.AcademicYearName ?? "-")}," +
+            sb.AppendLine($"{c.Name.EscapeCsv()}," +
+                           $"{(c.Program?.ProgramName ?? "-").EscapeCsv()}," +
+                           $"{(c.EffectiveAcademicYear?.AcademicYearName ?? "-").EscapeCsv()}," +
                            $"{(c.IsActive ? "Active" : "Inactive")}");
         }
 

@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -461,13 +462,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
                             {
                                 var guardian = new StudentGuardian
                                 {
-                                    FatherName = $"{fatherFirstName} {fatherLastName}".Trim(),
+                                    FatherName = fatherFirstName.GetFullName(fatherLastName),
                                     FatherProfession = fatherOccupation,
                                     FatherContactNumber = fatherPhone,
-                                    MotherName = $"{motherFirstName} {motherLastName}".Trim(),
+                                    MotherName = motherFirstName.GetFullName(motherLastName),
                                     MotherProfession = motherOccupation,
                                     MotherContactNumber = motherPhone,
-                                    GuardianName = $"{fatherFirstName} {fatherLastName}".Trim(),
+                                    GuardianName = fatherFirstName.GetFullName(fatherLastName),
                                     RelationWithStudent = "Father"
                                 };
                                 await studentRegistrationService.SaveGuardiansAsync(registrationId, guardian);
@@ -864,13 +865,13 @@ public class StudentRegistrationsController(IStudentRegistrationService studentR
 
         var guardian = new StudentGuardian
         {
-            FatherName = $"{fatherFirstName} {fatherLastName}".Trim(),
+            FatherName = fatherFirstName.GetFullName(fatherLastName),
             FatherProfession = fatherOccupation,
             FatherContactNumber = fatherPhone,
-            MotherName = $"{motherFirstName} {motherLastName}".Trim(),
+            MotherName = motherFirstName.GetFullName(motherLastName),
             MotherProfession = motherOccupation,
             MotherContactNumber = motherPhone,
-            GuardianName = $"{fatherFirstName} {fatherLastName}".Trim(),
+            GuardianName = fatherFirstName.GetFullName(fatherLastName),
             RelationWithStudent = "Father"
         };
 

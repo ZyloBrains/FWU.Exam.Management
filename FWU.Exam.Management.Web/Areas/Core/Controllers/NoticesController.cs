@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -30,13 +31,6 @@ public class NoticesController(INoticeService noticeService) : Controller
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "PublishedDate", string sortDir = "desc")
     {
@@ -47,8 +41,8 @@ public class NoticesController(INoticeService noticeService) : Controller
 
         foreach (var n in items)
         {
-            sb.AppendLine($"{EscapeCsv(n.NoticeTitle)}," +
-                           $"{EscapeCsv(n.NoticePreview)}," +
+            sb.AppendLine($"{n.NoticeTitle.EscapeCsv()}," +
+                           $"{n.NoticePreview.EscapeCsv()}," +
                            $"{(n.PublishedDate.HasValue ? n.PublishedDate.Value.ToString("yyyy-MM-dd") : "")}");
         }
 

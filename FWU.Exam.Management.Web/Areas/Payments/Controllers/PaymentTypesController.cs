@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,13 +30,6 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "PaymentTypeName", string sortDir = "asc")
     {
@@ -46,8 +40,8 @@ public class PaymentTypesController(IPaymentTypeService paymentTypeService) : Co
 
         foreach (var pt in items)
         {
-            sb.AppendLine($"{EscapeCsv(pt.PaymentTypeName)}," +
-                           $"{EscapeCsv(pt.LogoUrl)}," +
+            sb.AppendLine($"{pt.PaymentTypeName.EscapeCsv()}," +
+                           $"{pt.LogoUrl.EscapeCsv()}," +
                            $"{(pt.IsActive ? "Active" : "Inactive")}");
         }
 

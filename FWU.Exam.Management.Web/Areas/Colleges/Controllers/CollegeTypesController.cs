@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using System.Text;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,13 +30,6 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
@@ -46,9 +40,9 @@ public class CollegeTypesController(ICollegeTypeService collegeTypeService) : Co
 
         foreach (var c in items)
         {
-            sb.AppendLine($"{EscapeCsv(c.Code)}," +
-                           $"{EscapeCsv(c.Name)}," +
-                           $"{EscapeCsv(c.Remarks ?? "N/A")}," +
+            sb.AppendLine($"{c.Code.EscapeCsv()}," +
+                           $"{c.Name.EscapeCsv()}," +
+                           $"{(c.Remarks ?? "N/A").EscapeCsv()}," +
                            $"{(c.IsDefault == true ? "Yes" : "No")}," +
                            $"{(c.IsActive ? "Active" : "Inactive")}");
         }

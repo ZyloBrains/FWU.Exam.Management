@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,13 +30,6 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
@@ -46,9 +40,9 @@ public class ExamTypesController(IExamTypeService examTypeService) : Controller
 
         foreach (var e in items)
         {
-            sb.AppendLine($"{EscapeCsv(e.Code.ToString())}," +
-                           $"{EscapeCsv(e.Name)}," +
-                           $"{EscapeCsv(e.Remarks)}," +
+            sb.AppendLine($"{e.Code.ToString().EscapeCsv()}," +
+                           $"{e.Name.EscapeCsv()}," +
+                           $"{e.Remarks.EscapeCsv()}," +
                            $"{(e.IsActive ? "Active" : "Inactive")}");
         }
 

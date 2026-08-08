@@ -6,6 +6,7 @@ using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -538,7 +539,7 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
 
-        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
+        var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
         int logId;
         if (subjectIds.Count == 0)
@@ -722,7 +723,7 @@ public class StudentDashboardController(
         }
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
+        var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
         int logId;
         if (subjectIds.Count == 0)
@@ -1012,7 +1013,7 @@ public class StudentDashboardController(
                 marksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
-                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     Level = er.ExamSchedule?.Level?.LevelName,
@@ -1093,7 +1094,7 @@ public class StudentDashboardController(
                 allMarksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
-                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     SemesterId = er.ExamSchedule?.Semester?.Id,

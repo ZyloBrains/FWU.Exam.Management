@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
@@ -81,7 +82,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email!);
         if (registration == null) return;
 
-        vm.StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}";
+        vm.StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
         vm.RegistrationNumber = registration.RegistrationNumber;
         vm.CollegeName = registration.College?.Name;
         vm.AcademicYearName = registration.AcademicYear?.AcademicYearName;

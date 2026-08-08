@@ -7,6 +7,7 @@ using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -251,7 +252,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         int sn = 1;
         foreach (var e in items)
         {
-            sb.AppendLine($"{sn++},{EscapeCsv(e.StudentName)},{EscapeCsv(e.CollegeRollNumber)},{EscapeCsv(e.ProgramName)},{EscapeCsv(e.CollegeName)},{EscapeCsv(e.SemesterName)},{EscapeCsv(e.AcademicYearName)},{e.EnrollmentStatus},{e.EnrollmentType},{e.PaymentStatus},{e.TotalFee},{e.TotalCredits},{e.ResultStatus}");
+            sb.AppendLine($"{sn++},{e.StudentName.EscapeCsv()},{e.CollegeRollNumber.EscapeCsv()},{e.ProgramName.EscapeCsv()},{e.CollegeName.EscapeCsv()},{e.SemesterName.EscapeCsv()},{e.AcademicYearName.EscapeCsv()},{e.EnrollmentStatus},{e.EnrollmentType},{e.PaymentStatus},{e.TotalFee},{e.TotalCredits},{e.ResultStatus}");
         }
 
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"SemesterEnrollments_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
@@ -344,13 +345,6 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             "Id", "AcademicYearCode", selectedId);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
         [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)

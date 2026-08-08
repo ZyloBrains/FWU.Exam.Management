@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -59,7 +60,7 @@ public class ResultRecordsController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.StudentName ?? "")},{EscapeCsv(item.SymbolNumber ?? "")},{EscapeCsv(item.RegistrationNumber ?? "")},{EscapeCsv(item.Year ?? "")},{EscapeCsv(item.Part ?? "")},{EscapeCsv(item.Gpa ?? "")},{EscapeCsv(item.Result ?? "")}");
+            sb.AppendLine($"{item.Id},{(item.StudentName ?? "").EscapeCsv()},{(item.SymbolNumber ?? "").EscapeCsv()},{(item.RegistrationNumber ?? "").EscapeCsv()},{(item.Year ?? "").EscapeCsv()},{(item.Part ?? "").EscapeCsv()},{(item.Gpa ?? "").EscapeCsv()},{(item.Result ?? "").EscapeCsv()}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -72,11 +73,4 @@ public class ResultRecordsController(
         return View("PrintPdf", items);
     }
 
-    private static string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 }

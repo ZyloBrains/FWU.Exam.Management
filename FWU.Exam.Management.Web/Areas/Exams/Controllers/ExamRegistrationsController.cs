@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -198,7 +199,7 @@ public class ExamRegistrationsController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.ExamSchedule?.ExamScheduleName ?? "")},{EscapeCsv(item.College?.Name ?? "")},{EscapeCsv(item.ExamRollNumber ?? "")},{item.Status},{item.RegistrationDate?.ToString("yyyy-MM-dd")},{item.FeeEnclosed},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.ExamRollNumber ?? "").EscapeCsv()},{item.Status},{item.RegistrationDate?.ToString("yyyy-MM-dd")},{item.FeeEnclosed},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -236,11 +237,4 @@ public class ExamRegistrationsController(
         ViewData["ExamCenterId"] = new SelectList(selectLists.ExamCenters, "Id", "Name", examRegistration?.ExamCenterId);
     }
 
-    private static string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 }

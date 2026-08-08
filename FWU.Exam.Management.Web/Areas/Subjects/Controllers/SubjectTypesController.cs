@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,13 +37,6 @@ public class SubjectTypesController : Controller
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
@@ -53,8 +47,8 @@ public class SubjectTypesController : Controller
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.Code)}," +
-                           $"{EscapeCsv(s.Name)}," +
+            sb.AppendLine($"{s.Code.EscapeCsv()}," +
+                           $"{s.Name.EscapeCsv()}," +
                            $"{s.MaxAllowedSubjects}," +
                            $"{(s.IsDefault ? "Yes" : "No")}," +
                            $"{(s.IsActive ? "Active" : "Inactive")}");

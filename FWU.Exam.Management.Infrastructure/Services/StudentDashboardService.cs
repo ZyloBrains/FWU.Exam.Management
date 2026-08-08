@@ -7,6 +7,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.Extensions.Logging;
@@ -390,7 +391,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         }
 
         var studentName = studentReg != null
-            ? $"{studentReg.FirstName} {studentReg.MiddleName} {studentReg.LastName}".Replace("  ", " ").Trim()
+            ? studentReg.FirstName.GetFullName(studentReg.MiddleName, studentReg.LastName)
             : "";
 
         var voucherNumber = $"VCH-{DateTime.UtcNow:yyyyMMdd}-{examScheduleId}-{studentRegistrationId}";

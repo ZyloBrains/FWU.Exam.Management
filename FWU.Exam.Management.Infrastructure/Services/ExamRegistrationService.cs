@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -299,7 +300,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var srId)
                 && srLookup.TryGetValue(srId, out var sr))
             {
-                studentName = string.Join(" ", new[] { sr.FirstName, sr.MiddleName, sr.LastName }.Where(x => !string.IsNullOrEmpty(x)));
+                studentName = sr.FirstName.GetFullName(sr.MiddleName, sr.LastName);
                 registrationNumber = sr.RegistrationNumber;
 
                 if (paymentLogLookup.TryGetValue((er.ExamScheduleId, srId), out var pl))
