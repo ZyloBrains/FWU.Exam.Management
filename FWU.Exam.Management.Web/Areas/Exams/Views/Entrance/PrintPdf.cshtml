@@ -1,0 +1,58 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Exams.EntranceExamApplication>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Entrance Applications Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
+        .exam-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .exam-table th, .exam-table td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; vertical-align: top; }
+        .exam-table th { background: #f3f4f6; }
+        .footer { margin-top: 30px; font-size: 11px; color: #6b7280; text-align: center; }
+    </style>
+</head>
+<body>
+    <div>
+        <h2 style="margin: 0 0 10px 0;">Entrance Applications Report</h2>
+        <table class="exam-table">
+            <thead>
+                <tr>
+                    <th>#</th><th>Application ID</th><th>Full Name</th><th>Email</th><th>Contact</th><th>Gender</th><th>Academic Year</th><th>College</th><th>Program</th><th>Status</th><th>Submitted Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ var counter = 1; }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="text-align: center;">@counter</td>
+                        <td>@item.Id</td>
+                        <td><strong>@item.FirstName @item.LastName</strong></td>
+                        <td>@item.Email</td>
+                        <td>@item.ContactNumber</td>
+                        <td>@item.Gender?.GenderName</td>
+                        <td>@item.AcademicYear?.AcademicYearName</td>
+                        <td>@item.College?.Name</td>
+                        <td>@item.Program?.ProgramName</td>
+                        <td>@item.Status</td>
+                        <td style="font-size: 11px;">@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    </tr>
+                    counter++;
+                }
+            </tbody>
+        </table>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+                <p>No entrance applications found.</p>
+            </div>
+        }
+    </div>
+
+    <script>
+        window.onload = function () { window.print(); };
+    </script>
+</body>
+</html>

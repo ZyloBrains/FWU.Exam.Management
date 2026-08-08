@@ -258,6 +258,20 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"SemesterEnrollments_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
 
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    {
+        var (items, totalCount) = await enrollmentService.GetEnrollmentsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId);
+
+        ViewBag.CurrentPage = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View("PrintPdf", items);
+    }
+
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string search = "", string sort = "EnrolledDate", string sortDir = "desc", int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
     {

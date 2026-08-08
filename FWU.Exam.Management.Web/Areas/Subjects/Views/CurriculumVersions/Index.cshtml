@@ -9,8 +9,8 @@
     var totalPages = ViewBag.TotalPages ?? 1;
     var pageSize = ViewBag.PageSize ?? 10;
     var currentSearch = ViewBag.Search as string ?? "";
-    var currentSort = ViewBag.Sort as string ?? "Name";
-    var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentSort = ViewBag.Sort as string ?? "id";
+    var currentSortDir = ViewBag.SortDir as string ?? "desc";
     var currentUser = await UserManager.GetUserAsync(User);
     var userPerms = currentUser != null
         ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
@@ -36,44 +36,19 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToCsv" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> CSV (Current Page)
-                    </a>
-                    <a asp-action="ExportToPdf" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
-                    </a>
-                    <a asp-action="ExportToExcel" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Excel (Current Page)
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["page"] = currentPage.ToString(),
+                    ["pageSize"] = pageSize.ToString(),
+                    ["search"] = currentSearch,
+                    ["sort"] = currentSort,
+                    ["sortDir"] = currentSortDir
+                },
+                ButtonClass = "bg-orange-600 hover:bg-orange-700",
+                ScopeLabel = " (Current Page)"
+            })
             @if (HasPerm("curriculumversions.create"))
             {
                 <a asp-action="Create" asp-area="Subjects" class="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors shadow-sm">
@@ -111,6 +86,10 @@
 
     <div class="flex flex-wrap items-center gap-2 text-sm">
         <span class="text-gray-500">Sort by:</span>
+        <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="id" asp-route-sortDir="@(currentSort.ToLower() == "id" && currentSortDir == "desc" ? "asc" : "desc")"
+               class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "id" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600") hover:bg-orange-50">
+            Newest @(currentSort.ToLower() == "id" ? (currentSortDir == "desc" ? "?" : "?") : "")
+        </a>
         <a asp-action="Index" asp-area="Subjects" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="name" asp-route-sortDir="@(currentSort.ToLower() == "name" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort.ToLower() == "name" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600") hover:bg-orange-50">
             Name @(currentSort.ToLower() == "name" ? (currentSortDir == "asc" ? "?" : "?") : "")
@@ -170,6 +149,12 @@
                                 <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Details">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
+                                @if (HasPerm("curriculumversions.create"))
+                                {
+                                    <a asp-action="Copy" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md" title="Copy to New Academic Year">
+                                        <i class="fas fa-copy text-xs"></i>
+                                    </a>
+                                }
                                 @if (HasPerm("curriculumversions.edit"))
                                 {
                                     <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
@@ -239,6 +224,12 @@
                     <a asp-action="Details" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100">
                         Details
                     </a>
+                    @if (HasPerm("curriculumversions.create"))
+                    {
+                        <a asp-action="Copy" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100">
+                            Copy
+                        </a>
+                    }
                     @if (HasPerm("curriculumversions.edit"))
                     {
                         <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-amber-600 bg-amber-50 rounded-lg hover:bg-amber-100">

@@ -26,25 +26,18 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToExcel"
-                           asp-route-search="@currentSearch"
-                           asp-route-status="@currentStatus"
-                           asp-route-programId="@ViewBag.ProgramId"
-                           asp-route-academicYearId="@ViewBag.AcademicYearId"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Excel (All)
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["status"] = currentStatus,
+                    ["programId"] = ViewBag.ProgramId?.ToString() ?? "",
+                    ["academicYearId"] = ViewBag.AcademicYearId?.ToString() ?? ""
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
         </div>
     </div>
 

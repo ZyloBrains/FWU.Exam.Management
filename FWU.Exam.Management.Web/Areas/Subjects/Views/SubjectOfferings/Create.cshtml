@@ -27,7 +27,6 @@
                 <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Program</label>
                     <select asp-for="ProgramId" asp-items="ViewBag.ProgramId"
-                            x-on:change="initExistingSubjects()"
                             class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="">-- Select Program --</option>
                     </select>
@@ -42,234 +41,104 @@
                     <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Semester</label>
-                    <select asp-for="SemesterId" asp-items="ViewBag.SemesterId"
-                            disabled="@(Model != null && Model.AcademicYearId > 0 ? null : "disabled")"
-                            x-on:change="initExistingSubjects()"
+                    <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Curriculum Version</label>
+                    <select asp-for="CurriculumVersionId" asp-items="ViewBag.CurriculumVersionId"
                             class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">-- Select Semester --</option>
+                        <option value="">Auto-create default version</option>
                     </select>
-                    <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
+                    <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
             </div>
+            <p class="text-xs text-gray-400 mt-3" x-text="statusMessage"></p>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6 mb-4">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-sm font-semibold text-gray-700">Subjects</h3>
-                <span class="text-xs bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1 rounded-full"
-                      x-show="selectedSubjects.length > 0"
-                      x-text="selectedSubjects.length + ' selected'"></span>
+        <template x-if="semesters.length === 0">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-10 text-center text-sm text-gray-400">
+                <i class="fas fa-calendar-alt text-3xl mb-2 block text-gray-300"></i>
+                <p x-text="statusMessage"></p>
             </div>
+        </template>
 
-            <div class="relative mb-4" @@click.away="showDropdown = false">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                    <input type="text"
-                           x-model="search"
-                           @@focus="showDropdown = true"
-                           @@input="showDropdown = true"
-                           placeholder="Search and add subjects by code or name..."
-                           class="w-full border border-gray-300 rounded-lg pl-9 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                    <button type="button"
-                            x-show="search.length > 0"
-                            @@click="search = ''; showDropdown = false"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
+        <template x-for="(sem, semIndex) in semesters" :key="sem.semesterId">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <span class="w-8 h-8 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center text-xs font-bold">
+                            <span x-text="semIndex + 1"></span>
+                        </span>
+                        <span x-text="sem.semesterName"></span>
+                    </h3>
+                    <input type="hidden" :name="'Semesters[' + semIndex + '].SemesterId'" :value="sem.semesterId" />
+                    <input type="hidden" :name="'Semesters[' + semIndex + '].SemesterName'" :value="sem.semesterName" />
+                    <span class="text-xs bg-indigo-100 text-indigo-700 font-medium px-2.5 py-1 rounded-full"
+                          x-show="sem.selectedSubjects.length > 0"
+                          x-text="sem.selectedSubjects.length + ' selected'"></span>
                 </div>
 
-                <div x-show="showDropdown && filteredSubjects.length > 0"
-                     class="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                    <template x-for="subject in filteredSubjects" :key="subject.id">
-                        <div class="flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition"
-                             @@click="addSubject(subject)">
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">
-                                    <span class="font-mono text-indigo-600" x-text="subject.code"></span>
-                                    <span class="text-gray-400 mx-1">-</span>
-                                    <span x-text="subject.name"></span>
-                                </p>
-                                <p class="text-xs text-gray-400" x-text="subject.type + (subject.credits ? ' | ' + subject.credits + ' cr' : '')"></p>
-                            </div>
-                            <i class="fas fa-plus text-xs text-indigo-400"></i>
-                        </div>
-                    </template>
-                </div>
+                <div class="relative mb-4" @@click.away="sem.showDropdown = false">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text"
+                               x-model="sem.search"
+                               @@focus="sem.showDropdown = true"
+                               @@input="sem.showDropdown = true"
+                               placeholder="Search and add subjects by code or name..."
+                               class="w-full border border-gray-300 rounded-lg pl-9 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <button type="button"
+                                x-show="sem.search.length > 0"
+                                @@click="sem.search = ''; sem.showDropdown = false"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
 
-                <div x-show="showDropdown && search.length > 0 && filteredSubjects.length === 0"
-                     class="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center text-sm text-gray-400">
-                    No subjects match "<span x-text="search"></span>"
-                </div>
-            </div>
-
-            <template x-if="selectedSubjects.length === 0">
-                <div class="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
-                    <i class="fas fa-search text-2xl mb-2 block text-gray-300"></i>
-                    <p>Search and add subjects above</p>
-                </div>
-            </template>
-
-            <div class="space-y-3">
-                <template x-for="(subject, index) in selectedSubjects" :key="subject.id">
-                    <div class="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                        <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded shrink-0"
-                                      x-text="'#' + (index + 1)"></span>
+                    <div x-show="sem.showDropdown && filteredSubjectsFor(sem).length > 0"
+                         class="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        <template x-for="subject in filteredSubjectsFor(sem)" :key="subject.id">
+                            <div class="flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition"
+                                 @@click="addSubject(sem, subject)">
                                 <div>
                                     <p class="text-sm font-medium text-gray-800">
                                         <span class="font-mono text-indigo-600" x-text="subject.code"></span>
                                         <span class="text-gray-400 mx-1">-</span>
                                         <span x-text="subject.name"></span>
                                     </p>
+                                    <p class="text-xs text-gray-400" x-text="subject.type + (subject.credits ? ' | ' + subject.credits + ' cr' : '')"></p>
                                 </div>
+                                <i class="fas fa-plus text-xs text-indigo-400"></i>
                             </div>
-                            <button type="button"
-                                    class="w-7 h-7 bg-red-50 text-red-400 rounded-full flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition shrink-0"
-                                    @@click="removeSubject(index)">
-                                <i class="fas fa-times text-xs"></i>
-                            </button>
-                        </div>
+                        </template>
+                    </div>
 
-                        <div class="p-4 space-y-3">
-                            <div class="flex items-center gap-6">
-                                <div class="flex items-center gap-2">
-                                    <input type="hidden" :name="'Subjects[' + index + '].IsCompulsory'" :value="subject.isCompulsory" />
-                                    <button type="button"
-                                            @@click="subject.isCompulsory = !subject.isCompulsory"
-                                            :class="subject.isCompulsory ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300'"
-                                            class="w-4 h-4 rounded border-2 flex items-center justify-center transition shrink-0">
-                                        <i x-show="subject.isCompulsory" class="fas fa-check text-white text-[8px]"></i>
-                                    </button>
-                                    <span class="text-sm text-gray-600">Compulsory</span>
-                                </div>
-                                <div>
-                                    <label class="text-xs text-gray-500 block mb-0.5">Display Order</label>
-                                    <input type="number" min="1"
-                                           :name="'Subjects[' + index + '].DisplayOrder'"
-                                           x-model="subject.displayOrder"
-                                           class="w-20 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                </div>
-                            </div>
+                    <div x-show="sem.showDropdown && sem.search.length > 0 && filteredSubjectsFor(sem).length === 0"
+                         class="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center text-sm text-gray-400">
+                        No subjects match "<span x-text="sem.search"></span>"
+                    </div>
+                </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 border-t border-gray-100">
-                                <div>
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <input type="hidden" :name="'Subjects[' + index + '].HasTheory'" :value="subject.hasTheory" />
-                                        <button type="button"
-                                                @@click="subject.hasTheory = !subject.hasTheory"
-                                                :class="subject.hasTheory ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300'"
-                                                class="w-4 h-4 rounded border-2 flex items-center justify-center transition shrink-0">
-                                            <i x-show="subject.hasTheory" class="fas fa-check text-white text-[8px]"></i>
-                                        </button>
-                                        <span class="text-xs sm:text-sm font-medium text-gray-700">Theory</span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Full Marks</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].TheoryFullMarks'"
-                                                   x-model="subject.theoryFullMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Pass Marks</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].TheoryPassMarks'"
-                                                   x-model="subject.theoryPassMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <input type="hidden" :name="'Subjects[' + index + '].HasPractical'" :value="subject.hasPractical" />
-                                        <button type="button"
-                                                @@click="subject.hasPractical = !subject.hasPractical"
-                                                :class="subject.hasPractical ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300'"
-                                                class="w-4 h-4 rounded border-2 flex items-center justify-center transition shrink-0">
-                                            <i x-show="subject.hasPractical" class="fas fa-check text-white text-[8px]"></i>
-                                        </button>
-                                        <span class="text-xs sm:text-sm font-medium text-gray-700">Practical</span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Full Marks</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].PracticalFullMarks'"
-                                                   x-model="subject.practicalFullMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Pass Marks</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].PracticalPassMarks'"
-                                                   x-model="subject.practicalPassMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <input type="hidden" :name="'Subjects[' + index + '].HasInternal'" :value="subject.hasInternal" />
-                                        <button type="button"
-                                                @@click="subject.hasInternal = !subject.hasInternal"
-                                                :class="subject.hasInternal ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300'"
-                                                class="w-4 h-4 rounded border-2 flex items-center justify-center transition shrink-0">
-                                            <i x-show="subject.hasInternal" class="fas fa-check text-white text-[8px]"></i>
-                                        </button>
-                                        <span class="text-xs sm:text-sm font-medium text-gray-700">Internal</span>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-x-2 gap-y-1">
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Theory Full</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].InternalTheoryFullMarks'"
-                                                   x-model="subject.internalTheoryFullMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Theory Pass</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].InternalTheoryPassMarks'"
-                                                   x-model="subject.internalTheoryPassMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Practical Full</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].InternalPracticalFullMarks'"
-                                                   x-model="subject.internalPracticalFullMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label class="text-xs text-gray-500 block mb-0.5">Practical Pass</label>
-                                            <input type="number" step="0.5" min="0"
-                                                   :name="'Subjects[' + index + '].InternalPracticalPassMarks'"
-                                                   x-model="subject.internalPracticalPassMarks"
-                                                   class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-indigo-500" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <input type="hidden" :name="'Subjects[' + index + '].SubjectCatalogId'" :value="subject.id" />
+                <template x-if="sem.selectedSubjects.length === 0">
+                    <div class="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                        <i class="fas fa-search text-2xl mb-2 block text-gray-300"></i>
+                        <p>Search and add subjects for this semester</p>
                     </div>
                 </template>
+
+                <div class="space-y-3">
+                    <template x-for="(subject, index) in sem.selectedSubjects" :key="subject.id">
+                        @{
+                            await Html.RenderPartialAsync("_SubjectOfferingSelectedCard");
+                        }
+                    </template>
+                </div>
             </div>
-        </div>
+        </template>
 
         <div class="flex items-center gap-4">
             <button type="submit"
-
                     class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    x-bind:disabled="selectedSubjects.length === 0">
+                    x-bind:disabled="totalSelected === 0">
                 <i class="fas fa-save mr-1.5"></i>
-                Save <span x-text="selectedSubjects.length"></span> Offering(s)
+                Save <span x-text="totalSelected"></span> Offering(s)
             </button>
             <a asp-action="Index" class="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
                 Cancel
@@ -320,31 +189,54 @@
         function subjectOfferingForm() {
             return {
                 allSubjects: [],
-                search: '',
-                showDropdown: false,
-                selectedSubjects: [],
-                existingSubjectIds: [],
+                semesters: [],
+                statusMessage: '',
 
                 init() {
                     this.allSubjects = @Html.Raw(ViewBag.SubjectCatalogsJson ?? "[]");
+                    const initial = @Html.Raw(ViewBag.InitialSemestersJson ?? "[]");
+                    const existing = @Html.Raw(ViewBag.InitialExistingJson ?? "{}");
+                    this.semesters = initial.map(s => ({
+                        semesterId: s.semesterId,
+                        semesterName: s.semesterName,
+                        search: '',
+                        showDropdown: false,
+                        existingSubjectIds: existing[s.semesterId] || [],
+                        selectedSubjects: (s.subjects || []).map(sub => ({
+                            id: sub.id,
+                            code: sub.code,
+                            name: sub.name,
+                            isCompulsory: !!sub.isCompulsory,
+                            displayOrder: sub.displayOrder || 1,
+                            hasTheory: !!sub.hasTheory,
+                            hasPractical: !!sub.hasPractical,
+                            hasInternal: !!sub.hasInternal,
+                            theoryFullMarks: sub.theoryFullMarks,
+                            theoryPassMarks: sub.theoryPassMarks,
+                            practicalFullMarks: sub.practicalFullMarks,
+                            practicalPassMarks: sub.practicalPassMarks,
+                            internalTheoryFullMarks: sub.internalTheoryFullMarks,
+                            internalTheoryPassMarks: sub.internalTheoryPassMarks,
+                            internalPracticalFullMarks: sub.internalPracticalFullMarks,
+                            internalPracticalPassMarks: sub.internalPracticalPassMarks
+                        }))
+                    }));
+                    this.statusMessage = this.semesters.length
+                        ? 'Add subjects for each semester below, then click Save.'
+                        : 'Select a program and academic year to load its semesters.';
                 },
 
-                async initExistingSubjects() {
-                    const programId = document.getElementById('ProgramId').value;
-                    const semesterId = document.getElementById('SemesterId').value;
-                    if (programId && semesterId) {
-                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjects?programId=${programId}&semesterId=${semesterId}`));
-                        this.existingSubjectIds = await resp.json();
-                    } else {
-                        this.existingSubjectIds = [];
-                    }
+                get totalSelected() {
+                    return this.semesters.reduce(function (sum, sem) {
+                        return sum + sem.selectedSubjects.length;
+                    }, 0);
                 },
 
-                get filteredSubjects() {
-                    if (!this.search.trim()) return [];
-                    const q = this.search.toLowerCase().trim();
-                    const selectedIds = new Set(this.selectedSubjects.map(s => s.id));
-                    const existingIdsSet = new Set(this.existingSubjectIds);
+                filteredSubjectsFor(sem) {
+                    if (!sem.search.trim()) return [];
+                    const q = sem.search.toLowerCase().trim();
+                    const selectedIds = new Set(sem.selectedSubjects.map(s => s.id));
+                    const existingIdsSet = new Set(sem.existingSubjectIds);
                     return this.allSubjects.filter(s =>
                         !selectedIds.has(s.id) &&
                         !existingIdsSet.has(s.id) && (
@@ -355,20 +247,20 @@
                     );
                 },
 
-                addSubject(subject) {
-                    if (this.selectedSubjects.some(s => s.id === subject.id)) return;
-                    if (this.existingSubjectIds.includes(subject.id)) {
-                        alert(`Already exists: "${subject.code} - ${subject.name}" is already offered in this semester for the selected program.`);
-                        this.search = '';
-                        this.showDropdown = false;
+                addSubject(sem, subject) {
+                    if (sem.selectedSubjects.some(s => s.id === subject.id)) return;
+                    if (sem.existingSubjectIds.includes(subject.id)) {
+                        alert(`Already exists: "${subject.code} - ${subject.name}" is already offered in ${sem.semesterName} for the selected program.`);
+                        sem.search = '';
+                        sem.showDropdown = false;
                         return;
                     }
-                    this.selectedSubjects.push({
+                    sem.selectedSubjects.push({
                         id: subject.id,
                         code: subject.code,
                         name: subject.name,
                         isCompulsory: true,
-                        displayOrder: this.selectedSubjects.length + 1,
+                        displayOrder: sem.selectedSubjects.length + 1,
                         hasTheory: true,
                         hasPractical: false,
                         hasInternal: false,
@@ -381,18 +273,59 @@
                         internalPracticalFullMarks: null,
                         internalPracticalPassMarks: null
                     });
-                    this.search = '';
-                    this.showDropdown = false;
+                    sem.search = '';
+                    sem.showDropdown = false;
                 },
 
-                removeSubject(index) {
-                    this.selectedSubjects.splice(index, 1);
-                    this.selectedSubjects.forEach((s, i) => s.displayOrder = i + 1);
+                removeSubject(sem, index) {
+                    sem.selectedSubjects.splice(index, 1);
+                    sem.selectedSubjects.forEach(function (s, i) { s.displayOrder = i + 1; });
+                },
+
+                async loadSemesters() {
+                    const programId = document.getElementById('ProgramId').value;
+                    const academicYearId = document.getElementById('AcademicYearId').value;
+                    if (!programId || !academicYearId) {
+                        this.semesters = [];
+                        this.statusMessage = 'Select a program and academic year to load its semesters.';
+                        return;
+                    }
+                    try {
+                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetSemestersForCreate?programId=${programId}&academicYearId=${academicYearId}`));
+                        const data = await resp.json();
+                        this.semesters = data.map(s => ({
+                            semesterId: s.semesterId,
+                            semesterName: s.semesterName,
+                            search: '',
+                            showDropdown: false,
+                            existingSubjectIds: [],
+                            selectedSubjects: []
+                        }));
+                        this.statusMessage = this.semesters.length
+                            ? 'Add subjects for each semester below, then click Save.'
+                            : 'No semesters were found for the selected academic year.';
+                        await this.refreshExistingSubjects();
+                    } catch (e) {
+                        this.semesters = [];
+                        this.statusMessage = 'Could not load semesters. Please try again.';
+                    }
+                },
+
+                async refreshExistingSubjects() {
+                    const programId = document.getElementById('ProgramId').value;
+                    const academicYearId = document.getElementById('AcademicYearId').value;
+                    const curriculumVersionId = document.getElementById('CurriculumVersionId').value;
+                    if (!programId || !academicYearId || !curriculumVersionId) return;
+                    const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjectsBySemesters?programId=${programId}&academicYearId=${academicYearId}&curriculumVersionId=${curriculumVersionId}`));
+                    const data = await resp.json();
+                    this.semesters.forEach(sem => {
+                        sem.existingSubjectIds = data[sem.semesterId] || [];
+                    });
                 },
 
                 submitForm() {
-                    if (this.selectedSubjects.length === 0) {
-                        alert('Please add at least one subject.');
+                    if (this.totalSelected === 0) {
+                        alert('Please add at least one subject to at least one semester.');
                         return;
                     }
                     this.$el.submit();
@@ -400,40 +333,74 @@
             };
         }
 
-        function loadSemesters(academicYearId, programId) {
-            $('#SemesterId').select2('destroy');
-            var semesterDropdown = $("#SemesterId");
-            semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+        function resetSelect2($el) {
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
+            }
+            $el.empty().append('<option value="">Auto-create default version</option>');
+        }
 
-            if (!academicYearId) {
-                semesterDropdown.prop('disabled', true);
-                $('#SemesterId').select2({ width: 'resolve' });
+        function loadSemestersAlpine() {
+            var root = document.querySelector('[x-data="subjectOfferingForm()"]');
+            if (root && typeof Alpine !== 'undefined') {
+                var data = Alpine.$data(root);
+                if (data && typeof data.loadSemesters === 'function') data.loadSemesters();
+            }
+        }
+
+        function refreshExistingSubjects() {
+            var root = document.querySelector('[x-data="subjectOfferingForm()"]');
+            if (root && typeof Alpine !== 'undefined') {
+                var data = Alpine.$data(root);
+                if (data && typeof data.refreshExistingSubjects === 'function') data.refreshExistingSubjects();
+            }
+        }
+
+        function loadCurriculumVersions(academicYearId, selectedId) {
+            var programId = $('#ProgramId').val();
+            var versionSelect = $('#CurriculumVersionId');
+
+            resetSelect2(versionSelect);
+
+            if (!programId || !academicYearId) {
+                versionSelect.prop('disabled', true);
+                versionSelect.select2({ width: 'resolve' });
                 return;
             }
 
-            $.get(tenantUrl("/Subjects/SubjectOfferings/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
+            versionSelect.prop('disabled', false);
+            $.get(tenantUrl("/Subjects/SubjectOfferings/GetCurriculumVersionsByProgram"), { programId: programId, academicYearId: academicYearId }, function (data) {
                 $.each(data, function (index, item) {
-                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    versionSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
-                var initialSemesterId = '@(Model?.SemesterId ?? 0)';
-                if (initialSemesterId) semesterDropdown.val(initialSemesterId);
-                semesterDropdown.prop('disabled', false);
-                semesterDropdown.select2({ width: 'resolve' });
+                if (selectedId) versionSelect.val(selectedId);
+                versionSelect.select2({ width: 'resolve' });
+                refreshExistingSubjects();
+            }).fail(function () {
+                versionSelect.prop('disabled', true);
+                versionSelect.select2({ width: 'resolve' });
             });
         }
 
         $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val(), $("#ProgramId").val());
+            resetSelect2($('#CurriculumVersionId'));
+            loadSemestersAlpine();
+            loadCurriculumVersions($(this).val());
         });
 
         $("#ProgramId").change(function () {
-            if ($("#AcademicYearId").val()) {
-                loadSemesters($("#AcademicYearId").val(), $(this).val());
-            }
+            loadSemestersAlpine();
+            loadCurriculumVersions($("#AcademicYearId").val());
         });
 
-        if (!$("#AcademicYearId").val()) {
-            loadSemesters('');
-        }
+        $("#CurriculumVersionId").change(function () {
+            refreshExistingSubjects();
+        });
+
+        $(function () {
+            if (!$("#AcademicYearId").val()) {
+                loadSemestersAlpine();
+            }
+        });
     </script>
 }

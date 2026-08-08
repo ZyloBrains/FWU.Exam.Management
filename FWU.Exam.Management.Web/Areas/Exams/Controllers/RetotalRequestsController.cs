@@ -1,4 +1,5 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -140,6 +141,53 @@ public class RetotalRequestsController(
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", "RetotalRequests.csv");
+    }
+
+    public async Task<IActionResult> ExportToPdf(string? search = null)
+    {
+        var items = await retotalRequestService.GetFilteredItemsAsync(search);
+        return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null)
+    {
+        var items = await retotalRequestService.GetFilteredItemsAsync(search);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("RetotalRequests");
+
+        var headers = new[] { "ID", "Student", "Subject", "Status", "Requested Date", "Fee Paid", "Reviewed By", "Reviewed Date" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName) : "";
+            var subjectName = item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "";
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = studentName;
+            worksheet.Cell(row, 3).Value = subjectName;
+            worksheet.Cell(row, 4).Value = item.Status.ToString();
+            worksheet.Cell(row, 5).Value = item.RequestedDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 6).Value = item.FeePaid;
+            worksheet.Cell(row, 7).Value = item.ReviewedByUsername ?? "";
+            worksheet.Cell(row, 8).Value = item.ReviewedDate?.ToString("yyyy-MM-dd") ?? "";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "RetotalRequests.xlsx");
     }
 
 }

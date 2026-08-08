@@ -176,6 +176,43 @@ public class GradingSchemesController(
         return View("PrintPdf", items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null)
+    {
+        var items = await gradingSchemeService.GetFilteredItemsAsync(search);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("GradingSchemes");
+
+        var headers = new[] { "ID", "Name", "Program", "Academic Year", "Description", "IsActive" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.Name ?? "";
+            worksheet.Cell(row, 3).Value = item.Program?.ProgramName ?? "";
+            worksheet.Cell(row, 4).Value = item.AcademicYear?.AcademicYearName ?? "";
+            worksheet.Cell(row, 5).Value = item.Description ?? "";
+            worksheet.Cell(row, 6).Value = item.IsActive ? "Yes" : "No";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "GradingSchemes.xlsx");
+    }
+
     [RequirePermission("gradingschemes.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]

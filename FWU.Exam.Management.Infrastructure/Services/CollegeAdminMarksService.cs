@@ -38,10 +38,15 @@ public class CollegeAdminMarksService(
                 .Distinct()
                 .ToList();
 
+            var fallbackScheduleQuery = context.ExamSchedules
+                .Where(es => es.ProgramId == so.ProgramId && es.SemesterId == so.SemesterId && es.IsActive);
+
+            if (so.CurriculumVersionId is > 0)
+                fallbackScheduleQuery = fallbackScheduleQuery.Where(es => es.CurriculumVersionId == so.CurriculumVersionId);
+
             var examScheduleIds = examSchedules.Any()
                 ? examSchedules
-                : await context.ExamSchedules
-                    .Where(es => es.ProgramId == so.ProgramId && es.SemesterId == so.SemesterId && es.IsActive)
+                : await fallbackScheduleQuery
                     .Select(es => es.Id)
                     .ToListAsync();
 

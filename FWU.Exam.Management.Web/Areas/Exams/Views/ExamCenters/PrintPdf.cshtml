@@ -1,0 +1,55 @@
+@model IEnumerable<FWU.Exam.Management.Domain.Entities.Exams.ExamCenter>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Exam Centers Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
+        .exam-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .exam-table th, .exam-table td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; vertical-align: top; }
+        .exam-table th { background: #f3f4f6; }
+        .status-active { color: #047857; font-weight: bold; }
+        .status-inactive { color: #6b7280; font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 11px; color: #6b7280; text-align: center; }
+    </style>
+</head>
+<body>
+    <div>
+        <h2 style="margin: 0 0 10px 0;">Exam Centers Report</h2>
+        <table class="exam-table">
+            <thead>
+                <tr>
+                    <th>#</th><th>Code</th><th>Exam Schedule</th><th>College</th><th>Remark</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ var counter = 1; }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td style="text-align: center;">@counter</td>
+                        <td><strong>@item.Code</strong></td>
+                        <td>@item.ExamSchedule?.ExamScheduleName</td>
+                        <td>@item.College?.Name</td>
+                        <td>@item.Remark</td>
+                        <td>@(item.IsActive ? "Active" : "Inactive")</td>
+                    </tr>
+                    counter++;
+                }
+            </tbody>
+        </table>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+                <p>No exam centers found.</p>
+            </div>
+        }
+    </div>
+
+    <script>
+        window.onload = function () { window.print(); };
+    </script>
+</body>
+</html>

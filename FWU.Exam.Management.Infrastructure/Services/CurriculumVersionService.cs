@@ -77,12 +77,16 @@ public class CurriculumVersionService : ICurriculumVersionService
 
     public async Task CreateCurriculumVersionAsync(CurriculumVersion curriculumVersion)
     {
+        if (curriculumVersion.IsActive)
+            await DeactivateOtherVersionsAsync(curriculumVersion.ProgramId, null);
         _context.CurriculumVersions.Add(curriculumVersion);
         await _context.SaveChangesAsync();
     }
 
     public async Task UpdateCurriculumVersionAsync(CurriculumVersion curriculumVersion)
     {
+        if (curriculumVersion.IsActive)
+            await DeactivateOtherVersionsAsync(curriculumVersion.ProgramId, curriculumVersion.Id);
         _context.CurriculumVersions.Update(curriculumVersion);
         await _context.SaveChangesAsync();
     }
@@ -119,10 +123,120 @@ public class CurriculumVersionService : ICurriculumVersionService
         return (programs, academicYears);
     }
 
+    public async Task<List<CurriculumVersion>> GetCurriculumVersionsByProgramAsync(int programId)
+    {
+        return await _context.CurriculumVersions
+            .Include(c => c.Program)
+            .Include(c => c.EffectiveAcademicYear)
+            .AsNoTracking()
+            .Where(c => c.ProgramId == programId)
+            .OrderByDescending(c => c.EffectiveAcademicYearId)
+            .ThenBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    public async Task<CurriculumVersion?> CopyCurriculumVersionAsync(int sourceVersionId, int targetAcademicYearId, string name)
+    {
+        var source = await _context.CurriculumVersions
+            .Include(c => c.Program)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == sourceVersionId);
+
+        if (source == null) return null;
+
+        var targetYear = await _context.AcademicYears
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == targetAcademicYearId);
+
+        if (targetYear == null) return null;
+
+        var sourceOfferings = await _context.SubjectOfferings
+            .AsNoTracking()
+            .Where(so => so.CurriculumVersionId == sourceVersionId)
+            .ToListAsync();
+
+        var targetSemesters = await _context.Semesters
+            .AsNoTracking()
+            .Where(s => s.AcademicYearId == targetAcademicYearId)
+            .ToListAsync();
+
+        var semesterMap = targetSemesters.ToDictionary(s => s.Number);
+
+        var sourceSemesterMap = await _context.Semesters
+            .AsNoTracking()
+            .Where(s => sourceOfferings.Select(o => o.SemesterId).Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id);
+
+        var newVersion = new CurriculumVersion
+        {
+            TenantId = source.TenantId,
+            Name = name,
+            ProgramId = source.ProgramId,
+            EffectiveAcademicYearId = targetAcademicYearId,
+            Description = source.Description,
+            IsActive = true
+        };
+
+        await DeactivateOtherVersionsAsync(source.ProgramId, null);
+        _context.CurriculumVersions.Add(newVersion);
+        await _context.SaveChangesAsync();
+
+        var skipped = 0;
+        foreach (var offering in sourceOfferings.OrderBy(o => o.SemesterId))
+        {
+            var sourceSemesterNumber = sourceSemesterMap.TryGetValue(offering.SemesterId, out var sourceSemester)
+                ? sourceSemester.Number
+                : -1;
+            var targetSemester = sourceSemesterNumber >= 0 && semesterMap.TryGetValue(sourceSemesterNumber, out var t)
+                ? t
+                : null;
+            if (targetSemester == null)
+            {
+                skipped++;
+                continue;
+            }
+
+            _context.SubjectOfferings.Add(new SubjectOffering
+            {
+                TenantId = source.TenantId,
+                SubjectCatalogId = offering.SubjectCatalogId,
+                ProgramId = source.ProgramId,
+                SemesterId = targetSemester.Id,
+                CurriculumVersionId = newVersion.Id,
+                IsCompulsory = offering.IsCompulsory,
+                DisplayOrder = offering.DisplayOrder,
+                HasTheory = offering.HasTheory,
+                HasPractical = offering.HasPractical,
+                HasInternal = offering.HasInternal,
+                TheoryFullMarks = offering.TheoryFullMarks,
+                TheoryPassMarks = offering.TheoryPassMarks,
+                PracticalFullMarks = offering.PracticalFullMarks,
+                PracticalPassMarks = offering.PracticalPassMarks,
+                InternalTheoryFullMarks = offering.InternalTheoryFullMarks,
+                InternalTheoryPassMarks = offering.InternalTheoryPassMarks,
+                InternalPracticalFullMarks = offering.InternalPracticalFullMarks,
+                InternalPracticalPassMarks = offering.InternalPracticalPassMarks
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        return newVersion;
+    }
+
+    private async Task DeactivateOtherVersionsAsync(int programId, int? exceptId)
+    {
+        var others = await _context.CurriculumVersions
+            .Where(c => c.ProgramId == programId && c.IsActive && (!exceptId.HasValue || c.Id != exceptId.Value))
+            .ToListAsync();
+        foreach (var v in others)
+            v.IsActive = false;
+    }
+
     private static Expression<Func<CurriculumVersion, object>> GetSortProperty(string sort)
     {
         return sort.ToLower() switch
         {
+            "id" => c => c.Id,
             "name" => c => c.Name ?? "",
             "program" => c => c.Program != null ? c.Program.ProgramName : "",
             "academicyear" => c => c.EffectiveAcademicYear != null ? c.EffectiveAcademicYear.AcademicYearName : "",

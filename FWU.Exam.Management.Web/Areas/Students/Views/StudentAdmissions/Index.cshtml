@@ -41,15 +41,17 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <a asp-action="ExportToCsv" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                    <i class="fas fa-file-csv"></i> CSV
-                </a>
-                <a asp-action="ExportToPdf" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-                    <i class="fas fa-file-pdf"></i> PDF
-                </a>
-                <a asp-action="ExportToExcel" asp-route-search="@ViewBag.Search" asp-route-sort="@ViewBag.Sort" asp-route-sortDir="@ViewBag.SortDir" class="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                    <i class="fas fa-file-excel"></i> Excel
-                </a>
+                @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+                {
+                    RouteValues = new Dictionary<string, string>
+                    {
+                        ["search"] = ViewBag.Search?.ToString() ?? "",
+                        ["sort"] = ViewBag.Sort?.ToString() ?? "",
+                        ["sortDir"] = ViewBag.SortDir?.ToString() ?? ""
+                    },
+                    ButtonClass = "bg-green-600 hover:bg-green-700",
+                    ScopeLabel = " (All)"
+                })
             </div>
         </div>
     </div>

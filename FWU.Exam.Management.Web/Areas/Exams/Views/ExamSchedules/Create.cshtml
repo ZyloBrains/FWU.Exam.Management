@@ -46,19 +46,27 @@
             <div>
                 <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                        <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
-                            <option value="">-- Select Academic Year --</option>
-                        </select>
-                        <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>
+                    <input type="hidden" asp-for="AcademicYearId" id="AcademicYearId" />
                     <div>
                         <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
+                        <select asp-for="ProgramId" id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="CurriculumVersionId" id="CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.CurriculumVersionId">
+                            <option value="">-- Select Curriculum Version --</option>
+                        </select>
+                        <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="SemesterId" id="SemesterId" disabled="disabled" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                            <option value="">-- Select Semester --</option>
+                        </select>
+                        <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="ExamTypeId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
@@ -67,13 +75,10 @@
                         </select>
                         <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
-                    <div>
-                        <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="SemesterId" disabled="@(Model != null && Model.AcademicYearId > 0 ? null : "disabled")" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
-                            <option value="">-- Select Semester --</option>
-                        </select>
-                        <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
-                    </div>                    
+                    <div id="AcademicYearDisplayWrap" class="hidden">
+                        <label class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Academic Year (Auto)</label>
+                        <p id="AcademicYearDisplay" class="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">--</p>
+                    </div>
                 </div>
             </div>
 
@@ -195,61 +200,87 @@
             $('.select2').select2({ width: 'resolve' });
         });
 
-        var todayStr = '@DateTime.Today.ToString("yyyy-MM-dd")';
-        $('#examScheduleForm').on('submit', function (e) {
-            var start = $('#StartDate').val();
-            var end = $('#EndDate').val();
+        var initialVersionId = '@(Model?.CurriculumVersionId ?? 0)';
+        var initialSemesterId = '@(Model?.SemesterId ?? 0)';
 
-            if (start && end && start > end) {
-                e.preventDefault();
-                alert('Start date cannot be after end date.');
-                return;
+        var academicYearMap = {};
+        @if (ViewBag.AcademicYearId != null)
+        {
+            foreach (var ay in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.AcademicYearId)
+            {
+                <text>academicYearMap[@ay.Value] = '@ay.Text';</text>
             }
-            if (start && start < todayStr) {
-                e.preventDefault();
-                alert('Start date cannot be in the past.');
-                return;
-            }
-            if (end && end < todayStr) {
-                e.preventDefault();
-                alert('End date cannot be in the past.');
-                return;
-            }
-        });
+        }
 
-        function loadSemesters(academicYearId, programId) {
-            $('#SemesterId').select2('destroy');
-            var semesterDropdown = $("#SemesterId");
-            semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
+        function resetSelect2($el) {
+            $el.select2('destroy').empty().append('<option value="">-- Select --</option>').prop('disabled', true).select2({ width: 'resolve' });
+        }
 
-            if (!academicYearId) {
-                semesterDropdown.prop('disabled', true);
-                $('#SemesterId').select2({ width: 'resolve' });
+        function loadCurriculumVersions(selectedId) {
+            var programId = $('#ProgramId').val();
+            var versionSelect = $('#CurriculumVersionId');
+
+            versionSelect.select2('destroy').empty().append('<option value="">-- Select Curriculum Version --</option>');
+            resetSelect2($('#SemesterId'));
+            $('#AcademicYearDisplayWrap').addClass('hidden');
+            $('#AcademicYearDisplay').text('--');
+
+            if (!programId) {
+                versionSelect.prop('disabled', true).select2({ width: 'resolve' });
                 return;
             }
 
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
+            versionSelect.prop('disabled', false);
+            $.get(tenantUrl("/Exams/ExamSchedules/GetCurriculumVersionsByProgram"), { programId: programId }, function (data) {
                 $.each(data, function (index, item) {
-                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    versionSelect.append('<option value="' + item.id + '" data-ay="' + item.academicYearId + '">' + item.name + '</option>');
                 });
-                semesterDropdown.prop('disabled', false);
-                semesterDropdown.select2({ width: 'resolve' });
+                if (selectedId) versionSelect.val(selectedId);
+                versionSelect.select2({ width: 'resolve' });
+                loadSemestersByVersion(initialSemesterId);
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val(), $("#ProgramId").val());
-        });
+        function loadSemestersByVersion(selectedId) {
+            var versionId = $('#CurriculumVersionId').val();
+            var semesterSelect = $('#SemesterId');
+
+            resetSelect2(semesterSelect);
+
+            if (!versionId) {
+                $('#AcademicYearDisplayWrap').addClass('hidden');
+                $('#AcademicYearDisplay').text('--');
+                return;
+            }
+
+            var ay = $('#CurriculumVersionId option:selected').attr('data-ay');
+            if (ay) {
+                var ayName = academicYearMap[ay];
+                $('#AcademicYearDisplay').text(ayName || ay);
+                $('#AcademicYearId').val(ay);
+                $('#AcademicYearDisplayWrap').removeClass('hidden');
+            }
+
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByCurriculumVersion"), { curriculumVersionId: versionId }, function (data) {
+                $.each(data, function (index, item) {
+                    semesterSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                if (selectedId) semesterSelect.val(selectedId);
+                semesterSelect.prop('disabled', false);
+                semesterSelect.select2({ width: 'resolve' });
+            });
+        }
 
         $("#ProgramId").change(function () {
-            if ($("#AcademicYearId").val()) {
-                loadSemesters($("#AcademicYearId").val(), $(this).val());
-            }
+            $('#CurriculumVersionId').val('');
+            loadCurriculumVersions('');
         });
 
-        if (!$("#AcademicYearId").val()) {
-            loadSemesters('');
-        }
+        $("#CurriculumVersionId").change(function () {
+            loadSemestersByVersion('');
+        });
+
+        loadCurriculumVersions(initialVersionId);
 
         var convertTimer;
         $("#StartDate").on("input", function () {

@@ -15,4 +15,6 @@ public interface ICurriculumVersionService
     Task DeleteCurriculumVersionAsync(int id);
     Task<bool> CurriculumVersionExistsAsync(int id);
     Task<(List<Program> Programs, List<AcademicYear> AcademicYears)> GetSelectListsAsync(int? programId = null, int? academicYearId = null);
+    Task<List<CurriculumVersion>> GetCurriculumVersionsByProgramAsync(int programId);
+    Task<CurriculumVersion?> CopyCurriculumVersionAsync(int sourceVersionId, int targetAcademicYearId, string name);
 }

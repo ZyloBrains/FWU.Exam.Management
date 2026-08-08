@@ -19,7 +19,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
-    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null)
+    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null, string? academicYear = null, int? facultyId = null, int? collegeId = null, int? levelId = null, string? status = null)
     {
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
@@ -44,6 +44,20 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         if (userContext.IsSuperAdmin && collegeIds != null && collegeIds.Count > 0)
         {
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(academicYear))
+            query = query.Where(s => s.AcademicYear != null && s.AcademicYear.AcademicYearName == academicYear);
+        if (facultyId.HasValue)
+            query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (collegeId.HasValue)
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        if (levelId.HasValue)
+            query = query.Where(s => s.LevelId == levelId.Value);
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var isActive = status.ToLower() == "active";
+            query = query.Where(s => s.IsActive == isActive);
         }
 
         return await query

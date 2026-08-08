@@ -17,12 +17,22 @@ public interface ISubjectOfferingService
     Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task DeleteSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);
-    Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId);
+    Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null);
+    Task<Dictionary<int, List<int>>> GetExistingSubjectCatalogIdsBySemesterAsync(int programId, int curriculumVersionId, int academicYearId);
     Task<List<SelectOption>> GetAcademicYearsAsync();
     Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null);
     Task<List<ProgramOfferingSummary>> GetProgramsByAcademicYearAsync(int academicYearId);
     Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId);
+    Task<List<SemesterOfferingSummary>> GetSemestersForOfferingAsync(int programId, int academicYearId);
+    Task EnsureSemesterAssignedToProgramAsync(int programId, int semesterId);
+    Task<CurriculumVersion?> GetOrCreateDefaultCurriculumVersionAsync(int programId, int academicYearId);
+    Task<List<SubjectOffering>> GetSubjectOfferingsForDeletionAsync(List<int> ids);
     Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null);
     Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null);
     Task<bool> IsSemesterAssignedToProgramAsync(int programId, int semesterId);
+    Task<List<SelectOption>> GetCurriculumVersionsAsync(int? programId = null, int? academicYearId = null);
+    Task<CurriculumVersion?> GetCurriculumVersionByIdAsync(int id);
+    Task<List<SubjectOffering>> GetSearchResultsAsync(int? academicYearId, int? programId, int? semesterId);
+    Task<List<SubjectOffering>> GetSubjectOfferingsByCurriculumVersionAsync(int curriculumVersionId);
+    Task<bool> IsCurriculumVersionForProgramAsync(int curriculumVersionId, int programId);
 }

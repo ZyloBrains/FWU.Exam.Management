@@ -8,7 +8,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IStudentRegistrationService
 {
-    Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null);
+    Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null, string? academicYear = null, int? facultyId = null, int? collegeId = null, int? levelId = null, string? status = null);
     Task<StudentRegistration?> GetStudentRegistrationByIdAsync(int id);
     Task<int> CreateStudentRegistrationAsync(StudentRegistration studentRegistration, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber);
     Task UpdateStudentRegistrationAsync(StudentRegistration studentRegistration, string? permanentLocalLevelId, string? permanentWardNumber, string? permanentToleStreet, string? permanentHouseNumber);

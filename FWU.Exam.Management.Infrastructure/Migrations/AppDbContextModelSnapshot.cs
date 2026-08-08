@@ -1416,6 +1416,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int?>("CollegeId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CurriculumVersionId")
+                        .HasColumnType("int");
+
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
@@ -1490,6 +1493,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("AcademicYearId");
 
                     b.HasIndex("CollegeId");
+
+                    b.HasIndex("CurriculumVersionId");
 
                     b.HasIndex("ExamTypeId");
 
@@ -4086,6 +4091,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CurriculumVersionId")
+                        .HasColumnType("int");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
 
@@ -4143,10 +4151,13 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("SemesterId");
 
+                    b.HasIndex("SubjectCatalogId");
+
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("SubjectCatalogId", "ProgramId", "SemesterId")
-                        .IsUnique();
+                    b.HasIndex("CurriculumVersionId", "SubjectCatalogId", "ProgramId", "SemesterId")
+                        .IsUnique()
+                        .HasFilter("[CurriculumVersionId] IS NOT NULL");
 
                     b.ToTable("SubjectOfferings");
                 });
@@ -5173,6 +5184,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("CollegeId");
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion", "CurriculumVersion")
+                        .WithMany()
+                        .HasForeignKey("CurriculumVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Exams.ExamType", "ExamType")
                         .WithMany()
                         .HasForeignKey("ExamTypeId")
@@ -5204,6 +5220,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("AcademicYear");
 
                     b.Navigation("College");
+
+                    b.Navigation("CurriculumVersion");
 
                     b.Navigation("ExamType");
 
@@ -6019,6 +6037,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", b =>
                 {
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion", "CurriculumVersion")
+                        .WithMany("SubjectOfferings")
+                        .HasForeignKey("CurriculumVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
                         .WithMany()
                         .HasForeignKey("ProgramId")
@@ -6042,6 +6065,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("CurriculumVersion");
 
                     b.Navigation("Program");
 
@@ -6383,6 +6408,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("StudentGuardians");
 
                     b.Navigation("StudentQualifications");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.CurriculumVersion", b =>
+                {
+                    b.Navigation("SubjectOfferings");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectCatalog", b =>
