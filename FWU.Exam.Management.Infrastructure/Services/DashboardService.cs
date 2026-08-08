@@ -113,15 +113,13 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
     public async Task<DashboardStats> GetCollegeDashboardStatsAsync(int collegeId)
     {
         var totalRoles = await roleManager.Roles.CountAsync();
-        var totalPrograms = await context.Programs.CountAsync();
-        var totalExamSchedules = await context.ExamSchedules.CountAsync();
-        var totalSubjects = await context.SubjectCatalogs.CountAsync();
+        var totalPrograms = await context.Programs.CountAsync(p => p.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
+        var totalExamSchedules = await context.ExamSchedules.CountAsync(e => e.CollegeId == collegeId);
+        var totalSubjects = await context.SubjectCatalogs.CountAsync(sc =>
+            sc.SubjectOfferings!.Any(so => so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId)));
         var totalAcademicYears = await context.AcademicYears.CountAsync();
-        var totalBanks = await context.Banks.CountAsync();
-        var totalBoards = await context.Boards.CountAsync();
-        var totalBatches = await context.Batches.CountAsync();
-        var activePrograms = await context.Programs.CountAsync(p => p.IsActive);
-        var activeExamSchedules = await context.ExamSchedules.CountAsync(e => e.IsActive);
+        var activePrograms = await context.Programs.CountAsync(p => p.IsActive && p.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
+        var activeExamSchedules = await context.ExamSchedules.CountAsync(e => e.IsActive && e.CollegeId == collegeId);
         var totalColleges = await context.Colleges.CountAsync(c => c.Id == collegeId);
         var activeColleges = await context.Colleges.CountAsync(c => c.Id == collegeId && c.IsActive);
         var totalStudents = await context.StudentRegistrations.CountAsync(s => s.CollegeId == collegeId);
@@ -141,9 +139,6 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
             TotalExamRegistrations = totalExamRegistrations,
             TotalSubjects = totalSubjects,
             TotalAcademicYears = totalAcademicYears,
-            TotalBanks = totalBanks,
-            TotalBoards = totalBoards,
-            TotalBatches = totalBatches,
             ActiveColleges = activeColleges,
             ActivePrograms = activePrograms,
             ActiveStudents = activeStudents,

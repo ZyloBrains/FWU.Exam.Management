@@ -2,11 +2,15 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
@@ -17,10 +21,18 @@ public class FacultyDashboardController(
     IFacultyService facultyService,
     IDashboardService dashboardService,
     UserManager<AppUser> userManager,
-    RoleManager<IdentityRole> roleManager) : Controller
+    RoleManager<IdentityRole> roleManager,
+    AppDbContext context) : Controller
 {
     private async Task<Faculty?> GetFacultyAsync(string officeCode) =>
         await facultyService.GetFacultyByOfficeCodeAsync(officeCode);
+
+    private async Task<List<College>> GetFacultyCollegesAsync(int facultyId) =>
+        await context.Colleges
+            .AsNoTracking()
+            .Where(c => c.CollegePrograms.Any(cp => cp.Program != null && cp.Program.FacultyId == facultyId))
+            .OrderBy(c => c.Name)
+            .ToListAsync();
 
     private async Task<(Faculty? Faculty, IActionResult? DeniedResult)> GetAuthorizedFacultyAsync(string officeCode)
     {
@@ -129,6 +141,7 @@ public class FacultyDashboardController(
         if (auth.DeniedResult != null) return auth.DeniedResult;
 
         ViewBag.Faculty = auth.Faculty!;
+        ViewBag.Colleges = new SelectList(await GetFacultyCollegesAsync(auth.Faculty!.Id), "Id", "Name");
         return View(new CreateUserViewModel());
     }
 
@@ -139,8 +152,16 @@ public class FacultyDashboardController(
     {
         var auth = await GetAuthorizedFacultyAsync(officeCode);
         if (auth.DeniedResult != null) return auth.DeniedResult;
+        var faculty = auth.Faculty!;
 
-        var faculty = auth.Faculty!;
+        if (!model.CollegeId.HasValue)
+        {
+            ModelState.AddModelError(nameof(model.CollegeId), "College is required for this role.");
+        }
+        else if (!(await GetFacultyCollegesAsync(faculty.Id)).Any(c => c.Id == model.CollegeId.Value))
+        {
+            ModelState.AddModelError(nameof(model.CollegeId), "The selected college is not within this faculty.");
+        }
 
         if (ModelState.IsValid)
         {
@@ -148,10 +169,11 @@ public class FacultyDashboardController(
             {
                 UserName = model.Email,
                 Email = model.Email,
-                FacultyId = faculty.Id,
+                FacultyId = faculty.Id,
+                CollegeId = model.CollegeId,
+
                 EmailConfirmed = true
             };
-
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
@@ -166,6 +188,7 @@ public class FacultyDashboardController(
         }
 
         ViewBag.Faculty = faculty;
+        ViewBag.Colleges = new SelectList(await GetFacultyCollegesAsync(faculty.Id), "Id", "Name", model.CollegeId);
         return View(model);
     }
 

@@ -1,4 +1,6 @@
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Web.Authorization;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +11,7 @@ namespace FWU.Exam.Management.Web.Areas.Reports.Controllers;
 
 [Area("Reports")]
 [RequirePermission("reports.summary")]
-public class ReportsController(AppDbContext context) : Controller
+public class ReportsController(AppDbContext context, IUserContext userContext) : Controller
 {
     public IActionResult Index()
     {
@@ -90,6 +92,7 @@ public class ReportsController(AppDbContext context) : Controller
 
         ViewData["ExamScheduleId"] = new SelectList(
             await context.ExamSchedules.AsNoTracking()
+                .ApplyScope(userContext)
                 .OrderByDescending(e => e.ExamScheduleCode)
                 .Select(e => new { e.Id, e.ExamScheduleName })
                 .ToListAsync(),
@@ -97,6 +100,7 @@ public class ReportsController(AppDbContext context) : Controller
 
         ViewData["ProgramId"] = new SelectList(
             await context.Programs.AsNoTracking()
+                .ApplyScope(userContext)
                 .Where(p => p.IsActive)
                 .OrderBy(p => p.ProgramName)
                 .Select(p => new { p.Id, p.ProgramName })
@@ -105,6 +109,7 @@ public class ReportsController(AppDbContext context) : Controller
 
         ViewData["CollegeId"] = new SelectList(
             await context.Colleges.AsNoTracking()
+                .ApplyScope(userContext)
                 .Where(c => c.IsActive)
                 .OrderBy(c => c.Name)
                 .Select(c => new { c.Id, c.Name })

@@ -100,6 +100,28 @@ public class UserController(
         };
     }
 
+    private async Task<List<College>> GetScopedCollegesAsync()
+    {
+        return await context.Colleges
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    private async Task<SelectList> BuildCollegeSelectListAsync(int? selectedId, int? currentCollegeId = null)
+    {
+        var colleges = await GetScopedCollegesAsync();
+        if (currentCollegeId.HasValue && !colleges.Any(c => c.Id == currentCollegeId.Value))
+        {
+            var current = await context.Colleges.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == currentCollegeId.Value);
+            if (current != null)
+                colleges.Add(current);
+        }
+        return new SelectList(colleges, "Id", "Name", selectedId);
+    }
+
     public async Task<IActionResult> Details(string id)
     {
         if (id == null) return NotFound();
@@ -123,7 +145,7 @@ public class UserController(
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
-        ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await GetScopedCollegesAsync(), "Id", "Name");
         return View(new CreateUserViewModel());
     }
 
@@ -137,6 +159,20 @@ public class UserController(
 
         if (model.SelectedRole == Role.FacultyAdmin && !User.IsInRole(Role.SuperAdmin))
             ModelState.AddModelError(nameof(model.SelectedRole), "Only Super Admin can create a Faculty Admin user.");
+
+        if (model.SelectedRole is Role.CollegeAdmin or Role.Student)
+        {
+            if (!model.CollegeId.HasValue)
+            {
+                ModelState.AddModelError(nameof(model.CollegeId), "College is required for this role.");
+            }
+            else
+            {
+                var scopedColleges = await GetScopedCollegesAsync();
+                if (!scopedColleges.Any(c => c.Id == model.CollegeId.Value))
+                    ModelState.AddModelError(nameof(model.CollegeId), "The selected college is not within your scope.");
+            }
+        }
 
         if (ModelState.IsValid)
         {
@@ -172,7 +208,7 @@ public class UserController(
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Colleges = new SelectList(await GetScopedCollegesAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -200,7 +236,7 @@ public class UserController(
 
         ViewBag.PrimaryRole = primaryRole;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Colleges = await BuildCollegeSelectListAsync(model.CollegeId, user.CollegeId);
         return View(model);
     }
 
@@ -211,11 +247,18 @@ public class UserController(
     {
         if (id != model.Id) return NotFound();
 
+        var user = await userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        if (model.CollegeId.HasValue && user.CollegeId != model.CollegeId)
+        {
+            var scopedColleges = await GetScopedCollegesAsync();
+            if (!scopedColleges.Any(c => c.Id == model.CollegeId.Value))
+                ModelState.AddModelError(nameof(model.CollegeId), "The selected college is not within your scope.");
+        }
+
         if (ModelState.IsValid)
         {
-            var user = await userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
             user.Email = model.Email;
             user.UserName = model.Email;
             user.FullName = model.FullName;
@@ -233,12 +276,10 @@ public class UserController(
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        var editUser = await userManager.FindByIdAsync(id);
-        if (editUser == null) return NotFound();
-        var roles = await userManager.GetRolesAsync(editUser);
+        var roles = await userManager.GetRolesAsync(user);
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
         ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Colleges = await BuildCollegeSelectListAsync(model.CollegeId, user.CollegeId);
         return View(model);
     }
 
