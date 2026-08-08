@@ -26,7 +26,7 @@ public class StudentDashboardServiceTests
         var service = CreateService(db);
         var student = TestData.StudentRegistration(1, Email);
 
-        var result = await service.GetExamSchedulesForStudentAsync(student);
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
 
         Assert.Empty(result);
     }
@@ -48,7 +48,7 @@ public class StudentDashboardServiceTests
         var student = db.Context.StudentRegistrations!.FirstOrDefault() ?? TestData.StudentRegistration(1, Email);
         var service = CreateService(db);
 
-        var result = await service.GetExamSchedulesForStudentAsync(student);
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
 
         Assert.Empty(result);
     }
@@ -73,12 +73,16 @@ public class StudentDashboardServiceTests
             ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Past, null)); // supplementary sem2 (enrolled)
             ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Past, null));      // entrance (excluded)
             ctx.ExamSchedules.Add(TestData.Schedule(16, 2, TestData.Regular, Past, null, TestData.ProgramIdOther)); // other program
+
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 12));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 12, 1));
+            ctx.ExamSubjectResults.Add(TestData.Result(1, 1, 102, TestData.Regular, "F", 12)); // failed in sem2 => supplementary shown
         });
 
         var student = db.Context.StudentRegistrations!.Single();
         var service = CreateService(db);
 
-        var result = await service.GetExamSchedulesForStudentAsync(student);
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
 
         Assert.Equal(3, result.Count);
         Assert.Contains(result, s => s.Id == 11);
@@ -210,7 +214,12 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
             ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
             {
@@ -237,7 +246,12 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
             ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
             {
@@ -266,7 +280,12 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
         });
 
