@@ -38,44 +38,19 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToCsv" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> CSV (Current Page)
-                    </a>
-                    <a asp-action="ExportToPdf" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
-                    </a>
-                    <a asp-action="ExportToExcel" asp-area="Subjects"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Excel (Current Page)
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["page"] = currentPage.ToString(),
+                    ["pageSize"] = pageSize.ToString(),
+                    ["search"] = currentSearch,
+                    ["sort"] = currentSort,
+                    ["sortDir"] = currentSortDir
+                },
+                ButtonClass = "bg-teal-600 hover:bg-teal-700",
+                ScopeLabel = " (Current Page)"
+            })
             <form asp-action="ImportExcel" asp-area="Subjects" method="post" enctype="multipart/form-data" class="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-lg border border-dashed border-gray-300 w-full xl:w-auto" id="importForm">
                 <input type="file" name="file" accept=".xlsx" class="block w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-white file:text-gray-700 file:ring-1 file:ring-gray-300 hover:file:bg-gray-50 transition cursor-pointer" required />
                 <button type="submit" class="inline-flex items-center justify-center px-3 py-1.5 bg-gray-800 text-white rounded-md text-xs font-medium hover:bg-gray-900 transition shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900" id="importBtn">

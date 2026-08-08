@@ -24,29 +24,11 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToCsv" asp-area="Subjects"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> Export CSV
-                    </a>
-                    <a asp-action="ExportToPdf" asp-area="Subjects"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> Export PDF
-                    </a>
-                    <a asp-action="ExportToExcel" asp-area="Subjects"
-                           class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Export Excel
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                ButtonClass = "bg-indigo-600 hover:bg-indigo-700",
+                ScopeLabel = " (All)"
+            })
             @if (HasPerm("subjectofferings.create"))
             {
                 <a asp-action="Create" asp-area="Subjects" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">

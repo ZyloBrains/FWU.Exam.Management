@@ -39,16 +39,20 @@
             <a asp-action="BatchCreate" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                 <i class="fas fa-users text-xs"></i> Bulk Enroll
             </a>
-            <a asp-action="ExportToCsv" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-               asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">
-                <i class="fas fa-file-csv text-xs text-gray-400"></i> CSV
-            </a>
-            <a asp-action="ExportToExcel" asp-route-search="@currentSearch" asp-route-admissionId="@admissionId"
-               asp-route-collegeId="@currentCollegeId" asp-route-programId="@currentProgramId" asp-route-semesterId="@currentSemesterId" asp-route-academicYearId="@currentAcademicYearId"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">
-                <i class="fas fa-file-excel text-xs text-green-500"></i> Excel
-            </a>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["admissionId"] = admissionId?.ToString() ?? "",
+                    ["collegeId"] = currentCollegeId?.ToString() ?? "",
+                    ["programId"] = currentProgramId?.ToString() ?? "",
+                    ["semesterId"] = currentSemesterId?.ToString() ?? "",
+                    ["academicYearId"] = currentAcademicYearId?.ToString() ?? ""
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
         </div>
     </div>
 

@@ -34,45 +34,19 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <!-- Export dropdown -->
-            <div class="relative">
-                <button x-on:click="openExport = !openExport"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-cyan-700 transition-colors shadow-sm">
-                    <i class="fas fa-download text-xs"></i> Export
-                </button>
-                <div x-show="openExport"
-                     x-on:click.away="openExport = false"
-                     x-transition
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                    <a asp-action="ExportToCsv"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-csv text-blue-600"></i> CSV (Current Page)
-                    </a>
-                    <a asp-action="ExportToPdf"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-pdf text-red-600"></i> PDF (Current Page)
-                    </a>
-                    <a asp-action="ExportToExcel"
-                           asp-route-page="@currentPage"
-                           asp-route-pageSize="@pageSize"
-                           asp-route-search="@currentSearch"
-                           asp-route-sort="@currentSort"
-                           asp-route-sortDir="@currentSortDir"
-                           class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-file-excel text-green-600"></i> Export Excel
-                    </a>
-                </div>
-            </div>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["page"] = currentPage.ToString(),
+                    ["pageSize"] = pageSize.ToString(),
+                    ["sort"] = currentSort,
+                    ["sortDir"] = currentSortDir
+                },
+                ButtonClass = "bg-cyan-600 hover:bg-cyan-700",
+                ScopeLabel = " (Current Page)"
+            })
             @if (HasPerm("levels.create"))
             {
                 <a asp-action="Create" class="inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-cyan-700 transition-colors shadow-sm">
