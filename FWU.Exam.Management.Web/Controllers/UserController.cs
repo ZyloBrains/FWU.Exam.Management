@@ -110,6 +110,27 @@ public class UserController(
             .ToListAsync();
     }
 
+    private async Task<List<Faculty>> GetScopedFacultiesAsync()
+    {
+        return await context.GetScopedFacultiesAsync(userContext);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByCollege(int collegeId, int? facultyId = null)
+    {
+        var programs = await context.CollegePrograms
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(cp => cp.CollegeId == collegeId)
+            .Where(cp => cp.Program != null && cp.Program.ProgramName != null)
+            .Where(cp => !facultyId.HasValue || (cp.Program != null && cp.Program.FacultyId == facultyId.Value))
+            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
+            .Distinct()
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+        return Json(programs);
+    }
+
     [HttpGet]
     public async Task<JsonResult> GetCollegesByFaculty(int facultyId)
     {
@@ -159,8 +180,12 @@ public class UserController(
         ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
+        ViewBag.Faculties = new SelectList(await GetScopedFacultiesAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await GetScopedCollegesAsync(), "Id", "Name");
+        ViewBag.ShowFacultyFilter = userContext.IsSuperAdmin || userContext.IsCollegeAdmin;
+        ViewBag.ShowCollegeFilter = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
+        ViewBag.ShowProgramFilter = true;
+        ViewBag.CurrentCollegeId = userContext.IsCollegeAdmin ? userContext.CollegeId : null;
         return View(new CreateUserViewModel());
     }
 
@@ -246,8 +271,12 @@ public class UserController(
         ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
             ? roles
             : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Faculties = new SelectList(await GetScopedFacultiesAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await GetScopedCollegesAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.ShowFacultyFilter = userContext.IsSuperAdmin || userContext.IsCollegeAdmin;
+        ViewBag.ShowCollegeFilter = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
+        ViewBag.ShowProgramFilter = true;
+        ViewBag.CurrentCollegeId = userContext.IsCollegeAdmin ? userContext.CollegeId : null;
         return View(model);
     }
 
@@ -610,10 +639,10 @@ public class UserController(
     [RequirePermission("users.create")]
     [HttpGet]
     public async Task<IActionResult> GetStudentsWithoutUsers(
-        int? collegeId, int? facultyId, int page = 1, int pageSize = 50)
+        int? collegeId, int? facultyId, int? programId, int page = 1, int pageSize = 50)
     {
         var (data, totalCount) = await bulkUserCreationService.GetStudentsWithoutUsersAsync(
-            collegeId, facultyId, page, pageSize);
+            collegeId, facultyId, programId, page, pageSize);
         return Json(new { data, totalCount });
     }
 
@@ -642,7 +671,7 @@ public class UserController(
     {
         var userId = userManager.GetUserId(User) ?? "unknown";
         var job = await bulkUserCreationService.StartJobFromFiltersAsync(
-            filters.CollegeId, filters.FacultyId, userId);
+            filters.CollegeId, filters.FacultyId, filters.ProgramId, userId);
 
         return Json(new
         {
@@ -657,6 +686,7 @@ public class UserController(
     {
         public int? CollegeId { get; set; }
         public int? FacultyId { get; set; }
+        public int? ProgramId { get; set; }
     }
 
     [RequirePermission("users.create")]

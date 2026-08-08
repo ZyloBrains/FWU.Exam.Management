@@ -38,7 +38,8 @@ public class ResultRecordsController(
         ViewBag.FacultyId = facultyId;
 
         ViewData["CollegeId"] = new SelectList(context.Colleges.AsNoTracking().ApplyScope(userContext).OrderBy(c => c.Name).Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
-        ViewData["FacultyId"] = new SelectList(context.Faculties.AsNoTracking().ApplyScope(userContext).OrderBy(f => f.Name).Select(f => new { f.Id, f.Name }), "Id", "Name", facultyId);
+        ViewData["FacultyId"] = new SelectList(await context.GetScopedFacultiesAsync(userContext), "Id", "Name", facultyId);
+        ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
 
         return View(items);
     }

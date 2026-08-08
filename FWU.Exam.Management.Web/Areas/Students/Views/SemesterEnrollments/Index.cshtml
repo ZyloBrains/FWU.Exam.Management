@@ -66,17 +66,20 @@
                        placeholder="Search by student name, roll number, registration no..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </div>
-            <select name="collegeId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
-                <option value="">All Colleges</option>
-                @if (ViewData["CollegeFilter"] is SelectList collegeList)
-                {
-                    foreach (var item in collegeList.Items)
+            @if (ViewData["ShowCollegeFilter"] as bool? == true)
+            {
+                <select name="collegeId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
+                    <option value="">All Colleges</option>
+                    @if (ViewData["CollegeFilter"] is SelectList collegeList)
                     {
-                        var value = ((dynamic)item).Id.ToString();
-                        <option value="@value" selected="@(value == currentCollegeId?.ToString())">@(((dynamic)item).Name)</option>
+                        foreach (var item in collegeList.Items)
+                        {
+                            var value = ((dynamic)item).Id.ToString();
+                            <option value="@value" selected="@(value == currentCollegeId?.ToString())">@(((dynamic)item).Name)</option>
+                        }
                     }
-                }
-            </select>
+                </select>
+            }
             <select name="programId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
                 <option value="">All Programs</option>
                 @if (ViewData["ProgramFilter"] is SelectList programList)

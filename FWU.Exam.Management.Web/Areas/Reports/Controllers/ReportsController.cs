@@ -115,6 +115,7 @@ public class ReportsController(AppDbContext context, IUserContext userContext) :
                 .Select(c => new { c.Id, c.Name })
                 .ToListAsync(),
             "Id", "Name", filter.CollegeId);
+        ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
 
         ViewData["SemesterId"] = new SelectList(
             await context.Semesters.AsNoTracking()

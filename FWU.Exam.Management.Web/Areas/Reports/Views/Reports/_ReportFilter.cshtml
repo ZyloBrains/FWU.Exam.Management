@@ -22,12 +22,15 @@
                     <option value="">-- All Programs --</option>
                 </select>
             </div>
-            <div>
-                <label asp-for="CollegeId" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1"></label>
-                <select asp-for="CollegeId" asp-items="@(ViewBag.CollegeId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                    <option value="">-- All Colleges --</option>
-                </select>
-            </div>
+            @if (ViewData["ShowCollegeFilter"] as bool? == true)
+            {
+                <div>
+                    <label asp-for="CollegeId" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1"></label>
+                    <select asp-for="CollegeId" asp-items="@(ViewBag.CollegeId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <option value="">-- All Colleges --</option>
+                    </select>
+                </div>
+            }
             <div>
                 <label asp-for="SemesterId" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1"></label>
                 <select asp-for="SemesterId" asp-items="@(ViewBag.SemesterId as SelectList)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">

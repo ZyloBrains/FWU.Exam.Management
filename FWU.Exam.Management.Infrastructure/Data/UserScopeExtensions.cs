@@ -12,6 +12,29 @@ namespace FWU.Exam.Management.Infrastructure.Data;
 
 public static class UserScopeExtensions
 {
+    public static async Task<List<Faculty>> GetScopedFacultiesAsync(this AppDbContext context, IUserContext user)
+    {
+        IQueryable<Faculty> query = context.Faculties.AsNoTracking();
+
+        if (user.IsSuperAdmin)
+            return await query.OrderBy(f => f.Name).ToListAsync();
+
+        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
+            return await query.Where(f => f.Id == user.FacultyId.Value).ToListAsync();
+
+        if (user.IsCollegeAdmin && user.CollegeId.HasValue)
+        {
+            var collegeId = user.CollegeId.Value;
+            return await query
+                .Where(f => context.CollegePrograms.Any(cp =>
+                    cp.CollegeId == collegeId && cp.Program != null && cp.Program.FacultyId == f.Id))
+                .OrderBy(f => f.Name)
+                .ToListAsync();
+        }
+
+        return [];
+    }
+
     public static IQueryable<Faculty> ApplyScope(this IQueryable<Faculty> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;

@@ -19,23 +19,27 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class BulkUserCreationService(
     AppDbContext context,
     IServiceScopeFactory scopeFactory,
-    ITenantContext tenantContext) : IBulkUserCreationService
+    ITenantContext tenantContext,
+    IUserContext userContext) : IBulkUserCreationService
 {
     private const int BatchSize = 50;
 
     public async Task<(List<StudentWithoutUserDto> Data, int TotalCount)> GetStudentsWithoutUsersAsync(
-        int? collegeId, int? facultyId, int page, int pageSize)
+        int? collegeId, int? facultyId, int? programId, int page, int pageSize)
     {
         var query = context.StudentRegistrations
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
-                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber));
+                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber))
+            .ApplyScope(userContext);
 
         if (collegeId.HasValue)
             query = query.Where(s => s.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
 
         var totalCount = await query.CountAsync();
 
@@ -62,10 +66,17 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob> StartJobAsync(List<int> registrationIds, string userId)
     {
+        var scopedIds = await context.StudentRegistrations
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(s => registrationIds.Contains(s.Id))
+            .Select(s => s.Id)
+            .ToListAsync();
+
         var job = new BulkUserCreationJob
         {
             UserId = userId,
-            TotalStudents = registrationIds.Count,
+            TotalStudents = scopedIds.Count,
             Status = "Running",
             CreatedAt = DateTime.UtcNow
         };
@@ -74,7 +85,7 @@ public class BulkUserCreationService(
         await context.SaveChangesAsync();
 
         var jobId = job.Id;
-        var idsJson = JsonSerializer.Serialize(registrationIds);
+        var idsJson = JsonSerializer.Serialize(scopedIds);
         var capturedTenantId = tenantContext.TenantId;
         var capturedTenantCode = tenantContext.TenantCode;
         var capturedTenantType = tenantContext.Type;
@@ -84,18 +95,21 @@ public class BulkUserCreationService(
         return job;
     }
 
-    public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, string userId)
+    public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, int? programId, string userId)
     {
         var query = context.StudentRegistrations
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
-                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber));
+                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber))
+            .ApplyScope(userContext);
 
         if (collegeId.HasValue)
             query = query.Where(s => s.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
 
         var ids = await query.Select(s => s.Id).ToListAsync();
         return await StartJobAsync(ids, userId);
