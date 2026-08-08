@@ -22,7 +22,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 SET es.CurriculumVersionId = cv.Id
                 FROM ExamSchedules es
                 INNER JOIN CurriculumVersions cv
-                    ON cv.ProgramId = es.ProgramId
+                    ON cv.TenantId = es.TenantId
+                   AND cv.ProgramId = es.ProgramId
                    AND cv.EffectiveAcademicYearId = es.AcademicYearId
                 WHERE cv.Name LIKE 'Default - %'
                   AND es.CurriculumVersionId IS NULL;

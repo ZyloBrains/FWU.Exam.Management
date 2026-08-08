@@ -29,7 +29,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         so.TenantId,
                         so.ProgramId,
                         s.AcademicYearId,
-                        N'Default - ' + ISNULL(p.ProgramName, N'Program') + N' (' + ISNULL(ay.AcademicYearName, N'') + N')',
+                        LEFT(N'Default - ' + ISNULL(p.ProgramName, N'Program') + N' (' + ISNULL(ay.AcademicYearName, N'') + N')', 100),
                         N'Auto-created curriculum version for existing subject offerings.',
                         1
                     FROM SubjectOfferings so

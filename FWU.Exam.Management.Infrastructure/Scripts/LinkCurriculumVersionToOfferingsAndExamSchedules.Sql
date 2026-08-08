@@ -1,4 +1,7 @@
-﻿BEGIN TRANSACTION;
+﻿SET XACT_ABORT ON;
+
+BEGIN TRANSACTION;
+BEGIN TRY
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260807180334_LinkSubjectOfferingsToCurriculumVersion'
@@ -27,7 +30,7 @@ BEGIN
             so.TenantId,
             so.ProgramId,
             s.AcademicYearId,
-            N'Default - ' + ISNULL(p.ProgramName, N'Program') + N' (' + ISNULL(ay.AcademicYearName, N'') + N')',
+            LEFT(N'Default - ' + ISNULL(p.ProgramName, N'Program') + N' (' + ISNULL(ay.AcademicYearName, N'') + N')', 100),
             N'Auto-created curriculum version for existing subject offerings.',
             1
         FROM SubjectOfferings so
@@ -92,9 +95,16 @@ BEGIN
 END;
 
 COMMIT;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
 GO
 
 BEGIN TRANSACTION;
+BEGIN TRY
 IF NOT EXISTS (
     SELECT * FROM [__EFMigrationsHistory]
     WHERE [MigrationId] = N'20260807202753_LinkExamSchedulesToCurriculumVersion'
@@ -112,7 +122,8 @@ BEGIN
     SET es.CurriculumVersionId = cv.Id
     FROM ExamSchedules es
     INNER JOIN CurriculumVersions cv
-        ON cv.ProgramId = es.ProgramId
+        ON cv.TenantId = es.TenantId
+       AND cv.ProgramId = es.ProgramId
        AND cv.EffectiveAcademicYearId = es.AcademicYearId
     WHERE cv.Name LIKE 'Default - %'
       AND es.CurriculumVersionId IS NULL;
@@ -144,5 +155,11 @@ BEGIN
 END;
 
 COMMIT;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRANSACTION;
+    THROW;
+END CATCH;
 GO
 
