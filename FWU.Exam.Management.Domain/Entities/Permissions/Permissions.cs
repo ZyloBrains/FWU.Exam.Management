@@ -662,7 +662,7 @@ public static class Permissions
             SubjectOfferingsView, SubjectOfferingsCreate, SubjectOfferingsEdit, SubjectOfferingsDelete,
             CurriculumVersionsView,
 
-            ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit,
+            ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit, ExamSchedulesDelete,
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
