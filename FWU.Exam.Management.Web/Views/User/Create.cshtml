@@ -65,7 +65,7 @@
                     </div>
 
                     <!-- Faculty dropdown (FacultyAdmin) -->
-                    <div id="facultyField">
+                    <div id="facultyField" style="display:none">
                         <label asp-for="FacultyId" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="FacultyId" asp-items="ViewBag.Faculties"
                                 class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
@@ -74,8 +74,8 @@
                         <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
-                    <!-- College dropdown (CollegeAdmin & Student) -->
-                    <div id="collegeField">
+                    <!-- College dropdown (CollegeAdmin, Student & FacultyAdmin) -->
+                    <div id="collegeField" style="display:none">
                         <label asp-for="CollegeId" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="CollegeId" asp-items="ViewBag.Colleges"
                                 class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
@@ -315,30 +315,129 @@
     </style>
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
+        var _collegeOptions = [];
+
         function initSelect2() {
             document.querySelectorAll('.select2').forEach(function (el) {
-                var isVisible = el.offsetParent !== null;
-                if (isVisible) {
-                    if (!$(el).data('select2')) {
-                        $(el).select2({width:'resolve'});
+                if (el.tagName !== 'SELECT') return;
+                try {
+                    var isVisible = el.offsetParent !== null;
+                    if (isVisible) {
+                        if (!$(el).data('select2')) {
+                            $(el).select2({width:'resolve'});
+                        }
+                    } else {
+                        if ($(el).data('select2')) {
+                            $(el).select2('destroy');
+                        }
                     }
-                } else {
-                    if ($(el).data('select2')) {
-                        $(el).select2('destroy');
-                    }
+                } catch (e) {
+                    // ignore select2 errors so the field toggle never breaks
                 }
             });
         }
+
+        function clearSelectOptions(select) {
+            if ($(select).data('select2')) $(select).select2('destroy');
+            select.innerHTML = '';
+            var opt = document.createElement('option');
+            opt.value = '';
+            opt.text = '-- Select College --';
+            select.appendChild(opt);
+        }
+
+        function resetCollegeOptions() {
+            var collegeSelect = document.getElementById('CollegeId');
+            if (!collegeSelect) return;
+            clearSelectOptions(collegeSelect);
+            _collegeOptions.forEach(function (o) {
+                var el = document.createElement('option');
+                el.value = o.id;
+                el.text = o.text;
+                collegeSelect.appendChild(el);
+            });
+        }
+
+        function loadColleges(facultyId) {
+            var collegeSelect = document.getElementById('CollegeId');
+            var collegeField = document.getElementById('collegeField');
+            if (!collegeSelect || !collegeField) return;
+
+            var currentValue = collegeSelect.value;
+            clearSelectOptions(collegeSelect);
+
+            if (!facultyId) {
+                collegeField.style.display = 'none';
+                initSelect2();
+                return;
+            }
+
+            $.get('@Url.Action("GetCollegesByFaculty", "User")', { facultyId: facultyId }, function (data) {
+                collegeSelect.innerHTML = '';
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.text = '-- Select College --';
+                collegeSelect.appendChild(opt);
+
+                var hasMatch = false;
+                $.each(data, function (index, item) {
+                    var el = document.createElement('option');
+                    el.value = item.id;
+                    el.text = item.name;
+                    collegeSelect.appendChild(el);
+                    if (currentValue && item.id == currentValue) hasMatch = true;
+                });
+
+                if (currentValue && hasMatch) collegeSelect.value = currentValue;
+                collegeField.style.display = '';
+                initSelect2();
+            }).fail(function () {
+                collegeField.style.display = 'none';
+                initSelect2();
+            });
+        }
+
         function updateRoleFields() {
-            var role = document.getElementById('SelectedRole').value;
+            var roleSelect = document.getElementById('SelectedRole');
+            var role = roleSelect ? roleSelect.value : '';
             var facultyField = document.getElementById('facultyField');
             var collegeField = document.getElementById('collegeField');
-            if (facultyField) facultyField.style.display = role === '@Role.FacultyAdmin' ? '' : 'none';
-            if (collegeField) collegeField.style.display = (role === '@Role.CollegeAdmin' || role === '@Role.Student') ? '' : 'none';
-            initSelect2();
+            var facultySelect = document.getElementById('FacultyId');
+
+            if (role === '@Role.FacultyAdmin') {
+                if (facultyField) facultyField.style.display = '';
+                if (collegeField) collegeField.style.display = 'none';
+                if (facultySelect) loadColleges(facultySelect.value);
+            } else if (role === '@Role.CollegeAdmin' || role === '@Role.Student') {
+                if (facultyField) facultyField.style.display = 'none';
+                resetCollegeOptions();
+                if (collegeField) collegeField.style.display = '';
+                initSelect2();
+            } else {
+                if (facultyField) facultyField.style.display = 'none';
+                if (collegeField) collegeField.style.display = 'none';
+                initSelect2();
+            }
         }
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('SelectedRole').addEventListener('change', updateRoleFields);
+
+        $(function () {
+            var collegeSelect = document.getElementById('CollegeId');
+            if (collegeSelect) {
+                _collegeOptions = [];
+                Array.prototype.forEach.call(collegeSelect.options, function (opt) {
+                    if (opt.value) _collegeOptions.push({ id: opt.value, text: opt.text });
+                });
+            }
+
+            var roleSelect = document.getElementById('SelectedRole');
+            var facultySelect = document.getElementById('FacultyId');
+
+            if (roleSelect) $(roleSelect).on('change', updateRoleFields);
+            if (facultySelect) $(facultySelect).on('change', function () {
+                var role = roleSelect ? roleSelect.value : '';
+                if (role === '@Role.FacultyAdmin') loadColleges(facultySelect.value);
+            });
+
             updateRoleFields();
         });
 

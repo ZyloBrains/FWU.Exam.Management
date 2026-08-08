@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Colleges;
@@ -109,6 +110,20 @@ public class UserController(
             .ToListAsync();
     }
 
+    [HttpGet]
+    public async Task<JsonResult> GetCollegesByFaculty(int facultyId)
+    {
+        var colleges = await context.Colleges
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(c => c.CollegePrograms.Any(cp =>
+                cp.Program != null && cp.Program.FacultyId == facultyId))
+            .OrderBy(c => c.Name)
+            .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+            .ToListAsync();
+        return Json(colleges);
+    }
+
     private async Task<SelectList> BuildCollegeSelectListAsync(int? selectedId, int? currentCollegeId = null)
     {
         var colleges = await GetScopedCollegesAsync();
@@ -174,6 +189,27 @@ public class UserController(
             }
         }
 
+        if (model.SelectedRole == Role.FacultyAdmin)
+        {
+            if (!model.FacultyId.HasValue)
+            {
+                ModelState.AddModelError(nameof(model.FacultyId), "Faculty is required for this role.");
+            }
+            else if (model.CollegeId.HasValue)
+            {
+                var facultyCollegeIds = await context.Colleges
+                    .AsNoTracking()
+                    .ApplyScope(userContext)
+                    .Where(c => c.CollegePrograms.Any(cp =>
+                        cp.Program != null && cp.Program.FacultyId == model.FacultyId.Value))
+                    .Select(c => c.Id)
+                    .ToListAsync();
+
+                if (!facultyCollegeIds.Contains(model.CollegeId.Value))
+                    ModelState.AddModelError(nameof(model.CollegeId), "The selected college does not belong to the selected faculty.");
+            }
+        }
+
         if (ModelState.IsValid)
         {
             var user = new AppUser
@@ -185,7 +221,10 @@ public class UserController(
             };
 
             if (model.SelectedRole is Role.FacultyAdmin)
+            {
                 user.FacultyId = model.FacultyId;
+                user.CollegeId = model.CollegeId;
+            }
 
             if (model.SelectedRole is Role.CollegeAdmin or Role.Student)
                 user.CollegeId = model.CollegeId;
