@@ -430,7 +430,7 @@ public class SubjectOfferingService : ISubjectOfferingService
     {
         return await _context.SubjectOfferings
             .Include(so => so.SubjectCatalog)
-            .ThenInclude(sc => sc.SubjectType)
+            .ThenInclude(sc => sc!.SubjectType)
             .Include(so => so.Semester)
             .AsNoTracking()
             .ApplyScope(_userContext)
