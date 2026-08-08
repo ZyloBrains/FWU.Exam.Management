@@ -1,6 +1,8 @@
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -470,5 +472,85 @@ public class SemesterEnrollmentServiceTests
 
         Assert.False(created);
         Assert.Empty(db.Context.SemesterEnrollments!);
+    }
+
+    private static void SeedVersions(AppDbContext ctx)
+    {
+        ctx.CurriculumVersions.Add(new CurriculumVersion
+        {
+            Id = 1,
+            TenantId = TestData.TenantId,
+            Name = "Default - BCA (2081)",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = TestData.AcademicYearId,
+            IsActive = true
+        });
+        ctx.CurriculumVersions.Add(new CurriculumVersion
+        {
+            Id = 2,
+            TenantId = TestData.TenantId,
+            Name = "Old BCA",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = TestData.AcademicYearId,
+            IsActive = false
+        });
+    }
+
+    private static void SeedProgramSemesters(AppDbContext ctx)
+    {
+        ctx.ProgramSemesters.Add(new ProgramSemester { Id = 1, ProgramId = TestData.ProgramId, SemesterId = 1, IsActive = true });
+        ctx.ProgramSemesters.Add(new ProgramSemester { Id = 2, ProgramId = TestData.ProgramId, SemesterId = 2, IsActive = true });
+    }
+
+    [Fact]
+    public async Task PromoteCompletedSemestersAsync_ConsultsActiveVersionSchedule_OverInactiveVersionSchedule()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            SeedVersions(ctx);
+            SeedProgramSemesters(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+
+            var activeVersionSchedule = TestData.Schedule(21, 1, TestData.Regular, Future, PastDateTime);
+            activeVersionSchedule.CurriculumVersionId = 1;
+            var inactiveVersionSchedule = TestData.Schedule(22, 1, TestData.Regular, Past, PastDateTime);
+            inactiveVersionSchedule.CurriculumVersionId = 2;
+            ctx.ExamSchedules.Add(activeVersionSchedule);
+            ctx.ExamSchedules.Add(inactiveVersionSchedule);
+        });
+        var service = CreateService(db);
+
+        var created = await service.PromoteCompletedSemestersAsync();
+
+        Assert.Equal(0, created);
+    }
+
+    [Fact]
+    public async Task PromoteCompletedSemestersAsync_Promotes_WhenActiveVersionScheduleEnded_EvenIfInactiveVersionHasNot()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            SeedVersions(ctx);
+            SeedProgramSemesters(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+
+            var activeVersionSchedule = TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime);
+            activeVersionSchedule.CurriculumVersionId = 1;
+            var inactiveVersionSchedule = TestData.Schedule(22, 1, TestData.Regular, Future, PastDateTime);
+            inactiveVersionSchedule.CurriculumVersionId = 2;
+            ctx.ExamSchedules.Add(activeVersionSchedule);
+            ctx.ExamSchedules.Add(inactiveVersionSchedule);
+        });
+        var service = CreateService(db);
+
+        var created = await service.PromoteCompletedSemestersAsync();
+
+        Assert.Equal(1, created);
     }
 }

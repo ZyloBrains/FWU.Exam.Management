@@ -25,7 +25,7 @@
 
             <div class="border-b border-gray-200 pb-4 mb-2">
                 <h3 class="text-sm font-semibold text-gray-700 mb-3">Basic Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
                     <div>
                         <label asp-for="SubjectCatalogId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject</label>
                         <select asp-for="SubjectCatalogId" asp-items="ViewBag.SubjectCatalogId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
@@ -52,6 +52,13 @@
                             <option value="">-- Select Semester --</option>
                         </select>
                         <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
+                        <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Curriculum Version</label>
+                        <select asp-for="CurriculumVersionId" id="CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                            <option value="">-- Select Curriculum Version --</option>
+                        </select>
+                        <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
@@ -188,6 +195,25 @@
     <script>
         $(function () { $('.select2').select2({ width: 'resolve' }); });
 
+        function loadCurriculumVersions(programId, selectedId) {
+            $('#CurriculumVersionId').select2('destroy');
+            var versionDropdown = $("#CurriculumVersionId");
+            versionDropdown.empty().append('<option value="">-- Select Curriculum Version --</option>');
+
+            if (!programId) {
+                $('#CurriculumVersionId').select2({ width: 'resolve' });
+                return;
+            }
+
+            $.get(tenantUrl("/Subjects/SubjectOfferings/GetCurriculumVersionsByProgram"), { programId: programId }, function (data) {
+                $.each(data, function (index, item) {
+                    versionDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+                if (selectedId) versionDropdown.val(selectedId);
+                $('#CurriculumVersionId').select2({ width: 'resolve' });
+            });
+        }
+
         function loadSemesters(academicYearId, programId) {
             $('#SemesterId').select2('destroy');
             var semesterDropdown = $("#SemesterId");
@@ -215,11 +241,13 @@
         });
 
         $("#ProgramId").change(function () {
+            loadCurriculumVersions($(this).val(), null);
             if ($("#AcademicYearId").val()) {
                 loadSemesters($("#AcademicYearId").val(), $(this).val());
             }
         });
 
         loadSemesters($("#AcademicYearId").val(), $("#ProgramId").val());
+        loadCurriculumVersions($("#ProgramId").val(), '@Model.CurriculumVersionId');
     </script>
 }

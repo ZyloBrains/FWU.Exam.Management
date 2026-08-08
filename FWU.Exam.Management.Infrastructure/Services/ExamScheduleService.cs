@@ -42,6 +42,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
+                CurriculumVersionId = e.CurriculumVersionId,
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
                 ExamType = e.ExamType
@@ -95,6 +96,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
+                CurriculumVersionId = e.CurriculumVersionId,
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
                 ExamType = e.ExamType
@@ -132,6 +134,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
+                CurriculumVersionId = e.CurriculumVersionId,
                 AcademicYear = e.AcademicYear,
                 Program = e.Program,
                 Semester = e.Semester,
@@ -336,22 +339,39 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var examTypes = await context.ExamTypes.AsNoTracking().ToListAsync();
         var programsQuery = context.Programs.AsNoTracking().ApplyScope(userContext);
         var programs = await programsQuery.ToListAsync();
-        var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext);
-        if (examSchedule != null && examSchedule.AcademicYearId > 0)
-            semestersQuery = semestersQuery.Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
-        var allowUpperSemesters = examSchedule != null
-                                  && examSchedule.ProgramId > 0
-                                  && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == examSchedule.ProgramId && p.Duration >= 10);
-        if (!allowUpperSemesters)
-            semestersQuery = semestersQuery.Where(s => s.Number <= 8);
-        var semesters = await semestersQuery.OrderBy(s => s.Number).ToListAsync();
+
+        List<SelectOption> semesters;
+        if (examSchedule != null && examSchedule.CurriculumVersionId is > 0)
+        {
+            semesters = await GetSemestersByCurriculumVersionAsync(examSchedule.CurriculumVersionId.Value);
+        }
+        else if (examSchedule != null && examSchedule.AcademicYearId > 0)
+        {
+            var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext)
+                .Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
+            var allowUpperSemesters = examSchedule.ProgramId > 0
+                                      && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == examSchedule.ProgramId && p.Duration >= 10);
+            if (!allowUpperSemesters)
+                semestersQuery = semestersQuery.Where(s => s.Number <= 8);
+            semesters = [.. (await semestersQuery.OrderBy(s => s.Number).ToListAsync())
+                .Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + ")" })];
+        }
+        else
+        {
+            semesters = [];
+        }
+
+        var curriculumVersions = examSchedule != null && examSchedule.ProgramId > 0
+            ? await GetCurriculumVersionsByProgramAsync(examSchedule.ProgramId)
+            : [];
 
         return new ExamScheduleSelectListsDto
         {
             AcademicYears = [.. academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName })],
             ExamTypes = [.. examTypes.Select(et => new SelectOption { Id = et.Id, Name = et.Name })],
             Programs = [.. programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName })],
-            Semesters = [.. semesters.Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + ")" })]
+            Semesters = semesters,
+            CurriculumVersions = curriculumVersions
         };
     }
 
@@ -364,6 +384,46 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .ApplyScope(userContext)
             .Where(s => s.AcademicYearId == academicYearId
                         && (s.Number <= 8 || allowUpperSemesters))
+            .OrderBy(s => s.Number)
+            .Select(s => new SelectOption
+            {
+                Id = s.Id,
+                Name = s.Name + " (" + s.Code + ")"
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetCurriculumVersionsByProgramAsync(int programId)
+    {
+        return await context.CurriculumVersions
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .Where(cv => cv.ProgramId == programId)
+            .OrderByDescending(cv => cv.EffectiveAcademicYearId)
+            .ThenByDescending(cv => cv.Id)
+            .Select(cv => new SelectOption
+            {
+                Id = cv.Id,
+                Name = cv.Name + (cv.EffectiveAcademicYear != null ? " (" + cv.EffectiveAcademicYear.AcademicYearName + ")" : "")
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetSemestersByCurriculumVersionAsync(int curriculumVersionId)
+    {
+        var semesterIds = await context.SubjectOfferings
+            .AsNoTracking()
+            .Where(so => so.CurriculumVersionId == curriculumVersionId)
+            .Select(so => so.SemesterId)
+            .Distinct()
+            .ToListAsync();
+
+        if (semesterIds.Count == 0)
+            return [];
+
+        return await context.Semesters
+            .AsNoTracking()
+            .Where(s => semesterIds.Contains(s.Id))
             .OrderBy(s => s.Number)
             .Select(s => new SelectOption
             {

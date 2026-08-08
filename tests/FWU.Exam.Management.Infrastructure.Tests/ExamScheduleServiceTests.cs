@@ -1,4 +1,5 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Infrastructure.Services;
 using Xunit;
 
@@ -6,82 +7,84 @@ namespace FWU.Exam.Management.Infrastructure.Tests;
 
 public class ExamScheduleServiceTests
 {
-    private static ExamScheduleService CreateService(TestDb db) =>
-        new(db.Context, new TestUserContext());
+    private const int VersionId = 5;
 
-    private static DateOnly Today => DateOnly.FromDateTime(DateTime.Today);
-
-    private static ExamSchedule NewSchedule(DateOnly start, DateOnly end, int id = 0) => new()
+    private static ExamScheduleService CreateService(TestDb db)
     {
-        Id = id,
+        var uc = new TestUserContext();
+        uc.SetUser("admin-1", null, null, [], ["SuperAdmin"]);
+        return new(db.Context, uc);
+    }
+
+    private static void SeedVersion(AppDbContext ctx, int versionId = VersionId, int programId = TestData.ProgramId,
+        int effectiveAcademicYearId = TestData.AcademicYearId, bool isActive = true, string? name = null)
+    {
+        ctx.CurriculumVersions.Add(new CurriculumVersion
+        {
+            Id = versionId,
         TenantId = TestData.TenantId,
-        ExamScheduleName = "Test Schedule",
-        AcademicYearId = TestData.AcademicYearId,
-        ProgramId = TestData.ProgramId,
-        SemesterId = 1,
-        ExamTypeId = TestData.Regular,
-        StartDate = start,
-        EndDate = end,
-        IsActive = true
-    };
+            Name = name ?? $"Default - BCA ({effectiveAcademicYearId})",
+            ProgramId = programId,
+            EffectiveAcademicYearId = effectiveAcademicYearId,
+            IsActive = isActive
+        });
+    }
 
-    [Fact]
-    public async Task CreateExamScheduleAsync_Throws_WhenEndDateIsInPast()
+    private static void AssignOfferings(AppDbContext ctx, int versionId, params int[] offeringIds)
     {
-        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
-        var service = CreateService(db);
-
-        var schedule = NewSchedule(Today, Today.AddDays(-1));
-        schedule.StartDate = null;
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateExamScheduleAsync(schedule));
-
-        Assert.Contains("End date cannot be in the past", ex.Message);
+        foreach (var id in offeringIds)
+            ctx.SubjectOfferings.Local.First(o => o.Id == id).CurriculumVersionId = versionId;
     }
 
     [Fact]
-    public async Task CreateExamScheduleAsync_Throws_WhenStartDateIsInPast()
-    {
-        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
-        var service = CreateService(db);
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateExamScheduleAsync(NewSchedule(Today.AddDays(-1), Today.AddDays(5))));
-
-        Assert.Contains("Start date cannot be in the past", ex.Message);
-    }
-
-    [Fact]
-    public async Task CreateExamScheduleAsync_Throws_WhenStartDateAfterEndDate()
-    {
-        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
-        var service = CreateService(db);
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateExamScheduleAsync(NewSchedule(Today.AddDays(10), Today.AddDays(5))));
-
-        Assert.Contains("Start date cannot be after end date", ex.Message);
-    }
-
-    [Fact]
-    public async Task CreateExamScheduleAsync_Saves_WhenDatesAreTodayOrFuture()
-    {
-        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
-        var service = CreateService(db);
-
-        await service.CreateExamScheduleAsync(NewSchedule(Today, Today.AddDays(10)));
-
-        Assert.Equal(1, db.Context.ExamSchedules.Count());
-    }
-
-    [Fact]
-    public async Task UpdateExamScheduleAsync_AllowsUnchangedPastDates()
+    public async Task GetCurriculumVersionsByProgramAsync_ReturnsOnlyProgramVersions_OrderedByEffectiveYearDescThenIdDesc()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.ExamSchedules.Add(NewSchedule(Today.AddDays(-20), Today.AddDays(-10), id: 1));
+            ctx.AcademicYears.Add(new AcademicYear
+            {
+                Id = 2,
+                AcademicYearCode = "2082",
+                AcademicYearName = "2082",
+                AcademicYearNameNepali = "2082",
+                IsActive = true,
+                IsRunning = false
+            });
+            SeedVersion(ctx, 10, effectiveAcademicYearId: TestData.AcademicYearId, name: "V1 (2081)");
+            SeedVersion(ctx, 11, effectiveAcademicYearId: 2, name: "V2 (2082)");
+            SeedVersion(ctx, 12, programId: TestData.ProgramIdOther, effectiveAcademicYearId: 2, name: "Other (2082)");
+        });
+        var service = CreateService(db);
+
+        var versions = await service.GetCurriculumVersionsByProgramAsync(TestData.ProgramId);
+
+        Assert.Equal(new[] { 11, 10 }, versions.Select(v => v.Id));
+    }
+
+    [Fact]
+    public async Task GetSemestersByCurriculumVersionAsync_ReturnsDistinctSemestersWithOfferings_OrderedByNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+    {
+            TestData.SeedBase(ctx);
+            SeedVersion(ctx);
+            AssignOfferings(ctx, VersionId, 101, 102, 103, 104);
+        });
+        var service = CreateService(db);
+
+        var semesters = await service.GetSemestersByCurriculumVersionAsync(VersionId);
+
+        Assert.Equal(new[] { 1, 2, 3, 4 }, semesters.Select(s => s.Id));
+    }
+
+    [Fact]
+    public async Task GetSemestersByCurriculumVersionAsync_ReturnsEmpty_WhenVersionHasNoOfferings()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedVersion(ctx);
         });
 
         var service = CreateService(db);
@@ -90,51 +93,40 @@ public class ExamScheduleServiceTests
 
         schedule.ExamScheduleName = "Renamed";
 
-        await service.UpdateExamScheduleAsync(schedule);
+        var semesters = await service.GetSemestersByCurriculumVersionAsync(VersionId);
 
-        Assert.Equal("Renamed", db.Context.ExamSchedules.First().ExamScheduleName);
+        Assert.Empty(semesters);
     }
 
     [Fact]
-    public async Task UpdateExamScheduleAsync_Throws_WhenEndDateChangedToPast()
+    public async Task GetSelectListDataAsync_UsesVersionDerivedSemesters_WhenScheduleHasCurriculumVersion()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.ExamSchedules.Add(NewSchedule(Today.AddDays(1), Today.AddDays(10), id: 1));
+            SeedVersion(ctx);
+            AssignOfferings(ctx, VersionId, 102, 103, 104);
         });
 
         var service = CreateService(db);
-        var schedule = await service.GetExamScheduleByIdAsync(1);
-        Assert.NotNull(schedule);
+        var schedule = TestData.Schedule(31, 2, TestData.Regular, null, null);
+        schedule.CurriculumVersionId = VersionId;
 
-        schedule.StartDate = null;
-        schedule.EndDate = Today.AddDays(-1);
+        var dto = await service.GetSelectListDataAsync(schedule);
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.UpdateExamScheduleAsync(schedule));
-
-        Assert.Contains("End date cannot be in the past", ex.Message);
+        Assert.Equal(new[] { 2, 3, 4 }, dto.Semesters.Select(s => s.Id));
+        Assert.Contains(dto.CurriculumVersions, v => v.Id == VersionId);
     }
 
     [Fact]
-    public async Task UpdateExamScheduleAsync_Throws_WhenStartDateAfterEndDate()
-    {
-        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+    public async Task GetSelectListDataAsync_FallsBackToAcademicYearSemesters_WhenScheduleHasNoCurriculumVersion()
         {
-            TestData.SeedBase(ctx);
-            ctx.ExamSchedules.Add(NewSchedule(Today.AddDays(1), Today.AddDays(10), id: 1));
-        });
-
+        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
         var service = CreateService(db);
-        var schedule = await service.GetExamScheduleByIdAsync(1);
-        Assert.NotNull(schedule);
+        var schedule = TestData.Schedule(31, 2, TestData.Regular, null, null);
 
-        schedule.EndDate = Today.AddDays(0);
+        var dto = await service.GetSelectListDataAsync(schedule);
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.UpdateExamScheduleAsync(schedule));
-
-        Assert.Contains("Start date cannot be after end date", ex.Message);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5, 6 }, dto.Semesters.Select(s => s.Id));
     }
 }

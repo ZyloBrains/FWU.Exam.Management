@@ -59,6 +59,12 @@
         </div>
 
         <div class="flex items-center gap-4 pt-6 mt-4 border-t border-gray-200">
+            @if (HasPerm("curriculumversions.create"))
+            {
+                <a asp-action="Copy" asp-area="Subjects" asp-route-id="@Model?.Id" class="px-6 py-2 bg-emerald-500 text-white text-sm font-semibold rounded-lg hover:bg-emerald-600 transition shadow-md">
+                    <i class="fas fa-copy mr-1"></i> Copy to New Academic Year
+                </a>
+            }
             @if (HasPerm("curriculumversions.edit"))
             {
                 <a asp-action="Edit" asp-area="Subjects" asp-route-id="@Model?.Id" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
@@ -69,5 +75,99 @@
                 Back to List
             </a>
         </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-base font-bold text-gray-800">Subjects in this Curriculum</h2>
+                <p class="text-xs text-gray-500 mt-0.5">
+                    <span class="font-semibold text-gray-700">@(ViewBag.SubjectCount ?? 0)</span> subject offering(s) across semesters
+                </p>
+            </div>
+            @if (HasPerm("subjectofferings.create"))
+            {
+                <a asp-area="Subjects" asp-controller="CurriculumVersions" asp-action="Manage" asp-route-id="@Model!.Id" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    <i class="fas fa-pen text-xs"></i> Manage Subjects
+                </a>
+            }
+        </div>
+
+        @{
+            var offerings = (List<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>)(ViewBag.SubjectOfferings ?? new List<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>());
+            var bySemester = offerings
+                .GroupBy(o => o.Semester?.Number ?? 0)
+                .OrderBy(g => g.Key)
+                .ToList();
+        }
+
+        @if (bySemester.Any())
+        {
+            <div class="space-y-5">
+                @foreach (var group in bySemester)
+                {
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">
+                            Semester @group.Key
+                            <span class="text-xs font-normal text-gray-400 ml-1">(@group.Count() subject(s))</span>
+                        </h3>
+                        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">#</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Code</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Subject</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Type</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Credits</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase text-right">Theory</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase text-right">Practical</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase text-right">Internal</th>
+                                        <th class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase text-center">Compulsory</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @{
+                                        int idx = 0;
+                                    }
+                                    @foreach (var o in group.OrderBy(o => o.DisplayOrder).ThenBy(o => o.SubjectCatalog?.SubjectName))
+                                    {
+                                        idx++;
+                                        <tr class="hover:bg-gray-50 transition-colors">
+                                            <td class="px-3 py-2 text-gray-500">@idx</td>
+                                            <td class="px-3 py-2 font-mono text-indigo-600">@(o.SubjectCatalog?.SubjectCode ?? "-")</td>
+                                            <td class="px-3 py-2 font-medium text-gray-800">@(o.SubjectCatalog?.SubjectName ?? "-")</td>
+                                            <td class="px-3 py-2 text-gray-600">@(o.SubjectCatalog?.SubjectType?.Name ?? "-")</td>
+                                            <td class="px-3 py-2 text-gray-600">@(o.SubjectCatalog?.CreditHours.HasValue == true ? o.SubjectCatalog.CreditHours + " cr" : "-")</td>
+                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasTheory ? o.TheoryFullMarks.ToString() : "-")</td>
+                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasPractical ? (o.PracticalFullMarks?.ToString() ?? "-") : "-")</td>
+                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasInternal ? (((o.InternalTheoryFullMarks ?? 0) + (o.InternalPracticalFullMarks ?? 0)).ToString()) : "-")</td>
+                                            <td class="px-3 py-2 text-center">
+                                                @if (o.IsCompulsory)
+                                                {
+                                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-green-100 text-green-700 rounded-full"><i class="fas fa-check text-xs"></i></span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="inline-flex items-center justify-center w-5 h-5 bg-gray-100 text-gray-400 rounded-full"><i class="fas fa-minus text-xs"></i></span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-10 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                <i class="fas fa-book-open text-2xl mb-2 block text-gray-300"></i>
+                <p>No subjects assigned to this curriculum version yet.</p>
+                <p class="text-xs mt-1">Use "Manage Subjects" to add subject offerings under this version.</p>
+            </div>
+        }
     </div>
 </div>

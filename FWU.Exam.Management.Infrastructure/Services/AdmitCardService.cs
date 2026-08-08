@@ -89,11 +89,16 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
         if (admitCard.ExamSchedule != null)
         {
-            var subjectOfferings = await context.SubjectOfferings
+            var offeringQuery = context.SubjectOfferings
                 .AsNoTracking()
                 .Include(so => so.SubjectCatalog)
                 .Where(so => so.ProgramId == admitCard.ExamSchedule.ProgramId
-                          && so.SemesterId == admitCard.ExamSchedule.SemesterId)
+                          && so.SemesterId == admitCard.ExamSchedule.SemesterId);
+
+            if (admitCard.ExamSchedule.CurriculumVersionId is > 0)
+                offeringQuery = offeringQuery.Where(so => so.CurriculumVersionId == admitCard.ExamSchedule.CurriculumVersionId);
+
+            var subjectOfferings = await offeringQuery
                 .OrderBy(so => so.DisplayOrder)
                 .ToListAsync();
 

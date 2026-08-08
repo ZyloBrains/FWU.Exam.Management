@@ -72,11 +72,16 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         if (schedule == null) return new List<SubjectOffering>();
 
-        return await context.SubjectOfferings!
+        var query = context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .ThenInclude(sc => sc!.SubjectType)
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId)
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
+
+        if (schedule.CurriculumVersionId is > 0)
+            query = query.Where(so => so.CurriculumVersionId == schedule.CurriculumVersionId);
+
+        return await query
             .OrderBy(so => so.DisplayOrder)
             .ToListAsync();
     }
@@ -90,6 +95,12 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(so => so.SubjectCatalog)
             .Include(so => so.Semester)
             .Where(so => so.ProgramId == programId);
+
+        var activeVersionId = await context.CurriculumVersions!
+            .AsNoTracking()
+            .Where(cv => cv.ProgramId == programId && cv.IsActive)
+            .Select(cv => (int?)cv.Id)
+            .FirstOrDefaultAsync();
 
         var academicYearId = admission?.AcademicYearId;
 
@@ -106,6 +117,15 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
             if (enrolledSemesterId.HasValue)
             {
+                if (activeVersionId.HasValue)
+                {
+                    return await query
+                        .Where(so => so.SemesterId == enrolledSemesterId.Value
+                                  && so.CurriculumVersionId == activeVersionId.Value)
+                        .OrderBy(so => so.DisplayOrder)
+                        .ToListAsync();
+                }
+
                 return await query
                     .Where(so => so.SemesterId == enrolledSemesterId.Value)
                     .OrderBy(so => so.DisplayOrder)

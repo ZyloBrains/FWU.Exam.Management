@@ -139,6 +139,103 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_ReturnsOnlyOfferingsOfScheduleVersion()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 5,
+                TenantId = TestData.TenantId,
+                Name = "Default - BCA (2081)",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+            ctx.SubjectOfferings.Local.First(o => o.Id == 101).CurriculumVersionId = 5;
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 5;
+            ctx.SubjectOfferings.Local.First(o => o.Id == 103).CurriculumVersionId = 5;
+
+            var schedule = TestData.Schedule(31, 2, TestData.Regular, Past, null);
+            schedule.CurriculumVersionId = 5;
+            ctx.ExamSchedules.Add(schedule);
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        var offering = Assert.Single(offerings);
+        Assert.Equal(102, offering.Id);
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_ReturnsAllSemesterOfferings_WhenScheduleHasNoVersion()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.SubjectOfferings.Add(TestData.Offering(210, 2, TestData.ProgramId));
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        Assert.Equal(new[] { 102, 210 }, offerings.Select(o => o.Id).OrderBy(id => id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForStudentAsync_ReturnsActiveVersionOfferingsForEnrolledSemester()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 5,
+                TenantId = TestData.TenantId,
+                Name = "Default - BCA (2081)",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 5;
+            ctx.SubjectOfferings.Add(TestData.Offering(210, 2, TestData.ProgramId));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForStudentAsync(UserId, TestData.ProgramId);
+
+        var offering = Assert.Single(offerings);
+        Assert.Equal(102, offering.Id);
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForStudentAsync_FallsBackToAllSemesterOfferings_WhenNoActiveVersion()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SubjectOfferings.Add(TestData.Offering(210, 2, TestData.ProgramId));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForStudentAsync(UserId, TestData.ProgramId);
+
+        Assert.Equal(new[] { 102, 210 }, offerings.Select(o => o.Id).OrderBy(id => id));
+    }
+
+    [Fact]
     public async Task GetResultRecordsAsync_LoadsExamScheduleBelongingToAnotherTenant()
     {
         using var db = new TestDb(TestTenantContext.Standard(2), ctx =>
