@@ -6,7 +6,6 @@ public class SemesterEnrollmentListItemDto
 {
     public int Id { get; set; }
     public string? StudentName { get; set; }
-    public string? RegistrationNumber { get; set; }
     public string? CollegeRollNumber { get; set; }
     public string? ProgramName { get; set; }
     public string? CollegeName { get; set; }

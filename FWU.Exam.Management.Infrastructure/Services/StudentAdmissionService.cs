@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext) : IStudentAdmissionService
+public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> userManager, IUserContext userContext, ISemesterEnrollmentService semesterEnrollmentService) : IStudentAdmissionService
 {
     public async Task<(List<StudentAdmission> Items, int TotalCount)> GetAdmissionsAsync(int page, int pageSize, string? search, string sort, string sortDir)
     {
@@ -53,10 +53,11 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
             .FirstOrDefaultAsync(sa => sa.Id == id);
     }
 
-    public async Task CreateAdmissionAsync(StudentAdmission admission)
+    public async Task<int> CreateAdmissionAsync(StudentAdmission admission)
     {
         context.StudentAdmissions.Add(admission);
         await context.SaveChangesAsync();
+        return admission.Id;
     }
 
     public async Task UpdateAdmissionAsync(StudentAdmission admission)
@@ -82,11 +83,15 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
 
     public async Task CompleteAdmissionAsync(int id, string userId)
     {
-        var admission = await context.StudentAdmissions.FindAsync(id);
+        var admission = await context.StudentAdmissions
+            .FirstOrDefaultAsync(sa => sa.Id == id);
         if (admission != null)
         {
             admission.IsCompleted = true;
             admission.CheckedBy = int.TryParse(userId, out var parsed) ? parsed : null;
+
+            await semesterEnrollmentService.EnrollInFirstSemesterAsync(admission.Id);
+
             await context.SaveChangesAsync();
         }
     }
@@ -133,6 +138,7 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
             .AsNoTracking()
             .Include(sr => sr.Program)
             .Where(sr => sr.CollegeId == collegeId && sr.IsActive)
+            .Where(sr => sr.StudentAdmissionId == null)
             .Where(sr => sr.Email != null && !admittedEmails.Contains(sr.Email))
             .OrderBy(sr => sr.RegistrationNumber)
             .ToListAsync();

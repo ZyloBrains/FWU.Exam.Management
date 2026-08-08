@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260807162810_EnforceStudentAdmissionRegistrationOneToOne")]
+    partial class EnforceStudentAdmissionRegistrationOneToOne
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3485,35 +3488,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("ContactNumber")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
-
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("DateOfBirthAD")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("DateOfBirthBS")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.Property<int?>("GenderId")
-                        .HasColumnType("int");
 
                     b.Property<bool>("HasFeeExemption")
                         .HasColumnType("bit");
@@ -3523,23 +3502,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("MiddleName")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("NepaliName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
 
                     b.Property<int>("ProgramsId")
                         .HasColumnType("int");
@@ -5115,7 +5077,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasForeignKey("ProgramsId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment", "SemesterEnrollment")
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment", null)
                         .WithMany("ExamRegistrations")
                         .HasForeignKey("SemesterEnrollmentId");
 
@@ -5136,8 +5098,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("ExamSchedule");
 
                     b.Navigation("Program");
-
-                    b.Navigation("SemesterEnrollment");
 
                     b.Navigation("Tenant");
                 });

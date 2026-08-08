@@ -142,6 +142,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
     public async Task CreateExamScheduleAsync(ExamSchedule examSchedule)
     {
+        ValidateScheduleDates(examSchedule, existing: null);
         context.ExamSchedules.Add(examSchedule);
         await context.SaveChangesAsync();
     }
@@ -151,6 +152,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var existing = await context.ExamSchedules.FindAsync(examSchedule.Id);
         if (existing == null)
             throw new InvalidOperationException("Exam schedule not found.");
+
+        ValidateScheduleDates(examSchedule, existing);
 
         if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
         {
@@ -174,6 +177,30 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         context.Entry(existing).CurrentValues.SetValues(examSchedule);
         await context.SaveChangesAsync();
+    }
+
+    private static void ValidateScheduleDates(ExamSchedule schedule, ExamSchedule? existing)
+    {
+        if (schedule.StartDate.HasValue && schedule.EndDate.HasValue
+            && schedule.StartDate.Value > schedule.EndDate.Value)
+        {
+            throw new InvalidOperationException("Start date cannot be after end date.");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var startChanged = existing == null || schedule.StartDate != existing.StartDate;
+        var endChanged = existing == null || schedule.EndDate != existing.EndDate;
+
+        if (startChanged && schedule.StartDate.HasValue && schedule.StartDate.Value < today)
+        {
+            throw new InvalidOperationException("Start date cannot be in the past.");
+        }
+
+        if (endChanged && schedule.EndDate.HasValue && schedule.EndDate.Value < today)
+        {
+            throw new InvalidOperationException("End date cannot be in the past.");
+        }
     }
 
     public async Task DeleteExamScheduleAsync(int id)

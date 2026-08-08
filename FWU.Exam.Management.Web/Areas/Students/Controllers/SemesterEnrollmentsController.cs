@@ -84,53 +84,6 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return View(enrollment);
     }
 
-    public async Task<IActionResult> Create(int? studentAdmissionId = null)
-    {
-        ViewBag.StudentAdmissionId = await GetAdmissionSelectListAsync(studentAdmissionId);
-
-        ViewBag.SemesterId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
-        ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>());
-        ViewBag.AcademicYearId = await GetAcademicYearsAsync();
-        ViewBag.StudentAdmissionIdValue = studentAdmissionId;
-
-        if (studentAdmissionId.HasValue)
-        {
-            var admission = await context.StudentAdmissions
-                .AsNoTracking()
-                .Include(a => a.Program)
-                .FirstOrDefaultAsync(a => a.Id == studentAdmissionId.Value);
-            if (admission?.Program != null)
-            {
-                var semesters = await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId);
-                ViewBag.SemesterId = SemesterSelectList(semesters, admission.Program.ShortName);
-            }
-        }
-
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(SemesterEnrollment enrollment)
-    {
-        if (ModelState.IsValid)
-        {
-            await enrollmentService.CreateEnrollmentAsync(enrollment);
-            TempData["SuccessMessage"] = "Semester enrollment created successfully!";
-            return RedirectToAction(nameof(Index));
-        }
-
-        ViewBag.StudentAdmissionId = await GetAdmissionSelectListAsync(enrollment.StudentAdmissionId);
-        ViewBag.AcademicYearId = await GetAcademicYearsAsync();
-
-        var selectedAdmission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
-        var semesters = await enrollmentService.GetSemestersByProgramAsync(selectedAdmission?.ProgramsId ?? 0);
-        ViewBag.SemesterId = SemesterSelectList(semesters, selectedAdmission?.Program?.ShortName, enrollment.SemesterId);
-        ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);
-
-        return View(enrollment);
-    }
-
     public async Task<IActionResult> BatchCreate(string search = "", int page = 1, int pageSize = 25, int? academicYearId = null, int? collegeId = null, int? programId = null, int? semesterId = null)
     {
         ViewBag.Search = search;
@@ -173,7 +126,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BatchCreate(List<int> admissionIds, int semesterId, string enrollAction = "selected", string search = "", int? academicYearId = null, int? collegeId = null, int? programId = null)
+    public async Task<IActionResult> BatchCreate(List<int> admissionIds, int semesterId, EnrollmentType? enrollmentType = null, string enrollAction = "selected", string search = "", int? academicYearId = null, int? collegeId = null, int? programId = null)
     {
         if (semesterId <= 0)
         {
@@ -183,7 +136,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
         if (enrollAction == "all")
         {
-            var (created, skipped) = await enrollmentService.BulkCreateAllEnrollmentsAsync(search, academicYearId, collegeId, programId, semesterId);
+            var (created, skipped) = await enrollmentService.BulkCreateAllEnrollmentsAsync(search, academicYearId, collegeId, programId, semesterId, enrollmentType);
             TempData["SuccessMessage"] = created > 0
                 ? $"{created} matching student(s) enrolled in the selected semester." + (skipped > 0 ? $" {skipped} already enrolled and skipped." : "")
                 : (skipped > 0 ? $"All {skipped} matching student(s) were already enrolled in this semester." : "No matching students found to enroll.");
@@ -196,7 +149,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             return RedirectToAction(nameof(BatchCreate), new { search, academicYearId, collegeId, programId, semesterId });
         }
 
-        var (createdSelected, skippedSelected) = await enrollmentService.BulkCreateEnrollmentsAsync(admissionIds, semesterId);
+        var (createdSelected, skippedSelected) = await enrollmentService.BulkCreateEnrollmentsAsync(admissionIds, semesterId, enrollmentType);
         TempData["SuccessMessage"] = createdSelected > 0
             ? $"{createdSelected} student(s) enrolled in the selected semester." + (skippedSelected > 0 ? $" {skippedSelected} already enrolled and skipped." : "")
             : (skippedSelected > 0 ? $"All {skippedSelected} selected student(s) were already enrolled in this semester." : "No students were enrolled.");
@@ -278,84 +231,6 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         }
     }
 
-    [HttpGet]
-    public async Task<JsonResult> GetSemestersByAdmission(int admissionId)
-    {
-        var admission = await context.StudentAdmissions
-            .AsNoTracking()
-            .Include(a => a.Program)
-            .FirstOrDefaultAsync(a => a.Id == admissionId);
-
-        if (admission == null) return Json(new List<object>());
-
-        var semesters = await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId);
-        return Json(semesters.Select(s => new { id = s.Id, name = SemesterDisplayHelper.FormatForProgram(s, admission.Program?.ShortName) }));
-    }
-
-    [HttpGet]
-    public async Task<JsonResult> SearchAdmissions(string? q = null, int pageSize = 20, int? academicYearId = null)
-    {
-        var query = context.StudentAdmissions
-            .AsNoTracking()
-            .Where(sa => sa.IsActive);
-
-        if (academicYearId.HasValue)
-            query = query.Where(sa => sa.AcademicYearId == academicYearId.Value);
-
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            query = query.Where(sa =>
-                (sa.CollegeRollNumber != null && sa.CollegeRollNumber.Contains(q)) ||
-                (sa.Program != null && sa.Program.ProgramName.Contains(q)) ||
-                (sa.College != null && sa.College.Name.Contains(q)) ||
-                context.StudentRegistrations.Any(r =>
-                    r.StudentAdmissionId == sa.Id &&
-                    ((r.FirstName + (r.MiddleName != null ? " " + r.MiddleName : "") + (r.LastName != null ? " " + r.LastName : "")).Contains(q) ||
-                     (r.RegistrationNumber != null && r.RegistrationNumber.Contains(q)))));
-        }
-
-        if (!userContext.IsSuperAdmin && userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
-            query = query.Where(sa => sa.CollegeId == userContext.CollegeId.Value);
-
-        var data = await query
-            .OrderBy(sa => sa.CollegeRollNumber)
-            .Take(pageSize)
-            .Select(sa => new
-            {
-                sa.Id,
-                sa.CollegeRollNumber,
-                ProgramName = sa.Program != null ? sa.Program.ProgramName : null,
-                CollegeName = sa.College != null ? sa.College.Name : null,
-                StudentName = context.StudentRegistrations
-                    .Where(r => r.StudentAdmissionId == sa.Id)
-                    .Select(r => r.FirstName + (r.MiddleName != null ? " " + r.MiddleName : "") + (r.LastName != null ? " " + r.LastName : ""))
-                    .FirstOrDefault(),
-                RegistrationNumber = context.StudentRegistrations
-                    .Where(r => r.StudentAdmissionId == sa.Id)
-                    .Select(r => r.RegistrationNumber)
-                    .FirstOrDefault()
-            })
-            .ToListAsync();
-
-        var results = data.Select(sa =>
-        {
-            var parts = new List<string>();
-            if (!string.IsNullOrWhiteSpace(sa.StudentName))
-                parts.Add(string.IsNullOrWhiteSpace(sa.RegistrationNumber)
-                    ? sa.StudentName
-                    : $"{sa.StudentName} ({sa.RegistrationNumber})");
-            if (!string.IsNullOrWhiteSpace(sa.CollegeRollNumber))
-                parts.Add(sa.CollegeRollNumber);
-            if (!string.IsNullOrWhiteSpace(sa.ProgramName))
-                parts.Add(sa.ProgramName);
-            if (!string.IsNullOrWhiteSpace(sa.CollegeName))
-                parts.Add($"({sa.CollegeName})");
-            return new { id = sa.Id, text = string.Join(" - ", parts) };
-        });
-
-        return Json(new { results });
-    }
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RunPromotion()
@@ -372,11 +247,11 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         var items = await enrollmentService.GetFilteredItemsAsync(page, pageSize, search, sort, sortDir, admissionId, collegeId, programId, semesterId, academicYearId);
 
         var sb = new StringBuilder();
-        sb.AppendLine("S.N.,Student Name,Registration No,Roll Number,Program,College,Semester,Academic Year,Status,Type,Payment,Total Fee,Total Credits,Result");
+        sb.AppendLine("S.N.,Student Name,Roll Number,Program,College,Semester,Academic Year,Status,Type,Payment,Total Fee,Total Credits,Result");
         int sn = 1;
         foreach (var e in items)
         {
-            sb.AppendLine($"{sn++},{EscapeCsv(e.StudentName)},{EscapeCsv(e.RegistrationNumber)},{EscapeCsv(e.CollegeRollNumber)},{EscapeCsv(e.ProgramName)},{EscapeCsv(e.CollegeName)},{EscapeCsv(e.SemesterName)},{EscapeCsv(e.AcademicYearName)},{e.EnrollmentStatus},{e.EnrollmentType},{e.PaymentStatus},{e.TotalFee},{e.TotalCredits},{e.ResultStatus}");
+            sb.AppendLine($"{sn++},{EscapeCsv(e.StudentName)},{EscapeCsv(e.CollegeRollNumber)},{EscapeCsv(e.ProgramName)},{EscapeCsv(e.CollegeName)},{EscapeCsv(e.SemesterName)},{EscapeCsv(e.AcademicYearName)},{e.EnrollmentStatus},{e.EnrollmentType},{e.PaymentStatus},{e.TotalFee},{e.TotalCredits},{e.ResultStatus}");
         }
 
         return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"SemesterEnrollments_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
@@ -390,7 +265,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("SemesterEnrollments");
 
-        var headers = new[] { "S.N.", "Student Name", "Registration No", "Roll Number", "Program", "College", "Semester", "Academic Year", "Status", "Type", "Payment", "Total Fee", "Total Credits", "Result" };
+        var headers = new[] { "S.N.", "Student Name", "Roll Number", "Program", "College", "Semester", "Academic Year", "Status", "Type", "Payment", "Total Fee", "Total Credits", "Result" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -405,18 +280,17 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         {
             worksheet.Cell(row, 1).Value = sn++;
             worksheet.Cell(row, 2).Value = e.StudentName ?? "";
-            worksheet.Cell(row, 3).Value = e.RegistrationNumber ?? "";
-            worksheet.Cell(row, 4).Value = e.CollegeRollNumber ?? "";
-            worksheet.Cell(row, 5).Value = e.ProgramName ?? "";
-            worksheet.Cell(row, 6).Value = e.CollegeName ?? "";
-            worksheet.Cell(row, 7).Value = e.SemesterName ?? "";
-            worksheet.Cell(row, 8).Value = e.AcademicYearName ?? "";
-            worksheet.Cell(row, 9).Value = e.EnrollmentStatus.ToString();
-            worksheet.Cell(row, 10).Value = e.EnrollmentType.ToString();
-            worksheet.Cell(row, 11).Value = e.PaymentStatus.ToString();
-            worksheet.Cell(row, 12).Value = e.TotalFee;
-            worksheet.Cell(row, 13).Value = e.TotalCredits;
-            worksheet.Cell(row, 14).Value = e.ResultStatus.ToString();
+            worksheet.Cell(row, 3).Value = e.CollegeRollNumber ?? "";
+            worksheet.Cell(row, 4).Value = e.ProgramName ?? "";
+            worksheet.Cell(row, 5).Value = e.CollegeName ?? "";
+            worksheet.Cell(row, 6).Value = e.SemesterName ?? "";
+            worksheet.Cell(row, 7).Value = e.AcademicYearName ?? "";
+            worksheet.Cell(row, 8).Value = e.EnrollmentStatus.ToString();
+            worksheet.Cell(row, 9).Value = e.EnrollmentType.ToString();
+            worksheet.Cell(row, 10).Value = e.PaymentStatus.ToString();
+            worksheet.Cell(row, 11).Value = e.TotalFee;
+            worksheet.Cell(row, 12).Value = e.TotalCredits;
+            worksheet.Cell(row, 13).Value = e.ResultStatus.ToString();
             row++;
         }
 
@@ -457,44 +331,6 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         ViewData["SemesterFilter"] = new SelectList(
             await semesterQuery.OrderBy(s => s.Number).Select(s => new { s.Id, s.Name }).ToListAsync(), "Id", "Name", semesterId);
         ViewData["AcademicYearFilter"] = await GetAcademicYearsAsync(academicYearId);
-    }
-
-    private async Task<SelectList> GetAdmissionSelectListAsync(int? selectedId)
-    {
-        if (selectedId.HasValue)
-        {
-            var admission = await context.StudentAdmissions
-                .Include(a => a.Program)
-                .Include(a => a.College)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(a => a.Id == selectedId.Value);
-            if (admission != null)
-            {
-                var registration = await context.StudentRegistrations
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.StudentAdmissionId == admission.Id);
-
-                var parts = new List<string>();
-                var name = string.Join(" ", new[] { registration?.FirstName, registration?.MiddleName, registration?.LastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
-                if (!string.IsNullOrWhiteSpace(name))
-                    parts.Add(string.IsNullOrWhiteSpace(registration?.RegistrationNumber)
-                        ? name
-                        : $"{name} ({registration.RegistrationNumber})");
-                if (!string.IsNullOrWhiteSpace(admission.CollegeRollNumber))
-                    parts.Add(admission.CollegeRollNumber);
-                if (!string.IsNullOrWhiteSpace(admission.Program?.ProgramName))
-                    parts.Add(admission.Program.ProgramName);
-                if (!string.IsNullOrWhiteSpace(admission.College?.Name))
-                    parts.Add($"({admission.College.Name})");
-
-                return new SelectList(new[]
-                {
-                    new { id = admission.Id, text = string.Join(" - ", parts) }
-                }, "id", "text", admission.Id);
-            }
-        }
-
-        return new SelectList(Enumerable.Empty<object>(), "id", "text");
     }
 
     private async Task<SelectList> GetAcademicYearsAsync(int? selectedId = null)

@@ -259,6 +259,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             var existingRegistration = await context.StudentRegistrations
                 .FirstOrDefaultAsync(sr => sr.Email == application.Email);
 
+            StudentRegistration? registration = existingRegistration;
             int studentRegistrationId;
             if (existingRegistration != null)
             {
@@ -266,7 +267,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             }
             else
             {
-                var registration = new StudentRegistration
+                registration = new StudentRegistration
                 {
                     AcademicYearId = application.AcademicYearId,
                     CollegeId = application.CollegeId,
@@ -301,6 +302,12 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
 
             if (existingAdmission != null)
             {
+                if (registration != null && registration.StudentAdmissionId != existingAdmission.Id)
+                {
+                    registration.StudentAdmissionId = existingAdmission.Id;
+                    await context.SaveChangesAsync();
+                }
+
                 await transaction.CommitAsync();
                 return existingAdmission.Id;
             }
@@ -315,11 +322,27 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                 IsActive = true,
                 IsCompleted = false,
                 AppUserId = appUser?.Id,
+                FirstName = application.FirstName ?? string.Empty,
+                MiddleName = application.MiddleName,
+                LastName = application.LastName ?? string.Empty,
+                NepaliName = application.NepaliName,
+                DateOfBirthBS = application.DateOfBirthBS,
+                DateOfBirthAD = application.DateOfBirthAD,
+                GenderId = application.GenderId,
+                ContactNumber = application.ContactNumber,
+                Phone = application.Phone,
+                Email = application.Email,
                 CollegeRollNumber = await GenerateCollegeRollNumberAsync(application.CollegeId, application.ProgramId)
             };
 
             context.StudentAdmissions.Add(admission);
             await context.SaveChangesAsync();
+
+            if (registration != null)
+            {
+                registration.StudentAdmissionId = admission.Id;
+                await context.SaveChangesAsync();
+            }
 
             await transaction.CommitAsync();
             return admission.Id;

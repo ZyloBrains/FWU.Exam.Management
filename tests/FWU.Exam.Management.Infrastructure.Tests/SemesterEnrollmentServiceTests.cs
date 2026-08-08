@@ -39,6 +39,9 @@ public class SemesterEnrollmentServiceTests
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1));
         });
         var service = CreateService(db);
 
@@ -116,6 +119,9 @@ public class SemesterEnrollmentServiceTests
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1));
         });
         var service = CreateService(db);
 
@@ -137,6 +143,9 @@ public class SemesterEnrollmentServiceTests
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId, TestData.ProgramIdOther));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(21, 2, TestData.Regular, Past, PastDateTime, TestData.ProgramIdOther));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email, TestData.ProgramIdOther));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramIdOther, semesterEnrollmentId: 1));
         });
         var service = CreateService(db);
 
@@ -156,6 +165,9 @@ public class SemesterEnrollmentServiceTests
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1));
         });
         var service = CreateService(db);
 
@@ -191,6 +203,26 @@ public class SemesterEnrollmentServiceTests
             Assert.Equal(ResultStatus.Incomplete, se.ResultStatus);
             Assert.Equal(TestData.TenantId, se.TenantId);
         });
+    }
+
+    [Fact]
+    public async Task BulkCreateEnrollmentsAsync_RespectsProvidedEnrollmentType()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.StudentAdmissions.Add(TestData.Admission(2, UserId));
+        });
+        var service = CreateService(db);
+
+        var (created, skipped) = await service.BulkCreateEnrollmentsAsync([1, 2], 2, EnrollmentType.PartTime);
+
+        Assert.Equal(2, created);
+        Assert.Equal(0, skipped);
+        Assert.All(db.Context.SemesterEnrollments!.Where(se => se.SemesterId == 2), se =>
+            Assert.Equal(EnrollmentType.PartTime, se.EnrollmentType));
     }
 
     [Fact]
@@ -321,15 +353,12 @@ public class SemesterEnrollmentServiceTests
     }
 
     [Fact]
-    public async Task GetEnrollmentCandidatesAsync_ReturnsStudentsWithRegistrationAndEnrollmentFlag()
+    public async Task GetEnrollmentCandidatesAsync_ReturnsStudentsWithEnrollmentFlag()
     {
         using var db = new TestDb(TestTenantContext.Central(), ctx =>
         {
             TestData.SeedBase(ctx);
             SeedPromotionBase(ctx);
-            var reg = TestData.StudentRegistration(1, Email);
-            reg.StudentAdmissionId = 1;
-            ctx.StudentRegistrations.Add(reg);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.StudentAdmissions.Add(TestData.Admission(2, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
@@ -343,10 +372,103 @@ public class SemesterEnrollmentServiceTests
         Assert.True(candidates.Single(c => c.AdmissionId == 1).IsEnrolled);
         Assert.False(candidates.Single(c => c.AdmissionId == 2).IsEnrolled);
 
-        var withReg = candidates.Single(c => c.StudentName != null);
-        Assert.Equal("Test Student", withReg.StudentName);
-        Assert.Equal("REG1", withReg.RegistrationNumber);
-        Assert.Equal("2081", withReg.AcademicYearName);
-        Assert.Equal("ROLL1", withReg.CollegeRollNumber);
+        var named = candidates.Single(c => c.AdmissionId == 1);
+        Assert.Equal("Test Student", named.StudentName);
+        Assert.Equal("2081", named.AcademicYearName);
+        Assert.Equal("ROLL1", named.CollegeRollNumber);
+    }
+
+    [Fact]
+    public async Task PromoteCompletedSemestersAsync_DoesNotPromote_WhenNoExamFormSubmitted()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+        });
+
+        var service = CreateService(db);
+
+        var created = await service.PromoteCompletedSemestersAsync();
+
+        Assert.Equal(0, created);
+    }
+
+    [Fact]
+    public async Task PromoteCompletedSemestersAsync_DoesNotPromote_WhenExamFormRejected()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+            ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, PastDateTime));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+            var reg = TestData.ExamRegistration(1, 21, 1, TestData.ProgramId, semesterEnrollmentId: 1);
+            reg.Status = RegistrationStatus.Rejected;
+            ctx.ExamRegistrations.Add(reg);
+        });
+
+        var service = CreateService(db);
+
+        var created = await service.PromoteCompletedSemestersAsync();
+
+        Assert.Equal(0, created);
+    }
+
+    [Fact]
+    public async Task EnrollInFirstSemesterAsync_CreatesFirstSemesterEnrollment()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+        });
+        var service = CreateService(db);
+
+        var created = await service.EnrollInFirstSemesterAsync(1);
+
+        Assert.True(created);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(1, enrollment.StudentAdmissionId);
+        Assert.Equal(1, enrollment.SemesterId);
+        Assert.Equal(StudentEnrollmentStatus.Active, enrollment.EnrollmentStatus);
+    }
+
+    [Fact]
+    public async Task EnrollInFirstSemesterAsync_IsIdempotent()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedPromotionBase(ctx);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+        });
+        var service = CreateService(db);
+
+        var created = await service.EnrollInFirstSemesterAsync(1);
+
+        Assert.False(created);
+        var enrollment = Assert.Single(db.Context.SemesterEnrollments!);
+        Assert.Equal(1, enrollment.SemesterId);
+    }
+
+    [Fact]
+    public async Task EnrollInFirstSemesterAsync_ReturnsFalse_WhenAdmissionNotFound()
+    {
+        using var db = new TestDb(TestTenantContext.Central(), ctx => TestData.SeedBase(ctx));
+        var service = CreateService(db);
+
+        var created = await service.EnrollInFirstSemesterAsync(999);
+
+        Assert.False(created);
+        Assert.Empty(db.Context.SemesterEnrollments!);
     }
 }

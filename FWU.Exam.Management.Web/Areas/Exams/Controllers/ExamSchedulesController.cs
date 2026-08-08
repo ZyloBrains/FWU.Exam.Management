@@ -307,9 +307,16 @@ public class ExamSchedulesController(
     {
         if (ModelState.IsValid)
         {
-            await examScheduleService.CreateExamScheduleAsync(examSchedule);
-            TempData["SuccessMessage"] = "Exam schedule created successfully!";
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await examScheduleService.CreateExamScheduleAsync(examSchedule);
+                TempData["SuccessMessage"] = "Exam schedule created successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync();
         PopulateDropdowns(selectLists, examSchedule);
