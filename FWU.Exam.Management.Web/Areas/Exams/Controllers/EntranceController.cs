@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
@@ -5,6 +6,7 @@ using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -553,6 +555,39 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             $"EntranceApplications_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
     }
 
+    [HttpGet]
+    [RequirePermission("entrance.export")]
+    public async Task<IActionResult> ExportToCsv(string? search = null, string? status = null, int? programId = null, int? academicYearId = null)
+    {
+        ApplicationStatus? statusFilter = null;
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
+            statusFilter = parsedStatus;
+
+        var data = await service.GetAllApplicationsAsync(search, statusFilter, programId, academicYearId);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Application ID,Full Name,Email,Contact Number,Gender,Academic Year,College,Program,Status,Submitted Date");
+        foreach (var item in data)
+        {
+            sb.AppendLine($"{item.Id},{(item.FirstName + " " + item.LastName).Trim().EscapeCsv()},{(item.Email ?? "").EscapeCsv()},{(item.ContactNumber ?? "").EscapeCsv()},{(item.Gender?.GenderName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.Status.ToString() ?? "").EscapeCsv()},{item.CreatedAt:yyyy-MM-dd HH:mm}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", $"EntranceApplications_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+    }
+
+    [HttpGet]
+    [RequirePermission("entrance.export")]
+    public async Task<IActionResult> ExportToPdf(string? search = null, string? status = null, int? programId = null, int? academicYearId = null)
+    {
+        ApplicationStatus? statusFilter = null;
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<ApplicationStatus>(status, out var parsedStatus))
+            statusFilter = parsedStatus;
+
+        var data = await service.GetAllApplicationsAsync(search, statusFilter, programId, academicYearId);
+        return View("PrintPdf", data);
+    }
+
     [HttpPost]
     [Authorize(Roles = Role.BackOfficeRoles)]
     [ValidateAntiForgeryToken]
@@ -619,9 +654,16 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
             model.ExamScheduleCode ??= $"ENT-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-            await examScheduleService.CreateExamScheduleAsync(model);
-            TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
-            return RedirectToAction(nameof(ManageSchedule));
+            try
+            {
+                await examScheduleService.CreateExamScheduleAsync(model);
+                TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
+                return RedirectToAction(nameof(ManageSchedule));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
         }
 
         PopulateScheduleDropdowns(sl, model);
@@ -655,9 +697,16 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
-            await examScheduleService.UpdateExamScheduleAsync(model);
-            TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
-            return RedirectToAction(nameof(ManageSchedule));
+            try
+            {
+                await examScheduleService.UpdateExamScheduleAsync(model);
+                TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
+                return RedirectToAction(nameof(ManageSchedule));
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
         }
 
         PopulateScheduleDropdowns(sl, model);

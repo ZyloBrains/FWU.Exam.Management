@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -168,7 +169,7 @@ public class RetotalRequestService(AppDbContext context, IUserContext userContex
         return new RetotalRequestSelectListsDto
         {
             ExamSchedules = examSchedules.Select(es => new SelectOption { Id = es.Id, Name = es.ExamScheduleName }).ToList(),
-            Students = students.Select(s => new SelectOption { Id = s.Id, Name = $"{s.FirstName} {s.LastName}" }).ToList(),
+            Students = students.Select(s => new SelectOption { Id = s.Id, Name = s.FirstName.GetFullName(s.LastName) }).ToList(),
             Subjects = subjects.Select(s => new SelectOption { Id = s.Id, Name = s.SubjectName }).ToList()
         };
     }

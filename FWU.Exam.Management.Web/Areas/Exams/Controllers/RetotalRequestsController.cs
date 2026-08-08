@@ -1,7 +1,9 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
@@ -131,21 +133,61 @@ public class RetotalRequestsController(
 
         foreach (var item in items)
         {
-            var studentName = item.StudentRegistration != null ? $"{item.StudentRegistration.FirstName} {item.StudentRegistration.LastName}" : "";
+            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName) : "";
             var subjectName = item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "";
             var reviewedDateStr = item.ReviewedDate?.ToString("yyyy-MM-dd") ?? "";
-            sb.AppendLine($"{item.Id},{EscapeCsv(studentName)},{EscapeCsv(subjectName)},{item.Status},{item.RequestedDate:yyyy-MM-dd},{item.FeePaid},{EscapeCsv(item.ReviewedByUsername ?? "")},{reviewedDateStr}");
+            sb.AppendLine($"{item.Id},{studentName.EscapeCsv()},{subjectName.EscapeCsv()},{item.Status},{item.RequestedDate:yyyy-MM-dd},{item.FeePaid},{(item.ReviewedByUsername ?? "").EscapeCsv()},{reviewedDateStr}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", "RetotalRequests.csv");
     }
 
-    private static string EscapeCsv(string? field)
+    public async Task<IActionResult> ExportToPdf(string? search = null)
     {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
+        var items = await retotalRequestService.GetFilteredItemsAsync(search);
+        return View("PrintPdf", items);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null)
+    {
+        var items = await retotalRequestService.GetFilteredItemsAsync(search);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("RetotalRequests");
+
+        var headers = new[] { "ID", "Student", "Subject", "Status", "Requested Date", "Fee Paid", "Reviewed By", "Reviewed Date" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            var studentName = item.StudentRegistration != null ? item.StudentRegistration.FirstName.GetFullName(item.StudentRegistration.LastName) : "";
+            var subjectName = item.ExamSubjectResult?.SubjectOffering?.SubjectCatalog?.SubjectName ?? "";
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = studentName;
+            worksheet.Cell(row, 3).Value = subjectName;
+            worksheet.Cell(row, 4).Value = item.Status.ToString();
+            worksheet.Cell(row, 5).Value = item.RequestedDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 6).Value = item.FeePaid;
+            worksheet.Cell(row, 7).Value = item.ReviewedByUsername ?? "";
+            worksheet.Cell(row, 8).Value = item.ReviewedDate?.ToString("yyyy-MM-dd") ?? "";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "RetotalRequests.xlsx");
+    }
+
 }

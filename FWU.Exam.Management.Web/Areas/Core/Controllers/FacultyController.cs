@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -66,13 +67,6 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return "\"" + field.Replace("\"", "\"\"") + "\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(string? search = null, string sort = "Name", string sortDir = "asc")
     {
@@ -107,7 +101,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
 
         foreach (var f in faculties)
         {
-            sb.AppendLine($"{EscapeCsv(f.Name)},{EscapeCsv(f.ShortName)},{EscapeCsv(f.OfficeCode)},{EscapeCsv(f.ContactNumber)},{EscapeCsv(f.Email)},{EscapeCsv(f.Address)}");
+            sb.AppendLine($"{f.Name.EscapeCsv()},{f.ShortName.EscapeCsv()},{f.OfficeCode.EscapeCsv()},{f.ContactNumber.EscapeCsv()},{f.Email.EscapeCsv()},{f.Address.EscapeCsv()}");
         }
 
         var fileName = $"Faculties_{DateTime.Now:yyyyMMdd_HHmmss}.csv";

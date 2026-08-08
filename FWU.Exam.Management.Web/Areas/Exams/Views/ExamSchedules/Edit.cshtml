@@ -22,7 +22,7 @@
 
     <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-300 p-8">
-        <form asp-action="Edit" asp-area="Exams" method="post" class="space-y-6">
+        <form asp-action="Edit" asp-area="Exams" method="post" id="examScheduleForm" class="space-y-6">
             <input type="hidden" asp-for="Id" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 

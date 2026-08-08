@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using ClosedXML.Excel;
@@ -32,13 +33,6 @@ public class BoardsController(IBoardService boardService, ICountryService countr
     }
 
     // Helper method to escape CSV fields
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     // Export to CSV (Current Page with pagination)
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "BoardName", string sortDir = "asc")
@@ -52,9 +46,9 @@ public class BoardsController(IBoardService boardService, ICountryService countr
 
         foreach (var b in items)
         {
-            sb.AppendLine($"{EscapeCsv(b.BoardName)}," +
-                           //$"{EscapeCsv(b.Country?.CountryName ?? "")}," +
-                           $"{EscapeCsv(b.Remarks)}," +
+            sb.AppendLine($"{b.BoardName.EscapeCsv()}," +
+                           //$"{(b.Country?.CountryName ?? "").EscapeCsv()}," +
+                           $"{b.Remarks.EscapeCsv()}," +
                            $"{(b.IsActive ? "Active" : "Inactive")}");
         }
 

@@ -1,8 +1,10 @@
 using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.Authorization;
@@ -157,27 +159,63 @@ public class AdmitCardsController(
         return View(admitCard);
     }
 
-    public async Task<IActionResult> ExportToCsv(string? search = null)
+    public async Task<IActionResult> ExportToCsv(string? search = null, int? examScheduleId = null)
     {
-        var items = await admitCardService.GetFilteredItemsAsync(search);
+        var items = await admitCardService.GetFilteredItemsAsync(search, examScheduleId);
 
         var sb = new StringBuilder();
         sb.AppendLine("ID,Admit Card Number,Exam Schedule,Generated Date,Downloaded,Is Active");
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.AdmitCardNumber ?? "")},{EscapeCsv(item.ExamSchedule?.ExamScheduleName ?? "")},{item.GeneratedDate:yyyy-MM-dd},{(item.IsDownloaded ? "Yes" : "No")},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{(item.AdmitCardNumber ?? "").EscapeCsv()},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{item.GeneratedDate:yyyy-MM-dd},{(item.IsDownloaded ? "Yes" : "No")},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
         return File(csvBytes, "text/csv", "AdmitCards.csv");
     }
 
-    private static string EscapeCsv(string? field)
+    public async Task<IActionResult> ExportToPdf(string? search = null, int? examScheduleId = null)
     {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
+        var items = await admitCardService.GetFilteredItemsAsync(search, examScheduleId);
+        return View("PrintPdf", items);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null, int? examScheduleId = null)
+    {
+        var items = await admitCardService.GetFilteredItemsAsync(search, examScheduleId);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("AdmitCards");
+
+        var headers = new[] { "ID", "Admit Card Number", "Exam Schedule", "Generated Date", "Downloaded", "Is Active" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.AdmitCardNumber ?? "";
+            worksheet.Cell(row, 3).Value = item.ExamSchedule?.ExamScheduleName ?? "";
+            worksheet.Cell(row, 4).Value = item.GeneratedDate.ToString("yyyy-MM-dd");
+            worksheet.Cell(row, 5).Value = item.IsDownloaded ? "Yes" : "No";
+            worksheet.Cell(row, 6).Value = item.IsActive ? "Yes" : "No";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "AdmitCards.xlsx");
+    }
+
 }

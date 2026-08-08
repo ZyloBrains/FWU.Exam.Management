@@ -24,14 +24,17 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a asp-action="ExportToCsv" asp-area="Exams" asp-route-search="@currentSearch" asp-route-collegeId="@ViewBag.CollegeId" asp-route-facultyId="@ViewBag.FacultyId"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                <i class="fas fa-file-csv text-xs"></i> Export CSV
-            </a>
-            <a asp-action="ExportToPdf" asp-area="Exams" asp-route-search="@currentSearch" asp-route-collegeId="@ViewBag.CollegeId" asp-route-facultyId="@ViewBag.FacultyId"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
-                <i class="fas fa-file-pdf text-xs"></i> Export PDF
-            </a>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch,
+                    ["collegeId"] = ViewBag.CollegeId?.ToString() ?? "",
+                    ["facultyId"] = ViewBag.FacultyId?.ToString() ?? ""
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
         </div>
     </div>
 

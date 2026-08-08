@@ -145,6 +145,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
     public async Task CreateExamScheduleAsync(ExamSchedule examSchedule)
     {
+        ValidateScheduleDates(examSchedule, existing: null);
         context.ExamSchedules.Add(examSchedule);
         await context.SaveChangesAsync();
     }
@@ -154,6 +155,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var existing = await context.ExamSchedules.FindAsync(examSchedule.Id);
         if (existing == null)
             throw new InvalidOperationException("Exam schedule not found.");
+
+        ValidateScheduleDates(examSchedule, existing);
 
         if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
         {
@@ -179,19 +182,155 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         await context.SaveChangesAsync();
     }
 
+    private static void ValidateScheduleDates(ExamSchedule schedule, ExamSchedule? existing)
+    {
+        if (schedule.StartDate.HasValue && schedule.EndDate.HasValue
+            && schedule.StartDate.Value > schedule.EndDate.Value)
+        {
+            throw new InvalidOperationException("Start date cannot be after end date.");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var startChanged = existing == null || schedule.StartDate != existing.StartDate;
+        var endChanged = existing == null || schedule.EndDate != existing.EndDate;
+
+        if (startChanged && schedule.StartDate.HasValue && schedule.StartDate.Value < today)
+        {
+            throw new InvalidOperationException("Start date cannot be in the past.");
+        }
+
+        if (endChanged && schedule.EndDate.HasValue && schedule.EndDate.Value < today)
+        {
+            throw new InvalidOperationException("End date cannot be in the past.");
+        }
+    }
+
     public async Task DeleteExamScheduleAsync(int id)
     {
         var examSchedule = await context.ExamSchedules.FindAsync(id);
-        if (examSchedule != null)
+        if (examSchedule == null)
+            return;
+
+        if (examSchedule.IsActive)
+            throw new InvalidOperationException("Exam schedule must be made inactive before it can be deleted. Please deactivate it first.");
+
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        try
         {
-            context.ExamSchedules.Remove(examSchedule);
-            await context.SaveChangesAsync();
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM EntranceExamApplications WHERE ApplicationVoucherId IN (SELECT Id FROM ApplicationVouchers WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamCenterColleges WHERE ExamCenterId IN (SELECT Id FROM ExamCenters WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamCenterVenues WHERE ExamCenterId IN (SELECT Id FROM ExamCenters WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamCenterSymbolRanges WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamSlots WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM BankVoucher WHERE BillTitleId IN (SELECT Id FROM BillTitle WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM HallTickets WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ResultRecords WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamRollNumberSetup WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamFees WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM CollegeAdminSubjectAssignments WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM RetotalRequests WHERE ExamRegistrationId IN (SELECT Id FROM ExamRegistrations WHERE ExamScheduleId = {id}) OR ExamSubjectResultId IN (SELECT Id FROM ExamSubjectResults WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamSubjectResults WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamRegistrations WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ApplicationVouchers WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM BillTitle WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamCenters WHERE ExamScheduleId = {id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM PaymentResponseLogs WHERE PaymentRequestLogId IN (SELECT Id FROM PaymentRequestLogs WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM PaymentPracticalSubjects WHERE PaymentRequestLogId IN (SELECT Id FROM PaymentRequestLogs WHERE ExamScheduleId = {id})");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM ExamSchedules WHERE Id = {id}");
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
         }
     }
 
     public async Task<bool> ExamScheduleExistsAsync(int id)
     {
         return await context.ExamSchedules.AnyAsync(e => e.Id == id);
+    }
+
+    public async Task<DeletePreviewDto> GetDeletePreviewAsync(int id)
+    {
+        var schedule = await context.ExamSchedules.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        if (schedule == null)
+            throw new InvalidOperationException("Exam schedule not found.");
+
+        var items = new List<DeletePreviewItemDto>();
+
+        var submissions = await CountRowsAsync($"SELECT COUNT(*) FROM ExamRegistrations WHERE ExamScheduleId = {id}");
+        var subjectResults = await CountRowsAsync($"SELECT COUNT(*) FROM ExamSubjectResults WHERE ExamScheduleId = {id}");
+        var hallTickets = await CountRowsAsync($"SELECT COUNT(*) FROM HallTickets WHERE ExamScheduleId = {id}");
+        var rollNumbers = await CountRowsAsync($"SELECT COUNT(*) FROM ExamRollNumberSetup WHERE ExamScheduleId = {id}");
+
+        var payments = await CountRowsAsync($"SELECT COUNT(*) FROM ApplicationVouchers WHERE ExamScheduleId = {id}");
+        payments += await CountRowsAsync($"SELECT COUNT(*) FROM PaymentRequestLogs WHERE ExamScheduleId = {id}");
+        payments += await CountRowsAsync($"SELECT COUNT(*) FROM PaymentResponseLogs WHERE PaymentRequestLogId IN (SELECT Id FROM PaymentRequestLogs WHERE ExamScheduleId = {id})");
+        payments += await CountRowsAsync($"SELECT COUNT(*) FROM PaymentPracticalSubjects WHERE PaymentRequestLogId IN (SELECT Id FROM PaymentRequestLogs WHERE ExamScheduleId = {id})");
+        payments += await CountRowsAsync($"SELECT COUNT(*) FROM BankVoucher WHERE BillTitleId IN (SELECT Id FROM BillTitle WHERE ExamScheduleId = {id})");
+        payments += await CountRowsAsync($"SELECT COUNT(*) FROM ExamFees WHERE ExamScheduleId = {id}");
+
+        var centers = await CountRowsAsync($"SELECT COUNT(*) FROM ExamCenters WHERE ExamScheduleId = {id}");
+        centers += await CountRowsAsync($"SELECT COUNT(*) FROM ExamCenterColleges WHERE ExamCenterId IN (SELECT Id FROM ExamCenters WHERE ExamScheduleId = {id})");
+        centers += await CountRowsAsync($"SELECT COUNT(*) FROM ExamCenterVenues WHERE ExamCenterId IN (SELECT Id FROM ExamCenters WHERE ExamScheduleId = {id})");
+        centers += await CountRowsAsync($"SELECT COUNT(*) FROM ExamCenterSymbolRanges WHERE ExamScheduleId = {id}");
+
+        var slots = await CountRowsAsync($"SELECT COUNT(*) FROM ExamSlots WHERE ExamScheduleId = {id}");
+        var retotals = await CountRowsAsync($"SELECT COUNT(*) FROM RetotalRequests WHERE ExamRegistrationId IN (SELECT Id FROM ExamRegistrations WHERE ExamScheduleId = {id}) OR ExamSubjectResultId IN (SELECT Id FROM ExamSubjectResults WHERE ExamScheduleId = {id})");
+        var resultRecords = await CountRowsAsync($"SELECT COUNT(*) FROM ResultRecords WHERE ExamScheduleId = {id}");
+        var entranceApplications = await CountRowsAsync($"SELECT COUNT(*) FROM EntranceExamApplications WHERE ApplicationVoucherId IN (SELECT Id FROM ApplicationVouchers WHERE ExamScheduleId = {id})");
+        var billTitles = await CountRowsAsync($"SELECT COUNT(*) FROM BillTitle WHERE ExamScheduleId = {id}");
+        var adminAssignments = await CountRowsAsync($"SELECT COUNT(*) FROM CollegeAdminSubjectAssignments WHERE ExamScheduleId = {id}");
+
+        void Add(string label, long count)
+        {
+            if (count > 0)
+                items.Add(new DeletePreviewItemDto { Label = label, Count = (int)count });
+        }
+
+        Add("Student exam submissions", submissions);
+        Add("Subject results", subjectResults);
+        Add("Hall tickets", hallTickets);
+        Add("Roll numbers", rollNumbers);
+        Add("Payments", payments);
+        Add("Exam centers", centers);
+        Add("Exam slots", slots);
+        Add("Retotal requests", retotals);
+        Add("Result records", resultRecords);
+        Add("Entrance applications", entranceApplications);
+        Add("Bill titles", billTitles);
+        Add("College admin subject assignments", adminAssignments);
+
+        return new DeletePreviewDto { ScheduleName = schedule.ExamScheduleName, Items = items };
+    }
+
+    private async Task<long> CountRowsAsync(FormattableString sql)
+    {
+        var rows = await context.Database.SqlQuery<long>(sql).ToListAsync();
+        return rows.Count > 0 ? rows[0] : 0;
     }
 
     public async Task<ExamScheduleSelectListsDto> GetSelectListDataAsync(ExamSchedule? examSchedule = null)

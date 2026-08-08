@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using System.ComponentModel;
@@ -90,6 +91,11 @@ public class ExamRegistration : ITenantScoped
 
     [Display(Name = "Admin Verified Date")]
     public DateTime? AdminVerifiedDate { get; set; }
+
+    [Display(Name = "Semester Enrollment")]
+    public int? SemesterEnrollmentId { get; set; }
+
+    public virtual SemesterEnrollment? SemesterEnrollment { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }
 

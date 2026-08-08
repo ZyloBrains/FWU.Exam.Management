@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -101,13 +102,6 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
         }
 
         // Helper method to escape CSV fields
-        private string EscapeCsv(string? field)
-        {
-            if (string.IsNullOrEmpty(field)) return "";
-            if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-                return $"\"{field.Replace("\"", "\"\"")}\"";
-            return field;
-        }
 
         // Export to CSV (Current Page with pagination)
         public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Host", string sortDir = "asc")
@@ -124,10 +118,10 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                 // Mask password for security
                 var maskedPassword = string.IsNullOrEmpty(s.Password) ? "" : new string('*', s.Password.Length);
 
-                sb.AppendLine($"{EscapeCsv(s.Host)}," +
-                              $"{EscapeCsv(s.From)}," +
+                sb.AppendLine($"{s.Host.EscapeCsv()}," +
+                              $"{s.From.EscapeCsv()}," +
                               $"{s.Port}," +
-                              $"{EscapeCsv(s.UserName)}," +
+                              $"{s.UserName.EscapeCsv()}," +
                               $"{(s.EnableSsl ? "Yes" : "No")}," +
                               $"{(s.IsActive ? "Yes" : "No")}");
             }

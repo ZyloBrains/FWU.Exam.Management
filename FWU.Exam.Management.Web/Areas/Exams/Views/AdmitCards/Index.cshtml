@@ -9,6 +9,9 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "Id";
     var currentSortDir = ViewBag.SortDir as string ?? "asc";
+    var currentScheduleId = (ViewData["ExamScheduleId"] is SelectList scheduleSelectList && scheduleSelectList.SelectedValue != null)
+        ? scheduleSelectList.SelectedValue.ToString() ?? ""
+        : "";
 }
 
 <div class="space-y-6">
@@ -26,10 +29,16 @@
         <div class="flex items-center gap-3">
             @if (ViewBag.HasPermission ?? true)
             {
-                <a asp-action="ExportToCsv" asp-area="Exams" asp-route-search="@currentSearch"
-                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                    <i class="fas fa-file-excel"></i> Export CSV
-                </a>
+                @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+                {
+                    RouteValues = new Dictionary<string, string>
+                    {
+                        ["search"] = currentSearch,
+                        ["examScheduleId"] = currentScheduleId
+                    },
+                    ButtonClass = "bg-green-600 hover:bg-green-700",
+                    ScopeLabel = " (All)"
+                })
                 <a asp-action="Generate" asp-area="Exams"
                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Generate Cards

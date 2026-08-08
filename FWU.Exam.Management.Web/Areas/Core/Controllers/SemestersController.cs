@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -31,13 +32,6 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "Name", string sortDir = "asc")
     {
@@ -48,13 +42,13 @@ public class SemestersController(ISemesterService semesterService, IAcademicYear
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.Code)}," +
-                           $"{EscapeCsv(s.Name)}," +
+            sb.AppendLine($"{s.Code.EscapeCsv()}," +
+                           $"{s.Name.EscapeCsv()}," +
                            $"{s.Number}," +
                            $"{s.Year}," +
                            $"{s.StartDate:yyyy-MM-dd}," +
                            $"{s.EndDate:yyyy-MM-dd}," +
-                           $"{EscapeCsv(s.Remark)}");
+                           $"{s.Remark.EscapeCsv()}");
         }
 
         var fileName = $"Semesters_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";

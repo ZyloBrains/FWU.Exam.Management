@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Extensions;
 
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -90,13 +91,6 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
         return (items, totalCount);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "ProductCode", string sortDir = "asc")
     {
@@ -107,10 +101,10 @@ public class ESewaConfigurationsController(AppDbContext context) : Controller
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.ProductCode)}," +
-                          $"{EscapeCsv(s.PostUrl)}," +
-                          $"{EscapeCsv(s.SuccessUrl)}," +
-                          $"{EscapeCsv(s.VerifyUrl)}," +
+            sb.AppendLine($"{s.ProductCode.EscapeCsv()}," +
+                          $"{s.PostUrl.EscapeCsv()}," +
+                          $"{s.SuccessUrl.EscapeCsv()}," +
+                          $"{s.VerifyUrl.EscapeCsv()}," +
                           $"{s.ServiceChargeAmount}");
         }
 

@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -30,13 +31,6 @@ public class LevelsController(ILevelService levelService) : Controller
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "LevelDisplayOrder", string sortDir = "asc")
     {
@@ -47,10 +41,10 @@ public class LevelsController(ILevelService levelService) : Controller
 
         foreach (var l in items)
         {
-            sb.AppendLine($"{EscapeCsv(l.LevelCode)}," +
-                           $"{EscapeCsv(l.LevelName)}," +
+            sb.AppendLine($"{l.LevelCode.EscapeCsv()}," +
+                           $"{l.LevelName.EscapeCsv()}," +
                            $"{l.LevelDisplayOrder}," +
-                           $"{EscapeCsv(l.Remarks)}," +
+                           $"{l.Remarks.EscapeCsv()}," +
                            $"{(l.IsRunning == true ? "Yes" : "No")}," +
                            $"{(l.IsActive ? "Active" : "Inactive")}");
         }

@@ -38,9 +38,9 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         return (items, totalCount);
     }
 
-    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search)
+    public async Task<List<AdmitCard>> GetFilteredItemsAsync(string? search, int? examScheduleId = null)
     {
-        var query = BuildQuery(search, "Id", "asc", null).ApplyScope(userContext);
+        var query = BuildQuery(search, "Id", "asc", examScheduleId).ApplyScope(userContext);
         return await query
             .Select(e => new AdmitCard
             {

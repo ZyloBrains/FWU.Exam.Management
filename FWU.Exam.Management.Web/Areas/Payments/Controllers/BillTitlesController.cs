@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -32,13 +33,6 @@ public class BillTitlesController(
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "BillTitleName", string sortDir = "asc")
     {
@@ -49,10 +43,10 @@ public class BillTitlesController(
 
         foreach (var bt in items)
         {
-            sb.AppendLine($"{EscapeCsv(bt.BillTitleName)}," +
-                           $"{EscapeCsv(bt.Category ?? "-")}," +
+            sb.AppendLine($"{bt.BillTitleName.EscapeCsv()}," +
+                           $"{(bt.Category ?? "-").EscapeCsv()}," +
                            $"{bt.Amount?.ToString("F2") ?? "-"}," +
-                           $"{EscapeCsv(bt.ExamSchedule?.ExamScheduleName ?? "-")}," +
+                           $"{(bt.ExamSchedule?.ExamScheduleName ?? "-").EscapeCsv()}," +
                            $"{bt.ApplicableDate?.ToString("yyyy-MM-dd") ?? "-"}," +
                            $"{bt.ThroughDate?.ToString("yyyy-MM-dd") ?? "-"}," +
                            $"{(bt.IsActive ? "Active" : "Inactive")}");

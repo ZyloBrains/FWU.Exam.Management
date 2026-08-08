@@ -6,6 +6,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -18,7 +19,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
-    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null)
+    public async Task<List<StudentRegistration>> GetAllStudentRegistrationsAsync(List<int>? collegeIds = null, string? academicYear = null, int? facultyId = null, int? collegeId = null, int? levelId = null, string? status = null)
     {
         var query = context.StudentRegistrations
             .Include(s => s.AcademicYear)
@@ -43,6 +44,20 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         if (userContext.IsSuperAdmin && collegeIds != null && collegeIds.Count > 0)
         {
             query = query.Where(s => collegeIds.Contains(s.CollegeId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(academicYear))
+            query = query.Where(s => s.AcademicYear != null && s.AcademicYear.AcademicYearName == academicYear);
+        if (facultyId.HasValue)
+            query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (collegeId.HasValue)
+            query = query.Where(s => s.CollegeId == collegeId.Value);
+        if (levelId.HasValue)
+            query = query.Where(s => s.LevelId == levelId.Value);
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var isActive = status.ToLower() == "active";
+            query = query.Where(s => s.IsActive == isActive);
         }
 
         return await query
@@ -490,7 +505,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             {
                 UserName = studentRegistration.Email,
                 Email = studentRegistration.Email,
-                FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim(),
+                FullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName),
                 IsActive = true,
                 FacultyId = studentRegistration.FacultyId,
                 CollegeId = studentRegistration.CollegeId
@@ -532,9 +547,9 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 needsUpdate = true;
             }
 
-            if (user.FullName != $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim())
+            if (user.FullName != studentRegistration.FirstName.GetFullName(studentRegistration.LastName))
             {
-                user.FullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim();
+                user.FullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName);
                 needsUpdate = true;
             }
 
@@ -615,7 +630,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
     private async Task<List<string>> SendStudentRegistrationNotificationsAsync(StudentRegistration studentRegistration, string? registrationNumber)
     {
         var results = new List<string>();
-        var fullName = $"{studentRegistration.FirstName} {studentRegistration.LastName}".Trim();
+        var fullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName);
         var program = await context.Programs.Where(p => p.Id == studentRegistration.ProgramId).Select(p => p.ProgramName).FirstOrDefaultAsync();
         var college = await context.Colleges.Where(c => c.Id == studentRegistration.CollegeId).Select(c => c.Name).FirstOrDefaultAsync();
         var password = studentRegistration.DateOfBirthBS;

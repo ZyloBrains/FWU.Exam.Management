@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
@@ -43,13 +44,6 @@ public class DistrictsController(IDistrictService districtService) : Controller
     }
 
     // Helper method to escape CSV fields
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     // Export to CSV (Current Page with pagination)
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "DistrictName", string sortDir = "asc")
@@ -63,8 +57,8 @@ public class DistrictsController(IDistrictService districtService) : Controller
 
         foreach (var d in items)
         {
-            sb.AppendLine($"{EscapeCsv(d.DistrictName)}," +
-                           $"{EscapeCsv(d.Province?.ProvinceName ?? "")}," +
+            sb.AppendLine($"{d.DistrictName.EscapeCsv()}," +
+                           $"{(d.Province?.ProvinceName ?? "").EscapeCsv()}," +
                            $"{(d.IsActive ? "Active" : "Inactive")}");
         }
 

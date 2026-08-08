@@ -1,5 +1,8 @@
+using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -210,5 +213,64 @@ public class ExamCentersController(
         {
             return Json(new { success = false, message = ex.Message });
         }
+    }
+
+    public async Task<IActionResult> ExportToCsv(string? search = null)
+    {
+        var items = await examCenterService.GetFilteredItemsAsync(search, "Id", "asc");
+
+        var sb = new StringBuilder();
+        sb.AppendLine("ID,Code,Exam Schedule,College,Remark,Is Active");
+
+        foreach (var item in items)
+        {
+            sb.AppendLine($"{item.Id},{(item.Code ?? "").EscapeCsv()},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.Remark ?? "").EscapeCsv()},{(item.IsActive ? "Yes" : "No")}");
+        }
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", "ExamCenters.csv");
+    }
+
+    public async Task<IActionResult> ExportToPdf(string? search = null)
+    {
+        var items = await examCenterService.GetFilteredItemsAsync(search, "Id", "asc");
+        return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null)
+    {
+        var items = await examCenterService.GetFilteredItemsAsync(search, "Id", "asc");
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ExamCenters");
+
+        var headers = new[] { "ID", "Code", "Exam Schedule", "College", "Remark", "Is Active" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.Code ?? "";
+            worksheet.Cell(row, 3).Value = item.ExamSchedule?.ExamScheduleName ?? "";
+            worksheet.Cell(row, 4).Value = item.College?.Name ?? "";
+            worksheet.Cell(row, 5).Value = item.Remark ?? "";
+            worksheet.Cell(row, 6).Value = item.IsActive ? "Yes" : "No";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ExamCenters.xlsx");
     }
 }

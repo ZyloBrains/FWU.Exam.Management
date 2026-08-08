@@ -4,6 +4,7 @@ using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -35,13 +36,6 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         return View(items);
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(string? search = null, string sort = "DisplayOrder", string sortDir = "asc")
     {
@@ -52,27 +46,27 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
 
         foreach (var c in items)
         {
-            sb.AppendLine($"{EscapeCsv(c.Code.ToString())}," +
-                          $"{EscapeCsv(c.Name)}," +
-                          $"{EscapeCsv(c.CollegeNameNepali)}," +
-                          $"{EscapeCsv(c.ShortName)}," +
-                          $"{EscapeCsv(c.Address?.LocalLevel?.District?.DistrictName)}," +
-                          $"{EscapeCsv(c.Address?.LocalLevel?.LocalLevelName)}," +
+            sb.AppendLine($"{c.Code.ToString().EscapeCsv()}," +
+                          $"{c.Name.EscapeCsv()}," +
+                          $"{c.CollegeNameNepali.EscapeCsv()}," +
+                          $"{c.ShortName.EscapeCsv()}," +
+                          $"{c.Address?.LocalLevel?.District?.DistrictName.EscapeCsv()}," +
+                          $"{c.Address?.LocalLevel?.LocalLevelName.EscapeCsv()}," +
                           $"{c.Address?.WardNumber}," +
-                          $"{EscapeCsv(c.Address?.HouseNumber)}," +
-                          $"{EscapeCsv(c.Website)}," +
-                          $"{EscapeCsv(c.Email)}," +
-                          $"{EscapeCsv(c.Phone1)}," +
-                          $"{EscapeCsv(c.Phone2)}," +
-                          $"{EscapeCsv(c.PrincipalName)}," +
-                          $"{EscapeCsv(c.PrincipalContactNumber)}," +
-                          $"{EscapeCsv(c.Fax)}," +
-                          $"{EscapeCsv(c.Remarks)}," +
+                          $"{c.Address?.HouseNumber.EscapeCsv()}," +
+                          $"{c.Website.EscapeCsv()}," +
+                          $"{c.Email.EscapeCsv()}," +
+                          $"{c.Phone1.EscapeCsv()}," +
+                          $"{c.Phone2.EscapeCsv()}," +
+                          $"{c.PrincipalName.EscapeCsv()}," +
+                          $"{c.PrincipalContactNumber.EscapeCsv()}," +
+                          $"{c.Fax.EscapeCsv()}," +
+                          $"{c.Remarks.EscapeCsv()}," +
                           $"{(c.IsExamCenterOnly ? "Yes" : "No")}," +
                           $"{(c.IsActive ? "Active" : "Inactive")}," +
-                          $"{EscapeCsv(c.CollegeType?.Code)}," +
+                          $"{c.CollegeType?.Code.EscapeCsv()}," +
                           $"{c.AllocatedAmount}," +
-                          $"{EscapeCsv(c.Address?.ToleStreet)}," +
+                          $"{c.Address?.ToleStreet.EscapeCsv()}," +
                           $"{c.DisplayOrder}," +
                           $"{c.EstablishedDate?.ToString("yyyy-MM-dd")}," +
                           $"{c.ClosedDate?.ToString("yyyy-MM-dd")}");

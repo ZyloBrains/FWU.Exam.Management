@@ -24,10 +24,15 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a asp-action="ExportToCsv" asp-area="Exams" asp-route-search="@currentSearch"
-               class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                <i class="fas fa-file-excel"></i> Export CSV
-            </a>
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+            {
+                RouteValues = new Dictionary<string, string>
+                {
+                    ["search"] = currentSearch
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
         </div>
     </div>
 

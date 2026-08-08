@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -188,13 +189,6 @@ public class SubjectCatalogsController : Controller
         }
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "SubjectName", string sortDir = "asc")
     {
@@ -205,11 +199,11 @@ public class SubjectCatalogsController : Controller
 
         foreach (var s in items)
         {
-            sb.AppendLine($"{EscapeCsv(s.SubjectCode)}," +
-                           $"{EscapeCsv(s.SubjectName)}," +
-                           $"{EscapeCsv(s.ShortName ?? "-")}," +
+            sb.AppendLine($"{s.SubjectCode.EscapeCsv()}," +
+                           $"{s.SubjectName.EscapeCsv()}," +
+                           $"{(s.ShortName ?? "-").EscapeCsv()}," +
                            $"{s.CreditHours}," +
-                           $"{EscapeCsv(s.SubjectType?.Name ?? "-")}," +
+                           $"{(s.SubjectType?.Name ?? "-").EscapeCsv()}," +
                            $"{(s.IsActive ? "Active" : "Inactive")}");
         }
 

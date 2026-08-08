@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -198,7 +199,7 @@ public class ExamRegistrationsController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.ExamSchedule?.ExamScheduleName ?? "")},{EscapeCsv(item.College?.Name ?? "")},{EscapeCsv(item.ExamRollNumber ?? "")},{item.Status},{item.RegistrationDate?.ToString("yyyy-MM-dd")},{item.FeeEnclosed},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{(item.ExamSchedule?.ExamScheduleName ?? "").EscapeCsv()},{(item.College?.Name ?? "").EscapeCsv()},{(item.ExamRollNumber ?? "").EscapeCsv()},{item.Status},{item.RegistrationDate?.ToString("yyyy-MM-dd")},{item.FeeEnclosed},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -209,6 +210,45 @@ public class ExamRegistrationsController(
     {
         var items = await examRegistrationService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null)
+    {
+        var items = await examRegistrationService.GetFilteredItemsAsync(search);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ExamRegistrations");
+
+        var headers = new[] { "ID", "Exam Schedule", "College", "Roll Number", "Status", "Registration Date", "Fee", "Is Active" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.ExamSchedule?.ExamScheduleName ?? "";
+            worksheet.Cell(row, 3).Value = item.College?.Name ?? "";
+            worksheet.Cell(row, 4).Value = item.ExamRollNumber ?? "";
+            worksheet.Cell(row, 5).Value = item.Status.ToString();
+            worksheet.Cell(row, 6).Value = item.RegistrationDate?.ToString("yyyy-MM-dd") ?? "";
+            worksheet.Cell(row, 7).Value = item.FeeEnclosed;
+            worksheet.Cell(row, 8).Value = item.IsActive ? "Yes" : "No";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ExamRegistrations.xlsx");
     }
 
     [RequirePermission("examregistration.delete")]
@@ -236,11 +276,4 @@ public class ExamRegistrationsController(
         ViewData["ExamCenterId"] = new SelectList(selectLists.ExamCenters, "Id", "Name", examRegistration?.ExamCenterId);
     }
 
-    private static string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 }

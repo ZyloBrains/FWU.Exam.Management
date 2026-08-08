@@ -1,0 +1,49 @@
+@model ExportDropdownModel
+
+<div class="relative" x-data="{ openExport: false }">
+    <button x-on:click="openExport = !openExport"
+            class="inline-flex items-center gap-2 px-4 py-2.5 @Model.ButtonClass text-white text-xs sm:text-sm font-medium rounded-lg transition-colors shadow-sm">
+        <i class="fas fa-download text-xs"></i> Export
+    </button>
+    <div x-show="openExport"
+         x-on:click.away="openExport = false"
+         x-transition
+         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+        @if (Model.JavascriptCallbacks != null && Model.JavascriptCallbacks.TryGetValue("csv", out var csvJs))
+        {
+            <a href="javascript:void(0)" onclick="@csvJs" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-file-csv text-blue-600"></i> CSV@(Model.ScopeLabel)
+            </a>
+        }
+        else
+        {
+            <a asp-action="ExportToCsv" asp-all-route-data="@Model.RouteValues" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-file-csv text-blue-600"></i> CSV@(Model.ScopeLabel)
+            </a>
+        }
+        @if (Model.JavascriptCallbacks != null && Model.JavascriptCallbacks.TryGetValue("pdf", out var pdfJs))
+        {
+            <a href="javascript:void(0)" onclick="@pdfJs" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-file-pdf text-red-600"></i> PDF@(Model.ScopeLabel)
+            </a>
+        }
+        else
+        {
+            <a asp-action="ExportToPdf" asp-all-route-data="@Model.RouteValues" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-file-pdf text-red-600"></i> PDF@(Model.ScopeLabel)
+            </a>
+        }
+        @if (Model.JavascriptCallbacks != null && Model.JavascriptCallbacks.TryGetValue("excel", out var excelJs))
+        {
+            <a href="javascript:void(0)" onclick="@excelJs" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-file-excel text-green-600"></i> Excel@(Model.ScopeLabel)
+            </a>
+        }
+        else
+        {
+            <a asp-action="ExportToExcel" asp-all-route-data="@Model.RouteValues" class="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-file-excel text-green-600"></i> Excel@(Model.ScopeLabel)
+            </a>
+        }
+    </div>
+</div>

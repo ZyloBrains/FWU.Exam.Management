@@ -40,26 +40,17 @@
                     <span x-show="activeFilterCount > 0" x-text="activeFilterCount"
                           class="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-teal-500 rounded-full"></span>
                 </button>
-                <div class="relative">
-                    <button x-on:click="openExport = !openExport"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <i class="fas fa-download text-xs"></i> Export
-                    </button>
-                    <div x-show="openExport"
-                         x-on:click.away="openExport = false"
-                         x-transition
-                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                        <a href="javascript:void(0)" onclick="exportPdf()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-pdf text-red-600"></i> PDF
-                        </a>
-                        <a href="javascript:void(0)" onclick="exportExcel()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-excel text-green-600"></i> Excel
-                        </a>
-                        <a href="javascript:void(0)" onclick="exportCsv()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            <i class="fas fa-file-csv text-blue-600"></i> CSV
-                        </a>
-                    </div>
-                </div>
+                @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+                {
+                    ButtonClass = "bg-white hover:bg-gray-50",
+                    ScopeLabel = " (All)",
+                    JavascriptCallbacks = new Dictionary<string, string>
+                    {
+                        ["csv"] = "exportCsv()",
+                        ["pdf"] = "exportPdf()",
+                        ["excel"] = "exportExcel()"
+                    }
+                })
             </div>
         </div>
 

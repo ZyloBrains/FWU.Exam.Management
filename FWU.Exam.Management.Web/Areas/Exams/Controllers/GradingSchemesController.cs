@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -162,7 +163,7 @@ public class GradingSchemesController(
 
         foreach (var item in items)
         {
-            sb.AppendLine($"{item.Id},{EscapeCsv(item.Name)},{EscapeCsv(item.Program?.ProgramName ?? "")},{EscapeCsv(item.AcademicYear?.AcademicYearName ?? "")},{EscapeCsv(item.Description ?? "")},{(item.IsActive ? "Yes" : "No")}");
+            sb.AppendLine($"{item.Id},{item.Name.EscapeCsv()},{(item.Program?.ProgramName ?? "").EscapeCsv()},{(item.AcademicYear?.AcademicYearName ?? "").EscapeCsv()},{(item.Description ?? "").EscapeCsv()},{(item.IsActive ? "Yes" : "No")}");
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -173,6 +174,43 @@ public class GradingSchemesController(
     {
         var items = await gradingSchemeService.GetFilteredItemsAsync(search);
         return View("PrintPdf", items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(string? search = null)
+    {
+        var items = await gradingSchemeService.GetFilteredItemsAsync(search);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("GradingSchemes");
+
+        var headers = new[] { "ID", "Name", "Program", "Academic Year", "Description", "IsActive" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.Gray;
+        }
+
+        int row = 2;
+        foreach (var item in items)
+        {
+            worksheet.Cell(row, 1).Value = item.Id;
+            worksheet.Cell(row, 2).Value = item.Name ?? "";
+            worksheet.Cell(row, 3).Value = item.Program?.ProgramName ?? "";
+            worksheet.Cell(row, 4).Value = item.AcademicYear?.AcademicYearName ?? "";
+            worksheet.Cell(row, 5).Value = item.Description ?? "";
+            worksheet.Cell(row, 6).Value = item.IsActive ? "Yes" : "No";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "GradingSchemes.xlsx");
     }
 
     [RequirePermission("gradingschemes.delete")]
@@ -197,13 +235,6 @@ public class GradingSchemesController(
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
     }
 
-    private static string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     private static List<GradeDefinition> GetDefaultGradeDefinitions()
     {

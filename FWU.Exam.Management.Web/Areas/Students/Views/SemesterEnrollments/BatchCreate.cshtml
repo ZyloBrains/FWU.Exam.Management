@@ -1,4 +1,5 @@
 @using FWU.Exam.Management.Application.DTOs
+@using FWU.Exam.Management.Domain.Enums
 @model IEnumerable<SemesterEnrollmentCandidateDto>
 
 @{
@@ -141,7 +142,6 @@
                                 <input type="checkbox" id="selectAll" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" title="Select all eligible" />
                             </th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
-                            <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Reg No</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Roll No</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Program</th>
                             <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">College</th>
@@ -158,7 +158,6 @@
                                            class="row-check h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
                                 </td>
                                 <td class="px-4 py-3 font-medium text-gray-800">@(item.StudentName ?? "-")</td>
-                                <td class="px-4 py-3 text-gray-600">@(item.RegistrationNumber ?? "-")</td>
                                 <td class="px-4 py-3 text-gray-600">@(item.CollegeRollNumber ?? "-")</td>
                                 <td class="px-4 py-3 text-gray-600">@(item.ProgramName ?? "-")</td>
                                 <td class="px-4 py-3 text-gray-600">@(item.CollegeName ?? "-")</td>
@@ -202,8 +201,6 @@
                             }
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
-                            <div class="text-gray-500">Reg No</div>
-                            <div class="text-gray-800">@(item.RegistrationNumber ?? "-")</div>
                             <div class="text-gray-500">Program</div>
                             <div class="text-gray-800">@(item.ProgramName ?? "-")</div>
                             <div class="text-gray-500">College</div>
@@ -236,6 +233,16 @@
                                     var value = ((dynamic)item).Id.ToString();
                                     <option value="@value" selected="@(value == currentSemesterId?.ToString())">@(((dynamic)item).Name)</option>
                                 }
+                            }
+                        </select>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <label for="enrollType" class="text-sm font-medium text-gray-700 shrink-0">Enrollment type</label>
+                        <select id="enrollType" name="enrollmentType"
+                                class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            @foreach (var type in Enum.GetValues<EnrollmentType>())
+                            {
+                                <option value="@((int)type)" selected="@(type == EnrollmentType.FullTime)">@type</option>
                             }
                         </select>
                     </div>

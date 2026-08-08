@@ -5,6 +5,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
         ViewBag.ProgramsId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
         ViewBag.StudentRegistrationId = studentRegistrationId;
+        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName");
 
         if (studentRegistrationId.HasValue)
         {
@@ -119,6 +121,19 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
                     admission.AppUserId = appUserId;
                 }
 
+                if (string.IsNullOrEmpty(admission.FirstName))
+                    admission.FirstName = reg.FirstName;
+                admission.MiddleName ??= reg.MiddleName;
+                if (string.IsNullOrEmpty(admission.LastName))
+                    admission.LastName = reg.LastName;
+                admission.NepaliName ??= reg.NepaliName;
+                admission.DateOfBirthBS ??= reg.DateOfBirthBS;
+                admission.DateOfBirthAD ??= reg.DateOfBirthAD;
+                admission.GenderId ??= reg.GenderId;
+                admission.ContactNumber ??= reg.ContactNumber;
+                admission.Phone ??= reg.Phone;
+                admission.Email ??= reg.Email;
+
                 if (string.IsNullOrEmpty(admission.CollegeRollNumber))
                 {
                     admission.CollegeRollNumber = reg.RegistrationNumber;
@@ -138,7 +153,19 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
         if (ModelState.IsValid)
         {
-            await admissionService.CreateAdmissionAsync(admission);
+            var admissionId = await admissionService.CreateAdmissionAsync(admission);
+
+            if (studentRegistrationId.HasValue)
+            {
+                var registrationToLink = await context.StudentRegistrations
+                    .FirstOrDefaultAsync(r => r.Id == studentRegistrationId.Value);
+                if (registrationToLink != null)
+                {
+                    registrationToLink.StudentAdmissionId = admissionId;
+                    await context.SaveChangesAsync();
+                }
+            }
+
             TempData["SuccessMessage"] = "Student admission created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -155,6 +182,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
 
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
         ViewBag.StudentRegistrationId = studentRegistrationId;
+        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
         return View(admission);
     }
 
@@ -169,6 +197,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         var colleges = await admissionService.GetCollegeSelectListAsync();
         ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", admission.CollegeId);
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
+        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
         return View(admission);
     }
 
@@ -198,6 +227,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         var colleges = await admissionService.GetCollegeSelectListAsync();
         ViewBag.CollegeId = new SelectList(colleges.Select(c => new { c.Id, c.Name }), "Id", "Name", admission.CollegeId);
         ViewBag.ProgramsId = new SelectList(await admissionService.GetCollegeProgramsAsync(admission.CollegeId), "Id", "ProgramName", admission.ProgramsId);
+        ViewBag.GenderId = new SelectList(await context.Genders.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.GenderName).ToListAsync(), "Id", "GenderName", admission.GenderId);
         return View(admission);
     }
 
@@ -235,13 +265,6 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         }
     }
 
-    private string EscapeCsv(string? field)
-    {
-        if (string.IsNullOrEmpty(field)) return "";
-        if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
-            return $"\"{field.Replace("\"", "\"\"")}\"";
-        return field;
-    }
 
     public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string sort = "AdmissionDate", string sortDir = "desc")
     {
@@ -254,9 +277,9 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
         foreach (var a in items)
         {
             sb.AppendLine($"{sn++}," +
-                          $"{EscapeCsv(a.CollegeRollNumber)}," +
-                          $"{EscapeCsv(a.College?.Name)}," +
-                          $"{EscapeCsv(a.Program?.ProgramName)}," +
+                          $"{a.CollegeRollNumber.EscapeCsv()}," +
+                          $"{a.College?.Name.EscapeCsv()}," +
+                          $"{a.Program?.ProgramName.EscapeCsv()}," +
                           $"{a.AdmissionDate:yyyy-MM-dd}," +
                           $"{(a.IsCompleted ? "Completed" : "Pending")}," +
                           $"{(a.IsActive ? "Active" : "Inactive")}");
@@ -333,6 +356,7 @@ public class StudentAdmissionsController(IStudentAdmissionService admissionServi
             .AsNoTracking()
             .Include(s => s.Program)
             .Where(s => s.CollegeId == collegeId && s.IsActive)
+            .Where(s => s.StudentAdmissionId == null)
             .Where(s => (s.RegistrationNumber != null && s.RegistrationNumber.ToLower().Contains(lowerSearch))
                      || (s.FirstName != null && s.FirstName.ToLower().Contains(lowerSearch))
                      || (s.LastName != null && s.LastName.ToLower().Contains(lowerSearch))

@@ -6,6 +6,7 @@ using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -267,7 +268,7 @@ public class StudentDashboardController(
             return View(new ExamFormsListViewModel());
         }
 
-        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration, user.Id);
+        var schedules = await dashboardService.GetExamSchedulesForStudentAsync(registration);
         schedules = schedules.Where(s => !IsScheduleDeadlinePassed(s)).ToList();
 
         var forms = new List<ExamFormViewModel>();
@@ -538,7 +539,7 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
         }
 
-        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
+        var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
         int logId;
         if (subjectIds.Count == 0)
@@ -722,7 +723,7 @@ public class StudentDashboardController(
         }
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
-        var fullName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " ");
+        var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
         int logId;
         if (subjectIds.Count == 0)
@@ -745,6 +746,15 @@ public class StudentDashboardController(
         var returnUrl = Url.Action(nameof(KhaltiCallback), "StudentDashboard",
             new { area = "Students" }, scheme)!;
 
+        var customerEmail = registration.Email;
+        if (string.IsNullOrWhiteSpace(customerEmail))
+            customerEmail = null;
+        else
+        {
+            try { _ = new System.Net.Mail.MailAddress(customerEmail); }
+            catch { customerEmail = null; }
+        }
+
         var khaltiRequest = new KhaltiInitiateRequest
         {
             ReturnUrl = returnUrl,
@@ -754,9 +764,9 @@ public class StudentDashboardController(
             PurchaseOrderName = $"Exam Fee - {schedule?.ExamScheduleName ?? ""}",
             CustomerInfo = new KhaltiCustomerInfo
             {
-                Name = fullName,
-                Email = registration.Email,
-                Phone = registration.ContactNumber
+                Name = string.IsNullOrWhiteSpace(fullName) ? null : fullName,
+                Email = customerEmail,
+                Phone = string.IsNullOrWhiteSpace(registration.ContactNumber) ? null : registration.ContactNumber
             }
         };
 
@@ -1003,7 +1013,7 @@ public class StudentDashboardController(
                 marksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
-                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     Level = er.ExamSchedule?.Level?.LevelName,
@@ -1084,7 +1094,7 @@ public class StudentDashboardController(
                 allMarksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
-                    StudentName = $"{registration.FirstName} {registration.MiddleName} {registration.LastName}".Replace("  ", " "),
+                    StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     SemesterId = er.ExamSchedule?.Semester?.Id,

@@ -7,6 +7,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 using Microsoft.Extensions.Logging;
@@ -30,23 +31,16 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(s => (s.Email != null && s.Email == email) || s.RegistrationNumber == email);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
+    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student)
     {
-      //  var studentAdmission = await ResolveStudentAdmissionAsync(userId, student.Email);
-        //if (studentAdmission == null) return [];
+        var enrolledSemesterIds = await context.SemesterEnrollments!
+            .AsNoTracking()
+            .Where(se => se.StudentAdmissionId == student.StudentAdmissionId)
+            .Select(se => se.SemesterId)
+            .Distinct()
+            .ToListAsync();
 
-        //var currentEnrollment = await context.SemesterEnrollments!
-        //    .AsNoTracking()
-        //    .Include(se => se.Semester)
-        //    .Where(se => se.EnrollmentStatus == StudentEnrollmentStatus.Active)
-        //    .OrderByDescending(se => se.Semester!.Year)
-        //    .ThenByDescending(se => se.Semester!.Number)
-        //    .ThenByDescending(se => se.EnrolledDate)
-        //    .FirstOrDefaultAsync();
-
-        //if (currentEnrollment?.Semester == null) return [];
-
-        //var currentSemesterId = currentEnrollment.Semester.Id;
+        if (enrolledSemesterIds.Count == 0) return [];
 
         var query = context.ExamSchedules!
             .AsNoTracking()
@@ -56,30 +50,17 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(es => es.Level)
             .Include(es => es.Semester)
             .Include(es => es.AcademicYear)
-            .Where(es => es.IsActive && es.ProgramId == student.ProgramId);
+            .Where(es => es.IsActive
+                      && es.ProgramId == student.ProgramId
+                      && enrolledSemesterIds.Contains(es.SemesterId)
+                      && es.ExamType!.Name != "Entrance");
 
         if (student.LevelId != 0)
         {
             query = query.Where(es => es.LevelId == null || es.LevelId == student.LevelId);
         }
 
-        var allSchedules = await query.ToListAsync();
-
-        var filtered = new List<ExamSchedule>();
-        foreach (var schedule in allSchedules)
-        {
-            var isSupplementary = schedule.ExamType?.Name == "Supplementary";
-
-            if (isSupplementary)
-            {
-                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterId, student.ProgramId ?? 0);
-                if (!hasFailed)
-                    continue;
-            }
-            filtered.Add(schedule);
-        }
-
-        return filtered;
+        return await query.ToListAsync();
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId)
@@ -430,7 +411,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         }
 
         var studentName = studentReg != null
-            ? $"{studentReg.FirstName} {studentReg.MiddleName} {studentReg.LastName}".Replace("  ", " ").Trim()
+            ? studentReg.FirstName.GetFullName(studentReg.MiddleName, studentReg.LastName)
             : "";
 
         var voucherNumber = $"VCH-{DateTime.UtcNow:yyyyMMdd}-{examScheduleId}-{studentRegistrationId}";
@@ -480,7 +461,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         context.ExamRegistrations!.Add(registration);
         if (semesterEnrollmentId.HasValue)
         {
-            context.Entry(registration).Property("SemesterEnrollmentId").CurrentValue = semesterEnrollmentId.Value;
+            registration.SemesterEnrollmentId = semesterEnrollmentId.Value;
         }
         await context.SaveChangesAsync();
         logger.LogInformation("CreateExamRegistrationAsync: ExamRegistration created. RegId={RegId}, ScheduleId={ScheduleId}, UserId={UserId}, VoucherId={VoucherId}", registration.Id, examScheduleId, userId, voucher.Id);

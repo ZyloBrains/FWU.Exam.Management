@@ -311,8 +311,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         builder.Entity<StudentRegistration>()
             .HasOne(sr => sr.StudentAdmission)
-            .WithMany()
-            .HasForeignKey(sr => sr.StudentAdmissionId)
+            .WithOne(sa => sa.StudentRegistration)
+            .HasForeignKey<StudentRegistration>(sr => sr.StudentAdmissionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamRegistration>()

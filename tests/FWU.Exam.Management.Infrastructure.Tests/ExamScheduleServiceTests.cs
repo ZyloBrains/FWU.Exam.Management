@@ -22,7 +22,7 @@ public class ExamScheduleServiceTests
         ctx.CurriculumVersions.Add(new CurriculumVersion
         {
             Id = versionId,
-            TenantId = TestData.TenantId,
+        TenantId = TestData.TenantId,
             Name = name ?? $"Default - BCA ({effectiveAcademicYearId})",
             ProgramId = programId,
             EffectiveAcademicYearId = effectiveAcademicYearId,
@@ -66,7 +66,7 @@ public class ExamScheduleServiceTests
     public async Task GetSemestersByCurriculumVersionAsync_ReturnsDistinctSemestersWithOfferings_OrderedByNumber()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
-        {
+    {
             TestData.SeedBase(ctx);
             SeedVersion(ctx);
             AssignOfferings(ctx, VersionId, 101, 102, 103, 104);
@@ -86,7 +86,12 @@ public class ExamScheduleServiceTests
             TestData.SeedBase(ctx);
             SeedVersion(ctx);
         });
+
         var service = CreateService(db);
+        var schedule = await service.GetExamScheduleByIdAsync(1);
+        Assert.NotNull(schedule);
+
+        schedule.ExamScheduleName = "Renamed";
 
         var semesters = await service.GetSemestersByCurriculumVersionAsync(VersionId);
 
@@ -102,6 +107,7 @@ public class ExamScheduleServiceTests
             SeedVersion(ctx);
             AssignOfferings(ctx, VersionId, 102, 103, 104);
         });
+
         var service = CreateService(db);
         var schedule = TestData.Schedule(31, 2, TestData.Regular, null, null);
         schedule.CurriculumVersionId = VersionId;
@@ -114,7 +120,7 @@ public class ExamScheduleServiceTests
 
     [Fact]
     public async Task GetSelectListDataAsync_FallsBackToAcademicYearSemesters_WhenScheduleHasNoCurriculumVersion()
-    {
+        {
         using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
         var service = CreateService(db);
         var schedule = TestData.Schedule(31, 2, TestData.Regular, null, null);

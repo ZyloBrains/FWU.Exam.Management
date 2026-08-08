@@ -26,116 +26,67 @@ public class StudentDashboardServiceTests
         var service = CreateService(db);
         var student = TestData.StudentRegistration(1, Email);
 
-        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+        var result = await service.GetExamSchedulesForStudentAsync(student);
 
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ReturnsEmpty_WhenStudentHasNoActiveEnrollment()
+    public async Task GetExamSchedulesForStudentAsync_ReturnsEmpty_WhenStudentHasNoEnrollment()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
             ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
-            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2, StudentEnrollmentStatus.Dropped));
             ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
         });
 
         var student = db.Context.StudentRegistrations!.FirstOrDefault() ?? TestData.StudentRegistration(1, Email);
         var service = CreateService(db);
 
-        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+        var result = await service.GetExamSchedulesForStudentAsync(student);
 
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ReturnsOnlyCurrentSemesterRegularSchedule()
+    public async Task GetExamSchedulesForStudentAsync_ReturnsSchedulesForAllEnrolledSemesters()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
             ctx.Users.Add(TestData.User(UserId, Email));
-            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
-            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 2));
 
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));       // regular sem1
-            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Past, null));       // regular sem2 (current)
-            ctx.ExamSchedules.Add(TestData.Schedule(13, 3, TestData.Regular, Past, null));       // regular sem3
-            ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Past, null)); // supplementary sem2 (no failures)
-            ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Past, null));      // entrance
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));       // regular sem1 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Past, null));       // regular sem2 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(13, 3, TestData.Regular, Past, null));       // regular sem3 (not enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Past, null)); // supplementary sem2 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Past, null));      // entrance (excluded)
             ctx.ExamSchedules.Add(TestData.Schedule(16, 2, TestData.Regular, Past, null, TestData.ProgramIdOther)); // other program
         });
 
         var student = db.Context.StudentRegistrations!.Single();
         var service = CreateService(db);
 
-        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+        var result = await service.GetExamSchedulesForStudentAsync(student);
 
-        var schedule = Assert.Single(result);
-        Assert.Equal(12, schedule.Id);
-    }
-
-    [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ShowsSupplementary_WhenStudentFailedSubjectsInThatSemester()
-    {
-        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
-        {
-            TestData.SeedBase(ctx);
-            ctx.Users.Add(TestData.User(UserId, Email));
-            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
-            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
-            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
-
-            var regularSem2 = TestData.Schedule(11, 2, TestData.Regular, Past, null);
-            var supplementarySem2 = TestData.Schedule(12, 2, TestData.Supplementary, Past, null);
-            ctx.ExamSchedules.Add(regularSem2);
-            ctx.ExamSchedules.Add(supplementarySem2);
-
-            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
-            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 11, 1));
-            ctx.ExamSubjectResults.Add(TestData.Result(1, 1, 102, TestData.Regular, "F", 11));
-        });
-
-        var student = db.Context.StudentRegistrations!.Single();
-        var service = CreateService(db);
-
-        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
-
-        Assert.Equal(2, result.Count);
+        Assert.Equal(3, result.Count);
         Assert.Contains(result, s => s.Id == 11);
         Assert.Contains(result, s => s.Id == 12);
-    }
-
-    [Fact]
-    public async Task GetExamSchedulesForStudentAsync_HidesSupplementary_WhenNoFailures()
-    {
-        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
-        {
-            TestData.SeedBase(ctx);
-            ctx.Users.Add(TestData.User(UserId, Email));
-            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
-            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
-            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
-
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
-            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Supplementary, Past, null));
-
-            ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 11));
-            ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 11, 1));
-            ctx.ExamSubjectResults.Add(TestData.Result(1, 1, 102, TestData.Regular, "B", 11));
-        });
-
-        var student = db.Context.StudentRegistrations!.Single();
-        var service = CreateService(db);
-
-        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
-
-        var schedule = Assert.Single(result);
-        Assert.Equal(11, schedule.Id);
+        Assert.Contains(result, s => s.Id == 14);
+        Assert.DoesNotContain(result, s => s.Id == 13);
+        Assert.DoesNotContain(result, s => s.Id == 15);
+        Assert.DoesNotContain(result, s => s.Id == 16);
     }
 
     [Fact]

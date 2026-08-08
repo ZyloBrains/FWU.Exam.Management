@@ -101,10 +101,15 @@ public static class TestData
         ctx.Semesters.Add(Semester(6, 3, 6));
 
         for (var semId = 1; semId <= 6; semId++)
+        {
             ctx.SubjectOfferings.Add(Offering(100 + semId, semId, ProgramId));
+            ctx.ProgramSemesters.Add(ProgramSemester(semId, semId, ProgramId));
+        }
 
         ctx.SubjectOfferings.Add(Offering(201, 1, ProgramIdOther));
         ctx.SubjectOfferings.Add(Offering(202, 2, ProgramIdOther));
+        ctx.ProgramSemesters.Add(ProgramSemester(7, 1, ProgramIdOther));
+        ctx.ProgramSemesters.Add(ProgramSemester(8, 2, ProgramIdOther));
     }
 
     public static AppUser User(string id, string email) => new()
@@ -126,6 +131,15 @@ public static class TestData
         StartDate = DateTime.UtcNow.AddYears(-1),
         EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6),
         AcademicYearId = AcademicYearId
+    };
+
+    public static ProgramSemester ProgramSemester(int id, int semesterId, int programId) => new()
+    {
+        Id = id,
+        ProgramId = programId,
+        SemesterId = semesterId,
+        IsActive = true,
+        DisplayOrder = semesterId
     };
 
     public static ExamSchedule Schedule(int id, int semesterId, int examTypeId, DateOnly? endDate,
@@ -194,6 +208,10 @@ public static class TestData
         AcademicYearId = AcademicYearId,
         AdmissionDate = DateTime.UtcNow,
         IsActive = true,
+        FirstName = "Test",
+        LastName = "Student",
+        GenderId = 1,
+        ContactNumber = "000",
         CollegeRollNumber = $"ROLL{id}",
         AppUserId = userId
     };
@@ -232,7 +250,7 @@ public static class TestData
     };
 
     public static ExamRegistration ExamRegistration(int id, int examScheduleId, int voucherId,
-        int programId = ProgramId) => new()
+        int programId = ProgramId, int? semesterEnrollmentId = null) => new()
     {
         Id = id,
         TenantId = TenantId,
@@ -241,6 +259,7 @@ public static class TestData
         ExamScheduleId = examScheduleId,
         ApplicationVoucherId = voucherId,
         ProgramsId = programId,
+        SemesterEnrollmentId = semesterEnrollmentId,
         RegistrationDate = DateTime.UtcNow,
         Status = RegistrationStatus.Registered,
         IsActive = true,
