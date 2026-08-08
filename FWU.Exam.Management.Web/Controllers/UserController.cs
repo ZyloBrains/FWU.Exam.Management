@@ -1,13 +1,8 @@
-using System.Security.Claims;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
-using FWU.Exam.Management.Domain.Entities.Colleges;
-using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Web.ViewModels;
-using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +10,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
-
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -25,6 +19,7 @@ public class UserController(
     RoleManager<IdentityRole> roleManager,
     AppDbContext context,
     IUserContext userContext,
+    IPermissionService permissionService,
     IBulkUserCreationService bulkUserCreationService) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
@@ -104,10 +99,7 @@ public class UserController(
     {
         if (id == null) return NotFound();
 
-        var user = await userManager.Users
-            .Include(u => u.Faculty)
-            .Include(u => u.College)
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var user = await LoadScopedUserAsync(id);
 
         if (user == null) return NotFound();
 
@@ -118,12 +110,12 @@ public class UserController(
     [RequirePermission("users.create")]
     public async Task<IActionResult> Create()
     {
-        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
-        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
-            ? roles
-            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.ToListAsync(), "Id", "Name");
-        ViewBag.Colleges = new SelectList(await context.Colleges.ToListAsync(), "Id", "Name");
+        var assignableRoles = await GetAssignableRolesAsync();
+        var roles = (await roleManager.Roles.Select(r => r.Name).ToListAsync())
+            .Where(r => r != null && assignableRoles.Contains(r));
+        ViewBag.RolesList = roles;
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).ToListAsync(), "Id", "Name");
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).ToListAsync(), "Id", "Name");
         return View(new CreateUserViewModel());
     }
 
@@ -132,11 +124,22 @@ public class UserController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
+        var callerRole = await GetCallerRoleAsync();
+
         if (model.SelectedRole == Role.SuperAdmin)
             ModelState.AddModelError(nameof(model.SelectedRole), "Cannot create a Super Admin user.");
 
-        if (model.SelectedRole == Role.FacultyAdmin && !User.IsInRole(Role.SuperAdmin))
+        if (model.SelectedRole == Role.FacultyAdmin && callerRole != Role.SuperAdmin)
             ModelState.AddModelError(nameof(model.SelectedRole), "Only Super Admin can create a Faculty Admin user.");
+
+        if (model.SelectedRole != null && !(await GetAssignableRolesAsync()).Contains(model.SelectedRole))
+            ModelState.AddModelError(nameof(model.SelectedRole), "You are not allowed to assign this role.");
+
+        if (model.SelectedRole == Role.FacultyAdmin && !model.FacultyId.HasValue)
+            ModelState.AddModelError(nameof(model.FacultyId), "Faculty is required for a Faculty Admin user.");
+
+        if (model.SelectedRole is Role.CollegeAdmin or Role.Student && !IsCollegeInScope(model.CollegeId))
+            ModelState.AddModelError(nameof(model.CollegeId), "The selected college is not within your access.");
 
         if (ModelState.IsValid)
         {
@@ -157,8 +160,9 @@ public class UserController(
             var result = await userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
-                if (await roleManager.RoleExistsAsync(model.SelectedRole))
-                    await userManager.AddToRoleAsync(user, model.SelectedRole);
+                var selectedRole = model.SelectedRole;
+                if (!string.IsNullOrEmpty(selectedRole) && await roleManager.RoleExistsAsync(selectedRole))
+                    await userManager.AddToRoleAsync(user, selectedRole);
                 TempData["SuccessMessage"] = "User created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -167,12 +171,12 @@ public class UserController(
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        var roles = await roleManager.Roles.Select(r => r.Name).ToListAsync();
-        ViewBag.RolesList = User.IsInRole(Role.SuperAdmin)
-            ? roles
-            : roles.Where(r => r != Role.SuperAdmin && r != Role.FacultyAdmin);
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        var assignableRoles = await GetAssignableRolesAsync();
+        var roles = (await roleManager.Roles.Select(r => r.Name).ToListAsync())
+            .Where(r => r != null && assignableRoles.Contains(r));
+        ViewBag.RolesList = roles;
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -181,10 +185,11 @@ public class UserController(
     {
         if (id == null) return NotFound();
 
-        var user = await userManager.Users
-            .Include(u => u.College)
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var user = await LoadScopedUserAsync(id);
         if (user == null) return NotFound();
+
+        if (!await CanManageTargetAsync(user))
+            return Forbid();
 
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? string.Empty;
@@ -199,8 +204,8 @@ public class UserController(
         };
 
         ViewBag.PrimaryRole = primaryRole;
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
@@ -213,14 +218,28 @@ public class UserController(
 
         if (ModelState.IsValid)
         {
-            var user = await userManager.FindByIdAsync(id);
+            var user = await LoadScopedUserAsync(id);
             if (user == null) return NotFound();
+
+            if (!await CanManageTargetAsync(user))
+                return Forbid();
+
+            if (model.CollegeId.HasValue && !IsCollegeInScope(model.CollegeId))
+                ModelState.AddModelError(nameof(model.CollegeId), "The selected college is not within your access.");
+
+            if (!IsFacultyInScope(model.FacultyId))
+                ModelState.AddModelError(nameof(model.FacultyId), "The selected faculty is not within your access.");
+
+            if (!ModelState.IsValid)
+                return await ReloadEditViewAsync(id, model);
 
             user.Email = model.Email;
             user.UserName = model.Email;
             user.FullName = model.FullName;
-            user.FacultyId = model.FacultyId;
             user.CollegeId = model.CollegeId;
+            // CollegeAdmin cannot manage faculty assignments; preserve the existing value.
+            if (!User.IsInRole(Role.CollegeAdmin))
+                user.FacultyId = model.FacultyId;
 
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
@@ -233,21 +252,30 @@ public class UserController(
                 ModelState.AddModelError(string.Empty, error.Description);
         }
 
-        var editUser = await userManager.FindByIdAsync(id);
+        return await ReloadEditViewAsync(id, model);
+    }
+
+    private async Task<IActionResult> ReloadEditViewAsync(string id, EditUserViewModel model)
+    {
+        var editUser = await LoadScopedUserAsync(id);
         if (editUser == null) return NotFound();
         var roles = await userManager.GetRolesAsync(editUser);
         ViewBag.PrimaryRole = roles.FirstOrDefault() ?? string.Empty;
-        ViewBag.Faculties = new SelectList(await context.Faculties.AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
-        ViewBag.Colleges = new SelectList(await context.Colleges.AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
+        ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
         return View(model);
     }
 
+    [RequirePermission("users.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleStatus(string id)
     {
-        var user = await userManager.FindByIdAsync(id);
+        var user = await LoadScopedUserAsync(id);
         if (user == null) return NotFound();
+
+        if (!await CanManageTargetAsync(user))
+            return Forbid();
 
         user.IsActive = !user.IsActive;
         await userManager.UpdateAsync(user);
@@ -261,10 +289,7 @@ public class UserController(
     {
         if (id == null) return NotFound();
 
-        var user = await userManager.Users
-            .Include(u => u.Faculty)
-            .Include(u => u.College)
-            .FirstOrDefaultAsync(u => u.Id == id);
+        var user = await LoadScopedUserAsync(id);
 
         if (user == null) return NotFound();
 
@@ -278,8 +303,8 @@ public class UserController(
     {
         try
         {
-            var user = await userManager.FindByIdAsync(id);
-            if (user != null)
+            var user = await LoadScopedUserAsync(id);
+            if (user != null && await CanManageTargetAsync(user))
                 await userManager.DeleteAsync(user);
 
             TempData["SuccessMessage"] = "User deleted successfully!";
@@ -302,9 +327,13 @@ public class UserController(
     {
         if (id == null) return NotFound();
 
-        var user = await userManager.FindByIdAsync(id);
+        var user = await LoadScopedUserAsync(id);
         if (user == null) return NotFound();
 
+        if (!await CanManageTargetAsync(user))
+            return Forbid();
+
+        var assignableRoles = await GetAssignableRolesAsync();
         var allRoles = await roleManager.Roles.ToListAsync();
         var userRoles = await userManager.GetRolesAsync(user);
 
@@ -312,11 +341,13 @@ public class UserController(
         {
             UserId = user.Id,
             UserEmail = user.Email ?? string.Empty,
-            Roles = allRoles.Select(r => new RoleAssignmentItem
-            {
-                RoleName = r.Name ?? string.Empty,
-                IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
-            }).ToList()
+            Roles = allRoles
+                .Where(r => r.Name != null && assignableRoles.Contains(r.Name))
+                .Select(r => new RoleAssignmentItem
+                {
+                    RoleName = r.Name ?? string.Empty,
+                    IsAssigned = userRoles.Contains(r.Name ?? string.Empty)
+                }).ToList()
         };
 
         return View(model);
@@ -327,19 +358,21 @@ public class UserController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AssignRoles(AssignRolesViewModel model)
     {
-        var user = await userManager.FindByIdAsync(model.UserId);
+        var user = await LoadScopedUserAsync(model.UserId);
         if (user == null) return NotFound();
 
+        if (!await CanManageTargetAsync(user))
+            return Forbid();
+
+        var assignableRoles = await GetAssignableRolesAsync();
         var currentRoles = await userManager.GetRolesAsync(user);
         var selectedRoles = model.Roles
             .Where(r => r.IsAssigned)
             .Select(r => r.RoleName)
             .ToList();
 
-        var toAdd = selectedRoles.Except(currentRoles).ToList();
-        var toRemove = currentRoles.Except(selectedRoles)
-            .Where(r => r != Role.SuperAdmin)
-            .ToList();
+        var toAdd = selectedRoles.Intersect(assignableRoles).Except(currentRoles).ToList();
+        var toRemove = currentRoles.Intersect(assignableRoles).Except(selectedRoles).ToList();
 
         if (toAdd.Count > 0)
             await userManager.AddToRolesAsync(user, toAdd);
@@ -360,6 +393,15 @@ public class UserController(
             selectedUser = await LoadSelectedUserAsync(userId);
             if (selectedUser == null)
                 TempData["ErrorMessage"] = "User not found or you do not have access to this user.";
+            else
+            {
+                var target = await userManager.FindByIdAsync(userId);
+                if (target != null && !await CanManageTargetAsync(target))
+                {
+                    selectedUser = null;
+                    TempData["ErrorMessage"] = "You do not have access to reset this user's password.";
+                }
+            }
         }
 
         var model = await BuildResetPasswordPageAsync(selectedUser, search, page, pageSize);
@@ -385,17 +427,23 @@ public class UserController(
             return RedirectToAction(nameof(ResetPassword), new { search = model.Search, page = model.Page, pageSize = model.PageSize });
         }
 
-        if (!ModelState.IsValid)
-        {
-            var pageModel = await BuildResetPasswordPageAsync(selectedUser, model.Search, model.Page, model.PageSize);
-            return View(pageModel);
-        }
-
         var user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
             TempData["ErrorMessage"] = "User not found.";
             return RedirectToAction(nameof(ResetPassword), new { search = model.Search, page = model.Page, pageSize = model.PageSize });
+        }
+
+        if (!await CanManageTargetAsync(user))
+        {
+            TempData["ErrorMessage"] = "You do not have access to reset this user's password.";
+            return RedirectToAction(nameof(ResetPassword), new { search = model.Search, page = model.Page, pageSize = model.PageSize });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var pageModel = await BuildResetPasswordPageAsync(selectedUser, model.Search, model.Page, model.PageSize);
+            return View(pageModel);
         }
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -444,6 +492,82 @@ public class UserController(
             CollegeName = user.College?.Name,
             IsActive = user.IsActive
         };
+    }
+
+    private async Task<AppUser?> LoadScopedUserAsync(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return null;
+
+        var scopedIds = userManager.Users.ApplyScope(userContext).Select(u => u.Id);
+        return await userManager.Users
+            .Include(u => u.Faculty)
+            .Include(u => u.College)
+            .FirstOrDefaultAsync(u => u.Id == id && scopedIds.Contains(u.Id));
+    }
+
+    private async Task<bool> CanManageTargetAsync(AppUser user)
+    {
+        var callerRole = await GetCallerRoleAsync();
+        if (callerRole != null)
+            return RoleRules.CanManageTarget(callerRole, await userManager.GetRolesAsync(user));
+
+        // Caller holds only dynamic/custom roles: permission-subset rule —
+        // they may manage a user only if the target's permission set is a
+        // subset of the caller's own, preventing privilege escalation.
+        var callerId = userManager.GetUserId(User);
+        if (callerId == null) return false;
+        var callerPermissions = new HashSet<string>(await permissionService.GetUserPermissionsAsync(callerId));
+        var targetPermissions = await permissionService.GetUserPermissionsAsync(user.Id);
+        return targetPermissions.All(callerPermissions.Contains);
+    }
+
+    private async Task<string?> GetCallerRoleAsync()
+    {
+        var caller = await userManager.GetUserAsync(User);
+        if (caller == null) return null;
+        return RoleRules.FromRoles(await userManager.GetRolesAsync(caller));
+    }
+
+    private async Task<IReadOnlySet<string>> GetAssignableRolesAsync()
+    {
+        var callerRole = await GetCallerRoleAsync();
+        if (callerRole != null)
+            return RoleRules.AssignableRoles(callerRole);
+
+        // Caller holds only dynamic/custom roles: permission-subset rule —
+        // they may only assign roles whose permission set is a subset of
+        // their own, matching the guard used by ManagePermissionsController.
+        var callerId = userManager.GetUserId(User);
+        if (callerId == null) return new HashSet<string>();
+        var callerPermissions = new HashSet<string>(await permissionService.GetUserPermissionsAsync(callerId));
+        var assignable = new HashSet<string>();
+        foreach (var role in await roleManager.Roles.ToListAsync())
+        {
+            if (role.Name == null) continue;
+            var rolePermissions = await permissionService.GetRolePermissionsAsync(role.Id);
+            if (rolePermissions.All(callerPermissions.Contains))
+                assignable.Add(role.Name);
+        }
+        return assignable;
+    }
+
+    private bool IsCollegeInScope(int? collegeId)
+    {
+        if (!collegeId.HasValue) return false;
+        if (User.IsInRole(Role.SuperAdmin)) return true;
+        if (User.IsInRole(Role.CollegeAdmin))
+            return userContext.CollegeId == collegeId.Value;
+        if (User.IsInRole(Role.FacultyAdmin))
+            return userContext.FacultyCollegeIds.Contains(collegeId.Value);
+        return false;
+    }
+
+    private bool IsFacultyInScope(int? facultyId)
+    {
+        if (!facultyId.HasValue) return true;
+        if (User.IsInRole(Role.SuperAdmin)) return true;
+        if (User.IsInRole(Role.CollegeAdmin)) return false;
+        return userContext.FacultyId == facultyId.Value;
     }
 
     private async Task<UserResetPasswordPageViewModel> BuildResetPasswordPageAsync(
@@ -516,8 +640,8 @@ public class UserController(
     {
         try
         {
-            var user = await userManager.FindByIdAsync(id);
-            if (user != null)
+            var user = await LoadScopedUserAsync(id);
+            if (user != null && await CanManageTargetAsync(user))
                 await userManager.DeleteAsync(user);
             return Json(new { success = true, message = "User deleted successfully!" });
         }

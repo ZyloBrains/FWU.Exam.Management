@@ -19,7 +19,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class BulkUserCreationService(
     AppDbContext context,
     IServiceScopeFactory scopeFactory,
-    ITenantContext tenantContext) : IBulkUserCreationService
+    ITenantContext tenantContext,
+    IUserContext userContext) : IBulkUserCreationService
 {
     private const int BatchSize = 50;
 
@@ -30,7 +31,8 @@ public class BulkUserCreationService(
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
-                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber));
+                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber))
+            .ApplyScope(userContext);
 
         if (collegeId.HasValue)
             query = query.Where(s => s.CollegeId == collegeId.Value);
@@ -62,10 +64,16 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob> StartJobAsync(List<int> registrationIds, string userId)
     {
+        var scopedIds = await context.StudentRegistrations
+            .ApplyScope(userContext)
+            .Where(s => registrationIds.Contains(s.Id))
+            .Select(s => s.Id)
+            .ToListAsync();
+
         var job = new BulkUserCreationJob
         {
             UserId = userId,
-            TotalStudents = registrationIds.Count,
+            TotalStudents = scopedIds.Count,
             Status = "Running",
             CreatedAt = DateTime.UtcNow
         };
@@ -74,7 +82,7 @@ public class BulkUserCreationService(
         await context.SaveChangesAsync();
 
         var jobId = job.Id;
-        var idsJson = JsonSerializer.Serialize(registrationIds);
+        var idsJson = JsonSerializer.Serialize(scopedIds);
         var capturedTenantId = tenantContext.TenantId;
         var capturedTenantCode = tenantContext.TenantCode;
         var capturedTenantType = tenantContext.Type;
@@ -90,7 +98,8 @@ public class BulkUserCreationService(
             .AsNoTracking()
             .Where(s => s.IsActive)
             .Where(s => !context.Users.Any(u => u.Email != null && u.Email == s.Email)
-                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber));
+                     && !context.Users.Any(u => u.UserName != null && u.UserName == s.RegistrationNumber))
+            .ApplyScope(userContext);
 
         if (collegeId.HasValue)
             query = query.Where(s => s.CollegeId == collegeId.Value);
@@ -103,9 +112,14 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob?> GetJobStatusAsync(int jobId)
     {
-        return await context.BulkUserCreationJobs!
+        var query = context.BulkUserCreationJobs!
             .AsNoTracking()
-            .FirstOrDefaultAsync(j => j.Id == jobId);
+            .Where(j => j.Id == jobId);
+
+        if (!userContext.IsSuperAdmin)
+            query = query.Where(j => j.UserId == userContext.UserId);
+
+        return await query.FirstOrDefaultAsync();
     }
 
     private async Task ProcessJobBackgroundAsync(int jobId, string idsJson, int tenantId, string tenantCode, TenantType tenantType)

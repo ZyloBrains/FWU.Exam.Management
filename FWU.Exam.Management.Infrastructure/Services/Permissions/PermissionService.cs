@@ -122,4 +122,15 @@ public class PermissionService(AppDbContext context, IMemoryCache cache) : IPerm
             .Select(rp => rp.PermissionId)
             .ToListAsync();
     }
+
+    public async Task<List<string>> GetRolePermissionsAsync(string roleId)
+    {
+        return await context.Set<Domain.Entities.Permissions.RolePermission>()
+            .Where(rp => rp.RoleId == roleId)
+            .Include(rp => rp.Permission)
+            .Where(rp => rp.Permission.IsActive)
+            .Select(rp => rp.Permission.Name)
+            .Distinct()
+            .ToListAsync();
+    }
 }

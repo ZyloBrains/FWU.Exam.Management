@@ -28,10 +28,10 @@ public class ManagePermissionsController(
         var userPermissions = await permissionService.GetUserPermissionsAsync(user.Id);
         var userPermSet = new HashSet<string>(userPermissions);
 
-        // Roles this user can manage (SuperAdmin sees all, CollegeAdmin sees FacultyAdmin + Student)
+        // Roles this user can manage (SuperAdmin sees all, CollegeAdmin sees Student only)
         var targetRoleNames = isSuperAdmin
             ? new[] { Role.FacultyAdmin, Role.CollegeAdmin, Role.Student }
-            : new[] { Role.FacultyAdmin, Role.Student };
+            : new[] { Role.Student };
 
         var targetRoles = await roleManager.Roles
             .Where(r => targetRoleNames.Contains(r.Name ?? ""))
@@ -64,8 +64,8 @@ public class ManagePermissionsController(
         var userPermissions = await permissionService.GetUserPermissionsAsync(user.Id);
         var userPermSet = new HashSet<string>(userPermissions);
 
-        // Only allow managing FacultyAdmin or Student for CollegeAdmin
-        if (!isSuperAdmin && role.Name != Role.FacultyAdmin && role.Name != Role.Student)
+        // Only allow managing Student for CollegeAdmin
+        if (!isSuperAdmin && role.Name != Role.Student)
             return Forbid();
 
         var allPermissions = await permissionService.GetAllPermissionsAsync();
@@ -112,7 +112,7 @@ public class ManagePermissionsController(
 
         var isSuperAdmin = await userManager.IsInRoleAsync(user, Role.SuperAdmin);
 
-        if (!isSuperAdmin && role.Name != Role.FacultyAdmin && role.Name != Role.Student)
+        if (!isSuperAdmin && role.Name != Role.Student)
             return Forbid();
 
         // CollegeAdmin can only grant permissions they themselves have
