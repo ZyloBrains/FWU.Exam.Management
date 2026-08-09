@@ -160,7 +160,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequirePermission("colleges.create")]
-    public async Task<IActionResult> Create([Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,CollegeProfileId")] College college)
+    public async Task<IActionResult> Create([Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId")] College college)
     {
         var localLevelId = Request.Form["LocalLevelId"].ToString();
         var wardNumber = Request.Form["WardNumber"].ToString();
@@ -212,7 +212,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequirePermission("colleges.edit")]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,CollegeProfileId,AddressId")] College college)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,Code,Name,CollegeNameNepali,ShortName,EstablishedDate,ClosedDate,Website,Email,Phone1,Phone2,PrincipalName,PrincipalContactNumber,Fax,Remarks,IsExamCenterOnly,IsActive,AllocatedAmount,DisplayOrder,CollegeTypeId,AddressId")] College college)
     {
         if (id != college.Id) return NotFound();
 

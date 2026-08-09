@@ -50,6 +50,7 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         return await context.Colleges
             .Include(c => c.CollegeType)
             .Include(c => c.CollegeFaculties)
+            .ThenInclude(cf => cf.Faculty)
             .Include(c => c.Address)
             .ThenInclude(a => a!.LocalLevel)
             .ThenInclude(ll => ll!.District)
@@ -110,7 +111,6 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         existingCollege.AllocatedAmount = college.AllocatedAmount;
         existingCollege.DisplayOrder = college.DisplayOrder;
         existingCollege.CollegeTypeId = college.CollegeTypeId;
-        existingCollege.CollegeProfileId = college.CollegeProfileId;
 
         if (!string.IsNullOrEmpty(localLevelId))
         {
@@ -225,6 +225,8 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
     {
         var query = context.Colleges
             .Include(c => c.CollegeType)
+            .Include(c => c.CollegeFaculties)
+            .ThenInclude(cf => cf.Faculty)
             .Include(c => c.Address)
             .ThenInclude(a => a!.LocalLevel)
             .ThenInclude(ll => ll!.District)
@@ -256,6 +258,7 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
             "name" => c => c.Name,
             "shortname" => c => c.ShortName ?? "",
             "district" => c => (c.Address != null && c.Address.LocalLevel != null && c.Address.LocalLevel.District != null) ? c.Address.LocalLevel.District.DistrictName : "",
+            "faculties" => c => c.CollegeFaculties.OrderBy(cf => cf.Faculty == null ? "" : cf.Faculty.Name).Select(cf => cf.Faculty == null ? "" : cf.Faculty.Name).FirstOrDefault() ?? "",
             "collegetype" => c => c.CollegeType != null ? c.CollegeType.Code : "",
             "displayorder" => c => c.DisplayOrder ?? 0,
             "isactive" => c => c.IsActive,
