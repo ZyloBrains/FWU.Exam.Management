@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -37,6 +36,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
     internal static int GetCurrentTenantId() => AmbientTenantContext.Value?.TenantId ?? 0;
     internal static bool IsCurrentTenantCentral() => AmbientTenantContext.Value?.IsCentralTenant ?? false;
+
+    // Rooted at the DbContext instance so EF Core query filters parameterize (and re-evaluate
+    // per query execution) instead of inlining the value once into the compiled query cache.
+    private int FilterTenantId => GetCurrentTenantId();
+    private bool FilterIsCentral => IsCurrentTenantCentral();
 
     public DbSet<AcademicYear> AcademicYears { get; set; } = null!;
     public DbSet<Address> Addresses { get; set; } = null!;
@@ -135,10 +139,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         {
             var param = Expression.Parameter(entityType.ClrType, "e");
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
-            var tenantIdMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentTenantId), BindingFlags.NonPublic | BindingFlags.Static);
-            var isCentralMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentTenantCentral), BindingFlags.NonPublic | BindingFlags.Static);
-            var tenantIdValue = Expression.Call(null, tenantIdMethod!);
-            var isCentral = Expression.Call(null, isCentralMethod!);
+            var thisContext = Expression.Constant(this, typeof(AppDbContext));
+            var tenantIdValue = Expression.Property(thisContext, nameof(FilterTenantId));
+            var isCentral = Expression.Property(thisContext, nameof(FilterIsCentral));
             var body = Expression.OrElse(isCentral, Expression.Equal(tenantIdProp, tenantIdValue));
             var lambda = Expression.Lambda(body, param);
             entityType.SetQueryFilter(lambda);
@@ -151,8 +154,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         }
 
         builder.Entity<College>()
-            .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
-                c.TenantColleges!.Any(tc => tc.TenantId == AppDbContext.GetCurrentTenantId()));
+            .HasQueryFilter(c => FilterIsCentral ||
+                c.TenantColleges!.Any(tc => tc.TenantId == FilterTenantId));
 
         builder.Entity<TenantCollege>()
             .HasKey(tc => new { tc.TenantId, tc.CollegeId });

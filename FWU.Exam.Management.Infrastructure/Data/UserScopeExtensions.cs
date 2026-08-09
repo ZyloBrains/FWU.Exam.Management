@@ -86,7 +86,9 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(sr => sr.FacultyId == user.FacultyId.Value);
+            return query.Where(sr =>
+                sr.FacultyId == user.FacultyId.Value ||
+                (sr.Program != null && sr.Program.FacultyId == user.FacultyId.Value));
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sr => sr.CollegeId == user.CollegeId.Value);
         return query.Where(sr => false);
