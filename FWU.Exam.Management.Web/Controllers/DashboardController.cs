@@ -71,7 +71,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
 
     private async Task PopulateStudentData(DashboardViewModel vm, AppUser user)
     {
-        var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email!);
+        var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return;
 
         vm.StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);

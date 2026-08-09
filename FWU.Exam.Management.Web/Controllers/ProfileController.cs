@@ -90,9 +90,14 @@ public class ProfileController(
         }
 
         var registration = isStudent
-            ? await context.StudentRegistrations
-                .FirstOrDefaultAsync(sr => sr.Email == user.Email || sr.RegistrationNumber == user.Email)
+            ? await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id)
             : null;
+
+        if (isStudent && registration != null)
+        {
+            registration = await context.StudentRegistrations
+                .FirstOrDefaultAsync(sr => sr.Id == registration.Id);
+        }
 
         if (isStudent)
         {
@@ -524,7 +529,7 @@ public class ProfileController(
             CanUploadSignature = baseVm.CanUploadSignature,
         };
 
-        var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
 
         Address? permanentAddress = registration?.PermanentAddress;
         if (registration?.PermanentAddressId is int permanentAddressId && permanentAddress?.LocalLevel == null)
@@ -687,7 +692,7 @@ public class ProfileController(
             .ToListAsync();
 
         vm.MissingMandatoryFields = await studentDashboardService
-            .GetMissingMandatoryProfileFieldsAsync(user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
+            .GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
         vm.ShowProfileCompletionPopup = vm.MissingMandatoryFields.Count > 0;
 
         var mandatoryFieldOrder = new[]

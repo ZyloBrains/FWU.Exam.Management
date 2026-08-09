@@ -377,7 +377,7 @@ public class StudentDashboardServiceTests
         });
         var service = CreateService(db);
 
-        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
 
         Assert.Empty(missing);
     }
@@ -388,7 +388,7 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
         var service = CreateService(db);
 
-        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, null, null, null);
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, null, null, null, null);
 
         Assert.Equal(new[] { "Email Address", "Phone Number", "Province", "District", "Local Level", "Gender", "Ethnicity", "Profile Photo", "Student Signature" }, missing);
     }
@@ -403,7 +403,7 @@ public class StudentDashboardServiceTests
         });
         var service = CreateService(db);
 
-        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
 
         Assert.Equal(new[] { "Province", "District", "Local Level", "Gender", "Ethnicity" }, missing);
     }
@@ -419,7 +419,7 @@ public class StudentDashboardServiceTests
         });
         var service = CreateService(db);
 
-        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, "9800000000", null, null);
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, "9800000000", null, null);
 
         Assert.Equal(new[] { "Profile Photo", "Student Signature" }, missing);
     }
@@ -435,7 +435,7 @@ public class StudentDashboardServiceTests
         });
         var service = CreateService(db);
 
-        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, null, "uploads/profile.png", "uploads/sign.png");
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, null, "uploads/profile.png", "uploads/sign.png");
 
         Assert.DoesNotContain("Phone", missing);
     }
@@ -459,5 +459,47 @@ public class StudentDashboardServiceTests
         Assert.NotNull(reg.PermanentAddress.LocalLevel!.District);
         Assert.NotNull(reg.PermanentAddress.LocalLevel.District!.Province);
         Assert.Equal("Bagmati", reg.PermanentAddress.LocalLevel.District!.Province!.ProvinceName);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByEmailAsync_DoesNotMatchRegistrationNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.TenantColleges.Add(new TenantCollege { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId });
+            var sr = TestData.StudentRegistration(1, "student@example.com");
+            sr.RegistrationNumber = "REG-SPECIAL";
+            ctx.StudentRegistrations.Add(sr);
+        });
+        var service = CreateService(db);
+
+        var byEmail = await service.GetStudentRegistrationByEmailAsync("REG-SPECIAL");
+        var byRegNumber = await service.GetStudentRegistrationByEmailAsync("student@example.com");
+
+        Assert.Null(byEmail);
+        Assert.NotNull(byRegNumber);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByUserIdAsync_LoadsRegistrationViaAdmissionLink()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedLocationData(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = CompleteRegistration(1);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+        });
+        var service = CreateService(db);
+
+        var reg = await service.GetStudentRegistrationByUserIdAsync(UserId);
+
+        Assert.NotNull(reg);
+        Assert.Equal(1, reg!.Id);
+        Assert.Equal(1, reg.StudentAdmissionId);
     }
 }

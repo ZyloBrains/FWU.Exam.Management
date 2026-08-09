@@ -28,7 +28,32 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(s => s.Ethnicity)
             .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
             .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
-            .FirstOrDefaultAsync(s => (s.Email != null && s.Email == email) || s.RegistrationNumber == email);
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
+    }
+
+    public async Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId)
+    {
+        var admission = await context.StudentAdmissions!
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
+        if (admission != null)
+        {
+            var registration = await context.StudentRegistrations!
+                .AsNoTracking()
+                .Include(s => s.AcademicYear)
+                .Include(s => s.Level)
+                .Include(s => s.College)
+                .Include(s => s.Gender)
+                .Include(s => s.StudentCategory)
+                .Include(s => s.Ethnicity)
+                .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+                .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+                .FirstOrDefaultAsync(s => s.StudentAdmissionId == admission.Id);
+            if (registration != null) return registration;
+        }
+
+        var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+        return user?.Email == null ? null : await GetStudentRegistrationByEmailAsync(user.Email);
     }
 
     public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student)
@@ -602,7 +627,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var sr = await context.StudentRegistrations!
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => (s.Email != null && s.Email == email) || s.RegistrationNumber == email);
+            .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
         if (sr == null) return null;
 
         if (sr.StudentAdmissionId.HasValue)
@@ -840,14 +865,16 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
+    public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
     {
         var missing = new List<string>();
 
         if (string.IsNullOrWhiteSpace(userEmail))
             missing.Add("Email Address");
 
-        var registration = await GetStudentRegistrationByEmailAsync(userEmail ?? "");
+        var registration = !string.IsNullOrWhiteSpace(userId)
+            ? await GetStudentRegistrationByUserIdAsync(userId)
+            : await GetStudentRegistrationByEmailAsync(userEmail ?? "");
         var hasPhone = !string.IsNullOrWhiteSpace(phoneNumber)
             || (registration != null && (!string.IsNullOrWhiteSpace(registration.ContactNumber) || !string.IsNullOrWhiteSpace(registration.Phone)));
 

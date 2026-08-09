@@ -9,6 +9,7 @@ namespace FWU.Exam.Management.Application.Interfaces;
 public interface IStudentDashboardService
 {
     Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
+    Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId);
     Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
@@ -39,5 +40,5 @@ public interface IStudentDashboardService
     Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId);
     Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
     Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
-    Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath);
+    Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath);
 }
