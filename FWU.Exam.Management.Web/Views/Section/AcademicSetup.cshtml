@@ -20,7 +20,7 @@
         </div>
         <div>
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Academic Setup</h1>
-            <p class="text-xs sm:text-sm text-gray-500">Configure faculties, programs, semesters and subjects</p>
+            <p class="text-xs sm:text-sm text-gray-500">Configure faculties, programs, semesters and academic years</p>
         </div>
     </div>
 
@@ -80,66 +80,6 @@
                 <div>
                     <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Academic Years</h3>
                     <p class="text-xs sm:text-sm text-gray-500">Manage academic years</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("subjects.view"))
-        {
-        <a asp-area="Subjects" asp-controller="SubjectCatalogs" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                    <i class="fas fa-book text-red-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Subject Catalogs</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage subject catalog</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("subjecttypes.view"))
-        {
-        <a asp-area="Subjects" asp-controller="SubjectTypes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
-                    <i class="fas fa-tags text-teal-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Subject Types</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage subject categories</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("subjectofferings.view"))
-        {
-        <a asp-area="Subjects" asp-controller="SubjectOfferings" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                    <i class="fas fa-layer-group text-orange-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Subject Offerings</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage subject offerings per program</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("curriculumversions.view"))
-        {
-        <a asp-area="Subjects" asp-controller="CurriculumVersions" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
-                    <i class="fas fa-code-branch text-cyan-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Curriculum Versions</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage curriculum versions</p>
                 </div>
             </div>
         </a>

@@ -3,7 +3,7 @@
 @inject IPermissionService PermissionService
 
 @{
-    ViewData["Title"] = "Academic";
+    ViewData["Title"] = "Student Portal";
 
     var sectionUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
     var isSuperAdmin = sectionUser != null && await UserManager.IsInRoleAsync(sectionUser, Role.SuperAdmin);
@@ -19,7 +19,7 @@
             <i class="fas fa-graduation-cap text-indigo-600"></i>
         </div>
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Academic</h1>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Student Portal</h1>
             <p class="text-xs sm:text-sm text-gray-500">Student portal - profile, exams, marksheet and payments</p>
         </div>
     </div>
