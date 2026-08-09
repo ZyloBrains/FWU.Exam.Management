@@ -14,8 +14,6 @@ public class College
     [Display(Name = "Code")]
     public string Code { get; set; } = string.Empty;
 
-    public virtual ICollection<Faculty> Faculties { get; set; } = [];
-
     [Required, MaxLength(500)]
     [Display(Name = "Name")]
     public string Name { get; set; } = string.Empty;
@@ -90,8 +88,8 @@ public class College
     public int? CollegeProfileId { get; set; }
     public virtual CollegeProfile? CollegeProfile { get; set; }
 
+    public virtual ICollection<CollegeFaculty> CollegeFaculties { get; set; } = [];
     public virtual ICollection<CollegeProgram> CollegePrograms { get; set; } = [];
-    public virtual ICollection<TenantCollege> TenantColleges { get; set; } = [];
     public virtual ICollection<ExamCenter> ExamCenters { get; set; } = [];
     public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
     public virtual ICollection<StudentAdmission> StudentAdmissions { get; set; } = [];

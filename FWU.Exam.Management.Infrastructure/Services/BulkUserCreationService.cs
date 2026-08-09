@@ -25,7 +25,7 @@ public class BulkUserCreationService(
     private const int BatchSize = 50;
 
     public async Task<(List<StudentWithoutUserDto> Data, int TotalCount)> GetStudentsWithoutUsersAsync(
-        int? collegeId, int? facultyId, int page, int pageSize)
+        int? collegeId, int? facultyId, int? programId, int page, int pageSize)
     {
         var query = context.StudentRegistrations
             .AsNoTracking()
@@ -38,6 +38,8 @@ public class BulkUserCreationService(
             query = query.Where(s => s.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
 
         var totalCount = await query.CountAsync();
 
@@ -65,6 +67,7 @@ public class BulkUserCreationService(
     public async Task<BulkUserCreationJob> StartJobAsync(List<int> registrationIds, string userId)
     {
         var scopedIds = await context.StudentRegistrations
+            .AsNoTracking()
             .ApplyScope(userContext)
             .Where(s => registrationIds.Contains(s.Id))
             .Select(s => s.Id)
@@ -92,7 +95,7 @@ public class BulkUserCreationService(
         return job;
     }
 
-    public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, string userId)
+    public async Task<BulkUserCreationJob> StartJobFromFiltersAsync(int? collegeId, int? facultyId, int? programId, string userId)
     {
         var query = context.StudentRegistrations
             .AsNoTracking()
@@ -105,6 +108,8 @@ public class BulkUserCreationService(
             query = query.Where(s => s.CollegeId == collegeId.Value);
         if (facultyId.HasValue)
             query = query.Where(s => s.FacultyId == facultyId.Value);
+        if (programId.HasValue)
+            query = query.Where(s => s.ProgramId == programId.Value);
 
         var ids = await query.Select(s => s.Id).ToListAsync();
         return await StartJobAsync(ids, userId);

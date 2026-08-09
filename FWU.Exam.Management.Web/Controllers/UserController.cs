@@ -654,10 +654,10 @@ public class UserController(
     [RequirePermission("users.create")]
     [HttpGet]
     public async Task<IActionResult> GetStudentsWithoutUsers(
-        int? collegeId, int? facultyId, int page = 1, int pageSize = 50)
+        int? collegeId, int? facultyId, int? programId, int page = 1, int pageSize = 50)
     {
         var (data, totalCount) = await bulkUserCreationService.GetStudentsWithoutUsersAsync(
-            collegeId, facultyId, page, pageSize);
+            collegeId, facultyId, programId, page, pageSize);
         return Json(new { data, totalCount });
     }
 
@@ -686,8 +686,7 @@ public class UserController(
     {
         var userId = userManager.GetUserId(User) ?? "unknown";
         var job = await bulkUserCreationService.StartJobFromFiltersAsync(
-            filters.CollegeId, filters.FacultyId, userId);
-
+            filters.CollegeId, filters.FacultyId, filters.ProgramId, userId);
         return Json(new
         {
             success = true,
@@ -701,6 +700,7 @@ public class UserController(
     {
         public int? CollegeId { get; set; }
         public int? FacultyId { get; set; }
+        public int? ProgramId { get; set; }
     }
 
     [RequirePermission("users.create")]

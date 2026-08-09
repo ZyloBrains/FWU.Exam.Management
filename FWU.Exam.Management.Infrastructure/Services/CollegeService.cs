@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Enums;
@@ -48,6 +49,7 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
     {
         return await context.Colleges
             .Include(c => c.CollegeType)
+            .Include(c => c.CollegeFaculties)
             .Include(c => c.Address)
             .ThenInclude(a => a!.LocalLevel)
             .ThenInclude(ll => ll!.District)
@@ -56,7 +58,7 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
-    public async Task<int> CreateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber)
+    public async Task<int> CreateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber, List<int>? facultyIds)
     {
         if (!string.IsNullOrEmpty(localLevelId))
         {
@@ -75,12 +77,14 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         }
 
         context.Colleges.Add(college);
-        context.TenantColleges.Add(new TenantCollege { College = college });
         await context.SaveChangesAsync();
+
+        await SyncCollegeFacultiesAsync(college.Id, facultyIds);
+
         return college.Id;
     }
 
-    public async Task<int> UpdateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber)
+    public async Task<int> UpdateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber, List<int>? facultyIds)
     {
         var existingCollege = await context.Colleges
             .Include(c => c.Address)
@@ -135,8 +139,51 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
             }
         }
 
+        await SyncCollegeFacultiesAsync(college.Id, facultyIds);
+
         await context.SaveChangesAsync();
         return existingCollege.Id;
+    }
+
+    private async Task SyncCollegeFacultiesAsync(int collegeId, List<int>? facultyIds)
+    {
+        var existing = await context.CollegeFaculties
+            .Where(cf => cf.CollegeId == collegeId)
+            .ToListAsync();
+
+        var desired = facultyIds?.Distinct().ToList() ?? [];
+
+        var toAdd = desired
+            .Where(fid => !existing.Any(cf => cf.FacultyId == fid))
+            .ToList();
+
+        if (toAdd.Count > 0)
+        {
+            var tenantIdsByFaculty = await context.Faculties
+                .Where(f => toAdd.Contains(f.Id))
+                .Select(f => new { f.Id, f.TenantId })
+                .ToDictionaryAsync(f => f.Id, f => f.TenantId);
+
+            foreach (var facultyId in toAdd)
+            {
+                if (!tenantIdsByFaculty.TryGetValue(facultyId, out var tenantId) || tenantId == null)
+                    throw new InvalidOperationException($"Faculty {facultyId} has no tenant assigned. Assign a tenant to the faculty before affiliating it with a college.");
+
+                context.CollegeFaculties.Add(new CollegeFaculty
+                {
+                    CollegeId = collegeId,
+                    FacultyId = facultyId,
+                    TenantId = tenantId.Value
+                });
+            }
+        }
+
+        var toRemove = existing
+            .Where(cf => !desired.Contains(cf.FacultyId))
+            .ToList();
+
+        if (toRemove.Count > 0)
+            context.CollegeFaculties.RemoveRange(toRemove);
     }
 
     public async Task DeleteCollegeAsync(int id)
@@ -144,9 +191,24 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         var college = await context.Colleges.FindAsync(id);
         if (college != null)
         {
+            var collegeFaculties = await context.CollegeFaculties
+                .Where(cf => cf.CollegeId == id)
+                .ToListAsync();
+            if (collegeFaculties.Count > 0)
+                context.CollegeFaculties.RemoveRange(collegeFaculties);
+
             context.Colleges.Remove(college);
             await context.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<Faculty>> GetFacultiesAsync()
+    {
+        return await context.Faculties
+            .AsNoTracking()
+            .ApplyScope(userContext)
+            .OrderBy(f => f.Name)
+            .ToListAsync();
     }
 
     public async Task<bool> CollegeExistsAsync(int id)

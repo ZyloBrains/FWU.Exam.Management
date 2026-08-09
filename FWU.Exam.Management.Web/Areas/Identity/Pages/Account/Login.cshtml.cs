@@ -195,11 +195,14 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (user.CollegeId != null)
         {
-            var collegeTenant = await context.TenantColleges
+            var collegeTenant = await context.CollegeFaculties
                 .AsNoTracking()
                 .IgnoreQueryFilters()
-                .Where(tc => tc.CollegeId == user.CollegeId.Value && tc.Tenant != null && tc.Tenant.IsActive)
-                .Select(tc => tc.Tenant!.OfficeCode)
+                .Where(cf => cf.CollegeId == user.CollegeId.Value
+                    && cf.Faculty != null
+                    && cf.Faculty.Tenant != null
+                    && cf.Faculty.Tenant.IsActive)
+                .Select(cf => cf.Faculty!.Tenant!.OfficeCode)
                 .FirstOrDefaultAsync();
 
             return collegeTenant;

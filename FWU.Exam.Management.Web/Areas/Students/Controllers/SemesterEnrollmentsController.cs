@@ -324,7 +324,13 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         var collegeQuery = context.Colleges.AsNoTracking().AsQueryable();
         var programQuery = context.Programs.AsNoTracking().AsQueryable();
 
-        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+        {
+            var fid = userContext.FacultyId.Value;
+            collegeQuery = collegeQuery.Where(c => c.CollegePrograms.Any(cp => cp.Program != null && cp.Program.FacultyId == fid));
+            programQuery = programQuery.Where(p => p.FacultyId == fid);
+        }
+        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
             var cid = userContext.CollegeId.Value;
             collegeQuery = collegeQuery.Where(c => c.Id == cid);
@@ -337,6 +343,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
         ViewData["CollegeFilter"] = new SelectList(
             await collegeQuery.OrderBy(c => c.Name).Select(c => new { c.Id, c.Name }).ToListAsync(), "Id", "Name", collegeId);
+        ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
         ViewData["ProgramFilter"] = new SelectList(
             await programQuery.OrderBy(p => p.ProgramName).Select(p => new { p.Id, p.ProgramName }).ToListAsync(), "Id", "ProgramName", programId);
         var semesterQuery = context.Semesters.AsNoTracking().AsQueryable();

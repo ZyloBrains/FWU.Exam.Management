@@ -3,7 +3,6 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Students;
-using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -14,7 +13,6 @@ using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
@@ -54,13 +52,9 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     }
 
     [RequirePermission("tenants.create")]
-    public async Task<IActionResult> Create()
+    public IActionResult Create()
     {
-        var model = new TenantCreateViewModel
-        {
-            FacultyList = await GetAvailableFacultiesAsync()
-        };
-        return View(model);
+        return View(new TenantCreateViewModel());
     }
 
     [RequirePermission("tenants.create")]
@@ -68,13 +62,6 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TenantCreateViewModel viewModel, IFormFile? bannerImage, IFormFile? logoImage)
     {
-        viewModel.FacultyList = await GetAvailableFacultiesAsync();
-
-        if (viewModel.Tenant.TenantType == TenantType.Standard && viewModel.SelectedFacultyId == null)
-        {
-            ModelState.AddModelError(nameof(viewModel.SelectedFacultyId), "Please select a faculty for a Standard tenant.");
-        }
-
         if (ModelState.IsValid)
         {
             var tenant = viewModel.Tenant;
@@ -102,23 +89,12 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
                 Email = viewModel.AdminEmail,
                 EmailConfirmed = true,
                 FullName = viewModel.AdminFullName,
-                IsActive = true,
-                FacultyId = viewModel.SelectedFacultyId
+                IsActive = true
             };
 
             var result = await _userManager.CreateAsync(adminUser, viewModel.AdminPassword);
             if (result.Succeeded)
             {
-                if (viewModel.SelectedFacultyId.HasValue)
-                {
-                    var faculty = await _context.Faculties.FindAsync(viewModel.SelectedFacultyId.Value);
-                    if (faculty != null)
-                    {
-                        faculty.TenantId = tenant.Id;
-                    }
-                    await _context.SaveChangesAsync();
-                }
-
                 await _userManager.AddToRoleAsync(adminUser, Role.FacultyAdmin);
 
                 try
@@ -150,19 +126,6 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
             return RedirectToAction(nameof(Index));
         }
         return View(viewModel);
-    }
-
-    private async Task<IEnumerable<SelectListItem>> GetAvailableFacultiesAsync()
-    {
-        return await _context.Faculties
-            .IgnoreQueryFilters()
-            .OrderBy(f => f.Name)
-            .Select(f => new SelectListItem
-            {
-                Value = f.Id.ToString(),
-                Text = f.Name + " (" + f.OfficeCode + ")"
-            })
-            .ToListAsync();
     }
 
     [RequirePermission("tenants.edit")]
@@ -241,8 +204,8 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
 
         try
         {
-            var tenantColleges = await _context.TenantColleges.Where(tc => tc.TenantId == id).ToListAsync();
-            _context.TenantColleges.RemoveRange(tenantColleges);
+            var collegeFaculties = await _context.CollegeFaculties.Where(cf => cf.TenantId == id).ToListAsync();
+            _context.CollegeFaculties.RemoveRange(collegeFaculties);
 
             var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
             _context.Faculties.RemoveRange(faculties);
@@ -264,7 +227,11 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         return new Dictionary<string, int>
         {
             ["Faculties"] = await _context.Faculties.CountAsync(f => f.TenantId == tenantId),
-            ["Colleges"] = await _context.TenantColleges.CountAsync(tc => tc.TenantId == tenantId),
+            ["Colleges"] = await _context.CollegeFaculties
+                .Where(cf => cf.TenantId == tenantId)
+                .Select(cf => cf.CollegeId)
+                .Distinct()
+                .CountAsync(),
             ["College Programs"] = await _context.Set<CollegeProgram>().CountAsync(cp => cp.TenantId == tenantId),
             ["Academic Years"] = await _context.AcademicYears.CountAsync(),
             ["Students"] = await _context.StudentRegistrations.CountAsync(s => s.TenantId == tenantId),
@@ -318,8 +285,8 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
             if (tenant == null)
                 return Json(new { success = false, message = "Tenant not found." });
 
-            var tenantColleges = await _context.TenantColleges.Where(tc => tc.TenantId == id).ToListAsync();
-            _context.TenantColleges.RemoveRange(tenantColleges);
+            var collegeFaculties = await _context.CollegeFaculties.Where(cf => cf.TenantId == id).ToListAsync();
+            _context.CollegeFaculties.RemoveRange(collegeFaculties);
 
             var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
             _context.Faculties.RemoveRange(faculties);
