@@ -1,5 +1,8 @@
+@using System.Text.Json
+@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using FWU.Exam.Management.Application.Interfaces
+@using FWU.Exam.Management.Web.Navigation
 @inject SignInManager<AppUser> SignInManager
 @inject UserManager<AppUser> UserManager
 @inject IPermissionService PermissionService
@@ -30,17 +33,16 @@
         return true;
     }
 
-    Func<bool, string> ParentClass = (active) => active 
-        ? "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-white/[0.12] text-white font-semibold shadow-sm backdrop-blur-sm ring-1 ring-white/10 transition-all duration-200" 
+    Func<bool, string> ParentClass = (active) => active
+        ? "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-white/[0.12] text-white font-semibold shadow-sm backdrop-blur-sm ring-1 ring-white/10 transition-all duration-200"
         : "w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-blue-200 hover:bg-white/[0.07] hover:text-white hover:ring-1 hover:ring-white/[0.06] transition-all duration-200";
 
-    Func<bool, string> ChildClass = (active) => active 
+    Func<bool, string> ChildClass = (active) => active
         ? "flex items-center gap-3 px-4 py-2.5 rounded-lg bg-white/[0.12] text-white font-medium text-sm shadow-sm backdrop-blur-sm ring-1 ring-white/10 transition-all duration-200"
         : "flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-200 hover:bg-white/[0.07] hover:text-white hover:ring-1 hover:ring-white/[0.06] text-sm transition-all duration-200";
 
     // Get user and permissions
     var sideMenuUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
-    var sideMenuTenantCode = Context.Items["TenantCode"] as string;
     var isSuperAdmin = sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, Role.SuperAdmin);
 
     // Get permissions for the current user
@@ -49,439 +51,116 @@
         : new List<string>();
     bool HasPerm(string permission) => isSuperAdmin || sideMenuPermissions.Contains(permission);
 
-    // Permission-based section visibility
-    var showUserMgmt = HasPerm("users.view") || HasPerm("users.create") || HasPerm("roles.view") || HasPerm("permissions.manage");
-    var showAcademic = HasPerm("faculties.view") || HasPerm("programs.view") || HasPerm("semesters.view") || HasPerm("academicyears.view") ||
-                       HasPerm("subjects.view") || HasPerm("subjecttypes.view") || HasPerm("subjectofferings.view") || HasPerm("curriculumversions.view");
-    var showColleges = HasPerm("colleges.view") || HasPerm("collegetypes.view") || HasPerm("collegeprograms.view");
-    var showRegistration = HasPerm("students.view") || HasPerm("studentcategories.view") || HasPerm("studentadmissions.view");
-    var showExamination = HasPerm("examschedules.view") || HasPerm("examtypes.view") || HasPerm("entrance.view") ||
-                       HasPerm("gradingschemes.view") || HasPerm("examregistrations.view") || HasPerm("examsubjectresults.view") || HasPerm("resultrecords.view") ||
-                       HasPerm("examcenters.view") ||
-                       HasPerm("marksentry.view");
-    var showResults = HasPerm("examsubjectresults.view") || HasPerm("resultrecords.view");
-    var showPayments = HasPerm("banks.view") || HasPerm("paymenttypes.view") || HasPerm("billtitles.view");
-    var showLocation = HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view");
-    var showStudentPortal = isSuperAdmin || (sideMenuUser != null && await UserManager.IsInRoleAsync(sideMenuUser, Role.Student));
-    var showConfig = HasPerm("tenants.view") || HasPerm("smtp.view") || HasPerm("sms.view") || HasPerm("gumpnowemail.view") || HasPerm("esewa.view") || HasPerm("khalti.view") || HasPerm("connectips.view") || HasPerm("notices.view") || HasPerm("auditlog.view") || HasPerm("backuprestore.manage");
-    var showReports = HasPerm("reports.collegepayments") || HasPerm("reports.subjectcount") || HasPerm("reports.examtriplicate") || HasPerm("reports.summary") ||
-                      HasPerm("reports.tabulationtriplicate") || HasPerm("reports.programwisestudent") || HasPerm("reports.attendanceheet") || HasPerm("reports.marksfoil") ||
-                      HasPerm("reports.bankvoucherlist");
+    var sideMenuRoles = sideMenuUser != null ? await UserManager.GetRolesAsync(sideMenuUser) : new List<string>();
 
-    // Active state detection for sections
-    var isUserActive = IsActive(controllerName: "User") || IsActive(page: "/Account/ForgotPassword") ||
-                       IsActive(controllerName: "Role") || IsActive(controllerName: "RolePermissionManager", areaName: "Admin") ||
-                       IsActive(controllerName: "ManagePermissions", areaName: "Admin") ||
-                       IsActive(controllerName: "Section", actionName: "UserManagement");
-    var isAcademicActive = IsActive(controllerName: "Faculty", areaName: "Core") ||
-                            IsActive(controllerName: "Programs", areaName: "Core") ||
-                            IsActive(controllerName: "Semesters", areaName: "Core") ||
-                            IsActive(controllerName: "SubjectCatalogs", areaName: "Subjects") ||
-                            IsActive(controllerName: "SubjectTypes", areaName: "Subjects") ||
-                            IsActive(controllerName: "SubjectOfferings", areaName: "Subjects") ||
-                            IsActive(controllerName: "CurriculumVersions", areaName: "Subjects") ||
-                            IsActive(controllerName: "AcademicYears", areaName: "Core") ||
-                            IsActive(controllerName: "Section", actionName: "AcademicSetup");
-    var isCollegeActive = IsActive(controllerName: "Colleges", areaName: "Colleges") ||
-                           IsActive(controllerName: "CollegeTypes", areaName: "Colleges") ||
-                           IsActive(controllerName: "CollegePrograms", areaName: "Colleges") ||
-                           IsActive(controllerName: "Section", actionName: "Colleges");
-    var isRegActive = IsActive(controllerName: "StudentRegistrations", areaName: "Students") ||
-                      IsActive(controllerName: "StudentCategories") ||
-                      IsActive(controllerName: "StudentAdmissions", areaName: "Students") ||
-                      IsActive(controllerName: "SemesterEnrollments", areaName: "Students") ||
-                      IsActive(controllerName: "Section", actionName: "Registration");
-    var isExamActive = IsActive(controllerName: "Entrance", areaName: "Exams") ||
-                        IsActive(controllerName: "ExamSchedules", areaName: "Exams") ||
-                        IsActive(controllerName: "ExamTypes", areaName: "Exams") ||
-                        IsActive(controllerName: "GradingSchemes", areaName: "Exams") ||
-                        IsActive(controllerName: "ExamRegistrations", areaName: "Exams") ||
-                        IsActive(controllerName: "ExamSubjectResults", areaName: "Exams") ||
-                        IsActive(controllerName: "ResultRecords", areaName: "Exams") ||
-                        IsActive(controllerName: "ExamCenters", areaName: "Exams") ||
-                        IsActive(controllerName: "ExamCenterDistribution", areaName: "Exams") ||
-                        IsActive(controllerName: "AdmitCards", areaName: "Exams") ||
-                        IsActive(controllerName: "RetotalRequests", areaName: "Exams") ||
-                        IsActive(controllerName: "CollegeAdminMarks", areaName: "Exams") ||
-                        IsActive(controllerName: "Section", actionName: "Examination");
-    var isResultActive = IsActive(controllerName: "ExamSubjectResults", areaName: "Exams") ||
-                          IsActive(controllerName: "ResultRecords", areaName: "Exams") ||
-                          IsActive(controllerName: "RetotalRequests", areaName: "Exams") ||
-                          IsActive(controllerName: "Section", actionName: "Results");
-    var isPayActive = IsActive(controllerName: "Banks", areaName: "Payments") ||
-                      IsActive(controllerName: "PaymentTypes", areaName: "Payments") ||
-                      IsActive(controllerName: "BillTitles", areaName: "Payments") ||
-                      IsActive(controllerName: "Section", actionName: "Payments");
-    var isLocActive = IsActive(controllerName: "Provinces", areaName: "Location") ||
-                      IsActive(controllerName: "Districts", areaName: "Location") ||
-                      IsActive(controllerName: "LocalLevels", areaName: "Location") ||
-                      IsActive(controllerName: "Section", actionName: "Location");
-    var isStudentActive = IsActive(controllerName: "StudentDashboard", areaName: "Students") ||
-                           IsActive(controllerName: "Section", actionName: "StudentPortal");
-    var isConfigActive = IsActive(controllerName: "Tenants") ||
-                          IsActive(controllerName: "SmtpConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "TestEmail", areaName: "Core") ||
-                          IsActive(controllerName: "GumpNowEmailConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "TestGumpNowEmail", areaName: "Core") ||
-                          IsActive(controllerName: "ESewaConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "KhaltiConfigurations", areaName: "Core") ||
-                          IsActive(controllerName: "ConnectIPSConfigurations", areaName: "Core") ||
-                           IsActive(controllerName: "SmsConfigurations", areaName: "Core") ||
-                           IsActive(controllerName: "TestGumpNowSms", areaName: "Core") ||
-                           IsActive(controllerName: "Notices", areaName: "Core") ||
-                           IsActive(controllerName: "AuditLog", areaName: "Core") ||
-                           IsActive(controllerName: "BackupRestore", areaName: "Core") ||
-                           IsActive(controllerName: "Section", actionName: "SystemConfig");
-    var isReportActive = IsActive(controllerName: "Reports", areaName: "Reports") ||
-                         IsActive(controllerName: "Section", actionName: "Reports");
-    var isCoreActive = IsActive(controllerName: "Programs", areaName: "Core") ||
-                       IsActive(controllerName: "AcademicYears", areaName: "Core") ||
-                       IsActive(controllerName: "Levels", areaName: "Core") ||
-                       IsActive(controllerName: "Genders", areaName: "Core") ||
-                       IsActive(controllerName: "Ethnicities", areaName: "Core") ||
-                       IsActive(controllerName: "Boards", areaName: "Core") ||
-                       IsActive(controllerName: "Countries", areaName: "Core") ||
-                       IsActive(controllerName: "Provinces", areaName: "Location") ||
-                       IsActive(controllerName: "Districts", areaName: "Location") ||
-                       IsActive(controllerName: "LocalLevels", areaName: "Location");
+    bool ItemVisible(MenuItem item) => item.Permissions.Length == 0 || item.Permissions.Any(HasPerm);
+
+    bool SectionVisible(MenuSection section)
+    {
+        if (section.SingleLink) return true;
+        if (section.SuperAdminOnly && !isSuperAdmin) return false;
+        if (section.RoleGate != null && !isSuperAdmin && !sideMenuRoles.Contains(section.RoleGate)) return false;
+        return section.Items.Any(ItemVisible);
+    }
+
+    bool ItemActive(MenuItem item)
+    {
+        var routes = item.ActiveOns?.Length > 0 ? item.ActiveOns : [item.Target];
+        return routes.Any(r => IsActive(controllerName: r.Controller, actionName: r.Action, areaName: r.Area, page: r.Page));
+    }
+
+    bool SectionActive(MenuSection section)
+    {
+        if (section.SingleLink && section.Items.Length > 0) return ItemActive(section.Items[0]);
+        if (section.Items.Any(ItemActive)) return true;
+        if (section.Landing != null && IsActive(controllerName: section.Landing.Controller, actionName: section.Landing.Action, areaName: section.Landing.Area)) return true;
+        return (section.SectionActiveOns ?? Array.Empty<MenuRoute>()).Any(r => IsActive(controllerName: r.Controller, actionName: r.Action, areaName: r.Area, page: r.Page));
+    }
+
+    string ItemUrl(MenuItem item) => Url.Action(item.Target.Action, item.Target.Controller, new { area = item.Target.Area })!;
+
+    string? SectionHeaderUrl(MenuSection section) =>
+        section.SingleLink ? ItemUrl(section.Items[0])
+        : section.Landing != null ? Url.Action(section.Landing.Action, section.Landing.Controller, new { area = section.Landing.Area })
+        : null;
+
+    var visibleSections = AppMenu.Sections.Where(SectionVisible).ToList();
+
+    // Search index for the command palette. Built from the same single-source
+    // menu definition and permission filters as the sidebar above.
+    var searchMenuItems = new List<object>();
+
+    void AddMenuItem(string section, string label, string? url, string icon, params string[] aliases)
+    {
+        searchMenuItems.Add(new { section, label, url = url ?? "", icon, aliases });
+    }
+
+    foreach (var menuSection in visibleSections)
+    {
+        foreach (var item in menuSection.Items.Where(ItemVisible))
+        {
+            AddMenuItem(menuSection.Title, item.Label, ItemUrl(item), item.Icon, item.Aliases);
+        }
+    }
 }
 
 <ul class="space-y-1.5 px-3 font-poppins">
-    <!-- Dashboard - Everyone -->
-    <li>
-        <a asp-area="" asp-controller="Dashboard" asp-action="Index" class="@ParentClass(IsActive(controllerName: "Dashboard", actionName: "Index"))">
-            <div class="flex items-center justify-center w-6">
-                <i class="fas fa-home text-lg opacity-80"></i>
-            </div>
-            <span class="flex-1 text-left tracking-wide">Dashboard</span>
-        </a>
-    </li>
-
-    @if (showUserMgmt)
+    @foreach (var menuSection in visibleSections)
     {
-        // ----------------------------------------------------- //
-        // User Management
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isUserActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isUserActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="UserManagement" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-users text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">User Management</span>
+        @if (menuSection.SingleLink)
+        {
+            var item = menuSection.Items[0];
+            <li>
+                <a href="@ItemUrl(item)" class="@ParentClass(SectionActive(menuSection))">
+                    <div class="flex items-center justify-center w-6">
+                        <i class="fas @item.Icon text-lg opacity-80"></i>
+                    </div>
+                    <span class="flex-1 text-left tracking-wide">@menuSection.Title</span>
                 </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("users.view")) { <li><a asp-area="" asp-controller="User" asp-action="Index" class="@ChildClass(IsActive(controllerName: "User", actionName: "Index"))"><i class="fas fa-list w-4 text-center opacity-70"></i><span class="whitespace-nowrap">All Users</span></a></li> }
-                @if (HasPerm("users.create")) { <li><a asp-area="" asp-controller="User" asp-action="Create" class="@ChildClass(IsActive(controllerName: "User", actionName: "Create"))"><i class="fas fa-user-plus w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Create New User</span></a></li> }
-                @if (HasPerm("users.edit")) { <li><a asp-area="" asp-controller="User" asp-action="ResetPassword" class="@ChildClass(IsActive(controllerName: "User", actionName: "ResetPassword"))"><i class="fas fa-key w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Reset Password</span></a></li> }
-                @if (HasPerm("roles.view")) { <li><a asp-area="" asp-controller="Role" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Role"))"><i class="fas fa-user-shield w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Roles</span></a></li> }
-                @if (HasPerm("permissions.manage")) { <li><a asp-area="Admin" asp-controller="RolePermissionManager" asp-action="Index" class="@ChildClass(IsActive(controllerName: "RolePermissionManager", actionName: "Index", areaName: "Admin") || IsActive(controllerName: "ManagePermissions", actionName: "Index", areaName: "Admin"))"><i class="fas fa-lock w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Permissions</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showAcademic)
-    {
-        // ----------------------------------------------------- //
-        // Academic Setup (Faculties, Programs, Subjects, Semesters, Academic Years)
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isAcademicActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isAcademicActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="AcademicSetup" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-graduation-cap text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Academic Setup</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 600px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("faculties.view")) { <li><a asp-area="Core" asp-controller="Faculty" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Faculty", actionName: "Index", areaName: "Core"))"><i class="fas fa-building w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Faculties</span></a></li> }
-                @if (HasPerm("programs.view")) { <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core"))"><i class="fas fa-stream w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Programs / Streams</span></a></li> }
-                @if (HasPerm("semesters.view")) { <li><a asp-area="Core" asp-controller="Semesters" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Semesters", actionName: "Index", areaName: "Core"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Semesters</span></a></li> }
-                @if (HasPerm("academicyears.view")) { <li><a asp-area="Core" asp-controller="AcademicYears" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core"))"><i class="fas fa-calendar-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Academic Years</span></a></li> }
-                @if (HasPerm("subjects.view") || HasPerm("subjecttypes.view") || HasPerm("subjectofferings.view") || HasPerm("curriculumversions.view")) { <li class="border-t border-white/10 my-1"></li> }
-                @if (HasPerm("subjects.view")) { <li><a asp-area="Subjects" asp-controller="SubjectCatalogs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SubjectCatalogs", actionName: "Index", areaName: "Subjects"))"><i class="fas fa-book w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Catalogs</span></a></li> }
-                @if (HasPerm("subjecttypes.view")) { <li><a asp-area="Subjects" asp-controller="SubjectTypes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SubjectTypes", actionName: "Index", areaName: "Subjects"))"><i class="fas fa-tags w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Types</span></a></li> }
-                @if (HasPerm("subjectofferings.view")) { <li><a asp-area="Subjects" asp-controller="SubjectOfferings" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SubjectOfferings", actionName: "Index", areaName: "Subjects"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Offerings</span></a></li> }
-                @if (HasPerm("curriculumversions.view")) { <li><a asp-area="Subjects" asp-controller="CurriculumVersions" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CurriculumVersions", actionName: "Index", areaName: "Subjects"))"><i class="fas fa-code-branch w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Curriculum Versions</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showColleges)
-    {
-        // ----------------------------------------------------- //
-        // Colleges
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isCollegeActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isCollegeActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="Colleges" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-school text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Colleges</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 400px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("colleges.view")) { <li><a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Colleges", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-school w-4 text-center opacity-70"></i><span class="whitespace-nowrap">All Colleges</span></a></li> }
-                @if (HasPerm("collegetypes.view")) { <li><a asp-area="Colleges" asp-controller="CollegeTypes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CollegeTypes", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-tag w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Types</span></a></li> }
-                @if (HasPerm("collegeprograms.view")) { <li><a asp-area="Colleges" asp-controller="CollegePrograms" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CollegePrograms", actionName: "Index", areaName: "Colleges"))"><i class="fas fa-diagram-project w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Programs</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showRegistration)
-    {
-        // ----------------------------------------------------- //
-        // Registration
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isRegActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isRegActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="Registration" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-address-card text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Registration</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("students.view")) { <li><a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "StudentRegistrations", actionName: "Index", areaName: "Students"))"><i class="fas fa-user-plus w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Registrations</span></a></li> }
-                @if (HasPerm("studentcategories.view")) { <li><a asp-area="" asp-controller="StudentCategories" asp-action="Index" class="@ChildClass(IsActive(controllerName: "StudentCategories", actionName: "Index"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Categories</span></a></li> }
-                @if (HasPerm("studentadmissions.view")) { <li><a asp-area="Students" asp-controller="StudentAdmissions" asp-action="Index" class="@ChildClass(IsActive(controllerName: "StudentAdmissions", actionName: "Index", areaName: "Students"))"><i class="fas fa-user-graduate w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Admissions</span></a></li> }
-                @if (HasPerm("studentadmissions.view")) { <li><a asp-area="Students" asp-controller="SemesterEnrollments" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SemesterEnrollments", actionName: "Index", areaName: "Students"))"><i class="fas fa-user-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Semester Enrollments</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showExamination)
-    {
-        // ----------------------------------------------------- //
-        // Examination
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isExamActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isExamActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="Examination" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-file-alt text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Examination</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("examschedules.view")) { <li><a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamSchedules", actionName: "Index", areaName: "Exams"))"><i class="fas fa-calendar-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Schedules</span></a></li> }
-                @if (HasPerm("examapproval.view")) { <li><a asp-area="Exams" asp-controller="CollegeAdminApprovals" asp-action="Index" class="@ChildClass(IsActive(controllerName: "CollegeAdminApprovals", actionName: "Index", areaName: "Exams"))"><i class="fas fa-check-double w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Schedule Approvals</span></a></li> }
-                @if (HasPerm("examtypes.view")) { <li><a asp-area="Exams" asp-controller="ExamTypes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamTypes", actionName: "Index", areaName: "Exams"))"><i class="fas fa-list-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Types</span></a></li> }
-                @if (HasPerm("examschedules.view")) { <li><a asp-area="Exams" asp-controller="Entrance" asp-action="ManageSchedule" class="@ChildClass(IsActive(controllerName: "Entrance", actionName: "ManageSchedule", areaName: "Exams") || IsActive(controllerName: "Entrance", actionName: "CreateSchedule", areaName: "Exams") || IsActive(controllerName: "Entrance", actionName: "EditSchedule", areaName: "Exams") || IsActive(controllerName: "Entrance", actionName: "ScheduleDetails", areaName: "Exams"))"><i class="fas fa-calendar-plus w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Entrance Schedule</span></a></li> }
-                @if (HasPerm("gradingschemes.view")) { <li><a asp-area="Exams" asp-controller="GradingSchemes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "GradingSchemes", actionName: "Index", areaName: "Exams"))"><i class="fas fa-percentage w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Grading Schemes</span></a></li> }
-                @if (HasPerm("examregistrations.view")) { <li><a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamRegistrations", actionName: "Index", areaName: "Exams"))"><i class="fas fa-clipboard-list w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Registrations</span></a></li> }
-                @if (HasPerm("examregistrations.view")) { <li><a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="StudentForms" class="@ChildClass(IsActive(controllerName: "ExamRegistrations", actionName: "StudentForms", areaName: "Exams"))"><i class="fas fa-user-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Student Exam Forms</span></a></li> }
-                @if (HasPerm("examcenters.view")) { <li><a asp-area="Exams" asp-controller="ExamCenters" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamCenters", actionName: "Index", areaName: "Exams"))"><i class="fas fa-map-marker-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Centers</span></a></li> }
-                @if (HasPerm("examcenters.view")) { <li><a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamCenterDistribution", actionName: "Index", areaName: "Exams"))"><i class="fas fa-people-arrows w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Center Distribution</span></a></li> }
-                @if (HasPerm("admitcards.view")) { <li><a asp-area="Exams" asp-controller="AdmitCards" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AdmitCards", actionName: "Index", areaName: "Exams"))"><i class="fas fa-ticket-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Admit Cards</span></a></li> }
-                @if (HasPerm("marksentry.view")) { <li><a asp-area="Exams" asp-controller="CollegeAdminMarks" asp-action="Dashboard" class="@ChildClass(IsActive(controllerName: "CollegeAdminMarks", actionName: "Dashboard", areaName: "Exams"))"><i class="fas fa-table w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marks Entry</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showResults)
-    {
-        // ----------------------------------------------------- //
-        // Results
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isResultActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isResultActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="Results" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-poll text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Results</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 300px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("examsubjectresults.view")) { <li><a asp-area="Exams" asp-controller="ExamSubjectResults" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ExamSubjectResults", actionName: "Index", areaName: "Exams"))"><i class="fas fa-check-double w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Results</span></a></li> }
-                @if (HasPerm("resultrecords.view")) { <li><a asp-area="Exams" asp-controller="ResultRecords" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ResultRecords", actionName: "Index", areaName: "Exams"))"><i class="fas fa-clipboard-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Result Records</span></a></li> }
-                @if (HasPerm("retotaling.view")) { <li><a asp-area="Exams" asp-controller="RetotalRequests" asp-action="Index" class="@ChildClass(IsActive(controllerName: "RetotalRequests", actionName: "Index", areaName: "Exams"))"><i class="fas fa-redo-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Retotaling</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showPayments)
-    {
-        // ----------------------------------------------------- //
-        // Payments
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isPayActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isPayActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="Payments" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-money-bill-wave text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Payments</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 400px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("banks.view")) { <li><a asp-area="Payments" asp-controller="Banks" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Banks", actionName: "Index", areaName: "Payments"))"><i class="fas fa-university w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Banks</span></a></li> }
-                @if (HasPerm("paymenttypes.view")) { <li><a asp-area="Payments" asp-controller="PaymentTypes" asp-action="Index" class="@ChildClass(IsActive(controllerName: "PaymentTypes", actionName: "Index", areaName: "Payments"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Payment Types</span></a></li> }
-                @if (HasPerm("billtitles.view")) { <li><a asp-area="Payments" asp-controller="BillTitles" asp-action="Index" class="@ChildClass(IsActive(controllerName: "BillTitles", actionName: "Index", areaName: "Payments"))"><i class="fas fa-file-invoice-dollar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Bill Titles</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showLocation)
-    {
-        // ----------------------------------------------------- //
-        // Location
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isLocActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isLocActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="Location" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-map-marker-alt text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Location</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 400px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("provinces.view")) { <li><a asp-area="Location" asp-controller="Provinces" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Provinces", actionName: "Index", areaName: "Location"))"><i class="fas fa-map-marked-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Provinces</span></a></li> }
-                @if (HasPerm("districts.view")) { <li><a asp-area="Location" asp-controller="Districts" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Districts", actionName: "Index", areaName: "Location"))"><i class="fas fa-map-pin w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Districts</span></a></li> }
-                @if (HasPerm("locallevels.view")) { <li><a asp-area="Location" asp-controller="LocalLevels" asp-action="Index" class="@ChildClass(IsActive(controllerName: "LocalLevels", actionName: "Index", areaName: "Location"))"><i class="fas fa-city w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Local Levels</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showStudentPortal)
-    {
-        // ----------------------------------------------------- //
-        // Student Portal
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isStudentActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isStudentActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="" asp-controller="Section" asp-action="StudentPortal" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-graduation-cap text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Academic</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("student.portal.examforms")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="ExamForms" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "ExamForms", areaName: "Students"))"><i class="fas fa-file-invoice w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Forms</span></a></li> }
-                @if (HasPerm("student.portal.marksheet")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="Marksheet" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "Marksheet", areaName: "Students"))"><i class="fas fa-file-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marksheet</span></a></li> }
-                @if (HasPerm("admitcards.view")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="AdmitCards" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "AdmitCards", areaName: "Students"))"><i class="fas fa-ticket-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Admit Cards</span></a></li> }
-                @if (HasPerm("student.portal.payment")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="PaymentHistory" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "PaymentHistory", areaName: "Students"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Payment History</span></a></li> }
-                @if (HasPerm("retotaling.view")) { <li><a asp-area="Students" asp-controller="StudentDashboard" asp-action="RetotalRequests" class="@ChildClass(IsActive(controllerName: "StudentDashboard", actionName: "RetotalRequests", areaName: "Students"))"><i class="fas fa-redo-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Re-evaluation</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showConfig)
-    {
-    <li x-data="{ open: @(isConfigActive.ToString().ToLower()) }">
-        <div class="flex items-center @(isConfigActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-            <a asp-area="" asp-controller="Section" asp-action="SystemConfig" class="flex items-center gap-3.5 flex-1 min-w-0">
-                <div class="flex items-center justify-center w-6"><i class="fas fa-cog text-lg opacity-80"></i></div>
-                <span class="flex-1 text-left tracking-wide whitespace-nowrap">System Config</span>
-            </a>
-            <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-            </button>
-        </div>
-        <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-            :style="open ? 'max-height: 500px; opacity: 1' : 'max-height: 0; opacity: 0'">
-            @if (HasPerm("tenants.view")) { <li><a asp-area="" asp-controller="Tenants" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Tenants", actionName: "Index"))"><i class="fas fa-globe w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tenants</span></a></li> }
-            @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="SmtpConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmtpConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMTP Configuration</span></a></li> }
-            @if (HasPerm("sms.view")) { <li><a asp-area="Core" asp-controller="SmsConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "SmsConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-sms w-4 text-center opacity-70"></i><span class="whitespace-nowrap">SMS Configuration</span></a></li> }
-            @if (HasPerm("sms.view")) { <li><a asp-area="Core" asp-controller="TestGumpNowSms" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestGumpNowSms", actionName: "Index", areaName: "Core"))"><i class="fas fa-comment-dots w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Test GumpNow SMS</span></a></li> }
-            @if (HasPerm("gumpnowemail.view")) { <li><a asp-area="Core" asp-controller="GumpNowEmailConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "GumpNowEmailConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-envelope-open-text w-4 text-center opacity-70"></i><span class="whitespace-nowrap">GumpNow Email Config</span></a></li> }
-            @if (HasPerm("smtp.view")) { <li><a asp-area="Core" asp-controller="TestEmail" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestEmail", actionName: "Index", areaName: "Core"))"><i class="fas fa-paper-plane w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Send Test Email</span></a></li> }
-            @if (HasPerm("gumpnowemail.view")) { <li><a asp-area="Core" asp-controller="TestGumpNowEmail" asp-action="Index" class="@ChildClass(IsActive(controllerName: "TestGumpNowEmail", actionName: "Index", areaName: "Core"))"><i class="fas fa-paper-plane w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Test GumpNow Email</span></a></li> }
-            @if (HasPerm("esewa.view")) { <li><a asp-area="Core" asp-controller="ESewaConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ESewaConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">eSewa Configuration</span></a></li> }
-            @if (HasPerm("khalti.view")) { <li><a asp-area="Core" asp-controller="KhaltiConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "KhaltiConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Khalti Configuration</span></a></li> }
-            @if (HasPerm("connectips.view")) { <li><a asp-area="Core" asp-controller="ConnectIPSConfigurations" asp-action="Index" class="@ChildClass(IsActive(controllerName: "ConnectIPSConfigurations", actionName: "Index", areaName: "Core"))"><i class="fas fa-credit-card w-4 text-center opacity-70"></i><span class="whitespace-nowrap">ConnectIPS Configuration</span></a></li> }
-            @if (HasPerm("notices.view")) { <li><a asp-area="Core" asp-controller="Notices" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Notices", actionName: "Index", areaName: "Core"))"><i class="fas fa-bullhorn w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Notices</span></a></li> }
-            @if (HasPerm("auditlog.view")) { <li><a asp-area="Core" asp-controller="AuditLog" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AuditLog", actionName: "Index", areaName: "Core") || IsActive(controllerName: "AuditLog", actionName: "Details", areaName: "Core"))"><i class="fas fa-history w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Audit Log</span></a></li> }
-            @if (HasPerm("backuprestore.manage")) { <li><a asp-area="Core" asp-controller="BackupRestore" asp-action="Index" class="@ChildClass(IsActive(controllerName: "BackupRestore", actionName: "Index", areaName: "Core"))"><i class="fas fa-database w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Backup & Restore</span></a></li> }
-        </ul>
-    </li>
-    }
-
-    @if (isSuperAdmin)
-    {
-        // ----------------------------------------------------- //
-        // Core Area (SuperAdmin only)
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isCoreActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isCoreActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a href="javascript:void(0)" class="flex items-center gap-3.5 flex-1 min-w-0" @@click.prevent.stop="open = !open">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-cubes text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Core Area</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 800px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("programs.view")) { <li><a asp-area="Core" asp-controller="Programs" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Programs", actionName: "Index", areaName: "Core"))"><i class="fas fa-stream w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Program</span></a></li> }
-                @if (HasPerm("academicyears.view")) { <li><a asp-area="Core" asp-controller="AcademicYears" asp-action="Index" class="@ChildClass(IsActive(controllerName: "AcademicYears", actionName: "Index", areaName: "Core"))"><i class="fas fa-calendar-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Academic Year</span></a></li> }
-                @if (HasPerm("levels.view")) { <li><a asp-area="Core" asp-controller="Levels" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Levels", actionName: "Index", areaName: "Core"))"><i class="fas fa-layer-group w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Level</span></a></li> }
-                @if (HasPerm("genders.view")) { <li><a asp-area="Core" asp-controller="Genders" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Genders", actionName: "Index", areaName: "Core"))"><i class="fas fa-venus-mars w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Gender</span></a></li> }
-                @if (HasPerm("ethnicities.view")) { <li><a asp-area="Core" asp-controller="Ethnicities" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Ethnicities", actionName: "Index", areaName: "Core"))"><i class="fas fa-users w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Ethnicity</span></a></li> }
-                @if (HasPerm("boards.view")) { <li><a asp-area="Core" asp-controller="Boards" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Boards", actionName: "Index", areaName: "Core"))"><i class="fas fa-landmark w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Board</span></a></li> }
-                @if (HasPerm("provinces.view") || HasPerm("districts.view") || HasPerm("locallevels.view")) { <li class="border-t border-white/10 my-1"></li> }
-                @if (HasPerm("provinces.view")) { <li><a asp-area="Location" asp-controller="Provinces" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Provinces", actionName: "Index", areaName: "Location"))"><i class="fas fa-map-marked-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Province</span></a></li> }
-                @if (HasPerm("districts.view")) { <li><a asp-area="Location" asp-controller="Districts" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Districts", actionName: "Index", areaName: "Location"))"><i class="fas fa-map-pin w-4 text-center opacity-70"></i><span class="whitespace-nowrap">District</span></a></li> }
-                @if (HasPerm("locallevels.view")) { <li><a asp-area="Location" asp-controller="LocalLevels" asp-action="Index" class="@ChildClass(IsActive(controllerName: "LocalLevels", actionName: "Index", areaName: "Location"))"><i class="fas fa-city w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Local Level</span></a></li> }
-                @if (HasPerm("countries.view")) { <li><a asp-area="Core" asp-controller="Countries" asp-action="Index" class="@ChildClass(IsActive(controllerName: "Countries", actionName: "Index", areaName: "Core"))"><i class="fas fa-globe w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Country</span></a></li> }
-            </ul>
-        </li>
-    }
-
-    @if (showReports)
-    {
-        // ----------------------------------------------------- //
-        // Reports
-        // ----------------------------------------------------- //
-        <li x-data="{ open: @(isReportActive.ToString().ToLower()) }">
-            <div class="flex items-center @(isReportActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
-                <a asp-area="Reports" asp-controller="Reports" asp-action="Index" class="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div class="flex items-center justify-center w-6"><i class="fas fa-chart-line text-lg opacity-80"></i></div>
-                    <span class="flex-1 text-left tracking-wide whitespace-nowrap">Reports</span>
-                </a>
-                <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
-                    <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
-                </button>
-            </div>
-            <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
-                :style="open ? 'max-height: 800px; opacity: 1' : 'max-height: 0; opacity: 0'">
-                @if (HasPerm("reports.collegepayments")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="CollegePayments" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "CollegePayments", areaName: "Reports"))"><i class="fas fa-money-check-alt w-4 text-center opacity-70"></i><span class="whitespace-nowrap">College Payments</span></a></li> }
-                @if (HasPerm("reports.subjectcount")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="SubjectCount" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "SubjectCount", areaName: "Reports"))"><i class="fas fa-chart-bar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Subject Count Report</span></a></li> }
-                @if (HasPerm("reports.examtriplicate")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="ExamTriplicate" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "ExamTriplicate", areaName: "Reports"))"><i class="fas fa-copy w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Exam Triplicate</span></a></li> }
-                @if (HasPerm("reports.summary")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="Summary" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "Summary", areaName: "Reports"))"><i class="fas fa-chart-pie w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Summary Report</span></a></li> }
-                @if (HasPerm("reports.tabulationtriplicate")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="TabulationTriplicate" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "TabulationTriplicate", areaName: "Reports"))"><i class="fas fa-table w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Tabulation Triplicate</span></a></li> }
-                @if (HasPerm("reports.programwisestudent")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="ProgramWiseStudent" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "ProgramWiseStudent", areaName: "Reports"))"><i class="fas fa-user-friends w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Program Wise Student</span></a></li> }
-                @if (HasPerm("reports.attendanceheet")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="AttendanceSheet" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "AttendanceSheet", areaName: "Reports"))"><i class="fas fa-clipboard-check w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Attendance Sheet</span></a></li> }
-                @if (HasPerm("reports.marksfoil")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="MarksFoil" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "MarksFoil", areaName: "Reports"))"><i class="fas fa-poll w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Marks Foil</span></a></li> }
-                @if (HasPerm("reports.bankvoucherlist")) { <li><a asp-area="Reports" asp-controller="Reports" asp-action="BankVoucherList" class="@ChildClass(IsActive(controllerName: "Reports", actionName: "BankVoucherList", areaName: "Reports"))"><i class="fas fa-file-invoice-dollar w-4 text-center opacity-70"></i><span class="whitespace-nowrap">Bank Voucher List</span></a></li> }
-            </ul>
-        </li>
+            </li>
+        }
+        else
+        {
+            var sectionActive = SectionActive(menuSection);
+            var visibleItems = menuSection.Items.Where(ItemVisible).ToList();
+            var maxHeight = Math.Max(300, visibleItems.Count * 52 + 40);
+            <li x-data="{ open: @(sectionActive.ToString().ToLower()) }">
+                <div class="flex items-center @(sectionActive ? ParentClass(true) : ParentClass(false).Replace(" rounded-xl", ""))">
+                    @if (SectionHeaderUrl(menuSection) is string headerUrl)
+                    {
+                        <a href="@headerUrl" class="flex items-center gap-3.5 flex-1 min-w-0">
+                            <div class="flex items-center justify-center w-6"><i class="fas @menuSection.Icon text-lg opacity-80"></i></div>
+                            <span class="flex-1 text-left tracking-wide whitespace-nowrap">@menuSection.Title</span>
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0)" class="flex items-center gap-3.5 flex-1 min-w-0" @@click.prevent.stop="open = !open">
+                            <div class="flex items-center justify-center w-6"><i class="fas @menuSection.Icon text-lg opacity-80"></i></div>
+                            <span class="flex-1 text-left tracking-wide whitespace-nowrap">@menuSection.Title</span>
+                        </a>
+                    }
+                    <button @@click.stop="open = !open" class="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/10 transition-colors shrink-0">
+                        <i class="fas transition-transform duration-200 text-xs opacity-60 fa-chevron-down" :class="open ? 'rotate-180' : 'rotate-0'"></i>
+                    </button>
+                </div>
+                <ul class="ml-3 pl-3 border-l border-white/10 mt-1 space-y-1 overflow-hidden transition-all duration-300"
+                    :style="open ? 'max-height: @(maxHeight)px; opacity: 1' : 'max-height: 0; opacity: 0'">
+                    @foreach (var item in visibleItems)
+                    {
+                        <li>
+                            <a href="@ItemUrl(item)" class="@ChildClass(ItemActive(item))"><i class="fas @item.Icon w-4 text-center opacity-70"></i><span class="whitespace-nowrap">@item.Label</span></a>
+                        </li>
+                    }
+                </ul>
+            </li>
+        }
     }
 </ul>
+
+<script type="application/json" id="sideMenuSearchData">
+    @Html.Raw(JsonSerializer.Serialize(searchMenuItems, new JsonSerializerOptions
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    }))
+</script>

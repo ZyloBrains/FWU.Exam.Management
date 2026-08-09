@@ -245,6 +245,22 @@
                         </div>
                     </div>
 
+                    <!-- Right: Menu Search -->
+                    <button type="button"
+                            x-on:click="window.dispatchEvent(new CustomEvent('open-menu-search'))"
+                            class="hidden md:flex items-center gap-2 pl-3 pr-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white"
+                            title="Search pages (Ctrl+K)">
+                        <i class="fas fa-search text-sm"></i>
+                        <span class="text-sm font-medium hidden lg:inline">Menu Search</span>
+                        <kbd class="hidden lg:inline-flex text-[10px] font-semibold text-blue-100 bg-white/15 rounded px-1.5 py-0.5">Ctrl K</kbd>
+                    </button>
+                    <button type="button"
+                            x-on:click="window.dispatchEvent(new CustomEvent('open-menu-search'))"
+                            class="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white"
+                            title="Search pages">
+                        <i class="fas fa-search"></i>
+                    </button>
+
                     <!-- Right: User Dropdown -->
                     <div x-data="{ dropdownOpen: false }" x-on:click.away="dropdownOpen = false" class="relative shrink-0">
                         <button x-on:click="dropdownOpen = !dropdownOpen" 
@@ -311,6 +327,58 @@
                 </div>
             </main>
         </div>
+
+        <!-- Command Palette: Menu Search -->
+        <div x-data="menuSearchPalette()"
+             x-on:open-menu-search.window="openPalette()"
+             x-on:keydown.escape.window="if (open) closePalette()"
+             x-cloak>
+            <div x-show="open" x-transition.opacity.duration.150 class="fixed inset-0 z-[60]">
+                <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" x-on:click="closePalette()"></div>
+                <div class="absolute inset-x-0 top-[15vh] mx-auto w-full max-w-lg px-4">
+                    <div x-on:keydown="onKeydown($event)" class="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                        <div class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100">
+                            <i class="fas fa-search text-gray-400 text-sm"></i>
+                            <input x-ref="input" type="text" autocomplete="off" spellcheck="false"
+                                   x-model="query"
+                                   x-on:input="index = 0"
+                                   placeholder="Search pages..."
+                                   class="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent">
+                            <kbd class="shrink-0 text-[10px] font-semibold text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">ESC</kbd>
+                        </div>
+                        <div x-ref="results" class="max-h-[45vh] overflow-y-auto p-2">
+                            <template x-if="filtered.length === 0">
+                                <div class="px-4 py-10 text-center">
+                                    <i class="fas fa-search text-2xl text-gray-300 mb-2"></i>
+                                    <p class="text-sm text-gray-400" x-text="query.trim() ? ('No pages match ' + query) : ''"></p>
+                                </div>
+                            </template>
+                            <template x-for="group in groups" :key="group.name">
+                                <div>
+                                    <div class="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400" x-text="group.name"></div>
+                                    <template x-for="item in group.items" :key="item.url">
+                                        <a href="#" x-on:click.prevent="navigate(item)"
+                                           x-on:mouseenter="index = filtered.indexOf(item)"
+                                           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors"
+                                           :class="filtered[index] === item ? 'bg-blue-50 text-blue-700 palette-active' : 'text-gray-700 hover:bg-gray-50'">
+                                            <i class="fas w-4 text-center text-xs"
+                                               :class="item.icon + ' ' + (filtered[index] === item ? 'text-blue-500' : 'text-gray-400')"></i>
+                                            <span class="flex-1 min-w-0 truncate font-medium" x-text="item.label"></span>
+                                            <span class="shrink-0 text-[10px] text-gray-400" x-text="item.section"></span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="flex items-center gap-4 px-4 py-2.5 border-t border-gray-100 bg-gray-50/50 text-[11px] text-gray-400">
+                            <span><kbd class="border border-gray-200 rounded px-1">&#8593;</kbd> <kbd class="border border-gray-200 rounded px-1">&#8595;</kbd> navigate</span>
+                            <span><kbd class="border border-gray-200 rounded px-1">Enter</kbd> open</span>
+                            <span class="ml-auto"><kbd class="border border-gray-200 rounded px-1">Ctrl K</kbd> toggle</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Minimal Scripts Footer -->
@@ -333,6 +401,91 @@
                 sessionStorage.setItem(key, nav.scrollTop);
             });
         })();
+    </script>
+    <script>
+        (function () {
+            var dataEl = document.getElementById('sideMenuSearchData');
+            window.__sideMenuSearchData = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+        })();
+    </script>
+    <script>
+        function menuSearchPalette() {
+            return {
+                open: false,
+                query: '',
+                index: 0,
+                items: window.__sideMenuSearchData || [],
+                get filtered() {
+                    var q = (this.query || '').trim().toLowerCase();
+                    if (!q) return this.items;
+                    return this.items.filter(function (item) {
+                        if ((item.label || '').toLowerCase().indexOf(q) !== -1) return true;
+                        if ((item.section || '').toLowerCase().indexOf(q) !== -1) return true;
+                        return (item.aliases || []).some(function (a) {
+                            return ('' + a).toLowerCase().indexOf(q) !== -1;
+                        });
+                    });
+                },
+                get groups() {
+                    var map = {};
+                    this.filtered.forEach(function (item) {
+                        (map[item.section] = map[item.section] || []).push(item);
+                    });
+                    return Object.keys(map).map(function (name) {
+                        return { name: name, items: map[name] };
+                    });
+                },
+                openPalette() {
+                    this.open = true;
+                    this.query = '';
+                    this.index = 0;
+                    this.$nextTick(() => {
+                        if (this.$refs.input) this.$refs.input.focus();
+                    });
+                },
+                closePalette() {
+                    this.open = false;
+                },
+                onKeydown(e) {
+                    var list = this.filtered;
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (list.length) this.index = Math.min(this.index + 1, list.length - 1);
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (list.length) this.index = Math.max(this.index - 1, 0);
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (list[this.index]) this.navigate(list[this.index]);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.closePalette();
+                        return;
+                    }
+                    this.$nextTick(() => {
+                        var el = this.$refs.results ? this.$refs.results.querySelector('.palette-active') : null;
+                        if (el) el.scrollIntoView({ block: 'nearest' });
+                    });
+                },
+                navigate(item) {
+                    if (!item || !item.url) return;
+                    window.location.href = item.url;
+                }
+            };
+        }
+    </script>
+    <script>
+        document.addEventListener('keydown', function (e) {
+            var tag = e.target ? e.target.tagName : '';
+            var typing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target && e.target.isContentEditable);
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent('open-menu-search'));
+            } else if (!typing && e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent('open-menu-search'));
+            }
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

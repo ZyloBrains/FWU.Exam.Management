@@ -40,6 +40,21 @@
         </a>
         }
 
+        @if (HasPerm("examapproval.view"))
+        {
+        <a asp-area="Exams" asp-controller="CollegeAdminApprovals" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-check-double text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Schedule Approvals</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Approve or review exam schedules</p>
+                </div>
+            </div>
+        </a>
+        }
+
         @if (HasPerm("examtypes.view"))
         {
         <a asp-area="Exams" asp-controller="ExamTypes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
@@ -65,21 +80,6 @@
                 <div>
                     <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Entrance Schedule</h3>
                     <p class="text-xs sm:text-sm text-gray-500">Manage entrance exam schedules</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("gradingschemes.view"))
-        {
-        <a asp-area="Exams" asp-controller="GradingSchemes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                    <i class="fas fa-percentage text-yellow-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Grading Schemes</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage grading schemes</p>
                 </div>
             </div>
         </a>
@@ -115,36 +115,6 @@
         </a>
         }
 
-        @if (HasPerm("examcenters.view"))
-        {
-        <a asp-area="Exams" asp-controller="ExamCenters" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
-                    <i class="fas fa-map-marker-alt text-teal-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Exam Centers</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage examination centers</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("examcenters.view"))
-        {
-        <a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                    <i class="fas fa-people-arrows text-orange-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Center Distribution</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Manage center distribution</p>
-                </div>
-            </div>
-        </a>
-        }
-
         @if (HasPerm("admitcards.view"))
         {
         <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
@@ -155,21 +125,6 @@
                 <div>
                     <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Admit Cards</h3>
                     <p class="text-xs sm:text-sm text-gray-500">Generate and manage admit cards</p>
-                </div>
-            </div>
-        </a>
-        }
-
-        @if (HasPerm("marksentry.view"))
-        {
-        <a asp-area="Exams" asp-controller="CollegeAdminMarks" asp-action="Dashboard" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
-                    <i class="fas fa-table text-cyan-600 text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Marks Entry</h3>
-                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage exam marks</p>
                 </div>
             </div>
         </a>
