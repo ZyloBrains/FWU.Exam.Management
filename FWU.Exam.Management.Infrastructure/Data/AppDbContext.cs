@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Reflection;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -40,6 +39,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     internal static bool IsCurrentUserCollegeAdmin() => AmbientTenantContext.Value?.IsCollegeAdmin ?? false;
     internal static int? GetCurrentCollegeId() => AmbientTenantContext.Value?.CollegeId;
     internal static IReadOnlyList<int> GetCurrentCollegeTenantIds() => AmbientTenantContext.Value?.CollegeTenantIds ?? [];
+
+    // Rooted at the DbContext instance so EF Core query filters parameterize (and re-evaluate
+    // per query execution) instead of inlining the value once into the compiled query cache.
+    private int FilterTenantId => GetCurrentTenantId();
+    private bool FilterIsCentral => IsCurrentTenantCentral();
+    private bool FilterIsCollegeAdmin => IsCurrentUserCollegeAdmin();
+    private int? FilterCollegeId => GetCurrentCollegeId();
+    private IReadOnlyList<int> FilterCollegeTenantIds => GetCurrentCollegeTenantIds();
 
     public DbSet<AcademicYear> AcademicYears { get; set; } = null!;
     public DbSet<Address> Addresses { get; set; } = null!;
@@ -132,14 +139,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         {
             var param = Expression.Parameter(entityType.ClrType, "e");
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
-            var tenantIdMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentTenantId), BindingFlags.NonPublic | BindingFlags.Static);
-            var isCentralMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentTenantCentral), BindingFlags.NonPublic | BindingFlags.Static);
-            var isCollegeAdminMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentUserCollegeAdmin), BindingFlags.NonPublic | BindingFlags.Static);
-            var collegeTenantIdsMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentCollegeTenantIds), BindingFlags.NonPublic | BindingFlags.Static);
-            var tenantIdValue = Expression.Call(null, tenantIdMethod!);
-            var isCentral = Expression.Call(null, isCentralMethod!);
-            var isCollegeAdmin = Expression.Call(null, isCollegeAdminMethod!);
-            var collegeTenantIds = Expression.Call(null, collegeTenantIdsMethod!);
+            var context = Expression.Constant(this, typeof(AppDbContext));
+            var tenantIdValue = Expression.Property(context, nameof(FilterTenantId));
+            var isCentral = Expression.Property(context, nameof(FilterIsCentral));
+            var isCollegeAdmin = Expression.Property(context, nameof(FilterIsCollegeAdmin));
+            var collegeTenantIds = Expression.Property(context, nameof(FilterCollegeTenantIds));
             var collegeAdminTenants = Expression.Call(
                 typeof(Enumerable), nameof(Enumerable.Contains), [typeof(int)], collegeTenantIds, tenantIdProp);
             var collegeAdminBranch = Expression.AndAlso(isCollegeAdmin, collegeAdminTenants);
@@ -156,9 +160,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         }
 
         builder.Entity<College>()
-            .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
-                (AppDbContext.IsCurrentUserCollegeAdmin() && c.Id == AppDbContext.GetCurrentCollegeId()) ||
-                c.CollegeFaculties!.Any(cf => cf.TenantId == AppDbContext.GetCurrentTenantId()));
+            .HasQueryFilter(c => FilterIsCentral ||
+                (FilterIsCollegeAdmin && c.Id == FilterCollegeId) ||
+                c.CollegeFaculties!.Any(cf => cf.TenantId == FilterTenantId));
 
         builder.Entity<CollegeFaculty>()
             .ToTable("CollegeFaculties");
