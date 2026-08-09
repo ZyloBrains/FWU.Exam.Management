@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Permissions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Admin.Controllers;
 [RequirePermission(Permissions.PermissionsManage)]
 public class ManagePermissionsController(
     RoleManager<IdentityRole> roleManager,
+    UserManager<AppUser> userManager,
     AppDbContext context,
     IPermissionService permissionService) : Controller
 {
@@ -24,8 +26,16 @@ public class ManagePermissionsController(
             .OrderBy(r => r.Name)
             .ToListAsync();
 
+        var user = await userManager.GetUserAsync(User);
+        var userRoles = user != null ? await userManager.GetRolesAsync(user) : [];
+        var isSuperAdmin = userRoles.Contains(Role.SuperAdmin);
+
+        var allowedRoles = isSuperAdmin
+            ? roles
+            : roles.Where(r => r.Name != Role.SuperAdmin && r.Name != Role.CollegeAdmin).ToList();
+
         var rolePermCounts = new Dictionary<string, int>();
-        foreach (var role in roles)
+        foreach (var role in allowedRoles)
         {
             var count = await context.RolePermissions!
                 .CountAsync(rp => rp.RoleId == role.Id);
@@ -33,7 +43,7 @@ public class ManagePermissionsController(
         }
 
         ViewBag.RolePermCounts = rolePermCounts;
-        return View(roles);
+        return View(allowedRoles);
     }
 
     public async Task<IActionResult> Edit(string id)
@@ -41,11 +51,27 @@ public class ManagePermissionsController(
         var role = await roleManager.FindByIdAsync(id);
         if (role == null) return NotFound();
 
+        var user = await userManager.GetUserAsync(User);
+        var userRoles = user != null ? await userManager.GetRolesAsync(user) : [];
+        var isSuperAdmin = userRoles.Contains(Role.SuperAdmin);
+
+        if (!isSuperAdmin && (role.Name == Role.SuperAdmin || role.Name == Role.CollegeAdmin))
+            return Forbid();
+
         var allPermissions = await permissionService.GetAllPermissionsAsync();
         var assignedIds = await permissionService.GetRolePermissionIdsAsync(role.Id);
 
-        var groups = allPermissions
+        var userPermNames = isSuperAdmin
+            ? null
+            : await permissionService.GetUserPermissionsAsync(user!.Id);
+
+        var filteredPermissions = isSuperAdmin
+            ? allPermissions
+            : allPermissions.Where(p => userPermNames!.Contains(p.Name)).ToList();
+
+        var groups = filteredPermissions
             .GroupBy(p => p.Group)
+            .Where(g => g.Any())
             .Select(g => new PermissionGroupViewModel
             {
                 GroupName = g.Key,
@@ -73,12 +99,29 @@ public class ManagePermissionsController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(string id, List<int> permissionIds)
+    public async Task<IActionResult> Edit(string id, List<int>? permissionIds)
     {
         var role = await roleManager.FindByIdAsync(id);
         if (role == null) return NotFound();
 
-        await permissionService.UpdateRolePermissionsAsync(role.Id, permissionIds);
+        var user = await userManager.GetUserAsync(User);
+        var userRoles = user != null ? await userManager.GetRolesAsync(user) : [];
+        var isSuperAdmin = userRoles.Contains(Role.SuperAdmin);
+
+        if (!isSuperAdmin && (role.Name == Role.SuperAdmin || role.Name == Role.CollegeAdmin))
+            return Forbid();
+
+        var ids = permissionIds ?? [];
+
+        if (!isSuperAdmin && ids.Count > 0)
+        {
+            var userPermNames = await permissionService.GetUserPermissionsAsync(user!.Id);
+            var allPerms = await permissionService.GetAllPermissionsAsync();
+            var allowedIds = allPerms.Where(p => userPermNames.Contains(p.Name)).Select(p => p.Id).ToHashSet();
+            ids = ids.Where(id => allowedIds.Contains(id)).ToList();
+        }
+
+        await permissionService.UpdateRolePermissionsAsync(role.Id, ids);
 
         TempData["Success"] = $"Permissions updated for role '{role.Name}' successfully.";
         return RedirectToAction(nameof(Index));

@@ -117,9 +117,14 @@ public class BulkUserCreationService(
 
     public async Task<BulkUserCreationJob?> GetJobStatusAsync(int jobId)
     {
-        return await context.BulkUserCreationJobs!
+        var query = context.BulkUserCreationJobs!
             .AsNoTracking()
-            .FirstOrDefaultAsync(j => j.Id == jobId);
+            .Where(j => j.Id == jobId);
+
+        if (!userContext.IsSuperAdmin)
+            query = query.Where(j => j.UserId == userContext.UserId);
+
+        return await query.FirstOrDefaultAsync();
     }
 
     private async Task ProcessJobBackgroundAsync(int jobId, string idsJson, int tenantId, string tenantCode, TenantType tenantType)

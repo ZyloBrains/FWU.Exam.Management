@@ -13,4 +13,5 @@ public interface IPermissionService
     Task UpdateRolePermissionsAsync(string roleId, List<int> permissionIds);
     Task<List<Permission>> GetAllPermissionsAsync();
     Task<List<int>> GetRolePermissionIdsAsync(string roleId);
+    Task<List<string>> GetRolePermissionsAsync(string roleId);
 }
