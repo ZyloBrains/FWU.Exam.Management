@@ -53,8 +53,8 @@ public class DashboardScopeTests
             IsActive = true
         });
 
-        ctx.TenantColleges.Add(new TenantCollege { TenantId = 1, CollegeId = TestData.CollegeId });
-        ctx.TenantColleges.Add(new TenantCollege { TenantId = 2, CollegeId = 2 });
+        ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = 1, CollegeId = TestData.CollegeId, FacultyId = 1 });
+        ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = 2, CollegeId = 2, FacultyId = 2 });
 
         var bca = ctx.Programs.Local.Single(p => p.Id == TestData.ProgramId);
         bca.FacultyId = 1;
