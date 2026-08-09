@@ -3,6 +3,9 @@ namespace FWU.Exam.Management.Application.DTOs;
 public class CollegeAdminDashboardDto
 {
     public List<CollegeAdminSubjectInfo> AssignedSubjects { get; set; } = [];
+
+    /// <summary>Number of exam schedules awaiting this college's approval (dashboard badge).</summary>
+    public int PendingApprovalCount { get; set; }
 }
 
 public class CollegeAdminSubjectInfo

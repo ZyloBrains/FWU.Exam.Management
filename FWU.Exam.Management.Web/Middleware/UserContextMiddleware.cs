@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -19,6 +20,7 @@ public class UserContextMiddleware(RequestDelegate next)
                 var userManager = context.RequestServices.GetRequiredService<UserManager<AppUser>>();
                 var dbContext = context.RequestServices.GetRequiredService<AppDbContext>();
                 var userContext = context.RequestServices.GetRequiredService<IUserContext>();
+                var tenantContext = context.RequestServices.GetRequiredService<ITenantContext>();
 
                 var user = await dbContext.Users
                     .AsNoTracking()
@@ -44,6 +46,18 @@ public class UserContextMiddleware(RequestDelegate next)
                         collegeId: user.CollegeId,
                         facultyCollegeIds: facultyCollegeIds,
                         roles: (IReadOnlyList<string>)roles);
+
+                    var isCollegeAdmin = roles.Contains(Role.CollegeAdmin);
+                    List<int> collegeTenantIds = [];
+                    if (isCollegeAdmin && user.CollegeId.HasValue)
+                    {
+                        collegeTenantIds = await dbContext.TenantColleges
+                            .Where(tc => tc.CollegeId == user.CollegeId.Value)
+                            .Select(tc => tc.TenantId)
+                            .ToListAsync();
+                    }
+
+                    tenantContext.SetCollegeAdmin(isCollegeAdmin, user.CollegeId, collegeTenantIds);
                 }
             }
         }

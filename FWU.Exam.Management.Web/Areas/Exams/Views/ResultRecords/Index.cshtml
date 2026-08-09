@@ -46,18 +46,21 @@
                        placeholder="Search by name, symbol no, registration no..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
-            <div>
-                <select name="collegeId" class="select2 border border-gray-300 rounded-md px-3 py-2.5 text-sm" onchange="this.form.submit()">
-                    <option value="">All Colleges</option>
-                    @if (ViewData["CollegeId"] is SelectList sl)
-                    {
-                        foreach (var item in (sl.Items as IEnumerable<dynamic>)!)
+            @if (ViewData["ShowCollegeFilter"] as bool? == true)
+            {
+                <div>
+                    <select name="collegeId" class="select2 border border-gray-300 rounded-md px-3 py-2.5 text-sm" onchange="this.form.submit()">
+                        <option value="">All Colleges</option>
+                        @if (ViewData["CollegeId"] is SelectList sl)
                         {
-                            <option value="@item.Id" selected="@(item.Id.ToString() == ViewBag.CollegeId?.ToString())">@item.Name</option>
+                            foreach (var item in (sl.Items as IEnumerable<dynamic>)!)
+                            {
+                                <option value="@item.Id" selected="@(item.Id.ToString() == ViewBag.CollegeId?.ToString())">@item.Name</option>
+                            }
                         }
-                    }
-                </select>
-            </div>
+                    </select>
+                </div>
+            }
             <input type="hidden" name="sort" value="@currentSort" />
             <input type="hidden" name="sortDir" value="@currentSortDir" />
             <input type="hidden" name="pageSize" value="@pageSize" />

@@ -1,5 +1,16 @@
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
 @{
     ViewData["Title"] = "Registration";
+
+    var sectionUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var isSuperAdmin = sectionUser != null && await UserManager.IsInRoleAsync(sectionUser, Role.SuperAdmin);
+    var sectionPermissions = sectionUser != null
+        ? await PermissionService.GetUserPermissionsAsync(sectionUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => isSuperAdmin || sectionPermissions.Contains(permission);
 }
 
 <div class="space-y-6">
@@ -14,6 +25,8 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (HasPerm("students.view"))
+        {
         <a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -25,7 +38,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("studentcategories.view"))
+        {
         <a asp-area="" asp-controller="StudentCategories" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
@@ -37,7 +53,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("studentadmissions.view"))
+        {
         <a asp-area="Students" asp-controller="StudentAdmissions" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
@@ -49,7 +68,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("studentadmissions.view"))
+        {
         <a asp-area="Students" asp-controller="SemesterEnrollments" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
@@ -61,5 +83,6 @@
                 </div>
             </div>
         </a>
+        }
     </div>
 </div>

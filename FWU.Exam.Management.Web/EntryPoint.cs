@@ -239,6 +239,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
         builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
         builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
+        builder.Services.AddScoped<IExamScheduleApprovalService, ExamScheduleApprovalService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         builder.Services.AddScoped<IAuditLogService, AuditLogService>();
         builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();

@@ -24,7 +24,7 @@
     </div>
 
     <!-- Form Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8" x-data="{ role: '@Model.SelectedRole' }">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
         <form asp-action="Create" class="space-y-5">
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-3"></div>
 
@@ -65,7 +65,7 @@
                     </div>
 
                     <!-- Faculty dropdown (FacultyAdmin) -->
-                    <div x-show="role === '@Role.FacultyAdmin'" x-transition>
+                    <div id="facultyField" style="display:none">
                         <label asp-for="FacultyId" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="FacultyId" asp-items="ViewBag.Faculties"
                                 class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
@@ -74,8 +74,8 @@
                         <span asp-validation-for="FacultyId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
 
-                    <!-- College dropdown (CollegeAdmin & Student) -->
-                    <div x-show="role === '@Role.CollegeAdmin' || role === '@Role.Student'" x-transition>
+                    <!-- College dropdown (CollegeAdmin, Student & FacultyAdmin) -->
+                    <div id="collegeField" style="display:none">
                         <label asp-for="CollegeId" class="text-sm font-medium text-gray-700"></label>
                         <select asp-for="CollegeId" asp-items="ViewBag.Colleges"
                                 class="select2 w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
@@ -112,20 +112,32 @@
 
         <!-- Filters -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
-            <select x-model="filterCollegeId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="">All Colleges</option>
-                @foreach (var c in ViewBag.Colleges)
-                {
-                    <option value="@c.Value">@c.Text</option>
-                }
-            </select>
-            <select x-model="filterFacultyId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="">All Faculties</option>
-                @foreach (var f in ViewBag.Faculties)
-                {
-                    <option value="@f.Value">@f.Text</option>
-                }
-            </select>
+            @if (ViewBag.ShowCollegeFilter)
+            {
+                <select id="filterCollegeId" x-model="filterCollegeId" x-on:change="loadPrograms()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">All Colleges</option>
+                    @foreach (var c in ViewBag.Colleges)
+                    {
+                        <option value="@c.Value">@c.Text</option>
+                    }
+                </select>
+            }
+            @if (ViewBag.ShowFacultyFilter)
+            {
+                <select id="filterFacultyId" x-model="filterFacultyId" x-on:change="loadPrograms()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">All Faculties</option>
+                    @foreach (var f in ViewBag.Faculties)
+                    {
+                        <option value="@f.Value">@f.Text</option>
+                    }
+                </select>
+            }
+            @if (ViewBag.ShowProgramFilter)
+            {
+                <select id="filterProgramId" x-model="filterProgramId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">All Programs</option>
+                </select>
+            }
             <button x-on:click="loadStudents()" :disabled="loading"
                     class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
                 <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
@@ -315,35 +327,138 @@
     </style>
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
+        var _collegeOptions = [];
+
         function initSelect2() {
             document.querySelectorAll('.select2').forEach(function (el) {
-                var isVisible = el.offsetParent !== null;
-                if (isVisible) {
-                    if (!$(el).data('select2')) {
-                        $(el).select2({width:'resolve'});
+                if (el.tagName !== 'SELECT') return;
+                try {
+                    var isVisible = el.offsetParent !== null;
+                    if (isVisible) {
+                        if (!$(el).data('select2')) {
+                            $(el).select2({width:'resolve'});
+                        }
+                    } else {
+                        if ($(el).data('select2')) {
+                            $(el).select2('destroy');
+                        }
                     }
-                } else {
-                    if ($(el).data('select2')) {
-                        $(el).select2('destroy');
-                    }
+                } catch (e) {
+                    // ignore select2 errors so the field toggle never breaks
                 }
             });
         }
-        document.addEventListener('DOMContentLoaded', function () {
-            initSelect2();
-            document.getElementById('SelectedRole').addEventListener('change', function () {
-                var el = document.querySelector('[x-data]');
-                if (el && window.Alpine) {
-                    Alpine.$data(el).role = this.value;
-                }
-                setTimeout(initSelect2, 500);
+
+        function clearSelectOptions(select) {
+            if ($(select).data('select2')) $(select).select2('destroy');
+            select.innerHTML = '';
+            var opt = document.createElement('option');
+            opt.value = '';
+            opt.text = '-- Select College --';
+            select.appendChild(opt);
+        }
+
+        function resetCollegeOptions() {
+            var collegeSelect = document.getElementById('CollegeId');
+            if (!collegeSelect) return;
+            clearSelectOptions(collegeSelect);
+            _collegeOptions.forEach(function (o) {
+                var el = document.createElement('option');
+                el.value = o.id;
+                el.text = o.text;
+                collegeSelect.appendChild(el);
             });
+        }
+
+        function loadColleges(facultyId) {
+            var collegeSelect = document.getElementById('CollegeId');
+            var collegeField = document.getElementById('collegeField');
+            if (!collegeSelect || !collegeField) return;
+
+            var currentValue = collegeSelect.value;
+            clearSelectOptions(collegeSelect);
+
+            if (!facultyId) {
+                collegeField.style.display = 'none';
+                initSelect2();
+                return;
+            }
+
+            $.get('@Url.Action("GetCollegesByFaculty", "User")', { facultyId: facultyId }, function (data) {
+                collegeSelect.innerHTML = '';
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.text = '-- Select College --';
+                collegeSelect.appendChild(opt);
+
+                var hasMatch = false;
+                $.each(data, function (index, item) {
+                    var el = document.createElement('option');
+                    el.value = item.id;
+                    el.text = item.name;
+                    collegeSelect.appendChild(el);
+                    if (currentValue && item.id == currentValue) hasMatch = true;
+                });
+
+                if (currentValue && hasMatch) collegeSelect.value = currentValue;
+                collegeField.style.display = '';
+                initSelect2();
+            }).fail(function () {
+                collegeField.style.display = 'none';
+                initSelect2();
+            });
+        }
+
+        function updateRoleFields() {
+            var roleSelect = document.getElementById('SelectedRole');
+            var role = roleSelect ? roleSelect.value : '';
+            var facultyField = document.getElementById('facultyField');
+            var collegeField = document.getElementById('collegeField');
+            var facultySelect = document.getElementById('FacultyId');
+
+            if (role === '@Role.FacultyAdmin') {
+                if (facultyField) facultyField.style.display = '';
+                if (collegeField) collegeField.style.display = 'none';
+                if (facultySelect) loadColleges(facultySelect.value);
+            } else if (role === '@Role.CollegeAdmin' || role === '@Role.Student') {
+                if (facultyField) facultyField.style.display = 'none';
+                resetCollegeOptions();
+                if (collegeField) collegeField.style.display = '';
+                initSelect2();
+            } else {
+                if (facultyField) facultyField.style.display = 'none';
+                if (collegeField) collegeField.style.display = 'none';
+                initSelect2();
+            }
+        }
+
+        $(function () {
+            var collegeSelect = document.getElementById('CollegeId');
+            if (collegeSelect) {
+                _collegeOptions = [];
+                Array.prototype.forEach.call(collegeSelect.options, function (opt) {
+                    if (opt.value) _collegeOptions.push({ id: opt.value, text: opt.text });
+                });
+            }
+
+            var roleSelect = document.getElementById('SelectedRole');
+            var facultySelect = document.getElementById('FacultyId');
+
+            if (roleSelect) $(roleSelect).on('change', updateRoleFields);
+            if (facultySelect) $(facultySelect).on('change', function () {
+                var role = roleSelect ? roleSelect.value : '';
+                if (role === '@Role.FacultyAdmin') loadColleges(facultySelect.value);
+            });
+
+            updateRoleFields();
         });
 
         function batchCreate() {
             return {
                 filterCollegeId: '',
                 filterFacultyId: '',
+                filterProgramId: '',
+                defaultCollegeId: @(ViewBag.CurrentCollegeId != null ? ViewBag.CurrentCollegeId : 0),
                 students: [],
                 selectedIds: [],
                 loading: false,
@@ -369,6 +484,44 @@
                 failedCount: 0,
                 pollInterval: null,
 
+                init() {
+                    if (this.defaultCollegeId) this.loadPrograms();
+                },
+
+                async loadPrograms() {
+                    var programSelect = document.getElementById('filterProgramId');
+                    if (!programSelect) return;
+
+                    var collegeId = this.filterCollegeId || this.defaultCollegeId;
+                    if (!collegeId) {
+                        this.filterProgramId = '';
+                        programSelect.innerHTML = '<option value="">All Programs</option>';
+                        return;
+                    }
+
+                    var params = new URLSearchParams();
+                    params.append('collegeId', collegeId);
+                    if (this.filterFacultyId) params.append('facultyId', this.filterFacultyId);
+
+                    try {
+                        var response = await fetch('@Url.Action("GetProgramsByCollege", "User")?' + params.toString());
+                        var programs = await response.json();
+                        var currentValue = this.filterProgramId;
+                        programSelect.innerHTML = '<option value="">All Programs</option>';
+                        var hasMatch = false;
+                        programs.forEach(function (p) {
+                            var el = document.createElement('option');
+                            el.value = p.id;
+                            el.text = p.name;
+                            programSelect.appendChild(el);
+                            if (currentValue && p.id == currentValue) hasMatch = true;
+                        });
+                        if (!hasMatch) this.filterProgramId = '';
+                    } catch (e) {
+                        // keep previous options
+                    }
+                },
+
                 async loadStudents() {
                     this.loading = true;
                     this.alertMessage = '';
@@ -377,6 +530,7 @@
                         var params = new URLSearchParams();
                         if (this.filterCollegeId) params.append('collegeId', this.filterCollegeId);
                         if (this.filterFacultyId) params.append('facultyId', this.filterFacultyId);
+                        if (this.filterProgramId) params.append('programId', this.filterProgramId);
                         params.append('page', this.page);
                         params.append('pageSize', this.pageSize);
 
@@ -487,7 +641,8 @@
                             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                             body: JSON.stringify({
                                 collegeId: this.filterCollegeId ? parseInt(this.filterCollegeId) : null,
-                                facultyId: this.filterFacultyId ? parseInt(this.filterFacultyId) : null
+                                facultyId: this.filterFacultyId ? parseInt(this.filterFacultyId) : null,
+                                programId: this.filterProgramId ? parseInt(this.filterProgramId) : null
                             })
                         });
 
