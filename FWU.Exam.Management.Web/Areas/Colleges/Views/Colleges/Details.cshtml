@@ -138,6 +138,24 @@
             </div>
         </div>
 
+        <!-- Faculties Section -->
+        <div class="mb-6 pt-2">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Faculties</h2>
+            @if (Model.CollegeFaculties.Any())
+            {
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var cf in Model.CollegeFaculties)
+                    {
+                        <span class="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-full border border-blue-100">@(cf.Faculty?.Name)</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-gray-500">No faculties assigned.</p>
+            }
+        </div>
+
         <!-- Additional Information Section -->
         <div class="mb-6 pt-2">
             <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Additional Information</h2>
