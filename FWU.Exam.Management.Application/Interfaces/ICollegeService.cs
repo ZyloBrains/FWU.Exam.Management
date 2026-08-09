@@ -12,9 +12,10 @@ public interface ICollegeService
     Task<(List<College> Items, int TotalCount)> GetCollegesAsync(int page, int pageSize, string? search, string sort, string sortDir);
     Task<List<College>> GetFilteredItemsAsync(string? search, string sort, string sortDir);
     Task<College?> GetCollegeByIdAsync(int id);
-    Task<int> CreateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber);
-    Task<int> UpdateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber);
+    Task<int> CreateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber, List<int>? facultyIds);
+    Task<int> UpdateCollegeAsync(College college, string? localLevelId, string? wardNumber, string? toleStreet, string? houseNumber, List<int>? facultyIds);
     Task DeleteCollegeAsync(int id);
+    Task<List<Faculty>> GetFacultiesAsync();
     Task<bool> CollegeExistsAsync(int id);
     Task<List<CollegeType>> GetCollegeTypesAsync();
     Task<List<SelectOption>> GetDistrictsByProvinceAsync(int provinceId);

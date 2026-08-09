@@ -1,5 +1,16 @@
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
 @{
     ViewData["Title"] = "Examination";
+
+    var sectionUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var isSuperAdmin = sectionUser != null && await UserManager.IsInRoleAsync(sectionUser, Role.SuperAdmin);
+    var sectionPermissions = sectionUser != null
+        ? await PermissionService.GetUserPermissionsAsync(sectionUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => isSuperAdmin || sectionPermissions.Contains(permission);
 }
 
 <div class="space-y-6">
@@ -14,6 +25,8 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (HasPerm("examschedules.view"))
+        {
         <a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -25,7 +38,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("examtypes.view"))
+        {
         <a asp-area="Exams" asp-controller="ExamTypes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
@@ -37,7 +53,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("examschedules.view"))
+        {
         <a asp-area="Exams" asp-controller="Entrance" asp-action="ManageSchedule" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
@@ -49,7 +68,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("gradingschemes.view"))
+        {
         <a asp-area="Exams" asp-controller="GradingSchemes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
@@ -61,7 +83,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("examregistrations.view"))
+        {
         <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
@@ -73,7 +98,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("examregistrations.view"))
+        {
         <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="StudentForms" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
@@ -85,7 +113,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("examcenters.view"))
+        {
         <a asp-area="Exams" asp-controller="ExamCenters" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center group-hover:bg-teal-200 transition-colors">
@@ -97,7 +128,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("examcenters.view"))
+        {
         <a asp-area="Exams" asp-controller="ExamCenterDistribution" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
@@ -109,7 +143,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("admitcards.view"))
+        {
         <a asp-area="Exams" asp-controller="AdmitCards" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center group-hover:bg-pink-200 transition-colors">
@@ -121,7 +158,10 @@
                 </div>
             </div>
         </a>
+        }
 
+        @if (HasPerm("marksentry.view"))
+        {
         <a asp-area="Exams" asp-controller="CollegeAdminMarks" asp-action="Dashboard" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
@@ -133,5 +173,6 @@
                 </div>
             </div>
         </a>
+        }
     </div>
 </div>

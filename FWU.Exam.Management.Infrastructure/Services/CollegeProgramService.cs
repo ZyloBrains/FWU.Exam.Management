@@ -48,12 +48,16 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
 
     public async Task CreateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
+        await EnsureProgramBelongsToAffiliatedFacultyAsync(collegeProgram);
         context.CollegePrograms.Add(collegeProgram);
         await context.SaveChangesAsync();
     }
 
     public async Task CreateCollegeProgramsAsync(List<CollegeProgram> collegePrograms)
     {
+        foreach (var collegeProgram in collegePrograms)
+            await EnsureProgramBelongsToAffiliatedFacultyAsync(collegeProgram);
+
         context.CollegePrograms.AddRange(collegePrograms);
         await context.SaveChangesAsync();
     }
@@ -68,6 +72,7 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
 
     public async Task UpdateCollegeProgramAsync(CollegeProgram collegeProgram)
     {
+        await EnsureProgramBelongsToAffiliatedFacultyAsync(collegeProgram);
         context.CollegePrograms.Update(collegeProgram);
         await context.SaveChangesAsync();
     }
@@ -93,6 +98,26 @@ public class CollegeProgramService(AppDbContext context, IUserContext userContex
         var programs = await context.Programs.ApplyScope(userContext).AsNoTracking().ToListAsync();
 
         return (colleges, programs);
+    }
+
+    private async Task EnsureProgramBelongsToAffiliatedFacultyAsync(CollegeProgram collegeProgram)
+    {
+        var programFacultyId = await context.Programs
+            .Where(p => p.Id == collegeProgram.ProgramId)
+            .Select(p => (int?)p.FacultyId)
+            .FirstOrDefaultAsync();
+
+        if (programFacultyId == null)
+            return;
+
+        var isAffiliated = await context.CollegeFaculties
+            .AnyAsync(cf => cf.CollegeId == collegeProgram.CollegeId && cf.FacultyId == programFacultyId);
+
+        if (!isAffiliated)
+        {
+            throw new InvalidOperationException(
+                "The college is not affiliated with the program's faculty. Affiliate the college to the faculty before offering its programs.");
+        }
     }
 
     private IQueryable<CollegeProgram> BuildQuery(string? search)

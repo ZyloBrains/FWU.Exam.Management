@@ -55,20 +55,35 @@ public static class PermissionSeeder
                 .ToListAsync();
 
             var missingPermNames = permissionNames.Except(existingPermNames).ToList();
-            if (missingPermNames.Count == 0)
-                continue;
-
-            var missingPermissions = await context.Permissions!
-                .Where(p => missingPermNames.Contains(p.Name))
-                .ToListAsync();
-
-            var rolePermissions = missingPermissions.Select(p => new RolePermission
+            if (missingPermNames.Count > 0)
             {
-                RoleId = role!.Id,
-                PermissionId = p.Id,
-            }).ToList();
+                var missingPermissions = await context.Permissions!
+                    .Where(p => missingPermNames.Contains(p.Name))
+                    .ToListAsync();
 
-            await context.RolePermissions!.AddRangeAsync(rolePermissions);
+                var rolePermissions = missingPermissions.Select(p => new RolePermission
+                {
+                    RoleId = role!.Id,
+                    PermissionId = p.Id,
+                }).ToList();
+
+                await context.RolePermissions!.AddRangeAsync(rolePermissions);
+            }
+
+            var extraPermNames = existingPermNames.Except(permissionNames).ToList();
+            if (extraPermNames.Count > 0)
+            {
+                var extraPermIds = await context.Permissions!
+                    .Where(p => extraPermNames.Contains(p.Name))
+                    .Select(p => p.Id)
+                    .ToListAsync();
+
+                var staleRolePermissions = await context.RolePermissions!
+                    .Where(rp => rp.RoleId == role!.Id && extraPermIds.Contains(rp.PermissionId))
+                    .ToListAsync();
+
+                context.RolePermissions!.RemoveRange(staleRolePermissions);
+            }
         }
 
         await context.SaveChangesAsync();

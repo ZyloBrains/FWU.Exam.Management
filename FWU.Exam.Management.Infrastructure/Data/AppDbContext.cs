@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
@@ -36,11 +37,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
     internal static int GetCurrentTenantId() => AmbientTenantContext.Value?.TenantId ?? 0;
     internal static bool IsCurrentTenantCentral() => AmbientTenantContext.Value?.IsCentralTenant ?? false;
-
-    // Rooted at the DbContext instance so EF Core query filters parameterize (and re-evaluate
-    // per query execution) instead of inlining the value once into the compiled query cache.
-    private int FilterTenantId => GetCurrentTenantId();
-    private bool FilterIsCentral => IsCurrentTenantCentral();
+    internal static bool IsCurrentUserCollegeAdmin() => AmbientTenantContext.Value?.IsCollegeAdmin ?? false;
+    internal static int? GetCurrentCollegeId() => AmbientTenantContext.Value?.CollegeId;
+    internal static IReadOnlyList<int> GetCurrentCollegeTenantIds() => AmbientTenantContext.Value?.CollegeTenantIds ?? [];
 
     public DbSet<AcademicYear> AcademicYears { get; set; } = null!;
     public DbSet<Address> Addresses { get; set; } = null!;
@@ -48,9 +47,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<Batch> Batches { get; set; } = null!;
     public DbSet<Board> Boards { get; set; } = null!;
     public DbSet<College> Colleges { get; set; } = null!;
+    public DbSet<CollegeFaculty> CollegeFaculties { get; set; } = null!;
     public DbSet<CollegeProgram> CollegePrograms { get; set; } = null!;
     public DbSet<CollegeType> CollegeTypes { get; set; } = null!;
-    public DbSet<TenantCollege> TenantColleges { get; set; } = null!;
     public DbSet<Country> Countries { get; set; } = null!;
     public DbSet<District> Districts { get; set; } = null!;
     public DbSet<EntryFormat> EntryFormats { get; set; } = null!;
@@ -116,6 +115,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamCenterVenue> ExamCenterVenues { get; set; } = null!;
     public DbSet<ExamCenterSymbolRange> ExamCenterSymbolRanges { get; set; } = null!;
     public DbSet<CollegeAdminSubjectAssignment> CollegeAdminSubjectAssignments { get; set; } = null!;
+    public DbSet<ExamScheduleCollegeApproval> ExamScheduleCollegeApprovals { get; set; } = null!;
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<BulkUserCreationJob> BulkUserCreationJobs { get; set; } = null!;
 
@@ -139,10 +139,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         {
             var param = Expression.Parameter(entityType.ClrType, "e");
             var tenantIdProp = Expression.Call(typeof(EF), nameof(EF.Property), [typeof(int)], param, Expression.Constant("TenantId"));
-            var thisContext = Expression.Constant(this, typeof(AppDbContext));
-            var tenantIdValue = Expression.Property(thisContext, nameof(FilterTenantId));
-            var isCentral = Expression.Property(thisContext, nameof(FilterIsCentral));
-            var body = Expression.OrElse(isCentral, Expression.Equal(tenantIdProp, tenantIdValue));
+            var tenantIdMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentTenantId), BindingFlags.NonPublic | BindingFlags.Static);
+            var isCentralMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentTenantCentral), BindingFlags.NonPublic | BindingFlags.Static);
+            var isCollegeAdminMethod = typeof(AppDbContext).GetMethod(nameof(IsCurrentUserCollegeAdmin), BindingFlags.NonPublic | BindingFlags.Static);
+            var collegeTenantIdsMethod = typeof(AppDbContext).GetMethod(nameof(GetCurrentCollegeTenantIds), BindingFlags.NonPublic | BindingFlags.Static);
+            var tenantIdValue = Expression.Call(null, tenantIdMethod!);
+            var isCentral = Expression.Call(null, isCentralMethod!);
+            var isCollegeAdmin = Expression.Call(null, isCollegeAdminMethod!);
+            var collegeTenantIds = Expression.Call(null, collegeTenantIdsMethod!);
+            var collegeAdminTenants = Expression.Call(
+                typeof(Enumerable), nameof(Enumerable.Contains), [typeof(int)], collegeTenantIds, tenantIdProp);
+            var collegeAdminBranch = Expression.AndAlso(isCollegeAdmin, collegeAdminTenants);
+            var tenantBranch = Expression.Equal(tenantIdProp, tenantIdValue);
+            var body = Expression.OrElse(isCentral, Expression.OrElse(collegeAdminBranch, tenantBranch));
             var lambda = Expression.Lambda(body, param);
             entityType.SetQueryFilter(lambda);
 
@@ -154,22 +163,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         }
 
         builder.Entity<College>()
-            .HasQueryFilter(c => FilterIsCentral ||
-                c.TenantColleges!.Any(tc => tc.TenantId == FilterTenantId));
+            .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
+                (AppDbContext.IsCurrentUserCollegeAdmin() && c.Id == AppDbContext.GetCurrentCollegeId()) ||
+                c.CollegeFaculties!.Any(cf => cf.TenantId == AppDbContext.GetCurrentTenantId()));
 
-        builder.Entity<TenantCollege>()
-            .HasKey(tc => new { tc.TenantId, tc.CollegeId });
+        builder.Entity<CollegeFaculty>()
+            .ToTable("CollegeFaculties");
 
-        builder.Entity<TenantCollege>()
-            .HasOne(tc => tc.College)
-            .WithMany(c => c.TenantColleges)
-            .HasForeignKey(tc => tc.CollegeId)
+        builder.Entity<CollegeFaculty>()
+            .HasKey(cf => new { cf.CollegeId, cf.FacultyId });
+
+        builder.Entity<CollegeFaculty>()
+            .HasOne(cf => cf.College)
+            .WithMany(c => c.CollegeFaculties)
+            .HasForeignKey(cf => cf.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<TenantCollege>()
-            .HasOne(tc => tc.Tenant)
-            .WithMany(t => t.TenantColleges)
-            .HasForeignKey(tc => tc.TenantId)
+        builder.Entity<CollegeFaculty>()
+            .HasOne(cf => cf.Faculty)
+            .WithMany(f => f.CollegeFaculties)
+            .HasForeignKey(cf => cf.FacultyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<BillTitle>()
@@ -232,10 +245,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany()
             .HasForeignKey(c => c.AddressId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<College>()
-            .HasMany(c => c.Faculties)
-            .WithMany(f => f.Colleges);
 
         builder.Entity<Program>()
             .HasOne(p => p.Faculty)
@@ -639,6 +648,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(tsa => tsa.ExamSchedule)
             .WithMany()
             .HasForeignKey(tsa => tsa.ExamScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamScheduleCollegeApproval>()
+            .HasIndex(e => new { e.ExamScheduleId, e.CollegeId })
+            .IsUnique();
+
+        builder.Entity<ExamScheduleCollegeApproval>()
+            .HasOne(esca => esca.ExamSchedule)
+            .WithMany()
+            .HasForeignKey(esca => esca.ExamScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamScheduleCollegeApproval>()
+            .HasOne(esca => esca.College)
+            .WithMany()
+            .HasForeignKey(esca => esca.CollegeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ExamScheduleCollegeApproval>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(esca => esca.ApprovedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamCenterCollege>()

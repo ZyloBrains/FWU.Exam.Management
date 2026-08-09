@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -205,64 +206,43 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
     public async Task DeleteExamScheduleAsync(int id)
     {
-        var examSchedule = await context.ExamSchedules.FindAsync(id);
-        if (examSchedule == null)
+        if (!await context.ExamSchedules.AnyAsync(e => e.Id == id))
             return;
 
-        if (examSchedule.IsActive)
-            throw new InvalidOperationException("Exam schedule must be made inactive before it can be deleted. Please deactivate it first.");
+        if (await context.ExamRegistrations.AnyAsync(r => r.ExamScheduleId == id))
+            throw new InvalidOperationException(
+                "Cannot delete this exam schedule because students are already registered for it. Delete the registrations first.");
+
+        if (await context.ExamSubjectResults.AnyAsync(r => r.ExamScheduleId == id)
+            || await context.ResultRecords.AnyAsync(r => r.ExamScheduleId == id)
+            || await context.ApplicationVouchers.AnyAsync(v => v.ExamScheduleId == id))
+            throw new InvalidOperationException(
+                "Cannot delete this exam schedule because exam results or vouchers already exist for it.");
 
         await using var transaction = await context.Database.BeginTransactionAsync();
-        try
-        {
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM EntranceExamApplications WHERE ApplicationVoucherId IN (SELECT Id FROM ApplicationVouchers WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamCenterColleges WHERE ExamCenterId IN (SELECT Id FROM ExamCenters WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamCenterVenues WHERE ExamCenterId IN (SELECT Id FROM ExamCenters WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamCenterSymbolRanges WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamSlots WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM BankVoucher WHERE BillTitleId IN (SELECT Id FROM BillTitle WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM HallTickets WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ResultRecords WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamRollNumberSetup WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamFees WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM CollegeAdminSubjectAssignments WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM RetotalRequests WHERE ExamRegistrationId IN (SELECT Id FROM ExamRegistrations WHERE ExamScheduleId = {id}) OR ExamSubjectResultId IN (SELECT Id FROM ExamSubjectResults WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamSubjectResults WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamRegistrations WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ApplicationVouchers WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM BillTitle WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamCenters WHERE ExamScheduleId = {id}");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM PaymentResponseLogs WHERE PaymentRequestLogId IN (SELECT Id FROM PaymentRequestLogs WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM PaymentPracticalSubjects WHERE PaymentRequestLogId IN (SELECT Id FROM PaymentRequestLogs WHERE ExamScheduleId = {id})");
-            await context.Database.ExecuteSqlInterpolatedAsync(
-                $"DELETE FROM ExamSchedules WHERE Id = {id}");
 
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        await context.ExamScheduleCollegeApprovals.Where(a => a.ExamScheduleId == id).ExecuteDeleteAsync();
+        await context.ExamSlots.Where(s => s.ExamScheduleId == id).ExecuteDeleteAsync();
+        await context.ExamRollNumberSetup.Where(r => r.ExamScheduleId == id).ExecuteDeleteAsync();
+        await context.ExamFees.Where(f => f.ExamScheduleId == id).ExecuteDeleteAsync();
+        await context.CollegeAdminSubjectAssignments.Where(a => a.ExamScheduleId == id).ExecuteDeleteAsync();
+        await context.Set<BillTitle>().Where(b => b.ExamScheduleId == id).ExecuteDeleteAsync();
+
+        var examCenterIds = context.ExamCenters.Where(c => c.ExamScheduleId == id).Select(c => c.Id);
+        await context.ExamCenterSymbolRanges.Where(r => examCenterIds.Contains(r.ExamCenterId)).ExecuteDeleteAsync();
+        await context.ExamCenterVenues.Where(v => examCenterIds.Contains(v.ExamCenterId)).ExecuteDeleteAsync();
+        await context.ExamCenterColleges.Where(c => examCenterIds.Contains(c.ExamCenterId)).ExecuteDeleteAsync();
+        await context.ExamCenters.Where(c => c.ExamScheduleId == id).ExecuteDeleteAsync();
+
+        await context.AdmitCards.Where(a => a.ExamScheduleId == id).ExecuteDeleteAsync();
+
+        var paymentRequestLogIds = context.PaymentRequestLogs.Where(p => p.ExamScheduleId == id).Select(p => p.Id);
+        await context.PaymentPracticalSubjects.Where(p => paymentRequestLogIds.Contains(p.PaymentRequestLogId)).ExecuteDeleteAsync();
+        await context.PaymentResponseLogs.Where(p => paymentRequestLogIds.Contains(p.PaymentRequestLogId)).ExecuteDeleteAsync();
+        await context.PaymentRequestLogs.Where(p => p.ExamScheduleId == id).ExecuteDeleteAsync();
+
+        await context.ExamSchedules.Where(e => e.Id == id).ExecuteDeleteAsync();
+        await transaction.CommitAsync();
     }
 
     public async Task<bool> ExamScheduleExistsAsync(int id)

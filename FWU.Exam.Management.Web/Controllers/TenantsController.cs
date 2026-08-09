@@ -204,8 +204,8 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
 
         try
         {
-            var tenantColleges = await _context.TenantColleges.Where(tc => tc.TenantId == id).ToListAsync();
-            _context.TenantColleges.RemoveRange(tenantColleges);
+            var collegeFaculties = await _context.CollegeFaculties.Where(cf => cf.TenantId == id).ToListAsync();
+            _context.CollegeFaculties.RemoveRange(collegeFaculties);
 
             var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
             _context.Faculties.RemoveRange(faculties);
@@ -227,7 +227,11 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
         return new Dictionary<string, int>
         {
             ["Faculties"] = await _context.Faculties.CountAsync(f => f.TenantId == tenantId),
-            ["Colleges"] = await _context.TenantColleges.CountAsync(tc => tc.TenantId == tenantId),
+            ["Colleges"] = await _context.CollegeFaculties
+                .Where(cf => cf.TenantId == tenantId)
+                .Select(cf => cf.CollegeId)
+                .Distinct()
+                .CountAsync(),
             ["College Programs"] = await _context.Set<CollegeProgram>().CountAsync(cp => cp.TenantId == tenantId),
             ["Academic Years"] = await _context.AcademicYears.CountAsync(),
             ["Students"] = await _context.StudentRegistrations.CountAsync(s => s.TenantId == tenantId),
@@ -281,8 +285,8 @@ public class TenantsController(AppDbContext context, UserManager<AppUser> userMa
             if (tenant == null)
                 return Json(new { success = false, message = "Tenant not found." });
 
-            var tenantColleges = await _context.TenantColleges.Where(tc => tc.TenantId == id).ToListAsync();
-            _context.TenantColleges.RemoveRange(tenantColleges);
+            var collegeFaculties = await _context.CollegeFaculties.Where(cf => cf.TenantId == id).ToListAsync();
+            _context.CollegeFaculties.RemoveRange(collegeFaculties);
 
             var faculties = await _context.Faculties.Where(f => f.TenantId == id).ToListAsync();
             _context.Faculties.RemoveRange(faculties);

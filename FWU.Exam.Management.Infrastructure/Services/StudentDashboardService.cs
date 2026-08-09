@@ -31,7 +31,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(s => (s.Email != null && s.Email == email) || s.RegistrationNumber == email);
     }
 
-    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student)
+    public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
         var enrolledSemesterIds = await context.SemesterEnrollments!
             .AsNoTracking()
@@ -60,7 +60,28 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             query = query.Where(es => es.LevelId == null || es.LevelId == student.LevelId);
         }
 
-        return await query.ToListAsync();
+        var allSchedules = await query.ToListAsync();
+
+        var filtered = new List<ExamSchedule>();
+        foreach (var schedule in allSchedules)
+        {
+            // College approval gating: a schedule is visible to the student only if
+            // no college-approval rows exist for it, or the student's own college approved it.
+            if (!await IsScheduleVisibleToStudentAsync(schedule.Id, student.CollegeId))
+                continue;
+
+            var isSupplementary = schedule.ExamType?.Name == "Supplementary";
+
+            if (isSupplementary)
+            {
+                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterId, student.ProgramId ?? 0);
+                if (!hasFailed)
+                    continue;
+            }
+            filtered.Add(schedule);
+        }
+
+        return filtered;
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId)
@@ -663,6 +684,29 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(es => es.Program)
             .Where(es => ids.Contains(es.Id))
             .ToListAsync();
+    }
+
+    private async Task<bool> IsScheduleVisibleToStudentAsync(int examScheduleId, int? collegeId)
+    {
+        if (!collegeId.HasValue || collegeId.Value <= 0)
+            return true;
+
+        var hasApprovals = await context.ExamScheduleCollegeApprovals
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .AnyAsync(a => a.ExamScheduleId == examScheduleId && a.IsActive);
+
+        // Backward compat: schedules that never requested college approval stay visible.
+        if (!hasApprovals)
+            return true;
+
+        return await context.ExamScheduleCollegeApprovals
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .AnyAsync(a => a.ExamScheduleId == examScheduleId
+                        && a.CollegeId == collegeId.Value
+                        && a.IsActive
+                        && a.Status == ExamScheduleApprovalStatus.Approved);
     }
 
     private static bool IsFailedGrade(string? gradeLetter)

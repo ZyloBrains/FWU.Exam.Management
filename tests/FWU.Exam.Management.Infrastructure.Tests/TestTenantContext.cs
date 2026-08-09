@@ -9,6 +9,9 @@ public class TestTenantContext : ITenantContext
     public string TenantCode { get; private set; } = string.Empty;
     public TenantType Type { get; private set; }
     public bool IsCentralTenant => Type == TenantType.Central;
+    public bool IsCollegeAdmin { get; private set; }
+    public int? CollegeId { get; private set; }
+    public IReadOnlyList<int> CollegeTenantIds { get; private set; } = [];
 
     public static TestTenantContext Standard(int tenantId = TestData.TenantId)
     {
@@ -29,6 +32,13 @@ public class TestTenantContext : ITenantContext
         TenantId = tenantId;
         TenantCode = tenantCode;
         Type = type;
+    }
+
+    public void SetCollegeAdmin(bool isCollegeAdmin, int? collegeId, IReadOnlyList<int> collegeTenantIds)
+    {
+        IsCollegeAdmin = isCollegeAdmin;
+        CollegeId = collegeId;
+        CollegeTenantIds = collegeTenantIds;
     }
 
     public bool IsFilterIgnored(Type entityType) => false;
