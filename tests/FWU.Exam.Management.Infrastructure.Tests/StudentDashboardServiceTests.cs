@@ -1,6 +1,8 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -335,5 +337,127 @@ public class StudentDashboardServiceTests
         var subject = Assert.Single(registration.ExamSubjectResults!);
         Assert.NotNull(subject.SubjectOffering?.SubjectCatalog);
         Assert.Equal("Subject 7", subject.SubjectOffering!.SubjectCatalog!.SubjectName);
+    }
+
+    private static void SeedLocationData(AppDbContext ctx)
+    {
+        ctx.TenantColleges.Add(new TenantCollege { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId });
+        ctx.Provinces.Add(new Province { Id = 1, ProvinceName = "Bagmati", IsActive = true });
+        ctx.Districts.Add(new District { Id = 1, ProvinceId = 1, DistrictName = "Kathmandu", IsActive = true });
+        ctx.LocalLevels.Add(new LocalLevel
+        {
+            Id = 1,
+            DistrictId = 1,
+            LocalLevelName = "Kathmandu Metropolitan",
+            LocalLevelType = LocalLevelType.Metropolitan,
+            IsActive = true
+        });
+        ctx.Addresses.Add(new Address { Id = 1, LocalLevelId = 1, WardNumber = 1, IsActive = true });
+        ctx.Ethnicities.Add(new Ethnicity { Id = 1, EthnicityName = "Brahmin", IsActive = true });
+    }
+
+    private static StudentRegistration CompleteRegistration(int id)
+    {
+        var sr = TestData.StudentRegistration(id, Email);
+        sr.ContactNumber = "9800000000";
+        sr.GenderId = 1;
+        sr.EthnicityId = 1;
+        sr.PermanentAddressId = 1;
+        return sr;
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsEmpty_WhenAllFieldsPresent()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
+
+        Assert.Empty(missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsAllFields_WhenNothingPresent()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, null, null, null);
+
+        Assert.Equal(new[] { "Email Address", "Phone Number", "Province", "District", "Local Level", "Gender", "Ethnicity", "Profile Photo", "Student Signature" }, missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsProfileFields_WhenRegistrationIsIncomplete()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
+
+        Assert.Equal(new[] { "Province", "District", "Local Level", "Gender", "Ethnicity" }, missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsUploads_WhenPhotosMissing()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, "9800000000", null, null);
+
+        Assert.Equal(new[] { "Profile Photo", "Student Signature" }, missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_FallsBackToRegistrationContactNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(Email, null, "uploads/profile.png", "uploads/sign.png");
+
+        Assert.DoesNotContain("Phone", missing);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByEmailAsync_LoadsPermanentAddressChain()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var reg = await service.GetStudentRegistrationByEmailAsync(Email);
+
+        Assert.NotNull(reg);
+        Assert.NotNull(reg!.PermanentAddress);
+        Assert.NotNull(reg.PermanentAddress!.LocalLevel);
+        Assert.NotNull(reg.PermanentAddress.LocalLevel!.District);
+        Assert.NotNull(reg.PermanentAddress.LocalLevel.District!.Province);
+        Assert.Equal("Bagmati", reg.PermanentAddress.LocalLevel.District!.Province!.ProvinceName);
     }
 }

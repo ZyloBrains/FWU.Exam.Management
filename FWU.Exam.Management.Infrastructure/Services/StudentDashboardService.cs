@@ -839,4 +839,50 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .OrderByDescending(prl => prl.ForwardedTimestamp)
             .FirstOrDefaultAsync();
     }
+
+    public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
+    {
+        var missing = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+            missing.Add("Email Address");
+
+        var registration = await GetStudentRegistrationByEmailAsync(userEmail ?? "");
+        var hasPhone = !string.IsNullOrWhiteSpace(phoneNumber)
+            || (registration != null && (!string.IsNullOrWhiteSpace(registration.ContactNumber) || !string.IsNullOrWhiteSpace(registration.Phone)));
+
+        if (!hasPhone)
+            missing.Add("Phone Number");
+
+        if (registration == null)
+        {
+            missing.Add("Province");
+            missing.Add("District");
+            missing.Add("Local Level");
+            missing.Add("Gender");
+            missing.Add("Ethnicity");
+        }
+        else
+        {
+            var permanentAddress = registration.PermanentAddress;
+            if (permanentAddress?.LocalLevel == null)
+                missing.Add("Local Level");
+            if (permanentAddress?.LocalLevel?.District == null)
+                missing.Add("District");
+            if (permanentAddress?.LocalLevel?.District?.Province == null)
+                missing.Add("Province");
+            if (registration.Gender == null || registration.GenderId <= 0)
+                missing.Add("Gender");
+            if (registration.Ethnicity == null)
+                missing.Add("Ethnicity");
+        }
+
+        if (string.IsNullOrWhiteSpace(profilePath))
+            missing.Add("Profile Photo");
+
+        if (string.IsNullOrWhiteSpace(signaturePath))
+            missing.Add("Student Signature");
+
+        return missing;
+    }
 }

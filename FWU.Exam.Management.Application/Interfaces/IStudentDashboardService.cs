@@ -39,4 +39,5 @@ public interface IStudentDashboardService
     Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId);
     Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
     Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
+    Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath);
 }

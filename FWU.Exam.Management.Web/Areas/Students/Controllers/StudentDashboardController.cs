@@ -262,6 +262,13 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction("Index", "Profile");
+        }
+
         var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
         if (registration == null)
         {
@@ -353,6 +360,13 @@ public class StudentDashboardController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
+
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction("Index", "Profile");
+        }
 
         var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
         if (registration == null) return NotFound("Student registration not found.");
@@ -483,6 +497,13 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction("Index", "Profile");
+        }
+
         var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
         if (registration == null) return NotFound("Student registration not found.");
 
@@ -523,6 +544,13 @@ public class StudentDashboardController(
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
+
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction("Index", "Profile");
+        }
 
         var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
         if (registration == null) return NotFound("Student registration not found.");
@@ -707,6 +735,13 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction("Index", "Profile");
+        }
+
         var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
         if (registration == null) return NotFound("Student registration not found.");
 
@@ -878,6 +913,9 @@ public class StudentDashboardController(
     {
         return View();
     }
+
+    private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
+        await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
 
     private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
     {

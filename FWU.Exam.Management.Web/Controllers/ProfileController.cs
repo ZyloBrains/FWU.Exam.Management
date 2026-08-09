@@ -2,6 +2,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Location;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
@@ -47,9 +48,15 @@ public class ProfileController(
     public async Task<IActionResult> UpdateProfile(
         string? fullName,
         string? designation,
+        string? email,
         string? phoneNumber,
         IFormFile? photo,
-        IFormFile? signature)
+        IFormFile? signature,
+        int? provinceId,
+        int? districtId,
+        int? localLevelId,
+        int? genderId,
+        int? ethnicityId)
     {
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -80,6 +87,42 @@ public class ProfileController(
 
             user.FullName = fullName.Trim();
             user.Designation = string.IsNullOrWhiteSpace(designation) ? null : designation.Trim();
+        }
+
+        var registration = isStudent
+            ? await context.StudentRegistrations
+                .FirstOrDefaultAsync(sr => sr.Email == user.Email || sr.RegistrationNumber == user.Email)
+            : null;
+
+        if (isStudent)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                TempData["ErrorMessage"] = "Email is required.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var trimmedEmail = email.Trim();
+            if (trimmedEmail.Length > 256 || !System.Text.RegularExpressions.Regex.IsMatch(trimmedEmail,
+                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                TempData["ErrorMessage"] = "Please enter a valid email address.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!string.Equals(trimmedEmail, user.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                var existing = await userManager.FindByEmailAsync(trimmedEmail);
+                if (existing != null && existing.Id != user.Id)
+                {
+                    TempData["ErrorMessage"] = "This email is already used by another account.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                user.Email = trimmedEmail;
+                user.UserName = trimmedEmail;
+                user.EmailConfirmed = false;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(phoneNumber))
@@ -140,15 +183,85 @@ public class ProfileController(
             return RedirectToAction(nameof(Index));
         }
 
-        if (roles.Contains(Role.Student))
+        if (roles.Contains(Role.Student) && registration != null)
         {
-            var registration = await context.StudentRegistrations
-                .FirstOrDefaultAsync(sr => sr.Email == user.Email || sr.RegistrationNumber == user.Email);
-            if (registration != null)
+            if (user.Email != null)
+                registration.Email = user.Email;
+            registration.ContactNumber = user.PhoneNumber;
+
+            if (localLevelId is > 0)
             {
-                registration.ContactNumber = user.PhoneNumber;
-                await context.SaveChangesAsync();
+                var localLevel = await context.LocalLevels
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(l => l.Id == localLevelId.Value && l.IsActive);
+                if (localLevel == null)
+                {
+                    TempData["ErrorMessage"] = "The selected local level is not valid.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (districtId is > 0 && localLevel.DistrictId != districtId.Value)
+                {
+                    TempData["ErrorMessage"] = "The selected local level does not belong to the selected district.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (registration.PermanentAddressId.HasValue)
+                {
+                    var address = await context.Addresses.FindAsync(registration.PermanentAddressId.Value);
+                    if (address != null)
+                    {
+                        address.LocalLevelId = localLevelId.Value;
+                    }
+                }
+                else
+                {
+                    var newAddress = new Address { LocalLevelId = localLevelId.Value, IsActive = true };
+                    context.Addresses.Add(newAddress);
+                    await context.SaveChangesAsync();
+                    registration.PermanentAddressId = newAddress.Id;
+                }
             }
+
+            if (districtId is > 0 && provinceId is > 0)
+            {
+                var district = await context.Districts
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == districtId.Value && d.IsActive);
+                if (district == null)
+                {
+                    TempData["ErrorMessage"] = "The selected district is not valid.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (district.ProvinceId != provinceId.Value)
+                {
+                    TempData["ErrorMessage"] = "The selected district does not belong to the selected province.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+            if (genderId is > 0)
+            {
+                if (!await context.Genders.AnyAsync(g => g.Id == genderId.Value && g.IsActive))
+                {
+                    TempData["ErrorMessage"] = "The selected gender is not valid.";
+                    return RedirectToAction(nameof(Index));
+                }
+                registration.GenderId = genderId.Value;
+            }
+
+            if (ethnicityId is > 0)
+            {
+                if (!await context.Ethnicities.AnyAsync(e => e.Id == ethnicityId.Value && e.IsActive))
+                {
+                    TempData["ErrorMessage"] = "The selected ethnicity is not valid.";
+                    return RedirectToAction(nameof(Index));
+                }
+                registration.EthnicityId = ethnicityId.Value;
+            }
+
+            await context.SaveChangesAsync();
         }
 
         TempData["SuccessMessage"] = "Profile updated successfully.";
@@ -412,6 +525,16 @@ public class ProfileController(
         };
 
         var registration = await studentDashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+
+        Address? permanentAddress = registration?.PermanentAddress;
+        if (registration?.PermanentAddressId is int permanentAddressId && permanentAddress?.LocalLevel == null)
+        {
+            permanentAddress = await context.Addresses
+                .AsNoTracking()
+                .Include(a => a.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+                .FirstOrDefaultAsync(a => a.Id == permanentAddressId);
+        }
+
         if (registration != null)
         {
             vm.RegistrationId = registration.Id;
@@ -428,8 +551,17 @@ public class ProfileController(
             vm.AcademicYear = registration.AcademicYear?.AcademicYearName;
             vm.College = registration.College?.Name;
             vm.Level = registration.Level?.LevelName;
-            vm.Address = registration.PermanentAddress?.FullAddress
-                ?? registration.PermanentAddress?.ToleStreet;
+            vm.Address = permanentAddress?.FullAddress
+                ?? permanentAddress?.ToleStreet;
+            vm.PermanentProvinceName = permanentAddress?.LocalLevel?.District?.Province?.ProvinceName;
+            vm.PermanentDistrictName = permanentAddress?.LocalLevel?.District?.DistrictName;
+            vm.PermanentLocalLevelName = permanentAddress?.LocalLevel?.LocalLevelName;
+
+            vm.PermanentLocalLevelId = permanentAddress?.LocalLevelId;
+            vm.PermanentDistrictId = permanentAddress?.LocalLevel?.DistrictId;
+            vm.PermanentProvinceId = permanentAddress?.LocalLevel?.District?.ProvinceId;
+            vm.RegistrationGenderId = registration.GenderId;
+            vm.RegistrationEthnicityId = registration.EthnicityId;
 
             var guardians = await context.StudentGuardians
                 .AsNoTracking()
@@ -527,6 +659,49 @@ public class ProfileController(
             vm.Program = registration.Program.ProgramName;
             vm.ProgramCode = registration.Program.ProgramCode;
         }
+
+        ViewData["Provinces"] = await context.Provinces
+            .AsNoTracking()
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.ProvinceName)
+            .ToListAsync();
+        ViewData["Districts"] = await context.Districts
+            .AsNoTracking()
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.DistrictName)
+            .ToListAsync();
+        ViewData["LocalLevels"] = await context.LocalLevels
+            .AsNoTracking()
+            .Where(l => l.IsActive)
+            .OrderBy(l => l.LocalLevelName)
+            .ToListAsync();
+        ViewData["Genders"] = await context.Genders
+            .AsNoTracking()
+            .Where(g => g.IsActive)
+            .OrderBy(g => g.GenderName)
+            .ToListAsync();
+        ViewData["Ethnicities"] = await context.Ethnicities
+            .AsNoTracking()
+            .Where(e => e.IsActive)
+            .OrderBy(e => e.EthnicityName)
+            .ToListAsync();
+
+        vm.MissingMandatoryFields = await studentDashboardService
+            .GetMissingMandatoryProfileFieldsAsync(user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
+        vm.ShowProfileCompletionPopup = vm.MissingMandatoryFields.Count > 0;
+
+        var mandatoryFieldOrder = new[]
+        {
+            "Email Address", "Phone Number", "Profile Photo", "Student Signature",
+            "Province", "District", "Local Level", "Gender", "Ethnicity"
+        };
+        vm.MandatoryFields = mandatoryFieldOrder
+            .Select(name => new MandatoryProfileFieldStatusViewModel
+            {
+                Name = name,
+                IsComplete = !vm.MissingMandatoryFields.Contains(name),
+            })
+            .ToList();
 
         return vm;
     }
