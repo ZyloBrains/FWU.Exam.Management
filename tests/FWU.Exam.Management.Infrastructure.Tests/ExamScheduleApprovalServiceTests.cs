@@ -34,8 +34,7 @@ public class ExamScheduleApprovalServiceTests
             };
             ctx.Colleges.Add(college);
         }
-        college.Faculties.Add(faculty);
-        ctx.TenantColleges.Add(new TenantCollege { TenantId = TestData.TenantId, CollegeId = id });
+        ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = TestData.TenantId, CollegeId = id, FacultyId = faculty.Id });
     }
 
     private static Faculty Faculty() => new()
@@ -259,7 +258,9 @@ public class ExamScheduleApprovalServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.TenantColleges.Add(new TenantCollege { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId });
+            var faculty = Faculty();
+            ctx.Faculties.Add(faculty);
+            ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId, FacultyId = faculty.Id });
             ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
             ctx.ExamScheduleCollegeApprovals.Add(Approval(1, 11, TestData.CollegeId));
         });

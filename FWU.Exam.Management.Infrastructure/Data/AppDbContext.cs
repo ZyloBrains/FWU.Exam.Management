@@ -47,9 +47,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<Batch> Batches { get; set; } = null!;
     public DbSet<Board> Boards { get; set; } = null!;
     public DbSet<College> Colleges { get; set; } = null!;
+    public DbSet<CollegeFaculty> CollegeFaculties { get; set; } = null!;
     public DbSet<CollegeProgram> CollegePrograms { get; set; } = null!;
     public DbSet<CollegeType> CollegeTypes { get; set; } = null!;
-    public DbSet<TenantCollege> TenantColleges { get; set; } = null!;
     public DbSet<Country> Countries { get; set; } = null!;
     public DbSet<District> Districts { get; set; } = null!;
     public DbSet<EntryFormat> EntryFormats { get; set; } = null!;
@@ -165,21 +165,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<College>()
             .HasQueryFilter(c => AppDbContext.IsCurrentTenantCentral() ||
                 (AppDbContext.IsCurrentUserCollegeAdmin() && c.Id == AppDbContext.GetCurrentCollegeId()) ||
-                c.TenantColleges!.Any(tc => tc.TenantId == AppDbContext.GetCurrentTenantId()));
+                c.CollegeFaculties!.Any(cf => cf.TenantId == AppDbContext.GetCurrentTenantId()));
 
-        builder.Entity<TenantCollege>()
-            .HasKey(tc => new { tc.TenantId, tc.CollegeId });
+        builder.Entity<CollegeFaculty>()
+            .ToTable("CollegeFaculties");
 
-        builder.Entity<TenantCollege>()
-            .HasOne(tc => tc.College)
-            .WithMany(c => c.TenantColleges)
-            .HasForeignKey(tc => tc.CollegeId)
+        builder.Entity<CollegeFaculty>()
+            .HasKey(cf => new { cf.CollegeId, cf.FacultyId });
+
+        builder.Entity<CollegeFaculty>()
+            .HasOne(cf => cf.College)
+            .WithMany(c => c.CollegeFaculties)
+            .HasForeignKey(cf => cf.CollegeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<TenantCollege>()
-            .HasOne(tc => tc.Tenant)
-            .WithMany(t => t.TenantColleges)
-            .HasForeignKey(tc => tc.TenantId)
+        builder.Entity<CollegeFaculty>()
+            .HasOne(cf => cf.Faculty)
+            .WithMany(f => f.CollegeFaculties)
+            .HasForeignKey(cf => cf.FacultyId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<BillTitle>()
@@ -242,10 +245,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .WithMany()
             .HasForeignKey(c => c.AddressId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<College>()
-            .HasMany(c => c.Faculties)
-            .WithMany(f => f.Colleges);
 
         builder.Entity<Program>()
             .HasOne(p => p.Faculty)

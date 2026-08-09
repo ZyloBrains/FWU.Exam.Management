@@ -318,7 +318,8 @@ public class StudentDashboardServiceTests
 
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
 
-            ctx.TenantColleges.Add(new TenantCollege { TenantId = 2, CollegeId = TestData.CollegeId });
+            ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });
+            ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = 2, CollegeId = TestData.CollegeId, FacultyId = 5 });
 
             ctx.ResultRecords.Add(new ResultRecord
             {
@@ -372,7 +373,8 @@ public class StudentDashboardServiceTests
                 IsActive = true
             });
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
-            ctx.TenantColleges.Add(new TenantCollege { TenantId = 2, CollegeId = TestData.CollegeId });
+            ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });
+            ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = 2, CollegeId = TestData.CollegeId, FacultyId = 5 });
 
             ctx.SubjectCatalogs.Add(new SubjectCatalog
             {

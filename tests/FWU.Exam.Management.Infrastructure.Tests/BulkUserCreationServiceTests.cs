@@ -50,7 +50,7 @@ public class BulkUserCreationServiceTests
         uc.SetUser("admin-1", null, TestData.CollegeId, [], [Role.CollegeAdmin]);
         var service = CreateService(db, uc);
 
-        var (data, totalCount) = await service.GetStudentsWithoutUsersAsync(null, null, 1, 50);
+        var (data, totalCount) = await service.GetStudentsWithoutUsersAsync(null, null, null, 1, 50);
 
         Assert.Equal(1, totalCount);
         Assert.Single(data);
@@ -77,7 +77,7 @@ public class BulkUserCreationServiceTests
         uc.SetUser("admin-1", 1, null, [TestData.CollegeId], [Role.FacultyAdmin]);
         var service = CreateService(db, uc);
 
-        var (data, totalCount) = await service.GetStudentsWithoutUsersAsync(null, null, 1, 50);
+        var (data, totalCount) = await service.GetStudentsWithoutUsersAsync(null, null, null, 1, 50);
 
         Assert.Equal(1, totalCount);
         Assert.Equal("s1@test.com", data[0].Email);
@@ -100,7 +100,7 @@ public class BulkUserCreationServiceTests
         uc.SetUser("admin-1", null, null, [], [Role.SuperAdmin]);
         var service = CreateService(db, uc);
 
-        var (_, totalCount) = await service.GetStudentsWithoutUsersAsync(null, null, 1, 50);
+        var (_, totalCount) = await service.GetStudentsWithoutUsersAsync(null, null, null, 1, 50);
 
         Assert.Equal(2, totalCount);
     }

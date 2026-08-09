@@ -49,12 +49,11 @@ public class ExamScheduleApprovalService(AppDbContext context) : IExamScheduleAp
 
         var facultyId = schedule.Program.FacultyId.Value;
 
-        // Colleges under the schedule's faculty (via the CollegeFaculty M2M).
-        var facultyCollegeIds = await context.Faculties
+        // Colleges under the schedule's faculty (via the CollegeFaculty bridge).
+        var facultyCollegeIds = await context.CollegeFaculties
             .AsNoTracking()
-            .Where(f => f.Id == facultyId)
-            .SelectMany(f => f.Colleges)
-            .Select(c => c.Id)
+            .Where(cf => cf.FacultyId == facultyId)
+            .Select(cf => cf.CollegeId)
             .Distinct()
             .ToListAsync();
 

@@ -33,9 +33,9 @@ public class UserContextMiddleware(RequestDelegate next)
                     List<int> facultyCollegeIds = [];
                     if (user.FacultyId.HasValue)
                     {
-                        facultyCollegeIds = await dbContext.CollegePrograms
-                            .Where(cp => cp.Program != null && cp.Program.FacultyId == user.FacultyId)
-                            .Select(cp => cp.CollegeId)
+                        facultyCollegeIds = await dbContext.CollegeFaculties
+                            .Where(cf => cf.FacultyId == user.FacultyId)
+                            .Select(cf => cf.CollegeId)
                             .Distinct()
                             .ToListAsync();
                     }
@@ -51,9 +51,10 @@ public class UserContextMiddleware(RequestDelegate next)
                     List<int> collegeTenantIds = [];
                     if (isCollegeAdmin && user.CollegeId.HasValue)
                     {
-                        collegeTenantIds = await dbContext.TenantColleges
-                            .Where(tc => tc.CollegeId == user.CollegeId.Value)
-                            .Select(tc => tc.TenantId)
+                        collegeTenantIds = await dbContext.CollegeFaculties
+                            .Where(cf => cf.CollegeId == user.CollegeId.Value)
+                            .Select(cf => cf.TenantId)
+                            .Distinct()
                             .ToListAsync();
                     }
 

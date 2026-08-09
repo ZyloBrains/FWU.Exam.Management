@@ -26,8 +26,8 @@ public static class UserScopeExtensions
         {
             var collegeId = user.CollegeId.Value;
             return await query
-                .Where(f => context.CollegePrograms.Any(cp =>
-                    cp.CollegeId == collegeId && cp.Program != null && cp.Program.FacultyId == f.Id))
+                .Where(f => context.CollegeFaculties.Any(cf =>
+                    cf.CollegeId == collegeId && cf.FacultyId == f.Id))
                 .OrderBy(f => f.Name)
                 .ToListAsync();
         }
@@ -52,13 +52,7 @@ public static class UserScopeExtensions
     {
         if (user.IsSuperAdmin) return query;
         if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(c => c.CollegePrograms!.Any(cp =>
-                cp.Program != null && cp.Program.FacultyId == user.FacultyId.Value));
-        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-        {
-            var collegeIds = user.FacultyCollegeIds;
-            return query.Where(c => collegeIds.Contains(c.Id));
-        }
+            return query.Where(c => c.CollegeFaculties!.Any(cf => cf.FacultyId == user.FacultyId.Value));
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(c => c.Id == user.CollegeId.Value);
         return query.Where(c => false);

@@ -19,7 +19,7 @@ namespace FWU.Exam.Management.Web.Areas.Colleges.Controllers;
 
 [Area("Colleges")]
 [RequirePermission("colleges.view")]
-public class CollegesController(ICollegeService collegeService, IUserContext userContext, AppDbContext context) : Controller
+public class CollegesController(ICollegeService collegeService, IUserContext userContext) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "DisplayOrder", string sortDir = "asc", int pageSize = 10)
     {
@@ -172,9 +172,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
             {
                 if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
                 {
-                    var faculty = new Faculty { Id = userContext.FacultyId.Value };
-                    context.Faculties.Attach(faculty);
-                    college.Faculties = new List<Faculty> { faculty };
+                    college.CollegeFaculties = [new CollegeFaculty { FacultyId = userContext.FacultyId.Value }];
                 }
                 await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
                 TempData["SuccessMessage"] = "College created successfully!";
