@@ -2,18 +2,21 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Extensions;
+using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("faculties.view")]
-public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper) : Controller
+public class FacultyController(IFacultyService facultyService, IFileUploadHelper fileUploadHelper, AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Name", string sortDir = "asc", int pageSize = 10)
     {
@@ -148,6 +151,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
     [RequirePermission("faculties.create")]
     public IActionResult Create()
     {
+        ViewBag.TenantList = GetTenantList();
         return View();
     }
 
@@ -176,6 +180,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             return RedirectToAction(nameof(Index));
         }
 
+        ViewBag.TenantList = GetTenantList();
         return View(faculty);
     }
 
@@ -187,6 +192,7 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
         var faculty = await facultyService.GetFacultyByIdAsync(id.Value);
         if (faculty == null) return NotFound();
 
+        ViewBag.TenantList = GetTenantList();
         return View(faculty);
     }
 
@@ -218,7 +224,22 @@ public class FacultyController(IFacultyService facultyService, IFileUploadHelper
             return RedirectToAction(nameof(Index));
         }
 
+        ViewBag.TenantList = GetTenantList();
         return View(faculty);
+    }
+
+    private List<SelectListItem> GetTenantList()
+    {
+        return context.Tenants
+            .AsNoTracking()
+            .Where(t => t.TenantType == TenantType.Standard)
+            .OrderBy(t => t.Name)
+            .Select(t => new SelectListItem
+            {
+                Value = t.Id.ToString(),
+                Text = t.Name
+            })
+            .ToList();
     }
 
     [RequirePermission("faculties.delete")]

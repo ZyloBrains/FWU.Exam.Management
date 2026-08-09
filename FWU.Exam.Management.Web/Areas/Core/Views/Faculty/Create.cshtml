@@ -63,6 +63,15 @@
                             <span asp-validation-for="Email" class="text-xs text-red-500 mt-1 block"></span>
                         </div>
                     </div>
+
+                    <div>
+                        <label asp-for="TenantId" class="text-xs sm:text-sm font-medium text-gray-700"></label>
+                        <select asp-for="TenantId" asp-items="ViewBag.TenantList" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">-- No Tenant --</option>
+                        </select>
+                        <span asp-validation-for="TenantId" class="text-xs text-red-500 mt-1 block"></span>
+                        <p class="text-xs text-gray-500 mt-1">Optional. Leave unassigned to keep this faculty available for linking to a tenant later.</p>
+                    </div>
                 </div>
             </div>
 
