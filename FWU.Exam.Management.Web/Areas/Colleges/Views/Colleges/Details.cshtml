@@ -155,10 +155,6 @@
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeType!.Code)</p>
                 </div>
                 <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">College Profile</p>
-                    <p class="mt-1 text-gray-800">@(Model.CollegeProfile?.BankName ?? "N/A")</p>
-                </div>
-                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Allocated Amount</p>
                     <p class="mt-1 text-gray-800">@(Model.AllocatedAmount.HasValue? Model.AllocatedAmount.Value.ToString("N2") : "?")</p>
                 </div>

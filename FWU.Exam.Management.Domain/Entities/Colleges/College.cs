@@ -84,10 +84,6 @@ public class College
     public int? CollegeTypeId { get; set; }
     public virtual CollegeType? CollegeType { get; set; }
 
-    [Display(Name = "College Profile")]
-    public int? CollegeProfileId { get; set; }
-    public virtual CollegeProfile? CollegeProfile { get; set; }
-
     public virtual ICollection<CollegeFaculty> CollegeFaculties { get; set; } = [];
     public virtual ICollection<CollegeProgram> CollegePrograms { get; set; } = [];
     public virtual ICollection<ExamCenter> ExamCenters { get; set; } = [];

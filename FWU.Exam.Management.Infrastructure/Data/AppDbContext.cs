@@ -52,7 +52,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<CollegeType> CollegeTypes { get; set; } = null!;
     public DbSet<Country> Countries { get; set; } = null!;
     public DbSet<District> Districts { get; set; } = null!;
-    public DbSet<EntryFormat> EntryFormats { get; set; } = null!;
     public DbSet<Ethnicity> Ethnicities { get; set; } = null!;
     public DbSet<ExamCenter> ExamCenters { get; set; } = null!;
     public DbSet<ExamFee> ExamFees { get; set; } = null!;
@@ -64,20 +63,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamType> ExamTypes { get; set; } = null!;
     public DbSet<AdmitCard> AdmitCards { get; set; } = null!;
     public DbSet<RetotalRequest> RetotalRequests { get; set; } = null!;
-    public DbSet<FiscalYear> FiscalYears { get; set; } = null!;
     public DbSet<Gender> Genders { get; set; } = null!;
-    public DbSet<IndexGroup> IndexGroups { get; set; } = null!;
     public DbSet<Level> Levels { get; set; } = null!;
     public DbSet<LocalLevel> LocalLevels { get; set; } = null!;
     public DbSet<NepaliDate> NepaliDates { get; set; } = null!;
     public DbSet<Notice> Notices { get; set; } = null!;
-    public DbSet<PeriodType> PeriodTypes { get; set; } = null!;
     public DbSet<PreviousLevel> PreviousLevels { get; set; } = null!;
     public DbSet<Program> Programs { get; set; } = null!;
     public DbSet<ProgramSemester> ProgramSemesters { get; set; } = null!;
-    public DbSet<QuestionSet> QuestionSets { get; set; } = null!;
     public DbSet<ResultRecord> ResultRecords { get; set; } = null!;
-    public DbSet<SchoolType> SchoolTypes { get; set; } = null!;
     public DbSet<Semester> Semesters { get; set; } = null!;
     public DbSet<SemesterEnrollment> SemesterEnrollments { get; set; } = null!;
     public DbSet<StudentAdmission> StudentAdmissions { get; set; } = null!;
@@ -97,7 +91,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GumpNowEmailConfiguration> GumpNowEmailConfigurations { get; set; } = null!;
     public DbSet<GumpNowEmailLog> GumpNowEmailLogs { get; set; } = null!;
     public DbSet<SmsLog> SmsLogs { get; set; } = null!;
-    public DbSet<CollegeProfile> CollegeProfiles { get; set; } = null!;
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
     public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
@@ -186,12 +179,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<BillTitle>()
-            .HasOne(e => e.Tenant)
-            .WithMany()
-            .HasForeignKey(e => e.TenantId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ProgramSubjectPracticalCharge>()
             .HasOne(e => e.Tenant)
             .WithMany()
             .HasForeignKey(e => e.TenantId)
@@ -497,12 +484,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(pl => pl.LevelId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<SchoolType>()
-            .HasOne(st => st.PreviousLevel)
-            .WithMany(pl => pl.SchoolTypes)
-            .HasForeignKey(st => st.PreviousLevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<Program>().ToTable("Programs");
 
         builder.Entity<SubjectCatalog>()
@@ -749,12 +730,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(rr => rr.ExamRegistrationId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Entity<ProgramSubjectPracticalCharge>()
-            .HasOne(pspc => pspc.Program)
-            .WithMany()
-            .HasForeignKey(pspc => pspc.ProgramsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.Entity<PaymentRequestLog>()
             .HasOne(prl => prl.PaymentType)
             .WithMany(pt => pt.PaymentRequestLogs)
@@ -795,24 +770,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(u => u.College)
             .WithMany()
             .HasForeignKey(u => u.CollegeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<College>()
-            .HasOne(c => c.CollegeProfile)
-            .WithOne(cp => cp.College)
-            .HasForeignKey<CollegeProfile>(cp => cp.CollegeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<CollegeProfile>()
-            .HasOne(cp => cp.BlankChequeUserAttachment)
-            .WithMany()
-            .HasForeignKey(cp => cp.BlankChequeUserAttachmentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<CollegeProfile>()
-            .HasOne(cp => cp.AuditReportUserAttachment)
-            .WithMany()
-            .HasForeignKey(cp => cp.AuditReportUserAttachmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<BankVoucher>()
@@ -861,8 +818,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         });
         builder.Entity<PaymentPracticalSubjects>(e => e.Property(x => x.TotalAmount).HasPrecision(18, 2));
         builder.Entity<PaymentRequestLog>(e => e.Property(x => x.Amount).HasPrecision(18, 2));
-        builder.Entity<PeriodType>(e => e.Property(x => x.NumberOfMonths).HasPrecision(5, 2));
-        builder.Entity<ProgramSubjectPracticalCharge>(e => e.Property(x => x.PracticalSubjectCharge).HasPrecision(18, 2));
         builder.Entity<StudentQualification>(e => e.Property(x => x.Percentage).HasPrecision(5, 2));
 
         builder.Entity<BankVoucher>(e => e.Property(x => x.VoucherAmount).HasPrecision(18, 2));
@@ -1003,29 +958,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .IsUnique()
             .HasFilter("[BoardName] IS NOT NULL");
 
-        builder.Entity<EntryFormat>()
-            .HasIndex(ef => ef.EntryFormatName)
-            .IsUnique()
-            .HasFilter("[EntryFormatName] IS NOT NULL");
-
-        builder.Entity<IndexGroup>()
-            .HasIndex(ig => ig.IndexGroupName)
-            .IsUnique()
-            .HasFilter("[IndexGroupName] IS NOT NULL");
-
-        builder.Entity<PeriodType>()
-            .HasIndex(pt => pt.PeriodTypeName)
-            .IsUnique()
-            .HasFilter("[PeriodTypeName] IS NOT NULL");
-
         builder.Entity<PaymentType>()
             .HasIndex(pt => new { pt.TenantId, pt.PaymentTypeName })
             .IsUnique()
             .HasFilter("[PaymentTypeName] IS NOT NULL");
-
-        builder.Entity<SchoolType>()
-            .HasIndex(st => st.SchoolTypeName)
-            .IsUnique();
 
         // Unique indexes - Tenant-scoped composite (TenantId, Code)
         builder.Entity<College>()
@@ -1035,11 +971,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<AcademicYear>()
             .HasIndex(ay => ay.AcademicYearCode)
             .IsUnique();
-
-        builder.Entity<FiscalYear>()
-            .HasIndex(fy => fy.FiscalYearCode)
-            .IsUnique()
-            .HasFilter("[FiscalYearCode] IS NOT NULL");
 
         builder.Entity<ExamSchedule>()
             .HasIndex(es => new { es.TenantId, es.ExamScheduleCode })

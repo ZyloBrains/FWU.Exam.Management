@@ -110,7 +110,6 @@ public class CollegeService(AppDbContext context, IUserContext userContext) : IC
         existingCollege.AllocatedAmount = college.AllocatedAmount;
         existingCollege.DisplayOrder = college.DisplayOrder;
         existingCollege.CollegeTypeId = college.CollegeTypeId;
-        existingCollege.CollegeProfileId = college.CollegeProfileId;
 
         if (!string.IsNullOrEmpty(localLevelId))
         {
