@@ -152,6 +152,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
     {
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
         await this.PopulateSelectLists();
+        await PopulateFacultyListAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code");
         return View();
     }
@@ -165,6 +166,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         var wardNumber = Request.Form["WardNumber"].ToString();
         var toleStreet = Request.Form["ToleStreet"].ToString();
         var houseNumber = Request.Form["HouseNumber"].ToString();
+        var facultyIds = GetSelectedFacultyIds();
 
         if (ModelState.IsValid)
         {
@@ -172,9 +174,9 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
             {
                 if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
                 {
-                    college.CollegeFaculties = [new CollegeFaculty { FacultyId = userContext.FacultyId.Value }];
+                    facultyIds = [userContext.FacultyId.Value];
                 }
-                await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
+                await collegeService.CreateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber, facultyIds);
                 TempData["SuccessMessage"] = "College created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -187,6 +189,7 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
         await this.PopulateSelectLists();
+        await PopulateFacultyListAsync(facultyIds);
         return View(college);
     }
 
@@ -201,6 +204,8 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
         await this.PopulateSelectLists();
+        var selectedFacultyIds = college.CollegeFaculties?.Select(cf => cf.FacultyId).ToList() ?? [];
+        await PopulateFacultyListAsync(selectedFacultyIds);
         return View(college);
     }
 
@@ -215,12 +220,17 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
         var wardNumber = Request.Form["WardNumber"].ToString();
         var toleStreet = Request.Form["ToleStreet"].ToString();
         var houseNumber = Request.Form["HouseNumber"].ToString();
+        var facultyIds = GetSelectedFacultyIds();
 
         if (ModelState.IsValid)
         {
             try
             {
-                await collegeService.UpdateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber);
+                if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+                {
+                    facultyIds = [userContext.FacultyId.Value];
+                }
+                await collegeService.UpdateCollegeAsync(college, localLevelId, wardNumber, toleStreet, houseNumber, facultyIds);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -236,6 +246,8 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
 
         var collegeTypes = await collegeService.GetCollegeTypesAsync();
         ViewData["CollegeTypeId"] = new SelectList(collegeTypes, "Id", "Code", college.CollegeTypeId);
+        await this.PopulateSelectLists();
+        await PopulateFacultyListAsync(facultyIds);
         return View(college);
     }
 
@@ -295,6 +307,31 @@ public class CollegesController(ICollegeService collegeService, IUserContext use
 
         // This will be implemented based on the selectLists object
         // For now, using ViewData as in the original
+    }
+
+    private List<int>? GetSelectedFacultyIds()
+    {
+        var values = Request.Form["FacultyIds"];
+        var ids = new List<int>();
+        foreach (var value in values)
+        {
+            foreach (var part in (value ?? "").Split(','))
+            {
+                if (int.TryParse(part, out var id))
+                    ids.Add(id);
+            }
+        }
+        return ids;
+    }
+
+    private async Task PopulateFacultyListAsync(List<int>? selectedFacultyIds = null)
+    {
+        var faculties = await collegeService.GetFacultiesAsync();
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+        {
+            faculties = faculties.Where(f => f.Id == userContext.FacultyId.Value).ToList();
+        }
+        ViewBag.Faculties = new MultiSelectList(faculties, "Id", "Name", selectedFacultyIds ?? []);
     }
         [RequirePermission("colleges.delete")]
     [HttpPost]
