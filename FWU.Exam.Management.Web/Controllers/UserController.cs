@@ -1,5 +1,7 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Web.ViewModels;
@@ -116,6 +118,7 @@ public class UserController(
         ViewBag.RolesList = roles;
         ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).ToListAsync(), "Id", "Name");
+        await SetCreateFiltersAsync();
         return View(new CreateUserViewModel());
     }
 
@@ -177,7 +180,20 @@ public class UserController(
         ViewBag.RolesList = roles;
         ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        await SetCreateFiltersAsync();
         return View(model);
+    }
+
+    private async Task SetCreateFiltersAsync()
+    {
+        ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
+        ViewData["ShowFacultyFilter"] = userContext.IsSuperAdmin;
+        ViewData["ShowProgramFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin || userContext.IsCollegeAdmin;
+        ViewBag.FilterColleges = userContext.IsSuperAdmin
+            ? new SelectList(Array.Empty<College>(), "Id", "Name")
+            : new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name");
+        ViewBag.DefaultFacultyId = userContext.IsFacultyAdmin ? userContext.FacultyId : null;
+        ViewBag.CurrentCollegeId = userContext.IsCollegeAdmin ? userContext.CollegeId : null;
     }
 
     [RequirePermission("users.edit")]
@@ -649,6 +665,37 @@ public class UserController(
         {
             return Json(new { success = false, message = ex.Message });
         }
+    }
+
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<JsonResult> GetCollegesByFaculty(int? facultyId)
+    {
+        if (!facultyId.HasValue)
+            return Json(new List<SelectOption>());
+
+        var colleges = await context.Colleges
+            .ApplyScope(userContext)
+            .Where(c => c.CollegeFaculties!.Any(cf => cf.FacultyId == facultyId.Value))
+            .OrderBy(c => c.Name)
+            .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+            .AsNoTracking()
+            .ToListAsync();
+        return Json(colleges);
+    }
+
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByCollege(int collegeId)
+    {
+        var programs = await context.CollegePrograms
+            .ApplyScope(userContext)
+            .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
+            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
+            .OrderBy(p => p.Name)
+            .AsNoTracking()
+            .ToListAsync();
+        return Json(programs);
     }
 
     [RequirePermission("users.create")]

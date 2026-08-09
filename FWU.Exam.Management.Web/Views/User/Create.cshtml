@@ -112,19 +112,9 @@
 
         <!-- Filters -->
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
-            @if (ViewBag.ShowCollegeFilter)
+            @if (ViewData["ShowFacultyFilter"] as bool? == true)
             {
-                <select id="filterCollegeId" x-model="filterCollegeId" x-on:change="loadPrograms()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <option value="">All Colleges</option>
-                    @foreach (var c in ViewBag.Colleges)
-                    {
-                        <option value="@c.Value">@c.Text</option>
-                    }
-                </select>
-            }
-            @if (ViewBag.ShowFacultyFilter)
-            {
-                <select id="filterFacultyId" x-model="filterFacultyId" x-on:change="loadPrograms()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <select id="filterFacultyId" x-model="filterFacultyId" x-on:change="refreshColleges()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">All Faculties</option>
                     @foreach (var f in ViewBag.Faculties)
                     {
@@ -132,7 +122,17 @@
                     }
                 </select>
             }
-            @if (ViewBag.ShowProgramFilter)
+            @if (ViewData["ShowCollegeFilter"] as bool? == true)
+            {
+                <select id="filterCollegeId" x-model="filterCollegeId" x-on:change="loadPrograms()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">All Colleges</option>
+                    @foreach (var c in ViewBag.FilterColleges)
+                    {
+                        <option value="@c.Value">@c.Text</option>
+                    }
+                </select>
+            }
+            @if (ViewData["ShowProgramFilter"] as bool? == true)
             {
                 <select id="filterProgramId" x-model="filterProgramId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">All Programs</option>
@@ -141,7 +141,7 @@
             <button x-on:click="loadStudents()" :disabled="loading"
                     class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
                 <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
-                <span x-text="loading ? 'Loading...' : 'Load Students'"></span>
+                <span x-text="loading ? 'Loading...' : 'Load Students'">Load Students</span>
             </button>
         </div>
 
@@ -454,11 +454,14 @@
         });
 
         function batchCreate() {
+            var defaultFacultyId = @(ViewBag.DefaultFacultyId != null ? ViewBag.DefaultFacultyId : 0);
+            var defaultCollegeId = @(ViewBag.CurrentCollegeId != null ? ViewBag.CurrentCollegeId : 0);
             return {
-                filterCollegeId: '',
-                filterFacultyId: '',
+                defaultFacultyId: defaultFacultyId,
+                defaultCollegeId: defaultCollegeId,
+                filterFacultyId: defaultFacultyId || '',
+                filterCollegeId: defaultCollegeId || '',
                 filterProgramId: '',
-                defaultCollegeId: @(ViewBag.CurrentCollegeId != null ? ViewBag.CurrentCollegeId : 0),
                 students: [],
                 selectedIds: [],
                 loading: false,
@@ -486,6 +489,34 @@
 
                 init() {
                     if (this.defaultCollegeId) this.loadPrograms();
+                },
+
+                async refreshColleges() {
+                    var collegeSelect = document.getElementById('filterCollegeId');
+                    if (!collegeSelect) return;
+
+                    var facultyId = this.filterFacultyId;
+                    var params = new URLSearchParams();
+                    if (facultyId) params.append('facultyId', facultyId);
+
+                    try {
+                        var response = await fetch('@Url.Action("GetCollegesByFaculty", "User")?' + params.toString());
+                        if (!response.ok) throw new Error('Request failed');
+                        var colleges = await response.json();
+                        collegeSelect.innerHTML = '<option value="">All Colleges</option>';
+                        colleges.forEach(function (c) {
+                            var el = document.createElement('option');
+                            el.value = c.id;
+                            el.text = c.name;
+                            collegeSelect.appendChild(el);
+                        });
+                    } catch (e) {
+                        // keep previous options
+                    }
+
+                    this.filterCollegeId = '';
+                    this.filterProgramId = '';
+                    await this.loadPrograms();
                 },
 
                 async loadPrograms() {
