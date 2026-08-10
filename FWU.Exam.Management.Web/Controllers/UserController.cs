@@ -22,7 +22,8 @@ public class UserController(
     AppDbContext context,
     IUserContext userContext,
     IPermissionService permissionService,
-    IBulkUserCreationService bulkUserCreationService) : Controller
+    IBulkUserCreationService bulkUserCreationService,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
@@ -166,6 +167,10 @@ public class UserController(
                 var selectedRole = model.SelectedRole;
                 if (!string.IsNullOrEmpty(selectedRole) && await roleManager.RoleExistsAsync(selectedRole))
                     await userManager.AddToRoleAsync(user, selectedRole);
+                await auditLogWriter.LogAsync(ActivityTypes.UserCreated,
+                    $"Created user {user.Email} with role {model.SelectedRole}",
+                    new { userId = user.Id, email = user.Email, role = model.SelectedRole },
+                    entityName: "AppUser", entityId: user.Id);
                 TempData["SuccessMessage"] = "User created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -260,6 +265,10 @@ public class UserController(
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
+                await auditLogWriter.LogAsync(ActivityTypes.UserUpdated,
+                    $"Updated user {(user.FullName ?? user.Email)}",
+                    new { userId = user.Id, email = user.Email },
+                    entityName: "AppUser", entityId: user.Id);
                 TempData["SuccessMessage"] = "User updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -295,6 +304,10 @@ public class UserController(
 
         user.IsActive = !user.IsActive;
         await userManager.UpdateAsync(user);
+        await auditLogWriter.LogAsync(ActivityTypes.UserStatusChanged,
+            $"{(user.IsActive ? "Enabled" : "Disabled")} user {(user.FullName ?? user.Email)}",
+            new { userId = user.Id, email = user.Email, isActive = user.IsActive },
+            entityName: "AppUser", entityId: user.Id);
 
         TempData["SuccessMessage"] = $"User status updated to {(user.IsActive ? "active" : "inactive")}.";
         return RedirectToAction(nameof(Index));
@@ -321,7 +334,13 @@ public class UserController(
         {
             var user = await LoadScopedUserAsync(id);
             if (user != null && await CanManageTargetAsync(user))
+            {
                 await userManager.DeleteAsync(user);
+                await auditLogWriter.LogAsync(ActivityTypes.UserDeleted,
+                    $"Deleted user {(user.FullName ?? user.Email)}",
+                    new { userId = user.Id, email = user.Email },
+                    entityName: "AppUser", entityId: user.Id);
+            }
 
             TempData["SuccessMessage"] = "User deleted successfully!";
             return RedirectToAction(nameof(Index));
@@ -396,6 +415,14 @@ public class UserController(
         if (toRemove.Count > 0)
             await userManager.RemoveFromRolesAsync(user, toRemove);
 
+        if (toAdd.Count > 0 || toRemove.Count > 0)
+        {
+            await auditLogWriter.LogAsync(ActivityTypes.UserRolesChanged,
+                $"Updated roles for {(user.FullName ?? user.Email)}: added [{string.Join(", ", toAdd)}], removed [{string.Join(", ", toRemove)}]",
+                new { userId = user.Id, added = toAdd, removed = toRemove },
+                entityName: "AppUser", entityId: user.Id);
+        }
+
         TempData["SuccessMessage"] = "User roles updated successfully!";
         return RedirectToAction(nameof(Index));
     }
@@ -467,6 +494,10 @@ public class UserController(
 
         if (result.Succeeded)
         {
+            await auditLogWriter.LogAsync(ActivityTypes.UserPasswordResetByAdmin,
+                $"Admin reset password for {(user.FullName ?? user.Email)}",
+                new { userId = user.Id, email = user.Email, byAdmin = true },
+                entityName: "AppUser", entityId: user.Id);
             TempData["SuccessMessage"] = $"Password reset successfully for '{(user.FullName ?? user.Email)}'. The user must use the new password on their next login.";
             return RedirectToAction(nameof(ResetPassword), new { userId = user.Id, search = model.Search, page = model.Page, pageSize = model.PageSize });
         }

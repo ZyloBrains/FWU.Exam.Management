@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.Authorization;
@@ -11,7 +13,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("gumpnowemail.view")]
-public class GumpNowEmailConfigurationsController(AppDbContext context) : Controller
+public class GumpNowEmailConfigurationsController(AppDbContext context, IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ApiUrl", string sortDir = "asc", int pageSize = 10)
     {
@@ -175,6 +177,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
         {
             context.Add(config);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.EmailConfigUpdated, $"GumpNow email configuration created (id {config.Id})", new { id = config.Id, apiUrl = config.ApiUrl, fromAddr = config.FromAddr, isActive = config.IsActive }, entityName: "GumpNowEmailConfiguration", entityId: config.Id.ToString());
             TempData["SuccessMessage"] = "GumpNow email configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -211,6 +214,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
                 if (!GumpNowEmailConfigurationExists(config.Id)) return NotFound();
                 throw;
             }
+            await auditLogWriter.LogAsync(ActivityTypes.EmailConfigUpdated, $"GumpNow email configuration {config.Id} updated", new { id = config.Id, apiUrl = config.ApiUrl, fromAddr = config.FromAddr, isActive = config.IsActive }, entityName: "GumpNowEmailConfiguration", entityId: config.Id.ToString());
             TempData["SuccessMessage"] = "GumpNow email configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -241,6 +245,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
                 context.GumpNowEmailConfigurations.Remove(config);
             }
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.EmailConfigUpdated, $"GumpNow email configuration {id} deleted", new { id }, entityName: "GumpNowEmailConfiguration", entityId: id.ToString());
             TempData["SuccessMessage"] = "GumpNow email configuration deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -268,6 +273,7 @@ public class GumpNowEmailConfigurationsController(AppDbContext context) : Contro
             {
                 context.GumpNowEmailConfigurations.Remove(entity);
                 await context.SaveChangesAsync();
+                await auditLogWriter.LogAsync(ActivityTypes.EmailConfigUpdated, $"GumpNow email configuration {id} deleted", new { id }, entityName: "GumpNowEmailConfiguration", entityId: id.ToString());
             }
             return Json(new { success = true, message = "GumpNow email configuration deleted successfully!" });
         }

@@ -2,9 +2,11 @@ using System.Globalization;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +16,8 @@ public class CollegeAdminMarksService(
     AppDbContext context,
     ICollegeAdminSubjectAssignmentService assignmentService,
     IGradeCalculationService gradeCalculationService,
-    IExamScheduleApprovalService approvalService) : ICollegeAdminMarksService
+    IExamScheduleApprovalService approvalService,
+    IAuditLogWriter auditLogWriter) : ICollegeAdminMarksService
 {
     public async Task<CollegeAdminDashboardDto> GetCollegeAdminDashboardAsync(string collegeAdminUserId)
     {
@@ -313,6 +316,11 @@ public class CollegeAdminMarksService(
         await context.SaveChangesAsync();
         result.Success = result.Errors.Count == 0;
 
+        await auditLogWriter.LogAsync(ActivityTypes.MarksSaved,
+            $"Marks saved for subject offering {dto.SubjectOfferingId} (schedule {dto.ExamScheduleId}, submitted: {dto.SubmitAll})",
+            new { subjectOfferingId = dto.SubjectOfferingId, examScheduleId = dto.ExamScheduleId, submitAll = dto.SubmitAll, savedCount = result.SavedCount, errorCount = result.Errors.Count, actorUserId = collegeAdminUserId },
+            entityName: "ExamSubjectResult", entityId: dto.SubjectOfferingId.ToString(), actorUserId: collegeAdminUserId);
+
         return result;
     }
 
@@ -475,6 +483,12 @@ public class CollegeAdminMarksService(
         }
 
         await context.SaveChangesAsync();
+
+        await auditLogWriter.LogAsync(ActivityTypes.MarksImported,
+            $"Marks imported from Excel for subject offering {subjectOfferingId} (schedule {examScheduleId})",
+            new { subjectOfferingId, examScheduleId, successCount = result.SuccessCount, errorCount = result.ErrorCount, actorUserId = collegeAdminUserId },
+            entityName: "ExamSubjectResult", entityId: subjectOfferingId.ToString(), actorUserId: collegeAdminUserId);
+
         return result;
     }
 

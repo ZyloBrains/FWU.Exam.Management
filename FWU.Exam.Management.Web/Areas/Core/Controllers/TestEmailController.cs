@@ -1,11 +1,13 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
-public class TestEmailController(IEmailService emailService) : Controller
+public class TestEmailController(IEmailService emailService, IAuditLogWriter auditLogWriter) : Controller
 {
     public IActionResult Index()
     {
@@ -21,6 +23,7 @@ public class TestEmailController(IEmailService emailService) : Controller
         try
         {
             await emailService.SendEmailAsync(model.ToEmail, model.Subject, model.Body);
+            await auditLogWriter.LogAsync(ActivityTypes.TestEmailSent, $"Test email sent to {model.ToEmail}", new { to = model.ToEmail, subject = model.Subject });
             TempData["Success"] = "Email sent successfully!";
         }
         catch (Exception ex)

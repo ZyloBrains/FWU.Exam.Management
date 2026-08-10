@@ -20,7 +20,8 @@ public class BulkUserCreationService(
     AppDbContext context,
     IServiceScopeFactory scopeFactory,
     ITenantContext tenantContext,
-    IUserContext userContext) : IBulkUserCreationService
+    IUserContext userContext,
+    IAuditLogWriter auditLogWriter) : IBulkUserCreationService
 {
     private const int BatchSize = 50;
 
@@ -89,6 +90,8 @@ public class BulkUserCreationService(
         var capturedTenantId = tenantContext.TenantId;
         var capturedTenantCode = tenantContext.TenantCode;
         var capturedTenantType = tenantContext.Type;
+
+        await auditLogWriter.LogAsync(ActivityTypes.UsersBulkCreationStarted, $"Bulk user creation job {jobId} started", new { jobId, totalStudents = job.TotalStudents, requestedCount = registrationIds.Count, scopedCount = scopedIds.Count }, entityName: "BulkUserCreationJob", entityId: jobId.ToString(), actorUserId: userId);
 
         _ = Task.Run(async () => await ProcessJobBackgroundAsync(jobId, idsJson, capturedTenantId, capturedTenantCode, capturedTenantType));
 
@@ -238,6 +241,9 @@ public class BulkUserCreationService(
             job.Status = "Completed";
             job.CompletedAt = DateTime.UtcNow;
             await scopedContext.SaveChangesAsync();
+
+            var scopedAuditWriter = scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+            await scopedAuditWriter.LogAsync(ActivityTypes.UsersBulkCreationCompleted, $"Bulk user creation job {jobId} completed", new { jobId, successCount = job.SuccessCount, failedCount = job.FailedCount, totalStudents = job.TotalStudents }, entityName: "BulkUserCreationJob", entityId: jobId.ToString(), actorUserId: job.UserId);
         }
         catch (Exception ex)
         {
@@ -252,6 +258,9 @@ public class BulkUserCreationService(
                     job.CompletedAt = DateTime.UtcNow;
                     await scopedContext.SaveChangesAsync();
                 }
+
+                var scopedAuditWriter = scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+                await scopedAuditWriter.LogAsync(ActivityTypes.UsersBulkCreationFailed, $"Bulk user creation job {jobId} failed", new { jobId, error = ex.Message }, AuditSeverity.Error, "BulkUserCreationJob", jobId.ToString(), job?.UserId);
             }
             catch (Exception innerEx)
             {

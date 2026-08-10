@@ -4,6 +4,8 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +14,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class ResetPasswordModel(UserManager<AppUser> userManager) : PageModel
+public class ResetPasswordModel(UserManager<AppUser> userManager, IAuditLogWriter auditLogWriter) : PageModel
 {
 
     /// <summary>
@@ -98,6 +100,9 @@ public class ResetPasswordModel(UserManager<AppUser> userManager) : PageModel
             var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
             if (result.Succeeded)
             {
+                await auditLogWriter.LogAsync(ActivityTypes.UserPasswordReset,
+                    $"Password reset for {Input.Email}",
+                    new { email = Input.Email, userId = user.Id }, entityName: "AppUser", entityId: user.Id);
                 TempData["StatusMessage"] = "Your password has been reset successfully. Please log in with your new password.";
                 return RedirectToPage("./Login");
             }

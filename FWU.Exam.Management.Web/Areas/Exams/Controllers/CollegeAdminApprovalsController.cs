@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
@@ -14,7 +15,8 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 public class CollegeAdminApprovalsController(
     IExamScheduleApprovalService approvalService,
     IUserContext userContext,
-    UserManager<AppUser> userManager) : Controller
+    UserManager<AppUser> userManager,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -44,6 +46,7 @@ public class CollegeAdminApprovalsController(
         try
         {
             await approvalService.ApproveAsync(examScheduleId, userContext.CollegeId.Value, user.Id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleApproved, $"College approved exam schedule {examScheduleId}", new { scheduleId = examScheduleId, collegeId = userContext.CollegeId.Value, approvalBy = user.Id }, entityName: "ExamSchedule", entityId: examScheduleId.ToString());
             TempData["Success"] = "Exam schedule approved successfully. Students of your college can now see and register for this exam.";
         }
         catch (KeyNotFoundException)
@@ -79,6 +82,7 @@ public class CollegeAdminApprovalsController(
                 input.ProposedDate,
                 input.Remarks,
                 user.Id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleRejected, $"College rejected exam schedule {input.ExamScheduleId}", new { scheduleId = input.ExamScheduleId, collegeId = userContext.CollegeId.Value, proposedDate = input.ProposedDate?.ToString("yyyy-MM-dd"), remarks = input.Remarks, rejectedBy = user.Id }, entityName: "ExamSchedule", entityId: input.ExamScheduleId.ToString());
             TempData["Success"] = "Exam schedule rejected. The faculty has been notified to review and resubmit.";
         }
         catch (KeyNotFoundException)

@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,10 @@ public class SemesterPromotionBackgroundService(
         var enrollmentService = scope.ServiceProvider.GetRequiredService<ISemesterEnrollmentService>();
         var count = await enrollmentService.PromoteCompletedSemestersAsync();
         if (count > 0)
+        {
             logger.LogInformation("SemesterPromotionBackgroundService: promoted {Count} student(s).", count);
+            var auditLogWriter = scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
+            await auditLogWriter.LogAsync(ActivityTypes.SemesterPromotionCompleted, $"Semester promotion completed for {count} student(s)", new { promotedCount = count });
+        }
     }
 }

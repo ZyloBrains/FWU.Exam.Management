@@ -56,10 +56,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
         builder.Services.AddScoped<AuditLogInterceptor>();
 
+        var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(defaultConnection);
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
@@ -242,6 +243,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamScheduleApprovalService, ExamScheduleApprovalService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+        builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
         builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();

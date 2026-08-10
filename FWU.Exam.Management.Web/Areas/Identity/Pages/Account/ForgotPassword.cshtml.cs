@@ -5,6 +5,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
@@ -15,7 +17,7 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender emailSender) : PageModel
+public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender emailSender, IAuditLogWriter auditLogWriter) : PageModel
 {
 
     /// <summary>
@@ -74,6 +76,10 @@ public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender 
                 Input.Email,
                 "Reset Password",
                 EmailTemplateHelper.ResetPassword(Input.Email, callbackUrl));
+
+            await auditLogWriter.LogAsync(ActivityTypes.UserPasswordResetRequested,
+                $"Password reset link requested for {Input.Email}",
+                new { email = Input.Email });
 
             TempData["StatusMessage"] = "Password reset link has been sent to your email.";
             return RedirectToPage("./ForgotPasswordConfirmation");

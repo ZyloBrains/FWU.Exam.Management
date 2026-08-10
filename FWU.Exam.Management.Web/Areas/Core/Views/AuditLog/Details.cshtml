@@ -2,11 +2,18 @@
 
 @{
     ViewData["Title"] = "Audit Log Details";
+    var isActivity = string.Equals(Model.Kind, "Activity", StringComparison.OrdinalIgnoreCase);
 
     List<Dictionary<string, object>>? changes = null;
     if (!string.IsNullOrEmpty(Model.ChangesJson))
     {
         changes = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(Model.ChangesJson);
+    }
+
+    object? activityDetails = null;
+    if (!string.IsNullOrEmpty(Model.DetailsJson))
+    {
+        activityDetails = System.Text.Json.JsonSerializer.Deserialize<object>(Model.DetailsJson);
     }
 }
 
@@ -18,7 +25,16 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Audit Log Details</h1>
-                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Change record for @Model.EntityName #@Model.EntityId</p>
+                <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+                    @if (isActivity)
+                    {
+                        <span>Activity record</span>
+                    }
+                    else
+                    {
+                        <span>Change record for @Model.EntityName #@Model.EntityId</span>
+                    }
+                </p>
             </div>
         </div>
         <a asp-action="Index" asp-area="Core" class="px-4 py-2 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
@@ -33,39 +49,56 @@
                 <p class="text-xs sm:text-sm text-gray-800 font-medium">@Model.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") UTC</p>
             </div>
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Entity</label>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                    @Model.EntityName
-                </span>
-            </div>
-            <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Entity ID</label>
-                <p class="text-xs sm:text-sm text-gray-800 font-mono font-medium">@Model.EntityId</p>
-            </div>
-            <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Action</label>
-                @switch (Model.Action)
+                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Type</label>
+                @if (isActivity)
                 {
-                    case "Created":
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            <i class="fas fa-plus-circle mr-1"></i> Created
-                        </span>
-                        break;
-                    case "Updated":
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                            <i class="fas fa-edit mr-1"></i> Updated
-                        </span>
-                        break;
-                    case "Deleted":
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                            <i class="fas fa-trash mr-1"></i> Deleted
-                        </span>
-                        break;
-                    default:
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                            @Model.Action
-                        </span>
-                        break;
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+                        <i class="fas fa-bolt mr-1"></i> Activity
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        <i class="fas fa-database mr-1"></i> Data Change
+                    </span>
+                }
+            </div>
+            <div>
+                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">@(isActivity ? "Activity Type" : "Entity")</label>
+                @if (isActivity)
+                {
+                    <p class="text-xs sm:text-sm text-gray-800 font-mono font-medium">@Model.ActivityType</p>
+                }
+                else
+                {
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        @Model.EntityName
+                    </span>
+                }
+            </div>
+            <div>
+                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">@(isActivity ? "Severity" : "Entity ID")</label>
+                @if (isActivity)
+                {
+                    if (!string.IsNullOrEmpty(Model.Severity))
+                    {
+                        switch (Model.Severity)
+                        {
+                            case "Warning":
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Warning</span>
+                                break;
+                            case "Error":
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Error</span>
+                                break;
+                            default:
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Info</span>
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    <p class="text-xs sm:text-sm text-gray-800 font-mono font-medium">@Model.EntityId</p>
                 }
             </div>
             <div>
@@ -76,10 +109,41 @@
                 <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">User ID</label>
                 <p class="text-xs sm:text-sm text-gray-800 font-mono">@Model.UserId</p>
             </div>
+            @if (Model.RowCount > 1)
+            {
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Rows Affected</label>
+                    <p class="text-xs sm:text-sm text-gray-800 font-medium">@Model.RowCount</p>
+                </div>
+            }
         </div>
     </div>
 
-    @if (changes != null && changes.Count > 0)
+    @if (isActivity)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-4">
+                <i class="fas fa-bolt mr-2 text-violet-500"></i>
+                Activity Details
+            </h3>
+            <div class="mb-4">
+                <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Description</label>
+                <p class="text-sm text-gray-800">@(Model.Description ?? "No description.")</p>
+            </div>
+            @if (activityDetails != null)
+            {
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-500 mb-1">Payload</label>
+                    <pre class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs text-gray-800 overflow-x-auto"><code>@activityDetails</code></pre>
+                </div>
+            }
+            else
+            {
+                <p class="text-xs sm:text-sm text-gray-500">No structured payload recorded for this activity.</p>
+            }
+        </div>
+    }
+    else if (changes != null && changes.Count > 0)
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200">

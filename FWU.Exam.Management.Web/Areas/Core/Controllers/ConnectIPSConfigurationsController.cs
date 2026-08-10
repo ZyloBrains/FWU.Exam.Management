@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Payments;
 
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission(Permissions.ConnectIPSView)]
-public class ConnectIPSConfigurationsController(AppDbContext context) : Controller
+public class ConnectIPSConfigurationsController(AppDbContext context, IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "MerchantId", string sortDir = "asc", int pageSize = 10)
     {
@@ -193,6 +195,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
         {
             context.Add(configuration);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"ConnectIPS payment gateway configuration created (id {configuration.Id})", new { gateway = "connectips", id = configuration.Id, merchantId = configuration.MerchantId }, entityName: "ConnectIPSConfiguration", entityId: configuration.Id.ToString());
             TempData["SuccessMessage"] = "ConnectIPS configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -232,6 +235,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
                     return NotFound();
                 throw;
             }
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"ConnectIPS payment gateway configuration {configuration.Id} updated", new { gateway = "connectips", id = configuration.Id, merchantId = configuration.MerchantId }, entityName: "ConnectIPSConfiguration", entityId: configuration.Id.ToString());
             TempData["SuccessMessage"] = "ConnectIPS configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -264,6 +268,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
             }
 
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"ConnectIPS payment gateway configuration {id} deleted", new { gateway = "connectips", id }, entityName: "ConnectIPSConfiguration", entityId: id.ToString());
             TempData["SuccessMessage"] = "ConnectIPS configuration deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -288,7 +293,7 @@ public class ConnectIPSConfigurationsController(AppDbContext context) : Controll
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { var entity = await context.ConnectIpsPaymentConfigurations.FindAsync(id); if (entity != null) { context.ConnectIpsPaymentConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "ConnectIPS configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try { var entity = await context.ConnectIpsPaymentConfigurations.FindAsync(id); if (entity != null) { context.ConnectIpsPaymentConfigurations.Remove(entity); await context.SaveChangesAsync(); await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"ConnectIPS payment gateway configuration {id} deleted", new { gateway = "connectips", id }, entityName: "ConnectIPSConfiguration", entityId: id.ToString()); } return Json(new { success = true, message = "ConnectIPS configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
 
 }
