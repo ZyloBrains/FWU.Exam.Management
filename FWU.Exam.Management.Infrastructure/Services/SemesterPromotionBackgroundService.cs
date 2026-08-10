@@ -16,15 +16,20 @@ public class SemesterPromotionBackgroundService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation("SemesterPromotionBackgroundService: started.");
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await RunPromotionAsync(stoppingToken);
+                await RunPromotionAsync();
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "SemesterPromotionBackgroundService: promotion run failed.");
+                await WriteAuditAsync(
+                    "Semester promotion run failed.",
+                    new { error = ex.Message },
+                    AuditSeverity.Error);
             }
 
             try
@@ -36,21 +41,41 @@ public class SemesterPromotionBackgroundService(
                 break;
             }
         }
+        logger.LogInformation("SemesterPromotionBackgroundService: stopped.");
     }
 
-    private async Task RunPromotionAsync(CancellationToken cancellationToken)
+    private async Task RunPromotionAsync()
     {
         using var scope = scopeFactory.CreateScope();
         var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
-        tenantContext.SetTenant(0, string.Empty, TenantType.Central);
+        tenantContext.SetTenant(1, "OCE", TenantType.Central);
 
         var enrollmentService = scope.ServiceProvider.GetRequiredService<ISemesterEnrollmentService>();
         var count = await enrollmentService.PromoteCompletedSemestersAsync();
-        if (count > 0)
+
+        await WriteAuditAsync(
+            count > 0
+                ? $"Semester promotion completed for {count} student(s)"
+                : "Semester promotion run completed; no students were eligible.",
+            new { promotedCount = count },
+            AuditSeverity.Info);
+
+        logger.LogInformation("SemesterPromotionBackgroundService: promotion run completed; promoted {Count} student(s).", count);
+    }
+
+    private async Task WriteAuditAsync(string description, object? details, string severity)
+    {
+        try
         {
-            logger.LogInformation("SemesterPromotionBackgroundService: promoted {Count} student(s).", count);
+            using var scope = scopeFactory.CreateScope();
+            var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+            tenantContext.SetTenant(1, "OCE", TenantType.Central);
             var auditLogWriter = scope.ServiceProvider.GetRequiredService<IAuditLogWriter>();
-            await auditLogWriter.LogAsync(ActivityTypes.SemesterPromotionCompleted, $"Semester promotion completed for {count} student(s)", new { promotedCount = count });
+            await auditLogWriter.LogAsync(ActivityTypes.SemesterPromotionCompleted, description, details, severity);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "SemesterPromotionBackgroundService: failed to write failure audit record.");
         }
     }
 }
