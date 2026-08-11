@@ -257,18 +257,37 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 .FirstOrDefaultAsync(u => u.Email == input);
         }
 
-        var studentEmail = await context.StudentRegistrations
+        // Registration number: resolve through the student records.
+        // IgnoreQueryFilters is required because StudentRegistration is tenant-scoped and no
+        // tenant context exists yet at login time (the tenant cookie is set only after login).
+        var studentLookup = await context.StudentRegistrations
             .AsNoTracking()
-            .Where(s => s.RegistrationNumber == input && s.Email != null)
-            .Select(s => s.Email)
+            .IgnoreQueryFilters()
+            .Where(s => s.RegistrationNumber == input)
+            .Select(s => new
+            {
+                s.Email,
+                AppUserId = s.StudentAdmission != null ? s.StudentAdmission.AppUserId : null
+            })
             .FirstOrDefaultAsync();
 
-        if (studentEmail != null)
+        if (studentLookup != null)
         {
-            var userByEmail = await userManager.Users
-                .FirstOrDefaultAsync(u => u.Email == studentEmail);
-            if (userByEmail != null)
-                return userByEmail;
+            if (!string.IsNullOrWhiteSpace(studentLookup.AppUserId))
+            {
+                var userByAdmission = await userManager.Users
+                    .FirstOrDefaultAsync(u => u.Id == studentLookup.AppUserId);
+                if (userByAdmission != null)
+                    return userByAdmission;
+            }
+
+            if (!string.IsNullOrWhiteSpace(studentLookup.Email))
+            {
+                var userByEmail = await userManager.Users
+                    .FirstOrDefaultAsync(u => u.Email == studentLookup.Email);
+                if (userByEmail != null)
+                    return userByEmail;
+            }
         }
 
         return await userManager.Users

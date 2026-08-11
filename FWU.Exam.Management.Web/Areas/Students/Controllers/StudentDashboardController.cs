@@ -267,7 +267,11 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        ViewBag.ShowMandatoryProfilePopup = missingFields.Count > 0;
+        ViewBag.MissingMandatoryFields = missingFields;
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null)
         {
             return View(new ExamFormsListViewModel());
@@ -306,7 +310,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return View(new List<AdmitCard>());
 
         var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id, registration.Id);
@@ -318,7 +322,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return View(new List<PaymentRequestLog>());
 
         var payments = await dashboardService.GetPaymentHistoryForStudentAsync(registration.Id);
@@ -330,7 +334,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
@@ -359,7 +363,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
@@ -488,7 +499,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
@@ -533,7 +551,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
@@ -736,7 +761,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
@@ -919,6 +951,9 @@ public class StudentDashboardController(
         return View();
     }
 
+    private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
+        await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
+
     private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
     {
         var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
@@ -1001,7 +1036,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration?.RegistrationNumber == null)
         {
             return View(new List<MarksheetViewModel>());
@@ -1081,7 +1116,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
 
         // Show all marksheets for logged-in student
         if (registration?.RegistrationNumber == null)
@@ -1166,7 +1201,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null)
             return View(new List<RetotalRequest>());
 
@@ -1196,7 +1231,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return RedirectToAction(nameof(Profile));
 
         if (examSubjectResultId.HasValue)
@@ -1235,7 +1270,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return RedirectToAction(nameof(Profile));
 
         var result = await context.ExamSubjectResults
