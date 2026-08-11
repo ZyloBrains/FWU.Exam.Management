@@ -12,7 +12,21 @@ public class CollegeAdminMarksController(
 {
     public async Task<IActionResult> Dashboard()
     {
-        var model = await collegeAdminMarksService.GetInternalMarksPageAsync();
+        var page = await collegeAdminMarksService.GetInternalMarksPageAsync();
+        var model = new MarksEntryWizardViewModel
+        {
+            Mode = MarksEntryMode.Internal,
+            Title = "Internal Marks Entry",
+            Subtitle = "Select the exam schedule and subject, then enter internal marks step by step.",
+            Icon = "fa-pen-alt",
+            ControllerBase = "CollegeAdminMarks",
+            SaveAction = "SaveInternalMarks",
+            IsSuperAdmin = page.IsSuperAdmin,
+            IsFacultyAdmin = page.IsFacultyAdmin,
+            IsCollegeAdmin = page.IsCollegeAdmin,
+            Faculties = page.Faculties,
+            Colleges = page.Colleges
+        };
         return View(model);
     }
 

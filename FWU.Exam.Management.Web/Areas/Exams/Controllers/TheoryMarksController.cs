@@ -11,7 +11,20 @@ public class TheoryMarksController(ITheoryMarksService theoryMarksService) : Con
 {
     public async Task<IActionResult> Dashboard()
     {
-        var model = await theoryMarksService.GetTheoryMarksPageAsync();
+        var page = await theoryMarksService.GetTheoryMarksPageAsync();
+        var model = new MarksEntryWizardViewModel
+        {
+            Mode = MarksEntryMode.Theory,
+            Title = "Theory Marks Entry",
+            Subtitle = "Select the exam schedule and subject, then enter theory marks step by step.",
+            Icon = "fa-pen-alt",
+            ControllerBase = "TheoryMarks",
+            SaveAction = "SaveTheoryMarks",
+            IsSuperAdmin = page.IsSuperAdmin,
+            IsFacultyAdmin = page.IsFacultyAdmin,
+            Faculties = page.Faculties,
+            Colleges = page.Colleges
+        };
         return View(model);
     }
 
