@@ -1,6 +1,8 @@
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -43,6 +45,39 @@ public class ExamRegistrationServiceTests
         ctx.StudentRegistrations.Add(TestData.StudentRegistration(2, "stu2@test.com"));
         ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
         ctx.ApplicationVouchers.Add(TestData.Voucher(2, 2, 21));
+
+        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 2, SubjectCode = "SUB2", SubjectName = "Subject 2", SubjectTypeId = 1, IsActive = true });
+        ctx.SubjectOfferings.Add(new SubjectOffering
+        {
+            Id = 301,
+            TenantId = TestData.TenantId,
+            SubjectCatalogId = 2,
+            ProgramId = TestData.ProgramId,
+            SemesterId = 1,
+            IsCompulsory = true,
+            DisplayOrder = 2,
+            HasTheory = true,
+            HasPractical = false,
+            HasInternal = true,
+            TheoryFullMarks = 100,
+            TheoryPassMarks = 40
+        });
+
+        ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+        ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+        {
+            TenantId = TestData.TenantId,
+            PaymentRequestLogStatus = 1,
+            InvoiceNumber = "INV-1",
+            ForwardedTimestamp = DateTime.UtcNow,
+            FullName = "Test Student",
+            Amount = 1000,
+            FullRequestContent = "{}",
+            PaymentTypeId = 1,
+            StudentRegistrationId = 1,
+            ExamScheduleId = 21,
+            SelectedSubjectIds = "101"
+        });
 
         var pending = TestData.ExamRegistration(1, 21, 1);
         pending.CollegeId = TestData.CollegeId;
@@ -88,6 +123,23 @@ public class ExamRegistrationServiceTests
         masterForm.ProgramsId = 3;
 
         ctx.ExamRegistrations.Add(masterForm);
+    }
+
+    private static void SeedFormsWithoutPaymentLog(AppDbContext ctx)
+    {
+        TestData.SeedBase(ctx);
+        ctx.Faculties.Add(new Faculty { Id = 1, Name = "Management", OfficeCode = "L001", ShortName = "MG", TenantId = TestData.TenantId });
+        ctx.CollegeFaculties.Add(new CollegeFaculty { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId, FacultyId = 1 });
+
+        ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular,
+            DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)), DateTime.UtcNow.AddMonths(2)));
+        ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, "stu1@test.com"));
+        ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+
+        var form = TestData.ExamRegistration(1, 21, 1);
+        form.CollegeId = TestData.CollegeId;
+
+        ctx.ExamRegistrations.Add(form);
     }
 
     private static ExamRegistrationService CreateService(TestDb db) =>
@@ -202,9 +254,35 @@ public class ExamRegistrationServiceTests
         Assert.Equal("Subject 1", subject.Name);
         Assert.True(subject.Theory);
         Assert.False(subject.Practical);
+        Assert.DoesNotContain(detail.Subjects, s => s.Code == "SUB2");
 
         var outOfScope = await service.GetStudentExamFormDetailAsync(2);
         Assert.Null(outOfScope);
+    }
+
+    [Fact]
+    public async Task GetStudentExamFormDetailAsync_ShowsOnlySelectedSubjects_FromConfirmedPaymentLog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var detail = await service.GetStudentExamFormDetailAsync(1);
+
+        Assert.NotNull(detail);
+        var codes = detail!.Subjects.Select(s => s.Code).OrderBy(c => c).ToList();
+        Assert.Equal(new[] { "SUB1" }, codes);
+    }
+
+    [Fact]
+    public async Task GetStudentExamFormDetailAsync_ShowsNoSubjects_WhenNoConfirmedPaymentLog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedFormsWithoutPaymentLog);
+        var service = CreateService(db);
+
+        var detail = await service.GetStudentExamFormDetailAsync(1);
+
+        Assert.NotNull(detail);
+        Assert.Empty(detail!.Subjects);
     }
 
     [Fact]

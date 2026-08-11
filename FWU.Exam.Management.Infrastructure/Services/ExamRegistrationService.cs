@@ -485,6 +485,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             decimal? paidAmount = null;
             bool paymentConfirmed = false;
             string? invoiceNumber = null;
+            HashSet<int>? selectedSubjectIds = null;
 
             if (er.ApplicationVoucherId.HasValue
                 && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var srId)
@@ -506,6 +507,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     paymentConfirmed = true;
                     invoiceNumber = pl.InvoiceNumber;
                     paidAmount = pl.Amount;
+                    selectedSubjectIds = string.IsNullOrWhiteSpace(pl.SelectedSubjectIds)
+                        ? new HashSet<int>()
+                        : pl.SelectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                            .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
+                            .Where(value => value.HasValue)
+                            .Select(value => value!.Value)
+                            .ToHashSet();
                 }
             }
 
@@ -513,8 +521,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             var subjects = new List<ExamFormSubjectDto>();
             if (schedule != null && offeringLookup.TryGetValue((schedule.ProgramId, schedule.SemesterId), out var scheduleOfferings))
             {
-                subjects = scheduleOfferings
-                    .Where(so => so.SubjectCatalog != null)
+                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null);
+                if (selectedSubjectIds is { Count: > 0 })
+                    eligible = eligible.Where(so => selectedSubjectIds.Contains(so.Id));
+                else
+                    eligible = [];
+
+                subjects = eligible
                     .Select(so => new ExamFormSubjectDto
                     {
                         Code = so.SubjectCatalog!.SubjectCode,
