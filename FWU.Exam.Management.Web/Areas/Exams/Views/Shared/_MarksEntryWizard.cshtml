@@ -1,21 +1,26 @@
 @model MarksEntryWizardViewModel
 
 @{
-    var isInternal = Model.Mode == MarksEntryMode.Internal;
+    var mode = Model.Mode;
 
-    var accentPrimary = isInternal ? "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500";
-    var accentInput = isInternal ? "focus:ring-teal-500" : "focus:ring-blue-500";
-    var accentCircle = isInternal ? "bg-teal-600" : "bg-blue-600";
-    var accentBadge = isInternal ? "bg-teal-100 text-teal-700" : "bg-blue-100 text-blue-700";
-    var accentText = isInternal ? "text-teal-600" : "text-blue-600";
-    var accentIconBg = isInternal ? "bg-teal-100" : "bg-blue-100";
-    var accentCheckbox = isInternal ? "text-teal-600 focus:ring-teal-500" : "text-blue-600 focus:ring-blue-500";
+    var isInternal = mode == MarksEntryMode.Internal;
+    var isPractical = mode == MarksEntryMode.Practical;
+
+    var accentPrimary = isInternal ? "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500" : isPractical ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500" : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500";
+    var accentInput = isInternal ? "focus:ring-teal-500" : isPractical ? "focus:ring-amber-500" : "focus:ring-blue-500";
+    var accentCircle = isInternal ? "bg-teal-600" : isPractical ? "bg-amber-600" : "bg-blue-600";
+    var accentBadge = isInternal ? "bg-teal-100 text-teal-700" : isPractical ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700";
+    var accentText = isInternal ? "text-teal-600" : isPractical ? "text-amber-600" : "text-blue-600";
+    var accentIconBg = isInternal ? "bg-teal-100" : isPractical ? "bg-amber-100" : "bg-blue-100";
+    var accentCheckbox = isInternal ? "text-teal-600 focus:ring-teal-500" : isPractical ? "text-amber-600 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500";
     var cardSelected = "border-indigo-600 bg-indigo-50";
     var cardCheck = "text-indigo-600";
+    var modeKey = isInternal ? "internal" : isPractical ? "practical" : "theory";
+    var modeLabel = isInternal ? "Internal" : isPractical ? "Practical" : "Theory";
 
     var config = new
     {
-        mode = isInternal ? "internal" : "theory",
+        mode = modeKey,
         baseUrl = "/Exams/" + Model.ControllerBase,
         saveAction = Model.SaveAction,
         isSuperAdmin = Model.IsSuperAdmin,
@@ -36,7 +41,7 @@
     };
 }
 
-<div id="marksEntryWizard" class="space-y-6" data-mode="@(isInternal ? "internal" : "theory")">
+<div id="marksEntryWizard" class="space-y-6" data-mode="@modeKey">
     @Html.AntiForgeryToken()
 
     <!-- Header -->
@@ -225,7 +230,7 @@
                     </button>
                     <button type="button" id="btnSave"
                             class="inline-flex items-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors @accentPrimary">
-                        <i class="fas fa-save"></i> Save @(isInternal ? "Internal" : "Theory") Marks
+                        <i class="fas fa-save"></i> Save @modeLabel Marks
                     </button>
                     <button type="button" id="btnSubmitAll"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
@@ -418,8 +423,6 @@
                 card.attr('data-code', s.code || '');
                 card.attr('data-theoryfull', s.theoryFullMarks != null ? s.theoryFullMarks : '');
                 card.attr('data-internaltheoryfull', s.internalTheoryFullMarks != null ? s.internalTheoryFullMarks : '');
-                card.attr('data-internalpracticalfull', s.internalPracticalFullMarks != null ? s.internalPracticalFullMarks : '');
-                card.attr('data-haspractical', s.hasPractical ? 'true' : 'false');
 
                 var head = $('<div class="flex items-start justify-between gap-2"></div>');
                 head.append('<span class="font-semibold text-gray-800 text-sm leading-tight">' + s.name + '</span>');
@@ -432,9 +435,8 @@
                 var badgeRow = $('<div class="flex flex-wrap gap-1.5 mt-3"></div>');
                 if (config.mode === 'internal') {
                     badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Internal Theory / ' + fmt(s.internalTheoryFullMarks) + '</span>');
-                    if (s.hasPractical) {
-                        badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-100 text-teal-700">Internal Practical / ' + fmt(s.internalPracticalFullMarks) + '</span>');
-                    }
+                } else if (config.mode === 'practical') {
+                    badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Practical / ' + fmt(s.practicalFullMarks) + '</span>');
                 } else {
                     badgeRow.append('<span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Theory / ' + fmt(s.theoryFullMarks) + '</span>');
                 }
@@ -451,12 +453,12 @@
                 var badges = $('#subjInfoBadges').empty();
                 var line = $('#subjectInfoLine').empty();
                 if (config.mode === 'internal') {
-                    badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-teal-100 text-teal-700">' + (data.hasPractical ? 'Has Practical' : 'Theory Only') + '</span>');
-                    badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">Internal Theory / ' + fmt(data.internalTheoryFullMarks) + '</span>');
-                    if (data.hasPractical) {
-                        badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">Internal Practical / ' + fmt(data.internalPracticalFullMarks) + '</span>');
-                    }
+                    badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-teal-100 text-teal-700">Internal Theory / ' + fmt(data.internalTheoryFullMarks) + '</span>');
                     line.text('Enter internal marks for each student. Values must not exceed the full marks shown under each input.');
+                } else if (config.mode === 'practical') {
+                    badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-700">Practical / ' + fmt(data.practicalFullMarks) + '</span>');
+                    badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-700">Pass / ' + fmt(data.practicalPassMarks) + '</span>');
+                    line.text('Enter practical marks for each student. Values must not exceed the full marks shown under each input.');
                 } else {
                     badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-700">Theory / ' + fmt(data.theoryFullMarks) + '</span>');
                     badges.append('<span class="text-[10px] font-medium px-2 py-1 rounded-full bg-blue-100 text-blue-700">Pass / ' + fmt(data.theoryPassMarks) + '</span>');
@@ -506,12 +508,11 @@
         function renderStudents(data) {
             var tbody = $('#wizardStudentsBody').empty();
             var theoryMax = config.mode === 'internal' ? data.internalTheoryFullMarks : data.theoryFullMarks;
-            var practicalMax = data.internalPracticalFullMarks;
-            var hasPractical = config.mode === 'internal' && data.hasPractical;
+            var practicalMax = data.practicalFullMarks;
 
             $('#wizardMarksHeader').text(config.mode === 'internal'
-                ? (hasPractical ? 'Internal Marks (Theory / Practical)' : 'Internal Marks')
-                : 'Theory Marks');
+                ? 'Internal Marks'
+                : config.mode === 'practical' ? 'Practical Marks' : 'Theory Marks');
             $('#wizardStudentCount').text(data.students.length + ' student(s)');
 
             $.each(data.students, function (i, s) {
@@ -524,9 +525,10 @@
 
                 var td = $('<td class="px-4 py-2.5"></td>');
                 var wrap = $('<div class="flex items-start gap-3"></div>');
-                wrap.append(buildField('Theory', config.mode === 'internal' ? s.theoryInternal : s.theory, theoryMax, 'theory'));
-                if (hasPractical) {
-                    wrap.append(buildField('Practical', s.practicalInternal, practicalMax, 'practical'));
+                if (config.mode === 'practical') {
+                    wrap.append(buildField('Practical', s.practical, practicalMax, 'practical'));
+                } else {
+                    wrap.append(buildField('Theory', config.mode === 'internal' ? s.theoryInternal : s.theory, theoryMax, 'theory'));
                 }
                 td.append(wrap);
                 tr.append(td);
@@ -581,7 +583,8 @@
                 };
                 if (config.mode === 'internal') {
                     row.TheoryInternal = theoryVal !== '' ? parseFloat(theoryVal) : null;
-                    row.PracticalInternal = practicalVal !== '' ? parseFloat(practicalVal) : null;
+                } else if (config.mode === 'practical') {
+                    row.Practical = practicalVal !== '' ? parseFloat(practicalVal) : null;
                 } else {
                     row.Theory = theoryVal !== '' ? parseFloat(theoryVal) : null;
                 }

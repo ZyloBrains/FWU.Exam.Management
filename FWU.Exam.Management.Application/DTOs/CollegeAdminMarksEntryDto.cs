@@ -30,6 +30,8 @@ public class SubjectOptionDto
     public float TheoryFullMarks { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
     public float? InternalPracticalFullMarks { get; set; }
+    public float? PracticalFullMarks { get; set; }
+    public float? PracticalPassMarks { get; set; }
 }
 
 public class SubjectDetailDto
@@ -46,6 +48,8 @@ public class SubjectDetailDto
     public float? InternalTheoryPassMarks { get; set; }
     public float? InternalPracticalFullMarks { get; set; }
     public float? InternalPracticalPassMarks { get; set; }
+    public float? PracticalFullMarks { get; set; }
+    public float? PracticalPassMarks { get; set; }
 }
 
 public class StudentInternalMarksRowDto

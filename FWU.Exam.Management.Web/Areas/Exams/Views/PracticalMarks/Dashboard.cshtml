@@ -1,0 +1,13 @@
+@model MarksEntryWizardViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+@await Html.PartialAsync("_MarksEntryWizard", Model)
+
+@section Scripts {
+    <script>
+        $(function () { MarksEntryWizard.boot(); });
+    </script>
+}

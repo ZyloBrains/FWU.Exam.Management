@@ -3,7 +3,8 @@ namespace FWU.Exam.Management.Application.DTOs;
 public enum MarksEntryMode
 {
     Internal,
-    Theory
+    Theory,
+    Practical
 }
 
 public class MarksEntryWizardViewModel
