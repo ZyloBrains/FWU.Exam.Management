@@ -1,6 +1,7 @@
 using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
@@ -17,7 +18,8 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("retotaling.view")]
 public class RetotalRequestsController(
     IRetotalRequestService retotalRequestService,
-    UserManager<AppUser> userManager) : Controller
+    UserManager<AppUser> userManager,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
@@ -51,6 +53,7 @@ public class RetotalRequestsController(
     {
         var user = await userManager.GetUserAsync(User);
         await retotalRequestService.MarkUnderReviewAsync(id, user?.UserName ?? "system");
+        await auditLogWriter.LogAsync(ActivityTypes.RetotalUnderReview, $"Retotal request {id} marked as under review", new { requestId = id }, entityName: "RetotalRequest", entityId: id.ToString());
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -61,6 +64,7 @@ public class RetotalRequestsController(
     {
         var user = await userManager.GetUserAsync(User);
         await retotalRequestService.ApproveRetotalRequestAsync(id, retotalledGradeLetter, retotalledMarks, adminRemarks, user?.UserName ?? "system");
+        await auditLogWriter.LogAsync(ActivityTypes.RetotalApproved, $"Retotal request {id} approved", new { requestId = id, retotalledGradeLetter, retotalledMarks, adminRemarks }, entityName: "RetotalRequest", entityId: id.ToString());
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -71,6 +75,7 @@ public class RetotalRequestsController(
     {
         var user = await userManager.GetUserAsync(User);
         await retotalRequestService.RejectRetotalRequestAsync(id, adminRemarks, user?.UserName ?? "system");
+        await auditLogWriter.LogAsync(ActivityTypes.RetotalRejected, $"Retotal request {id} rejected", new { requestId = id, adminRemarks }, entityName: "RetotalRequest", entityId: id.ToString());
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -93,6 +98,7 @@ public class RetotalRequestsController(
         try
         {
             await retotalRequestService.DeleteRetotalRequestAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.RetotalRequested, $"Retotal request {id} deleted", new { requestId = id }, entityName: "RetotalRequest", entityId: id.ToString());
             TempData["SuccessMessage"] = "Retotal request deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -116,6 +122,7 @@ public class RetotalRequestsController(
         try
         {
             await retotalRequestService.DeleteRetotalRequestAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.RetotalRequested, $"Retotal request {id} deleted", new { requestId = id }, entityName: "RetotalRequest", entityId: id.ToString());
             return Json(new { success = true, message = "Retotal request deleted successfully!" });
         }
         catch (Exception ex)
@@ -140,12 +147,14 @@ public class RetotalRequestsController(
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        await auditLogWriter.LogAsync(ActivityTypes.ResultExported, "Retotal requests exported to CSV", new { format = "csv", count = items.Count }, entityName: "RetotalRequest");
         return File(csvBytes, "text/csv", "RetotalRequests.csv");
     }
 
     public async Task<IActionResult> ExportToPdf(string? search = null)
     {
         var items = await retotalRequestService.GetFilteredItemsAsync(search);
+        await auditLogWriter.LogAsync(ActivityTypes.ResultExported, "Retotal requests exported to PDF", new { format = "pdf", count = items.Count }, entityName: "RetotalRequest");
         return View("PrintPdf", items);
     }
 
@@ -187,6 +196,7 @@ public class RetotalRequestsController(
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         var content = stream.ToArray();
+        await auditLogWriter.LogAsync(ActivityTypes.ResultExported, "Retotal requests exported to Excel", new { format = "excel", count = items.Count }, entityName: "RetotalRequest");
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "RetotalRequests.xlsx");
     }
 

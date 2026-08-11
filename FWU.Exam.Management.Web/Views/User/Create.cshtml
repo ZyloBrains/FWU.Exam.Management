@@ -111,10 +111,10 @@
         </div>
 
         <!-- Filters -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5 flex-wrap">
             @if (ViewData["ShowFacultyFilter"] as bool? == true)
             {
-                <select id="filterFacultyId" x-model="filterFacultyId" x-on:change="refreshColleges()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <select id="filterFacultyId" x-model="filterFacultyId" x-on:change="refreshColleges()" class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">All Faculties</option>
                     @foreach (var f in ViewBag.Faculties)
                     {
@@ -124,7 +124,7 @@
             }
             @if (ViewData["ShowCollegeFilter"] as bool? == true)
             {
-                <select id="filterCollegeId" x-model="filterCollegeId" x-on:change="loadPrograms()" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <select id="filterCollegeId" x-model="filterCollegeId" x-on:change="loadPrograms()" class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">All Colleges</option>
                     @foreach (var c in ViewBag.FilterColleges)
                     {
@@ -134,12 +134,12 @@
             }
             @if (ViewData["ShowProgramFilter"] as bool? == true)
             {
-                <select id="filterProgramId" x-model="filterProgramId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <select id="filterProgramId" x-model="filterProgramId" class="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="">All Programs</option>
                 </select>
             }
             <button x-on:click="loadStudents()" :disabled="loading"
-                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shrink-0">
                 <i class="fas" :class="loading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
                 <span x-text="loading ? 'Loading...' : 'Load Students'">Load Students</span>
             </button>

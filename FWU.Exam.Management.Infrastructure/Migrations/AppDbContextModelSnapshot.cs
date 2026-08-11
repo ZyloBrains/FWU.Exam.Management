@@ -143,9 +143,19 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
+                    b.Property<string>("ActivityType")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<string>("ChangesJson")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("DetailsJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EntityId")
                         .HasMaxLength(128)
@@ -154,6 +164,18 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<string>("EntityName")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int?>("RowCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Severity")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<int?>("TenantId")
                         .HasColumnType("int");
@@ -176,6 +198,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("Timestamp");
 
                     b.HasIndex("EntityName", "EntityId");
+
+                    b.HasIndex("Kind", "ActivityType", "Timestamp");
 
                     b.ToTable("AuditLogs", (string)null);
                 });
@@ -2212,6 +2236,50 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Notices");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Notifications.NotificationTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PlaceholdersHelp")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code", "Channel")
+                        .IsUnique();
+
+                    b.ToTable("NotificationTemplates");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Payments.Bank", b =>

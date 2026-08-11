@@ -54,6 +54,8 @@ public static class Permissions
     public const string GroupAdmitCards = "admitcards";
     public const string GroupRetotaling = "retotaling";
     public const string GroupMarksEntry = "marksentry";
+    public const string GroupTheoryMarks = "theorymarks";
+    public const string GroupPracticalMarks = "practicalmarks";
     public const string GroupReports = "reports";
     public const string GroupAuditLog = "auditlog";
     public const string GroupBackupRestore = "backuprestore";
@@ -369,6 +371,14 @@ public static class Permissions
     public const string MarksEntryImport = "marksentry.import";
     public const string MarksEntryExport = "marksentry.export";
 
+    // Theory Marks Entry (Central / Faculty Admin)
+    public const string TheoryMarksView = "theorymarks.view";
+    public const string TheoryMarksSubmit = "theorymarks.submit";
+
+    // Practical Marks Entry (Central / Faculty Admin)
+    public const string PracticalMarksView = "practicalmarks.view";
+    public const string PracticalMarksSubmit = "practicalmarks.submit";
+
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
@@ -647,6 +657,12 @@ public static class Permissions
         (MarksEntryImport, "Import Marks", GroupMarksEntry, "Import marks from Excel for assigned subjects"),
         (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
 
+        (TheoryMarksView, "View Theory Marks Entry", GroupTheoryMarks, "View theory marks entry for exam schedule students"),
+        (TheoryMarksSubmit, "Submit Theory Marks", GroupTheoryMarks, "Submit theory marks for exam schedule students"),
+
+        (PracticalMarksView, "View Practical Marks Entry", GroupPracticalMarks, "View practical marks entry for exam schedule students"),
+        (PracticalMarksSubmit, "Submit Practical Marks", GroupPracticalMarks, "Submit practical marks for exam schedule students"),
+
         (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
 
         (BackupRestoreManage, "Manage Backup & Restore", GroupBackupRestore, "Backup and restore database"),
@@ -685,6 +701,8 @@ public static class Permissions
             ResultRecordsView,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
+            TheoryMarksView, TheoryMarksSubmit,
+            PracticalMarksView, PracticalMarksSubmit,
 
             ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
             ExamCentersGenerateRollNumbers,

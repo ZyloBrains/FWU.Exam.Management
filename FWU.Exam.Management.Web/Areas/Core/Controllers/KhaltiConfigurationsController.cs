@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Payments;
 
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission(Permissions.KhaltiView)]
-public class KhaltiConfigurationsController(AppDbContext context) : Controller
+public class KhaltiConfigurationsController(AppDbContext context, IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ProductName", string sortDir = "asc", int pageSize = 10)
     {
@@ -196,6 +198,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
         {
             context.Add(khaltiConfiguration);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration created (id {khaltiConfiguration.Id})", new { gateway = "khalti", id = khaltiConfiguration.Id, productName = khaltiConfiguration.ProductName }, entityName: "KhaltiConfiguration", entityId: khaltiConfiguration.Id.ToString());
             TempData["SuccessMessage"] = "Khalti configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -235,6 +238,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
                     return NotFound();
                 throw;
             }
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration {khaltiConfiguration.Id} updated", new { gateway = "khalti", id = khaltiConfiguration.Id, productName = khaltiConfiguration.ProductName }, entityName: "KhaltiConfiguration", entityId: khaltiConfiguration.Id.ToString());
             TempData["SuccessMessage"] = "Khalti configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -267,6 +271,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
             }
 
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration {id} deleted", new { gateway = "khalti", id }, entityName: "KhaltiConfiguration", entityId: id.ToString());
             TempData["SuccessMessage"] = "Khalti configuration deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -291,7 +296,7 @@ public class KhaltiConfigurationsController(AppDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { var entity = await context.KhaltiConfigurations.FindAsync(id); if (entity != null) { context.KhaltiConfigurations.Remove(entity); await context.SaveChangesAsync(); } return Json(new { success = true, message = "Khalti configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try { var entity = await context.KhaltiConfigurations.FindAsync(id); if (entity != null) { context.KhaltiConfigurations.Remove(entity); await context.SaveChangesAsync(); await auditLogWriter.LogAsync(ActivityTypes.PaymentGatewayConfigured, $"Khalti payment gateway configuration {id} deleted", new { gateway = "khalti", id }, entityName: "KhaltiConfiguration", entityId: id.ToString()); } return Json(new { success = true, message = "Khalti configuration deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
 
 }

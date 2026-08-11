@@ -56,10 +56,11 @@ public partial class EntryPoint
         builder.Services.AddScoped<TenantSaveChangesInterceptor>();
         builder.Services.AddScoped<AuditLogInterceptor>();
 
+        var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(defaultConnection);
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
@@ -177,11 +178,12 @@ public partial class EntryPoint
         builder.Services.AddHostedService<SemesterPromotionBackgroundService>();
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
         builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
         builder.Services.AddHttpClient<ISmsService, SmsService>();
         builder.Services.AddScoped<IGumpNowEmailConfigurationService, GumpNowEmailConfigurationService>();
         builder.Services.AddHttpClient<IGumpNowEmailService, GumpNowEmailService>();
+        builder.Services.AddScoped<INotificationTemplateService, NotificationTemplateService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
 
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
@@ -238,10 +240,13 @@ public partial class EntryPoint
         builder.Services.AddScoped<IExamCenterDistributionService, ExamCenterDistributionService>();
         builder.Services.AddScoped<IRetotalRequestService, RetotalRequestService>();
         builder.Services.AddScoped<ICollegeAdminMarksService, CollegeAdminMarksService>();
+        builder.Services.AddScoped<ITheoryMarksService, TheoryMarksService>();
+        builder.Services.AddScoped<IPracticalMarksService, PracticalMarksService>();
         builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
         builder.Services.AddScoped<IExamScheduleApprovalService, ExamScheduleApprovalService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
         builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+        builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
         builder.Services.AddScoped<IBackupRestoreService, BackupRestoreService>();
         builder.Services.AddScoped<IBulkUserCreationService, BulkUserCreationService>();
@@ -268,6 +273,7 @@ public partial class EntryPoint
             await RunSeederAsync(services, ReferenceDataSeeder.SeedKhaltiConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedConnectIPSConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedSmsConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedNotificationTemplatesAsync);
             await RunSeederAsync(services, UserSeeder.SeedUsersAsync);
         }
 

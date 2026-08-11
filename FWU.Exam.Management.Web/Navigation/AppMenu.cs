@@ -134,10 +134,12 @@ public static class AppMenu
             "text-yellow-600", "bg-yellow-100", "group-hover:bg-yellow-200",
             [
                 M("Grading Schemes", "fa-percentage", ["gradingschemes.view"], R("Exams", "GradingSchemes", "Index"), ["grade", "grading", "scheme"]),
-                M("Marks Entry", "fa-table", ["marksentry.view"], R("Exams", "CollegeAdminMarks", "Dashboard"), ["marks", "entry", "scores"]),
+                M("Internal TH Marks Entry", "fa-table", ["marksentry.view"], R("Exams", "CollegeAdminMarks", "Dashboard"), ["internal", "marks", "entry", "scores"]),
+                M("Theory Marks Entry", "fa-calculator", ["theorymarks.view"], R("Exams", "TheoryMarks", "Dashboard"), ["theory", "marks", "scores"]),
+                M("Practical Marks Entry", "fa-flask", ["practicalmarks.view"], R("Exams", "PracticalMarks", "Dashboard"), ["practical", "marks", "scores"]),
             ],
             Landing: R(null, "Section", "GradingAndMarks"),
-            SectionActiveOns: [R("Exams", "GradingSchemes", null), R("Exams", "CollegeAdminMarks", null)]),
+            SectionActiveOns: [R("Exams", "GradingSchemes", null), R("Exams", "CollegeAdminMarks", null), R("Exams", "TheoryMarks", null), R("Exams", "PracticalMarks", null)]),
 
         new("Results", "Results", "fa-poll",
             "View and manage examination results",

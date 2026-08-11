@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -10,12 +12,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutModel> logger) : PageModel
+public class LogoutModel(SignInManager<AppUser> signInManager, ILogger<LogoutModel> logger, IAuditLogWriter auditLogWriter) : PageModel
 {
     public async Task<IActionResult> OnPost(string returnUrl = null)
     {
+        var userName = User.Identity?.Name;
         await signInManager.SignOutAsync();
         logger.LogInformation("User logged out.");
+        await auditLogWriter.LogAsync(ActivityTypes.UserLogout, "User signed out",
+            new { username = userName });
         if (returnUrl != null)
         {
             return LocalRedirect(returnUrl);

@@ -15,7 +15,7 @@ public class BulkUserCreationServiceTests
         var scopeFactory = new ServiceCollection()
             .BuildServiceProvider()
             .GetRequiredService<IServiceScopeFactory>();
-        return new BulkUserCreationService(db.Context, scopeFactory, db.Tenant, userContext);
+        return new BulkUserCreationService(db.Context, scopeFactory, db.Tenant, userContext, new TestAuditLogWriter());
     }
 
     private static void SeedSecondCollege(AppDbContext ctx)

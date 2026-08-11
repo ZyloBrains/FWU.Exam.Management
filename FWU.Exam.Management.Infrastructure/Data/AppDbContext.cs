@@ -9,6 +9,7 @@ using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Entities.Notifications;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -98,6 +99,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GumpNowEmailConfiguration> GumpNowEmailConfigurations { get; set; } = null!;
     public DbSet<GumpNowEmailLog> GumpNowEmailLogs { get; set; } = null!;
     public DbSet<SmsLog> SmsLogs { get; set; } = null!;
+    public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
     public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
@@ -158,6 +160,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 .HasForeignKey("TenantId")
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
+        builder.Entity<NotificationTemplate>()
+            .HasIndex(t => new { t.Code, t.Channel })
+            .IsUnique();
 
         builder.Entity<College>()
             .HasQueryFilter(c => FilterIsCentral ||
@@ -1035,13 +1041,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         {
             entity.ToTable("AuditLogs");
             entity.HasKey(a => a.Id);
+            entity.Property(a => a.Kind).HasMaxLength(32);
             entity.Property(a => a.EntityName).HasMaxLength(128);
             entity.Property(a => a.EntityId).HasMaxLength(128);
             entity.Property(a => a.Action).HasMaxLength(32);
             entity.Property(a => a.UserName).HasMaxLength(256);
             entity.Property(a => a.UserId).HasMaxLength(128);
-            entity.Property(a => a.ChangesJson).HasMaxLength(4000);
+            entity.Property(a => a.ChangesJson);
+            entity.Property(a => a.ActivityType).HasMaxLength(128);
+            entity.Property(a => a.Description).HasMaxLength(500);
+            entity.Property(a => a.Severity).HasMaxLength(32);
+            entity.Property(a => a.DetailsJson);
             entity.HasIndex(a => new { a.EntityName, a.EntityId });
+            entity.HasIndex(a => new { a.Kind, a.ActivityType, a.Timestamp });
             entity.HasIndex(a => a.Timestamp);
         });
 

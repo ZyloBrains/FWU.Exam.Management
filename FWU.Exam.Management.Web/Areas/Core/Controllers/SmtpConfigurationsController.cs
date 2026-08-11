@@ -3,7 +3,9 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Extensions;
 
@@ -14,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("smtp.view")]
-public class SmtpConfigurationsController(AppDbContext context) : Controller
+public class SmtpConfigurationsController(AppDbContext context, IAuditLogWriter auditLogWriter) : Controller
     {
 
     // GET: SmtpConfigurations1 with pagination, search, and sorting
@@ -219,6 +221,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
             {
                 context.Add(smtpConfiguration);
                 await context.SaveChangesAsync();
+                await auditLogWriter.LogAsync(ActivityTypes.SmtpConfigUpdated, $"SMTP configuration created (Host {smtpConfiguration.Host})", new { id = smtpConfiguration.Id, host = smtpConfiguration.Host, from = smtpConfiguration.From, port = smtpConfiguration.Port, isActive = smtpConfiguration.IsActive }, entityName: "SmtpConfiguration", entityId: smtpConfiguration.Id.ToString());
                 TempData["SuccessMessage"] = "SMTP configuration created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -271,6 +274,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                         throw;
                     }
                 }
+                await auditLogWriter.LogAsync(ActivityTypes.SmtpConfigUpdated, $"SMTP configuration {smtpConfiguration.Id} updated", new { id = smtpConfiguration.Id, host = smtpConfiguration.Host, from = smtpConfiguration.From, port = smtpConfiguration.Port, isActive = smtpConfiguration.IsActive }, entityName: "SmtpConfiguration", entityId: smtpConfiguration.Id.ToString());
                 TempData["SuccessMessage"] = "SMTP configuration updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -311,6 +315,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                 }
 
                 await context.SaveChangesAsync();
+                await auditLogWriter.LogAsync(ActivityTypes.SmtpConfigUpdated, $"SMTP configuration {id} deleted", new { id }, entityName: "SmtpConfiguration", entityId: id.ToString());
                 TempData["SuccessMessage"] = "SMTP configuration deleted successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -338,6 +343,7 @@ public class SmtpConfigurationsController(AppDbContext context) : Controller
                 {
                     context.SmtpConfigurations.Remove(entity);
                     await context.SaveChangesAsync();
+                    await auditLogWriter.LogAsync(ActivityTypes.SmtpConfigUpdated, $"SMTP configuration {id} deleted", new { id }, entityName: "SmtpConfiguration", entityId: id.ToString());
                 }
                 return Json(new { success = true, message = "SMTP configuration deleted successfully!" });
             }
