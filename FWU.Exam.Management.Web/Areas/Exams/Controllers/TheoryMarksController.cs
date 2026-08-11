@@ -6,24 +6,22 @@ using Microsoft.AspNetCore.Mvc;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-[RequirePermission("marksentry.view")]
-public class CollegeAdminMarksController(
-    ICollegeAdminMarksService collegeAdminMarksService) : Controller
+[RequirePermission("theorymarks.view")]
+public class TheoryMarksController(ITheoryMarksService theoryMarksService) : Controller
 {
     public async Task<IActionResult> Dashboard()
     {
-        var page = await collegeAdminMarksService.GetInternalMarksPageAsync();
+        var page = await theoryMarksService.GetTheoryMarksPageAsync();
         var model = new MarksEntryWizardViewModel
         {
-            Mode = MarksEntryMode.Internal,
-            Title = "Internal Marks Entry",
-            Subtitle = "Select the exam schedule and subject, then enter internal marks step by step.",
+            Mode = MarksEntryMode.Theory,
+            Title = "Theory Marks Entry",
+            Subtitle = "Select the exam schedule and subject, then enter theory marks step by step.",
             Icon = "fa-pen-alt",
-            ControllerBase = "CollegeAdminMarks",
-            SaveAction = "SaveInternalMarks",
+            ControllerBase = "TheoryMarks",
+            SaveAction = "SaveTheoryMarks",
             IsSuperAdmin = page.IsSuperAdmin,
             IsFacultyAdmin = page.IsFacultyAdmin,
-            IsCollegeAdmin = page.IsCollegeAdmin,
             Faculties = page.Faculties,
             Colleges = page.Colleges
         };
@@ -33,31 +31,31 @@ public class CollegeAdminMarksController(
     [HttpGet]
     public async Task<IActionResult> GetFaculties()
     {
-        return Json(await collegeAdminMarksService.GetFacultiesAsync());
+        return Json(await theoryMarksService.GetFacultiesAsync());
     }
 
     [HttpGet]
     public async Task<IActionResult> GetColleges(int? facultyId)
     {
-        return Json(await collegeAdminMarksService.GetCollegesAsync(facultyId));
+        return Json(await theoryMarksService.GetCollegesAsync(facultyId));
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAcademicYears(int collegeId)
     {
-        return Json(await collegeAdminMarksService.GetAcademicYearsAsync(collegeId));
+        return Json(await theoryMarksService.GetAcademicYearsAsync(collegeId));
     }
 
     [HttpGet]
     public async Task<IActionResult> GetLevels(int collegeId, int academicYearId)
     {
-        return Json(await collegeAdminMarksService.GetLevelsAsync(collegeId, academicYearId));
+        return Json(await theoryMarksService.GetLevelsAsync(collegeId, academicYearId));
     }
 
     [HttpGet]
     public async Task<IActionResult> GetExamSchedules(int collegeId, int academicYearId, int levelId)
     {
-        return Json(await collegeAdminMarksService.GetExamSchedulesAsync(collegeId, academicYearId, levelId));
+        return Json(await theoryMarksService.GetExamSchedulesAsync(collegeId, academicYearId, levelId));
     }
 
     [HttpGet]
@@ -65,7 +63,7 @@ public class CollegeAdminMarksController(
     {
         try
         {
-            return Json(await collegeAdminMarksService.GetScheduleDetailAsync(examScheduleId, collegeId));
+            return Json(await theoryMarksService.GetScheduleDetailAsync(examScheduleId, collegeId));
         }
         catch (UnauthorizedAccessException)
         {
@@ -82,7 +80,7 @@ public class CollegeAdminMarksController(
     {
         try
         {
-            return Json(await collegeAdminMarksService.GetSubjectsByScheduleAsync(examScheduleId, collegeId));
+            return Json(await theoryMarksService.GetSubjectsByScheduleAsync(examScheduleId, collegeId));
         }
         catch (UnauthorizedAccessException)
         {
@@ -99,7 +97,7 @@ public class CollegeAdminMarksController(
     {
         try
         {
-            return Json(await collegeAdminMarksService.GetSubjectDetailAsync(subjectOfferingId, collegeId));
+            return Json(await theoryMarksService.GetSubjectDetailAsync(subjectOfferingId, collegeId));
         }
         catch (UnauthorizedAccessException)
         {
@@ -116,7 +114,7 @@ public class CollegeAdminMarksController(
     {
         try
         {
-            return Json(await collegeAdminMarksService.GetStudentsForInternalMarksAsync(examScheduleId, subjectOfferingId, collegeId));
+            return Json(await theoryMarksService.GetStudentsForTheoryMarksAsync(examScheduleId, subjectOfferingId, collegeId));
         }
         catch (UnauthorizedAccessException)
         {
@@ -129,13 +127,13 @@ public class CollegeAdminMarksController(
     }
 
     [HttpPost]
-    [RequirePermission("marksentry.submit")]
+    [RequirePermission("theorymarks.submit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveInternalMarks([FromForm] InternalMarksSaveDto dto)
+    public async Task<IActionResult> SaveTheoryMarks([FromForm] TheoryMarksSaveDto dto)
     {
         try
         {
-            var result = await collegeAdminMarksService.SaveInternalMarksAsync(dto);
+            var result = await theoryMarksService.SaveTheoryMarksAsync(dto);
 
             if (result.Success)
             {

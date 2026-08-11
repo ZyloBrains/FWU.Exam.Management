@@ -1,32 +1,24 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
-using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
-using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
-using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Infrastructure.Services;
 
-public class CollegeAdminMarksService(
+public class PracticalMarksService(
     AppDbContext context,
-    IUserContext userContext,
-    ICollegeAdminSubjectAssignmentService assignmentService,
-    IGradeCalculationService gradeCalculationService,
-    IExamScheduleApprovalService approvalService,
-    IAuditLogWriter auditLogWriter) : ICollegeAdminMarksService
+    IUserContext userContext) : IPracticalMarksService
 {
-    public async Task<InternalMarksPageViewModel> GetInternalMarksPageAsync()
+    public async Task<PracticalMarksPageViewModel> GetPracticalMarksPageAsync()
     {
-        var vm = new InternalMarksPageViewModel
+        var vm = new PracticalMarksPageViewModel
         {
             IsSuperAdmin = userContext.IsSuperAdmin,
-            IsFacultyAdmin = userContext.IsFacultyAdmin,
-            IsCollegeAdmin = userContext.IsCollegeAdmin
+            IsFacultyAdmin = userContext.IsFacultyAdmin
         };
 
         if (userContext.IsSuperAdmin)
@@ -36,11 +28,6 @@ public class CollegeAdminMarksService(
         else if (userContext.IsFacultyAdmin)
         {
             vm.Colleges = await GetCollegesAsync(null);
-        }
-        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
-        {
-            vm.Colleges = await GetCollegesAsync(null);
-            vm.AcademicYears = await GetAcademicYearsAsync(userContext.CollegeId.Value);
         }
 
         return vm;
@@ -60,16 +47,6 @@ public class CollegeAdminMarksService(
 
     public async Task<List<SelectOption>> GetCollegesAsync(int? facultyId)
     {
-        if (userContext.IsCollegeAdmin)
-        {
-            if (!userContext.CollegeId.HasValue) return [];
-            return await context.Colleges
-                .AsNoTracking()
-                .Where(c => c.Id == userContext.CollegeId.Value)
-                .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
-                .ToListAsync();
-        }
-
         if (userContext.IsFacultyAdmin)
         {
             var collegeIds = userContext.FacultyCollegeIds;
@@ -180,7 +157,9 @@ public class CollegeAdminMarksService(
         return await context.SubjectOfferings
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId)
+            .Where(so => so.ProgramId == schedule.ProgramId
+                && so.SemesterId == schedule.SemesterId
+                && so.HasPractical)
             .OrderBy(so => so.DisplayOrder)
             .ThenBy(so => so.Id)
             .Select(so => new SubjectOptionDto
@@ -192,7 +171,9 @@ public class CollegeAdminMarksService(
                 HasPractical = so.HasPractical,
                 TheoryFullMarks = so.TheoryFullMarks,
                 InternalTheoryFullMarks = so.InternalTheoryFullMarks,
-                InternalPracticalFullMarks = so.InternalPracticalFullMarks
+                InternalPracticalFullMarks = so.InternalPracticalFullMarks,
+                PracticalFullMarks = so.PracticalFullMarks,
+                PracticalPassMarks = so.PracticalPassMarks
             })
             .ToListAsync();
     }
@@ -223,11 +204,13 @@ public class CollegeAdminMarksService(
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
             InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks,
             InternalPracticalFullMarks = subjectOffering.InternalPracticalFullMarks,
-            InternalPracticalPassMarks = subjectOffering.InternalPracticalPassMarks
+            InternalPracticalPassMarks = subjectOffering.InternalPracticalPassMarks,
+            PracticalFullMarks = subjectOffering.PracticalFullMarks,
+            PracticalPassMarks = subjectOffering.PracticalPassMarks
         };
     }
 
-    public async Task<StudentInternalMarksViewModel> GetStudentsForInternalMarksAsync(int examScheduleId, int subjectOfferingId, int collegeId)
+    public async Task<StudentPracticalMarksViewModel> GetStudentsForPracticalMarksAsync(int examScheduleId, int subjectOfferingId, int collegeId)
     {
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
@@ -266,30 +249,28 @@ public class CollegeAdminMarksService(
             var existing = existingResults.FirstOrDefault(esr => esr.ExamRegistrationId == er.Id);
             registrationNumbers.TryGetValue(er.Id, out var regNum);
 
-            return new StudentInternalMarksRowDto
+            return new StudentPracticalMarksRowDto
             {
                 ExamRegistrationId = er.Id,
                 ExamSubjectResultId = existing?.Id,
                 RegistrationNumber = regNum ?? "",
                 SymbolNumber = er.SymbolNumber ?? er.ExamRollNumber ?? "",
-                TheoryInternal = existing?.ObtainedMarksTheoryInternal,
-                PracticalInternal = existing?.ObtainedMarksPracticalInternal,
+                Practical = existing?.ObtainedMarksPractical,
                 IsSubmitted = existing?.IsSubmitted ?? false
             };
         }).ToList();
 
-        return new StudentInternalMarksViewModel
+        return new StudentPracticalMarksViewModel
         {
             ExamScheduleId = examScheduleId,
             SubjectOfferingId = subjectOfferingId,
-            HasPractical = subjectOffering.HasPractical,
-            InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
-            InternalPracticalFullMarks = subjectOffering.InternalPracticalFullMarks,
+            PracticalFullMarks = subjectOffering.PracticalFullMarks,
+            PracticalPassMarks = subjectOffering.PracticalPassMarks,
             Students = rows
         };
     }
 
-    public async Task<BulkSaveResult> SaveInternalMarksAsync(InternalMarksSaveDto dto)
+    public async Task<BulkSaveResult> SavePracticalMarksAsync(PracticalMarksSaveDto dto)
     {
         var result = new BulkSaveResult { Success = true };
         var effectiveCollege = GetEffectiveCollegeId(dto.CollegeId);
@@ -338,8 +319,7 @@ public class CollegeAdminMarksService(
                     context.ExamSubjectResults.Add(entity);
                 }
 
-                entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
-                entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
+                entity.ObtainedMarksPractical = student.Practical;
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {
@@ -357,11 +337,6 @@ public class CollegeAdminMarksService(
 
         await context.SaveChangesAsync();
         result.Success = result.Errors.Count == 0;
-
-        await auditLogWriter.LogAsync(ActivityTypes.MarksSaved,
-            $"Marks saved for subject offering {dto.SubjectOfferingId} (schedule {dto.ExamScheduleId}, submitted: {dto.SubmitAll})",
-            new { subjectOfferingId = dto.SubjectOfferingId, examScheduleId = dto.ExamScheduleId, submitAll = dto.SubmitAll, savedCount = result.SavedCount, errorCount = result.Errors.Count },
-            entityName: "ExamSubjectResult", entityId: dto.SubjectOfferingId.ToString(), actorUserId: userContext.UserId);
 
         return result;
     }
@@ -389,13 +364,6 @@ public class CollegeAdminMarksService(
 
     private int GetEffectiveCollegeId(int? requestedCollegeId)
     {
-        if (userContext.IsCollegeAdmin)
-        {
-            if (userContext.CollegeId is not int collegeId)
-                throw new UnauthorizedAccessException("No college associated with your account.");
-            return collegeId;
-        }
-
         if (userContext.IsFacultyAdmin)
         {
             if (!requestedCollegeId.HasValue)
@@ -412,7 +380,7 @@ public class CollegeAdminMarksService(
             return requestedCollegeId.Value;
         }
 
-        throw new UnauthorizedAccessException("You are not authorized to manage marks.");
+        throw new UnauthorizedAccessException("You are not authorized to manage practical marks.");
     }
 
     private async Task<Dictionary<int, string>> GetRegistrationNumbersForExamRegistrationsAsync(List<int> examRegistrationIds)

@@ -2,9 +2,9 @@ using FWU.Exam.Management.Application.DTOs;
 
 namespace FWU.Exam.Management.Application.Interfaces;
 
-public interface ICollegeAdminMarksService
+public interface IPracticalMarksService
 {
-    Task<InternalMarksPageViewModel> GetInternalMarksPageAsync();
+    Task<PracticalMarksPageViewModel> GetPracticalMarksPageAsync();
     Task<List<SelectOption>> GetFacultiesAsync();
     Task<List<SelectOption>> GetCollegesAsync(int? facultyId);
     Task<List<SelectOption>> GetAcademicYearsAsync(int collegeId);
@@ -13,13 +13,6 @@ public interface ICollegeAdminMarksService
     Task<ScheduleDetailDto> GetScheduleDetailAsync(int examScheduleId, int collegeId);
     Task<List<SubjectOptionDto>> GetSubjectsByScheduleAsync(int examScheduleId, int collegeId);
     Task<SubjectDetailDto> GetSubjectDetailAsync(int subjectOfferingId, int collegeId);
-    Task<StudentInternalMarksViewModel> GetStudentsForInternalMarksAsync(int examScheduleId, int subjectOfferingId, int collegeId);
-    Task<BulkSaveResult> SaveInternalMarksAsync(InternalMarksSaveDto dto);
-}
-
-public class BulkSaveResult
-{
-    public bool Success { get; set; }
-    public int SavedCount { get; set; }
-    public List<string> Errors { get; set; } = [];
+    Task<StudentPracticalMarksViewModel> GetStudentsForPracticalMarksAsync(int examScheduleId, int subjectOfferingId, int collegeId);
+    Task<BulkSaveResult> SavePracticalMarksAsync(PracticalMarksSaveDto dto);
 }
