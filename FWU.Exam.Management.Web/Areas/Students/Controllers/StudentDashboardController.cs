@@ -9,11 +9,9 @@ using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
-using FWU.Exam.Management.Infrastructure.Services;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +25,7 @@ public class StudentDashboardController(
     IStudentDashboardService dashboardService,
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,
-    IEmailSender emailSender,
+    INotificationService notificationService,
     IESewaService esewaService,
     IKhaltiService khaltiService,
     ILogger<StudentDashboardController> logger,
@@ -150,10 +148,13 @@ public class StudentDashboardController(
                 new { area = "Students", userId = userId, email = newEmail, code = code },
                 protocol: Request.Scheme);
 
-            await emailSender.SendEmailAsync(
-                newEmail,
-                "Confirm your email",
-                EmailTemplateHelper.ChangeEmail(user.FullName ?? newEmail, callbackUrl ?? ""));
+            var context = new Dictionary<string, string>
+            {
+                ["UserName"] = user.FullName ?? newEmail,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            };
+
+            await notificationService.SendAsync(newEmail, null, "change_email", context);
 
             TempData["SuccessMessage"] = "A verification link has been sent to your new email address. Please check your inbox and verify. You can continue using your current email to login until verification is complete.";
         }
@@ -242,10 +243,13 @@ public class StudentDashboardController(
                 new { area = "Identity", userId = userId, code = code },
                 protocol: Request.Scheme);
 
-            await emailSender.SendEmailAsync(
-                email,
-                "Confirm your email",
-                EmailTemplateHelper.ConfirmEmail(user.FullName ?? email, callbackUrl ?? ""));
+            var context = new Dictionary<string, string>
+            {
+                ["UserName"] = user.FullName ?? email,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            };
+
+            await notificationService.SendAsync(email, null, "confirm_email", context);
 
             TempData["SuccessMessage"] = "Verification email sent. Please check your inbox.";
         }

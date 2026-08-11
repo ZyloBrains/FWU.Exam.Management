@@ -5,11 +5,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
-using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -17,7 +16,7 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public class ResendEmailConfirmationModel(UserManager<AppUser> userManager, IEmailSender emailSender) : PageModel
+public class ResendEmailConfirmationModel(UserManager<AppUser> userManager, INotificationService notificationService) : PageModel
 {
 
     /// <summary>
@@ -77,10 +76,13 @@ public class ResendEmailConfirmationModel(UserManager<AppUser> userManager, IEma
                 values: new { userId = userId, code = code },
                 protocol: Request.Scheme);
 
-            await emailSender.SendEmailAsync(
-                Input.Email,
-                "Confirm your email",
-                EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+            var context = new Dictionary<string, string>
+            {
+                ["UserName"] = string.IsNullOrWhiteSpace(user.FullName) ? Input.Email : user.FullName,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            };
+
+            await notificationService.SendAsync(Input.Email, null, "confirm_email", context);
 
             TempData["StatusMessage"] = "Verification email sent. Please check your email.";
             return RedirectToPage();

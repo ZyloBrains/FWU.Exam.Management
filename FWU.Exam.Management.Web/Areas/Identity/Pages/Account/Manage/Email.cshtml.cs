@@ -5,10 +5,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
-using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
@@ -17,7 +16,7 @@ namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account.Manage;
 
 public class EmailModel(
     UserManager<AppUser> userManager,
-    IEmailSender emailSender) : PageModel
+    INotificationService notificationService) : PageModel
 {
 
     /// <summary>
@@ -114,10 +113,13 @@ public class EmailModel(
                 protocol: Request.Scheme);
             try
             {
-                await emailSender.SendEmailAsync(
-                    Input.NewEmail,
-                    "Confirm your email",
-                    EmailTemplateHelper.ChangeEmail(Input.NewEmail, callbackUrl));
+                var context = new Dictionary<string, string>
+                {
+                    ["UserName"] = Input.NewEmail,
+                    ["CallbackUrl"] = callbackUrl ?? string.Empty
+                };
+
+                await notificationService.SendAsync(Input.NewEmail, null, "change_email", context);
                 StatusMessage = "Confirmation link to change email sent. Please check your email.";
             }
             catch (Exception ex)
@@ -156,10 +158,13 @@ public class EmailModel(
             protocol: Request.Scheme);
         try
         {
-            await emailSender.SendEmailAsync(
-                email,
-                "Confirm your email",
-                EmailTemplateHelper.ConfirmEmail(email, callbackUrl));
+            var context = new Dictionary<string, string>
+            {
+                ["UserName"] = string.IsNullOrWhiteSpace(user.FullName) ? email : user.FullName,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            };
+
+            await notificationService.SendAsync(email, null, "confirm_email", context);
             StatusMessage = "Verification email sent. Please check your email.";
         }
         catch (Exception ex)

@@ -178,7 +178,6 @@ public partial class EntryPoint
         builder.Services.AddHostedService<SemesterPromotionBackgroundService>();
         builder.Services.AddScoped<ISmtpConfigurationService, SmtpConfigurationService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
-        builder.Services.AddScoped<IEmailSender, IdentityEmailSender>();
         builder.Services.AddScoped<ISmsConfigurationService, SmsConfigurationService>();
         builder.Services.AddHttpClient<ISmsService, SmsService>();
         builder.Services.AddScoped<IGumpNowEmailConfigurationService, GumpNowEmailConfigurationService>();
