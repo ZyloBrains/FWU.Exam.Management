@@ -1035,13 +1035,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         {
             entity.ToTable("AuditLogs");
             entity.HasKey(a => a.Id);
+            entity.Property(a => a.Kind).HasMaxLength(32);
             entity.Property(a => a.EntityName).HasMaxLength(128);
             entity.Property(a => a.EntityId).HasMaxLength(128);
             entity.Property(a => a.Action).HasMaxLength(32);
             entity.Property(a => a.UserName).HasMaxLength(256);
             entity.Property(a => a.UserId).HasMaxLength(128);
-            entity.Property(a => a.ChangesJson).HasMaxLength(4000);
+            entity.Property(a => a.ChangesJson);
+            entity.Property(a => a.ActivityType).HasMaxLength(128);
+            entity.Property(a => a.Description).HasMaxLength(500);
+            entity.Property(a => a.Severity).HasMaxLength(32);
+            entity.Property(a => a.DetailsJson);
             entity.HasIndex(a => new { a.EntityName, a.EntityId });
+            entity.HasIndex(a => new { a.Kind, a.ActivityType, a.Timestamp });
             entity.HasIndex(a => a.Timestamp);
         });
 

@@ -19,7 +19,7 @@ using Microsoft.AspNetCore.Identity;
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, IAuditLogWriter auditLogWriter) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -193,6 +193,10 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             }
 
             await LogEsewaCallback(logId, response.TransactionCode, true, combinedData, "Payment verified via eSewa");
+            await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
+                $"Entrance exam fee payment verified via eSewa (Transaction {response.TransactionCode})",
+                new { gateway = "esewa", transactionCode = response.TransactionCode, transactionUuid = response.TransactionUuid, amount = response.TotalAmount, voucherId = voucher.Id, voucherNumber = voucher.VoucherNumber },
+                entityName: "EntranceExamApplication", entityId: voucher.Id.ToString());
 
             TempData["SuccessMessage"] = "Payment successful!";
             TempData["TransactionCode"] = response.TransactionCode;
@@ -330,11 +334,17 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             if (existing != null && (existing.Status == ApplicationStatus.Submitted || existing.Status == ApplicationStatus.Rejected))
             {
                 await service.UpdateStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId, existing.Id);
+                await auditLogWriter.LogAsync(ActivityTypes.EntranceUpdated,
+                    $"Entrance application {existing.Id} updated",
+                    new { applicationId = existing.Id, voucherId, name = $"{application.FirstName} {application.LastName}".Trim() }, entityName: "EntranceExamApplication", entityId: existing.Id.ToString());
                 TempData["SuccessMessage"] = "Application updated successfully.";
                 return RedirectToAction(nameof(Confirmation), new { id = existing.Id });
             }
 
             var id = await service.SubmitStepApplicationAsync(application, permanentLocalLevelId, permanentWardNumber, permanentToleStreet, permanentHouseNumber, voucherId);
+            await auditLogWriter.LogAsync(ActivityTypes.EntranceSubmitted,
+                $"Entrance application {id} submitted",
+                new { applicationId = id, voucherId, name = $"{application.FirstName} {application.LastName}".Trim() }, entityName: "EntranceExamApplication", entityId: id.ToString());
             return RedirectToAction(nameof(Confirmation), new { id });
         }
 
@@ -479,6 +489,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> Approve(int id)
     {
         await service.ReviewApplicationAsync(id, ApplicationStatus.Approved, null);
+        await auditLogWriter.LogAsync(ActivityTypes.EntranceApproved, $"Entrance application {id} approved", new { applicationId = id }, entityName: "EntranceExamApplication", entityId: id.ToString());
         TempData["SuccessMessage"] = "Application approved successfully.";
         return RedirectToAction(nameof(AdminList));
     }
@@ -489,6 +500,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> Reject(int id, string remarks)
     {
         await service.ReviewApplicationAsync(id, ApplicationStatus.Rejected, remarks);
+        await auditLogWriter.LogAsync(ActivityTypes.EntranceRejected, $"Entrance application {id} rejected", new { applicationId = id, remarks }, entityName: "EntranceExamApplication", entityId: id.ToString());
         TempData["SuccessMessage"] = "Application rejected.";
         return RedirectToAction(nameof(AdminList));
     }
@@ -499,6 +511,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> MarkUnderReview(int id)
     {
         await service.ReviewApplicationAsync(id, ApplicationStatus.UnderReview, null);
+        await auditLogWriter.LogAsync(ActivityTypes.EntranceUnderReview, $"Entrance application {id} marked as under review", new { applicationId = id }, entityName: "EntranceExamApplication", entityId: id.ToString());
         TempData["SuccessMessage"] = "Application marked as under review.";
         return RedirectToAction(nameof(AdminList));
     }
@@ -596,6 +609,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         try
         {
             var admissionId = await service.ConvertToAdmissionAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.EntranceConvertedToAdmission, $"Entrance application {id} converted to admission {admissionId}", new { applicationId = id, admissionId }, entityName: "StudentAdmission", entityId: admissionId.ToString());
             TempData["SuccessMessage"] = "Application converted to student admission successfully!";
             return RedirectToAction("Details", "StudentAdmissions", new { area = "Students", id = admissionId });
         }
@@ -657,6 +671,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             try
             {
                 await examScheduleService.CreateExamScheduleAsync(model);
+                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Entrance exam schedule created (Code {model.ExamScheduleCode})", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, academicYearId = model.AcademicYearId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
             }
@@ -700,6 +715,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             try
             {
                 await examScheduleService.UpdateExamScheduleAsync(model);
+                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Entrance exam schedule {model.Id} updated", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, academicYearId = model.AcademicYearId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
             }
@@ -731,6 +747,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         try
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleDeleted, $"Entrance exam schedule {id} deleted", new { scheduleId = id, type = "Entrance" }, entityName: "ExamSchedule", entityId: id.ToString());
             return Json(new { success = true, message = "Entrance schedule deleted successfully!" });
         }
         catch (Exception ex)

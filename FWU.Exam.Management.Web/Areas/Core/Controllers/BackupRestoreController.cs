@@ -1,4 +1,6 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +8,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("backuprestore.manage")]
-public class BackupRestoreController(IBackupRestoreService backupRestoreService) : Controller
+public class BackupRestoreController(IBackupRestoreService backupRestoreService, IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -22,6 +24,7 @@ public class BackupRestoreController(IBackupRestoreService backupRestoreService)
         try
         {
             var fileName = await backupRestoreService.BackupDatabaseAsync(backupName);
+            await auditLogWriter.LogAsync(ActivityTypes.DatabaseBackupCreated, $"Database backup created: {fileName}", new { fileName, backupName }, entityName: "Backup");
             TempData["SuccessMessage"] = $"Database backup created: {fileName}";
         }
         catch (Exception ex)
@@ -38,6 +41,7 @@ public class BackupRestoreController(IBackupRestoreService backupRestoreService)
         try
         {
             var result = await backupRestoreService.RestoreDatabaseAsync(backupFileName);
+            await auditLogWriter.LogAsync(ActivityTypes.DatabaseRestored, $"Database restored from backup: {backupFileName}", new { backupFileName }, AuditSeverity.Warning, "Backup", backupFileName);
             TempData["SuccessMessage"] = result;
         }
         catch (Exception ex)
@@ -60,7 +64,7 @@ public class BackupRestoreController(IBackupRestoreService backupRestoreService)
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Delete(string fileName)
+    public async Task<IActionResult> Delete(string fileName)
     {
         try
         {
@@ -69,6 +73,7 @@ public class BackupRestoreController(IBackupRestoreService backupRestoreService)
             if (System.IO.File.Exists(filePath))
             {
                 System.IO.File.Delete(filePath);
+                await auditLogWriter.LogAsync(ActivityTypes.DatabaseBackupDeleted, $"Backup file '{fileName}' deleted", new { fileName }, entityName: "Backup", entityId: fileName);
                 TempData["SuccessMessage"] = $"Backup file '{fileName}' deleted.";
             }
             else

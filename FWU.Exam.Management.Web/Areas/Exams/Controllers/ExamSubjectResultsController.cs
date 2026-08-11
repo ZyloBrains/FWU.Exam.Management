@@ -2,6 +2,7 @@ using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
@@ -17,7 +18,8 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examsubjectresults.view")]
 public class ExamSubjectResultsController(
     IExamSubjectResultService examSubjectResultService,
-    AppDbContext context) : Controller
+    AppDbContext context,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
     {
@@ -51,6 +53,7 @@ public class ExamSubjectResultsController(
         if (ModelState.IsValid)
         {
             await examSubjectResultService.CreateExamSubjectResultAsync(examSubjectResult);
+            await auditLogWriter.LogAsync(ActivityTypes.MarksSubmitted, $"Exam subject result created (Id {examSubjectResult.Id})", new { resultId = examSubjectResult.Id, examRegistrationId = examSubjectResult.ExamRegistrationId, subjectOfferingId = examSubjectResult.SubjectOfferingId, examScheduleId = examSubjectResult.ExamScheduleId }, entityName: "ExamSubjectResult", entityId: examSubjectResult.Id.ToString());
             TempData["SuccessMessage"] = "Exam subject result created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -91,6 +94,7 @@ public class ExamSubjectResultsController(
                     return NotFound();
                 throw;
             }
+            await auditLogWriter.LogAsync(ActivityTypes.MarksSubmitted, $"Exam subject result {examSubjectResult.Id} updated", new { resultId = examSubjectResult.Id, examRegistrationId = examSubjectResult.ExamRegistrationId, subjectOfferingId = examSubjectResult.SubjectOfferingId, examScheduleId = examSubjectResult.ExamScheduleId }, entityName: "ExamSubjectResult", entityId: examSubjectResult.Id.ToString());
             TempData["SuccessMessage"] = "Exam subject result updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -118,6 +122,7 @@ public class ExamSubjectResultsController(
         try
         {
             await examSubjectResultService.DeleteExamSubjectResultAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.MarksSubmitted, $"Exam subject result {id} deleted", new { resultId = id }, entityName: "ExamSubjectResult", entityId: id.ToString());
             TempData["SuccessMessage"] = "Exam subject result deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -151,6 +156,7 @@ public class ExamSubjectResultsController(
         try
         {
             await examSubjectResultService.DeleteExamSubjectResultAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.MarksSubmitted, $"Exam subject result {id} deleted", new { resultId = id }, entityName: "ExamSubjectResult", entityId: id.ToString());
             return Json(new { success = true, message = "Subject result deleted successfully!" });
         }
         catch (Exception ex)

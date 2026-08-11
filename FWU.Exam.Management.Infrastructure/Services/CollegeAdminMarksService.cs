@@ -1,5 +1,6 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
@@ -13,7 +14,11 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class CollegeAdminMarksService(
     AppDbContext context,
-    IUserContext userContext) : ICollegeAdminMarksService
+    IUserContext userContext,
+    ICollegeAdminSubjectAssignmentService assignmentService,
+    IGradeCalculationService gradeCalculationService,
+    IExamScheduleApprovalService approvalService,
+    IAuditLogWriter auditLogWriter) : ICollegeAdminMarksService
 {
     public async Task<InternalMarksPageViewModel> GetInternalMarksPageAsync()
     {
@@ -352,6 +357,11 @@ public class CollegeAdminMarksService(
 
         await context.SaveChangesAsync();
         result.Success = result.Errors.Count == 0;
+
+        await auditLogWriter.LogAsync(ActivityTypes.MarksSaved,
+            $"Marks saved for subject offering {dto.SubjectOfferingId} (schedule {dto.ExamScheduleId}, submitted: {dto.SubmitAll})",
+            new { subjectOfferingId = dto.SubjectOfferingId, examScheduleId = dto.ExamScheduleId, submitAll = dto.SubmitAll, savedCount = result.SavedCount, errorCount = result.Errors.Count },
+            entityName: "ExamSubjectResult", entityId: dto.SubjectOfferingId.ToString(), actorUserId: userContext.UserId);
 
         return result;
     }

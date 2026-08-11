@@ -3,6 +3,8 @@ using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Web.Authorization;
@@ -11,7 +13,7 @@ namespace FWU.Exam.Management.Web.Areas.Core.Controllers;
 
 [Area("Core")]
 [RequirePermission("sms.view")]
-public class SmsConfigurationsController(AppDbContext context) : Controller
+public class SmsConfigurationsController(AppDbContext context, IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "ApiUrl", string sortDir = "asc", int pageSize = 10)
     {
@@ -172,6 +174,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
         {
             context.Add(smsConfiguration);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.SmsConfigUpdated, $"SMS configuration created (id {smsConfiguration.Id})", new { id = smsConfiguration.Id, apiUrl = smsConfiguration.ApiUrl, mode = smsConfiguration.Mode, isActive = smsConfiguration.IsActive }, entityName: "SmsConfiguration", entityId: smsConfiguration.Id.ToString());
             TempData["SuccessMessage"] = "SMS configuration created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -208,6 +211,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
                 if (!SmsConfigurationExists(smsConfiguration.Id)) return NotFound();
                 throw;
             }
+            await auditLogWriter.LogAsync(ActivityTypes.SmsConfigUpdated, $"SMS configuration {smsConfiguration.Id} updated", new { id = smsConfiguration.Id, apiUrl = smsConfiguration.ApiUrl, mode = smsConfiguration.Mode, isActive = smsConfiguration.IsActive }, entityName: "SmsConfiguration", entityId: smsConfiguration.Id.ToString());
             TempData["SuccessMessage"] = "SMS configuration updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -238,6 +242,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
                 context.SmsConfigurations.Remove(smsConfiguration);
             }
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.SmsConfigUpdated, $"SMS configuration {id} deleted", new { id }, entityName: "SmsConfiguration", entityId: id.ToString());
             TempData["SuccessMessage"] = "SMS configuration deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -265,6 +270,7 @@ public class SmsConfigurationsController(AppDbContext context) : Controller
             {
                 context.SmsConfigurations.Remove(entity);
                 await context.SaveChangesAsync();
+                await auditLogWriter.LogAsync(ActivityTypes.SmsConfigUpdated, $"SMS configuration {id} deleted", new { id }, entityName: "SmsConfiguration", entityId: id.ToString());
             }
             return Json(new { success = true, message = "SMS configuration deleted successfully!" });
         }

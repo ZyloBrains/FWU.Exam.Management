@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
@@ -23,7 +24,8 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
     IExamScheduleApprovalService examScheduleApprovalService,
-    AppDbContext context) : Controller
+    AppDbContext context,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
@@ -259,6 +261,7 @@ public class ExamSchedulesController(
         if (added > 0 || updated > 0)
             await context.SaveChangesAsync();
 
+        await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slots saved for schedule {examScheduleId}", new { scheduleId = examScheduleId, added, updated }, entityName: "ExamSchedule", entityId: examScheduleId.ToString());
         TempData["SuccessMessage"] = $"Exam subjects saved: {added} added, {updated} updated.";
         return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
@@ -273,6 +276,7 @@ public class ExamSchedulesController(
         {
             context.ExamSlots.Remove(slot);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slot {id} removed from schedule {examScheduleId}", new { scheduleId = examScheduleId, slotId = id }, entityName: "ExamSlot", entityId: id.ToString());
             TempData["SuccessMessage"] = "Subject removed from exam schedule.";
         }
         return RedirectToAction(nameof(Details), new { id = examScheduleId });
@@ -308,6 +312,7 @@ public class ExamSchedulesController(
                 await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
             }
 
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Exam schedule created (Code {examSchedule.ExamScheduleCode})", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId, type = examSchedule.ExamType?.Name }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -366,6 +371,7 @@ public class ExamSchedulesController(
                 await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
             }
 
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam schedule {examSchedule.Id} updated", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -382,6 +388,7 @@ public class ExamSchedulesController(
         try
         {
             await examScheduleApprovalService.ResubmitAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleResubmitted, $"Exam schedule {id} resubmitted for college approval", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
             TempData["SuccessMessage"] = "Exam schedule resubmitted for college approval.";
         }
         catch (KeyNotFoundException)
@@ -411,6 +418,7 @@ public class ExamSchedulesController(
         try
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleDeleted, $"Exam schedule {id} deleted", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
             TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -488,6 +496,7 @@ public class ExamSchedulesController(
         try
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleDeleted, $"Exam schedule {id} deleted", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
             return Json(new { success = true, message = "Exam schedule deleted successfully!" });
         }
         catch (InvalidOperationException ex)
