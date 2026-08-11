@@ -167,7 +167,7 @@ public class ExamSchedulesController(
         ViewBag.TotalRegistrations = registrations.Count;
         ViewBag.PaidCount = registrations.Count(r => r.FeeEnclosed.HasValue && r.FeeEnclosed > 0);
         ViewBag.PendingCount = registrations.Count(r => !r.FeeEnclosed.HasValue || r.FeeEnclosed == 0);
-        ViewBag.RegisteredCount = registrations.Count(r => r.Status == RegistrationStatus.Registered);
+        ViewBag.RegisteredCount = registrations.Count(r => r.Status >= RegistrationStatus.CollegeVerified);
         ViewBag.PendingVerificationCount = registrations.Count(r => r.Status == RegistrationStatus.Pending);
         ViewBag.ExamSlots = examSlots;
 

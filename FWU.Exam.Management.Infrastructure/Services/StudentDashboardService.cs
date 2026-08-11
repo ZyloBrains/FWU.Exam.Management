@@ -470,7 +470,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             ProgramsId = programsId,
             FeeEnclosed = amount,
             RegistrationDate = DateTime.UtcNow,
-            Status = RegistrationStatus.Registered,
+            Status = RegistrationStatus.Pending,
             IsActive = true,
             IsAppliedByStudent = true,
             ApplicationVoucherId = voucher.Id

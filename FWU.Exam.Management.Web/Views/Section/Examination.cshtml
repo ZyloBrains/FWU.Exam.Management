@@ -85,7 +85,7 @@
         </a>
         }
 
-        @if (HasPerm("examregistrations.view"))
+        @if (HasPerm("examregistration.view"))
         {
         <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">
@@ -100,7 +100,7 @@
         </a>
         }
 
-        @if (HasPerm("examregistrations.view"))
+        @if (HasPerm("examregistration.view"))
         {
         <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="StudentForms" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
             <div class="flex items-center gap-4">

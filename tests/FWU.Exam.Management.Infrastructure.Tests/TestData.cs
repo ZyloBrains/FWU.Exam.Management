@@ -261,7 +261,7 @@ public static class TestData
         ProgramsId = programId,
         SemesterEnrollmentId = semesterEnrollmentId,
         RegistrationDate = DateTime.UtcNow,
-        Status = RegistrationStatus.Registered,
+        Status = RegistrationStatus.Pending,
         IsActive = true,
         IsAppliedByStudent = true
     };

@@ -16,6 +16,11 @@ public interface IExamRegistrationService
     Task<bool> ExamRegistrationExistsAsync(int id);
     Task VerifyExamRegistrationAsync(int id);
     Task ApproveExamRegistrationAsync(int id);
+    Task RejectExamRegistrationAsync(int id, string? remarks);
     Task<ExamRegistrationSelectListsDto> GetSelectListDataAsync(ExamRegistration? examRegistration = null);
-    Task<ExamFormsAdminResult> GetStudentExamFormsAsync(int? examScheduleId, string? search, int page, int pageSize);
+    Task<ExamFormsAdminResult> GetStudentExamFormsAsync(int? academicYearId, int? levelId, int? examScheduleId, string? search, int page, int pageSize);
+    Task<ExamFormAdminDto?> GetStudentExamFormDetailAsync(int id);
+    Task<List<SelectOption>> GetFilterAcademicYearsAsync();
+    Task<List<SelectOption>> GetFilterLevelsAsync(int academicYearId);
+    Task<List<SelectOption>> GetFilterExamSchedulesAsync(int academicYearId, int levelId);
 }

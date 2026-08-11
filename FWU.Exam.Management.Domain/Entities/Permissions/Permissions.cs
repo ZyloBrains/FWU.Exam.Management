@@ -749,7 +749,7 @@ public static class Permissions
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
             GradingSchemesView,
-            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit,
+            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify,
             ExamSubjectResultsView,
             ResultRecordsView,
 

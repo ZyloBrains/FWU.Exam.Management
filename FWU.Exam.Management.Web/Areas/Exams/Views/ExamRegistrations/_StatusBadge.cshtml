@@ -1,0 +1,23 @@
+@model FWU.Exam.Management.Domain.Enums.RegistrationStatus
+
+@switch (Model)
+{
+    case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending:
+        <span class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Pending</span>
+        break;
+    case FWU.Exam.Management.Domain.Enums.RegistrationStatus.CollegeVerified:
+        <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Approved</span>
+        break;
+    case FWU.Exam.Management.Domain.Enums.RegistrationStatus.AdminVerified:
+        <span class="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">Admin Verified</span>
+        break;
+    case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Registered:
+        <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Registered</span>
+        break;
+    case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Withheld:
+        <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full">Withheld</span>
+        break;
+    case FWU.Exam.Management.Domain.Enums.RegistrationStatus.Rejected:
+        <span class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">Rejected</span>
+        break;
+}

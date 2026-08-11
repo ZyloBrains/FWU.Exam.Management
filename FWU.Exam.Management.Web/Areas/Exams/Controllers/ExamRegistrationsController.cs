@@ -143,11 +143,21 @@ public class ExamRegistrationsController(
     [RequirePermission("examregistration.verify")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Verify(int id)
+    public async Task<IActionResult> Verify(int id, int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1)
     {
         await examRegistrationService.VerifyExamRegistrationAsync(id);
-        TempData["SuccessMessage"] = "Exam registration verified successfully!";
-        return RedirectToAction(nameof(Index));
+        TempData["SuccessMessage"] = "Student exam form approved successfully!";
+        return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
+    }
+
+    [RequirePermission("examregistration.verify")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reject(int id, string? remarks, int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1)
+    {
+        await examRegistrationService.RejectExamRegistrationAsync(id, remarks);
+        TempData["SuccessMessage"] = "Student exam form rejected successfully!";
+        return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
     }
 
     [RequirePermission("examregistration.approve")]
@@ -161,23 +171,70 @@ public class ExamRegistrationsController(
     }
 
     [RequirePermission("examregistration.view")]
-    public async Task<IActionResult> StudentForms(int? examScheduleId, string? search, int page = 1, int pageSize = 25)
+    public async Task<IActionResult> StudentForms(int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1, int pageSize = 25)
     {
-        var result = await examRegistrationService.GetStudentExamFormsAsync(examScheduleId, search, page, pageSize);
+        var result = await examRegistrationService.GetStudentExamFormsAsync(academicYearId, levelId, examScheduleId, search, page, pageSize);
 
         ViewBag.TotalCount = result.TotalCount;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = (int)Math.Ceiling(result.TotalCount / (double)pageSize);
         ViewBag.PageSize = pageSize;
         ViewBag.Search = search;
+        ViewBag.AcademicYearId = academicYearId;
+        ViewBag.LevelId = levelId;
         ViewBag.ExamScheduleId = examScheduleId;
         ViewBag.PaymentConfirmedCount = result.PaymentConfirmedCount;
         ViewBag.AdmitCardGeneratedCount = result.AdmitCardGeneratedCount;
         ViewBag.PendingAdmitCardCount = result.PendingAdmitCardCount;
+        ViewBag.PendingApprovalCount = result.PendingApprovalCount;
+        ViewBag.PendingBySchedule = result.PendingBySchedule;
 
-        ViewData["ExamScheduleId"] = new SelectList(context.ExamSchedules.AsNoTracking().Select(es => new { es.Id, es.ExamScheduleName }), "Id", "ExamScheduleName", examScheduleId);
+        ViewBag.AcademicYearOptions = await examRegistrationService.GetFilterAcademicYearsAsync();
+        ViewBag.LevelOptions = academicYearId.HasValue
+            ? await examRegistrationService.GetFilterLevelsAsync(academicYearId.Value)
+            : new List<SelectOption>();
+        ViewBag.ExamScheduleOptions = academicYearId.HasValue && levelId.HasValue
+            ? await examRegistrationService.GetFilterExamSchedulesAsync(academicYearId.Value, levelId.Value)
+            : new List<SelectOption>();
 
         return View(result.Forms);
+    }
+
+    [HttpGet]
+    [RequirePermission("examregistration.view")]
+    public async Task<IActionResult> StudentFormReview(int id, bool showActions = true, int? academicYearId = null, int? levelId = null, int? examScheduleId = null, string? search = null, int page = 1)
+    {
+        var form = await examRegistrationService.GetStudentExamFormDetailAsync(id);
+        if (form == null) return NotFound();
+
+        ViewBag.ShowActions = showActions;
+        ViewBag.AcademicYearId = academicYearId;
+        ViewBag.LevelId = levelId;
+        ViewBag.ExamScheduleId = examScheduleId;
+        ViewBag.Search = search;
+        ViewBag.Page = page;
+        return PartialView("_StudentFormReview", form);
+    }
+
+    [HttpGet]
+    [RequirePermission("examregistration.view")]
+    public async Task<IActionResult> GetFilterAcademicYears()
+    {
+        return Json(await examRegistrationService.GetFilterAcademicYearsAsync());
+    }
+
+    [HttpGet]
+    [RequirePermission("examregistration.view")]
+    public async Task<IActionResult> GetFilterLevels(int academicYearId)
+    {
+        return Json(await examRegistrationService.GetFilterLevelsAsync(academicYearId));
+    }
+
+    [HttpGet]
+    [RequirePermission("examregistration.view")]
+    public async Task<IActionResult> GetFilterExamSchedules(int academicYearId, int levelId)
+    {
+        return Json(await examRegistrationService.GetFilterExamSchedulesAsync(academicYearId, levelId));
     }
 
     public async Task<IActionResult> Details(int? id)
