@@ -25,7 +25,9 @@ public class SubjectOptionDto
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
+    public bool HasTheory { get; set; }
     public bool HasPractical { get; set; }
+    public float TheoryFullMarks { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
     public float? InternalPracticalFullMarks { get; set; }
 }
@@ -38,6 +40,8 @@ public class SubjectDetailDto
     public bool HasTheory { get; set; }
     public bool HasPractical { get; set; }
     public bool HasInternal { get; set; }
+    public float TheoryFullMarks { get; set; }
+    public float TheoryPassMarks { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
     public float? InternalTheoryPassMarks { get; set; }
     public float? InternalPracticalFullMarks { get; set; }

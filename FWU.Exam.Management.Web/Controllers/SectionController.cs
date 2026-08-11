@@ -104,7 +104,7 @@ public class SectionController(IPermissionService permissionService, UserManager
 
     public async Task<IActionResult> GradingAndMarks()
     {
-        if (!await HasAnyAsync("gradingschemes.view", "marksentry.view"))
+        if (!await HasAnyAsync("gradingschemes.view", "marksentry.view", "theorymarks.view"))
             return Forbid();
         return View();
     }

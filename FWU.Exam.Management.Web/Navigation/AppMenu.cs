@@ -135,9 +135,10 @@ public static class AppMenu
             [
                 M("Grading Schemes", "fa-percentage", ["gradingschemes.view"], R("Exams", "GradingSchemes", "Index"), ["grade", "grading", "scheme"]),
                 M("Marks Entry", "fa-table", ["marksentry.view"], R("Exams", "CollegeAdminMarks", "Dashboard"), ["marks", "entry", "scores"]),
+                M("Theory Marks Entry", "fa-calculator", ["theorymarks.view"], R("Exams", "TheoryMarks", "Dashboard"), ["theory", "marks", "scores"]),
             ],
             Landing: R(null, "Section", "GradingAndMarks"),
-            SectionActiveOns: [R("Exams", "GradingSchemes", null), R("Exams", "CollegeAdminMarks", null)]),
+            SectionActiveOns: [R("Exams", "GradingSchemes", null), R("Exams", "CollegeAdminMarks", null), R("Exams", "TheoryMarks", null)]),
 
         new("Results", "Results", "fa-poll",
             "View and manage examination results",
