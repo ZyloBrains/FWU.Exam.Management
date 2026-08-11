@@ -67,7 +67,7 @@ public class ForgotPasswordModel(UserManager<AppUser> userManager, INotification
             var callbackUrl = Url.Page(
                 "/Account/ResetPassword",
                 pageHandler: null,
-                values: new { area = "Identity", code },
+                values: new { area = "Identity", code, email = user.Email },
                 protocol: Request.Scheme);
 
             var context = new Dictionary<string, string>
