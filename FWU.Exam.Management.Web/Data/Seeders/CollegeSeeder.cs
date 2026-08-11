@@ -61,7 +61,6 @@ public static class CollegeSeeder
                 IsActive = d.IsActive,
                 IsExamCenterOnly = d.IsCentreOnly,
                 AddressId = addressId,
-                TenantColleges = [new TenantCollege()],
             });
         }
 

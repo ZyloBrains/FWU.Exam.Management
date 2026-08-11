@@ -1,0 +1,58 @@
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
+
+@{
+    ViewData["Title"] = "Grading & Marks";
+
+    var sectionUser = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+    var isSuperAdmin = sectionUser != null && await UserManager.IsInRoleAsync(sectionUser, Role.SuperAdmin);
+    var sectionPermissions = sectionUser != null
+        ? await PermissionService.GetUserPermissionsAsync(sectionUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => isSuperAdmin || sectionPermissions.Contains(permission);
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-percentage text-indigo-600"></i>
+        </div>
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Grading & Marks</h1>
+            <p class="text-xs sm:text-sm text-gray-500">Manage grading schemes and marks entry</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (HasPerm("gradingschemes.view"))
+        {
+        <a asp-area="Exams" asp-controller="GradingSchemes" asp-action="Index" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <i class="fas fa-percentage text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Grading Schemes</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage grading schemes</p>
+                </div>
+            </div>
+        </a>
+        }
+
+        @if (HasPerm("marksentry.view"))
+        {
+        <a asp-area="Exams" asp-controller="CollegeAdminMarks" asp-action="Dashboard" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center group-hover:bg-cyan-200 transition-colors">
+                    <i class="fas fa-table text-cyan-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">Marks Entry</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Enter and manage exam marks</p>
+                </div>
+            </div>
+        </a>
+        }
+    </div>
+</div>

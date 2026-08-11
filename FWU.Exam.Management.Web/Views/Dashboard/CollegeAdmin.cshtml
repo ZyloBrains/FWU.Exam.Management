@@ -24,19 +24,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs sm:text-sm font-medium text-gray-500">Colleges</p>
-                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalColleges</p>
-                    </div>
-                    <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center"><i class="fas fa-school text-amber-600 text-xl"></i></div>
-                </div>
-                <div class="mt-3"><span class="text-xs text-green-600 font-medium"><i class="fas fa-check mr-1"></i>@Model.ActiveColleges active</span></div>
-            </div>
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
             <div class="p-5">
                 <div class="flex items-center justify-between">
@@ -61,22 +49,6 @@
                 <div class="mt-3"><span class="text-xs text-green-600 font-medium"><i class="fas fa-check mr-1"></i>@Model.ActiveStudents active</span></div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <div class="p-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs sm:text-sm font-medium text-gray-500">Exam Schedules</p>
-                        <p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalExamSchedules</p>
-                    </div>
-                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center"><i class="fas fa-calendar-alt text-orange-600 text-xl"></i></div>
-                </div>
-                <div class="mt-3"><span class="text-xs text-green-600 font-medium"><i class="fas fa-check mr-1"></i>@Model.ActiveExamSchedules active</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Second Row Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <div class="flex items-center justify-between">
                 <div><p class="text-xs sm:text-sm text-gray-500">Subjects</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalSubjects</p></div>
@@ -95,12 +67,6 @@
                 <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center"><i class="fas fa-calendar text-pink-600"></i></div>
             </div>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <div class="flex items-center justify-between">
-                <div><p class="text-xs sm:text-sm text-gray-500">Batches</p><p class="text-xl sm:text-2xl font-bold text-gray-800 mt-1">@Model.TotalBatches</p></div>
-                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-gray-600"></i></div>
-            </div>
-        </div>
     </div>
 
     <!-- Quick Actions -->
@@ -111,17 +77,9 @@
         </div>
         <div class="p-6">
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                <a asp-area="Students" asp-controller="StudentRegistrations" asp-action="Index" class="group flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-blue-50 hover:shadow-md transition-all duration-200">
-                    <div class="w-12 h-12 bg-blue-100 group-hover:bg-blue-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-user-plus text-xl text-blue-600"></i></div>
-                    <span class="text-xs font-medium text-gray-700 group-hover:text-blue-700 text-center">Student Registration</span>
-                </a>
                 <a asp-area="Exams" asp-controller="ExamRegistrations" asp-action="Index" class="group flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-cyan-50 hover:shadow-md transition-all duration-200">
                     <div class="w-12 h-12 bg-cyan-100 group-hover:bg-cyan-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-clipboard-list text-xl text-cyan-600"></i></div>
                     <span class="text-xs font-medium text-gray-700 group-hover:text-cyan-700 text-center">Exam Registration</span>
-                </a>
-                <a asp-area="Colleges" asp-controller="Colleges" asp-action="Index" class="group flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-amber-50 hover:shadow-md transition-all duration-200">
-                    <div class="w-12 h-12 bg-amber-100 group-hover:bg-amber-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-school text-xl text-amber-600"></i></div>
-                    <span class="text-xs font-medium text-gray-700 group-hover:text-amber-700 text-center">Colleges</span>
                 </a>
                 <a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Index" class="group flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-orange-50 hover:shadow-md transition-all duration-200">
                     <div class="w-12 h-12 bg-orange-100 group-hover:bg-orange-200 rounded-full flex items-center justify-center mb-3 transition-colors"><i class="fas fa-calendar-alt text-xl text-orange-600"></i></div>

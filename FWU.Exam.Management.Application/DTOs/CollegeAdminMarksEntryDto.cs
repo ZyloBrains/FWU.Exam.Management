@@ -1,68 +1,85 @@
 namespace FWU.Exam.Management.Application.DTOs;
 
-public class CollegeAdminDashboardDto
+public class InternalMarksPageViewModel
 {
-    public List<CollegeAdminSubjectInfo> AssignedSubjects { get; set; } = [];
+    public bool IsSuperAdmin { get; set; }
+    public bool IsFacultyAdmin { get; set; }
+    public bool IsCollegeAdmin { get; set; }
+    public List<SelectOption> Faculties { get; set; } = [];
+    public List<SelectOption> Colleges { get; set; } = [];
+    public List<SelectOption> AcademicYears { get; set; } = [];
 }
 
-public class CollegeAdminSubjectInfo
+public class ScheduleDetailDto
 {
-    public int SubjectOfferingId { get; set; }
-    public string SubjectName { get; set; } = string.Empty;
-    public string SubjectCode { get; set; } = string.Empty;
+    public int ExamScheduleId { get; set; }
+    public string AcademicYearName { get; set; } = string.Empty;
+    public string LevelName { get; set; } = string.Empty;
     public string ProgramName { get; set; } = string.Empty;
     public string SemesterName { get; set; } = string.Empty;
-    public int RegisteredStudentCount { get; set; }
-    public int MarksEnteredCount { get; set; }
+    public string ExamTypeName { get; set; } = string.Empty;
 }
 
-public class MarksEntryViewModel
+public class SubjectOptionDto
 {
-    public int SubjectOfferingId { get; set; }
-    public int ExamScheduleId { get; set; }
-    public string SubjectName { get; set; } = string.Empty;
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
+    public bool HasTheory { get; set; }
+    public bool HasPractical { get; set; }
     public float TheoryFullMarks { get; set; }
-    public float TheoryPassMarks { get; set; }
+    public float? InternalTheoryFullMarks { get; set; }
+    public float? InternalPracticalFullMarks { get; set; }
     public float? PracticalFullMarks { get; set; }
     public float? PracticalPassMarks { get; set; }
+}
+
+public class SubjectDetailDto
+{
+    public int SubjectOfferingId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public bool HasTheory { get; set; }
     public bool HasPractical { get; set; }
     public bool HasInternal { get; set; }
-    public List<StudentMarksRowDto> Students { get; set; } = [];
+    public float TheoryFullMarks { get; set; }
+    public float TheoryPassMarks { get; set; }
+    public float? InternalTheoryFullMarks { get; set; }
+    public float? InternalTheoryPassMarks { get; set; }
+    public float? InternalPracticalFullMarks { get; set; }
+    public float? InternalPracticalPassMarks { get; set; }
+    public float? PracticalFullMarks { get; set; }
+    public float? PracticalPassMarks { get; set; }
 }
 
-public class StudentMarksRowDto
+public class StudentInternalMarksRowDto
 {
     public int ExamRegistrationId { get; set; }
     public int? ExamSubjectResultId { get; set; }
-    public string StudentName { get; set; } = string.Empty;
-    public string SymbolNumber { get; set; } = string.Empty;
     public string RegistrationNumber { get; set; } = string.Empty;
-    public float? TheoryMarks { get; set; }
-    public float? TheoryConfirm { get; set; }
-    public float? PracticalMarks { get; set; }
-    public float? PracticalConfirm { get; set; }
+    public string SymbolNumber { get; set; } = string.Empty;
     public float? TheoryInternal { get; set; }
     public float? PracticalInternal { get; set; }
-    public float? TotalMarks { get; set; }
-    public string? GradeLetter { get; set; }
-    public bool IsPass { get; set; }
     public bool IsSubmitted { get; set; }
 }
 
-public class BulkMarksSaveDto
+public class StudentInternalMarksViewModel
 {
-    public int SubjectOfferingId { get; set; }
     public int ExamScheduleId { get; set; }
-    public bool SubmitAll { get; set; }
-    public List<StudentMarksRowDto> Students { get; set; } = [];
+    public int SubjectOfferingId { get; set; }
+    public bool HasPractical { get; set; }
+    public float? InternalTheoryFullMarks { get; set; }
+    public float? InternalPracticalFullMarks { get; set; }
+    public List<StudentInternalMarksRowDto> Students { get; set; } = [];
 }
 
-public class ExcelImportResultDto
+public class InternalMarksSaveDto
 {
-    public int SuccessCount { get; set; }
-    public int ErrorCount { get; set; }
-    public List<string> Errors { get; set; } = [];
+    public int CollegeId { get; set; }
+    public int ExamScheduleId { get; set; }
+    public int SubjectOfferingId { get; set; }
+    public bool SubmitAll { get; set; }
+    public List<StudentInternalMarksRowDto> Students { get; set; } = [];
 }
 
 public class SelectListOption

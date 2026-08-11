@@ -1,5 +1,7 @@
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Domain.Constants;
+using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Web.ViewModels;
@@ -20,7 +22,8 @@ public class UserController(
     AppDbContext context,
     IUserContext userContext,
     IPermissionService permissionService,
-    IBulkUserCreationService bulkUserCreationService) : Controller
+    IBulkUserCreationService bulkUserCreationService,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
@@ -116,6 +119,7 @@ public class UserController(
         ViewBag.RolesList = roles;
         ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).ToListAsync(), "Id", "Name");
+        await SetCreateFiltersAsync();
         return View(new CreateUserViewModel());
     }
 
@@ -163,6 +167,10 @@ public class UserController(
                 var selectedRole = model.SelectedRole;
                 if (!string.IsNullOrEmpty(selectedRole) && await roleManager.RoleExistsAsync(selectedRole))
                     await userManager.AddToRoleAsync(user, selectedRole);
+                await auditLogWriter.LogAsync(ActivityTypes.UserCreated,
+                    $"Created user {user.Email} with role {model.SelectedRole}",
+                    new { userId = user.Id, email = user.Email, role = model.SelectedRole },
+                    entityName: "AppUser", entityId: user.Id);
                 TempData["SuccessMessage"] = "User created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -177,7 +185,20 @@ public class UserController(
         ViewBag.RolesList = roles;
         ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.FacultyId);
         ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name", model.CollegeId);
+        await SetCreateFiltersAsync();
         return View(model);
+    }
+
+    private async Task SetCreateFiltersAsync()
+    {
+        ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
+        ViewData["ShowFacultyFilter"] = userContext.IsSuperAdmin;
+        ViewData["ShowProgramFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin || userContext.IsCollegeAdmin;
+        ViewBag.FilterColleges = userContext.IsSuperAdmin
+            ? new SelectList(Array.Empty<College>(), "Id", "Name")
+            : new SelectList(await context.Colleges.ApplyScope(userContext).AsNoTracking().ToListAsync(), "Id", "Name");
+        ViewBag.DefaultFacultyId = userContext.IsFacultyAdmin ? userContext.FacultyId : null;
+        ViewBag.CurrentCollegeId = userContext.IsCollegeAdmin ? userContext.CollegeId : null;
     }
 
     [RequirePermission("users.edit")]
@@ -244,6 +265,10 @@ public class UserController(
             var result = await userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
+                await auditLogWriter.LogAsync(ActivityTypes.UserUpdated,
+                    $"Updated user {(user.FullName ?? user.Email)}",
+                    new { userId = user.Id, email = user.Email },
+                    entityName: "AppUser", entityId: user.Id);
                 TempData["SuccessMessage"] = "User updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -279,6 +304,10 @@ public class UserController(
 
         user.IsActive = !user.IsActive;
         await userManager.UpdateAsync(user);
+        await auditLogWriter.LogAsync(ActivityTypes.UserStatusChanged,
+            $"{(user.IsActive ? "Enabled" : "Disabled")} user {(user.FullName ?? user.Email)}",
+            new { userId = user.Id, email = user.Email, isActive = user.IsActive },
+            entityName: "AppUser", entityId: user.Id);
 
         TempData["SuccessMessage"] = $"User status updated to {(user.IsActive ? "active" : "inactive")}.";
         return RedirectToAction(nameof(Index));
@@ -305,7 +334,13 @@ public class UserController(
         {
             var user = await LoadScopedUserAsync(id);
             if (user != null && await CanManageTargetAsync(user))
+            {
                 await userManager.DeleteAsync(user);
+                await auditLogWriter.LogAsync(ActivityTypes.UserDeleted,
+                    $"Deleted user {(user.FullName ?? user.Email)}",
+                    new { userId = user.Id, email = user.Email },
+                    entityName: "AppUser", entityId: user.Id);
+            }
 
             TempData["SuccessMessage"] = "User deleted successfully!";
             return RedirectToAction(nameof(Index));
@@ -380,6 +415,14 @@ public class UserController(
         if (toRemove.Count > 0)
             await userManager.RemoveFromRolesAsync(user, toRemove);
 
+        if (toAdd.Count > 0 || toRemove.Count > 0)
+        {
+            await auditLogWriter.LogAsync(ActivityTypes.UserRolesChanged,
+                $"Updated roles for {(user.FullName ?? user.Email)}: added [{string.Join(", ", toAdd)}], removed [{string.Join(", ", toRemove)}]",
+                new { userId = user.Id, added = toAdd, removed = toRemove },
+                entityName: "AppUser", entityId: user.Id);
+        }
+
         TempData["SuccessMessage"] = "User roles updated successfully!";
         return RedirectToAction(nameof(Index));
     }
@@ -451,6 +494,10 @@ public class UserController(
 
         if (result.Succeeded)
         {
+            await auditLogWriter.LogAsync(ActivityTypes.UserPasswordResetByAdmin,
+                $"Admin reset password for {(user.FullName ?? user.Email)}",
+                new { userId = user.Id, email = user.Email, byAdmin = true },
+                entityName: "AppUser", entityId: user.Id);
             TempData["SuccessMessage"] = $"Password reset successfully for '{(user.FullName ?? user.Email)}'. The user must use the new password on their next login.";
             return RedirectToAction(nameof(ResetPassword), new { userId = user.Id, search = model.Search, page = model.Page, pageSize = model.PageSize });
         }
@@ -653,11 +700,42 @@ public class UserController(
 
     [RequirePermission("users.create")]
     [HttpGet]
+    public async Task<JsonResult> GetCollegesByFaculty(int? facultyId)
+    {
+        if (!facultyId.HasValue)
+            return Json(new List<SelectOption>());
+
+        var colleges = await context.Colleges
+            .ApplyScope(userContext)
+            .Where(c => c.CollegeFaculties!.Any(cf => cf.FacultyId == facultyId.Value))
+            .OrderBy(c => c.Name)
+            .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+            .AsNoTracking()
+            .ToListAsync();
+        return Json(colleges);
+    }
+
+    [RequirePermission("users.create")]
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByCollege(int collegeId)
+    {
+        var programs = await context.CollegePrograms
+            .ApplyScope(userContext)
+            .Where(cp => cp.CollegeId == collegeId && cp.Program != null && cp.Program.ProgramName != null)
+            .Select(cp => new SelectOption { Id = cp.Program!.Id, Name = cp.Program.ProgramName })
+            .OrderBy(p => p.Name)
+            .AsNoTracking()
+            .ToListAsync();
+        return Json(programs);
+    }
+
+    [RequirePermission("users.create")]
+    [HttpGet]
     public async Task<IActionResult> GetStudentsWithoutUsers(
-        int? collegeId, int? facultyId, int page = 1, int pageSize = 50)
+        int? collegeId, int? facultyId, int? programId, int page = 1, int pageSize = 50)
     {
         var (data, totalCount) = await bulkUserCreationService.GetStudentsWithoutUsersAsync(
-            collegeId, facultyId, page, pageSize);
+            collegeId, facultyId, programId, page, pageSize);
         return Json(new { data, totalCount });
     }
 
@@ -686,8 +764,7 @@ public class UserController(
     {
         var userId = userManager.GetUserId(User) ?? "unknown";
         var job = await bulkUserCreationService.StartJobFromFiltersAsync(
-            filters.CollegeId, filters.FacultyId, userId);
-
+            filters.CollegeId, filters.FacultyId, filters.ProgramId, userId);
         return Json(new
         {
             success = true,
@@ -701,6 +778,7 @@ public class UserController(
     {
         public int? CollegeId { get; set; }
         public int? FacultyId { get; set; }
+        public int? ProgramId { get; set; }
     }
 
     [RequirePermission("users.create")]

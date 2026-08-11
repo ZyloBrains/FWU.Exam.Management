@@ -6,14 +6,13 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using FWU.Exam.Management.Infrastructure.Data.Models;
-using FWU.Exam.Management.Infrastructure.Services;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
@@ -24,7 +23,7 @@ public class ExternalLoginModel : PageModel
     private readonly UserManager<AppUser> _userManager;
     private readonly IUserStore<AppUser> _userStore;
     private readonly IUserEmailStore<AppUser> _emailStore;
-    private readonly IEmailSender _emailSender;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<ExternalLoginModel> _logger;
 
     public ExternalLoginModel(
@@ -32,14 +31,14 @@ public class ExternalLoginModel : PageModel
         UserManager<AppUser> userManager,
         IUserStore<AppUser> userStore,
         ILogger<ExternalLoginModel> logger,
-        IEmailSender emailSender)
+        INotificationService notificationService)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _userStore = userStore;
         _emailStore = GetEmailStore();
         _logger = logger;
-        _emailSender = emailSender;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -172,8 +171,13 @@ public class ExternalLoginModel : PageModel
 
                     try
                     {
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            EmailTemplateHelper.ConfirmEmail(Input.Email, callbackUrl));
+                        var context = new Dictionary<string, string>
+                        {
+                            ["UserName"] = Input.Email,
+                            ["CallbackUrl"] = callbackUrl ?? string.Empty
+                        };
+
+                        await _notificationService.SendAsync(Input.Email, null, "confirm_email", context);
                     }
                     catch (Exception ex)
                     {

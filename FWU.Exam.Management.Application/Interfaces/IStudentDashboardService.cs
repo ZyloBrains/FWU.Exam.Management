@@ -9,8 +9,8 @@ namespace FWU.Exam.Management.Application.Interfaces;
 public interface IStudentDashboardService
 {
     Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
+    Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId);
     Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId);
-    Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
     Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId);

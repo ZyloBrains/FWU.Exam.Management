@@ -1,10 +1,12 @@
 using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -19,7 +21,9 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("resultrecords.view")]
 public class ResultRecordsController(
     IResultRecordService resultRecordService,
-    AppDbContext context) : Controller
+    IUserContext userContext,
+    AppDbContext context,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? collegeId = null, int? facultyId = null)
     {
@@ -35,8 +39,9 @@ public class ResultRecordsController(
         ViewBag.CollegeId = collegeId;
         ViewBag.FacultyId = facultyId;
 
-        ViewData["CollegeId"] = new SelectList(context.Colleges.AsNoTracking().Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
-        ViewData["FacultyId"] = new SelectList(context.Faculties.AsNoTracking().Select(f => new { f.Id, f.Name }), "Id", "Name", facultyId);
+        ViewData["CollegeId"] = new SelectList(context.Colleges.AsNoTracking().ApplyScope(userContext).OrderBy(c => c.Name).Select(c => new { c.Id, c.Name }), "Id", "Name", collegeId);
+        ViewData["FacultyId"] = new SelectList(await context.GetScopedFacultiesAsync(userContext), "Id", "Name", facultyId);
+        ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
 
         return View(items);
     }
@@ -64,12 +69,14 @@ public class ResultRecordsController(
         }
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        await auditLogWriter.LogAsync(ActivityTypes.ResultExported, "Result records exported to CSV", new { format = "csv", count = items.Count }, entityName: "ResultRecord");
         return File(csvBytes, "text/csv", "ResultRecords.csv");
     }
 
     public async Task<IActionResult> ExportToPdf(string? search = null)
     {
         var items = await resultRecordService.GetFilteredItemsAsync(search);
+        await auditLogWriter.LogAsync(ActivityTypes.ResultExported, "Result records exported to PDF", new { format = "pdf", count = items.Count }, entityName: "ResultRecord");
         return View("PrintPdf", items);
     }
 
@@ -109,6 +116,7 @@ public class ResultRecordsController(
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         var content = stream.ToArray();
+        await auditLogWriter.LogAsync(ActivityTypes.ResultExported, "Result records exported to Excel", new { format = "excel", count = items.Count }, entityName: "ResultRecord");
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ResultRecords.xlsx");
     }
 

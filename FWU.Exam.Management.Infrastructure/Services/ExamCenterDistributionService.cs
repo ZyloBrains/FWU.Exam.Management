@@ -12,7 +12,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
         var registrations = await context.ExamRegistrations
             .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered)
             .Include(er => er.College)
-                .ThenInclude(c => c!.Faculties)
+                .ThenInclude(c => c!.CollegeFaculties)
             .Include(er => er.ExamSchedule)
                 .ThenInclude(es => es!.AcademicYear)
             .OrderBy(er => er.Id)
@@ -34,7 +34,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
                 continue;
 
             var collegeIdPart = reg.CollegeId.ToString("D3");
-            var facultyId = reg.College?.Faculties?.FirstOrDefault()?.Id ?? 0;
+            var facultyId = reg.College?.CollegeFaculties?.FirstOrDefault()?.FacultyId ?? 0;
             var facultyIdPart = facultyId.ToString("D2");
             var seq = (existingCount + 1).ToString("D3");
 

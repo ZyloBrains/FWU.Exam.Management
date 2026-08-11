@@ -3,11 +3,13 @@
 #nullable disable
 
 using System.ComponentModel.DataAnnotations;
+using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +21,7 @@ using FWU.Exam.Management.Infrastructure.Data.Models;
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, AppDbContext context, ILogger<LoginModel> logger) : PageModel
+public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, AppDbContext context, ILogger<LoginModel> logger, IAuditLogWriter auditLogWriter, ITenantContext tenantContext) : PageModel
 {
     private const string MustChangePasswordClaimType = "must_change_password";
 
@@ -98,6 +100,9 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 if (!user.IsActive)
                 {
                     logger.LogWarning("Login attempt by inactive user {Input}", Input.EmailOrRegNumber);
+                    await auditLogWriter.LogAsync(ActivityTypes.UserLoginFailed,
+                        $"Login blocked for inactive user {Input.EmailOrRegNumber}",
+                        new { username = Input.EmailOrRegNumber, reason = "inactive" }, AuditSeverity.Warning);
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }
@@ -109,9 +114,17 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 {
                     logger.LogInformation("User logged in.");
 
-                    await signInManager.SignInAsync(user, Input.RememberMe);
+                    var tenant = await ResolveUserTenantAsync(user);
+                    if (tenant != null)
+                    {
+                        tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
+                    }
 
-                    var tenantCode = await ResolveUserTenantCodeAsync(user);
+                    await signInManager.SignInAsync(user, Input.RememberMe);
+                    await auditLogWriter.LogAsync(ActivityTypes.UserLogin, "User signed in",
+                        new { username = user.UserName, userId = user.Id }, entityName: "AppUser", entityId: user.Id);
+
+                    var tenantCode = tenant?.OfficeCode;
                     if (tenantCode != null)
                     {
                         SetTenantCookie(tenantCode);
@@ -168,11 +181,17 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 if (result.IsLockedOut)
                 {
                     logger.LogWarning("User account locked out.");
+                    await auditLogWriter.LogAsync(ActivityTypes.UserLoginLockedOut,
+                        $"Login blocked for locked-out user {Input.EmailOrRegNumber}",
+                        new { username = Input.EmailOrRegNumber, reason = "locked_out" }, AuditSeverity.Warning);
                     return RedirectToPage("./Lockout");
                 }
             }
 
             logger.LogWarning("Login failed for {Input} - user not found or invalid", Input.EmailOrRegNumber);
+            await auditLogWriter.LogAsync(ActivityTypes.UserLoginFailed,
+                $"Login failed for {Input.EmailOrRegNumber} - user not found or invalid credentials",
+                new { username = Input.EmailOrRegNumber, reason = "invalid_credentials" }, AuditSeverity.Warning);
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return Page();
         }
@@ -180,7 +199,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
         return Page();
     }
 
-    private async Task<string> ResolveUserTenantCodeAsync(AppUser user)
+    private async Task<Tenant> ResolveUserTenantAsync(AppUser user)
     {
         if (user.FacultyId != null)
         {
@@ -190,26 +209,27 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                 .Include(f => f.Tenant)
                 .FirstOrDefaultAsync(f => f.Id == user.FacultyId.Value);
 
-            return faculty?.Tenant?.OfficeCode;
+            return faculty?.Tenant;
         }
 
         if (user.CollegeId != null)
         {
-            var collegeTenant = await context.TenantColleges
+            var collegeTenant = await context.CollegeFaculties
                 .AsNoTracking()
                 .IgnoreQueryFilters()
-                .Where(tc => tc.CollegeId == user.CollegeId.Value && tc.Tenant != null && tc.Tenant.IsActive)
-                .Select(tc => tc.Tenant!.OfficeCode)
+                .Where(cf => cf.CollegeId == user.CollegeId.Value
+                    && cf.Faculty != null
+                    && cf.Faculty.Tenant != null
+                    && cf.Faculty.Tenant.IsActive)
+                .Select(cf => cf.Faculty!.Tenant!)
                 .FirstOrDefaultAsync();
 
             return collegeTenant;
         }
 
-        var centralTenant = await context.Tenants
+        return await context.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.TenantType == TenantType.Central && t.IsActive);
-
-        return centralTenant?.OfficeCode;
     }
 
     private void SetTenantCookie(string tenantCode)

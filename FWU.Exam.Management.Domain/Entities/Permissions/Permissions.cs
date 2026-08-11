@@ -16,6 +16,7 @@ public static class Permissions
     public const string GroupSubjectOfferings = "subjectofferings";
     public const string GroupCurriculumVersions = "curriculumversions";
     public const string GroupExamSchedules = "examschedules";
+    public const string GroupExamApproval = "examapproval";
     public const string GroupExamTypes = "examtypes";
     public const string GroupEntrance = "entrance";
     public const string GroupStudents = "students";
@@ -53,6 +54,8 @@ public static class Permissions
     public const string GroupAdmitCards = "admitcards";
     public const string GroupRetotaling = "retotaling";
     public const string GroupMarksEntry = "marksentry";
+    public const string GroupTheoryMarks = "theorymarks";
+    public const string GroupPracticalMarks = "practicalmarks";
     public const string GroupReports = "reports";
     public const string GroupAuditLog = "auditlog";
     public const string GroupBackupRestore = "backuprestore";
@@ -133,6 +136,12 @@ public static class Permissions
     public const string ExamSchedulesCreate = "examschedules.create";
     public const string ExamSchedulesEdit = "examschedules.edit";
     public const string ExamSchedulesDelete = "examschedules.delete";
+
+    // Exam Schedule College Approval
+    public const string ExamApprovalView = "examapproval.view";
+    public const string ExamApprovalApprove = "examapproval.approve";
+    public const string ExamApprovalReject = "examapproval.reject";
+    public const string ExamApprovalResubmit = "examapproval.resubmit";
 
     // Exam Types
     public const string ExamTypesView = "examtypes.view";
@@ -362,6 +371,14 @@ public static class Permissions
     public const string MarksEntryImport = "marksentry.import";
     public const string MarksEntryExport = "marksentry.export";
 
+    // Theory Marks Entry (Central / Faculty Admin)
+    public const string TheoryMarksView = "theorymarks.view";
+    public const string TheoryMarksSubmit = "theorymarks.submit";
+
+    // Practical Marks Entry (Central / Faculty Admin)
+    public const string PracticalMarksView = "practicalmarks.view";
+    public const string PracticalMarksSubmit = "practicalmarks.submit";
+
     // Reports
     public const string ReportsCollegePayments = "reports.collegepayments";
     public const string ReportsSubjectCount = "reports.subjectcount";
@@ -433,6 +450,11 @@ public static class Permissions
         (ExamSchedulesCreate, "Create Exam Schedules", GroupExamSchedules, "Create new exam schedules"),
         (ExamSchedulesEdit, "Edit Exam Schedules", GroupExamSchedules, "Edit existing exam schedules"),
         (ExamSchedulesDelete, "Delete Exam Schedules", GroupExamSchedules, "Delete exam schedules"),
+
+        (ExamApprovalView, "View Exam Schedule Approvals", GroupExamApproval, "View exam schedules pending college approval"),
+        (ExamApprovalApprove, "Approve Exam Schedule", GroupExamApproval, "Approve the college approval date of an exam schedule"),
+        (ExamApprovalReject, "Reject Exam Schedule", GroupExamApproval, "Reject the college approval date and propose an alternate date"),
+        (ExamApprovalResubmit, "Resubmit Exam Schedule", GroupExamApproval, "Resubmit a rejected exam schedule for college approval"),
 
         (ExamTypesView, "View Exam Types", GroupExamTypes, "View exam type list"),
         (ExamTypesCreate, "Create Exam Types", GroupExamTypes, "Create new exam types"),
@@ -635,6 +657,12 @@ public static class Permissions
         (MarksEntryImport, "Import Marks", GroupMarksEntry, "Import marks from Excel for assigned subjects"),
         (MarksEntryExport, "Export Marks", GroupMarksEntry, "Export marks to Excel for assigned subjects"),
 
+        (TheoryMarksView, "View Theory Marks Entry", GroupTheoryMarks, "View theory marks entry for exam schedule students"),
+        (TheoryMarksSubmit, "Submit Theory Marks", GroupTheoryMarks, "Submit theory marks for exam schedule students"),
+
+        (PracticalMarksView, "View Practical Marks Entry", GroupPracticalMarks, "View practical marks entry for exam schedule students"),
+        (PracticalMarksSubmit, "Submit Practical Marks", GroupPracticalMarks, "Submit practical marks for exam schedule students"),
+
         (AuditLogView, "View Audit Log", GroupAuditLog, "View audit trail and activity logs"),
 
         (BackupRestoreManage, "Manage Backup & Restore", GroupBackupRestore, "Backup and restore database"),
@@ -662,7 +690,8 @@ public static class Permissions
             SubjectOfferingsView, SubjectOfferingsCreate, SubjectOfferingsEdit, SubjectOfferingsDelete,
             CurriculumVersionsView,
 
-            ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit, ExamSchedulesDelete,
+            ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit,
+            ExamApprovalView, ExamApprovalResubmit,
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
@@ -672,6 +701,8 @@ public static class Permissions
             ResultRecordsView,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
+            TheoryMarksView, TheoryMarksSubmit,
+            PracticalMarksView, PracticalMarksSubmit,
 
             ExamCentersView, ExamCentersCreate, ExamCentersEdit, ExamCentersDelete,
             ExamCentersGenerateRollNumbers,
@@ -707,13 +738,13 @@ public static class Permissions
         [
             DashboardView,
 
-            CollegesView,
             ProgramsView,
             SubjectsView,
             SemestersView,
             AcademicYearsView,
 
             ExamSchedulesView,
+            ExamApprovalView, ExamApprovalApprove, ExamApprovalReject,
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
@@ -728,11 +759,9 @@ public static class Permissions
             AdmitCardsView, AdmitCardsDownload,
             RetotalingView,
 
-            StudentsView, StudentsCreate, StudentsEdit,
             StudentAdmissionsView, StudentAdmissionsCreate, StudentAdmissionsEdit,
 
             UsersView, UsersCreate, UsersEdit,
-            PermissionsManage,
 
             BanksView, BanksCreate, BanksEdit,
             PaymentTypesView, PaymentTypesCreate, PaymentTypesEdit, PaymentTypesDelete,

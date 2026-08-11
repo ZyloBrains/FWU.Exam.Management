@@ -27,6 +27,5 @@ public class PreviousLevel
     public bool IsActive { get; set; }
 
     public virtual Level? Level { get; set; }
-    public virtual ICollection<SchoolType> SchoolTypes { get; set; } = [];
     public virtual ICollection<StudentQualification> StudentQualifications { get; set; } = [];
 }

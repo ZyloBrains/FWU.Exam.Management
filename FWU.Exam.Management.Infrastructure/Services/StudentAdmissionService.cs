@@ -4,6 +4,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Students;
+using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -110,6 +111,8 @@ public class StudentAdmissionService(AppDbContext context, UserManager<AppUser> 
     {
         return await context.Colleges
             .AsNoTracking()
+            .ApplyScope(userContext)
+            .OrderBy(c => c.Name)
             .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
             .ToListAsync();
     }

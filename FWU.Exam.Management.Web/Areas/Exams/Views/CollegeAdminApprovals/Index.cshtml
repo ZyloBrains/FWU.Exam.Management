@@ -1,0 +1,184 @@
+@model List<CollegePendingApprovalDto>
+
+@{
+    ViewData["Title"] = "Exam Schedule Approvals";
+}
+
+<div class="space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-amber-600"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Schedule Approvals</h1>
+                <p class="text-sm text-gray-500">Approve or reject the requested exam date for your college.</p>
+            </div>
+        </div>
+        @if (ViewBag.PendingCount is int pendingCount && pendingCount > 0)
+        {
+            <span class="text-xs bg-amber-100 text-amber-700 px-3 py-1.5 rounded-full font-semibold">@pendingCount pending</span>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <i class="fas fa-check-circle text-5xl text-green-300 mb-4"></i>
+            <h3 class="text-base sm:text-lg font-semibold text-gray-900">Nothing to Review</h3>
+            <p class="text-sm text-gray-500 mt-1">No exam schedules have been submitted for your college's approval yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Exam Schedule</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Program / Semester</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Exam Dates</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Requested Approval Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3">
+                                    <a asp-area="Exams" asp-controller="ExamSchedules" asp-action="Details" asp-route-id="@item.ExamScheduleId"
+                                       class="text-sm font-semibold text-gray-900 hover:text-indigo-600">
+                                        @item.ExamScheduleName
+                                    </a>
+                                    <div class="text-xs text-gray-500 mt-0.5">
+                                        @item.ExamTypeName @if (!string.IsNullOrEmpty(item.ExamScheduleCode)) { <text> &middot; @item.ExamScheduleCode</text> }
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    @item.ProgramName
+                                    <div class="text-xs text-gray-500 mt-0.5">@item.SemesterName &middot; @item.AcademicYearName</div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    @if (item.StartDate.HasValue) { @item.StartDate.Value.ToString("yyyy-MM-dd") }
+                                    @if (item.EndDate.HasValue) { <text> &rarr; @item.EndDate.Value.ToString("yyyy-MM-dd")</text> }
+                                    <div class="text-xs text-gray-500 mt-0.5">@item.StartDateBs &rarr; @item.EndDateBs</div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    @item.RequestedApprovalDate?.ToString("yyyy-MM-dd") ?? item.CollegeApprovalDate?.ToString("yyyy-MM-dd")
+                                </td>
+                                <td class="px-4 py-3">
+                                    @switch (item.Status)
+                                    {
+                                        case ExamScheduleApprovalStatus.Pending:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pending</span>
+                                            break;
+                                        case ExamScheduleApprovalStatus.Approved:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Approved</span>
+                                            break;
+                                        case ExamScheduleApprovalStatus.Rejected:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Rejected</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex flex-wrap gap-2">
+                                        <form method="post" asp-action="Approve" asp-route-examScheduleId="@item.ExamScheduleId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                                    onclick="return confirm('Approve this exam schedule for your college?');">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                        </form>
+                                        <button type="button"
+                                                data-reject-schedule-id="@item.ExamScheduleId"
+                                                data-reject-name="@item.ExamScheduleName"
+                                                class="open-reject-modal inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </div>
+                                    @if (item.Status == ExamScheduleApprovalStatus.Rejected && !string.IsNullOrEmpty(item.Remarks))
+                                    {
+                                        <div class="text-xs text-gray-500 mt-2 border-t border-gray-100 pt-1.5">
+                                            <span class="font-semibold text-gray-600">Your remarks:</span> @item.Remarks
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Reject Exam Schedule</h3>
+                <p id="rejectScheduleName" class="text-sm text-gray-500 mt-0.5"></p>
+            </div>
+            <button type="button" id="closeRejectModal" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form method="post" asp-action="Reject">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ExamScheduleId" id="rejectExamScheduleId" />
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-700 block mb-1">Proposed Alternate Date</label>
+                    <input type="date" name="ProposedDate" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <p class="text-xs text-gray-500 mt-1">Optional - the date your college suggests instead.</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 block mb-1">Remarks</label>
+                    <textarea name="Remarks" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required
+                              placeholder="Explain why this date cannot be accepted..."></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button type="button" id="cancelRejectModal" class="px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">Reject Schedule</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var rejectModal = document.getElementById('rejectModal');
+        var rejectScheduleId = document.getElementById('rejectExamScheduleId');
+        var rejectScheduleName = document.getElementById('rejectScheduleName');
+
+        function openRejectModal(scheduleId, name) {
+            rejectScheduleId.value = scheduleId;
+            rejectScheduleName.textContent = name;
+            rejectModal.classList.remove('hidden');
+            rejectModal.classList.add('flex');
+        }
+
+        function closeRejectModal() {
+            rejectModal.classList.add('hidden');
+            rejectModal.classList.remove('flex');
+        }
+
+        document.querySelectorAll('.open-reject-modal').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                openRejectModal(this.getAttribute('data-reject-schedule-id'), this.getAttribute('data-reject-name'));
+            });
+        });
+
+        document.getElementById('closeRejectModal').addEventListener('click', closeRejectModal);
+        document.getElementById('cancelRejectModal').addEventListener('click', closeRejectModal);
+        rejectModal.addEventListener('click', function(e) {
+            if (e.target === rejectModal) closeRejectModal();
+        });
+    </script>
+}

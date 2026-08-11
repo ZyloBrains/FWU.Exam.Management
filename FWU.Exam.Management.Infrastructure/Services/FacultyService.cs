@@ -23,6 +23,7 @@ public class FacultyService(
     {
         return await context.Faculties
             .AsNoTracking()
+            .Include(f => f.Tenant)
             .ApplyScope(userContext)
             .OrderBy(f => f.Name)
             .ToListAsync();
@@ -32,6 +33,7 @@ public class FacultyService(
     {
         var query = context.Faculties
             .AsNoTracking()
+            .Include(f => f.Tenant)
             .ApplyScope(userContext);
 
         if (!string.IsNullOrEmpty(search))

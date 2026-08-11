@@ -9,6 +9,9 @@ public class AuditLog : ITenantScoped
     public int? TenantId { get; set; }
     public virtual Tenant? Tenant { get; set; }
 
+    [MaxLength(32)]
+    public string Kind { get; set; } = "DataChange";
+
     [MaxLength(128)]
     public string? EntityName { get; set; }
 
@@ -26,6 +29,18 @@ public class AuditLog : ITenantScoped
 
     public DateTime Timestamp { get; set; }
 
-    [MaxLength(4000)]
     public string? ChangesJson { get; set; }
+
+    [MaxLength(128)]
+    public string? ActivityType { get; set; }
+
+    [MaxLength(500)]
+    public string? Description { get; set; }
+
+    [MaxLength(32)]
+    public string? Severity { get; set; }
+
+    public string? DetailsJson { get; set; }
+
+    public int? RowCount { get; set; }
 }

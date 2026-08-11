@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
@@ -22,7 +23,9 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
-    AppDbContext context) : Controller
+    IExamScheduleApprovalService examScheduleApprovalService,
+    AppDbContext context,
+    IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
@@ -149,6 +152,11 @@ public class ExamSchedulesController(
             .Where(r => r.ExamScheduleId == id.Value)
             .ToListAsync();
 
+        var scheduleApprovals = await examScheduleApprovalService.GetApprovalsForScheduleAsync(id.Value);
+        ViewBag.ScheduleApprovals = scheduleApprovals;
+        ViewBag.HasRejectedApprovals = scheduleApprovals.Any(a => a.Status == Domain.Enums.ExamScheduleApprovalStatus.Rejected);
+        ViewBag.HasApprovals = scheduleApprovals.Count > 0;
+
         var examSlots = await context.ExamSlots
             .Where(es => es.ExamScheduleId == id.Value)
             .Include(es => es.SubjectOffering)
@@ -253,6 +261,7 @@ public class ExamSchedulesController(
         if (added > 0 || updated > 0)
             await context.SaveChangesAsync();
 
+        await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slots saved for schedule {examScheduleId}", new { scheduleId = examScheduleId, added, updated }, entityName: "ExamSchedule", entityId: examScheduleId.ToString());
         TempData["SuccessMessage"] = $"Exam subjects saved: {added} added, {updated} updated.";
         return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
@@ -267,6 +276,7 @@ public class ExamSchedulesController(
         {
             context.ExamSlots.Remove(slot);
             await context.SaveChangesAsync();
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slot {id} removed from schedule {examScheduleId}", new { scheduleId = examScheduleId, slotId = id }, entityName: "ExamSlot", entityId: id.ToString());
             TempData["SuccessMessage"] = "Subject removed from exam schedule.";
         }
         return RedirectToAction(nameof(Details), new { id = examScheduleId });
@@ -288,6 +298,21 @@ public class ExamSchedulesController(
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
+
+            // College approval workflow: if the creator set a CollegeApprovalDate,
+            // open Pending approval rows for every college that offers this program.
+            // ===== ALTERNATIVE SEMANTIC (UNCOMMENT IF NEEDED) =====
+            // If CollegeApprovalDate is a *deadline* instead of a proposed date,
+            // validate here that it is in the future before creating approvals.
+            //   if (examSchedule.CollegeApprovalDate.HasValue
+            //       && examSchedule.CollegeApprovalDate.Value <= DateTime.UtcNow)
+            //       ModelState.AddModelError("CollegeApprovalDate", "Approval date must be in the future.");
+            if (examSchedule.CollegeApprovalDate.HasValue)
+            {
+                await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
+            }
+
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Exam schedule created (Code {examSchedule.ExamScheduleCode})", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId, type = examSchedule.ExamType?.Name }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -338,12 +363,40 @@ public class ExamSchedulesController(
                     return NotFound();
                 throw;
             }
+
+            // Keep the approval rows in sync: add any newly-affiliated colleges and
+            // refresh the requested date for rows awaiting (re)approval.
+            if (examSchedule.CollegeApprovalDate.HasValue)
+            {
+                await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
+            }
+
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam schedule {examSchedule.Id} updated", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
         var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
+    }
+
+    [RequirePermission("examapproval.resubmit")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Resubmit(int id)
+    {
+        try
+        {
+            await examScheduleApprovalService.ResubmitAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleResubmitted, $"Exam schedule {id} resubmitted for college approval", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
+            TempData["SuccessMessage"] = "Exam schedule resubmitted for college approval.";
+        }
+        catch (KeyNotFoundException)
+        {
+            TempData["ErrorMessage"] = "Exam schedule not found.";
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
     }
 
     [RequirePermission("examschedules.delete")]
@@ -365,6 +418,7 @@ public class ExamSchedulesController(
         try
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleDeleted, $"Exam schedule {id} deleted", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
             TempData["SuccessMessage"] = "Exam schedule deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -442,6 +496,7 @@ public class ExamSchedulesController(
         try
         {
             await examScheduleService.DeleteExamScheduleAsync(id);
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleDeleted, $"Exam schedule {id} deleted", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
             return Json(new { success = true, message = "Exam schedule deleted successfully!" });
         }
         catch (InvalidOperationException ex)
@@ -450,11 +505,11 @@ public class ExamSchedulesController(
         }
         catch (DbUpdateException)
         {
-            return Json(new { success = false, message = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first." });
+            return Json(new { success = false, message = "Cannot delete this exam schedule because it is referenced by other records." });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Json(new { success = false, message = "An error occurred while deleting the exam schedule." });
+            return Json(new { success = false, message = $"An error occurred while deleting: {ex.Message}" });
         }
     }
 
