@@ -8,16 +8,14 @@ using System.Text.Encodings.Web;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Infrastructure.Data.Models;
-using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender emailSender, IAuditLogWriter auditLogWriter) : PageModel
+public class ForgotPasswordModel(UserManager<AppUser> userManager, INotificationService notificationService, IAuditLogWriter auditLogWriter) : PageModel
 {
 
     /// <summary>
@@ -72,10 +70,13 @@ public class ForgotPasswordModel(UserManager<AppUser> userManager, IEmailSender 
                 values: new { area = "Identity", code },
                 protocol: Request.Scheme);
 
-            await emailSender.SendEmailAsync(
-                Input.Email,
-                "Reset Password",
-                EmailTemplateHelper.ResetPassword(Input.Email, callbackUrl));
+            var context = new Dictionary<string, string>
+            {
+                ["UserName"] = string.IsNullOrWhiteSpace(user.FullName) ? Input.Email : user.FullName,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            };
+
+            await notificationService.SendAsync(Input.Email, null, "reset_password", context);
 
             await auditLogWriter.LogAsync(ActivityTypes.UserPasswordResetRequested,
                 $"Password reset link requested for {Input.Email}",

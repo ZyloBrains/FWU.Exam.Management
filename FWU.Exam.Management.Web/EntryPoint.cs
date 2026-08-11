@@ -183,6 +183,8 @@ public partial class EntryPoint
         builder.Services.AddHttpClient<ISmsService, SmsService>();
         builder.Services.AddScoped<IGumpNowEmailConfigurationService, GumpNowEmailConfigurationService>();
         builder.Services.AddHttpClient<IGumpNowEmailService, GumpNowEmailService>();
+        builder.Services.AddScoped<INotificationTemplateService, NotificationTemplateService>();
+        builder.Services.AddScoped<INotificationService, NotificationService>();
 
         builder.Services.AddScoped<IBoardService, BoardService>();
         builder.Services.AddScoped<ICollegeProgramService, CollegeProgramService>();
@@ -272,6 +274,7 @@ public partial class EntryPoint
             await RunSeederAsync(services, ReferenceDataSeeder.SeedKhaltiConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedConnectIPSConfigurationAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedSmsConfigurationAsync);
+            await RunSeederAsync(services, ReferenceDataSeeder.SeedNotificationTemplatesAsync);
             await RunSeederAsync(services, UserSeeder.SeedUsersAsync);
         }
 

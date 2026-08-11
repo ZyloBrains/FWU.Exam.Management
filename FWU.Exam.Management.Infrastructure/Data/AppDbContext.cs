@@ -9,6 +9,7 @@ using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
+using FWU.Exam.Management.Domain.Entities.Notifications;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -98,6 +99,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<GumpNowEmailConfiguration> GumpNowEmailConfigurations { get; set; } = null!;
     public DbSet<GumpNowEmailLog> GumpNowEmailLogs { get; set; } = null!;
     public DbSet<SmsLog> SmsLogs { get; set; } = null!;
+    public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
     public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
@@ -158,6 +160,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
                 .HasForeignKey("TenantId")
                 .OnDelete(DeleteBehavior.Restrict);
         }
+
+        builder.Entity<NotificationTemplate>()
+            .HasIndex(t => new { t.Code, t.Channel })
+            .IsUnique();
 
         builder.Entity<College>()
             .HasQueryFilter(c => FilterIsCentral ||

@@ -1,8 +1,10 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Entities.Notifications;
 using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure;
+using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -246,6 +248,32 @@ public static class ReferenceDataSeeder
             IsActive = true
         };
         context.SmsConfigurations.Add(smsConfig);
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedNotificationTemplatesAsync(IServiceProvider serviceProvider)
+    {
+        var context = serviceProvider.GetRequiredService<AppDbContext>();
+
+        foreach (var definition in NotificationTemplateDefaults.All)
+        {
+            var existing = await context.NotificationTemplates
+                .FirstOrDefaultAsync(t => t.Code == definition.Code && t.Channel == definition.Channel);
+            if (existing != null)
+                continue;
+
+            context.NotificationTemplates.Add(new NotificationTemplate
+            {
+                Code = definition.Code,
+                Name = definition.Name,
+                Channel = definition.Channel,
+                Subject = definition.Subject,
+                Body = definition.Body,
+                IsActive = true,
+                PlaceholdersHelp = definition.PlaceholdersHelp
+            });
+        }
+
         await context.SaveChangesAsync();
     }
 }

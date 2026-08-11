@@ -17,7 +17,7 @@ public static class EmailTemplateHelper
         </svg>";
     }
 
-    private static string Layout(string title, string content) => $@"
+    public static string Layout(string title, string content) => $@"
 <!DOCTYPE html>
 <html lang=""en"">
 <head>
