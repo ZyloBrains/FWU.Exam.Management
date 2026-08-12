@@ -2,11 +2,73 @@
 
 @{
     ViewData["Title"] = "Exam Forms";
+    var showMandatoryPopup = ViewBag.ShowMandatoryProfilePopup as bool? ?? false;
+    var missingMandatoryFields = (ViewBag.MissingMandatoryFields as List<string>) ?? new List<string>();
 }
 
-<div class="min-h-screen">
+<div x-data="{ mandatoryPopupOpen: @(showMandatoryPopup ? "true" : "false") }" class="min-h-screen">
 
     @await Html.PartialAsync("_AlertMessages")
+
+    @if (showMandatoryPopup)
+    {
+        <div x-show="mandatoryPopupOpen" x-cloak
+             x-transition:enter="transition ease-out duration-150"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-100"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-[110] flex items-center justify-center p-4"
+             x-on:keydown.escape.window="mandatoryPopupOpen = false">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" x-on:click="mandatoryPopupOpen = false"></div>
+            <div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95">
+                <div class="bg-gradient-to-r from-admin-blue to-admin-blue-dark px-6 py-5 relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10"></div>
+                    <div class="absolute right-6 -bottom-8 w-16 h-16 rounded-full bg-white/10"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <i class="fas fa-clipboard-check text-white text-lg"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-white font-semibold text-lg">Complete Your Profile</h3>
+                            <p class="text-blue-100 text-xs mt-0.5">@missingMandatoryFields.Count required field(s) missing</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-gray-600">Please fill in the following mandatory details in your profile before filling an exam form:</p>
+                    <ul class="mt-4 space-y-2 max-h-56 overflow-y-auto pr-1">
+                        @foreach (var field in missingMandatoryFields)
+                        {
+                            <li class="flex items-center gap-2 text-sm text-gray-700">
+                                <span class="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                                    <i class="fas fa-times text-[10px]"></i>
+                                </span>
+                                @field
+                            </li>
+                        }
+                    </ul>
+                    <div class="mt-6 flex flex-col-reverse sm:flex-row gap-3">
+                        <button type="button" x-on:click="mandatoryPopupOpen = false"
+                                class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                            Close
+                        </button>
+                        <a asp-area="" asp-controller="Profile" asp-action="Index"
+                           class="flex-1 px-5 py-2 rounded-lg bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-medium text-center hover:opacity-95 transition-opacity shadow-sm">
+                            <i class="fas fa-user-edit mr-1"></i> Complete Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     @if (Model.ExamForms.Count == 0)
     {
