@@ -716,7 +716,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return upper is "F" or "NG";
     }
 
-    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
+    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -729,6 +729,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
             dob = parsedDob;
 
+        var requestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}";
+        if (!string.IsNullOrEmpty(transactionUuid))
+            requestContent = requestContent[..^1] + $",\"transaction_uuid\":\"{transactionUuid}\"}}";
+
         var log = new PaymentRequestLog
         {
             ExamScheduleId = examScheduleId,
@@ -740,11 +744,12 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             MobileNumber = mobileNumber,
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
-            FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
+            FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = subjectOfferingIds.Count,
-            SelectedSubjectIds = string.Join(",", subjectOfferingIds)
+            SelectedSubjectIds = string.Join(",", subjectOfferingIds),
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
@@ -764,7 +769,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return log.Id;
     }
 
-    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
+    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -777,6 +782,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
             dob = parsedDob;
 
+        var requestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}";
+        if (!string.IsNullOrEmpty(transactionUuid))
+            requestContent = requestContent[..^1] + $",\"transaction_uuid\":\"{transactionUuid}\"}}";
+
         var log = new PaymentRequestLog
         {
             ExamScheduleId = examScheduleId,
@@ -788,10 +797,11 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             MobileNumber = mobileNumber,
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
-            FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}",
+            FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
-            StudentCount = 1
+            StudentCount = 1,
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
