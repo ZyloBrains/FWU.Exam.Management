@@ -191,11 +191,17 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(Profile));
         }
 
-        var setUserNameResult = await userManager.SetUserNameAsync(user, email);
-        if (!setUserNameResult.Succeeded)
+        // Non-student accounts keep UserName = Email; students keep UserName = RegistrationNumber
+        // so changing email never clobbers the registration number login.
+        var roles = await userManager.GetRolesAsync(user);
+        if (!roles.Contains(Role.Student))
         {
-            TempData["ErrorMessage"] = "Error updating username.";
-            return RedirectToAction(nameof(Profile));
+            var setUserNameResult = await userManager.SetUserNameAsync(user, email);
+            if (!setUserNameResult.Succeeded)
+            {
+                TempData["ErrorMessage"] = "Error updating username.";
+                return RedirectToAction(nameof(Profile));
+            }
         }
 
         var registration = await context.StudentRegistrations

@@ -110,11 +110,14 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             context.StudentRegistrations.Add(studentRegistration);
             await context.SaveChangesAsync();
 
+            // Generate the registration number before creating the AppUser so the user's
+            // UserName can be set to the registration number directly.
+            var registrationNumber = await GenerateRegistrationNumberAsync(studentRegistration.Id);
+
             await EnsureStudentAppUserAsync(studentRegistration);
 
             await transaction.CommitAsync();
 
-            var registrationNumber = await GenerateRegistrationNumberAsync(studentRegistration.Id);
             await SendStudentRegistrationNotificationsAsync(studentRegistration, registrationNumber);
 
             return studentRegistration.Id;
@@ -222,11 +225,16 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             .FirstOrDefaultAsync(s => s.Id == studentRegistrationId);
 
         if (student == null) return null;
-        if (student.IsRegistrationNumberGenerated == true) return student.RegistrationNumber;
+        if (student.IsRegistrationNumberGenerated == true)
+        {
+            await SyncStudentUserNameAsync(student);
+            return student.RegistrationNumber;
+        }
         if (!string.IsNullOrEmpty(student.RegistrationNumber))
         {
             student.IsRegistrationNumberGenerated = true;
             await context.SaveChangesAsync();
+            await SyncStudentUserNameAsync(student);
             return student.RegistrationNumber;
         }
 
@@ -242,7 +250,42 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         student.IsRegistrationNumberGenerated = true;
         await context.SaveChangesAsync();
 
+        await SyncStudentUserNameAsync(student);
+
         return student.RegistrationNumber;
+    }
+
+    private async Task SyncStudentUserNameAsync(StudentRegistration student)
+    {
+        if (string.IsNullOrWhiteSpace(student.RegistrationNumber))
+            return;
+
+        AppUser? user = null;
+
+        if (!string.IsNullOrWhiteSpace(student.Email))
+            user = await userManager.FindByEmailAsync(student.Email);
+
+        if (user == null && student.StudentAdmissionId != null)
+        {
+            var appUserId = await context.StudentAdmissions
+                .AsNoTracking()
+                .Where(sa => sa.Id == student.StudentAdmissionId.Value && sa.AppUserId != null)
+                .Select(sa => sa.AppUserId!)
+                .FirstOrDefaultAsync();
+            if (!string.IsNullOrWhiteSpace(appUserId))
+                user = await userManager.Users.FirstOrDefaultAsync(u => u.Id == appUserId);
+        }
+
+        if (user == null || string.Equals(user.UserName, student.RegistrationNumber, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        user.UserName = student.RegistrationNumber;
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join("; ", result.Errors.Select(e => e.Description));
+            logger.LogWarning("Failed to sync UserName to registration number for student {Id}: {Errors}", student.Id, errors);
+        }
     }
 
     public async Task<bool> StudentRegistrationExistsAsync(int id)
@@ -479,10 +522,17 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
     private async Task<bool> EnsureStudentAppUserAsync(StudentRegistration studentRegistration)
     {
-        if (string.IsNullOrWhiteSpace(studentRegistration.Email))
+        // The registration number is the primary login identifier for students.
+        var loginId = studentRegistration.RegistrationNumber;
+        if (string.IsNullOrWhiteSpace(loginId))
+            loginId = studentRegistration.Email;
+
+        if (string.IsNullOrWhiteSpace(loginId))
             return false;
 
-        var user = await userManager.FindByEmailAsync(studentRegistration.Email);
+        var user = !string.IsNullOrWhiteSpace(studentRegistration.Email)
+            ? await userManager.FindByEmailAsync(studentRegistration.Email)
+            : null;
 
         if (user == null && studentRegistration.Id != 0)
         {
@@ -503,7 +553,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             user = new AppUser
             {
-                UserName = studentRegistration.Email,
+                UserName = loginId,
                 Email = studentRegistration.Email,
                 FullName = studentRegistration.FirstName.GetFullName(studentRegistration.LastName),
                 IsActive = true,
@@ -513,14 +563,14 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
             var password = studentRegistration.DateOfBirthBS;
             if (string.IsNullOrWhiteSpace(password))
-                throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {studentRegistration.Email}");
+                throw new InvalidOperationException($"DateOfBirthBS is required to create login for student {loginId}");
 
             var createResult = await userManager.CreateAsync(user);
             if (!createResult.Succeeded)
             {
                 var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                logger.LogError("Failed to create AppUser for student {Email}: {Errors}", studentRegistration.Email, errors);
-                throw new InvalidOperationException($"Failed to create user account for {studentRegistration.Email}: {errors}");
+                logger.LogError("Failed to create AppUser for student {LoginId}: {Errors}", loginId, errors);
+                throw new InvalidOperationException($"Failed to create user account for {loginId}: {errors}");
             }
 
             SetPasswordHashDirectly(user, password);
@@ -531,19 +581,28 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
 
             await userManager.AddClaimAsync(user, new Claim(MustChangePasswordClaimType, "true"));
 
-            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-            await userManager.ConfirmEmailAsync(user, token);
-
+            // Student emails are NOT auto-confirmed; the student verifies them from their profile.
             return true;
         }
         else
         {
             var needsUpdate = false;
 
-            if (user.Email != studentRegistration.Email)
+            // Sync email only when the registration has one; a student-managed email (added or
+            // changed in the profile) must never be overwritten with a null registration email.
+            if (!string.IsNullOrWhiteSpace(studentRegistration.Email) &&
+                !string.Equals(user.Email, studentRegistration.Email, StringComparison.OrdinalIgnoreCase))
             {
                 user.Email = studentRegistration.Email;
-                user.UserName = studentRegistration.Email;
+                user.EmailConfirmed = false;
+                needsUpdate = true;
+            }
+
+            // Username is the registration number for students.
+            if (!string.IsNullOrWhiteSpace(studentRegistration.RegistrationNumber) &&
+                !string.Equals(user.UserName, studentRegistration.RegistrationNumber, StringComparison.OrdinalIgnoreCase))
+            {
+                user.UserName = studentRegistration.RegistrationNumber;
                 needsUpdate = true;
             }
 
@@ -577,7 +636,7 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 if (!updateResult.Succeeded)
                 {
                     var errors = string.Join("; ", updateResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to update existing student user {Email}: {Errors}", studentRegistration.Email, errors);
+                    logger.LogError("Failed to update existing student user {LoginId}: {Errors}", loginId, errors);
                     return false;
                 }
             }
@@ -589,14 +648,14 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
                 if (!addToRoleResult.Succeeded)
                 {
                     var errors = string.Join("; ", addToRoleResult.Errors.Select(e => e.Description));
-                    logger.LogError("Failed to add existing user {Email} to Student role: {Errors}", studentRegistration.Email, errors);
+                    logger.LogError("Failed to add existing user {LoginId} to Student role: {Errors}", loginId, errors);
                     return false;
                 }
             }
 
             var password = studentRegistration.DateOfBirthBS;
             if (string.IsNullOrWhiteSpace(password))
-                throw new InvalidOperationException($"DateOfBirthBS is required to reset login for student {studentRegistration.Email}");
+                throw new InvalidOperationException($"DateOfBirthBS is required to reset login for student {loginId}");
 
             var passwordValid = await userManager.CheckPasswordAsync(user, password);
             if (!passwordValid)
@@ -665,7 +724,10 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
         {
             try
             {
-                var smsMessage = $"Dear {fullName}, your registration is complete. Reg No: {registrationNumber}, Username: {studentRegistration.Email}, Password: {password}. Please change password on first login. - FWU";
+                var smsLoginHint = !string.IsNullOrWhiteSpace(studentRegistration.Email)
+                    ? $" or email {studentRegistration.Email}"
+                    : "";
+                var smsMessage = $"Dear {fullName}, your registration is complete. Reg No: {registrationNumber}, Password: {password}. Login with your registration number{smsLoginHint}. Please change password on first login. - FWU";
                 await smsService.SendSmsAsync(phone, smsMessage);
                 results.Add($"SMS sent to {phone}.");
             }

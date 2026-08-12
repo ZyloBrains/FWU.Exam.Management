@@ -175,7 +175,8 @@ public static class EmailTemplateHelper
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Program:</strong> <span style=""color:#555;font-size:13px;"">{program}</span></td></tr>
         </table>
         <table role=""presentation"" width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background:#eaf2f8;border-radius:8px;padding:16px 20px;margin:20px 0;border-left:4px solid #2980b9;"" class=""creds-table"">
-            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Username (Email):</strong> <span style=""color:#2980b9;font-size:13px;"">{email}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Username:</strong> <span style=""color:#2980b9;font-size:13px;"">{registrationNumber}</span></td></tr>
+            <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Email:</strong> <span style=""color:#555;font-size:13px;"">{email}</span></td></tr>
             <tr><td style=""padding:4px 0;""><strong style=""color:#2c3e50;font-size:13px;"">Password:</strong> <span style=""color:#555;font-size:13px;"">{password}</span></td></tr>
         </table>
         <table role=""presentation"" cellpadding=""0"" cellspacing=""0"" style=""margin:24px 0;"" class=""btn-table"">

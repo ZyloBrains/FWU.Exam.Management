@@ -754,6 +754,7 @@ public static class Permissions
             ResultRecordsView,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
+            PracticalMarksView, PracticalMarksSubmit,
 
             ExamCentersView,
             AdmitCardsView, AdmitCardsDownload,

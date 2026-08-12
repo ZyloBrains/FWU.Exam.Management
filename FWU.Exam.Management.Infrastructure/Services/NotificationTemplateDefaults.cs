@@ -149,7 +149,8 @@ public static class NotificationTemplateDefaults
                 <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Program:</strong> <span style="color:#555;font-size:13px;">{{Program}}</span></td></tr>
             </table>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eaf2f8;border-radius:8px;padding:16px 20px;margin:20px 0;border-left:4px solid #2980b9;">
-                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Username (Email):</strong> <span style="color:#2980b9;font-size:13px;">{{Email}}</span></td></tr>
+                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Username:</strong> <span style="color:#2980b9;font-size:13px;">{{RegistrationNumber}}</span></td></tr>
+                <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Email:</strong> <span style="color:#555;font-size:13px;">{{Email}}</span></td></tr>
                 <tr><td style="padding:4px 0;"><strong style="color:#2c3e50;font-size:13px;">Password:</strong> <span style="color:#555;font-size:13px;">{{Password}}</span></td></tr>
             </table>
             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
@@ -177,7 +178,7 @@ public static class NotificationTemplateDefaults
         Channel: NotificationChannel.Sms,
         Subject: null,
         PlaceholdersHelp: "FullName, RegistrationNumber, Email, Password",
-        Body: "Dear {{FullName}}, your registration is complete. Reg No: {{RegistrationNumber}}, Username: {{Email}}, Password: {{Password}}. Please change password on first login. - FWU");
+        Body: "Dear {{FullName}}, your registration is complete. Reg No: {{RegistrationNumber}}, Password: {{Password}}. Login with your registration number or email {{Email}}. Please change password on first login. - FWU");
 
     private static readonly TemplateDefinition TenantAccountCreated = new(
         Code: "tenant_account_created",
