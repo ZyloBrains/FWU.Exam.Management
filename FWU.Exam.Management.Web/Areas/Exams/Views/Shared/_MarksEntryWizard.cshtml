@@ -55,41 +55,6 @@
         </div>
     </div>
 
-    <!-- Stepper -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5">
-        <ol class="flex items-center w-full">
-            <li class="flex flex-1 items-center" data-step-node="1">
-                <button type="button" data-goto="1" class="flex items-center gap-2 sm:gap-3 group cursor-pointer text-left">
-                    <span class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-teal-600 text-white">1</span>
-                    <span class="hidden sm:block">
-                        <span data-label class="block text-sm font-semibold text-gray-800">Exam Schedule</span>
-                        <span class="block text-[11px] text-gray-400">Faculty, college, level</span>
-                    </span>
-                </button>
-                <div class="mx-2 sm:mx-3 h-0.5 flex-1 bg-gray-200" data-connector="1"></div>
-            </li>
-            <li class="flex flex-1 items-center" data-step-node="2">
-                <button type="button" data-goto="2" class="flex items-center gap-2 sm:gap-3 group cursor-pointer text-left">
-                    <span class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-400">2</span>
-                    <span class="hidden sm:block">
-                        <span data-label class="block text-sm font-semibold text-gray-400">Subject</span>
-                        <span class="block text-[11px] text-gray-400">Pick the subject</span>
-                    </span>
-                </button>
-                <div class="mx-2 sm:mx-3 h-0.5 flex-1 bg-gray-200" data-connector="2"></div>
-            </li>
-            <li class="flex flex-1 items-center" data-step-node="3">
-                <button type="button" data-goto="3" class="flex items-center gap-2 sm:gap-3 group cursor-pointer text-left">
-                    <span class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-400">3</span>
-                    <span class="hidden sm:block">
-                        <span data-label class="block text-sm font-semibold text-gray-400">Enter Marks</span>
-                        <span class="block text-[11px] text-gray-400">Enter and save marks</span>
-                    </span>
-                </button>
-            </li>
-        </ol>
-    </div>
-
     <!-- Step 1 : Exam Schedule -->
     <section class="wizard-step space-y-4" id="wizardStep1">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -631,31 +596,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function renderStepper() {
-            var circleBase = 'step-circle w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold';
-            $('[data-step-node]').each(function () {
-                var node = $(this);
-                var n = parseInt(node.attr('data-step'), 10);
-                var circle = node.find('.step-circle');
-                var connector = node.find('[data-connector]');
-                var label = node.find('[data-label]');
-
-                if (n < state.step) {
-                    circle.attr('class', circleBase + ' bg-green-500 text-white').html('<i class="fas fa-check text-xs"></i>');
-                    connector.removeClass('bg-gray-200').addClass('bg-green-500');
-                    label.removeClass('text-gray-400').addClass('text-gray-800');
-                } else if (n === state.step) {
-                    circle.attr('class', circleBase + ' text-white ' + config.accent.circle).text(n);
-                    connector.removeClass('bg-green-500').addClass('bg-gray-200');
-                    label.removeClass('text-gray-400').addClass('text-gray-800');
-                } else {
-                    circle.attr('class', circleBase + ' bg-gray-200 text-gray-400').text(n);
-                    connector.removeClass('bg-green-500').addClass('bg-gray-200');
-                    label.removeClass('text-gray-800').addClass('text-gray-400');
-                }
-            });
-        }
-
         function gotoStep(n) {
             if (n === 2 && !state.scheduleId) return;
             if (n === 3) {
@@ -667,7 +607,6 @@
             }
             state.step = n;
             showStep(n);
-            renderStepper();
         }
 
         function init() {
@@ -723,14 +662,9 @@
                 state.schedule = id ? { name: $(this).find('option:selected').text() } : null;
                 setNextEnabled(1, !!id);
                 resetSubjectsAndStudents();
-                renderStepper();
                 if (!id) return;
                 loadScheduleDetail(id);
                 loadSubjects(id);
-            });
-
-            $('[data-goto]').on('click', function () {
-                gotoStep(parseInt($(this).attr('data-goto'), 10));
             });
 
             $('#btnNext1').on('click', function () { gotoStep(2); });
@@ -784,7 +718,6 @@
             $('#btnSave').on('click', function () { submitSave(false); });
             $('#btnSubmitAll').on('click', function () { submitSave(true); });
 
-            renderStepper();
             showStep(1);
         }
 
