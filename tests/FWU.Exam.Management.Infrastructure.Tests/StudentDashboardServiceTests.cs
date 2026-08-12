@@ -437,7 +437,6 @@ public class StudentDashboardServiceTests
 
     private static void SeedLocationData(AppDbContext ctx)
     {
-        ctx.TenantColleges.Add(new TenantCollege { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId });
         ctx.Provinces.Add(new Province { Id = 1, ProvinceName = "Bagmati", IsActive = true });
         ctx.Districts.Add(new District { Id = 1, ProvinceId = 1, DistrictName = "Kathmandu", IsActive = true });
         ctx.LocalLevels.Add(new LocalLevel
@@ -563,7 +562,6 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
-            ctx.TenantColleges.Add(new TenantCollege { TenantId = TestData.TenantId, CollegeId = TestData.CollegeId });
             var sr = TestData.StudentRegistration(1, "student@example.com");
             sr.RegistrationNumber = "REG-SPECIAL";
             ctx.StudentRegistrations.Add(sr);

@@ -125,7 +125,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             {
                 if (!string.IsNullOrEmpty(sr.RegistrationNumber))
                 {
-                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+                    // Students have UserName = RegistrationNumber; legacy rows stored the
+                    // registration number in the Email column instead.
+                    var appUser = await context.Users.FirstOrDefaultAsync(u =>
+                        u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
+                        || (u.Email != null && u.Email == sr.RegistrationNumber));
                     if (appUser != null)
                     {
                         admitCard.PhotoPath ??= appUser.ProfilePath;
@@ -353,7 +357,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         if (voucher?.StudentRegistrationId == null) return null;
         var sr = await context.StudentRegistrations.FindAsync(voucher.StudentRegistrationId.Value);
         if (sr?.RegistrationNumber == null) return null;
-        return await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+        // Students have UserName = RegistrationNumber; legacy rows stored the
+        // registration number in the Email column instead.
+        return await context.Users.FirstOrDefaultAsync(u =>
+            u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
+            || (u.Email != null && u.Email == sr.RegistrationNumber));
     }
 
     private async Task<string?> ResolveControllerSignatureAsync()

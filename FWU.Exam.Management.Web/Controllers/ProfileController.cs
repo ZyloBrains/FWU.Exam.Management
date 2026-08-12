@@ -1,3 +1,4 @@
+using System.Text;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
@@ -12,6 +13,7 @@ using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
@@ -22,6 +24,7 @@ public class ProfileController(
     AppDbContext context,
     IStudentDashboardService studentDashboardService,
     IFileUploadHelper fileUploadHelper,
+    INotificationService notificationService,
     ILogger<ProfileController> logger) : Controller
 {
     public async Task<IActionResult> Index()
@@ -64,6 +67,7 @@ public class ProfileController(
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? Role.Student;
         var isStudent = roles.Contains(Role.Student);
+        var emailChanged = false;
 
         if (!isStudent)
         {
@@ -125,8 +129,8 @@ public class ProfileController(
                 }
 
                 user.Email = trimmedEmail;
-                user.UserName = trimmedEmail;
                 user.EmailConfirmed = false;
+                emailChanged = true;
             }
         }
 
@@ -186,6 +190,11 @@ public class ProfileController(
                 ModelState.AddModelError(string.Empty, error.Description);
             TempData["ErrorMessage"] = "Failed to save profile. Please try again.";
             return RedirectToAction(nameof(Index));
+        }
+
+        if (emailChanged)
+        {
+            await SendEmailVerificationAsync(user);
         }
 
         if (roles.Contains(Role.Student) && registration != null)
@@ -271,6 +280,37 @@ public class ProfileController(
 
         TempData["SuccessMessage"] = "Profile updated successfully.";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task SendEmailVerificationAsync(AppUser user)
+    {
+        try
+        {
+            var email = await userManager.GetEmailAsync(user);
+            if (string.IsNullOrWhiteSpace(email))
+                return;
+
+            var userId = await userManager.GetUserIdAsync(user);
+            var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var callbackUrl = Url.Action(
+                "ConfirmEmail",
+                "Account",
+                new { area = "Identity", userId, code },
+                protocol: Request.Scheme);
+
+            await notificationService.SendAsync(email, null, "confirm_email", new Dictionary<string, string>
+            {
+                ["UserName"] = user.FullName ?? email,
+                ["CallbackUrl"] = callbackUrl ?? string.Empty
+            });
+
+            TempData["InfoMessage"] = "A verification link has been sent to your new email address. You can verify it from the notification and use it to log in afterwards.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send email verification to {Email}", user.Email);
+        }
     }
 
     private async Task<ProfileBaseViewModel> BuildBaseViewModelAsync(AppUser user, List<string> roles, string primaryRole)
