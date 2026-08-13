@@ -115,7 +115,7 @@ public class UserController(
     {
         var assignableRoles = await GetAssignableRolesAsync();
         var roles = (await roleManager.Roles.Select(r => r.Name).ToListAsync())
-            .Where(r => r != null && assignableRoles.Contains(r));
+            .Where(r => r != null && assignableRoles.Contains(r) && r != Role.Student);
         ViewBag.RolesList = roles;
         ViewBag.Faculties = new SelectList(await context.Faculties.ApplyScope(userContext).ToListAsync(), "Id", "Name");
         ViewBag.Colleges = new SelectList(await context.Colleges.ApplyScope(userContext).ToListAsync(), "Id", "Name");
@@ -132,6 +132,9 @@ public class UserController(
 
         if (model.SelectedRole == Role.SuperAdmin)
             ModelState.AddModelError(nameof(model.SelectedRole), "Cannot create a Super Admin user.");
+
+        if (model.SelectedRole == Role.Student)
+            ModelState.AddModelError(nameof(model.SelectedRole), "Students are created via Student Registration or the batch create tool.");
 
         if (model.SelectedRole == Role.FacultyAdmin && callerRole != Role.SuperAdmin)
             ModelState.AddModelError(nameof(model.SelectedRole), "Only Super Admin can create a Faculty Admin user.");
@@ -254,8 +257,11 @@ public class UserController(
             if (!ModelState.IsValid)
                 return await ReloadEditViewAsync(id, model);
 
+            var targetRoles = await userManager.GetRolesAsync(user);
             user.Email = model.Email;
-            user.UserName = model.Email;
+            // Student username is the registration number; keep it separate from the email.
+            if (!targetRoles.Contains(Role.Student))
+                user.UserName = model.Email;
             user.FullName = model.FullName;
             user.CollegeId = model.CollegeId;
             // CollegeAdmin cannot manage faculty assignments; preserve the existing value.
