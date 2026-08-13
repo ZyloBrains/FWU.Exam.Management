@@ -90,11 +90,11 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Published Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PublishedDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.PublishedDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.ExtendedDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
             </div>
         </div>
@@ -105,11 +105,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">College Approval Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeApprovalDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Admission Card Release Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AdmissionCardReleaseDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>                
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date Charge</p>
@@ -317,7 +317,7 @@
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Center</th>
-                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date (BS)</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date (AD)</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">Start</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">End</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Remarks</th>
@@ -356,7 +356,7 @@
                                             </select>
                                         </td>
                                         <td class="px-3 py-2">
-                                            <input type="text" name="examDate" value="@(slot?.ExamDate)" placeholder="YYYY-MM-DD" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                            <input type="date" name="examDate" value="@(slot?.ExamDate)" min="@(Model.StartDate?.ToString("yyyy-MM-dd"))" max="@(Model.EndDate?.ToString("yyyy-MM-dd"))" class="w-36 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="time" name="startTime" value="@(slot?.StartTime.ToString("HH:mm") ?? Model.StartTime.ToString("HH:mm"))" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />

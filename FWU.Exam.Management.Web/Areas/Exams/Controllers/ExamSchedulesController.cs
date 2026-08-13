@@ -29,8 +29,6 @@ public class ExamSchedulesController(
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
     {
-        await examScheduleService.DeactivateExpiredSchedulesAsync();
-
         var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
 
         var scheduleIds = items.Select(i => i.Id).ToList();
@@ -213,6 +211,33 @@ public class ExamSchedulesController(
             .Where(es => es.ExamScheduleId == examScheduleId)
             .ToDictionaryAsync(es => es.SubjectOfferingId);
 
+        var errors = new List<string>();
+        for (var i = 0; i < subjectOfferingId.Length; i++)
+        {
+            var offeringId = subjectOfferingId[i];
+            if (!validOfferingIds.Contains(offeringId)) continue;
+
+            var date = (i < (examDate?.Length ?? 0) ? examDate![i] : null)?.Trim();
+            if (string.IsNullOrEmpty(date)) continue;
+
+            if (!DateOnly.TryParse(date, out var parsedDate))
+            {
+                errors.Add($"Subject '{offeringId}' has an invalid exam date '{date}'. Use YYYY-MM-DD.");
+                continue;
+            }
+
+            if (schedule.StartDate.HasValue && parsedDate < schedule.StartDate.Value)
+                errors.Add($"Subject '{offeringId}' exam date {date} is before the schedule start date {schedule.StartDate.Value:yyyy-MM-dd}.");
+            if (schedule.EndDate.HasValue && parsedDate > schedule.EndDate.Value)
+                errors.Add($"Subject '{offeringId}' exam date {date} is after the schedule end date {schedule.EndDate.Value:yyyy-MM-dd}.");
+        }
+
+        if (errors.Count > 0)
+        {
+            TempData["ErrorMessage"] = string.Join(" ", errors.Take(3)) + (errors.Count > 3 ? " (and more)" : "");
+            return RedirectToAction(nameof(Details), new { id = examScheduleId });
+        }
+
         var added = 0;
         var updated = 0;
 
@@ -349,6 +374,7 @@ public class ExamSchedulesController(
                 if (existing is null) return NotFound();
                 examSchedule.TenantId = existing.TenantId;
                 await examScheduleService.UpdateExamScheduleAsync(examSchedule);
+                await examScheduleService.DeactivateExpiredSchedulesAsync();
             }
             catch (InvalidOperationException ex)
             {

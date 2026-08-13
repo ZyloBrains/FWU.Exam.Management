@@ -9,6 +9,7 @@
     var currentSearch = ViewBag.Search as string ?? "";
     var currentSort = ViewBag.Sort as string ?? "StartDate";
     var currentSortDir = ViewBag.SortDir as string ?? "desc";
+    var today = DateOnly.FromDateTime(DateTime.Today);
 }
 
 <div class="space-y-6">
@@ -105,7 +106,11 @@
                             <div>@(item.EndDateBs ?? "-")</div>
                         </td>
                         <td class="px-4 py-3">
-                            @if (item.IsActive)
+                            @if (item.IsActive && item.EndDate.HasValue && item.EndDate.Value < today)
+                            {
+                                <span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Expired</span>
+                            }
+                            else if (item.IsActive)
                             {
                                 <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
                             }
@@ -183,7 +188,11 @@
                             </div>
                         </div>
                         <div>
-                            @if (item.IsActive)
+                            @if (item.IsActive && item.EndDate.HasValue && item.EndDate.Value < today)
+                            {
+                                <span class="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Expired</span>
+                            }
+                            else if (item.IsActive)
                             {
                                 <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Active</span>
                             }

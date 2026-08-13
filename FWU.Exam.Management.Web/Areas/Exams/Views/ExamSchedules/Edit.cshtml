@@ -102,12 +102,12 @@
                 </div>
                 <div>
                     <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Start Date (AD)</label>
-                    <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input asp-for="StartDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="EndDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">End Date (AD)</label>
-                    <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input asp-for="EndDate" type="date" min="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                     <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
@@ -225,12 +225,15 @@
 
         renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
 
-        var convertTimer;
+        var startDateBsTimer;
+        var endDateBsTimer;
+        var startDateTimer;
+        var endDateTimer;
         $("#StartDateBs").on("input", function () {
             var bs = $(this).val().trim();
             if (bs.length === 10) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(startDateBsTimer);
+                startDateBsTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
                         if (data.adDate) $("#StartDate").val(data.adDate);
                     });
@@ -240,8 +243,8 @@
         $("#EndDateBs").on("input", function () {
             var bs = $(this).val().trim();
             if (bs.length === 10) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(endDateBsTimer);
+                endDateBsTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertBsToAd"), { bsDate: bs }, function (data) {
                         if (data.adDate) $("#EndDate").val(data.adDate);
                     });
@@ -251,8 +254,8 @@
         $("#StartDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(startDateTimer);
+                startDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#StartDateBs").val(data.bsDate);
                     });
@@ -262,8 +265,8 @@
         $("#EndDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(endDateTimer);
+                endDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#EndDateBs").val(data.bsDate);
                     });

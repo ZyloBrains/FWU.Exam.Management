@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Helpers;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -55,7 +56,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
     public async Task DeactivateExpiredSchedulesAsync()
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTime.Today);
         var expired = await context.ExamSchedules
             .Where(e => e.IsActive && e.EndDate != null && e.EndDate < today)
             .ToListAsync();
@@ -144,6 +145,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
     public async Task CreateExamScheduleAsync(ExamSchedule examSchedule)
     {
         ValidateScheduleDates(examSchedule, existing: null);
+        EnsureBsDates(examSchedule);
         context.ExamSchedules.Add(examSchedule);
         await context.SaveChangesAsync();
     }
@@ -155,6 +157,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             throw new InvalidOperationException("Exam schedule not found.");
 
         ValidateScheduleDates(examSchedule, existing);
+        EnsureBsDates(examSchedule);
 
         if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
         {
@@ -178,6 +181,21 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         context.Entry(existing).CurrentValues.SetValues(examSchedule);
         await context.SaveChangesAsync();
+    }
+
+    private static void EnsureBsDates(ExamSchedule schedule)
+    {
+        if (schedule.StartDate.HasValue
+            && !NepaliDateConverter.TryParseBs(schedule.StartDateBs, out _))
+        {
+            schedule.StartDateBs = NepaliDateConverter.AdToBsString(schedule.StartDate.Value);
+        }
+
+        if (schedule.EndDate.HasValue
+            && !NepaliDateConverter.TryParseBs(schedule.EndDateBs, out _))
+        {
+            schedule.EndDateBs = NepaliDateConverter.AdToBsString(schedule.EndDate.Value);
+        }
     }
 
     private static void ValidateScheduleDates(ExamSchedule schedule, ExamSchedule? existing)

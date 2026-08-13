@@ -239,12 +239,13 @@
 
         renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
 
-        var convertTimer;
+        var startDateTimer;
+        var endDateTimer;
         $("#StartDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(startDateTimer);
+                startDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#StartDateBs").val(data.bsDate);
                     });
@@ -254,8 +255,8 @@
         $("#EndDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(endDateTimer);
+                endDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#EndDateBs").val(data.bsDate);
                     });
