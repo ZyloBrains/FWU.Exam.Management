@@ -18,16 +18,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 {
     public async Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email)
     {
-        return await context.StudentRegistrations!
-            .AsNoTracking()
-            .Include(s => s.AcademicYear)
-            .Include(s => s.Level)
-            .Include(s => s.College)
-            .Include(s => s.Gender)
-            .Include(s => s.StudentCategory)
-            .Include(s => s.Ethnicity)
-            .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
-            .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+        return await RegistrationQuery()
             .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
     }
 
@@ -38,23 +29,37 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
         if (admission != null)
         {
-            var registration = await context.StudentRegistrations!
-                .AsNoTracking()
-                .Include(s => s.AcademicYear)
-                .Include(s => s.Level)
-                .Include(s => s.College)
-                .Include(s => s.Gender)
-                .Include(s => s.StudentCategory)
-                .Include(s => s.Ethnicity)
-                .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
-                .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+            var registration = await RegistrationQuery()
                 .FirstOrDefaultAsync(s => s.StudentAdmissionId == admission.Id);
             if (registration != null) return registration;
         }
 
         var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-        return user?.Email == null ? null : await GetStudentRegistrationByEmailAsync(user.Email);
+        if (user == null) return null;
+
+        // Students authenticate with their registration number (UserName == RegistrationNumber),
+        // so fall back to that link before trying email.
+        if (!string.IsNullOrWhiteSpace(user.UserName))
+        {
+            var byRegistrationNumber = await RegistrationQuery()
+                .FirstOrDefaultAsync(s => s.RegistrationNumber != null && s.RegistrationNumber == user.UserName);
+            if (byRegistrationNumber != null) return byRegistrationNumber;
+        }
+
+        return user.Email == null ? null : await GetStudentRegistrationByEmailAsync(user.Email);
     }
+
+    private IQueryable<StudentRegistration> RegistrationQuery() =>
+        context.StudentRegistrations!
+            .AsNoTracking()
+            .Include(s => s.AcademicYear)
+            .Include(s => s.Level)
+            .Include(s => s.College)
+            .Include(s => s.Gender)
+            .Include(s => s.StudentCategory)
+            .Include(s => s.Ethnicity)
+            .Include(s => s.PermanentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+            .Include(s => s.CurrentAddress).ThenInclude(a => a!.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province);
 
     public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
@@ -912,9 +917,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
     public async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath)
     {
         var missing = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(userEmail))
-            missing.Add("Email Address");
 
         var registration = !string.IsNullOrWhiteSpace(userId)
             ? await GetStudentRegistrationByUserIdAsync(userId)

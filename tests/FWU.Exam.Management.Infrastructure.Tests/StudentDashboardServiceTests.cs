@@ -467,6 +467,7 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
             SeedLocationData(ctx);
             ctx.StudentRegistrations.Add(CompleteRegistration(1));
         });
@@ -485,7 +486,7 @@ public class StudentDashboardServiceTests
 
         var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, null, null, null, null);
 
-        Assert.Equal(new[] { "Email Address", "Phone Number", "Province", "District", "Local Level", "Gender", "Ethnicity", "Profile Photo", "Student Signature" }, missing);
+        Assert.Equal(new[] { "Phone Number", "Province", "District", "Local Level", "Gender", "Ethnicity", "Profile Photo", "Student Signature" }, missing);
     }
 
     [Fact]
@@ -509,6 +510,7 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
             SeedLocationData(ctx);
             ctx.StudentRegistrations.Add(CompleteRegistration(1));
         });
@@ -541,6 +543,7 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
             SeedLocationData(ctx);
             ctx.StudentRegistrations.Add(CompleteRegistration(1));
         });
@@ -562,6 +565,7 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
             var sr = TestData.StudentRegistration(1, "student@example.com");
             sr.RegistrationNumber = "REG-SPECIAL";
             ctx.StudentRegistrations.Add(sr);
@@ -581,6 +585,7 @@ public class StudentDashboardServiceTests
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
             SeedLocationData(ctx);
             ctx.Users.Add(TestData.User(UserId, Email));
             var sr = CompleteRegistration(1);
@@ -595,5 +600,28 @@ public class StudentDashboardServiceTests
         Assert.NotNull(reg);
         Assert.Equal(1, reg!.Id);
         Assert.Equal(1, reg.StudentAdmissionId);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByUserIdAsync_ResolvesViaUserNameRegistrationNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            SeedLocationData(ctx);
+            var sr = CompleteRegistration(1);
+            sr.StudentAdmissionId = null;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.Users.Local.Single().UserName = sr.RegistrationNumber;
+        });
+        var service = CreateService(db);
+
+        var reg = await service.GetStudentRegistrationByUserIdAsync(UserId);
+
+        Assert.NotNull(reg);
+        Assert.Equal(1, reg!.Id);
+        Assert.Equal("REG1", reg.RegistrationNumber);
     }
 }
