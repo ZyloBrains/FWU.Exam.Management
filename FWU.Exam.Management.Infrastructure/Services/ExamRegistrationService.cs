@@ -378,18 +378,6 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .ToListAsync();
     }
 
-    public async Task RejectExamRegistrationAsync(int id, string? remarks)
-    {
-        var examRegistration = await context.ExamRegistrations.FindAsync(id);
-        if (examRegistration != null && examRegistration.Status == RegistrationStatus.Pending)
-        {
-            examRegistration.Status = RegistrationStatus.Rejected;
-            if (!string.IsNullOrWhiteSpace(remarks))
-                examRegistration.Remarks = remarks;
-            await context.SaveChangesAsync();
-        }
-    }
-
     private async Task<List<ExamFormAdminDto>> BuildFormsAsync(List<ExamRegistration> items)
     {
         var registrationIds = items.Select(i => i.Id).ToList();
@@ -443,14 +431,24 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Distinct()
             .ToList();
 
+        // Students have UserName = RegistrationNumber; legacy rows stored the
+        // registration number in the Email column instead.
         var users = regNumbers.Count > 0
             ? await context.Users
                 .AsNoTracking()
-                .Where(u => u.Email != null && regNumbers.Contains(u.Email))
-                .Select(u => new { u.Email, u.ProfilePath, u.SignaturePath })
+                .Where(u => (u.UserName != null && regNumbers.Contains(u.UserName))
+                    || (u.Email != null && regNumbers.Contains(u.Email)))
+                .Select(u => new { u.UserName, u.Email, u.ProfilePath, u.SignaturePath })
                 .ToListAsync()
             : [];
-        var userLookup = users.ToDictionary(u => u.Email!);
+        var usersByUserName = users
+            .Where(u => u.UserName != null)
+            .GroupBy(u => u.UserName!)
+            .ToDictionary(g => g.Key, g => g.First());
+        var usersByEmail = users
+            .Where(u => u.Email != null)
+            .GroupBy(u => u.Email!)
+            .ToDictionary(g => g.Key, g => g.First());
 
         var subjectKeys = items
             .Where(i => i.ExamSchedule != null)
@@ -496,10 +494,12 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 contactNumber = sr.ContactNumber;
                 dateOfBirthAD = sr.DateOfBirthAD;
 
-                if (!string.IsNullOrEmpty(sr.RegistrationNumber) && userLookup.TryGetValue(sr.RegistrationNumber, out var u))
+                if (!string.IsNullOrEmpty(sr.RegistrationNumber)
+                    && (usersByUserName.TryGetValue(sr.RegistrationNumber, out var studentUser)
+                        || usersByEmail.TryGetValue(sr.RegistrationNumber, out studentUser)))
                 {
-                    photoPath = u.ProfilePath;
-                    signaturePath = u.SignaturePath;
+                    photoPath = studentUser.ProfilePath;
+                    signaturePath = studentUser.SignaturePath;
                 }
 
                 if (paymentLogLookup.TryGetValue((er.ExamScheduleId, srId), out var pl))
@@ -565,7 +565,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 RegistrationDate = er.RegistrationDate,
                 VerifiedByUsername = er.VerifiedByUsername,
                 VerifiedDate = er.VerifiedDate,
-                CanApprove = er.Status == RegistrationStatus.Pending
+                CanApprove = er.Status == RegistrationStatus.Pending,
+                CanAdminApprove = er.Status == RegistrationStatus.CollegeVerified
             };
         }).ToList();
 

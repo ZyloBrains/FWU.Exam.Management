@@ -214,18 +214,20 @@
                                         data-id="@item.ExamRegistrationId" data-show-actions="false" title="View Detail">
                                     <i class="fas fa-eye text-xs"></i>
                                 </button>
-                                @if (item.CanApprove)
+                                @if (item.CanAdminApprove && HasPerm("examregistration.approve"))
                                 {
-                                    <button type="button" class="reject-btn p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                            data-reject-id="@item.ExamRegistrationId"
-                                            data-reject-academic-year-id="@currentAcademicYearId"
-                                            data-reject-level-id="@currentLevelId"
-                                            data-reject-exam-schedule-id="@currentExamScheduleId"
-                                            data-reject-search="@currentSearch"
-                                            data-reject-page="@currentPage"
-                                            title="Reject">
-                                        <i class="fas fa-ban text-xs"></i>
-                                    </button>
+                                    <form method="post" asp-action="Approve" asp-area="Exams" onsubmit="return confirm('Final approve this student exam form?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.ExamRegistrationId" />
+                                        <input type="hidden" name="academicYearId" value="@currentAcademicYearId" />
+                                        <input type="hidden" name="levelId" value="@currentLevelId" />
+                                        <input type="hidden" name="examScheduleId" value="@currentExamScheduleId" />
+                                        <input type="hidden" name="search" value="@currentSearch" />
+                                        <input type="hidden" name="page" value="@currentPage" />
+                                        <button type="submit" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Final Approve">
+                                            <i class="fas fa-check-double text-xs"></i>
+                                        </button>
+                                    </form>
                                 }
                             </div>
                         </td>
@@ -271,15 +273,20 @@
                             data-id="@item.ExamRegistrationId" data-show-actions="true"><i class="fas fa-edit mr-1"></i> Edit</button>
                     <button type="button" class="review-btn flex-1 text-center py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
                             data-id="@item.ExamRegistrationId" data-show-actions="false"><i class="fas fa-eye mr-1"></i> Detail</button>
-                    @if (item.CanApprove)
+                    @if (item.CanAdminApprove && HasPerm("examregistration.approve"))
                     {
-                        <button type="button" class="reject-btn flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100"
-                                data-reject-id="@item.ExamRegistrationId"
-                                data-reject-academic-year-id="@currentAcademicYearId"
-                                data-reject-level-id="@currentLevelId"
-                                data-reject-exam-schedule-id="@currentExamScheduleId"
-                                data-reject-search="@currentSearch"
-                                data-reject-page="@currentPage"><i class="fas fa-ban mr-1"></i> Reject</button>
+                        <form method="post" asp-action="Approve" asp-area="Exams" onsubmit="return confirm('Final approve this student exam form?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.ExamRegistrationId" />
+                            <input type="hidden" name="academicYearId" value="@currentAcademicYearId" />
+                            <input type="hidden" name="levelId" value="@currentLevelId" />
+                            <input type="hidden" name="examScheduleId" value="@currentExamScheduleId" />
+                            <input type="hidden" name="search" value="@currentSearch" />
+                            <input type="hidden" name="page" value="@currentPage" />
+                            <button type="submit" class="flex-1 text-center py-2 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100">
+                                <i class="fas fa-check-double mr-1"></i> Final Approve
+                            </button>
+                        </form>
                     }
                 </div>
             </div>
@@ -336,39 +343,6 @@
             <p class="text-sm text-gray-500 max-w-md mx-auto">Select an academic year, level and exam schedule (or enter a registration number to search) and click <span class="font-semibold text-gray-700">Search</span> to load the student exam forms.</p>
         </div>
     }
-</div>
-
-<div id="rejectModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-        <div class="flex items-start justify-between mb-4">
-            <div>
-                <h3 class="text-lg font-bold text-gray-900">Reject Exam Form</h3>
-                <p class="text-sm text-gray-500 mt-0.5">The remark is optional and will be saved with the form.</p>
-            </div>
-            <button type="button" class="close-reject-modal text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form asp-action="Reject" asp-area="Exams" method="post">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="id" id="rejectId" />
-            <input type="hidden" name="academicYearId" id="rejectAcademicYearId" />
-            <input type="hidden" name="levelId" id="rejectLevelId" />
-            <input type="hidden" name="examScheduleId" id="rejectExamScheduleId" />
-            <input type="hidden" name="search" id="rejectSearch" />
-            <input type="hidden" name="page" id="rejectPage" />
-            <label class="block text-xs font-semibold text-gray-600 mb-1" for="rejectRemarks">Remarks (optional)</label>
-            <textarea id="rejectRemarks" name="remarks" rows="3"
-                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                      placeholder="Reason for rejecting this form..."></textarea>
-            <div class="mt-4 flex justify-end gap-2">
-                <button type="button" class="close-reject-modal px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
-                    <i class="fas fa-ban mr-1"></i> Reject
-                </button>
-            </div>
-        </form>
-    </div>
 </div>
 
 @section Scripts {
@@ -451,7 +425,7 @@
             var reviewPanel = $('#reviewPanel');
 
             function loadReview(id, showActions) {
-                reviewPanel.removeClass('hidden').html('<div class="text-center py-12 bg-white rounded-xl border border-indigo-200 shadow-sm"><i class="fas fa-spinner fa-spin text-3xl text-indigo-300"></i></div>');
+                reviewPanel.removeClass('hidden').html('<div class="text-center py-12 bg-white rounded-xl border border-blue-200 shadow-sm"><i class="fas fa-spinner fa-spin text-3xl text-blue-400"></i></div>');
                 $.get(tenantUrl('/Exams/ExamRegistrations/StudentFormReview'), {
                     id: id,
                     showActions: showActions,
@@ -475,24 +449,6 @@
             $(document).on('click', '.close-review-panel', function () {
                 reviewPanel.addClass('hidden').html('');
             });
-
-            function openRejectModal($btn) {
-                $('#rejectId').val($btn.data('reject-id'));
-                $('#rejectAcademicYearId').val($btn.data('reject-academic-year-id') || '');
-                $('#rejectLevelId').val($btn.data('reject-level-id') || '');
-                $('#rejectExamScheduleId').val($btn.data('reject-exam-schedule-id') || '');
-                $('#rejectSearch').val($btn.data('reject-search') || '');
-                $('#rejectPage').val($btn.data('reject-page') || '1');
-                $('#rejectModal').removeClass('hidden').addClass('flex');
-            }
-
-            function closeRejectModal() {
-                $('#rejectModal').addClass('hidden').removeClass('flex');
-            }
-
-            $(document).on('click', '.reject-btn', function () { openRejectModal($(this)); });
-            $('.close-reject-modal').on('click', closeRejectModal);
-            $('#rejectModal').on('click', function (e) { if (e.target === this) closeRejectModal(); });
         });
     </script>
 }

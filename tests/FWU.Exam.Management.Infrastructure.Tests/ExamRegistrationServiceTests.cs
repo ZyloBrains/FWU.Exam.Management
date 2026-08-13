@@ -96,6 +96,18 @@ public class ExamRegistrationServiceTests
         ctx.ExamRegistrations.AddRange(pending, otherCollegePending, approved, notStudentApplied);
     }
 
+    private static void SeedFormsWithUserDocuments(AppDbContext ctx)
+    {
+        SeedForms(ctx);
+
+        // Students have UserName = RegistrationNumber and a personal Email.
+        var studentUser = TestData.User("stu-user-1", "student1@test.com");
+        studentUser.UserName = "REG1";
+        studentUser.ProfilePath = "/uploads/photos/student1.jpg";
+        studentUser.SignaturePath = "/uploads/signatures/student1.jpg";
+        ctx.Users.Add(studentUser);
+    }
+
     private static void SeedMasterLevelForm(AppDbContext ctx)
     {
         SeedForms(ctx);
@@ -159,10 +171,12 @@ public class ExamRegistrationServiceTests
 
         var pending = Assert.Single(result.Forms, f => f.ExamRegistrationId == 1);
         Assert.True(pending.CanApprove);
+        Assert.False(pending.CanAdminApprove);
         Assert.Equal(RegistrationStatus.Pending, pending.Status);
 
         var approved = Assert.Single(result.Forms, f => f.ExamRegistrationId == 3);
         Assert.False(approved.CanApprove);
+        Assert.True(approved.CanAdminApprove);
         Assert.Equal(RegistrationStatus.CollegeVerified, approved.Status);
 
         Assert.Equal(1, result.PendingApprovalCount);
@@ -286,20 +300,16 @@ public class ExamRegistrationServiceTests
     }
 
     [Fact]
-    public async Task RejectExamRegistrationAsync_SetsRejectedWithRemark_OnlyWhenPending()
+    public async Task GetStudentExamFormDetailAsync_ResolvesPhotoAndSignature_WhenUserNameMatchesRegistrationNumber()
     {
-        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedFormsWithUserDocuments);
         var service = CreateService(db);
 
-        await service.RejectExamRegistrationAsync(1, "Incomplete documents");
-        var rejected = db.Context.ExamRegistrations!.Single(r => r.Id == 1);
-        Assert.Equal(RegistrationStatus.Rejected, rejected.Status);
-        Assert.Equal("Incomplete documents", rejected.Remarks);
+        var detail = await service.GetStudentExamFormDetailAsync(1);
 
-        await service.RejectExamRegistrationAsync(3, "Late");
-        var approved = db.Context.ExamRegistrations!.Single(r => r.Id == 3);
-        Assert.Equal(RegistrationStatus.CollegeVerified, approved.Status);
-        Assert.Null(approved.Remarks);
+        Assert.NotNull(detail);
+        Assert.Equal("/uploads/photos/student1.jpg", detail!.PhotoPath);
+        Assert.Equal("/uploads/signatures/student1.jpg", detail.SignaturePath);
     }
 
     [Fact]

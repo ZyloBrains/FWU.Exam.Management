@@ -22,6 +22,8 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examregistration.view")]
 public class ExamRegistrationsController(
     IExamRegistrationService examRegistrationService,
+    IPermissionService permissionService,
+    UserManager<AppUser> userManager,
     AppDbContext context) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10, int? examScheduleId = null)
@@ -150,24 +152,14 @@ public class ExamRegistrationsController(
         return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
     }
 
-    [RequirePermission("examregistration.verify")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Reject(int id, string? remarks, int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1)
-    {
-        await examRegistrationService.RejectExamRegistrationAsync(id, remarks);
-        TempData["SuccessMessage"] = "Student exam form rejected successfully!";
-        return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
-    }
-
     [RequirePermission("examregistration.approve")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Approve(int id)
+    public async Task<IActionResult> Approve(int id, int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1)
     {
         await examRegistrationService.ApproveExamRegistrationAsync(id);
         TempData["SuccessMessage"] = "Exam registration approved successfully!";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
     }
 
     [RequirePermission("examregistration.view")]
@@ -207,7 +199,13 @@ public class ExamRegistrationsController(
         var form = await examRegistrationService.GetStudentExamFormDetailAsync(id);
         if (form == null) return NotFound();
 
+        var currentUser = await userManager.GetUserAsync(User);
+        var userPerms = currentUser != null
+            ? await permissionService.GetUserPermissionsAsync(currentUser.Id)
+            : new List<string>();
+
         ViewBag.ShowActions = showActions;
+        ViewBag.CanAdminApprove = userPerms.Contains("examregistration.approve");
         ViewBag.AcademicYearId = academicYearId;
         ViewBag.LevelId = levelId;
         ViewBag.ExamScheduleId = examScheduleId;

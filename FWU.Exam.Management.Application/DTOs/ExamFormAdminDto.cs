@@ -30,6 +30,7 @@ public class ExamFormAdminDto
     public string? VerifiedByUsername { get; set; }
     public DateTime? VerifiedDate { get; set; }
     public bool CanApprove { get; set; }
+    public bool CanAdminApprove { get; set; }
 }
 
 public class ExamFormSubjectDto

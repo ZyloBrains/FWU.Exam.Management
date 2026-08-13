@@ -2,23 +2,25 @@
 
 @{
     var showActions = ViewBag.ShowActions as bool? ?? true;
+    var canAdminApprove = ViewBag.CanAdminApprove as bool? ?? false;
     var academicYearId = ViewBag.AcademicYearId as int?;
     var levelId = ViewBag.LevelId as int?;
     var examScheduleId = ViewBag.ExamScheduleId as int?;
     var search = ViewBag.Search as string ?? "";
     var page = ViewBag.Page as int? ?? 1;
     var isPending = Model.Status == FWU.Exam.Management.Domain.Enums.RegistrationStatus.Pending;
+    var isCollegeVerified = Model.Status == FWU.Exam.Management.Domain.Enums.RegistrationStatus.CollegeVerified;
 }
 
-<div class="bg-white rounded-xl shadow-lg border border-indigo-200 overflow-hidden">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4">
+<div class="bg-white rounded-xl shadow-lg border border-blue-200 overflow-hidden">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-blue-600 border-b-4 border-blue-400 px-5 py-4">
         <div class="flex items-center gap-3">
             <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
                 <i class="fas fa-clipboard-check text-white"></i>
             </div>
             <div>
                 <h2 class="text-white font-bold text-base">Review Exam Form</h2>
-                <p class="text-indigo-100 text-xs">@(Model.StudentName ?? "N/A") &middot; @(Model.RegistrationNumber ?? "-")</p>
+                <p class="text-blue-100 text-xs">@(Model.StudentName ?? "N/A") &middot; @(Model.RegistrationNumber ?? "-")</p>
             </div>
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -32,19 +34,25 @@
                     <input type="hidden" name="examScheduleId" value="@examScheduleId" />
                     <input type="hidden" name="search" value="@search" />
                     <input type="hidden" name="page" value="@(page)" />
-                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-lg shadow transition-colors">
+                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg shadow transition-colors">
                         <i class="fas fa-check text-xs"></i> Approve
                     </button>
                 </form>
-                <button type="button" data-reject-id="@Model.ExamRegistrationId"
-                        data-reject-academic-year-id="@academicYearId"
-                        data-reject-level-id="@levelId"
-                        data-reject-exam-schedule-id="@examScheduleId"
-                        data-reject-search="@search"
-                        data-reject-page="@(page)"
-                        class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-400 text-white text-sm font-semibold rounded-lg shadow transition-colors">
-                    <i class="fas fa-times text-xs"></i> Reject
-                </button>
+            }
+            @if (showActions && isCollegeVerified && canAdminApprove)
+            {
+                <form asp-action="Approve" asp-area="Exams" method="post" class="flex-1 sm:flex-none" onsubmit="return confirm('Final approve this student exam form?');">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.ExamRegistrationId" />
+                    <input type="hidden" name="academicYearId" value="@academicYearId" />
+                    <input type="hidden" name="levelId" value="@levelId" />
+                    <input type="hidden" name="examScheduleId" value="@examScheduleId" />
+                    <input type="hidden" name="search" value="@search" />
+                    <input type="hidden" name="page" value="@(page)" />
+                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg shadow transition-colors">
+                        <i class="fas fa-check-double text-xs"></i> Final Approve
+                    </button>
+                </form>
             }
             <button type="button" class="close-review-panel w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors" title="Close">
                 <i class="fas fa-times"></i>
@@ -56,7 +64,7 @@
         <div class="lg:col-span-2 space-y-8">
             <div>
                 <h3 class="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2.5">
-                    <i class="fas fa-id-card text-indigo-500 mr-2"></i>Student Registration Details
+                    <i class="fas fa-id-card text-blue-600 mr-2"></i>Student Registration Details
                 </h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                     <div class="flex justify-between gap-3 border-b border-gray-50 pb-2.5">
@@ -104,7 +112,7 @@
 
             <div>
                 <h3 class="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2.5">
-                    <i class="fas fa-book text-indigo-500 mr-2"></i>Subject Details
+                    <i class="fas fa-book text-blue-600 mr-2"></i>Subject Details
                 </h3>
                 <div class="overflow-x-auto rounded-lg border border-gray-200">
                     <table class="w-full text-sm text-left">
@@ -131,7 +139,7 @@
                                         <td class="px-4 py-2.5 text-center">
                                             @if (subject.Theory)
                                             {
-                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-600"><i class="fas fa-check text-[10px]"></i></span>
+                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-blue-600"><i class="fas fa-check text-[10px]"></i></span>
                                             }
                                             else
                                             {
@@ -165,7 +173,7 @@
 
         <div>
             <h3 class="text-sm font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">
-                <i class="fas fa-folder text-indigo-500 mr-2"></i>Document
+                <i class="fas fa-folder text-blue-600 mr-2"></i>Document
             </h3>
             <div class="space-y-5">
                 <div class="rounded-lg border border-gray-200 p-4">

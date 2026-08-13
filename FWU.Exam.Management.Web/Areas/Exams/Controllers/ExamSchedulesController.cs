@@ -386,6 +386,8 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
+        ViewBag.RegistrationCount = await context.ExamRegistrations.CountAsync(r => r.ExamScheduleId == id.Value);
+
         return View(examSchedule);
     }
 
