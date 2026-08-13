@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
@@ -9,6 +10,7 @@ using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Web.ViewModels;
 using FWU.Exam.Management.Web.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -27,6 +29,7 @@ public class UserController(
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager,
     AppDbContext context,
+    IWebHostEnvironment env,
     IUserContext userContext,
     ITenantContext tenantContext,
     IMemoryCache cache,
@@ -183,6 +186,7 @@ public class UserController(
     public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string? role = null, bool? isActive = null, string sort = "email", string sortDir = "asc")
     {
         var (items, totalCount) = await GetFilteredPageAsync(page, pageSize, search, role, isActive, sort, sortDir);
+        var (officeName, officeAddress, logoBytes) = await ResolveLetterheadAsync();
 
         var document = Document.Create(container =>
         {
@@ -194,18 +198,18 @@ public class UserController(
 
                 pageCfg.Header().Column(header =>
                 {
-                    header.Item().Text("Users Report")
-                        .FontSize(18).Bold().FontColor("#2563eb");
-                    header.Item().PaddingTop(4).Text($"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
-                        .FontSize(9).FontColor(Colors.Grey.Darken2);
-                    header.Item().PaddingTop(2).Text($"Page: {page} | Page Size: {pageSize} | Total Records: {totalCount}")
-                        .FontSize(9).FontColor(Colors.Grey.Darken2);
-                    if (!string.IsNullOrWhiteSpace(search))
-                        header.Item().PaddingTop(2).Text($"Search Filter: {search}").FontSize(9).FontColor(Colors.Grey.Darken2);
-                    if (!string.IsNullOrWhiteSpace(role))
-                        header.Item().PaddingTop(2).Text($"Role Filter: {role}").FontSize(9).FontColor(Colors.Grey.Darken2);
-                    if (isActive.HasValue)
-                        header.Item().PaddingTop(2).Text($"Status Filter: {(isActive.Value ? "Active" : "Inactive")}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                    header.Item().ShowIf(c => c.PageNumber == 1).Column(letterhead =>
+                    {
+                        if (logoBytes != null)
+                            letterhead.Item().AlignCenter().Width(70).Image(logoBytes).FitWidth();
+                        letterhead.Item().PaddingTop(logoBytes != null ? 4 : 0).AlignCenter().Text("Far Western University")
+                            .FontSize(17).Bold().FontColor("#1a5276");
+                        letterhead.Item().PaddingTop(2).AlignCenter().Text(officeName)
+                            .FontSize(10).SemiBold().FontColor(Colors.Grey.Darken3);
+                        letterhead.Item().PaddingTop(1).AlignCenter().Text(officeAddress)
+                            .FontSize(9).FontColor(Colors.Grey.Darken2);
+                        letterhead.Item().PaddingTop(8).LineHorizontal(1).LineColor("#1a5276");
+                    });
                 });
 
                 pageCfg.Content().PaddingTop(14).Table(table =>
@@ -246,11 +250,16 @@ public class UserController(
                     }
                 });
 
-                pageCfg.Footer().AlignCenter().Text(x =>
+                pageCfg.Footer().Column(footer =>
                 {
-                    x.CurrentPageNumber();
-                    x.Span(" / ");
-                    x.TotalPages();
+                    footer.Item().AlignCenter().Text("Far Western University - System Generated Report")
+                        .FontSize(8).FontColor(Colors.Grey.Darken2);
+                    footer.Item().PaddingTop(3).AlignCenter().Text(x =>
+                    {
+                        x.CurrentPageNumber();
+                        x.Span(" / ");
+                        x.TotalPages();
+                    });
                 });
             });
         });
@@ -259,6 +268,42 @@ public class UserController(
         var fileName = $"Users_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
         return File(pdfBytes, "application/pdf", fileName);
     }
+
+    private async Task<(string OfficeName, string OfficeAddress, byte[]? LogoBytes)> ResolveLetterheadAsync()
+    {
+        const string defaultOfficeName = "Office of Controller of Examinations";
+        const string defaultOfficeAddress = "Mahendranagar, Kanchanpur, Nepal";
+
+        var tenant = await context.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.OfficeCode == tenantContext.TenantCode);
+
+        var officeName = tenant != null && IsAscii(tenant.Name) && !string.IsNullOrWhiteSpace(tenant.Name)
+            ? tenant.Name
+            : defaultOfficeName;
+        var officeAddress = tenant != null && IsAscii(tenant.Address) && !string.IsNullOrWhiteSpace(tenant.Address)
+            ? tenant.Address
+            : defaultOfficeAddress;
+
+        byte[]? logoBytes = null;
+        var configuredLogo = tenant?.BannerImagePath ?? tenant?.LogoPath;
+        if (!string.IsNullOrWhiteSpace(configuredLogo) && env.WebRootPath != null)
+        {
+            var fullPath = Path.Combine(env.WebRootPath, configuredLogo.TrimStart('/', '\\').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(fullPath))
+                logoBytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+        }
+        if (logoBytes == null && env.WebRootPath != null)
+        {
+            var fallbackPath = Path.Combine(env.WebRootPath, "images", "fwu-logo-nobg.png");
+            if (System.IO.File.Exists(fallbackPath))
+                logoBytes = await System.IO.File.ReadAllBytesAsync(fallbackPath);
+        }
+
+        return (officeName, officeAddress, logoBytes);
+    }
+
+    private static bool IsAscii(string value) => value.All(c => c < 128);
 
     [HttpGet]
     public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string? role = null, bool? isActive = null, string sort = "email", string sortDir = "asc")
