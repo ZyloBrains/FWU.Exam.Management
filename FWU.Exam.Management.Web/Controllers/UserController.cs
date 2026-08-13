@@ -25,12 +25,26 @@ public class UserController(
     IBulkUserCreationService bulkUserCreationService,
     IAuditLogWriter auditLogWriter) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string? role = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
         IQueryable<AppUser> usersQuery = userManager.Users
             .Include(u => u.Faculty)
             .Include(u => u.College);
         usersQuery = usersQuery.ApplyScope(userContext);
+
+        var assignableRoles = await GetAssignableRolesAsync();
+        var scopedUserIds = usersQuery.Select(u => u.Id);
+        var rolesPresentInScope = await context.UserRoles
+            .Where(ur => scopedUserIds.Contains(ur.UserId))
+            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .Where(n => n != null)
+            .Select(n => n!)
+            .Distinct()
+            .ToListAsync();
+        ViewBag.RolesList = rolesPresentInScope
+            .Where(assignableRoles.Contains)
+            .OrderBy(n => n);
+        ViewBag.RoleFilter = role;
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -40,6 +54,17 @@ public class UserController(
                 (u.FullName != null && u.FullName.ToLower().Contains(s)) ||
                 (u.Faculty != null && u.Faculty.Name != null && u.Faculty.Name.ToLower().Contains(s)) ||
                 (u.College != null && u.College.Name != null && u.College.Name.ToLower().Contains(s)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(role) && assignableRoles.Contains(role))
+        {
+            var roleId = await context.Roles
+                .Where(r => r.Name == role)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+            if (roleId != null)
+                usersQuery = usersQuery.Where(u =>
+                    context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == roleId));
         }
 
         usersQuery = sortDir.ToLower() == "desc"
