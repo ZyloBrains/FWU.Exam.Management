@@ -35,10 +35,6 @@ public static class ActivityTypes
     public const string ExamScheduleCreated = "exam-schedule.created";
     public const string ExamScheduleUpdated = "exam-schedule.updated";
     public const string ExamScheduleDeleted = "exam-schedule.deleted";
-    public const string ExamScheduleSubmittedForApproval = "exam-schedule.submitted_for_approval";
-    public const string ExamScheduleApproved = "exam-schedule.approved";
-    public const string ExamScheduleRejected = "exam-schedule.rejected";
-    public const string ExamScheduleResubmitted = "exam-schedule.resubmitted";
     public const string EntranceSubmitted = "entrance.application.submitted";
     public const string EntranceUpdated = "entrance.application.updated";
     public const string EntranceApproved = "entrance.application.approved";

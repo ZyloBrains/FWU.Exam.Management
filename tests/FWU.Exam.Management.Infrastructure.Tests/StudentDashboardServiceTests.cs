@@ -20,6 +20,7 @@ public class StudentDashboardServiceTests
         new(db.Context, new TestUserContext(), NullLogger<StudentDashboardService>.Instance);
 
     private static DateOnly Past => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10));
+    private static DateOnly Future => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10));
 
     [Fact]
     public async Task GetExamSchedulesForStudentAsync_ReturnsEmpty_WhenStudentHasNoAdmission()
@@ -44,7 +45,7 @@ public class StudentDashboardServiceTests
             sr.StudentAdmissionId = 1;
             ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Future, null));
         });
 
         var student = db.Context.StudentRegistrations!.FirstOrDefault() ?? TestData.StudentRegistration(1, Email);
@@ -69,12 +70,12 @@ public class StudentDashboardServiceTests
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 2));
 
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));       // regular sem1 (enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Past, null));       // regular sem2 (enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(13, 3, TestData.Regular, Past, null));       // regular sem3 (not enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Past, null)); // supplementary sem2 (enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Past, null));      // entrance (excluded)
-            ctx.ExamSchedules.Add(TestData.Schedule(16, 2, TestData.Regular, Past, null, TestData.ProgramIdOther)); // other program
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Future, null));       // regular sem1 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Future, null));       // regular sem2 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(13, 3, TestData.Regular, Future, null));       // regular sem3 (not enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Future, null)); // supplementary sem2 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Future, null));      // entrance (excluded)
+            ctx.ExamSchedules.Add(TestData.Schedule(16, 2, TestData.Regular, Future, null, TestData.ProgramIdOther)); // other program
 
             ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 12));
             ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 12, 1));
@@ -211,7 +212,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenCollegeHasNotApproved()
+    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenStartDateIsInFuture()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -222,16 +223,8 @@ public class StudentDashboardServiceTests
             ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
-            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
-            {
-                Id = 1,
-                TenantId = TestData.TenantId,
-                ExamScheduleId = 11,
-                CollegeId = TestData.CollegeId,
-                Status = ExamScheduleApprovalStatus.Pending,
-                IsActive = true
-            });
+            var schedule = TestData.Schedule(11, 2, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)), null);
+            ctx.ExamSchedules.Add(schedule);
         });
 
         var student = db.Context.StudentRegistrations!.Single();
@@ -243,7 +236,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenCollegeApproved()
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenWithinDateWindow()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -254,17 +247,7 @@ public class StudentDashboardServiceTests
             ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
-            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
-            {
-                Id = 1,
-                TenantId = TestData.TenantId,
-                ExamScheduleId = 11,
-                CollegeId = TestData.CollegeId,
-                Status = ExamScheduleApprovalStatus.Approved,
-                ApprovedDate = DateTime.UtcNow,
-                IsActive = true
-            });
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Future, null));
         });
 
         var student = db.Context.StudentRegistrations!.Single();
@@ -277,7 +260,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenNoApprovalRequested()
+    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenEndDateHasPassed()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -289,6 +272,55 @@ public class StudentDashboardServiceTests
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenExtendedDateIsInFuture()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            var schedule = TestData.Schedule(11, 2, TestData.Regular, Past, null);
+            schedule.ExtendedDate = DateTime.UtcNow.AddDays(5);
+            ctx.ExamSchedules.Add(schedule);
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        var schedule = Assert.Single(result);
+        Assert.Equal(11, schedule.Id);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenNoDateWindowSet()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, null, null));
         });
 
         var student = db.Context.StudentRegistrations!.Single();

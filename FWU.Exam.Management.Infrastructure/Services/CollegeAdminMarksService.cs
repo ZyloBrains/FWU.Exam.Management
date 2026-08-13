@@ -17,7 +17,6 @@ public class CollegeAdminMarksService(
     IUserContext userContext,
     ICollegeAdminSubjectAssignmentService assignmentService,
     IGradeCalculationService gradeCalculationService,
-    IExamScheduleApprovalService approvalService,
     IAuditLogWriter auditLogWriter) : ICollegeAdminMarksService
 {
     public async Task<InternalMarksPageViewModel> GetInternalMarksPageAsync()

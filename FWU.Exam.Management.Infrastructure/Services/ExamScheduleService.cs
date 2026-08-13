@@ -41,7 +41,6 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 ExamFee = e.ExamFee,
                 PracticalSubjectFee = e.PracticalSubjectFee,
-                CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
@@ -58,7 +57,10 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         var expired = await context.ExamSchedules
-            .Where(e => e.IsActive && e.EndDate != null && e.EndDate < today)
+            .Where(e => e.IsActive
+                        && e.EndDate != null
+                        && ((e.ExtendedDate != null && DateOnly.FromDateTime(e.ExtendedDate.Value) < today)
+                            || (e.ExtendedDate == null && e.EndDate < today)))
             .ToListAsync();
 
         foreach (var schedule in expired)
@@ -94,7 +96,6 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 ExamFee = e.ExamFee,
                 PracticalSubjectFee = e.PracticalSubjectFee,
-                CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
@@ -131,7 +132,6 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 ExtendedDateCharge = e.ExtendedDateCharge,
                 ExamFee = e.ExamFee,
                 PracticalSubjectFee = e.PracticalSubjectFee,
-                CollegeApprovalDate = e.CollegeApprovalDate,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
                 AcademicYear = e.AcademicYear,
@@ -239,7 +239,6 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         await using var transaction = await context.Database.BeginTransactionAsync();
 
-        await context.ExamScheduleCollegeApprovals.Where(a => a.ExamScheduleId == id).ExecuteDeleteAsync();
         await context.ExamSlots.Where(s => s.ExamScheduleId == id).ExecuteDeleteAsync();
         await context.ExamRollNumberSetup.Where(r => r.ExamScheduleId == id).ExecuteDeleteAsync();
         await context.ExamFees.Where(f => f.ExamScheduleId == id).ExecuteDeleteAsync();

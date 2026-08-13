@@ -23,7 +23,6 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
-    IExamScheduleApprovalService examScheduleApprovalService,
     AppDbContext context,
     IAuditLogWriter auditLogWriter) : Controller
 {
@@ -56,7 +55,7 @@ public class ExamSchedulesController(
         var items = await examScheduleService.GetFilteredItemsAsync(search);
 
         var sb = new StringBuilder();
-        sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Start Date (AD),End Date (AD),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,College Approval Date,Admission Card Release Date,Remarks");
+        sb.AppendLine("ID,Exam Schedule Name,Code,Academic Year,Level,Exam Type,Start Date (BS),End Date (BS),Start Date (AD),End Date (AD),Published Date,Start Time,End Time,Is Active,Extended Date,Extended Date Charge,Admission Card Release Date,Remarks");
 
         foreach (var item in items)
         {
@@ -75,7 +74,6 @@ public class ExamSchedulesController(
                           $"{(item.IsActive ? "Yes" : "No")}," +
                           $"{(item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
                           $"{item.ExtendedDateCharge}," +
-                          $"{(item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
                           $"{(item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty).EscapeCsv()}," +
                           $"{(item.Remarks ?? string.Empty).EscapeCsv()}");
         }
@@ -98,7 +96,7 @@ public class ExamSchedulesController(
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("ExamSchedules");
 
-        var headers = new[] { "ID", "Exam Schedule Name", "Code", "Academic Year", "Exam Type", "Start Date (BS)", "End Date (BS)", "Start Date (AD)", "End Date (AD)", "Published Date", "Start Time", "End Time", "Is Active", "Extended Date", "Extended Date Charge", "College Approval Date", "Admission Card Release Date", "Remarks" };
+        var headers = new[] { "ID", "Exam Schedule Name", "Code", "Academic Year", "Exam Type", "Start Date (BS)", "End Date (BS)", "Start Date (AD)", "End Date (AD)", "Published Date", "Start Time", "End Time", "Is Active", "Extended Date", "Extended Date Charge", "Admission Card Release Date", "Remarks" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -125,9 +123,8 @@ public class ExamSchedulesController(
             worksheet.Cell(row, 13).Value = item.IsActive ? "Yes" : "No";
             worksheet.Cell(row, 14).Value = item.ExtendedDate?.ToString("yyyy-MM-dd") ?? string.Empty;
             worksheet.Cell(row, 15).Value = item.ExtendedDateCharge?.ToString() ?? string.Empty;
-            worksheet.Cell(row, 16).Value = item.CollegeApprovalDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-            worksheet.Cell(row, 17).Value = item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-            worksheet.Cell(row, 18).Value = item.Remarks ?? string.Empty;
+            worksheet.Cell(row, 16).Value = item.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+            worksheet.Cell(row, 17).Value = item.Remarks ?? string.Empty;
             row++;
         }
 
@@ -149,11 +146,6 @@ public class ExamSchedulesController(
         var registrations = await context.ExamRegistrations
             .Where(r => r.ExamScheduleId == id.Value)
             .ToListAsync();
-
-        var scheduleApprovals = await examScheduleApprovalService.GetApprovalsForScheduleAsync(id.Value);
-        ViewBag.ScheduleApprovals = scheduleApprovals;
-        ViewBag.HasRejectedApprovals = scheduleApprovals.Any(a => a.Status == Domain.Enums.ExamScheduleApprovalStatus.Rejected);
-        ViewBag.HasApprovals = scheduleApprovals.Count > 0;
 
         var examSlots = await context.ExamSlots
             .Where(es => es.ExamScheduleId == id.Value)
@@ -318,24 +310,11 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
-
-            // College approval workflow: if the creator set a CollegeApprovalDate,
-            // open Pending approval rows for every college that offers this program.
-            // ===== ALTERNATIVE SEMANTIC (UNCOMMENT IF NEEDED) =====
-            // If CollegeApprovalDate is a *deadline* instead of a proposed date,
-            // validate here that it is in the future before creating approvals.
-            //   if (examSchedule.CollegeApprovalDate.HasValue
-            //       && examSchedule.CollegeApprovalDate.Value <= DateTime.UtcNow)
-            //       ModelState.AddModelError("CollegeApprovalDate", "Approval date must be in the future.");
-            if (examSchedule.CollegeApprovalDate.HasValue)
-            {
-                await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
-            }
 
             await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Exam schedule created (Code {examSchedule.ExamScheduleCode})", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId, type = examSchedule.ExamType?.Name }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
@@ -362,7 +341,7 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,CollegeApprovalDate,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
 
@@ -390,13 +369,6 @@ public class ExamSchedulesController(
                 throw;
             }
 
-            // Keep the approval rows in sync: add any newly-affiliated colleges and
-            // refresh the requested date for rows awaiting (re)approval.
-            if (examSchedule.CollegeApprovalDate.HasValue)
-            {
-                await examScheduleApprovalService.CreateApprovalsForScheduleAsync(examSchedule.Id);
-            }
-
             await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam schedule {examSchedule.Id} updated", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
@@ -404,25 +376,6 @@ public class ExamSchedulesController(
         var selectLists = await examScheduleService.GetSelectListDataAsync(examSchedule);
         PopulateDropdowns(selectLists, examSchedule);
         return View(examSchedule);
-    }
-
-    [RequirePermission("examapproval.resubmit")]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Resubmit(int id)
-    {
-        try
-        {
-            await examScheduleApprovalService.ResubmitAsync(id);
-            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleResubmitted, $"Exam schedule {id} resubmitted for college approval", new { scheduleId = id }, entityName: "ExamSchedule", entityId: id.ToString());
-            TempData["SuccessMessage"] = "Exam schedule resubmitted for college approval.";
-        }
-        catch (KeyNotFoundException)
-        {
-            TempData["ErrorMessage"] = "Exam schedule not found.";
-        }
-
-        return RedirectToAction(nameof(Details), new { id });
     }
 
     [RequirePermission("examschedules.delete")]

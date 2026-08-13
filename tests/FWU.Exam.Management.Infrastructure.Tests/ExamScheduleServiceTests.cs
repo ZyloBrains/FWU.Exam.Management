@@ -1,5 +1,4 @@
 using FWU.Exam.Management.Domain.Entities.Exams;
-using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Helpers;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -13,28 +12,18 @@ public class ExamScheduleServiceTests
         new(db.Context, new TestUserContext());
 
     [Fact]
-    public async Task DeleteExamScheduleAsync_DeletesScheduleAndApprovalRows_WhenNoRegistrationsOrResults()
+    public async Task DeleteExamScheduleAsync_DeletesSchedule_WhenNoRegistrationsOrResults()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
             ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
-            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
-            {
-                Id = 1,
-                TenantId = TestData.TenantId,
-                ExamScheduleId = 11,
-                CollegeId = TestData.CollegeId,
-                Status = ExamScheduleApprovalStatus.Pending,
-                IsActive = true
-            });
         });
 
         var service = CreateService(db);
         await service.DeleteExamScheduleAsync(11);
 
         Assert.False(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11));
-        Assert.False(await db.Context.ExamScheduleCollegeApprovals.AnyAsync(a => a.ExamScheduleId == 11));
     }
 
     [Fact]
@@ -154,6 +143,40 @@ public class ExamScheduleServiceTests
         await service.DeactivateExpiredSchedulesAsync();
 
         Assert.True(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
+    }
+
+    [Fact]
+    public async Task DeactivateExpiredSchedulesAsync_KeepsScheduleActive_WhenExtendedDateIsInFuture()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            var schedule = TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), null);
+            schedule.ExtendedDate = DateTime.Today.AddDays(5);
+            ctx.ExamSchedules.Add(schedule);
+        });
+
+        var service = CreateService(db);
+        await service.DeactivateExpiredSchedulesAsync();
+
+        Assert.True(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
+    }
+
+    [Fact]
+    public async Task DeactivateExpiredSchedulesAsync_DeactivatesSchedule_WhenExtendedDateAlsoPassed()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            var schedule = TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(-10)), null);
+            schedule.ExtendedDate = DateTime.Today.AddDays(-1);
+            ctx.ExamSchedules.Add(schedule);
+        });
+
+        var service = CreateService(db);
+        await service.DeactivateExpiredSchedulesAsync();
+
+        Assert.False(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
     }
 
     [Fact]

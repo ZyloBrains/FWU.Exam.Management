@@ -108,7 +108,6 @@ public static class AppMenu
             "text-red-600", "bg-red-100", "group-hover:bg-red-200",
             [
                 M("Exam Schedules", "fa-calendar-alt", ["examschedules.view"], R("Exams", "ExamSchedules", "Index"), ["schedule", "timetable", "routine"]),
-                M("Schedule Approvals", "fa-check-double", ["examapproval.view"], R("Exams", "CollegeAdminApprovals", "Index"), ["approval", "approve", "schedule"]),
                 M("Exam Types", "fa-list-alt", ["examtypes.view"], R("Exams", "ExamTypes", "Index"), ["exam type"]),
                 M("Entrance Schedule", "fa-calendar-plus", ["examschedules.view"], R("Exams", "Entrance", "ManageSchedule"), ["entrance", "schedule"],
                     [R("Exams", "Entrance", "ManageSchedule"), R("Exams", "Entrance", "CreateSchedule"), R("Exams", "Entrance", "EditSchedule"), R("Exams", "Entrance", "ScheduleDetails")]),
@@ -117,7 +116,7 @@ public static class AppMenu
                 M("Admit Cards", "fa-ticket-alt", ["admitcards.view"], R("Exams", "AdmitCards", "Index"), ["admit", "card", "hall ticket"]),
             ],
             Landing: R(null, "Section", "Examination"),
-            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null), R("Exams", "CollegeAdminApprovals", null)]),
+            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null)]),
 
         new("Exam Centers", "Exam Centers", "fa-map-marker-alt",
             "Manage examination centers and distribution",
