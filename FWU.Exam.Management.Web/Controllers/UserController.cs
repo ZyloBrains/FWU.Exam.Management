@@ -1,7 +1,10 @@
+using System.Text;
+using ClosedXML.Excel;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Colleges;
+using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Web.ViewModels;
@@ -10,8 +13,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using FWU.Exam.Management.Infrastructure.Data;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -21,30 +28,74 @@ public class UserController(
     RoleManager<IdentityRole> roleManager,
     AppDbContext context,
     IUserContext userContext,
+    ITenantContext tenantContext,
+    IMemoryCache cache,
     IPermissionService permissionService,
     IBulkUserCreationService bulkUserCreationService,
     IAuditLogWriter auditLogWriter) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, string? search = null, string? role = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
+    public async Task<IActionResult> Index(int page = 1, string? search = null, string? role = null, bool? isActive = null, string sort = "email", string sortDir = "asc", int pageSize = 10)
     {
-        IQueryable<AppUser> usersQuery = userManager.Users
+        IQueryable<AppUser> scopedUsersQuery = userManager.Users
+            .AsNoTracking()
             .Include(u => u.Faculty)
             .Include(u => u.College);
-        usersQuery = usersQuery.ApplyScope(userContext);
+        scopedUsersQuery = scopedUsersQuery.ApplyScope(userContext);
 
         var assignableRoles = await GetAssignableRolesAsync();
-        var scopedUserIds = usersQuery.Select(u => u.Id);
-        var rolesPresentInScope = await context.UserRoles
-            .Where(ur => scopedUserIds.Contains(ur.UserId))
-            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
-            .Where(n => n != null)
-            .Select(n => n!)
-            .Distinct()
-            .ToListAsync();
+        var rolesPresentInScope = await GetRolesPresentInScopeAsync(scopedUsersQuery);
         ViewBag.RolesList = rolesPresentInScope
             .Where(assignableRoles.Contains)
             .OrderBy(n => n);
         ViewBag.RoleFilter = role;
+        ViewBag.IsActive = isActive;
+
+        var usersQuery = await BuildFilteredUsersAsync(search, role, isActive, assignableRoles);
+        usersQuery = ApplySort(usersQuery, sort, sortDir);
+
+        var totalCount = await usersQuery.CountAsync();
+
+        var users = await usersQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var model = await ToViewModelsAsync(users);
+
+        ViewBag.TotalCount = totalCount;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        ViewBag.PageSize = pageSize;
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.SortDir = sortDir;
+
+        return View(model);
+    }
+
+    private async Task<IQueryable<AppUser>> BuildFilteredUsersAsync(
+        string? search, string? role, bool? isActive, IReadOnlySet<string> assignableRoles)
+    {
+        IQueryable<AppUser> usersQuery = userManager.Users
+            .AsNoTracking()
+            .Include(u => u.Faculty)
+            .Include(u => u.College);
+        usersQuery = usersQuery.ApplyScope(userContext);
+
+        if (!string.IsNullOrWhiteSpace(role) && assignableRoles.Contains(role))
+        {
+            var roleId = await context.Roles
+                .AsNoTracking()
+                .Where(r => r.Name == role)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+            if (roleId != null)
+                usersQuery = usersQuery.Where(u =>
+                    context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == roleId));
+        }
+
+        if (isActive.HasValue)
+            usersQuery = usersQuery.Where(u => u.IsActive == isActive.Value);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -56,39 +107,30 @@ public class UserController(
                 (u.College != null && u.College.Name != null && u.College.Name.ToLower().Contains(s)));
         }
 
-        if (!string.IsNullOrWhiteSpace(role) && assignableRoles.Contains(role))
-        {
-            var roleId = await context.Roles
-                .Where(r => r.Name == role)
-                .Select(r => r.Id)
-                .FirstOrDefaultAsync();
-            if (roleId != null)
-                usersQuery = usersQuery.Where(u =>
-                    context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == roleId));
-        }
+        return usersQuery;
+    }
 
-        usersQuery = sortDir.ToLower() == "desc"
-            ? usersQuery.OrderByDescending(GetUserSortProperty(sort))
-            : usersQuery.OrderBy(GetUserSortProperty(sort));
+    private static IQueryable<AppUser> ApplySort(IQueryable<AppUser> query, string sort, string sortDir)
+    {
+        return sortDir.ToLower() == "desc"
+            ? query.OrderByDescending(GetUserSortProperty(sort))
+            : query.OrderBy(GetUserSortProperty(sort));
+    }
 
-        var totalCount = await usersQuery.CountAsync();
-
-        var users = await usersQuery
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
+    private async Task<List<UserListItemViewModel>> ToViewModelsAsync(IEnumerable<AppUser> users)
+    {
         var userIds = users.Select(u => u.Id).ToList();
         var userRoles = await context.UserRoles
+            .AsNoTracking()
             .Where(ur => userIds.Contains(ur.UserId))
-            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .Join(context.Roles.AsNoTracking(), ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
             .ToListAsync();
 
         var roleLookup = userRoles
             .GroupBy(x => x.UserId)
             .ToDictionary(g => g.Key, g => (IList<string>)g.Select(x => x.Name).ToList());
 
-        var model = users.Select(user => new UserListItemViewModel
+        return users.Select(user => new UserListItemViewModel
         {
             Id = user.Id,
             Email = user.Email ?? string.Empty,
@@ -98,16 +140,161 @@ public class UserController(
             IsActive = user.IsActive,
             Roles = roleLookup.GetValueOrDefault(user.Id, new List<string>())
         }).ToList();
+    }
 
-        ViewBag.TotalCount = totalCount;
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-        ViewBag.PageSize = pageSize;
-        ViewBag.Search = search;
-        ViewBag.Sort = sort;
-        ViewBag.SortDir = sortDir;
+    private async Task<(List<UserListItemViewModel> Items, int TotalCount)> GetFilteredPageAsync(
+        int page, int pageSize, string? search, string? role, bool? isActive, string sort, string sortDir)
+    {
+        var assignableRoles = await GetAssignableRolesAsync();
+        var usersQuery = await BuildFilteredUsersAsync(search, role, isActive, assignableRoles);
+        usersQuery = ApplySort(usersQuery, sort, sortDir);
 
-        return View(model);
+        var totalCount = await usersQuery.CountAsync();
+        var users = await usersQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        var items = await ToViewModelsAsync(users);
+        return (items, totalCount);
+    }
+
+    public async Task<IActionResult> ExportToCsv(int page = 1, int pageSize = 10, string? search = null, string? role = null, bool? isActive = null, string sort = "email", string sortDir = "asc")
+    {
+        var (items, _) = await GetFilteredPageAsync(page, pageSize, search, role, isActive, sort, sortDir);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Full Name,Email,Roles,Faculty,College,Status");
+
+        foreach (var u in items)
+        {
+            sb.AppendLine($"{(u.FullName ?? "").EscapeCsv()}," +
+                           $"{u.Email.EscapeCsv()}," +
+                           $"{string.Join("; ", u.Roles).EscapeCsv()}," +
+                           $"{(u.FacultyName ?? "-").EscapeCsv()}," +
+                           $"{(u.CollegeName ?? "-").EscapeCsv()}," +
+                           $"{(u.IsActive ? "Active" : "Inactive")}");
+        }
+
+        var fileName = $"Users_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
+        return File(csvBytes, "text/csv", fileName);
+    }
+
+    public async Task<IActionResult> ExportToPdf(int page = 1, int pageSize = 10, string? search = null, string? role = null, bool? isActive = null, string sort = "email", string sortDir = "asc")
+    {
+        var (items, totalCount) = await GetFilteredPageAsync(page, pageSize, search, role, isActive, sort, sortDir);
+
+        var document = Document.Create(container =>
+        {
+            container.Page(pageCfg =>
+            {
+                pageCfg.Size(PageSizes.A4);
+                pageCfg.Margin(30);
+                pageCfg.DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Grey.Darken3));
+
+                pageCfg.Header().Column(header =>
+                {
+                    header.Item().Text("Users Report")
+                        .FontSize(18).Bold().FontColor("#2563eb");
+                    header.Item().PaddingTop(4).Text($"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+                        .FontSize(9).FontColor(Colors.Grey.Darken2);
+                    header.Item().PaddingTop(2).Text($"Page: {page} | Page Size: {pageSize} | Total Records: {totalCount}")
+                        .FontSize(9).FontColor(Colors.Grey.Darken2);
+                    if (!string.IsNullOrWhiteSpace(search))
+                        header.Item().PaddingTop(2).Text($"Search Filter: {search}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                    if (!string.IsNullOrWhiteSpace(role))
+                        header.Item().PaddingTop(2).Text($"Role Filter: {role}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                    if (isActive.HasValue)
+                        header.Item().PaddingTop(2).Text($"Status Filter: {(isActive.Value ? "Active" : "Inactive")}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                });
+
+                pageCfg.Content().PaddingTop(14).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(24);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2.4f);
+                        columns.RelativeColumn(1.8f);
+                        columns.RelativeColumn(1.4f);
+                        columns.RelativeColumn(1.4f);
+                        columns.RelativeColumn(0.9f);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("#").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Full Name").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Email").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Roles").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Faculty").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("College").Bold().FontSize(9);
+                        header.Cell().Background(Colors.Grey.Lighten3).Padding(6).Text("Status").Bold().FontSize(9);
+                    });
+
+                    var serial = (page - 1) * pageSize;
+                    foreach (var item in items)
+                    {
+                        serial++;
+                        table.Cell().Padding(6).Text(serial.ToString()).FontSize(9);
+                        table.Cell().Padding(6).Text(item.FullName ?? "-").FontSize(9);
+                        table.Cell().Padding(6).Text(item.Email).FontSize(9);
+                        table.Cell().Padding(6).Text(item.Roles.Count > 0 ? string.Join(", ", item.Roles) : "-").FontSize(9);
+                        table.Cell().Padding(6).Text(item.FacultyName ?? "-").FontSize(9);
+                        table.Cell().Padding(6).Text(item.CollegeName ?? "-").FontSize(9);
+                        table.Cell().Padding(6).Text(item.IsActive ? "Active" : "Inactive").FontSize(9);
+                    }
+                });
+
+                pageCfg.Footer().AlignCenter().Text(x =>
+                {
+                    x.CurrentPageNumber();
+                    x.Span(" / ");
+                    x.TotalPages();
+                });
+            });
+        });
+
+        var pdfBytes = document.GeneratePdf();
+        var fileName = $"Users_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        return File(pdfBytes, "application/pdf", fileName);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportToExcel(int page = 1, int pageSize = 10, string? search = null, string? role = null, bool? isActive = null, string sort = "email", string sortDir = "asc")
+    {
+        var (items, _) = await GetFilteredPageAsync(page, pageSize, search, role, isActive, sort, sortDir);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Users");
+
+        var headers = new[] { "Full Name", "Email", "Roles", "Faculty", "College", "Status" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+        }
+
+        var row = 2;
+        foreach (var u in items)
+        {
+            worksheet.Cell(row, 1).Value = u.FullName ?? "";
+            worksheet.Cell(row, 2).Value = u.Email;
+            worksheet.Cell(row, 3).Value = string.Join(", ", u.Roles);
+            worksheet.Cell(row, 4).Value = u.FacultyName ?? "";
+            worksheet.Cell(row, 5).Value = u.CollegeName ?? "";
+            worksheet.Cell(row, 6).Value = u.IsActive ? "Active" : "Inactive";
+            row++;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        var fileName = $"Users_Page{page}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     private static System.Linq.Expressions.Expression<Func<AppUser, object>> GetUserSortProperty(string sort)
@@ -153,7 +340,7 @@ public class UserController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateUserViewModel model)
     {
-        var callerRole = await GetCallerRoleAsync();
+        var callerRole = RoleRules.FromRoles(userContext.Roles);
 
         if (model.SelectedRole == Role.SuperAdmin)
             ModelState.AddModelError(nameof(model.SelectedRole), "Cannot create a Super Admin user.");
@@ -195,6 +382,7 @@ public class UserController(
                 var selectedRole = model.SelectedRole;
                 if (!string.IsNullOrEmpty(selectedRole) && await roleManager.RoleExistsAsync(selectedRole))
                     await userManager.AddToRoleAsync(user, selectedRole);
+                InvalidateRolesInScopeCache();
                 await auditLogWriter.LogAsync(ActivityTypes.UserCreated,
                     $"Created user {user.Email} with role {model.SelectedRole}",
                     new { userId = user.Id, email = user.Email, role = model.SelectedRole },
@@ -448,6 +636,7 @@ public class UserController(
 
         if (toAdd.Count > 0 || toRemove.Count > 0)
         {
+            InvalidateRolesInScopeCache();
             await auditLogWriter.LogAsync(ActivityTypes.UserRolesChanged,
                 $"Updated roles for {(user.FullName ?? user.Email)}: added [{string.Join(", ", toAdd)}], removed [{string.Join(", ", toRemove)}]",
                 new { userId = user.Id, added = toAdd, removed = toRemove },
@@ -585,49 +774,81 @@ public class UserController(
 
     private async Task<bool> CanManageTargetAsync(AppUser user)
     {
-        var callerRole = await GetCallerRoleAsync();
+        var callerRole = RoleRules.FromRoles(userContext.Roles);
         if (callerRole != null)
             return RoleRules.CanManageTarget(callerRole, await userManager.GetRolesAsync(user));
 
         // Caller holds only dynamic/custom roles: permission-subset rule —
         // they may manage a user only if the target's permission set is a
         // subset of the caller's own, preventing privilege escalation.
-        var callerId = userManager.GetUserId(User);
+        var callerId = userContext.UserId;
         if (callerId == null) return false;
         var callerPermissions = new HashSet<string>(await permissionService.GetUserPermissionsAsync(callerId));
         var targetPermissions = await permissionService.GetUserPermissionsAsync(user.Id);
         return targetPermissions.All(callerPermissions.Contains);
     }
 
-    private async Task<string?> GetCallerRoleAsync()
-    {
-        var caller = await userManager.GetUserAsync(User);
-        if (caller == null) return null;
-        return RoleRules.FromRoles(await userManager.GetRolesAsync(caller));
-    }
-
     private async Task<IReadOnlySet<string>> GetAssignableRolesAsync()
     {
-        var callerRole = await GetCallerRoleAsync();
+        var callerRole = RoleRules.FromRoles(userContext.Roles);
         if (callerRole != null)
             return RoleRules.AssignableRoles(callerRole);
 
         // Caller holds only dynamic/custom roles: permission-subset rule —
         // they may only assign roles whose permission set is a subset of
         // their own, matching the guard used by ManagePermissionsController.
-        var callerId = userManager.GetUserId(User);
+        var callerId = userContext.UserId;
         if (callerId == null) return new HashSet<string>();
         var callerPermissions = new HashSet<string>(await permissionService.GetUserPermissionsAsync(callerId));
+
+        // Load every role's effective permission names in a single query instead of one query per role.
+        var rolePermissions = await context.Set<Domain.Entities.Permissions.RolePermission>()
+            .AsNoTracking()
+            .Include(rp => rp.Permission)
+            .Where(rp => rp.Permission.IsActive)
+            .Select(rp => new { rp.RoleId, rp.Permission.Name })
+            .Distinct()
+            .ToListAsync();
+
+        var rolePermissionLookup = rolePermissions
+            .GroupBy(x => x.RoleId)
+            .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)g.Select(x => x.Name).ToHashSet());
+
         var assignable = new HashSet<string>();
-        foreach (var role in await roleManager.Roles.ToListAsync())
+        foreach (var role in await roleManager.Roles.AsNoTracking().ToListAsync())
         {
             if (role.Name == null) continue;
-            var rolePermissions = await permissionService.GetRolePermissionsAsync(role.Id);
-            if (rolePermissions.All(callerPermissions.Contains))
+            var rolePermissionSet = rolePermissionLookup.GetValueOrDefault(role.Id)
+                ?? new HashSet<string>();
+            if (rolePermissionSet.All(callerPermissions.Contains))
                 assignable.Add(role.Name);
         }
         return assignable;
     }
+
+    private async Task<IReadOnlyList<string>> GetRolesPresentInScopeAsync(IQueryable<AppUser> scopedUsers)
+    {
+        var cacheKey = RolesInScopeCacheKey;
+        if (cache.TryGetValue(cacheKey, out IReadOnlyList<string>? cached) && cached != null)
+            return cached;
+
+        var scopedUserIds = scopedUsers.Select(u => u.Id);
+        var roles = await context.UserRoles
+            .AsNoTracking()
+            .Where(ur => scopedUserIds.Contains(ur.UserId))
+            .Join(context.Roles.AsNoTracking(), ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+            .Where(n => n != null)
+            .Select(n => n!)
+            .Distinct()
+            .ToListAsync();
+
+        cache.Set(cacheKey, roles, TimeSpan.FromMinutes(2));
+        return roles;
+    }
+
+    private void InvalidateRolesInScopeCache() => cache.Remove(RolesInScopeCacheKey);
+
+    private string RolesInScopeCacheKey => $"users_roles_in_scope_{tenantContext.TenantId}";
 
     private bool IsCollegeInScope(int? collegeId)
     {
@@ -652,6 +873,7 @@ public class UserController(
         UserResetPasswordViewModel? selectedUser, string? search, int page, int pageSize)
     {
         IQueryable<AppUser> usersQuery = userManager.Users
+            .AsNoTracking()
             .Include(u => u.Faculty)
             .Include(u => u.College)
             .ApplyScope(userContext);
@@ -676,8 +898,9 @@ public class UserController(
 
         var userIds = users.Select(u => u.Id).ToList();
         var userRoles = await context.UserRoles
+            .AsNoTracking()
             .Where(ur => userIds.Contains(ur.UserId))
-            .Join(context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
+            .Join(context.Roles.AsNoTracking(), ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, r.Name })
             .ToListAsync();
 
         var roleLookup = userRoles
