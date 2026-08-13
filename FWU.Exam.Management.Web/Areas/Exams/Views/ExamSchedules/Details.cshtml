@@ -205,6 +205,11 @@
                                 <option value="@item.Value">@item.Text</option>
                             }
                         </select>
+                        <label class="text-xs font-medium text-gray-600 ml-2">Start Time</label>
+                        <input type="time" id="allStartTime" value="@Model.StartTime.ToString("HH:mm")" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label class="text-xs font-medium text-gray-600 ml-2">End Time</label>
+                        <input type="time" id="allEndTime" value="@Model.EndTime.ToString("HH:mm")" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <span class="text-xs text-gray-500">(applies to all subjects)</span>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -325,4 +330,16 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.getElementById('allStartTime').addEventListener('change', function () {
+            document.querySelectorAll('input[name="startTime"]').forEach(function (input) {
+                input.value = this.value;
+            }, this);
+        });
+        document.getElementById('allEndTime').addEventListener('change', function () {
+            document.querySelectorAll('input[name="endTime"]').forEach(function (input) {
+                input.value = this.value;
+            }, this);
+        });
+    </script>
 }
