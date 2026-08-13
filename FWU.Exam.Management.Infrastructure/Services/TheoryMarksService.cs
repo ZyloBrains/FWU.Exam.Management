@@ -226,7 +226,7 @@ public class TheoryMarksService(
             .Where(er => er.ExamScheduleId == examScheduleId
                 && er.CollegeId == effectiveCollege
                 && er.IsActive
-                && er.Status == RegistrationStatus.Registered)
+                && er.Status >= RegistrationStatus.CollegeVerified)
             .OrderBy(er => er.ExamRollNumber)
             .ThenBy(er => er.Id)
             .ToListAsync();
@@ -285,7 +285,7 @@ public class TheoryMarksService(
             .Where(er => er.ExamScheduleId == dto.ExamScheduleId
                 && er.CollegeId == effectiveCollege
                 && er.IsActive
-                && er.Status == RegistrationStatus.Registered)
+                && er.Status >= RegistrationStatus.CollegeVerified)
             .Select(er => er.Id)
             .ToHashSetAsync();
 

@@ -92,12 +92,20 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         var allSchedules = await query.ToListAsync();
 
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
         var filtered = new List<ExamSchedule>();
         foreach (var schedule in allSchedules)
         {
-            // College approval gating: a schedule is visible to the student only if
-            // no college-approval rows exist for it, or the student's own college approved it.
-            if (!await IsScheduleVisibleToStudentAsync(schedule.Id, student.CollegeId))
+            // Date window visibility: a schedule is only shown once its start date has
+            // arrived and until it ends (ExtendedDate overrides EndDate when set).
+            if (schedule.StartDate.HasValue && schedule.StartDate.Value > today)
+                continue;
+
+            DateOnly? effectiveEnd = schedule.ExtendedDate.HasValue
+                ? DateOnly.FromDateTime(schedule.ExtendedDate.Value)
+                : schedule.EndDate;
+            if (effectiveEnd.HasValue && effectiveEnd.Value < today)
                 continue;
 
             var isSupplementary = schedule.ExamType?.Name == "Supplementary";
@@ -500,7 +508,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             ProgramsId = programsId,
             FeeEnclosed = amount,
             RegistrationDate = DateTime.UtcNow,
-            Status = RegistrationStatus.Registered,
+            Status = RegistrationStatus.Pending,
             IsActive = true,
             IsAppliedByStudent = true,
             ApplicationVoucherId = voucher.Id
@@ -716,29 +724,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .ToListAsync();
     }
 
-    private async Task<bool> IsScheduleVisibleToStudentAsync(int examScheduleId, int? collegeId)
-    {
-        if (!collegeId.HasValue || collegeId.Value <= 0)
-            return true;
-
-        var hasApprovals = await context.ExamScheduleCollegeApprovals
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .AnyAsync(a => a.ExamScheduleId == examScheduleId && a.IsActive);
-
-        // Backward compat: schedules that never requested college approval stay visible.
-        if (!hasApprovals)
-            return true;
-
-        return await context.ExamScheduleCollegeApprovals
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .AnyAsync(a => a.ExamScheduleId == examScheduleId
-                        && a.CollegeId == collegeId.Value
-                        && a.IsActive
-                        && a.Status == ExamScheduleApprovalStatus.Approved);
-    }
-
     private static bool IsFailedGrade(string? gradeLetter)
     {
         if (string.IsNullOrEmpty(gradeLetter)) return false;
@@ -746,7 +731,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return upper is "F" or "NG";
     }
 
-    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
+    public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -759,6 +744,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
             dob = parsedDob;
 
+        var requestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}";
+        if (!string.IsNullOrEmpty(transactionUuid))
+            requestContent = requestContent[..^1] + $",\"transaction_uuid\":\"{transactionUuid}\"}}";
+
         var log = new PaymentRequestLog
         {
             ExamScheduleId = examScheduleId,
@@ -770,11 +759,12 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             MobileNumber = mobileNumber,
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
-            FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount},\"subjects\":[{string.Join(",", subjectOfferingIds)}]}}",
+            FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
             StudentCount = subjectOfferingIds.Count,
-            SelectedSubjectIds = string.Join(",", subjectOfferingIds)
+            SelectedSubjectIds = string.Join(",", subjectOfferingIds),
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);
@@ -794,7 +784,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return log.Id;
     }
 
-    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null)
+    public async Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {
         var paymentTypes = await context.Set<PaymentType>()
             .AsNoTracking()
@@ -807,6 +797,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (!string.IsNullOrEmpty(dateOfBirthAd) && DateTime.TryParse(dateOfBirthAd, out var parsedDob))
             dob = parsedDob;
 
+        var requestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}";
+        if (!string.IsNullOrEmpty(transactionUuid))
+            requestContent = requestContent[..^1] + $",\"transaction_uuid\":\"{transactionUuid}\"}}";
+
         var log = new PaymentRequestLog
         {
             ExamScheduleId = examScheduleId,
@@ -818,10 +812,11 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             MobileNumber = mobileNumber,
             CollegeId = userContext.CollegeId,
             DateOfBirthAd = dob,
-            FullRequestContent = $"{{\"method\":\"{paymentMethod}\",\"amount\":{amount}}}",
+            FullRequestContent = requestContent,
             PaymentTypeId = paymentType?.Id ?? 0,
             ForwardedTimestamp = DateTime.UtcNow,
-            StudentCount = 1
+            StudentCount = 1,
+            TransactionId = string.IsNullOrEmpty(transactionUuid) ? null : transactionUuid
         };
 
         context.Set<PaymentRequestLog>().Add(log);

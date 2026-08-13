@@ -117,7 +117,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ExamCenterVenue> ExamCenterVenues { get; set; } = null!;
     public DbSet<ExamCenterSymbolRange> ExamCenterSymbolRanges { get; set; } = null!;
     public DbSet<CollegeAdminSubjectAssignment> CollegeAdminSubjectAssignments { get; set; } = null!;
-    public DbSet<ExamScheduleCollegeApproval> ExamScheduleCollegeApprovals { get; set; } = null!;
+
     public DbSet<AuditLog> AuditLogs { get; set; } = null!;
     public DbSet<BulkUserCreationJob> BulkUserCreationJobs { get; set; } = null!;
 
@@ -639,28 +639,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasOne(tsa => tsa.ExamSchedule)
             .WithMany()
             .HasForeignKey(tsa => tsa.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleCollegeApproval>()
-            .HasIndex(e => new { e.ExamScheduleId, e.CollegeId })
-            .IsUnique();
-
-        builder.Entity<ExamScheduleCollegeApproval>()
-            .HasOne(esca => esca.ExamSchedule)
-            .WithMany()
-            .HasForeignKey(esca => esca.ExamScheduleId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleCollegeApproval>()
-            .HasOne(esca => esca.College)
-            .WithMany()
-            .HasForeignKey(esca => esca.CollegeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.Entity<ExamScheduleCollegeApproval>()
-            .HasOne<AppUser>()
-            .WithMany()
-            .HasForeignKey(esca => esca.ApprovedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamCenterCollege>()

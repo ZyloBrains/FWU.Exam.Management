@@ -581,21 +581,22 @@ public class StudentDashboardController(
 
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
+        var transactionUuid = esewaService.GenerateTransactionUuid();
+
         int logId;
         if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, transactionUuid);
         }
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, transactionUuid);
         }
 
-        var transactionUuid = esewaService.GenerateTransactionUuid();
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
         var successUrl = defaultCallbackUrl;
         var failureUrl = defaultCallbackUrl;
@@ -630,13 +631,55 @@ public class StudentDashboardController(
             {
                 var log = await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value);
                 if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+
+                var uuid = log?.TransactionId;
+                if (log != null && !string.IsNullOrEmpty(uuid))
+                {
+                    try
+                    {
+                        var status = await esewaService.VerifyTransactionAsync(uuid, log.Amount);
+                        if (status != null && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogWarning("ESewaCallback: no callback data but status API reports COMPLETE for logId={LogId}, uuid={Uuid}. Treating as paid.",
+                                sessionLogId.Value, uuid);
+
+                            await HandlePostPaymentRegistration(sessionLogId.Value);
+                            await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, status.TransactionCode ?? "", true,
+                                System.Text.Json.JsonSerializer.Serialize(status),
+                                "Payment verified via eSewa status check (callback carried no data).");
+                            await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
+                                $"eSewa payment verified via status check (Transaction {status.TransactionCode})",
+                                new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = uuid, amount = status.TotalAmount },
+                                entityName: "PaymentRequestLog", entityId: sessionLogId.Value.ToString());
+
+                            TempData["SuccessMessage"] = "Payment successful!";
+                            TempData["TransactionCode"] = status.TransactionCode;
+                            TempData["TransactionUuid"] = uuid;
+                            return RedirectToAction(nameof(PaymentSuccess));
+                        }
+
+                        var statusData = status != null
+                            ? $"No response data received from eSewa. QueryString: {Request.QueryString}. Status check: {status.Status}"
+                            : $"No response data received from eSewa. QueryString: {Request.QueryString}. Status check: unreachable";
+                        await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, statusData, "Payment not completed at eSewa.");
+                    }
+                    catch (Exception statusEx)
+                    {
+                        logger.LogError(statusEx, "ESewaCallback: status check failed for logId={LogId}", sessionLogId.Value);
+                        await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false,
+                            $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+                    }
+                }
+                else
+                {
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+                }
             }
 
             await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                 "eSewa callback received no response data",
                 new { gateway = "esewa", reason = "no_data" }, AuditSeverity.Warning);
-            TempData["ErrorMessage"] = "No response data received from eSewa.";
+            TempData["ErrorMessage"] = "Payment was cancelled or not completed at eSewa. No amount has been deducted. Please try again.";
             return RedirectToAction(nameof(PaymentFailure));
         }
 

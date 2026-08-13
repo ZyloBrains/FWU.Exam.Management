@@ -16,7 +16,6 @@ public static class Permissions
     public const string GroupSubjectOfferings = "subjectofferings";
     public const string GroupCurriculumVersions = "curriculumversions";
     public const string GroupExamSchedules = "examschedules";
-    public const string GroupExamApproval = "examapproval";
     public const string GroupExamTypes = "examtypes";
     public const string GroupEntrance = "entrance";
     public const string GroupStudents = "students";
@@ -136,12 +135,6 @@ public static class Permissions
     public const string ExamSchedulesCreate = "examschedules.create";
     public const string ExamSchedulesEdit = "examschedules.edit";
     public const string ExamSchedulesDelete = "examschedules.delete";
-
-    // Exam Schedule College Approval
-    public const string ExamApprovalView = "examapproval.view";
-    public const string ExamApprovalApprove = "examapproval.approve";
-    public const string ExamApprovalReject = "examapproval.reject";
-    public const string ExamApprovalResubmit = "examapproval.resubmit";
 
     // Exam Types
     public const string ExamTypesView = "examtypes.view";
@@ -451,11 +444,6 @@ public static class Permissions
         (ExamSchedulesEdit, "Edit Exam Schedules", GroupExamSchedules, "Edit existing exam schedules"),
         (ExamSchedulesDelete, "Delete Exam Schedules", GroupExamSchedules, "Delete exam schedules"),
 
-        (ExamApprovalView, "View Exam Schedule Approvals", GroupExamApproval, "View exam schedules pending college approval"),
-        (ExamApprovalApprove, "Approve Exam Schedule", GroupExamApproval, "Approve the college approval date of an exam schedule"),
-        (ExamApprovalReject, "Reject Exam Schedule", GroupExamApproval, "Reject the college approval date and propose an alternate date"),
-        (ExamApprovalResubmit, "Resubmit Exam Schedule", GroupExamApproval, "Resubmit a rejected exam schedule for college approval"),
-
         (ExamTypesView, "View Exam Types", GroupExamTypes, "View exam type list"),
         (ExamTypesCreate, "Create Exam Types", GroupExamTypes, "Create new exam types"),
         (ExamTypesEdit, "Edit Exam Types", GroupExamTypes, "Edit existing exam types"),
@@ -691,7 +679,6 @@ public static class Permissions
             CurriculumVersionsView,
 
             ExamSchedulesView, ExamSchedulesCreate, ExamSchedulesEdit,
-            ExamApprovalView, ExamApprovalResubmit,
             ExamTypesView, ExamTypesCreate, ExamTypesEdit,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
@@ -744,12 +731,11 @@ public static class Permissions
             AcademicYearsView,
 
             ExamSchedulesView,
-            ExamApprovalView, ExamApprovalApprove, ExamApprovalReject,
             ExamTypesView,
             EntranceView, EntranceApprove, EntranceReject, EntranceExport,
 
             GradingSchemesView,
-            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit,
+            ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify,
             ExamSubjectResultsView,
             ResultRecordsView,
 

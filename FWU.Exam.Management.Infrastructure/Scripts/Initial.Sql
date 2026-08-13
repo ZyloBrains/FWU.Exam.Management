@@ -603,7 +603,6 @@ CREATE TABLE [ExamSchedules] (
     [ExtendedDateCharge] decimal(18,2) NULL,
     [ExamFee] decimal(18,2) NULL,
     [PracticalSubjectFee] decimal(18,2) NULL,
-    [CollegeApprovalDate] datetime2 NULL,
     [AdmissionCardReleaseDate] datetime2 NULL,
     [ExamScheduleCode] nvarchar(50) NULL,
     [AcademicYearId] int NOT NULL,

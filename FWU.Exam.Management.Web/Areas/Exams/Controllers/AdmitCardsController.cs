@@ -47,7 +47,7 @@ public class AdmitCardsController(
         if (examScheduleId.HasValue)
         {
             var registrations = await context.ExamRegistrations
-                .Where(er => er.ExamScheduleId == examScheduleId.Value && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
+                .Where(er => er.ExamScheduleId == examScheduleId.Value && er.IsActive && er.Status >= Domain.Enums.RegistrationStatus.CollegeVerified)
                 .Include(er => er.College)
                 .ToListAsync();
 
@@ -83,6 +83,13 @@ public class AdmitCardsController(
             TempData["ErrorMessage"] = ex.Message;
         }
         return RedirectToAction(nameof(Index), new { examScheduleId });
+    }
+
+    [RequirePermission("admitcards.download")]
+    public async Task<IActionResult> PrintAll(int? examScheduleId, string? search = null)
+    {
+        var items = await admitCardService.GetAdmitCardsForPrintAsync(examScheduleId, search);
+        return View(items);
     }
 
     [RequirePermission("admitcards.download")]

@@ -10,7 +10,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
     public async Task AssignSymbolNumbersAsync(int examScheduleId)
     {
         var registrations = await context.ExamRegistrations
-            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered)
+            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.CollegeVerified)
             .Include(er => er.College)
                 .ThenInclude(c => c!.CollegeFaculties)
             .Include(er => er.ExamSchedule)
@@ -55,7 +55,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
         if (centers.Count == 0) return 0;
 
         var registrations = await context.ExamRegistrations
-            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered && er.SymbolNumber != null)
+            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.CollegeVerified && er.SymbolNumber != null)
             .OrderBy(er => er.SymbolNumber)
             .ToListAsync();
 
@@ -89,7 +89,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
     public async Task<int> GetRegisteredCountAsync(int examScheduleId)
     {
         return await context.ExamRegistrations
-            .CountAsync(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered);
+            .CountAsync(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.CollegeVerified);
     }
 
     public async Task<int> GetAssignedCountAsync(int examScheduleId)
@@ -101,7 +101,7 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
     public async Task<int> GetUnassignedCountAsync(int examScheduleId)
     {
         return await context.ExamRegistrations
-            .CountAsync(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.Registered && er.ExamCenterId == null);
+            .CountAsync(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= RegistrationStatus.CollegeVerified && er.ExamCenterId == null);
     }
 
     public async Task<Dictionary<int, int>> GetCenterDistributionCountsAsync(int examScheduleId)

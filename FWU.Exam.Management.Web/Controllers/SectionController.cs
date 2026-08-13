@@ -89,8 +89,8 @@ public class SectionController(IPermissionService permissionService, UserManager
 
     public async Task<IActionResult> Examination()
     {
-        if (!await HasAnyAsync("examschedules.view", "examapproval.view", "examtypes.view", "entrance.view",
-            "examregistrations.view", "admitcards.view"))
+        if (!await HasAnyAsync("examschedules.view", "examtypes.view", "entrance.view",
+            "examregistration.view", "admitcards.view"))
             return Forbid();
         return View();
     }

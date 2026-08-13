@@ -90,11 +90,11 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Published Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.PublishedDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.PublishedDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDate)</p>
+                    <p class="mt-1 text-gray-800">@(Model.ExtendedDate?.ToString("yyyy-MM-dd") ?? "-")</p>
                 </div>
             </div>
         </div>
@@ -104,13 +104,9 @@
             <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Other Details</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">College Approval Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.CollegeApprovalDate)</p>
-                </div>
-                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Admission Card Release Date</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AdmissionCardReleaseDate)</p>
-                </div>                
+                    <p class="mt-1 text-gray-800">@(Model.AdmissionCardReleaseDate?.ToString("yyyy-MM-dd") ?? "-")</p>
+                </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Extended Date Charge</p>
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.ExtendedDateCharge)</p>
@@ -128,105 +124,6 @@
                     <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Remarks)</p>
                 </div>
             </div>
-        </div>
-
-        <!-- College Approval Status -->
-        <div>
-            <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">
-                <i class="fas fa-check-double mr-2 text-amber-500"></i>College Approval Status
-            </h2>
-
-            @{
-                var approvals = ViewBag.ScheduleApprovals as List<ScheduleApprovalStatusDto> ?? new();
-                var hasApprovals = ViewBag.HasApprovals is bool ha && ha;
-                var hasRejected = ViewBag.HasRejectedApprovals is bool hr && hr;
-            }
-
-            @if (!hasApprovals)
-            {
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <p class="text-sm text-amber-800">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        No college approval has been requested for this schedule. Set a
-                        <strong>College Approval Date</strong> when editing to open approvals
-                        for the colleges offering this program.
-                    </p>
-                </div>
-            }
-            else
-            {
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 border-b">
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">College</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Requested Date</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Status</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Acted On / By</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Proposed Date</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-600">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @foreach (var a in approvals)
-                            {
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-3 py-2 font-medium text-gray-800">@a.CollegeName</td>
-                                    <td class="px-3 py-2 text-gray-700">@(a.RequestedApprovalDate?.ToString("yyyy-MM-dd") ?? "-")</td>
-                                    <td class="px-3 py-2">
-                                        @switch (a.Status)
-                                        {
-                                            case ExamScheduleApprovalStatus.Pending:
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pending</span>
-                                                break;
-                                            case ExamScheduleApprovalStatus.Approved:
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Approved</span>
-                                                break;
-                                            case ExamScheduleApprovalStatus.Rejected:
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Rejected</span>
-                                                break;
-                                        }
-                                    </td>
-                                    <td class="px-3 py-2 text-gray-700">
-                                        @if (a.ApprovedDate.HasValue)
-                                        {
-                                            <span>@a.ApprovedDate.Value.ToString("yyyy-MM-dd")</span>
-                                        }
-                                        else if (a.RejectedDate.HasValue)
-                                        {
-                                            <span>@a.RejectedDate.Value.ToString("yyyy-MM-dd")</span>
-                                        }
-                                        else
-                                        {
-                                            <span>-</span>
-                                        }
-                                        @if (!string.IsNullOrEmpty(a.ApprovedByName))
-                                        {
-                                            <div class="text-xs text-gray-500">by @a.ApprovedByName</div>
-                                        }
-                                    </td>
-                                    <td class="px-3 py-2 text-gray-700">@(a.ProposedDate?.ToString("yyyy-MM-dd") ?? "-")</td>
-                                    <td class="px-3 py-2 text-gray-700">@(string.IsNullOrEmpty(a.Remarks) ? "-" : a.Remarks)</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                @if (hasRejected)
-                {
-                    <form method="post" asp-action="Resubmit" asp-route-id="@Model.Id" class="mt-3"
-                          onsubmit="return confirm('Change the College Approval Date (and optionally the exam dates) in Edit, then resubmit. Colleges that rejected will be asked again. Continue?');">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors shadow-sm">
-                            <i class="fas fa-redo text-xs"></i> Resubmit for College Approval
-                        </button>
-                    </form>
-                    <p class="text-xs text-gray-500 mt-2">
-                        Edit the schedule first to adjust the date based on the college's remarks/proposed date, then resubmit.
-                    </p>
-                }
-            }
         </div>
 
         <!-- Student Enrollment Summary -->
@@ -308,6 +205,11 @@
                                 <option value="@item.Value">@item.Text</option>
                             }
                         </select>
+                        <label class="text-xs font-medium text-gray-600 ml-2">Start Time</label>
+                        <input type="time" id="allStartTime" value="@Model.StartTime.ToString("HH:mm")" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <label class="text-xs font-medium text-gray-600 ml-2">End Time</label>
+                        <input type="time" id="allEndTime" value="@Model.EndTime.ToString("HH:mm")" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                        <span class="text-xs text-gray-500">(applies to all subjects)</span>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -317,7 +219,7 @@
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">S.N.</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Subject</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Center</th>
-                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date (BS)</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-600">Exam Date (AD)</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">Start</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-600">End</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-600">Remarks</th>
@@ -356,7 +258,7 @@
                                             </select>
                                         </td>
                                         <td class="px-3 py-2">
-                                            <input type="text" name="examDate" value="@(slot?.ExamDate)" placeholder="YYYY-MM-DD" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                            <input type="date" name="examDate" value="@(slot?.ExamDate)" min="@(Model.StartDate?.ToString("yyyy-MM-dd"))" max="@(Model.EndDate?.ToString("yyyy-MM-dd"))" class="w-36 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                                         </td>
                                         <td class="px-3 py-2">
                                             <input type="time" name="startTime" value="@(slot?.StartTime.ToString("HH:mm") ?? Model.StartTime.ToString("HH:mm"))" class="w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
@@ -428,4 +330,16 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        document.getElementById('allStartTime').addEventListener('change', function () {
+            document.querySelectorAll('input[name="startTime"]').forEach(function (input) {
+                input.value = this.value;
+            }, this);
+        });
+        document.getElementById('allEndTime').addEventListener('change', function () {
+            document.querySelectorAll('input[name="endTime"]').forEach(function (input) {
+                input.value = this.value;
+            }, this);
+        });
+    </script>
 }
