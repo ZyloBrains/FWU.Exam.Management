@@ -21,11 +21,14 @@ using Serilog;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using QuestPDF.Infrastructure;
 
 public partial class EntryPoint
 {
     private static async Task Main(string[] args)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
+
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
             .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
