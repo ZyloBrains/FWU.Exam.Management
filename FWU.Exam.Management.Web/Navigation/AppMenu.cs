@@ -26,7 +26,9 @@ public sealed record MenuSection(
     bool SuperAdminOnly = false,
     string? RoleGate = null,
     bool ShowOnDashboard = true,
-    MenuRoute[]? SectionActiveOns = null);
+    MenuRoute[]? SectionActiveOns = null,
+    bool HideFromStudents = false,
+    bool Flat = false);
 
 public static class AppMenu
 {
@@ -116,7 +118,8 @@ public static class AppMenu
                 M("Admit Cards", "fa-ticket-alt", ["admitcards.view"], R("Exams", "AdmitCards", "Index"), ["admit", "card", "hall ticket"]),
             ],
             Landing: R(null, "Section", "Examination"),
-            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null)]),
+            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null)],
+            HideFromStudents: true),
 
         new("Exam Centers", "Exam Centers", "fa-map-marker-alt",
             "Manage examination centers and distribution",
@@ -149,7 +152,8 @@ public static class AppMenu
                 M("Retotaling", "fa-redo-alt", ["retotaling.view"], R("Exams", "RetotalRequests", "Index"), ["retotal", "re-evaluation", "recheck"]),
             ],
             Landing: R(null, "Section", "Results"),
-            SectionActiveOns: [R("Exams", "ExamSubjectResults", null), R("Exams", "ResultRecords", null), R("Exams", "RetotalRequests", null)]),
+            SectionActiveOns: [R("Exams", "ExamSubjectResults", null), R("Exams", "ResultRecords", null), R("Exams", "RetotalRequests", null)],
+            HideFromStudents: true),
 
         new("Payments", "Payments", "fa-money-bill-wave",
             "Manage banks, payment types and bill titles",
@@ -185,7 +189,8 @@ public static class AppMenu
             ],
             Landing: R(null, "Section", "StudentPortal"),
             RoleGate: Role.Student,
-            SectionActiveOns: [R("Students", "StudentDashboard", null)]),
+            SectionActiveOns: [R("Students", "StudentDashboard", null)],
+            Flat: true),
 
         new("System Config", "System Config", "fa-cog",
             "Configure tenants, notices, audit and backup",
