@@ -27,7 +27,8 @@ public sealed record MenuSection(
     string? RoleGate = null,
     bool ShowOnDashboard = true,
     MenuRoute[]? SectionActiveOns = null,
-    bool HideFromStudents = false);
+    bool HideFromStudents = false,
+    bool Flat = false);
 
 public static class AppMenu
 {
@@ -188,7 +189,8 @@ public static class AppMenu
             ],
             Landing: R(null, "Section", "StudentPortal"),
             RoleGate: Role.Student,
-            SectionActiveOns: [R("Students", "StudentDashboard", null)]),
+            SectionActiveOns: [R("Students", "StudentDashboard", null)],
+            Flat: true),
 
         new("System Config", "System Config", "fa-cog",
             "Configure tenants, notices, audit and backup",
