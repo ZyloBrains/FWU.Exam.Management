@@ -57,6 +57,7 @@
 
     bool SectionVisible(MenuSection section)
     {
+        if (section.HideFromStudents && !isSuperAdmin && sideMenuRoles.Contains(Role.Student)) return false;
         if (section.SingleLink) return true;
         if (section.SuperAdminOnly && !isSuperAdmin) return false;
         if (section.RoleGate != null && !isSuperAdmin && !sideMenuRoles.Contains(section.RoleGate)) return false;
