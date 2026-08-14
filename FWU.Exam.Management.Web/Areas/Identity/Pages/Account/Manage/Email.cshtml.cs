@@ -149,6 +149,12 @@ public class EmailModel(
 
         var userId = await userManager.GetUserIdAsync(user);
         var email = await userManager.GetEmailAsync(user);
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            StatusMessage = "No email is saved on this account yet. Enter a new email below and click \"Change email\" to add and verify it.";
+            return RedirectToPage();
+        }
+
         var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
         var callbackUrl = Url.Page(

@@ -3,15 +3,17 @@
 #nullable disable
 
 using System.Text;
+using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Areas.Identity.Pages.Account;
 
-public class ConfirmEmailChangeModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : PageModel
+public class ConfirmEmailChangeModel(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, AppDbContext context) : PageModel
 {
 
     /// <summary>
@@ -42,13 +44,19 @@ public class ConfirmEmailChangeModel(UserManager<AppUser> userManager, SignInMan
             return Page();
         }
 
-        // In our UI email and user name are one and the same, so when we update the email
-        // we need to update the user name.
-        var setUserNameResult = await userManager.SetUserNameAsync(user, email);
-        if (!setUserNameResult.Succeeded)
+        // Do NOT change the username column: students log in with their registration
+        // number, so it must be preserved. Only the Email column is updated.
+
+        // Keep the StudentRegistration email in sync with the new address.
+        var registration = await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.StudentAdmissionId != null
+                && context.StudentAdmissions.Any(sa => sa.Id == sr.StudentAdmissionId && sa.AppUserId == user.Id));
+        registration ??= await context.StudentRegistrations
+            .FirstOrDefaultAsync(sr => sr.RegistrationNumber == user.UserName);
+        if (registration != null && registration.Email != email)
         {
-            StatusMessage = "Error changing user name.";
-            return Page();
+            registration.Email = email;
+            await context.SaveChangesAsync();
         }
 
         await signInManager.RefreshSignInAsync(user);
