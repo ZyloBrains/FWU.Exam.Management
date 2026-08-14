@@ -57,6 +57,7 @@
 
     bool SectionVisible(MenuSection section)
     {
+        if (section.HideFromStudents && !isSuperAdmin && sideMenuRoles.Contains(Role.Student)) return false;
         if (section.SingleLink) return true;
         if (section.SuperAdminOnly && !isSuperAdmin) return false;
         if (section.RoleGate != null && !isSuperAdmin && !sideMenuRoles.Contains(section.RoleGate)) return false;
@@ -118,6 +119,20 @@
                     <span class="flex-1 text-left tracking-wide">@menuSection.Title</span>
                 </a>
             </li>
+        }
+        else if (menuSection.Flat)
+        {
+            foreach (var item in menuSection.Items.Where(ItemVisible))
+            {
+                <li>
+                    <a href="@ItemUrl(item)" class="@ParentClass(ItemActive(item))">
+                        <div class="flex items-center justify-center w-6">
+                            <i class="fas @item.Icon text-lg opacity-80"></i>
+                        </div>
+                        <span class="flex-1 text-left tracking-wide">@item.Label</span>
+                    </a>
+                </li>
+            }
         }
         else
         {
