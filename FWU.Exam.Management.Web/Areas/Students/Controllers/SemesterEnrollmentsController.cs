@@ -1,6 +1,7 @@
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
@@ -95,28 +96,31 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
         await PopulateFilterDropdownsAsync(collegeId, programId, semesterId, academicYearId);
 
-        if (programId.HasValue)
-        {
-            var semesters = await enrollmentService.GetSemestersByProgramAsync(programId.Value, academicYearId);
-            ViewData["SemesterFilter"] = new SelectList(semesters, "Id", "Name", semesterId);
-        }
-        else
-        {
-            ViewData["SemesterFilter"] = new SelectList(Enumerable.Empty<SelectListItem>(), "Id", "Name");
-        }
-
-        var allSemestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext).AsQueryable();
+        var allSemestersQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).AsQueryable();
         if (academicYearId.HasValue)
             allSemestersQuery = allSemestersQuery.Where(s => s.AcademicYearId == academicYearId.Value);
-        var allSemesters = await allSemestersQuery.OrderBy(s => s.Name).ToListAsync();
-        ViewBag.EnrollSemesterList = new SelectList(allSemesters, "Id", "Name", semesterId);
+        var allSemesters = await allSemestersQuery.OrderBy(s => s.Year).ThenBy(s => s.Number).ToListAsync();
 
-        var (candidates, totalCount) = await enrollmentService.GetEnrollmentCandidatesAsync(search, academicYearId, collegeId, programId, semesterId, page, pageSize);
-        var totalPages = pageSize > 0 ? Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize)) : 1;
-        if (page > totalPages && totalPages > 0)
+        ViewData["SemesterFilter"] = new SelectList(
+            allSemesters.Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }), "Id", "Name", semesterId);
+        ViewBag.EnrollSemesterList = new SelectList(
+            allSemesters.Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }), "Id", "Name", semesterId);
+
+        var hasFilters = !string.IsNullOrWhiteSpace(search) || academicYearId.HasValue || collegeId.HasValue || programId.HasValue || semesterId.HasValue;
+        ViewBag.HasFilters = hasFilters;
+
+        List<SemesterEnrollmentCandidateDto> candidates = [];
+        var totalCount = 0;
+        var totalPages = 1;
+        if (hasFilters)
         {
-            page = totalPages;
             (candidates, totalCount) = await enrollmentService.GetEnrollmentCandidatesAsync(search, academicYearId, collegeId, programId, semesterId, page, pageSize);
+            totalPages = pageSize > 0 ? Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize)) : 1;
+            if (page > totalPages && totalPages > 0)
+            {
+                page = totalPages;
+                (candidates, totalCount) = await enrollmentService.GetEnrollmentCandidatesAsync(search, academicYearId, collegeId, programId, semesterId, page, pageSize);
+            }
         }
         ViewBag.TotalCount = totalCount;
         ViewBag.CurrentPage = page;
@@ -346,12 +350,12 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
         ViewData["ProgramFilter"] = new SelectList(
             await programQuery.OrderBy(p => p.ProgramName).Select(p => new { p.Id, p.ProgramName }).ToListAsync(), "Id", "ProgramName", programId);
-        var semesterQuery = context.Semesters.AsNoTracking().AsQueryable();
+        var semesterQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).AsQueryable();
         if (academicYearId.HasValue)
             semesterQuery = semesterQuery.Where(s => s.AcademicYearId == academicYearId.Value);
 
         ViewData["SemesterFilter"] = new SelectList(
-            await semesterQuery.OrderBy(s => s.Number).Select(s => new { s.Id, s.Name }).ToListAsync(), "Id", "Name", semesterId);
+            await semesterQuery.OrderBy(s => s.Year).ThenBy(s => s.Number).Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }).ToListAsync(), "Id", "Name", semesterId);
         ViewData["AcademicYearFilter"] = await GetAcademicYearsAsync(academicYearId);
     }
 
