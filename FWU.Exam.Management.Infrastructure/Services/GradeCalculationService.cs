@@ -19,8 +19,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         var theoryFull = subjectOffering.TheoryFullMarks;
         var practicalFull = subjectOffering.PracticalFullMarks ?? 0f;
         var internalTheoryFull = subjectOffering.InternalTheoryFullMarks ?? 0f;
-        var internalPracticalFull = subjectOffering.InternalPracticalFullMarks ?? 0f;
-        var totalFullMarks = theoryFull + practicalFull + internalTheoryFull + internalPracticalFull;
+        var totalFullMarks = theoryFull + practicalFull + internalTheoryFull;
 
         if (totalFullMarks == 0) totalFullMarks = 1;
 

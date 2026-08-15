@@ -171,7 +171,6 @@ public class PracticalMarksService(
                 HasPractical = so.HasPractical,
                 TheoryFullMarks = so.TheoryFullMarks,
                 InternalTheoryFullMarks = so.InternalTheoryFullMarks,
-                InternalPracticalFullMarks = so.InternalPracticalFullMarks,
                 PracticalFullMarks = so.PracticalFullMarks,
                 PracticalPassMarks = so.PracticalPassMarks
             })
@@ -203,8 +202,6 @@ public class PracticalMarksService(
             TheoryPassMarks = subjectOffering.TheoryPassMarks,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
             InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks,
-            InternalPracticalFullMarks = subjectOffering.InternalPracticalFullMarks,
-            InternalPracticalPassMarks = subjectOffering.InternalPracticalPassMarks,
             PracticalFullMarks = subjectOffering.PracticalFullMarks,
             PracticalPassMarks = subjectOffering.PracticalPassMarks
         };

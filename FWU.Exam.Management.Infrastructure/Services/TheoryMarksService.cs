@@ -170,8 +170,7 @@ public class TheoryMarksService(
                 HasTheory = so.HasTheory,
                 HasPractical = so.HasPractical,
                 TheoryFullMarks = so.TheoryFullMarks,
-                InternalTheoryFullMarks = so.InternalTheoryFullMarks,
-                InternalPracticalFullMarks = so.InternalPracticalFullMarks
+                InternalTheoryFullMarks = so.InternalTheoryFullMarks
             })
             .ToListAsync();
     }
@@ -200,9 +199,7 @@ public class TheoryMarksService(
             TheoryFullMarks = subjectOffering.TheoryFullMarks,
             TheoryPassMarks = subjectOffering.TheoryPassMarks,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
-            InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks,
-            InternalPracticalFullMarks = subjectOffering.InternalPracticalFullMarks,
-            InternalPracticalPassMarks = subjectOffering.InternalPracticalPassMarks
+            InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks
         };
     }
 

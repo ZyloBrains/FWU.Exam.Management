@@ -67,14 +67,6 @@ public class SubjectOffering : ITenantScoped
     [Display(Name = "Internal Theory Pass Marks")]
     public float? InternalTheoryPassMarks { get; set; }
 
-    [Range(0, float.MaxValue)]
-    [Display(Name = "Internal Practical Full Marks")]
-    public float? InternalPracticalFullMarks { get; set; }
-
-    [Range(0, float.MaxValue)]
-    [Display(Name = "Internal Practical Pass Marks")]
-    public float? InternalPracticalPassMarks { get; set; }
-
     public virtual SubjectCatalog? SubjectCatalog { get; set; }
     public virtual Program? Program { get; set; }
     public virtual Semester? Semester { get; set; }
