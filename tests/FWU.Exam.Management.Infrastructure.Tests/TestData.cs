@@ -112,6 +112,25 @@ public static class TestData
         ctx.ProgramSemesters.Add(ProgramSemester(8, 2, ProgramIdOther));
     }
 
+    // The College global query filter only exposes colleges that have a CollegeFaculty row for
+    // the current tenant, so the seeded college must be linked before it can be Included in
+    // student registration queries.
+    public static void SeedCollegeForStandardTenant(AppDbContext ctx)
+    {
+        ctx.Faculties.Add(new Faculty
+        {
+            Id = 99,
+            Name = "Seed Faculty",
+            OfficeCode = "SEED"
+        });
+        ctx.CollegeFaculties.Add(new CollegeFaculty
+        {
+            TenantId = TenantId,
+            CollegeId = CollegeId,
+            FacultyId = 99
+        });
+    }
+
     public static AppUser User(string id, string email) => new()
     {
         Id = id,
@@ -261,7 +280,7 @@ public static class TestData
         ProgramsId = programId,
         SemesterEnrollmentId = semesterEnrollmentId,
         RegistrationDate = DateTime.UtcNow,
-        Status = RegistrationStatus.Registered,
+        Status = RegistrationStatus.Pending,
         IsActive = true,
         IsAppliedByStudent = true
     };

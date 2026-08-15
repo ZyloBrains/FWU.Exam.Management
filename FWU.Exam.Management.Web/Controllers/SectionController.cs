@@ -24,6 +24,7 @@ public class SectionController(IPermissionService permissionService, UserManager
 
     private bool IsSectionVisible(MenuSection section, List<string> perms, bool isSuperAdmin, IList<string> userRoles)
     {
+        if (section.HideFromStudents && !isSuperAdmin && userRoles.Contains(Role.Student)) return false;
         if (section.SingleLink) return true;
         if (section.SuperAdminOnly && !isSuperAdmin) return false;
         if (section.RoleGate != null && !isSuperAdmin && !userRoles.Contains(section.RoleGate)) return false;
@@ -89,8 +90,8 @@ public class SectionController(IPermissionService permissionService, UserManager
 
     public async Task<IActionResult> Examination()
     {
-        if (!await HasAnyAsync("examschedules.view", "examapproval.view", "examtypes.view", "entrance.view",
-            "examregistrations.view", "admitcards.view"))
+        if (!await HasAnyAsync("examschedules.view", "examtypes.view", "entrance.view",
+            "examregistration.view", "admitcards.view"))
             return Forbid();
         return View();
     }

@@ -129,7 +129,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         if (examRegistration != null && examRegistration.Status == RegistrationStatus.Pending)
         {
             examRegistration.Status = RegistrationStatus.CollegeVerified;
-            examRegistration.VerifiedByUsername = null;
+            examRegistration.VerifiedByUsername = await ResolveUsernameAsync();
             examRegistration.VerifiedDate = DateTime.UtcNow;
             await context.SaveChangesAsync();
         }
@@ -141,10 +141,17 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         if (examRegistration != null && examRegistration.Status == RegistrationStatus.CollegeVerified)
         {
             examRegistration.Status = RegistrationStatus.AdminVerified;
-            examRegistration.AdminVerifiedByUsername = null;
+            examRegistration.AdminVerifiedByUsername = await ResolveUsernameAsync();
             examRegistration.AdminVerifiedDate = DateTime.UtcNow;
             await context.SaveChangesAsync();
         }
+    }
+
+    private async Task<string?> ResolveUsernameAsync()
+    {
+        if (string.IsNullOrEmpty(userContext.UserId)) return null;
+        var user = await context.Users.FindAsync(userContext.UserId);
+        return user?.UserName;
     }
 
     public async Task<ExamRegistrationSelectListsDto> GetSelectListDataAsync(ExamRegistration? examRegistration = null)
@@ -205,11 +212,20 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         };
     }
 
-    public async Task<ExamFormsAdminResult> GetStudentExamFormsAsync(int? examScheduleId, string? search, int page, int pageSize)
+    public async Task<ExamFormsAdminResult> GetStudentExamFormsAsync(int? academicYearId, int? levelId, int? examScheduleId, string? search, int page, int pageSize)
     {
-        var query = context.ExamRegistrations
+        var scopedQuery = context.ExamRegistrations
             .AsNoTracking()
-            .Where(er => er.IsAppliedByStudent == true && er.IsActive);
+            .Where(er => er.IsAppliedByStudent == true && er.IsActive)
+            .ApplyScope(userContext);
+
+        var query = scopedQuery;
+
+        if (academicYearId.HasValue)
+            query = query.Where(er => er.AcademicYearId == academicYearId.Value);
+
+        if (levelId.HasValue)
+            query = query.Where(er => er.ExamSchedule != null && er.ExamSchedule.Program != null && er.ExamSchedule.Program.LevelId == levelId.Value);
 
         if (examScheduleId.HasValue)
             query = query.Where(er => er.ExamScheduleId == examScheduleId.Value);
@@ -221,12 +237,27 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 (er.Remarks != null && er.Remarks.Contains(search)));
         }
 
+        var pendingBySchedule = await scopedQuery
+            .Where(er => er.Status == RegistrationStatus.Pending)
+            .GroupBy(er => er.ExamSchedule!.ExamScheduleName)
+            .Select(g => new SchedulePendingCountDto { ScheduleName = g.Key, PendingCount = g.Count() })
+            .ToListAsync();
+
         var totalCount = await query.CountAsync();
 
         var items = await query
             .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.Program)
+                    .ThenInclude(p => p!.Level)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.Semester)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.ExamType)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.AcademicYear)
             .Include(er => er.College)
             .Include(er => er.Program)
+            .Include(er => er.AcademicYear)
             .OrderByDescending(er => er.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -240,10 +271,115 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 TotalCount = totalCount,
                 PaymentConfirmedCount = 0,
                 AdmitCardGeneratedCount = 0,
-                PendingAdmitCardCount = 0
+                PendingAdmitCardCount = 0,
+                PendingApprovalCount = pendingBySchedule.Sum(g => g.PendingCount),
+                PendingBySchedule = pendingBySchedule
             };
         }
 
+        var stats = await ComputeStatsAsync(scopedQuery);
+        var forms = await BuildFormsAsync(items);
+
+        return new ExamFormsAdminResult
+        {
+            Forms = forms,
+            TotalCount = totalCount,
+            PaymentConfirmedCount = stats.PaymentConfirmedCount,
+            AdmitCardGeneratedCount = stats.AdmitCardGeneratedCount,
+            PendingAdmitCardCount = Math.Max(0, totalCount - stats.AdmitCardGeneratedCount),
+            PendingApprovalCount = pendingBySchedule.Sum(g => g.PendingCount),
+            PendingBySchedule = pendingBySchedule
+        };
+    }
+
+    public async Task<ExamFormAdminDto?> GetStudentExamFormDetailAsync(int id)
+    {
+        var er = await context.ExamRegistrations
+            .AsNoTracking()
+            .Where(e => e.Id == id && e.IsAppliedByStudent == true && e.IsActive)
+            .ApplyScope(userContext)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.Program)
+                    .ThenInclude(p => p!.Level)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.Semester)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.ExamType)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.AcademicYear)
+            .Include(er => er.College)
+            .Include(er => er.Program)
+            .Include(er => er.AcademicYear)
+            .FirstOrDefaultAsync();
+
+        if (er == null) return null;
+
+        var forms = await BuildFormsAsync([er]);
+        return forms.FirstOrDefault();
+    }
+
+    public async Task<List<SelectOption>> GetFilterAcademicYearsAsync()
+    {
+        var scopedQuery = context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.IsAppliedByStudent == true && er.IsActive)
+            .ApplyScope(userContext);
+
+        var yearIds = await scopedQuery
+            .Select(er => er.AcademicYearId)
+            .Distinct()
+            .ToListAsync();
+
+        return await context.AcademicYears
+            .AsNoTracking()
+            .Where(ay => yearIds.Contains(ay.Id))
+            .OrderByDescending(ay => ay.IsRunning)
+            .ThenByDescending(ay => ay.Id)
+            .Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName })
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetFilterLevelsAsync(int academicYearId)
+    {
+        var scopedQuery = context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.IsAppliedByStudent == true && er.IsActive)
+            .ApplyScope(userContext);
+
+        var levelIds = await scopedQuery
+            .Where(er => er.AcademicYearId == academicYearId && er.ExamSchedule != null && er.ExamSchedule.Program != null)
+            .Select(er => er.ExamSchedule!.Program!.LevelId)
+            .Distinct()
+            .ToListAsync();
+
+        return await context.Levels
+            .AsNoTracking()
+            .Where(l => levelIds.Contains(l.Id) && l.IsActive)
+            .OrderBy(l => l.LevelDisplayOrder)
+            .ThenBy(l => l.LevelName)
+            .Select(l => new SelectOption { Id = l.Id, Name = l.LevelName })
+            .ToListAsync();
+    }
+
+    public async Task<List<SelectOption>> GetFilterExamSchedulesAsync(int academicYearId, int levelId)
+    {
+        var scopedQuery = context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.IsAppliedByStudent == true && er.IsActive)
+            .ApplyScope(userContext);
+
+        return await scopedQuery
+            .Where(er => er.AcademicYearId == academicYearId
+                && er.ExamSchedule != null
+                && er.ExamSchedule.Program != null
+                && er.ExamSchedule.Program.LevelId == levelId)
+            .Select(er => new SelectOption { Id = er.ExamScheduleId, Name = er.ExamSchedule!.ExamScheduleName })
+            .Distinct()
+            .ToListAsync();
+    }
+
+    private async Task<List<ExamFormAdminDto>> BuildFormsAsync(List<ExamRegistration> items)
+    {
         var registrationIds = items.Select(i => i.Id).ToList();
         var scheduleIds = items.Select(i => i.ExamScheduleId).Distinct().ToList();
         var voucherIds = items.Where(i => i.ApplicationVoucherId.HasValue).Select(i => i.ApplicationVoucherId!.Value).Distinct().ToList();
@@ -282,19 +418,72 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .GroupBy(pl => (pl.ExamScheduleId, pl.StudentRegistrationId!.Value))
             .ToDictionary(
                 g => g.Key,
-                g => g.First());
+                g => g.OrderByDescending(pl => pl.Id).First());
 
         var admitCards = await context.AdmitCards!
             .AsNoTracking()
             .Where(ac => registrationIds.Contains(ac.ExamRegistrationId) && ac.IsActive)
             .ToListAsync();
 
+        var regNumbers = studentRegistrations
+            .Where(sr => !string.IsNullOrEmpty(sr.RegistrationNumber))
+            .Select(sr => sr.RegistrationNumber!)
+            .Distinct()
+            .ToList();
+
+        // Students have UserName = RegistrationNumber; legacy rows stored the
+        // registration number in the Email column instead.
+        var users = regNumbers.Count > 0
+            ? await context.Users
+                .AsNoTracking()
+                .Where(u => (u.UserName != null && regNumbers.Contains(u.UserName))
+                    || (u.Email != null && regNumbers.Contains(u.Email)))
+                .Select(u => new { u.UserName, u.Email, u.ProfilePath, u.SignaturePath })
+                .ToListAsync()
+            : [];
+        var usersByUserName = users
+            .Where(u => u.UserName != null)
+            .GroupBy(u => u.UserName!)
+            .ToDictionary(g => g.Key, g => g.First());
+        var usersByEmail = users
+            .Where(u => u.Email != null)
+            .GroupBy(u => u.Email!)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var subjectKeys = items
+            .Where(i => i.ExamSchedule != null)
+            .Select(i => (i.ExamSchedule!.ProgramId, i.ExamSchedule.SemesterId))
+            .Distinct()
+            .ToList();
+
+        var programIds = subjectKeys.Select(k => k.ProgramId).Distinct().ToList();
+        var semesterIds = subjectKeys.Select(k => k.SemesterId).Distinct().ToList();
+
+        var offerings = subjectKeys.Count > 0
+            ? await context.SubjectOfferings
+                .AsNoTracking()
+                .Include(so => so.SubjectCatalog)
+                .Where(so => programIds.Contains(so.ProgramId) && semesterIds.Contains(so.SemesterId))
+                .OrderBy(so => so.DisplayOrder)
+                .ToListAsync()
+            : [];
+
+        var offeringLookup = offerings
+            .GroupBy(so => (so.ProgramId, so.SemesterId))
+            .ToDictionary(g => g.Key, g => g.ToList());
+
         var forms = items.Select(er =>
         {
             string? studentName = null;
             string? registrationNumber = null;
+            string? contactNumber = null;
+            string? dateOfBirthAD = null;
+            string? photoPath = null;
+            string? signaturePath = null;
+            decimal? paidAmount = null;
             bool paymentConfirmed = false;
             string? invoiceNumber = null;
+            HashSet<int>? selectedSubjectIds = null;
 
             if (er.ApplicationVoucherId.HasValue
                 && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var srId)
@@ -302,12 +491,51 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             {
                 studentName = sr.FirstName.GetFullName(sr.MiddleName, sr.LastName);
                 registrationNumber = sr.RegistrationNumber;
+                contactNumber = sr.ContactNumber;
+                dateOfBirthAD = sr.DateOfBirthAD;
+
+                if (!string.IsNullOrEmpty(sr.RegistrationNumber)
+                    && (usersByUserName.TryGetValue(sr.RegistrationNumber, out var studentUser)
+                        || usersByEmail.TryGetValue(sr.RegistrationNumber, out studentUser)))
+                {
+                    photoPath = studentUser.ProfilePath;
+                    signaturePath = studentUser.SignaturePath;
+                }
 
                 if (paymentLogLookup.TryGetValue((er.ExamScheduleId, srId), out var pl))
                 {
                     paymentConfirmed = true;
                     invoiceNumber = pl.InvoiceNumber;
+                    paidAmount = pl.Amount;
+                    selectedSubjectIds = string.IsNullOrWhiteSpace(pl.SelectedSubjectIds)
+                        ? new HashSet<int>()
+                        : pl.SelectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                            .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
+                            .Where(value => value.HasValue)
+                            .Select(value => value!.Value)
+                            .ToHashSet();
                 }
+            }
+
+            var schedule = er.ExamSchedule;
+            var subjects = new List<ExamFormSubjectDto>();
+            if (schedule != null && offeringLookup.TryGetValue((schedule.ProgramId, schedule.SemesterId), out var scheduleOfferings))
+            {
+                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null);
+                if (selectedSubjectIds is { Count: > 0 })
+                    eligible = eligible.Where(so => selectedSubjectIds.Contains(so.Id));
+                else
+                    eligible = [];
+
+                subjects = eligible
+                    .Select(so => new ExamFormSubjectDto
+                    {
+                        Code = so.SubjectCatalog!.SubjectCode,
+                        Name = so.SubjectCatalog.SubjectName,
+                        Theory = so.HasTheory,
+                        Practical = so.HasPractical
+                    })
+                    .ToList();
             }
 
             return new ExamFormAdminDto
@@ -315,37 +543,90 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 ExamRegistrationId = er.Id,
                 StudentName = studentName,
                 RegistrationNumber = registrationNumber,
+                ContactNumber = contactNumber,
+                DateOfBirthAD = dateOfBirthAD,
                 CollegeName = er.College?.Name,
                 ExamScheduleId = er.ExamScheduleId,
-                ExamScheduleName = er.ExamSchedule?.ExamScheduleName,
-                ProgramName = er.Program?.ProgramName,
+                ExamScheduleName = schedule?.ExamScheduleName,
+                ProgramName = er.Program?.ProgramName ?? schedule?.Program?.ProgramName,
+                LevelName = schedule?.Program?.Level?.LevelName ?? er.Program?.Level?.LevelName,
+                SemesterName = schedule?.Semester?.Name,
+                ExamTypeName = schedule?.ExamType?.Name,
+                AcademicYearName = er.AcademicYear?.AcademicYearName ?? schedule?.AcademicYear?.AcademicYearName,
                 FeeEnclosed = er.FeeEnclosed,
+                PaidAmount = paidAmount ?? er.FeeEnclosed,
+                PhotoPath = photoPath,
+                SignaturePath = signaturePath,
+                Subjects = subjects,
                 Status = er.Status,
                 PaymentConfirmed = paymentConfirmed,
                 InvoiceNumber = invoiceNumber,
                 HasAdmitCard = admitCards.Any(ac => ac.ExamRegistrationId == er.Id),
-                RegistrationDate = er.RegistrationDate
+                RegistrationDate = er.RegistrationDate,
+                VerifiedByUsername = er.VerifiedByUsername,
+                VerifiedDate = er.VerifiedDate,
+                CanApprove = er.Status == RegistrationStatus.Pending,
+                CanAdminApprove = er.Status == RegistrationStatus.CollegeVerified
             };
         }).ToList();
 
-        var allPaymentConfirmedCount = paymentLogs.Count(pl => pl.PaymentRequestLogStatus == 1);
+        return forms;
+    }
 
-        var allAdmitCardCount = await context.AdmitCards!
-            .AsNoTracking()
-            .Where(ac => context.ExamRegistrations!
-                .Any(er => er.Id == ac.ExamRegistrationId
-                        && er.IsAppliedByStudent == true
-                        && er.IsActive)
-                && ac.IsActive)
-            .CountAsync();
+    private async Task<(int PaymentConfirmedCount, int AdmitCardGeneratedCount)> ComputeStatsAsync(IQueryable<ExamRegistration> scopedQuery)
+    {
+        var all = await scopedQuery
+            .Select(er => new { er.Id, er.ApplicationVoucherId, er.ExamScheduleId })
+            .ToListAsync();
 
-        return new ExamFormsAdminResult
+        var allIds = all.Select(x => x.Id).ToList();
+        var scheduleIds = all.Select(x => x.ExamScheduleId).Distinct().ToList();
+
+        var voucherIds = all.Where(x => x.ApplicationVoucherId.HasValue).Select(x => x.ApplicationVoucherId!.Value).Distinct().ToList();
+        var vouchers = voucherIds.Count > 0
+            ? await context.ApplicationVouchers!
+                .AsNoTracking()
+                .Where(v => voucherIds.Contains(v.Id))
+                .Select(v => new { v.Id, v.StudentRegistrationId })
+                .ToListAsync()
+            : [];
+
+        var erIdToSrId = vouchers
+            .Where(v => v.StudentRegistrationId.HasValue)
+            .ToDictionary(v => v.Id, v => v.StudentRegistrationId!.Value);
+
+        var srIds = erIdToSrId.Values.Distinct().ToList();
+
+        var confirmedPairs = new HashSet<(int ExamScheduleId, int StudentRegistrationId)>();
+        if (scheduleIds.Count > 0 && srIds.Count > 0)
         {
-            Forms = forms,
-            TotalCount = totalCount,
-            PaymentConfirmedCount = allPaymentConfirmedCount,
-            AdmitCardGeneratedCount = allAdmitCardCount,
-            PendingAdmitCardCount = Math.Max(0, totalCount - allAdmitCardCount)
-        };
+            var logs = await context.PaymentRequestLogs!
+                .AsNoTracking()
+                .Where(prl => scheduleIds.Contains(prl.ExamScheduleId)
+                           && prl.StudentRegistrationId != null
+                           && srIds.Contains(prl.StudentRegistrationId.Value)
+                           && prl.PaymentRequestLogStatus == 1)
+                .Select(prl => new { prl.ExamScheduleId, prl.StudentRegistrationId })
+                .ToListAsync();
+
+            foreach (var log in logs)
+                confirmedPairs.Add((log.ExamScheduleId, log.StudentRegistrationId!.Value));
+        }
+
+        var paymentConfirmedCount = all.Count(x =>
+            x.ApplicationVoucherId.HasValue
+            && erIdToSrId.TryGetValue(x.ApplicationVoucherId.Value, out var srId)
+            && confirmedPairs.Contains((x.ExamScheduleId, srId)));
+
+        var admitCardGeneratedCount = allIds.Count > 0
+            ? await context.AdmitCards!
+                .AsNoTracking()
+                .Where(ac => ac.IsActive && allIds.Contains(ac.ExamRegistrationId))
+                .Select(ac => ac.ExamRegistrationId)
+                .Distinct()
+                .CountAsync()
+            : 0;
+
+        return (paymentConfirmedCount, admitCardGeneratedCount);
     }
 }

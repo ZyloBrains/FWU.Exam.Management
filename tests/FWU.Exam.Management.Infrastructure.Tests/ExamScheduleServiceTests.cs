@@ -1,5 +1,5 @@
 using FWU.Exam.Management.Domain.Entities.Exams;
-using FWU.Exam.Management.Domain.Enums;
+using FWU.Exam.Management.Domain.Helpers;
 using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -12,28 +12,18 @@ public class ExamScheduleServiceTests
         new(db.Context, new TestUserContext());
 
     [Fact]
-    public async Task DeleteExamScheduleAsync_DeletesScheduleAndApprovalRows_WhenNoRegistrationsOrResults()
+    public async Task DeleteExamScheduleAsync_DeletesSchedule_WhenNoRegistrationsOrResults()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             TestData.SeedBase(ctx);
             ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
-            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
-            {
-                Id = 1,
-                TenantId = TestData.TenantId,
-                ExamScheduleId = 11,
-                CollegeId = TestData.CollegeId,
-                Status = ExamScheduleApprovalStatus.Pending,
-                IsActive = true
-            });
         });
 
         var service = CreateService(db);
         await service.DeleteExamScheduleAsync(11);
 
         Assert.False(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11));
-        Assert.False(await db.Context.ExamScheduleCollegeApprovals.AnyAsync(a => a.ExamScheduleId == 11));
     }
 
     [Fact]
@@ -123,5 +113,96 @@ public class ExamScheduleServiceTests
 
         var service = CreateService(db);
         await service.DeleteExamScheduleAsync(999);
+    }
+
+    [Fact]
+    public async Task DeactivateExpiredSchedulesAsync_DeactivatesSchedule_EndedBeforeToday()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), null));
+        });
+
+        var service = CreateService(db);
+        await service.DeactivateExpiredSchedulesAsync();
+
+        Assert.False(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
+    }
+
+    [Fact]
+    public async Task DeactivateExpiredSchedulesAsync_KeepsScheduleActive_WhenEndingToday()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today), null));
+        });
+
+        var service = CreateService(db);
+        await service.DeactivateExpiredSchedulesAsync();
+
+        Assert.True(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
+    }
+
+    [Fact]
+    public async Task DeactivateExpiredSchedulesAsync_KeepsScheduleActive_WhenExtendedDateIsInFuture()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            var schedule = TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(-1)), null);
+            schedule.ExtendedDate = DateTime.Today.AddDays(5);
+            ctx.ExamSchedules.Add(schedule);
+        });
+
+        var service = CreateService(db);
+        await service.DeactivateExpiredSchedulesAsync();
+
+        Assert.True(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
+    }
+
+    [Fact]
+    public async Task DeactivateExpiredSchedulesAsync_DeactivatesSchedule_WhenExtendedDateAlsoPassed()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            var schedule = TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(-10)), null);
+            schedule.ExtendedDate = DateTime.Today.AddDays(-1);
+            ctx.ExamSchedules.Add(schedule);
+        });
+
+        var service = CreateService(db);
+        await service.DeactivateExpiredSchedulesAsync();
+
+        Assert.False(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 11 && e.IsActive));
+    }
+
+    [Fact]
+    public async Task CreateExamScheduleAsync_DerivesBsDates_WhenAdProvided()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx => TestData.SeedBase(ctx));
+        var service = CreateService(db);
+
+        var schedule = TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.Today.AddDays(30)), null);
+        schedule.StartDate = DateOnly.FromDateTime(new DateTime(2026, 9, 1));
+        schedule.EndDate = DateOnly.FromDateTime(new DateTime(2026, 9, 15));
+        schedule.StartDateBs = null;
+        schedule.EndDateBs = null;
+
+        await service.CreateExamScheduleAsync(schedule);
+
+        var saved = await db.Context.ExamSchedules.AsNoTracking().FirstAsync(e => e.Id == 11);
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", saved.StartDateBs);
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", saved.EndDateBs);
+
+        var startBs = saved.StartDateBs!.Split('-').Select(int.Parse).ToArray();
+        var startAd = NepaliDateConverter.BsToAd(startBs[0], startBs[1], startBs[2]);
+        Assert.Equal(schedule.StartDate.Value, DateOnly.FromDateTime(startAd!.Value));
+
+        var endBs = saved.EndDateBs!.Split('-').Select(int.Parse).ToArray();
+        var endAd = NepaliDateConverter.BsToAd(endBs[0], endBs[1], endBs[2]);
+        Assert.Equal(schedule.EndDate.Value, DateOnly.FromDateTime(endAd!.Value));
     }
 }

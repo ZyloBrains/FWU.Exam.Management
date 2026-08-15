@@ -80,6 +80,9 @@ public class StudentProfileDetailViewModel : ProfileBaseViewModel
     public string? Nationality { get; set; }
     public string? Religion { get; set; }
     public string? Address { get; set; }
+    public string? PermanentProvinceName { get; set; }
+    public string? PermanentDistrictName { get; set; }
+    public string? PermanentLocalLevelName { get; set; }
     public string? AcademicYear { get; set; }
     public string? College { get; set; }
     public string? Level { get; set; }
@@ -88,6 +91,14 @@ public class StudentProfileDetailViewModel : ProfileBaseViewModel
     public string? AdmissionDate { get; set; }
     public string? CollegeRollNumber { get; set; }
     public string? CurrentSemester { get; set; }
+    public int? PermanentLocalLevelId { get; set; }
+    public int? PermanentDistrictId { get; set; }
+    public int? PermanentProvinceId { get; set; }
+    public int? RegistrationGenderId { get; set; }
+    public int? RegistrationEthnicityId { get; set; }
+    public bool ShowProfileCompletionPopup { get; set; }
+    public List<string> MissingMandatoryFields { get; set; } = [];
+    public List<MandatoryProfileFieldStatusViewModel> MandatoryFields { get; set; } = [];
     public List<StudentGuardianProfileViewModel> Guardians { get; set; } = [];
     public List<StudentQualificationProfileViewModel> Qualifications { get; set; } = [];
     public int ExamRegistrationCount { get; set; }
@@ -109,4 +120,10 @@ public class StudentQualificationProfileViewModel
     public string? ProgramName { get; set; }
     public string? PassedYear { get; set; }
     public string? Percentage { get; set; }
+}
+
+public class MandatoryProfileFieldStatusViewModel
+{
+    public string Name { get; set; } = string.Empty;
+    public bool IsComplete { get; set; }
 }

@@ -172,9 +172,10 @@ public class BulkUserCreationService(
                 {
                     try
                     {
-                        var loginId = !string.IsNullOrWhiteSpace(reg.Email)
-                            ? reg.Email
-                            : reg.RegistrationNumber;
+                        // The registration number is the primary login identifier for students.
+                        var loginId = !string.IsNullOrWhiteSpace(reg.RegistrationNumber)
+                            ? reg.RegistrationNumber
+                            : reg.Email;
 
                         if (string.IsNullOrWhiteSpace(loginId))
                         {
@@ -184,7 +185,8 @@ public class BulkUserCreationService(
                         }
 
                         // Check pre-loaded sets instead of individual DB queries
-                        if (existingEmailSet.Contains(loginId) || existingUserNameSet.Contains(loginId))
+                        if (existingUserNameSet.Contains(loginId)
+                            || (reg.Email != null && existingEmailSet.Contains(reg.Email)))
                         {
                             job.FailedCount++;
                             job.ProcessedCount++;
@@ -194,8 +196,8 @@ public class BulkUserCreationService(
                         var user = new AppUser
                         {
                             UserName = loginId,
-                            Email = loginId,
-                            EmailConfirmed = true,
+                            Email = reg.Email,
+                            EmailConfirmed = false,
                             FullName = reg.FirstName.GetFullName(reg.LastName),
                             IsActive = true,
                             FacultyId = reg.FacultyId,
@@ -220,8 +222,9 @@ public class BulkUserCreationService(
                         await scopedUserManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
 
                         // Add to pre-loaded sets so duplicates within same batch are caught
-                        existingEmailSet.Add(loginId);
                         existingUserNameSet.Add(loginId);
+                        if (reg.Email != null)
+                            existingEmailSet.Add(reg.Email);
 
                         job.SuccessCount++;
                         job.ProcessedCount++;

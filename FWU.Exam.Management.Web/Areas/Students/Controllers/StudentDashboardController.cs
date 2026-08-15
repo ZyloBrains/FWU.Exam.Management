@@ -191,11 +191,17 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(Profile));
         }
 
-        var setUserNameResult = await userManager.SetUserNameAsync(user, email);
-        if (!setUserNameResult.Succeeded)
+        // Non-student accounts keep UserName = Email; students keep UserName = RegistrationNumber
+        // so changing email never clobbers the registration number login.
+        var roles = await userManager.GetRolesAsync(user);
+        if (!roles.Contains(Role.Student))
         {
-            TempData["ErrorMessage"] = "Error updating username.";
-            return RedirectToAction(nameof(Profile));
+            var setUserNameResult = await userManager.SetUserNameAsync(user, email);
+            if (!setUserNameResult.Succeeded)
+            {
+                TempData["ErrorMessage"] = "Error updating username.";
+                return RedirectToAction(nameof(Profile));
+            }
         }
 
         var registration = await context.StudentRegistrations
@@ -267,7 +273,11 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        ViewBag.ShowMandatoryProfilePopup = missingFields.Count > 0;
+        ViewBag.MissingMandatoryFields = missingFields;
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null)
         {
             return View(new ExamFormsListViewModel());
@@ -306,7 +316,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return View(new List<AdmitCard>());
 
         var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id, registration.Id);
@@ -318,7 +328,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return View(new List<PaymentRequestLog>());
 
         var payments = await dashboardService.GetPaymentHistoryForStudentAsync(registration.Id);
@@ -330,7 +340,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
@@ -359,7 +369,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
@@ -488,7 +505,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
@@ -533,7 +557,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
@@ -550,21 +581,22 @@ public class StudentDashboardController(
 
         var fullName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName);
 
+        var transactionUuid = esewaService.GenerateTransactionUuid();
+
         int logId;
         if (subjectIds.Count == 0)
         {
             logId = await dashboardService.CreatePaymentRequestLogAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, transactionUuid);
         }
         else
         {
             logId = await dashboardService.CreatePaymentRequestLogWithSubjectsAsync(
                 examScheduleId, registration.Id, amount, "esewa", invoiceNumber, subjectIds,
-                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD);
+                fullName, registration.Email, registration.ContactNumber, registration.DateOfBirthAD, transactionUuid);
         }
 
-        var transactionUuid = esewaService.GenerateTransactionUuid();
         var defaultCallbackUrl = Url.Action(nameof(ESewaCallback), "StudentDashboard", new { area = "Students" }, Request.Scheme)!;
         var successUrl = defaultCallbackUrl;
         var failureUrl = defaultCallbackUrl;
@@ -599,13 +631,55 @@ public class StudentDashboardController(
             {
                 var log = await dashboardService.GetPaymentLogByIdAsync(sessionLogId.Value);
                 if (log != null) TempData["ExamScheduleId"] = log.ExamScheduleId;
-                await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+
+                var uuid = log?.TransactionId;
+                if (log != null && !string.IsNullOrEmpty(uuid))
+                {
+                    try
+                    {
+                        var status = await esewaService.VerifyTransactionAsync(uuid, log.Amount);
+                        if (status != null && string.Equals(status.Status, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogWarning("ESewaCallback: no callback data but status API reports COMPLETE for logId={LogId}, uuid={Uuid}. Treating as paid.",
+                                sessionLogId.Value, uuid);
+
+                            await HandlePostPaymentRegistration(sessionLogId.Value);
+                            await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, status.TransactionCode ?? "", true,
+                                System.Text.Json.JsonSerializer.Serialize(status),
+                                "Payment verified via eSewa status check (callback carried no data).");
+                            await auditLogWriter.LogAsync(ActivityTypes.PaymentVerified,
+                                $"eSewa payment verified via status check (Transaction {status.TransactionCode})",
+                                new { gateway = "esewa", transactionCode = status.TransactionCode, transactionUuid = uuid, amount = status.TotalAmount },
+                                entityName: "PaymentRequestLog", entityId: sessionLogId.Value.ToString());
+
+                            TempData["SuccessMessage"] = "Payment successful!";
+                            TempData["TransactionCode"] = status.TransactionCode;
+                            TempData["TransactionUuid"] = uuid;
+                            return RedirectToAction(nameof(PaymentSuccess));
+                        }
+
+                        var statusData = status != null
+                            ? $"No response data received from eSewa. QueryString: {Request.QueryString}. Status check: {status.Status}"
+                            : $"No response data received from eSewa. QueryString: {Request.QueryString}. Status check: unreachable";
+                        await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, statusData, "Payment not completed at eSewa.");
+                    }
+                    catch (Exception statusEx)
+                    {
+                        logger.LogError(statusEx, "ESewaCallback: status check failed for logId={LogId}", sessionLogId.Value);
+                        await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false,
+                            $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+                    }
+                }
+                else
+                {
+                    await dashboardService.UpdatePaymentRequestLogAsync(sessionLogId.Value, "", false, $"No response data received from eSewa. QueryString: {Request.QueryString}", "No response data received from eSewa.");
+                }
             }
 
             await auditLogWriter.LogAsync(ActivityTypes.PaymentVerificationFailed,
                 "eSewa callback received no response data",
                 new { gateway = "esewa", reason = "no_data" }, AuditSeverity.Warning);
-            TempData["ErrorMessage"] = "No response data received from eSewa.";
+            TempData["ErrorMessage"] = "Payment was cancelled or not completed at eSewa. No amount has been deducted. Please try again.";
             return RedirectToAction(nameof(PaymentFailure));
         }
 
@@ -736,7 +810,14 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
@@ -919,6 +1000,9 @@ public class StudentDashboardController(
         return View();
     }
 
+    private async Task<List<string>> GetMissingMandatoryProfileFieldsAsync(AppUser user) =>
+        await dashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath);
+
     private async Task<(bool Ok, string? Error)> ValidateSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
     {
         var offerings = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
@@ -1001,7 +1085,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration?.RegistrationNumber == null)
         {
             return View(new List<MarksheetViewModel>());
@@ -1081,7 +1165,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
 
         // Show all marksheets for logged-in student
         if (registration?.RegistrationNumber == null)
@@ -1166,7 +1250,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null)
             return View(new List<RetotalRequest>());
 
@@ -1196,7 +1280,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return RedirectToAction(nameof(Profile));
 
         if (examSubjectResultId.HasValue)
@@ -1235,7 +1319,7 @@ public class StudentDashboardController(
         var user = await userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        var registration = await dashboardService.GetStudentRegistrationByEmailAsync(user.Email ?? "");
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return RedirectToAction(nameof(Profile));
 
         var result = await context.ExamSubjectResults

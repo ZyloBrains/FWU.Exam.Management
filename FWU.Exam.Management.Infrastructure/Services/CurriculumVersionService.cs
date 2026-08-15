@@ -213,9 +213,7 @@ public class CurriculumVersionService : ICurriculumVersionService
                 PracticalFullMarks = offering.PracticalFullMarks,
                 PracticalPassMarks = offering.PracticalPassMarks,
                 InternalTheoryFullMarks = offering.InternalTheoryFullMarks,
-                InternalTheoryPassMarks = offering.InternalTheoryPassMarks,
-                InternalPracticalFullMarks = offering.InternalPracticalFullMarks,
-                InternalPracticalPassMarks = offering.InternalPracticalPassMarks
+                InternalTheoryPassMarks = offering.InternalTheoryPassMarks
             });
         }
 

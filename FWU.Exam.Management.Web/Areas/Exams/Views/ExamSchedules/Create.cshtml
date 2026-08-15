@@ -108,12 +108,6 @@
                         <input asp-for="EndTime" type="time" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                         <span asp-validation-for="EndTime" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
-                    <div class="md:col-span-2">
-                        <label asp-for="CollegeApprovalDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <input asp-for="CollegeApprovalDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
-                        <span asp-validation-for="CollegeApprovalDate" class="text-xs text-red-500 mt-1 block"></span>
-                        <p class="text-xs text-gray-400 mt-1">Set this to require each affiliated college to approve the schedule before its students can see it.</p>
-                    </div>
                 </div>
             </div>
 
@@ -239,12 +233,13 @@
 
         renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
 
-        var convertTimer;
+        var startDateTimer;
+        var endDateTimer;
         $("#StartDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(startDateTimer);
+                startDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#StartDateBs").val(data.bsDate);
                     });
@@ -254,8 +249,8 @@
         $("#EndDate").on("input", function () {
             var ad = $(this).val().trim();
             if (ad.length >= 8) {
-                clearTimeout(convertTimer);
-                convertTimer = setTimeout(function () {
+                clearTimeout(endDateTimer);
+                endDateTimer = setTimeout(function () {
                     $.get(tenantUrl("/Exams/ExamSchedules/ConvertAdToBs"), { adDate: ad }, function (data) {
                         if (data.bsDate) $("#EndDateBs").val(data.bsDate);
                     });

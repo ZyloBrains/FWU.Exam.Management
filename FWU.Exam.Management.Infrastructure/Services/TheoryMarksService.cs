@@ -170,8 +170,7 @@ public class TheoryMarksService(
                 HasTheory = so.HasTheory,
                 HasPractical = so.HasPractical,
                 TheoryFullMarks = so.TheoryFullMarks,
-                InternalTheoryFullMarks = so.InternalTheoryFullMarks,
-                InternalPracticalFullMarks = so.InternalPracticalFullMarks
+                InternalTheoryFullMarks = so.InternalTheoryFullMarks
             })
             .ToListAsync();
     }
@@ -200,9 +199,7 @@ public class TheoryMarksService(
             TheoryFullMarks = subjectOffering.TheoryFullMarks,
             TheoryPassMarks = subjectOffering.TheoryPassMarks,
             InternalTheoryFullMarks = subjectOffering.InternalTheoryFullMarks,
-            InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks,
-            InternalPracticalFullMarks = subjectOffering.InternalPracticalFullMarks,
-            InternalPracticalPassMarks = subjectOffering.InternalPracticalPassMarks
+            InternalTheoryPassMarks = subjectOffering.InternalTheoryPassMarks
         };
     }
 
@@ -226,7 +223,7 @@ public class TheoryMarksService(
             .Where(er => er.ExamScheduleId == examScheduleId
                 && er.CollegeId == effectiveCollege
                 && er.IsActive
-                && er.Status == RegistrationStatus.Registered)
+                && er.Status >= RegistrationStatus.CollegeVerified)
             .OrderBy(er => er.ExamRollNumber)
             .ThenBy(er => er.Id)
             .ToListAsync();
@@ -285,7 +282,7 @@ public class TheoryMarksService(
             .Where(er => er.ExamScheduleId == dto.ExamScheduleId
                 && er.CollegeId == effectiveCollege
                 && er.IsActive
-                && er.Status == RegistrationStatus.Registered)
+                && er.Status >= RegistrationStatus.CollegeVerified)
             .Select(er => er.Id)
             .ToHashSetAsync();
 

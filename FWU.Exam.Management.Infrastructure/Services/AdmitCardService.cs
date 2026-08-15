@@ -60,7 +60,60 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
 
     public async Task<AdmitCard?> GetAdmitCardByIdAsync(int id)
     {
-        var admitCard = await context.AdmitCards
+        var admitCard = await LoadAdmitCardAsync(id);
+        if (admitCard == null || !IsInScope(admitCard)) return null;
+        await EnrichAdmitCardAsync(admitCard);
+        return admitCard;
+    }
+
+    public async Task<List<AdmitCard>> GetAdmitCardsForPrintAsync(int? examScheduleId = null, string? search = null)
+    {
+        var query = context.AdmitCards
+            .AsNoTracking()
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.College)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.ExamCenter)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.Program)
+            .Include(e => e.ExamRegistration)
+                .ThenInclude(er => er!.ApplicationVoucher)
+                    .ThenInclude(v => v!.StudentRegistration)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Semester)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Program)
+                    .ThenInclude(p => p!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.Level)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.ExamType)
+            .Include(e => e.ExamSchedule)
+                .ThenInclude(s => s!.AcademicYear)
+            .Include(e => e.StudentRegistration)
+            .Where(ac => ac.IsActive)
+            .ApplyScope(userContext);
+
+        if (examScheduleId.HasValue)
+            query = query.Where(ac => ac.ExamScheduleId == examScheduleId.Value);
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(ac => ac.AdmitCardNumber != null && ac.AdmitCardNumber.Contains(search));
+
+        var admitCards = await query
+            .OrderBy(ac => ac.ExamRegistration != null ? ac.ExamRegistration.SymbolNumber : string.Empty)
+            .ThenBy(ac => ac.AdmitCardNumber)
+            .ToListAsync();
+
+        foreach (var admitCard in admitCards)
+            await EnrichAdmitCardAsync(admitCard);
+
+        return admitCards;
+    }
+
+    private async Task<AdmitCard?> LoadAdmitCardAsync(int id)
+    {
+        return await context.AdmitCards
             .AsNoTracking()
             .Include(e => e.ExamRegistration)
                 .ThenInclude(er => er!.College)
@@ -84,9 +137,21 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 .ThenInclude(s => s!.AcademicYear)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);
+    }
 
-        if (admitCard == null) return null;
+    private bool IsInScope(AdmitCard admitCard)
+    {
+        if (userContext.IsSuperAdmin) return true;
+        var er = admitCard.ExamRegistration;
+        if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            return er?.CollegeId == userContext.CollegeId.Value;
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            return er?.Program != null && er.Program.FacultyId == userContext.FacultyId.Value;
+        return false;
+    }
 
+    private async Task EnrichAdmitCardAsync(AdmitCard admitCard)
+    {
         if (admitCard.ExamSchedule != null)
         {
             var offeringQuery = context.SubjectOfferings
@@ -125,7 +190,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             {
                 if (!string.IsNullOrEmpty(sr.RegistrationNumber))
                 {
-                    var appUser = await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+                    // Students have UserName = RegistrationNumber; legacy rows stored the
+                    // registration number in the Email column instead.
+                    var appUser = await context.Users.FirstOrDefaultAsync(u =>
+                        u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
+                        || (u.Email != null && u.Email == sr.RegistrationNumber));
                     if (appUser != null)
                     {
                         admitCard.PhotoPath ??= appUser.ProfilePath;
@@ -164,8 +233,6 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             if (!string.IsNullOrEmpty(tenant?.ControllerSignaturePath))
                 admitCard.ControllerSignaturePath = tenant.ControllerSignaturePath;
         }
-
-        return admitCard;
     }
 
     public async Task CreateAdmitCardAsync(AdmitCard admitCard)
@@ -207,6 +274,13 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             .Include(er => er.College)
             .FirstOrDefaultAsync(er => er.Id == examRegistrationId)
             ?? throw new InvalidOperationException("Exam registration not found.");
+
+        if (registration.Status < Domain.Enums.RegistrationStatus.CollegeVerified)
+        {
+            throw new InvalidOperationException(
+                "Cannot generate admit card: the exam registration has not been approved by the college. " +
+                "Please approve the student form first.");
+        }
 
         if (string.IsNullOrEmpty(registration.SymbolNumber))
         {
@@ -255,7 +329,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
     public async Task<List<AdmitCard>> GenerateBulkAdmitCardsAsync(int examScheduleId)
     {
         var registrations = await context.ExamRegistrations
-            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status == Domain.Enums.RegistrationStatus.Registered)
+            .Where(er => er.ExamScheduleId == examScheduleId && er.IsActive && er.Status >= Domain.Enums.RegistrationStatus.CollegeVerified)
             .Include(er => er.College)
             .ToListAsync();
 
@@ -353,7 +427,11 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
         if (voucher?.StudentRegistrationId == null) return null;
         var sr = await context.StudentRegistrations.FindAsync(voucher.StudentRegistrationId.Value);
         if (sr?.RegistrationNumber == null) return null;
-        return await context.Users.FirstOrDefaultAsync(u => u.Email == sr.RegistrationNumber);
+        // Students have UserName = RegistrationNumber; legacy rows stored the
+        // registration number in the Email column instead.
+        return await context.Users.FirstOrDefaultAsync(u =>
+            u.NormalizedUserName == sr.RegistrationNumber.ToUpperInvariant()
+            || (u.Email != null && u.Email == sr.RegistrationNumber));
     }
 
     private async Task<string?> ResolveControllerSignatureAsync()

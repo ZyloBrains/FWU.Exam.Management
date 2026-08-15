@@ -1,6 +1,8 @@
 using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -18,6 +20,7 @@ public class StudentDashboardServiceTests
         new(db.Context, new TestUserContext(), NullLogger<StudentDashboardService>.Instance);
 
     private static DateOnly Past => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10));
+    private static DateOnly Future => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10));
 
     [Fact]
     public async Task GetExamSchedulesForStudentAsync_ReturnsEmpty_WhenStudentHasNoAdmission()
@@ -42,7 +45,7 @@ public class StudentDashboardServiceTests
             sr.StudentAdmissionId = 1;
             ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Future, null));
         });
 
         var student = db.Context.StudentRegistrations!.FirstOrDefault() ?? TestData.StudentRegistration(1, Email);
@@ -67,12 +70,12 @@ public class StudentDashboardServiceTests
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 1));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(2, 1, 2));
 
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Past, null));       // regular sem1 (enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Past, null));       // regular sem2 (enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(13, 3, TestData.Regular, Past, null));       // regular sem3 (not enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Past, null)); // supplementary sem2 (enrolled)
-            ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Past, null));      // entrance (excluded)
-            ctx.ExamSchedules.Add(TestData.Schedule(16, 2, TestData.Regular, Past, null, TestData.ProgramIdOther)); // other program
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, Future, null));       // regular sem1 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(12, 2, TestData.Regular, Future, null));       // regular sem2 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(13, 3, TestData.Regular, Future, null));       // regular sem3 (not enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(14, 2, TestData.Supplementary, Future, null)); // supplementary sem2 (enrolled)
+            ctx.ExamSchedules.Add(TestData.Schedule(15, 2, TestData.Entrance, Future, null));      // entrance (excluded)
+            ctx.ExamSchedules.Add(TestData.Schedule(16, 2, TestData.Regular, Future, null, TestData.ProgramIdOther)); // other program
 
             ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 12));
             ctx.ExamRegistrations.Add(TestData.ExamRegistration(1, 12, 1));
@@ -209,7 +212,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenCollegeHasNotApproved()
+    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenStartDateIsInFuture()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -220,16 +223,8 @@ public class StudentDashboardServiceTests
             ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
-            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
-            {
-                Id = 1,
-                TenantId = TestData.TenantId,
-                ExamScheduleId = 11,
-                CollegeId = TestData.CollegeId,
-                Status = ExamScheduleApprovalStatus.Pending,
-                IsActive = true
-            });
+            var schedule = TestData.Schedule(11, 2, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)), null);
+            ctx.ExamSchedules.Add(schedule);
         });
 
         var student = db.Context.StudentRegistrations!.Single();
@@ -241,7 +236,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenCollegeApproved()
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenWithinDateWindow()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -252,17 +247,7 @@ public class StudentDashboardServiceTests
             ctx.StudentRegistrations.Add(sr);
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
-            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
-            ctx.ExamScheduleCollegeApprovals.Add(new ExamScheduleCollegeApproval
-            {
-                Id = 1,
-                TenantId = TestData.TenantId,
-                ExamScheduleId = 11,
-                CollegeId = TestData.CollegeId,
-                Status = ExamScheduleApprovalStatus.Approved,
-                ApprovedDate = DateTime.UtcNow,
-                IsActive = true
-            });
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Future, null));
         });
 
         var student = db.Context.StudentRegistrations!.Single();
@@ -275,7 +260,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenNoApprovalRequested()
+    public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenEndDateHasPassed()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -287,6 +272,55 @@ public class StudentDashboardServiceTests
             ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
             ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
             ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, Past, null));
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenExtendedDateIsInFuture()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            var schedule = TestData.Schedule(11, 2, TestData.Regular, Past, null);
+            schedule.ExtendedDate = DateTime.UtcNow.AddDays(5);
+            ctx.ExamSchedules.Add(schedule);
+        });
+
+        var student = db.Context.StudentRegistrations!.Single();
+        var service = CreateService(db);
+
+        var result = await service.GetExamSchedulesForStudentAsync(student, UserId);
+
+        var schedule = Assert.Single(result);
+        Assert.Equal(11, schedule.Id);
+    }
+
+    [Fact]
+    public async Task GetExamSchedulesForStudentAsync_ShowsSchedule_WhenNoDateWindowSet()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 2, TestData.Regular, null, null));
         });
 
         var student = db.Context.StudentRegistrations!.Single();
@@ -431,5 +465,195 @@ public class StudentDashboardServiceTests
         var subject = Assert.Single(registration.ExamSubjectResults!);
         Assert.NotNull(subject.SubjectOffering?.SubjectCatalog);
         Assert.Equal("Subject 7", subject.SubjectOffering!.SubjectCatalog!.SubjectName);
+    }
+
+    private static void SeedLocationData(AppDbContext ctx)
+    {
+        ctx.Provinces.Add(new Province { Id = 1, ProvinceName = "Bagmati", IsActive = true });
+        ctx.Districts.Add(new District { Id = 1, ProvinceId = 1, DistrictName = "Kathmandu", IsActive = true });
+        ctx.LocalLevels.Add(new LocalLevel
+        {
+            Id = 1,
+            DistrictId = 1,
+            LocalLevelName = "Kathmandu Metropolitan",
+            LocalLevelType = LocalLevelType.Metropolitan,
+            IsActive = true
+        });
+        ctx.Addresses.Add(new Address { Id = 1, LocalLevelId = 1, WardNumber = 1, IsActive = true });
+        ctx.Ethnicities.Add(new Ethnicity { Id = 1, EthnicityName = "Brahmin", IsActive = true });
+    }
+
+    private static StudentRegistration CompleteRegistration(int id)
+    {
+        var sr = TestData.StudentRegistration(id, Email);
+        sr.ContactNumber = "9800000000";
+        sr.GenderId = 1;
+        sr.EthnicityId = 1;
+        sr.PermanentAddressId = 1;
+        return sr;
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsEmpty_WhenAllFieldsPresent()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
+
+        Assert.Empty(missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsAllFields_WhenNothingPresent()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), TestData.SeedBase);
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, null, null, null, null);
+
+        Assert.Equal(new[] { "Phone Number", "Province", "District", "Local Level", "Gender", "Ethnicity", "Profile Photo", "Student Signature" }, missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsProfileFields_WhenRegistrationIsIncomplete()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, "9800000000", "uploads/profile.png", "uploads/sign.png");
+
+        Assert.Equal(new[] { "Province", "District", "Local Level", "Gender", "Ethnicity" }, missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_ReturnsUploads_WhenPhotosMissing()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, "9800000000", null, null);
+
+        Assert.Equal(new[] { "Profile Photo", "Student Signature" }, missing);
+    }
+
+    [Fact]
+    public async Task GetMissingMandatoryProfileFieldsAsync_FallsBackToRegistrationContactNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var missing = await service.GetMissingMandatoryProfileFieldsAsync(null, Email, null, "uploads/profile.png", "uploads/sign.png");
+
+        Assert.DoesNotContain("Phone", missing);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByEmailAsync_LoadsPermanentAddressChain()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            SeedLocationData(ctx);
+            ctx.StudentRegistrations.Add(CompleteRegistration(1));
+        });
+        var service = CreateService(db);
+
+        var reg = await service.GetStudentRegistrationByEmailAsync(Email);
+
+        Assert.NotNull(reg);
+        Assert.NotNull(reg!.PermanentAddress);
+        Assert.NotNull(reg.PermanentAddress!.LocalLevel);
+        Assert.NotNull(reg.PermanentAddress.LocalLevel!.District);
+        Assert.NotNull(reg.PermanentAddress.LocalLevel.District!.Province);
+        Assert.Equal("Bagmati", reg.PermanentAddress.LocalLevel.District!.Province!.ProvinceName);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByEmailAsync_DoesNotMatchRegistrationNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            var sr = TestData.StudentRegistration(1, "student@example.com");
+            sr.RegistrationNumber = "REG-SPECIAL";
+            ctx.StudentRegistrations.Add(sr);
+        });
+        var service = CreateService(db);
+
+        var byEmail = await service.GetStudentRegistrationByEmailAsync("REG-SPECIAL");
+        var byRegNumber = await service.GetStudentRegistrationByEmailAsync("student@example.com");
+
+        Assert.Null(byEmail);
+        Assert.NotNull(byRegNumber);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByUserIdAsync_LoadsRegistrationViaAdmissionLink()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            SeedLocationData(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = CompleteRegistration(1);
+            sr.StudentAdmissionId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+        });
+        var service = CreateService(db);
+
+        var reg = await service.GetStudentRegistrationByUserIdAsync(UserId);
+
+        Assert.NotNull(reg);
+        Assert.Equal(1, reg!.Id);
+        Assert.Equal(1, reg.StudentAdmissionId);
+    }
+
+    [Fact]
+    public async Task GetStudentRegistrationByUserIdAsync_ResolvesViaUserNameRegistrationNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            TestData.SeedCollegeForStandardTenant(ctx);
+            SeedLocationData(ctx);
+            var sr = CompleteRegistration(1);
+            sr.StudentAdmissionId = null;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.Users.Local.Single().UserName = sr.RegistrationNumber;
+        });
+        var service = CreateService(db);
+
+        var reg = await service.GetStudentRegistrationByUserIdAsync(UserId);
+
+        Assert.NotNull(reg);
+        Assert.Equal(1, reg!.Id);
+        Assert.Equal("REG1", reg.RegistrationNumber);
     }
 }

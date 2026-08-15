@@ -1,7 +1,14 @@
 @model IEnumerable<AdmitCard>
+@inject UserManager<AppUser> UserManager
+@inject IPermissionService PermissionService
 
 @{
     ViewData["Title"] = "Admit Cards";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var userPerms = currentUser != null
+        ? await PermissionService.GetUserPermissionsAsync(currentUser.Id)
+        : new List<string>();
+    bool HasPerm(string permission) => userPerms.Contains(permission);
     var totalCount = ViewBag.TotalCount ?? Model.Count();
     var currentPage = ViewBag.CurrentPage ?? 1;
     var totalPages = ViewBag.TotalPages ?? 1;
@@ -27,21 +34,28 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            @if (ViewBag.HasPermission ?? true)
+            @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
             {
-                @await Html.PartialAsync("_ExportDropdown", new ExportDropdownModel
+                RouteValues = new Dictionary<string, string>
                 {
-                    RouteValues = new Dictionary<string, string>
-                    {
-                        ["search"] = currentSearch,
-                        ["examScheduleId"] = currentScheduleId
-                    },
-                    ButtonClass = "bg-green-600 hover:bg-green-700",
-                    ScopeLabel = " (All)"
-                })
+                    ["search"] = currentSearch,
+                    ["examScheduleId"] = currentScheduleId
+                },
+                ButtonClass = "bg-green-600 hover:bg-green-700",
+                ScopeLabel = " (All)"
+            })
+            @if (HasPerm("admitcards.generate"))
+            {
                 <a asp-action="Generate" asp-area="Exams"
                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                     <i class="fas fa-plus text-xs"></i> Generate Cards
+                </a>
+            }
+            @if (HasPerm("admitcards.download"))
+            {
+                <a asp-action="PrintAll" asp-area="Exams" asp-route-examScheduleId="@currentScheduleId"
+                   class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                    <i class="fas fa-print text-xs"></i> Download All (PDF)
                 </a>
             }
         </div>
@@ -132,9 +146,12 @@
                                 <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Download">
                                     <i class="fas fa-download text-xs"></i>
                                 </a>
-                                <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
-                                    <i class="fas fa-trash text-xs"></i>
-                                </a>
+                                @if (HasPerm("admitcards.delete"))
+                                {
+                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </a>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -193,9 +210,12 @@
                         <a asp-action="Download" asp-area="Exams" asp-route-id="@item.Id" class="flex-1 text-center py-2 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100">
                             <i class="fas fa-download mr-1"></i> Download
                         </a>
-                        <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
-                            <i class="fas fa-trash mr-1"></i> Delete
-                        </a>
+                        @if (HasPerm("admitcards.delete"))
+                        {
+                            <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="flex-1 text-center py-2 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                            </a>
+                        }
                     </div>
                 </div>
             }

@@ -59,16 +59,27 @@
     @await Html.PartialAsync("_AlertMessages")
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <form method="get" asp-action="Index" class="flex flex-col md:flex-row md:items-center gap-3">
-            <div class="relative flex-1">
+        <form method="get" asp-action="Index" id="filterForm" class="flex flex-col lg:flex-row lg:items-center gap-3 flex-wrap">
+            <div class="relative flex-1 md:min-w-[22rem]">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input type="text" name="search" value="@currentSearch"
                        placeholder="Search by student name, roll number, registration no..."
                        class="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </div>
+            <select name="academicYearId" id="academicYearId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0">
+                <option value="">All Years</option>
+                @if (ViewData["AcademicYearFilter"] is SelectList academicYearList)
+                {
+                    foreach (var item in academicYearList.Items)
+                    {
+                        var value = ((dynamic)item).Id.ToString();
+                        <option value="@value" selected="@(value == currentAcademicYearId?.ToString())">@(((dynamic)item).AcademicYearCode)</option>
+                    }
+                }
+            </select>
             @if (ViewData["ShowCollegeFilter"] as bool? == true)
             {
-                <select name="collegeId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
+                <select name="collegeId" id="collegeId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0">
                     <option value="">All Colleges</option>
                     @if (ViewData["CollegeFilter"] is SelectList collegeList)
                     {
@@ -80,7 +91,7 @@
                     }
                 </select>
             }
-            <select name="programId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
+            <select name="programId" id="programId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0">
                 <option value="">All Programs</option>
                 @if (ViewData["ProgramFilter"] is SelectList programList)
                 {
@@ -91,7 +102,7 @@
                     }
                 }
             </select>
-            <select name="semesterId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
+            <select name="semesterId" id="semesterId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem] shrink-0" onchange="this.form.submit()">
                 <option value="">All Semesters</option>
                 @if (ViewData["SemesterFilter"] is SelectList semesterList)
                 {
@@ -102,18 +113,7 @@
                     }
                 }
             </select>
-            <select name="academicYearId" class="border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white min-w-[10rem]" onchange="this.form.submit()">
-                <option value="">All Years</option>
-                @if (ViewData["AcademicYearFilter"] is SelectList academicYearList)
-                {
-                    foreach (var item in academicYearList.Items)
-                    {
-                        var value = ((dynamic)item).Id.ToString();
-                        <option value="@value" selected="@(value == currentAcademicYearId?.ToString())">@(((dynamic)item).AcademicYearCode)</option>
-                    }
-                }
-            </select>
-            <div class="flex gap-2">
+            <div class="flex gap-2 shrink-0">
                 <button type="submit" class="px-4 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors">Search</button>
                 @if (hasFilters)
                 {
@@ -125,6 +125,7 @@
             </div>
         </form>
     </div>
+
 
     <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
         <table class="w-full text-sm text-left">
@@ -336,18 +337,53 @@
 @section Scripts {
     @Html.AntiForgeryToken()
     <script>
-        function deleteRecord(id) {
-            if (!confirm('Are you sure you want to delete this record?')) return;
-            $.ajax({
-                url: '@Url.Action("DeleteAjax", "SemesterEnrollments")',
-                type: 'POST',
-                data: { id: id, __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val() },
-                success: function (response) {
-                    if (response.success) { alert(response.message); location.reload(); }
-                    else { alert('Error: ' + response.message); }
-                },
-                error: function () { alert('An error occurred while deleting.'); }
+        $(function () {
+            function resetOptions($select) {
+                $select.find('option:not(:first)').remove();
+                $select.val('');
+            }
+
+            function loadPrograms() {
+                var collegeId = $('#collegeId').val() || '';
+                $.getJSON('@Url.Action("GetProgramOptions")', { collegeId: collegeId })
+                    .done(function (data) {
+                        var $program = $('#programId');
+                        resetOptions($program);
+                        $.each(data, function (i, item) {
+                            $('<option>').val(item.id).text(item.name).appendTo($program);
+                        });
+                    });
+            }
+
+            function loadSemesters() {
+                var yearId = $('#academicYearId').val() || '';
+                var programId = $('#programId').val() || '';
+                $.getJSON('@Url.Action("GetSemesterOptions")', { academicYearId: yearId, programId: programId })
+                    .done(function (data) {
+                        var $semester = $('#semesterId');
+                        resetOptions($semester);
+                        $.each(data, function (i, item) {
+                            $('<option>').val(item.id).text(item.name).appendTo($semester);
+                        });
+                    });
+            }
+
+            $('#academicYearId').change(function () {
+                resetOptions($('#semesterId'));
+                loadSemesters();
             });
-        }
+
+            $('#collegeId').change(function () {
+                resetOptions($('#programId'));
+                resetOptions($('#semesterId'));
+                loadPrograms();
+                loadSemesters();
+            });
+
+            $('#programId').change(function () {
+                resetOptions($('#semesterId'));
+                loadSemesters();
+            });
+        });
     </script>
 }

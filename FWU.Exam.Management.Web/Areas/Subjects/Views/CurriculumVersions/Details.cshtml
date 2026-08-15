@@ -139,9 +139,9 @@
                                             <td class="px-3 py-2 font-medium text-gray-800">@(o.SubjectCatalog?.SubjectName ?? "-")</td>
                                             <td class="px-3 py-2 text-gray-600">@(o.SubjectCatalog?.SubjectType?.Name ?? "-")</td>
                                             <td class="px-3 py-2 text-gray-600">@(o.SubjectCatalog?.CreditHours.HasValue == true ? o.SubjectCatalog.CreditHours + " cr" : "-")</td>
-                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasTheory ? o.TheoryFullMarks.ToString() : "-")</td>
-                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasPractical ? (o.PracticalFullMarks?.ToString() ?? "-") : "-")</td>
-                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasInternal ? (((o.InternalTheoryFullMarks ?? 0) + (o.InternalPracticalFullMarks ?? 0)).ToString()) : "-")</td>
+                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasTheory ? $"{o.TheoryFullMarks} / pass {o.TheoryPassMarks}" : "-")</td>
+                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasPractical && o.PracticalFullMarks.HasValue ? $"{o.PracticalFullMarks} / pass {o.PracticalPassMarks}" : "-")</td>
+                                            <td class="px-3 py-2 text-gray-600 text-right">@(o.HasInternal && o.InternalTheoryFullMarks.HasValue ? $"{o.InternalTheoryFullMarks} / pass {o.InternalTheoryPassMarks}" : "-")</td>
                                             <td class="px-3 py-2 text-center">
                                                 @if (o.IsCompulsory)
                                                 {

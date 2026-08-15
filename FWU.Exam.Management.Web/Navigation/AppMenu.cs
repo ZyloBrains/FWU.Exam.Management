@@ -26,7 +26,9 @@ public sealed record MenuSection(
     bool SuperAdminOnly = false,
     string? RoleGate = null,
     bool ShowOnDashboard = true,
-    MenuRoute[]? SectionActiveOns = null);
+    MenuRoute[]? SectionActiveOns = null,
+    bool HideFromStudents = false,
+    bool Flat = false);
 
 public static class AppMenu
 {
@@ -108,16 +110,16 @@ public static class AppMenu
             "text-red-600", "bg-red-100", "group-hover:bg-red-200",
             [
                 M("Exam Schedules", "fa-calendar-alt", ["examschedules.view"], R("Exams", "ExamSchedules", "Index"), ["schedule", "timetable", "routine"]),
-                M("Schedule Approvals", "fa-check-double", ["examapproval.view"], R("Exams", "CollegeAdminApprovals", "Index"), ["approval", "approve", "schedule"]),
                 M("Exam Types", "fa-list-alt", ["examtypes.view"], R("Exams", "ExamTypes", "Index"), ["exam type"]),
                 M("Entrance Schedule", "fa-calendar-plus", ["examschedules.view"], R("Exams", "Entrance", "ManageSchedule"), ["entrance", "schedule"],
                     [R("Exams", "Entrance", "ManageSchedule"), R("Exams", "Entrance", "CreateSchedule"), R("Exams", "Entrance", "EditSchedule"), R("Exams", "Entrance", "ScheduleDetails")]),
-                M("Exam Registrations", "fa-clipboard-list", ["examregistrations.view"], R("Exams", "ExamRegistrations", "Index"), ["exam registration", "form"]),
-                M("Student Exam Forms", "fa-user-check", ["examregistrations.view"], R("Exams", "ExamRegistrations", "StudentForms"), ["student form", "exam form"]),
+                M("Exam Registrations", "fa-clipboard-list", ["examregistration.view"], R("Exams", "ExamRegistrations", "Index"), ["exam registration", "form"]),
+                M("Student Exam Forms", "fa-user-check", ["examregistration.view"], R("Exams", "ExamRegistrations", "StudentForms"), ["student form", "exam form"]),
                 M("Admit Cards", "fa-ticket-alt", ["admitcards.view"], R("Exams", "AdmitCards", "Index"), ["admit", "card", "hall ticket"]),
             ],
             Landing: R(null, "Section", "Examination"),
-            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null), R("Exams", "CollegeAdminApprovals", null)]),
+            SectionActiveOns: [R("Exams", "Entrance", null), R("Exams", "ExamSchedules", null), R("Exams", "ExamTypes", null), R("Exams", "ExamRegistrations", null), R("Exams", "AdmitCards", null)],
+            HideFromStudents: true),
 
         new("Exam Centers", "Exam Centers", "fa-map-marker-alt",
             "Manage examination centers and distribution",
@@ -150,7 +152,8 @@ public static class AppMenu
                 M("Retotaling", "fa-redo-alt", ["retotaling.view"], R("Exams", "RetotalRequests", "Index"), ["retotal", "re-evaluation", "recheck"]),
             ],
             Landing: R(null, "Section", "Results"),
-            SectionActiveOns: [R("Exams", "ExamSubjectResults", null), R("Exams", "ResultRecords", null), R("Exams", "RetotalRequests", null)]),
+            SectionActiveOns: [R("Exams", "ExamSubjectResults", null), R("Exams", "ResultRecords", null), R("Exams", "RetotalRequests", null)],
+            HideFromStudents: true),
 
         new("Payments", "Payments", "fa-money-bill-wave",
             "Manage banks, payment types and bill titles",
@@ -186,7 +189,8 @@ public static class AppMenu
             ],
             Landing: R(null, "Section", "StudentPortal"),
             RoleGate: Role.Student,
-            SectionActiveOns: [R("Students", "StudentDashboard", null)]),
+            SectionActiveOns: [R("Students", "StudentDashboard", null)],
+            Flat: true),
 
         new("System Config", "System Config", "fa-cog",
             "Configure tenants, notices, audit and backup",

@@ -220,9 +220,7 @@ public class CurriculumVersionsController : Controller
                     PracticalFullMarks = s.PracticalFullMarks,
                     PracticalPassMarks = s.PracticalPassMarks,
                     InternalTheoryFullMarks = s.InternalTheoryFullMarks,
-                    InternalTheoryPassMarks = s.InternalTheoryPassMarks,
-                    InternalPracticalFullMarks = s.InternalPracticalFullMarks,
-                    InternalPracticalPassMarks = s.InternalPracticalPassMarks
+                    InternalTheoryPassMarks = s.InternalTheoryPassMarks
                 }));
             }
 
@@ -349,9 +347,7 @@ public class CurriculumVersionsController : Controller
                         practicalFullMarks = s.PracticalFullMarks,
                         practicalPassMarks = s.PracticalPassMarks,
                         internalTheoryFullMarks = s.InternalTheoryFullMarks,
-                        internalTheoryPassMarks = s.InternalTheoryPassMarks,
-                        internalPracticalFullMarks = s.InternalPracticalFullMarks,
-                        internalPracticalPassMarks = s.InternalPracticalPassMarks
+                        internalTheoryPassMarks = s.InternalTheoryPassMarks
                     };
                 }).ToList()
             });

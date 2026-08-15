@@ -29,7 +29,6 @@ public class SubjectOptionDto
     public bool HasPractical { get; set; }
     public float TheoryFullMarks { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
-    public float? InternalPracticalFullMarks { get; set; }
     public float? PracticalFullMarks { get; set; }
     public float? PracticalPassMarks { get; set; }
 }
@@ -46,8 +45,6 @@ public class SubjectDetailDto
     public float TheoryPassMarks { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
     public float? InternalTheoryPassMarks { get; set; }
-    public float? InternalPracticalFullMarks { get; set; }
-    public float? InternalPracticalPassMarks { get; set; }
     public float? PracticalFullMarks { get; set; }
     public float? PracticalPassMarks { get; set; }
 }
@@ -69,7 +66,6 @@ public class StudentInternalMarksViewModel
     public int SubjectOfferingId { get; set; }
     public bool HasPractical { get; set; }
     public float? InternalTheoryFullMarks { get; set; }
-    public float? InternalPracticalFullMarks { get; set; }
     public List<StudentInternalMarksRowDto> Students { get; set; } = [];
 }
 

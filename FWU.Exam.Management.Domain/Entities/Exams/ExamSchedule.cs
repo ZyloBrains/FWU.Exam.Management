@@ -65,9 +65,6 @@ public class ExamSchedule : ITenantScoped
     [Display(Name = "Practical Subject Fee")]
     public decimal? PracticalSubjectFee { get; set; }
 
-    [Display(Name = "College Approval Date")]
-    public DateTime? CollegeApprovalDate { get; set; }
-
     [Display(Name = "Admission Card Release Date")]
     public DateTime? AdmissionCardReleaseDate { get; set; }
 

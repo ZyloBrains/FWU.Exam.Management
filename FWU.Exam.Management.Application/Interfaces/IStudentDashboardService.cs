@@ -10,6 +10,7 @@ public interface IStudentDashboardService
 {
     Task<StudentRegistration?> GetStudentRegistrationByEmailAsync(string email);
     Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId);
+    Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
     Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId);
@@ -21,8 +22,8 @@ public interface IStudentDashboardService
     Task<ExamSchedule?> GetExamScheduleByIdAsync(int examScheduleId);
     Task<List<ExamSchedule>> GetExamSchedulesByIdsAsync(IEnumerable<int> ids);
     Task<StudentAdmission?> GetStudentAdmissionByUserIdAsync(string userId);
-    Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null);
-    Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null);
+    Task<int> CreatePaymentRequestLogAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
+    Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null);
     Task UpdatePaymentRequestLogAsync(int logId, string transactionId, bool isSuccess, string responseData, string? responseMessage = null);
     Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForStudentAsync(string userId, int programId);
@@ -39,4 +40,5 @@ public interface IStudentDashboardService
     Task<List<PaymentRequestLog>> GetPaymentHistoryForStudentAsync(int studentRegistrationId);
     Task<PaymentRequestLog?> GetPaymentLogByInvoiceNumberAsync(string invoiceNumber);
     Task<PaymentRequestLog?> FindPendingPaymentLogByStudentAsync(int studentRegistrationId);
+    Task<List<string>> GetMissingMandatoryProfileFieldsAsync(string? userId, string? userEmail, string? phoneNumber, string? profilePath, string? signaturePath);
 }

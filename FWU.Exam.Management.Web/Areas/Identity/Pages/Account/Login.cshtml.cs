@@ -10,7 +10,6 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,12 +30,6 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
     /// </summary>
     [BindProperty]
     public InputModel Input { get; set; }
-
-    /// <summary>
-    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-    ///     directly from your code. This API may change or be removed in future releases.
-    /// </summary>
-    public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
     /// <summary>
     ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -74,11 +67,6 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         returnUrl ??= Url.Content("~/");
 
-        // Clear the existing external cookie to ensure a clean login process
-        await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-        ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
         ReturnUrl = returnUrl;
     }
 
@@ -86,11 +74,10 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
     {
         returnUrl ??= Url.Content("~/");
 
-        ExternalLogins = (await signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
         if (ModelState.IsValid)
         {
             logger.LogWarning("Login attempt for: {Input}", Input.EmailOrRegNumber);
+            var isEmailLogin = Input.EmailOrRegNumber != null && Input.EmailOrRegNumber.Contains('@');
             var user = await ResolveUserAsync(Input.EmailOrRegNumber);
             logger.LogWarning("Resolved user: {UserId}, UserName: {UserName}, IsActive: {IsActive}, PasswordHash present: {HasHash}",
                 user?.Id, user?.UserName, user?.IsActive, user?.PasswordHash != null);
@@ -107,78 +94,7 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                     return Page();
                 }
 
-                var result = await signInManager.CheckPasswordSignInAsync(user, Input.Password, false);
-                logger.LogWarning("CheckPasswordSignIn result: Succeeded={Succeeded}, IsLockedOut={IsLockedOut}, RequiresTwoFactor={RequiresTwoFactor}",
-                    result.Succeeded, result.IsLockedOut, result.RequiresTwoFactor);
-                if (result.Succeeded)
-                {
-                    logger.LogInformation("User logged in.");
-
-                    var tenant = await ResolveUserTenantAsync(user);
-                    if (tenant != null)
-                    {
-                        tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
-                    }
-
-                    await signInManager.SignInAsync(user, Input.RememberMe);
-                    await auditLogWriter.LogAsync(ActivityTypes.UserLogin, "User signed in",
-                        new { username = user.UserName, userId = user.Id }, entityName: "AppUser", entityId: user.Id);
-
-                    var tenantCode = tenant?.OfficeCode;
-                    if (tenantCode != null)
-                    {
-                        SetTenantCookie(tenantCode);
-                    }
-
-                    var claims = await userManager.GetClaimsAsync(user);
-                    var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
-                    if (mustChangePassword)
-                    {
-                        var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
-                        var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
-                            ? $"/faculty/{faculty.OfficeCode}"
-                            : returnUrl;
-
-                        return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
-                    }
-
-                    var roles = await userManager.GetRolesAsync(user);
-                    if (roles.Contains(Role.SuperAdmin))
-                    {
-                        return tenantCode != null
-                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
-                            : RedirectToAction("Index", "Dashboard", new { area = "" });
-                    }
-
-                    if (roles.Contains(Role.FacultyAdmin))
-                    {
-                        return tenantCode != null
-                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
-                            : RedirectToAction("Index", "Dashboard", new { area = "" });
-                    }
-
-                    if (roles.Contains(Role.CollegeAdmin))
-                    {
-                        return tenantCode != null
-                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
-                            : RedirectToAction("Index", "Dashboard", new { area = "" });
-                    }
-
-                    if (roles.Contains(Role.Student))
-                    {
-                        return tenantCode != null
-                            ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
-                            : RedirectToAction("Index", "Dashboard", new { area = "" });
-                    }
-
-                    return LocalRedirect(returnUrl);
-                }
-
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
+                if (await userManager.IsLockedOutAsync(user))
                 {
                     logger.LogWarning("User account locked out.");
                     await auditLogWriter.LogAsync(ActivityTypes.UserLoginLockedOut,
@@ -186,6 +102,90 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
                         new { username = Input.EmailOrRegNumber, reason = "locked_out" }, AuditSeverity.Warning);
                     return RedirectToPage("./Lockout");
                 }
+
+                if (!await userManager.CheckPasswordAsync(user, Input.Password))
+                {
+                    logger.LogWarning("Login failed for {Input} - invalid password", Input.EmailOrRegNumber);
+                    await auditLogWriter.LogAsync(ActivityTypes.UserLoginFailed,
+                        $"Login failed for {Input.EmailOrRegNumber} - user not found or invalid credentials",
+                        new { username = Input.EmailOrRegNumber, reason = "invalid_credentials" }, AuditSeverity.Warning);
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    return Page();
+                }
+
+                // Students authenticate by registration number (UserName); email verification only
+                // gates email-based logins so students without a verified email can still log in.
+                if (isEmailLogin && !await userManager.IsEmailConfirmedAsync(user))
+                {
+                    logger.LogWarning("Login blocked for {Input} - email not confirmed", Input.EmailOrRegNumber);
+                    await auditLogWriter.LogAsync(ActivityTypes.UserLoginFailed,
+                        $"Login blocked for unconfirmed email {Input.EmailOrRegNumber}",
+                        new { username = Input.EmailOrRegNumber, reason = "email_not_confirmed" }, AuditSeverity.Warning);
+                    ModelState.AddModelError(string.Empty,
+                        "Please verify your email before logging in with it. You can also log in with your registration number.");
+                    return Page();
+                }
+
+                logger.LogInformation("User logged in.");
+
+                var tenant = await ResolveUserTenantAsync(user);
+                if (tenant != null)
+                {
+                    tenantContext.SetTenant(tenant.Id, tenant.OfficeCode, tenant.TenantType);
+                }
+
+                await signInManager.SignInAsync(user, Input.RememberMe);
+                await auditLogWriter.LogAsync(ActivityTypes.UserLogin, "User signed in",
+                    new { username = user.UserName, userId = user.Id }, entityName: "AppUser", entityId: user.Id);
+
+                var tenantCode = tenant?.OfficeCode;
+                if (tenantCode != null)
+                {
+                    SetTenantCookie(tenantCode);
+                }
+
+                var claims = await userManager.GetClaimsAsync(user);
+                var mustChangePassword = claims.Any(c => c.Type == MustChangePasswordClaimType && c.Value == "true");
+                if (mustChangePassword)
+                {
+                    var faculty = user.FacultyId != null ? await context.Faculties.FindAsync(user.FacultyId.Value) : null;
+                    var postChangeReturnUrl = faculty != null && !string.IsNullOrWhiteSpace(faculty.OfficeCode)
+                        ? $"/faculty/{faculty.OfficeCode}"
+                        : returnUrl;
+
+                    return RedirectToPage("/Account/Manage/ChangePassword", new { area = "Identity", returnUrl = postChangeReturnUrl });
+                }
+
+                var roles = await userManager.GetRolesAsync(user);
+                if (roles.Contains(Role.SuperAdmin))
+                {
+                    return tenantCode != null
+                        ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                        : RedirectToAction("Index", "Dashboard", new { area = "" });
+                }
+
+                if (roles.Contains(Role.FacultyAdmin))
+                {
+                    return tenantCode != null
+                        ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                        : RedirectToAction("Index", "Dashboard", new { area = "" });
+                }
+
+                if (roles.Contains(Role.CollegeAdmin))
+                {
+                    return tenantCode != null
+                        ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                        : RedirectToAction("Index", "Dashboard", new { area = "" });
+                }
+
+                if (roles.Contains(Role.Student))
+                {
+                    return tenantCode != null
+                        ? Redirect($"/tenant/{tenantCode}/Dashboard/Index")
+                        : RedirectToAction("Index", "Dashboard", new { area = "" });
+                }
+
+                return LocalRedirect(returnUrl);
             }
 
             logger.LogWarning("Login failed for {Input} - user not found or invalid", Input.EmailOrRegNumber);
@@ -253,23 +253,16 @@ public class LoginModel(SignInManager<AppUser> signInManager, UserManager<AppUse
 
         if (input.Contains('@'))
         {
-            return await userManager.Users
-                .FirstOrDefaultAsync(u => u.Email == input);
+            return await userManager.FindByEmailAsync(input);
         }
 
-        var studentEmail = await context.StudentRegistrations
-            .AsNoTracking()
-            .Where(s => s.RegistrationNumber == input && s.Email != null)
-            .Select(s => s.Email)
-            .FirstOrDefaultAsync();
-
-        if (studentEmail != null)
-        {
-            var userByEmail = await userManager.Users
-                .FirstOrDefaultAsync(u => u.Email == studentEmail);
-            if (userByEmail != null)
-                return userByEmail;
-        }
+        // Registration number: students have UserName = RegistrationNumber, so this is a direct
+        // single-query lookup on the normalized username.
+        var normalized = input.ToUpperInvariant();
+        var userByRegNumber = await userManager.Users
+            .FirstOrDefaultAsync(u => u.NormalizedUserName == normalized);
+        if (userByRegNumber != null)
+            return userByRegNumber;
 
         return await userManager.Users
             .FirstOrDefaultAsync(u => u.UserName == input);

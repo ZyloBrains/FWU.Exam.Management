@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260813170454_RemoveExamScheduleCollegeApproval")]
+    partial class RemoveExamScheduleCollegeApproval
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3845,6 +3848,12 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<bool>("HasTheory")
                         .HasColumnType("bit");
+
+                    b.Property<float?>("InternalPracticalFullMarks")
+                        .HasColumnType("real");
+
+                    b.Property<float?>("InternalPracticalPassMarks")
+                        .HasColumnType("real");
 
                     b.Property<float?>("InternalTheoryFullMarks")
                         .HasColumnType("real");

@@ -625,8 +625,6 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     [RequirePermission("examschedules.view")]
     public async Task<IActionResult> ManageSchedule(int page = 1, string? search = null, string sort = "Id", string sortDir = "asc", int pageSize = 10)
     {
-        await examScheduleService.DeactivateExpiredSchedulesAsync();
-
         var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir, "Entrance");
 
         ViewBag.TotalCount = totalCount;
@@ -715,6 +713,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
             try
             {
                 await examScheduleService.UpdateExamScheduleAsync(model);
+                await examScheduleService.DeactivateExpiredSchedulesAsync();
                 await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Entrance exam schedule {model.Id} updated", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, academicYearId = model.AcademicYearId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
