@@ -76,14 +76,6 @@ public class SubjectOfferingItemViewModel : IValidatableObject
     [Range(0, float.MaxValue, ErrorMessage = "Internal theory pass marks cannot be negative.")]
     public float? InternalTheoryPassMarks { get; set; }
 
-    [Display(Name = "Internal Practical Full Marks")]
-    [Range(0, float.MaxValue, ErrorMessage = "Internal practical full marks cannot be negative.")]
-    public float? InternalPracticalFullMarks { get; set; }
-
-    [Display(Name = "Internal Practical Pass Marks")]
-    [Range(0, float.MaxValue, ErrorMessage = "Internal practical pass marks cannot be negative.")]
-    public float? InternalPracticalPassMarks { get; set; }
-
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (HasTheory && TheoryPassMarks > TheoryFullMarks)
@@ -120,18 +112,15 @@ public class SubjectOfferingItemViewModel : IValidatableObject
         if (HasInternal)
         {
             var hasInternalTheory = InternalTheoryFullMarks.HasValue || InternalTheoryPassMarks.HasValue;
-            var hasInternalPractical = InternalPracticalFullMarks.HasValue || InternalPracticalPassMarks.HasValue;
 
-            if (!hasInternalTheory && !hasInternalPractical)
+            if (!hasInternalTheory)
             {
                 yield return new ValidationResult(
                     "Internal marks are required when internal assessment is enabled.",
                     new[]
                     {
                         nameof(InternalTheoryFullMarks),
-                        nameof(InternalTheoryPassMarks),
-                        nameof(InternalPracticalFullMarks),
-                        nameof(InternalPracticalPassMarks)
+                        nameof(InternalTheoryPassMarks)
                     });
             }
 
@@ -142,25 +131,11 @@ public class SubjectOfferingItemViewModel : IValidatableObject
                     new[] { nameof(InternalTheoryFullMarks), nameof(InternalTheoryPassMarks) });
             }
 
-            if (InternalPracticalFullMarks.HasValue ^ InternalPracticalPassMarks.HasValue)
-            {
-                yield return new ValidationResult(
-                    "Both internal practical full marks and pass marks must be provided together.",
-                    new[] { nameof(InternalPracticalFullMarks), nameof(InternalPracticalPassMarks) });
-            }
-
             if (InternalTheoryFullMarks.HasValue && InternalTheoryPassMarks.HasValue && InternalTheoryPassMarks.Value > InternalTheoryFullMarks.Value)
             {
                 yield return new ValidationResult(
                     "Internal theory pass marks cannot exceed internal theory full marks.",
                     new[] { nameof(InternalTheoryPassMarks), nameof(InternalTheoryFullMarks) });
-            }
-
-            if (InternalPracticalFullMarks.HasValue && InternalPracticalPassMarks.HasValue && InternalPracticalPassMarks.Value > InternalPracticalFullMarks.Value)
-            {
-                yield return new ValidationResult(
-                    "Internal practical pass marks cannot exceed internal practical full marks.",
-                    new[] { nameof(InternalPracticalPassMarks), nameof(InternalPracticalFullMarks) });
             }
         }
     }

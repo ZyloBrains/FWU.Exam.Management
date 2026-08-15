@@ -68,7 +68,7 @@ public class SubjectOfferingsController : Controller
         var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
 
         var sb = new StringBuilder();
-        sb.AppendLine("Subject,Program,Semester,Compulsory,Theory Marks,Practical Marks,Internal Marks");
+        sb.AppendLine("Subject,Program,Semester,Compulsory,Theory Marks,Practical Marks,Internal Theory Marks");
 
         foreach (var s in items)
         {
@@ -78,7 +78,7 @@ public class SubjectOfferingsController : Controller
                            $"{(s.IsCompulsory ? "Yes" : "No")}," +
                            $"{s.TheoryFullMarks}," +
                            $"{s.PracticalFullMarks ?? 0}," +
-                           $"{(s.InternalTheoryFullMarks ?? 0) + (s.InternalPracticalFullMarks ?? 0)}");
+                           $"{s.InternalTheoryFullMarks ?? 0}");
         }
 
         var fileName = $"SubjectOfferings_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
@@ -94,7 +94,7 @@ public class SubjectOfferingsController : Controller
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Subject Offerings");
 
-        var headers = new[] { "Subject", "Program", "Semester", "Compulsory", "Theory Marks", "Practical Marks", "Internal Marks" };
+        var headers = new[] { "Subject", "Program", "Semester", "Compulsory", "Theory Marks", "Practical Marks", "Internal Theory Marks" };
         for (int i = 0; i < headers.Length; i++)
         {
             var cell = worksheet.Cell(1, i + 1);
@@ -112,7 +112,7 @@ public class SubjectOfferingsController : Controller
             worksheet.Cell(row, 4).Value = s.IsCompulsory ? "Yes" : "No";
             worksheet.Cell(row, 5).Value = s.TheoryFullMarks;
             worksheet.Cell(row, 6).Value = s.PracticalFullMarks ?? 0;
-            worksheet.Cell(row, 7).Value = (s.InternalTheoryFullMarks ?? 0) + (s.InternalPracticalFullMarks ?? 0);
+            worksheet.Cell(row, 7).Value = s.InternalTheoryFullMarks ?? 0;
             row++;
         }
 
@@ -326,9 +326,7 @@ public class SubjectOfferingsController : Controller
                     PracticalFullMarks = s.PracticalFullMarks,
                     PracticalPassMarks = s.PracticalPassMarks,
                     InternalTheoryFullMarks = s.InternalTheoryFullMarks,
-                    InternalTheoryPassMarks = s.InternalTheoryPassMarks,
-                    InternalPracticalFullMarks = s.InternalPracticalFullMarks,
-                    InternalPracticalPassMarks = s.InternalPracticalPassMarks
+                    InternalTheoryPassMarks = s.InternalTheoryPassMarks
                 }));
             }
 
@@ -397,9 +395,7 @@ public class SubjectOfferingsController : Controller
                         practicalFullMarks = s.PracticalFullMarks,
                         practicalPassMarks = s.PracticalPassMarks,
                         internalTheoryFullMarks = s.InternalTheoryFullMarks,
-                        internalTheoryPassMarks = s.InternalTheoryPassMarks,
-                        internalPracticalFullMarks = s.InternalPracticalFullMarks,
-                        internalPracticalPassMarks = s.InternalPracticalPassMarks
+                        internalTheoryPassMarks = s.InternalTheoryPassMarks
                     };
                 }).ToList()
             });
@@ -433,7 +429,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks,InternalPracticalFullMarks,InternalPracticalPassMarks")] SubjectOffering subjectOffering, int academicYearId)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering, int academicYearId)
     {
         if (id != subjectOffering.Id) return NotFound();
 
