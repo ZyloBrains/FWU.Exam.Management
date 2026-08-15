@@ -71,6 +71,7 @@
                 <th>Type</th>
                 <th>Theory</th>
                 <th>Practical</th>
+                <th>Internal</th>
             </tr>
         </thead>
         <tbody>
@@ -82,8 +83,9 @@
                     <td>@(item.Program?.ProgramName ?? "-")</td>
                     <td>@(item.Semester?.Name ?? "-")</td>
                     <td>@(item.IsCompulsory ? "Compulsory" : "Elective")</td>
-                    <td>@(item.HasTheory ? $"{item.TheoryFullMarks}/{item.TheoryPassMarks}" : "-")</td>
-                    <td>@(item.HasPractical ? $"{item.PracticalFullMarks}/{item.PracticalPassMarks}" : "-")</td>
+                    <td>@(item.HasTheory ? $"{item.TheoryFullMarks} / pass {item.TheoryPassMarks}" : "-")</td>
+                    <td>@(item.HasPractical ? $"{item.PracticalFullMarks} / pass {item.PracticalPassMarks}" : "-")</td>
+                    <td>@(item.HasInternal ? $"{item.InternalTheoryFullMarks} / pass {item.InternalTheoryPassMarks}" : "-")</td>
                 </tr>
             }
         </tbody>

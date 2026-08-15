@@ -125,9 +125,14 @@
                             <span class="px-2 py-0.5 text-xs bg-gray-200 text-gray-500 rounded-full">Disabled</span>
                         }
                     </div>
-                    <div class="text-sm">
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <p class="text-xs text-gray-500">Theory: @(Model.InternalTheoryFullMarks ?? 0)/@(Model.InternalTheoryPassMarks ?? 0)</p>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p class="text-xs text-gray-500">Theory Full Marks</p>
+                            <p class="font-medium">@(Model.InternalTheoryFullMarks ?? 0)</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Theory Pass Marks</p>
+                            <p class="font-medium">@(Model.InternalTheoryPassMarks ?? 0)</p>
                         </div>
                     </div>
                 </div>
