@@ -78,6 +78,41 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         return View(items);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetProgramOptions(int? collegeId)
+    {
+        var programQuery = context.Programs.AsNoTracking().AsQueryable();
+
+        if (userContext.IsFacultyAdmin && userContext.FacultyId.HasValue)
+            programQuery = programQuery.Where(p => p.FacultyId == userContext.FacultyId.Value);
+        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
+            programQuery = programQuery.Where(p => context.CollegePrograms.Any(cp => cp.ProgramId == p.Id && cp.CollegeId == userContext.CollegeId.Value));
+        else if (collegeId.HasValue)
+            programQuery = programQuery.Where(p => context.CollegePrograms.Any(cp => cp.ProgramId == p.Id && cp.CollegeId == collegeId.Value));
+
+        var items = await programQuery
+            .OrderBy(p => p.ProgramName)
+            .Select(p => new { id = p.Id, name = p.ProgramName })
+            .ToListAsync();
+        return Json(items);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetSemesterOptions(int? academicYearId, int? programId)
+    {
+        var semesterQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).AsQueryable();
+        if (academicYearId.HasValue)
+            semesterQuery = semesterQuery.Where(s => s.AcademicYearId == academicYearId.Value);
+        if (programId.HasValue)
+            semesterQuery = semesterQuery.Where(s => s.ProgramSemesters.Any(ps => ps.ProgramId == programId.Value && ps.IsActive));
+
+        var items = await semesterQuery
+            .OrderBy(s => s.Year).ThenBy(s => s.Number)
+            .Select(s => new { id = s.Id, name = SemesterDisplayHelper.Format(s) })
+            .ToListAsync();
+        return Json(items);
+    }
+
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -350,9 +385,11 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
         ViewData["ProgramFilter"] = new SelectList(
             await programQuery.OrderBy(p => p.ProgramName).Select(p => new { p.Id, p.ProgramName }).ToListAsync(), "Id", "ProgramName", programId);
-        var semesterQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).AsQueryable();
+        var semesterQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).AsQueryable();
         if (academicYearId.HasValue)
             semesterQuery = semesterQuery.Where(s => s.AcademicYearId == academicYearId.Value);
+        if (programId.HasValue)
+            semesterQuery = semesterQuery.Where(s => s.ProgramSemesters.Any(ps => ps.ProgramId == programId.Value && ps.IsActive));
 
         ViewData["SemesterFilter"] = new SelectList(
             await semesterQuery.OrderBy(s => s.Year).ThenBy(s => s.Number).Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }).ToListAsync(), "Id", "Name", semesterId);
