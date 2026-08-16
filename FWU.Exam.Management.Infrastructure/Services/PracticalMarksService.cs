@@ -11,7 +11,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class PracticalMarksService(
     AppDbContext context,
-    IUserContext userContext) : IPracticalMarksService
+    IUserContext userContext,
+    IGradeCalculationService gradeCalculationService) : IPracticalMarksService
 {
     public async Task<PracticalMarksPageViewModel> GetPracticalMarksPageAsync()
     {
@@ -317,6 +318,7 @@ public class PracticalMarksService(
                 }
 
                 entity.ObtainedMarksPractical = student.Practical;
+                gradeCalculationService.AssignGrades(entity, subjectOffering);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {

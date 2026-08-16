@@ -469,6 +469,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ResultRecord>()
+            .HasOne(rr => rr.Level)
+            .WithMany()
+            .HasForeignKey(rr => rr.LevelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ResultRecord>()
             .ToTable("ResultRecords")
             .HasKey(rr => rr.Id);
 

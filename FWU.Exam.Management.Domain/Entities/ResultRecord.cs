@@ -21,6 +21,9 @@ public class ResultRecord : ITenantScoped
     [Display(Name = "Academic Year")]
     public int AcademicYearId { get; set; }
 
+    [Display(Name = "Level")]
+    public int? LevelId { get; set; }
+
     [Range(1, int.MaxValue)]
     [Display(Name = "Program")]
     public int ProgramsId { get; set; }
@@ -120,6 +123,7 @@ public class ResultRecord : ITenantScoped
     public DateTime? CreatedDate { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }
+    public virtual Level? Level { get; set; }
     public virtual Program? Program { get; set; }
     public virtual ExamType? ExamType { get; set; }
     public virtual College? College { get; set; }
