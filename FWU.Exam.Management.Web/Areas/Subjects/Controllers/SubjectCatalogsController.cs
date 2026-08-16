@@ -136,24 +136,25 @@ public class SubjectCatalogsController : Controller
                     if (catalogs.Count > 0)
                     {
                         var existingCatalogs = await _subjectCatalogService.GetExistingSubjectCatalogsAsync();
-                        var existingPairs = existingCatalogs
-                            .Select(c => $"{c.SubjectCode?.Trim()}\u0001{c.SubjectName?.Trim()}")
+                        var existingKeys = existingCatalogs
+                            .Select(GetCatalogKey)
                             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                        var seenPairs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        var seenKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                         var deduplicated = new List<SubjectCatalog>();
+                        var skippedCount = 0;
 
                         foreach (var c in catalogs)
                         {
-                            var pair = $"{c.SubjectCode?.Trim()}\u0001{c.SubjectName?.Trim()}";
-                            if (existingPairs.Contains(pair))
+                            var key = GetCatalogKey(c);
+                            if (existingKeys.Contains(key))
                             {
-                                errors.Add($"SubjectCode '{c.SubjectCode}' with name '{c.SubjectName}' already exists in the system");
+                                skippedCount++;
                                 continue;
                             }
-                            if (!seenPairs.Add(pair))
+                            if (!seenKeys.Add(key))
                             {
-                                errors.Add($"Duplicate SubjectCode '{c.SubjectCode}' with name '{c.SubjectName}' in Excel");
+                                skippedCount++;
                                 continue;
                             }
                             deduplicated.Add(c);
@@ -164,12 +165,17 @@ public class SubjectCatalogsController : Controller
                             try
                             {
                                 await _subjectCatalogService.BulkCreateAsync(deduplicated);
-                                TempData["SuccessMessage"] = $"Imported {deduplicated.Count} subject(s) successfully.";
+                                TempData["SuccessMessage"] = $"Imported {deduplicated.Count} subject(s) successfully." +
+                                    (skippedCount > 0 ? $" {skippedCount} identical row(s) skipped." : "");
                             }
                             catch (Exception saveEx)
                             {
                                 errors.Add($"Database error: {saveEx.InnerException?.Message ?? saveEx.Message}");
                             }
+                        }
+                        else if (skippedCount > 0)
+                        {
+                            TempData["SuccessMessage"] = $"{skippedCount} identical row(s) skipped. No new subjects to import.";
                         }
                     }
 
@@ -271,6 +277,14 @@ public class SubjectCatalogsController : Controller
         var subjectTypes = await _subjectCatalogService.GetSelectListsAsync();
         ViewData["SubjectTypeId"] = new SelectList(subjectTypes, "Id", "Name");
         return View();
+    }
+
+    private static string GetCatalogKey(SubjectCatalog c)
+    {
+        var code = (c.SubjectCode ?? string.Empty).Trim();
+        var name = (c.SubjectName ?? string.Empty).Trim();
+        var shortName = (c.ShortName ?? string.Empty).Trim();
+        return $"{code}\u0001{name}\u0001{shortName}\u0001{c.CreditHours}\u0001{c.SubjectTypeId}\u0001{c.IsActive}";
     }
 
     [HttpPost]
