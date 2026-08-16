@@ -34,6 +34,10 @@
                     <p class="mt-1 text-gray-800">@Model.AcademicYear?.AcademicYearName</p>
                 </div>
                 <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Grade Group</p>
+                    <p class="mt-1 text-gray-800">@(Model.GradeGroup?.GradeGroupName ?? "-")</p>
+                </div>
+                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                     <p class="mt-1">
                         @if (Model.IsActive)

@@ -1093,7 +1093,7 @@ public class StudentDashboardController(
 
         var resultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var examRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
-        var gradePointMap = await GetGradePointMapAsync();
+        var gradePointMap = await GetGradePointMapAsync(registration.ProgramId);
 
         var marksheets = new List<MarksheetViewModel>();
 
@@ -1175,7 +1175,7 @@ public class StudentDashboardController(
 
         var allResultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var allExamRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
-        var gradePointMap = await GetGradePointMapAsync();
+        var gradePointMap = await GetGradePointMapAsync(registration.ProgramId);
 
         var allMarksheets = new List<MarksheetViewModel>();
 
@@ -1417,23 +1417,46 @@ public class StudentDashboardController(
             .ToList();
     }
 
-    private async Task<Dictionary<string, decimal>> GetGradePointMapAsync()
+    private async Task<Dictionary<string, decimal>> GetGradePointMapAsync(int? programId)
     {
         var map = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
-        var definitions = await context.GradingSchemes
-            .AsNoTracking()
-            .Include(gs => gs.GradeDefinitions)
-            .Where(gs => gs.IsActive)
-            .SelectMany(gs => gs.GradeDefinitions)
-            .ToListAsync();
-
-        foreach (var gd in definitions.OrderBy(gd => gd.DisplayOrder))
+        if (programId.HasValue)
         {
-            var letter = gd.GradeLetter?.Trim().ToUpperInvariant();
-            if (!string.IsNullOrEmpty(letter))
+            var scheme = await context.GradingSchemes
+                .AsNoTracking()
+                .Include(gs => gs.GradeDefinitions)
+                .Where(gs => gs.ProgramId == programId.Value && gs.IsActive)
+                .OrderByDescending(gs => gs.GradeGroupId.HasValue)
+                .ThenBy(gs => gs.Id)
+                .FirstOrDefaultAsync();
+
+            if (scheme?.GradeGroupId.HasValue == true)
             {
-                map.TryAdd(letter, gd.GradePoint);
+                var gradePoints = await context.GradePoints
+                    .AsNoTracking()
+                    .Where(gp => gp.GradeGroupId == scheme.GradeGroupId.Value)
+                    .ToListAsync();
+
+                foreach (var gp in gradePoints.OrderByDescending(gp => gp.GradePointValue))
+                {
+                    var letter = gp.Grade?.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrEmpty(letter))
+                    {
+                        map.TryAdd(letter, gp.GradePointValue);
+                    }
+                }
+            }
+            else if (scheme?.GradeDefinitions != null)
+            {
+                foreach (var gd in scheme.GradeDefinitions.OrderBy(gd => gd.DisplayOrder))
+                {
+                    var letter = gd.GradeLetter?.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrEmpty(letter))
+                    {
+                        map.TryAdd(letter, gd.GradePoint);
+                    }
+                }
             }
         }
 

@@ -63,7 +63,7 @@ public partial class EntryPoint
 
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
-            options.UseSqlServer(defaultConnection);
+            options.UseSqlServer(defaultConnection, sql => sql.CommandTimeout(120));
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
@@ -269,6 +269,7 @@ public partial class EntryPoint
             await RunSeederAsync(services, ProgramSeeder.SeedProgramsAsync);
             await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
             await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
+            await RunSeederAsync(services, GradeGroupSeeder.SeedGradeGroupsAsync);
             await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedPaymentTypesAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedESewaConfigurationAsync);

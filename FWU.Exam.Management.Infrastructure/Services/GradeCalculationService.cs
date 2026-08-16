@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Subjects;
@@ -7,13 +8,18 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class GradeCalculationService(AppDbContext context) : IGradeCalculationService
 {
+    private static readonly ConcurrentDictionary<(int GroupId, string Grade), decimal?> GradePointCache = new();
+
     public GradeResult CalculateGrade(float totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null)
     {
         if (gradingScheme == null)
         {
             gradingScheme = context.GradingSchemes
                 .Include(gs => gs.GradeDefinitions)
-                .FirstOrDefault(gs => gs.ProgramId == subjectOffering.ProgramId && gs.IsActive);
+                .Where(gs => gs.ProgramId == subjectOffering.ProgramId && gs.IsActive)
+                .OrderByDescending(gs => gs.GradeGroupId.HasValue)
+                .ThenBy(gs => gs.Id)
+                .FirstOrDefault();
         }
 
         var theoryFull = subjectOffering.TheoryFullMarks;
@@ -24,6 +30,24 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         if (totalFullMarks == 0) totalFullMarks = 1;
 
         var percentage = (totalMarks / totalFullMarks) * 100f;
+
+        if (gradingScheme?.GradeGroupId.HasValue == true)
+        {
+            var obtainedMark = Math.Clamp((int)Math.Round(percentage), 0, 100);
+            var gradePoint = context.GradePoints
+                .FirstOrDefault(gp => gp.GradeGroupId == gradingScheme.GradeGroupId.Value && gp.ObtainedMark == obtainedMark);
+
+            if (gradePoint != null)
+            {
+                return new GradeResult
+                {
+                    GradeLetter = gradePoint.Grade,
+                    GradePoint = gradePoint.GradePointValue,
+                    IsPass = gradePoint.GradePointValue > 0,
+                    Remark = gradePoint.GradePointValue > 0 ? "Pass" : "Fail"
+                };
+            }
+        }
 
         if (gradingScheme?.GradeDefinitions != null && gradingScheme.GradeDefinitions.Count != 0)
         {
@@ -52,6 +76,25 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
             IsPass = percentage >= 40,
             Remark = percentage >= 40 ? "Pass" : "Fail"
         };
+    }
+
+    public decimal? GetGradePointValue(string gradeLetter, int? gradeGroupId)
+    {
+        if (string.IsNullOrWhiteSpace(gradeLetter) || !gradeGroupId.HasValue)
+            return null;
+
+        var key = (gradeGroupId.Value, gradeLetter);
+        if (GradePointCache.TryGetValue(key, out var cached))
+            return cached;
+
+        var value = context.GradePoints
+            .AsNoTracking()
+            .Where(gp => gp.GradeGroupId == gradeGroupId.Value && gp.Grade == gradeLetter)
+            .Select(gp => (decimal?)gp.GradePointValue)
+            .FirstOrDefault();
+
+        GradePointCache[key] = value;
+        return value;
     }
 
     public bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering)
