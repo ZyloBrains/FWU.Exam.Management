@@ -71,9 +71,7 @@ public static class UserScopeExtensions
     public static IQueryable<SubjectCatalog> ApplyScope(this IQueryable<SubjectCatalog> query, IUserContext user)
     {
         if (user.IsSuperAdmin) return query;
-        if (user.IsFacultyAdmin && user.FacultyId.HasValue)
-            return query.Where(sc => sc.SubjectOfferings!.Any(so =>
-                so.Program != null && so.Program.FacultyId == user.FacultyId.Value));
+        if (user.IsFacultyAdmin) return query;
         if (user.IsCollegeAdmin && user.CollegeId.HasValue)
             return query.Where(sc => sc.SubjectOfferings!.Any(so =>
                 so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value)));

@@ -85,20 +85,61 @@ public class CurriculumVersionService : ICurriculumVersionService
 
     public async Task UpdateCurriculumVersionAsync(CurriculumVersion curriculumVersion)
     {
-        if (curriculumVersion.IsActive)
-            await DeactivateOtherVersionsAsync(curriculumVersion.ProgramId, curriculumVersion.Id);
-        _context.CurriculumVersions.Update(curriculumVersion);
+        var existing = await _context.CurriculumVersions.FindAsync(curriculumVersion.Id)
+            ?? throw new InvalidOperationException("Curriculum version not found.");
+
+        existing.Name = curriculumVersion.Name;
+        existing.ProgramId = curriculumVersion.ProgramId;
+        existing.EffectiveAcademicYearId = curriculumVersion.EffectiveAcademicYearId;
+        existing.Description = curriculumVersion.Description;
+        existing.IsActive = curriculumVersion.IsActive;
+
+        if (existing.IsActive)
+            await DeactivateOtherVersionsAsync(existing.ProgramId, existing.Id);
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteCurriculumVersionAsync(int id)
+    public async Task<(bool Deleted, int SkippedOfferings)> DeleteCurriculumVersionAsync(int id)
     {
-        var curriculumVersion = await _context.CurriculumVersions.FindAsync(id);
-        if (curriculumVersion != null)
+        var curriculumVersion = await _context.CurriculumVersions
+            .Include(cv => cv.SubjectOfferings)
+            .FirstOrDefaultAsync(cv => cv.Id == id);
+
+        if (curriculumVersion == null)
+            return (false, 0);
+
+        var offerings = curriculumVersion.SubjectOfferings?.ToList() ?? new List<SubjectOffering>();
+
+        var referencedIds = new HashSet<int>();
+        if (offerings.Count > 0)
         {
-            _context.CurriculumVersions.Remove(curriculumVersion);
-            await _context.SaveChangesAsync();
+            var ids = offerings.Select(o => o.Id).ToList();
+            var examSlotIds = await _context.ExamSlots
+                .Where(x => ids.Contains(x.SubjectOfferingId))
+                .Select(x => x.SubjectOfferingId)
+                .ToListAsync();
+            var examResultIds = await _context.ExamSubjectResults
+                .Where(x => ids.Contains(x.SubjectOfferingId))
+                .Select(x => x.SubjectOfferingId)
+                .ToListAsync();
+            var assignmentIds = await _context.CollegeAdminSubjectAssignments
+                .Where(x => ids.Contains(x.SubjectOfferingId))
+                .Select(x => x.SubjectOfferingId)
+                .ToListAsync();
+
+            foreach (var referencedId in examSlotIds.Concat(examResultIds).Concat(assignmentIds))
+                referencedIds.Add(referencedId);
         }
+
+        var deletable = offerings.Where(o => !referencedIds.Contains(o.Id)).ToList();
+        _context.SubjectOfferings.RemoveRange(deletable);
+
+        var skipped = offerings.Count - deletable.Count;
+        if (skipped == 0)
+            _context.CurriculumVersions.Remove(curriculumVersion);
+
+        await _context.SaveChangesAsync();
+        return (skipped == 0, skipped);
     }
 
     public async Task<bool> CurriculumVersionExistsAsync(int id)
