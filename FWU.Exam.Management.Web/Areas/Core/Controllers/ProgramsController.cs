@@ -152,6 +152,8 @@ public class ProgramsController(IProgramService programService, ISemesterService
     {
         if (ModelState.IsValid)
         {
+            if (userContext.FacultyId.HasValue)
+                program.FacultyId = userContext.FacultyId;
             await programService.CreateProgramAsync(program);
             TempData["SuccessMessage"] = "Program created successfully!";
             return RedirectToAction(nameof(Index));
@@ -188,6 +190,14 @@ public class ProgramsController(IProgramService programService, ISemesterService
         {
             try
             {
+                if (userContext.FacultyId.HasValue)
+                    program.FacultyId = userContext.FacultyId;
+                else if (!program.FacultyId.HasValue)
+                {
+                    var existing = await programService.GetProgramByIdAsync(program.Id);
+                    if (existing != null)
+                        program.FacultyId = existing.FacultyId;
+                }
                 await programService.UpdateProgramAsync(program);
             }
             catch (DbUpdateConcurrencyException)
