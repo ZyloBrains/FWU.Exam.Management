@@ -1,4 +1,5 @@
 using FWU.Exam.Management.Domain.Entities;
+using FWU.Exam.Management.Domain.Entities.CollegeAdmins;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Infrastructure.Services;
@@ -143,6 +144,71 @@ public class CurriculumVersionServiceTests
 
         var all = await db.Context.CurriculumVersions.AsNoTracking().ToListAsync();
         Assert.Single(all, v => v.IsActive);
+    }
+
+    [Fact]
+    public async Task DeleteCurriculumVersionAsync_DeletesVersionAndItsOfferings_WhenNoneAreReferenced()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), SeedCopyScenario);
+        var service = CreateService(db);
+
+        var (deleted, skipped) = await service.DeleteCurriculumVersionAsync(SourceVersionId);
+
+        Assert.True(deleted);
+        Assert.Equal(0, skipped);
+        Assert.False(await db.Context.CurriculumVersions.AnyAsync(v => v.Id == SourceVersionId));
+        Assert.False(await db.Context.SubjectOfferings.AnyAsync(o => o.CurriculumVersionId == SourceVersionId));
+        Assert.True(await db.Context.SubjectOfferings.AnyAsync(o => o.Id == 104));
+        Assert.True(await db.Context.SubjectOfferings.AnyAsync(o => o.Id == 201));
+    }
+
+    [Fact]
+    public async Task DeleteCurriculumVersionAsync_KeepsVersion_WhenAnOfferingIsReferenced()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedCopyScenario(ctx);
+            ctx.Users.Add(TestData.User("admin-1", "admin@test.com"));
+            ctx.CollegeAdminSubjectAssignments.Add(new CollegeAdminSubjectAssignment
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                CollegeAdminUserId = "admin-1",
+                SubjectOfferingId = 101,
+                IsActive = true
+            });
+        });
+        var service = CreateService(db);
+
+        var (deleted, skipped) = await service.DeleteCurriculumVersionAsync(SourceVersionId);
+
+        Assert.False(deleted);
+        Assert.Equal(1, skipped);
+        Assert.True(await db.Context.CurriculumVersions.AnyAsync(v => v.Id == SourceVersionId));
+        Assert.True(await db.Context.SubjectOfferings.AnyAsync(o => o.Id == 101));
+        Assert.False(await db.Context.SubjectOfferings.AnyAsync(o => o.Id == 102));
+        Assert.False(await db.Context.SubjectOfferings.AnyAsync(o => o.Id == 103));
+    }
+
+    [Fact]
+    public async Task UpdateCurriculumVersionAsync_PreservesTenantId()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), SeedCopyScenario);
+        var service = CreateService(db);
+
+        await service.UpdateCurriculumVersionAsync(new CurriculumVersion
+        {
+            Id = SourceVersionId,
+            TenantId = 0,
+            Name = "Updated Name",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = TestData.AcademicYearId,
+            IsActive = true
+        });
+
+        var version = await db.Context.CurriculumVersions.AsNoTracking().SingleAsync(v => v.Id == SourceVersionId);
+        Assert.Equal(TestData.TenantId, version.TenantId);
+        Assert.Equal("Updated Name", version.Name);
     }
 
     [Fact]

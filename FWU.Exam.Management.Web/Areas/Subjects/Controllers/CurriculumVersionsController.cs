@@ -488,8 +488,11 @@ public class CurriculumVersionsController : Controller
     {
         try
         {
-            await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
-            TempData["SuccessMessage"] = "Curriculum version deleted successfully!";
+            var (deleted, skipped) = await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
+            if (deleted)
+                TempData["SuccessMessage"] = "Curriculum version deleted successfully!";
+            else
+                TempData["ErrorMessage"] = $"{skipped} subject offering(s) are still referenced by exam slots, exam results, or admin assignments and were not removed. The curriculum version was kept.";
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateException)
@@ -508,7 +511,14 @@ public class CurriculumVersionsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteAjax(int id)
     {
-        try { await _curriculumVersionService.DeleteCurriculumVersionAsync(id); return Json(new { success = true, message = "Curriculum version deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try
+        {
+            var (deleted, skipped) = await _curriculumVersionService.DeleteCurriculumVersionAsync(id);
+            return Json(deleted
+                ? new { success = true, message = "Curriculum version deleted successfully!" }
+                : new { success = false, message = $"{skipped} subject offering(s) are still referenced by exam slots, exam results, or admin assignments and were not removed. The curriculum version was kept." });
+        }
+        catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
     }
 
 }
