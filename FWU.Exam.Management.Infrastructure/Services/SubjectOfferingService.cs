@@ -139,6 +139,13 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.SubjectOfferings.AnyAsync(e => e.Id == id);
     }
 
+    public async Task<bool> IsSubjectOfferingReferencedAsync(int id)
+    {
+        return await _context.ExamSlots.AnyAsync(x => x.SubjectOfferingId == id)
+            || await _context.ExamSubjectResults.AnyAsync(x => x.SubjectOfferingId == id)
+            || await _context.CollegeAdminSubjectAssignments.AnyAsync(x => x.SubjectOfferingId == id);
+    }
+
     public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null)
     {
         return await _context.SubjectOfferings

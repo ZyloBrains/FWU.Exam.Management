@@ -46,7 +46,7 @@ public class ExamRegistrationServiceTests
         ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
         ctx.ApplicationVouchers.Add(TestData.Voucher(2, 2, 21));
 
-        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 2, SubjectCode = "SUB2", SubjectName = "Subject 2", SubjectTypeId = 1, IsActive = true });
+        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 2, TenantId = TestData.TenantId, SubjectCode = "SUB2", SubjectName = "Subject 2", SubjectTypeId = 1, IsActive = true });
         ctx.SubjectOfferings.Add(new SubjectOffering
         {
             Id = 301,

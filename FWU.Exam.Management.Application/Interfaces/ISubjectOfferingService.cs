@@ -17,6 +17,7 @@ public interface ISubjectOfferingService
     Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task DeleteSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);
+    Task<bool> IsSubjectOfferingReferencedAsync(int id);
     Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null);
     Task<Dictionary<int, List<int>>> GetExistingSubjectCatalogIdsBySemesterAsync(int programId, int curriculumVersionId, int academicYearId);
     Task<List<SelectOption>> GetAcademicYearsAsync();

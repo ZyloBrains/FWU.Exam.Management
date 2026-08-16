@@ -441,6 +441,22 @@ public class SubjectOfferingsController : Controller
                           || current.SemesterId != subjectOffering.SemesterId
                           || current.CurriculumVersionId != subjectOffering.CurriculumVersionId;
 
+        var marksChanged = current.HasTheory != subjectOffering.HasTheory
+                        || current.HasPractical != subjectOffering.HasPractical
+                        || current.HasInternal != subjectOffering.HasInternal
+                        || current.TheoryFullMarks != subjectOffering.TheoryFullMarks
+                        || current.TheoryPassMarks != subjectOffering.TheoryPassMarks
+                        || current.PracticalFullMarks != subjectOffering.PracticalFullMarks
+                        || current.PracticalPassMarks != subjectOffering.PracticalPassMarks
+                        || current.InternalTheoryFullMarks != subjectOffering.InternalTheoryFullMarks
+                        || current.InternalTheoryPassMarks != subjectOffering.InternalTheoryPassMarks;
+
+        if (marksChanged && await _subjectOfferingService.IsSubjectOfferingReferencedAsync(id))
+        {
+            ModelState.AddModelError(string.Empty,
+                "The evaluation scheme (marks) cannot be edited once the subject has been used in exams or assigned to college admins. Other fields can still be updated.");
+        }
+
         if (academicYearId > 0 && subjectOffering.SemesterId > 0)
         {
             var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);

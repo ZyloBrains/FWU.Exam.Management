@@ -86,7 +86,7 @@ public static class TestData
         ctx.StudentCategories.Add(new StudentCategory { Id = 1, StudentCategoryName = "Regular", IsActive = true });
 
         ctx.SubjectTypes.Add(new SubjectType { Id = 1, Code = "TH", Name = "Theory", IsActive = true });
-        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 1, SubjectCode = "SUB1", SubjectName = "Subject 1", SubjectTypeId = 1, IsActive = true });
+        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 1, TenantId = TenantId, SubjectCode = "SUB1", SubjectName = "Subject 1", SubjectTypeId = 1, IsActive = true });
 
         ctx.ExamTypes.Add(new ExamType { Id = Regular, Name = "Regular", Code = "1", IsActive = true });
         ctx.ExamTypes.Add(new ExamType { Id = Partial, Name = "Partial", Code = "2", IsActive = true });

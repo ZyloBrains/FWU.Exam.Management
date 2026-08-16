@@ -413,6 +413,7 @@ public class StudentDashboardServiceTests
             ctx.SubjectCatalogs.Add(new SubjectCatalog
             {
                 Id = 7,
+                TenantId = 2,
                 SubjectCode = "SUB7",
                 SubjectName = "Subject 7",
                 SubjectTypeId = 1,

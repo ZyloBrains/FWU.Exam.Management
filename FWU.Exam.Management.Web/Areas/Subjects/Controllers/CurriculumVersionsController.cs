@@ -233,17 +233,26 @@ public class CurriculumVersionsController : Controller
                     await _subjectOfferingService.CreateSubjectOfferingsAsync(offerings);
 
                 var removed = 0;
+                var skippedReferenced = 0;
                 if (removedIds.Count > 0)
                 {
                     var toRemove = await _subjectOfferingService.GetSubjectOfferingsForDeletionAsync(removedIds);
                     foreach (var o in toRemove.Where(o => o.CurriculumVersionId == model.CurriculumVersionId).ToList())
                     {
+                        if (await _subjectOfferingService.IsSubjectOfferingReferencedAsync(o.Id))
+                        {
+                            skippedReferenced++;
+                            continue;
+                        }
                         await _subjectOfferingService.DeleteSubjectOfferingAsync(o.Id);
                         removed++;
                     }
                 }
 
-                TempData["SuccessMessage"] = $"{offerings.Count} subject(s) added, {removed} removed.";
+                var message = $"{offerings.Count} subject(s) added, {removed} removed.";
+                if (skippedReferenced > 0)
+                    message += $" {skippedReferenced} subject(s) skipped because they are used in exams or assigned to college admins.";
+                TempData["SuccessMessage"] = message;
                 return RedirectToAction(nameof(Details), new { id = model.CurriculumVersionId });
             }
             catch (DbUpdateException)
