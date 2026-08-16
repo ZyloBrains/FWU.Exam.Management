@@ -140,6 +140,16 @@ public static class TestData
         IsActive = true
     };
 
+    public static AcademicYear AcademicYear(int id, string name) => new()
+    {
+        Id = id,
+        AcademicYearCode = name,
+        AcademicYearName = name,
+        AcademicYearNameNepali = name,
+        IsActive = true,
+        IsRunning = false
+    };
+
     public static Semester Semester(int id, int year, int number) => new()
     {
         Id = id,
@@ -162,7 +172,7 @@ public static class TestData
     };
 
     public static ExamSchedule Schedule(int id, int semesterId, int examTypeId, DateOnly? endDate,
-        DateTime? admissionCardReleaseDate, int programId = ProgramId, bool isActive = true)
+        DateTime? admissionCardReleaseDate, int programId = ProgramId, bool isActive = true, int academicYearId = AcademicYearId)
     {
         return new ExamSchedule
         {
@@ -174,7 +184,7 @@ public static class TestData
             StartDate = endDate?.AddDays(-15),
             EndDate = endDate,
             IsActive = isActive,
-            AcademicYearId = AcademicYearId,
+            AcademicYearId = academicYearId,
             ProgramId = programId,
             SemesterId = semesterId,
             ExamTypeId = examTypeId,

@@ -131,11 +131,25 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         if (schedule == null) return new List<SubjectOffering>();
 
+        var curriculumVersionId = await context.CurriculumVersions!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(cv => cv.ProgramId == schedule.ProgramId
+                      && cv.EffectiveAcademicYearId <= schedule.AcademicYearId)
+            .OrderByDescending(cv => cv.EffectiveAcademicYearId)
+            .ThenByDescending(cv => cv.IsActive)
+            .ThenByDescending(cv => cv.Id)
+            .Select(cv => (int?)cv.Id)
+            .FirstOrDefaultAsync();
+
         var query = context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .ThenInclude(sc => sc!.SubjectType)
             .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
+
+        if (curriculumVersionId.HasValue)
+            query = query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
 
         return await query
             .OrderBy(so => so.DisplayOrder)

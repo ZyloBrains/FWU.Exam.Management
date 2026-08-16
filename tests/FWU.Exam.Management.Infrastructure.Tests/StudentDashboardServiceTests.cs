@@ -146,7 +146,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetSubjectOfferingsForScheduleAsync_ReturnsAllSemesterOfferings()
+    public async Task GetSubjectOfferingsForScheduleAsync_FallsBackToAllOfferings_WhenNoCurriculumVersionMatches()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -159,6 +159,90 @@ public class StudentDashboardServiceTests
         var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
 
         Assert.Equal(new[] { 102, 210 }, offerings.Select(o => o.Id).OrderBy(id => id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_ReturnsOnlyOfferingsForResolvedCurriculumVersion()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.AcademicYears.Add(TestData.AcademicYear(2, "2082"));
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 1,
+                Name = "Old",
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2,
+                Name = "New",
+                IsActive = true
+            });
+
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 1;
+            var v2Offering = TestData.Offering(210, 2, TestData.ProgramId);
+            v2Offering.CurriculumVersionId = 2;
+            ctx.SubjectOfferings.Add(v2Offering);
+
+            // Batch year 1 resolves to version 1 (exact EffectiveAcademicYearId match).
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null, academicYearId: 1));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        Assert.Equal(new[] { 102 }, offerings.Select(o => o.Id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_UsesLatestVersionAtOrBeforeBatchYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.AcademicYears.Add(TestData.AcademicYear(2024, "2024"));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2025, "2025"));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2026, "2026"));
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2024,
+                Name = "2024 Curriculum",
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2026,
+                Name = "2026 Curriculum",
+                IsActive = true
+            });
+
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 1;
+            var v2Offering = TestData.Offering(210, 2, TestData.ProgramId);
+            v2Offering.CurriculumVersionId = 2;
+            ctx.SubjectOfferings.Add(v2Offering);
+
+            // Batch year 2025 sits between the two versions; must use the 2024 one.
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null, academicYearId: 2025));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        Assert.Equal(new[] { 102 }, offerings.Select(o => o.Id));
     }
 
     [Fact]
