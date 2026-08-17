@@ -7,6 +7,8 @@
 }
 
 <div x-data="{ expandedMarksheet: null, printScheduleId: null }">
+
+<!-- ═══ SCREEN LAYOUT ═══ -->
 <div class="space-y-6 screen-only">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -254,11 +256,13 @@
         </div>
     }
 </div>
+
 <!-- ═══ PRINT LAYOUT (hidden on screen, shown on print) ═══ -->
 <div class="print-only">
     @foreach (var marksheet in Model)
     {
         <div class="print-page" x-show="printScheduleId === @marksheet.ExamScheduleId">
+            <!-- Header -->
             <div class="header-top">
                 <div class="header-logo">
                     <div class="logo-box">
@@ -278,6 +282,7 @@
                 </div>
             </div>
 
+            <!-- Student Info -->
             <div class="student-info">
                 <div class="info-row">
                     <span class="info-label">Name:</span>
@@ -405,45 +410,56 @@
                 </div>
             }
 
+            <!-- Footer -->
             <div class="footer">
                 <div>Date: @DateTime.Now.ToString("MMMM dd, yyyy")</div>
                 <div class="note">Note: This Mark Sheet is for general idea of mark(s) you secured. This is not for official use. If any mistakes appear; record at Administration ledger will be referred.</div>
             </div>
-
-
         </div>
     }
 </div>
+
 </div>
 
 <style>
+    /* ═══ Screen-only & print-only toggling ═══ */
     .print-only {
         display: none;
     }
 
+    /* ═══ PRINT PAGE ═══ */
     .print-page {
         width: 210mm;
         min-height: auto;
         margin: 0 auto;
         padding: 6mm 8mm;
         background: #fff;
-        font-family: 'Segoe UI', Tahoma, sans-serif;
+        font-family: 'Segoe UI', 'Nirmala UI', Tahoma, Geneva, Verdana, sans-serif;
         color: #111827;
     }
 
+    /* ═══ HEADER ═══ */
     .header-top {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        border-bottom: 2px solid #1a2a4a;
-        padding-bottom: 4px;
-        margin-bottom: 6px;
+        gap: 12px;
+        border-bottom: 3px double #1a2a4a;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+
+    .header-logo {
+        flex-shrink: 0;
     }
 
     .logo-box {
-        width: 60px;
-        height: 50px;
+        width: 70px;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
     }
 
     .logo-box img {
@@ -457,129 +473,171 @@
         text-align: center;
     }
 
-    .univ-name {
-        font-size: 18px;
+    .header-center .univ-name {
+        font-size: 20px;
         font-weight: 700;
-        line-height: 1.1;
+        color: #1a2a4a;
+        letter-spacing: 1px;
         text-transform: uppercase;
+        line-height: 1.2;
     }
 
-    .office {
-        font-size: 11px;
+    .header-center .office {
+        font-size: 12px;
         font-weight: 600;
+        color: #2c3e6b;
+        margin-top: 1px;
     }
 
-    .address {
-        font-size: 10px;
+    .header-center .address {
+        font-size: 11px;
+        color: #555;
+        margin-top: 0px;
     }
 
-    .doc-title {
-        font-size: 14px;
+    .header-center .doc-title {
+        font-size: 16px;
         font-weight: 700;
-        margin-top: 2px;
+        color: #1a2a4a;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-top: 4px;
+        border-top: 1px solid #ccc;
+        padding-top: 4px;
+        display: inline-block;
+        padding-left: 14px;
+        padding-right: 14px;
     }
 
+    /* ═══ STUDENT INFO ═══ */
     .student-info {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1px 15px;
-        border: 1px solid #ccc;
-        padding: 6px 8px;
-        margin-bottom: 6px;
-        font-size: 10px;
+        gap: 2px 20px;
+        border: 1px solid #d1d5db;
+        border-radius: 3px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        font-size: 11px;
     }
 
     .info-row {
         display: flex;
+        gap: 4px;
     }
 
     .info-label {
-        min-width: 80px;
         font-weight: 600;
+        color: #374151;
+        min-width: 90px;
     }
 
     .info-value {
+        color: #111827;
         font-weight: 500;
     }
 
+    /* ═══ MARKS TABLE ═══ */
     .marks-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 9.5px;
+        font-size: 11px;
         table-layout: fixed;
+        margin-bottom: 8px;
     }
 
     .marks-table th,
     .marks-table td {
         border: 1px solid #d1d5db;
-        padding: 2px 3px;
-        line-height: 1.15;
+        padding: 3px 4px;
+        line-height: 1.2;
     }
 
-    .marks-table th {
-        background: #f4f4f4;
-        font-weight: 700;
+    .marks-table thead th {
+        background: #f3f4f6;
+        font-weight: 600;
+        color: #374151;
         text-align: center;
+        font-size: 10.5px;
+        padding: 4px 3px;
     }
 
-    .marks-table td:first-child,
-    .marks-table td:nth-child(2) {
+    .marks-table thead th:first-child,
+    .marks-table thead th:nth-child(2) {
         text-align: left;
     }
 
-    .marks-table td {
+    .marks-table tbody td {
+        color: #111827;
+    }
+
+    .marks-table tbody td:first-child {
+        text-align: left;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 10.5px;
+    }
+
+    .marks-table tbody td:nth-child(2) {
+        text-align: left;
+    }
+
+    .marks-table tbody td:not(:first-child):not(:nth-child(2)) {
         text-align: center;
+    }
+
+    .marks-table tbody tr:nth-child(even) {
+        background: #fafafa;
     }
 
     .total-row {
         font-weight: 700;
-        background: #f8fafc;
+        background: #f9fafb !important;
     }
 
     .gpa-row {
         font-weight: 700;
-        background: #eef2ff;
+        background: #eef2ff !important;
     }
 
     .result-row {
         font-weight: 700;
+        background: #f0fdf4 !important;
     }
 
-    .result-pass {
-        color: green;
+    .result-row.fail {
+        background: #fef2f2 !important;
     }
 
-    .result-fail {
-        color: red;
-    }
+    .result-pass { color: #16a34a; }
+    .result-fail { color: #dc2626; }
+    .result-pending { color: #d97706; }
 
-    .result-pending {
-        color: orange;
-    }
-
+    /* ═══ FOOTER ═══ */
     .footer {
-        margin-top: 5px;
+        margin-top: 6px;
+        font-size: 10px;
+        color: #6b7280;
+        border-top: 1px solid #e5e7eb;
         padding-top: 4px;
-        border-top: 1px solid #ddd;
-        font-size: 8px;
     }
 
     .footer .note {
+        font-style: italic;
         margin-top: 2px;
         line-height: 1.2;
     }
 
+    /* ═══ PRINT MEDIA ═══ */
     @@media print {
-
         @@page {
             size: A4 portrait;
-            margin: 5mm;
+            margin: 8mm;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background: white;
+            background: #fff;
         }
 
         .screen-only,
@@ -600,15 +658,24 @@
             max-width: 100%;
             padding: 0;
             margin: 0;
+            min-height: auto;
             page-break-after: avoid;
             page-break-inside: avoid;
         }
 
-        table {
+        .student-info {
             page-break-inside: avoid;
         }
 
-        tr {
+        .marks-table {
+            page-break-inside: avoid;
+        }
+
+        .marks-table tr {
+            page-break-inside: avoid;
+        }
+
+        .footer {
             page-break-inside: avoid;
         }
     }

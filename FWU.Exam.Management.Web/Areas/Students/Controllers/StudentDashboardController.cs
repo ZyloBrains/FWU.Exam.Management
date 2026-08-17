@@ -1167,7 +1167,7 @@ public class StudentDashboardController(
 
         ViewBag.StudentRegistration = registration;
 
-        return View(sorted);
+        return View("Marksheet", sorted);
     }
 
     private static string? MarksheetSymbolNumber(ExamRegistration? er)
