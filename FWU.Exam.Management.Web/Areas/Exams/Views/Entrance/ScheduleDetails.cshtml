@@ -37,7 +37,7 @@
             </div>
             <div>
                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Academic Year</label>
-                <p class="text-sm font-medium text-gray-800 mt-1">@Model.AcademicYear?.AcademicYearName</p>
+                <p class="text-sm font-medium text-gray-800 mt-1">@(Model.SemesterInstance?.AcademicYear?.AcademicYearName ?? "-")</p>
             </div>
             <div>
                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Exam Type</label>

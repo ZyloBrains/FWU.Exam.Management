@@ -36,7 +36,6 @@ public class AcademicYear
     public bool IsActive { get; set; }
         public virtual ICollection<Batch> Batches { get; set; } = [];
         public virtual ICollection<ExamRegistration> ExamRegistrations { get; set; } = [];
-        public virtual ICollection<ExamSchedule> ExamSchedules { get; set; } = [];
         public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = [];
 }
 

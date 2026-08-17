@@ -7,7 +7,6 @@ using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
-using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
@@ -23,7 +22,6 @@ namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 [RequirePermission("examschedules.view")]
 public class ExamSchedulesController(
     IExamScheduleService examScheduleService,
-    AppDbContext context,
     IAuditLogWriter auditLogWriter) : Controller
 {
     public async Task<IActionResult> Index(int page = 1, string? search = null, string sort = "StartDate", string sortDir = "desc", int pageSize = 10)
@@ -31,11 +29,7 @@ public class ExamSchedulesController(
         var (items, totalCount) = await examScheduleService.GetExamSchedulesAsync(page, pageSize, search, sort, sortDir);
 
         var scheduleIds = items.Select(i => i.Id).ToList();
-        var registrationCounts = await context.ExamRegistrations
-            .Where(r => scheduleIds.Contains(r.ExamScheduleId))
-            .GroupBy(r => r.ExamScheduleId)
-            .Select(g => new { ScheduleId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.ScheduleId, x => x.Count);
+        var registrationCounts = await examScheduleService.GetRegistrationCountsAsync(scheduleIds);
 
         ViewBag.RegistrationCounts = registrationCounts;
         ViewBag.TotalCount = totalCount;
@@ -62,7 +56,7 @@ public class ExamSchedulesController(
             sb.AppendLine($"{item.Id.ToString().EscapeCsv()}," +
                           $"{(item.ExamScheduleName ?? string.Empty).EscapeCsv()}," +
                           $"{(item.ExamScheduleCode ?? string.Empty).EscapeCsv()}," +
-                          $"{(item.AcademicYear?.AcademicYearName ?? string.Empty).EscapeCsv()}," +
+                          $"{(item.SemesterInstance?.AcademicYear?.AcademicYearName ?? string.Empty).EscapeCsv()}," +
                           $"{(item.ExamType?.Name ?? string.Empty).EscapeCsv()}," +
                           $"{(item.StartDateBs ?? string.Empty).EscapeCsv()}," +
                           $"{(item.EndDateBs ?? string.Empty).EscapeCsv()}," +
@@ -111,7 +105,7 @@ public class ExamSchedulesController(
             worksheet.Cell(row, 1).Value = item.Id;
             worksheet.Cell(row, 2).Value = item.ExamScheduleName ?? string.Empty;
             worksheet.Cell(row, 3).Value = item.ExamScheduleCode ?? string.Empty;
-            worksheet.Cell(row, 4).Value = item.AcademicYear?.AcademicYearName ?? string.Empty;
+            worksheet.Cell(row, 4).Value = item.SemesterInstance?.AcademicYear?.AcademicYearName ?? string.Empty;
             worksheet.Cell(row, 5).Value = item.ExamType?.Name ?? string.Empty;
             worksheet.Cell(row, 6).Value = item.StartDateBs ?? string.Empty;
             worksheet.Cell(row, 7).Value = item.EndDateBs ?? string.Empty;
@@ -140,51 +134,21 @@ public class ExamSchedulesController(
     {
         if (id == null) return NotFound();
 
-        var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
-        if (examSchedule == null) return NotFound();
+        var details = await examScheduleService.GetExamScheduleDetailsAsync(id.Value);
+        if (details == null) return NotFound();
 
-        var registrations = await context.ExamRegistrations
-            .Where(r => r.ExamScheduleId == id.Value)
-            .ToListAsync();
+        ViewBag.TotalRegistrations = details.TotalRegistrations;
+        ViewBag.PaidCount = details.PaidCount;
+        ViewBag.PendingCount = details.PendingCount;
+        ViewBag.RegisteredCount = details.RegisteredCount;
+        ViewBag.PendingVerificationCount = details.PendingVerificationCount;
+        ViewBag.ExamSlots = details.ExamSlots;
+        ViewBag.SubjectOfferings = details.SubjectOfferings;
+        ViewBag.ExistingSlotsByOfferingId = details.ExistingSlotsByOfferingId;
+        ViewBag.ExamCenters = new SelectList(details.ExamCenters.Select(ec => new SelectListItem { Value = ec.Id.ToString(), Text = ec.Name }), "Value", "Text");
+        ViewBag.Batches = new SelectList(details.Batches.Select(b => new SelectListItem { Value = b.Id.ToString(), Text = b.Name }), "Value", "Text");
 
-        var examSlots = await context.ExamSlots
-            .Where(es => es.ExamScheduleId == id.Value)
-            .Include(es => es.SubjectOffering)
-                .ThenInclude(so => so!.SubjectCatalog)
-            .Include(es => es.ExamCenter)
-            .ToListAsync();
-
-        ViewBag.TotalRegistrations = registrations.Count;
-        ViewBag.PaidCount = registrations.Count(r => r.FeeEnclosed.HasValue && r.FeeEnclosed > 0);
-        ViewBag.PendingCount = registrations.Count(r => !r.FeeEnclosed.HasValue || r.FeeEnclosed == 0);
-        ViewBag.RegisteredCount = registrations.Count(r => r.Status >= RegistrationStatus.CollegeVerified);
-        ViewBag.PendingVerificationCount = registrations.Count(r => r.Status == RegistrationStatus.Pending);
-        ViewBag.ExamSlots = examSlots;
-
-        var offeringQuery = context.SubjectOfferings
-            .Where(so => so.ProgramId == examSchedule.ProgramId && so.SemesterId == examSchedule.SemesterId);
-        var subjectOfferings = await offeringQuery
-            .Include(so => so.SubjectCatalog)
-            .OrderBy(so => so.DisplayOrder)
-            .ThenBy(so => so.Id)
-            .ToListAsync();
-        ViewBag.SubjectOfferings = subjectOfferings;
-        ViewBag.ExistingSlotsByOfferingId = examSlots.ToDictionary(es => es.SubjectOfferingId);
-
-        ViewBag.ExamCenters = await context.ExamCenters
-            .Where(ec => ec.IsActive && ec.ExamScheduleId == id.Value)
-            .OrderBy(ec => ec.Code)
-            .Select(ec => new SelectListItem { Value = ec.Id.ToString(), Text = ec.Code ?? $"Center {ec.Id}" })
-            .ToListAsync();
-
-        var batches = await context.Batches
-            .Where(b => b.AcademicYearId == examSchedule.AcademicYearId && b.IsActive)
-            .OrderBy(b => b.BatchName)
-            .Select(b => new SelectListItem { Value = b.Id.ToString(), Text = b.BatchName })
-            .ToListAsync();
-        ViewBag.Batches = batches;
-
-        return View(examSchedule);
+        return View(details.Schedule);
     }
 
     [HttpPost]
@@ -192,94 +156,16 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveExamSlots(int examScheduleId, int batchId, int[] subjectOfferingId, int[] examCenterId, string[]? examDate, string[]? startTime, string[]? endTime, string[]? remarks)
     {
-        var schedule = await context.ExamSchedules.FindAsync(examScheduleId);
-        if (schedule == null) return NotFound();
+        var result = await examScheduleService.SaveExamSlotsAsync(examScheduleId, batchId, subjectOfferingId, examCenterId, examDate, startTime, endTime, remarks);
 
-        var validOfferingQuery = context.SubjectOfferings
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
-        var validOfferingIds = await validOfferingQuery.Select(so => so.Id).ToHashSetAsync();
-
-        var existingSlots = await context.ExamSlots
-            .Where(es => es.ExamScheduleId == examScheduleId)
-            .ToDictionaryAsync(es => es.SubjectOfferingId);
-
-        var errors = new List<string>();
-        for (var i = 0; i < subjectOfferingId.Length; i++)
+        if (result.Errors.Count > 0)
         {
-            var offeringId = subjectOfferingId[i];
-            if (!validOfferingIds.Contains(offeringId)) continue;
-
-            var date = (i < (examDate?.Length ?? 0) ? examDate![i] : null)?.Trim();
-            if (string.IsNullOrEmpty(date)) continue;
-
-            if (!DateOnly.TryParse(date, out var parsedDate))
-            {
-                errors.Add($"Subject '{offeringId}' has an invalid exam date '{date}'. Use YYYY-MM-DD.");
-                continue;
-            }
-
-            if (schedule.StartDate.HasValue && parsedDate < schedule.StartDate.Value)
-                errors.Add($"Subject '{offeringId}' exam date {date} is before the schedule start date {schedule.StartDate.Value:yyyy-MM-dd}.");
-            if (schedule.EndDate.HasValue && parsedDate > schedule.EndDate.Value)
-                errors.Add($"Subject '{offeringId}' exam date {date} is after the schedule end date {schedule.EndDate.Value:yyyy-MM-dd}.");
-        }
-
-        if (errors.Count > 0)
-        {
-            TempData["ErrorMessage"] = string.Join(" ", errors.Take(3)) + (errors.Count > 3 ? " (and more)" : "");
+            TempData["ErrorMessage"] = string.Join(" ", result.Errors.Take(3)) + (result.Errors.Count > 3 ? " (and more)" : "");
             return RedirectToAction(nameof(Details), new { id = examScheduleId });
         }
 
-        var added = 0;
-        var updated = 0;
-
-        for (var i = 0; i < subjectOfferingId.Length; i++)
-        {
-            var offeringId = subjectOfferingId[i];
-            if (!validOfferingIds.Contains(offeringId)) continue;
-
-            var centerId = i < examCenterId.Length ? examCenterId[i] : 0;
-            var date = (i < (examDate?.Length ?? 0) ? examDate![i] : null)?.Trim();
-            var startText = i < (startTime?.Length ?? 0) ? startTime![i] : null;
-            var endText = i < (endTime?.Length ?? 0) ? endTime![i] : null;
-            var remark = (i < (remarks?.Length ?? 0) ? remarks![i] : null)?.Trim();
-
-            var start = TimeOnly.TryParse(startText, out var startParsed) ? startParsed : schedule.StartTime;
-            var end = TimeOnly.TryParse(endText, out var endParsed) ? endParsed : schedule.EndTime;
-
-            if (existingSlots.TryGetValue(offeringId, out var slot))
-            {
-                if (centerId > 0) slot.ExamCenterId = centerId;
-                if (batchId > 0) slot.BatchId = batchId;
-                slot.ExamDate = string.IsNullOrEmpty(date) ? null : date;
-                slot.StartTime = start;
-                slot.EndTime = end;
-                slot.Remarks = string.IsNullOrEmpty(remark) ? null : remark;
-                updated++;
-            }
-            else if (centerId > 0 && batchId > 0)
-            {
-                context.ExamSlots.Add(new ExamSlot
-                {
-                    ExamScheduleId = examScheduleId,
-                    SubjectOfferingId = offeringId,
-                    ExamCenterId = centerId,
-                    BatchId = batchId,
-                    ExamDate = string.IsNullOrEmpty(date) ? null : date,
-                    StartTime = start,
-                    EndTime = end,
-                    Remarks = string.IsNullOrEmpty(remark) ? null : remark,
-                    TenantId = schedule.TenantId
-                });
-                added++;
-            }
-        }
-
-        if (added > 0 || updated > 0)
-            await context.SaveChangesAsync();
-
-        await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slots saved for schedule {examScheduleId}", new { scheduleId = examScheduleId, added, updated }, entityName: "ExamSchedule", entityId: examScheduleId.ToString());
-        TempData["SuccessMessage"] = $"Exam subjects saved: {added} added, {updated} updated.";
+        await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slots saved for schedule {examScheduleId}", new { scheduleId = examScheduleId, added = result.Added, updated = result.Updated }, entityName: "ExamSchedule", entityId: examScheduleId.ToString());
+        TempData["SuccessMessage"] = $"Exam subjects saved: {result.Added} added, {result.Updated} updated.";
         return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
 
@@ -288,14 +174,9 @@ public class ExamSchedulesController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteExamSlot(int id, int examScheduleId)
     {
-        var slot = await context.ExamSlots.FindAsync(id);
-        if (slot != null)
-        {
-            context.ExamSlots.Remove(slot);
-            await context.SaveChangesAsync();
-            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slot {id} removed from schedule {examScheduleId}", new { scheduleId = examScheduleId, slotId = id }, entityName: "ExamSlot", entityId: id.ToString());
-            TempData["SuccessMessage"] = "Subject removed from exam schedule.";
-        }
+        await examScheduleService.DeleteExamSlotAsync(id);
+        await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam slot {id} removed from schedule {examScheduleId}", new { scheduleId = examScheduleId, slotId = id }, entityName: "ExamSlot", entityId: id.ToString());
+        TempData["SuccessMessage"] = "Subject removed from exam schedule.";
         return RedirectToAction(nameof(Details), new { id = examScheduleId });
     }
 
@@ -310,13 +191,13 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Create([Bind("Id,ProgramId,SemesterInstanceId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (ModelState.IsValid)
         {
             await examScheduleService.CreateExamScheduleAsync(examSchedule);
 
-            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Exam schedule created (Code {examSchedule.ExamScheduleCode})", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId, type = examSchedule.ExamType?.Name }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Exam schedule created (Code {examSchedule.ExamScheduleCode})", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, semesterInstanceId = examSchedule.SemesterInstanceId, type = examSchedule.ExamType?.Name }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -341,7 +222,7 @@ public class ExamSchedulesController(
     [HttpPost]
     [RequirePermission("examschedules.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearId,ProgramId,SemesterId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,ProgramId,SemesterInstanceId,ExamTypeId,ExamScheduleName,StartDateBs,EndDateBs,StartDate,EndDate,PublishedDate,StartTime,EndTime,Remarks,IsActive,ExtendedDate,ExtendedDateCharge,ExamFee,PracticalSubjectFee,AdmissionCardReleaseDate,ExamScheduleCode")] ExamSchedule examSchedule)
     {
         if (id != examSchedule.Id) return NotFound();
 
@@ -369,7 +250,7 @@ public class ExamSchedulesController(
                 throw;
             }
 
-            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam schedule {examSchedule.Id} updated", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, academicYearId = examSchedule.AcademicYearId }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
+            await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Exam schedule {examSchedule.Id} updated", new { scheduleId = examSchedule.Id, code = examSchedule.ExamScheduleCode, programId = examSchedule.ProgramId, semesterInstanceId = examSchedule.SemesterInstanceId }, entityName: "ExamSchedule", entityId: examSchedule.Id.ToString());
             TempData["SuccessMessage"] = "Exam schedule updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -386,7 +267,7 @@ public class ExamSchedulesController(
         var examSchedule = await examScheduleService.GetExamScheduleByIdAsync(id.Value);
         if (examSchedule == null) return NotFound();
 
-        ViewBag.RegistrationCount = await context.ExamRegistrations.CountAsync(r => r.ExamScheduleId == id.Value);
+        ViewBag.RegistrationCount = await examScheduleService.GetRegistrationCountAsync(id.Value);
 
         return View(examSchedule);
     }
@@ -422,17 +303,16 @@ public class ExamSchedulesController(
 
     private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)
     {
-        ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", examSchedule?.AcademicYearId);
         ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
-        ViewData["SemesterId"] = new SelectList(selectLists.Semesters, "Id", "Name", examSchedule?.SemesterId);
+        ViewData["SemesterInstanceId"] = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text", examSchedule?.SemesterInstanceId);
     }
 
     [HttpGet]
     public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? programId = null)
     {
         var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId, programId);
-        return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
+        return Json(semesters);
     }
 
     [HttpGet]

@@ -38,13 +38,6 @@
                     <span asp-validation-for="ExamScheduleCode" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="AcademicYearId" id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
-                        <option value="">-- Select Academic Year --</option>
-                    </select>
-                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
-                <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                     <select asp-for="ProgramId" id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
                         <option value="">-- Select Program --</option>
@@ -59,11 +52,11 @@
                     <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
-                    <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                    <select asp-for="SemesterId" id="SemesterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                    <label asp-for="SemesterInstanceId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                    <select asp-for="SemesterInstanceId" id="SemesterInstanceId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterInstanceId">
                         <option value="">-- Select Semester --</option>
                     </select>
-                    <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
+                    <span asp-validation-for="SemesterInstanceId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="PublishedDate" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
@@ -182,10 +175,10 @@
     }
 
     <script>
-        var initialSemesterId = '@(Model?.SemesterId ?? 0)';
+        var initialSemesterInstanceId = '@(Model?.SemesterInstanceId ?? 0)';
 
-        function renderSemesters(academicYearId, programId, selectedId) {
-            var semesterSelect = $('#SemesterId');
+        function renderSemesters(programId, selectedId) {
+            var semesterSelect = $('#SemesterInstanceId');
 
             if (semesterSelect.data('select2')) {
                 semesterSelect.select2('destroy');
@@ -193,12 +186,12 @@
 
             semesterSelect.empty().append('<option value="">-- Select Semester --</option>');
 
-            if (!academicYearId) {
+            if (!programId) {
                 semesterSelect.prop('disabled', true).select2({ width: 'resolve' });
                 return;
             }
 
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
+            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: 0, programId: programId }, function (data) {
                 $.each(data, function (index, item) {
                     semesterSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
@@ -208,17 +201,11 @@
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            renderSemesters($(this).val(), $("#ProgramId").val());
-        });
-
         $("#ProgramId").change(function () {
-            if ($("#AcademicYearId").val()) {
-                renderSemesters($("#AcademicYearId").val(), $(this).val());
-            }
+            renderSemesters($(this).val());
         });
 
-        renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
+        renderSemesters($("#ProgramId").val(), initialSemesterInstanceId);
 
         var startDateBsTimer;
         var endDateBsTimer;

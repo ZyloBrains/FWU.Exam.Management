@@ -388,7 +388,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .Include(es => es.ExamType)
             .Where(es => es.IsActive
                       && es.ProgramId == programId
-                      && es.SemesterId == semesterId
+                      && es.SemesterInstanceId == semesterId
                       && es.ExamType != null
                       && es.ExamType.Name != "Entrance"
                       && es.ExamType.Name != "Supplementary")

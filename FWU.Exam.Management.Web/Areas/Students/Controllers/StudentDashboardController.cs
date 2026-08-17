@@ -297,7 +297,7 @@ public class StudentDashboardController(
             forms.Add(new ExamFormViewModel
             {
                 ExamScheduleId = schedule.Id,
-                Semester = $"Semester {schedule.Semester?.Number ?? 0}",
+                Semester = $"Semester {schedule.SemesterInstance?.Semester?.Number ?? 0}",
                 ExamScheduleName = schedule.ExamScheduleName,
                 HasPaid = hasPaid,
                 HasAdmitCard = hasAdmitCard,
@@ -416,7 +416,7 @@ public class StudentDashboardController(
         var isSupplementary = schedule.ExamType?.Name == "Supplementary";
         if (isSupplementary)
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId, programId);
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance!.SemesterId, programId);
             if (!hasFailed)
             {
                 TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
@@ -447,7 +447,7 @@ public class StudentDashboardController(
             hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
+        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterInstance!.SemesterId);
         var isRegular = failedSubjectIds.Count == 0;
 
         var failedSet = new HashSet<int>(failedSubjectIds);
@@ -471,11 +471,11 @@ public class StudentDashboardController(
             ExamScheduleId = examScheduleId,
             ExamScheduleName = schedule.ExamScheduleName,
             ProgramName = schedule.Program?.ProgramName,
-            SemesterName = schedule.Semester?.Name,
+            SemesterName = schedule.SemesterInstance?.Semester?.Name,
             StudentName = user.FullName,
             RegistrationNumber = registration.RegistrationNumber,
             EndDateBs = schedule.EndDateBs,
-            AcademicYearName = schedule.AcademicYear?.AcademicYearName,
+            AcademicYearName = schedule.SemesterInstance?.AcademicYear?.AcademicYearName,
             ExamTypeName = schedule.ExamType?.Name,
             TotalExamFee = examFee,
             HasESewa = hasESewa,
@@ -1112,7 +1112,7 @@ public class StudentDashboardController(
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
-                Semester = rr.ExamSchedule?.Semester?.Name,
+                Semester = rr.ExamSchedule?.SemesterInstance?.Semester?.Name,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
@@ -1139,7 +1139,7 @@ public class StudentDashboardController(
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
-                    Semester = er.ExamSchedule?.Semester?.Name,
+                    Semester = er.ExamSchedule?.SemesterInstance?.Semester?.Name,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
@@ -1192,10 +1192,10 @@ public class StudentDashboardController(
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
-                Semester = rr.ExamSchedule?.Semester?.Name,
-                SemesterId = rr.ExamSchedule?.Semester?.Id,
-                SemesterYear = rr.ExamSchedule?.Semester?.Number ?? 0,
-                SemesterNumber = rr.ExamSchedule?.Semester?.Number ?? 0,
+                Semester = rr.ExamSchedule?.SemesterInstance?.Semester?.Name,
+                SemesterId = rr.ExamSchedule?.SemesterInstance?.Semester?.Id,
+                SemesterYear = rr.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
+                SemesterNumber = rr.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
@@ -1220,10 +1220,10 @@ public class StudentDashboardController(
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
-                    Semester = er.ExamSchedule?.Semester?.Name,
-                    SemesterId = er.ExamSchedule?.Semester?.Id,
-                    SemesterYear = er.ExamSchedule?.Semester?.Number ?? 0,
-                    SemesterNumber = er.ExamSchedule?.Semester?.Number ?? 0,
+                    Semester = er.ExamSchedule?.SemesterInstance?.Semester?.Name,
+                    SemesterId = er.ExamSchedule?.SemesterInstance?.Semester?.Id,
+                    SemesterYear = er.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
+                    SemesterNumber = er.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,

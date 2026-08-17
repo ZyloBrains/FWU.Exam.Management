@@ -24,7 +24,6 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .Select(e => new ExamSchedule
             {
                 Id = e.Id,
-                AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
@@ -43,7 +42,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 PracticalSubjectFee = e.PracticalSubjectFee,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
-                AcademicYear = e.AcademicYear,
+                SemesterInstanceId = e.SemesterInstanceId,
+                SemesterInstance = e.SemesterInstance,
                 Program = e.Program,
                 ExamType = e.ExamType
             })
@@ -79,7 +79,6 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .Select(e => new ExamSchedule
             {
                 Id = e.Id,
-                AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
@@ -98,7 +97,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 PracticalSubjectFee = e.PracticalSubjectFee,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
-                AcademicYear = e.AcademicYear,
+                SemesterInstanceId = e.SemesterInstanceId,
+                SemesterInstance = e.SemesterInstance,
                 Program = e.Program,
                 ExamType = e.ExamType
             })
@@ -114,9 +114,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             {
                 Id = e.Id,
                 TenantId = e.TenantId,
-                AcademicYearId = e.AcademicYearId,
                 ProgramId = e.ProgramId,
-                SemesterId = e.SemesterId,
+                SemesterInstanceId = e.SemesterInstanceId,
                 ExamTypeId = e.ExamTypeId,
                 ExamScheduleName = e.ExamScheduleName,
                 StartDateBs = e.StartDateBs,
@@ -134,9 +133,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 PracticalSubjectFee = e.PracticalSubjectFee,
                 AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
                 ExamScheduleCode = e.ExamScheduleCode,
-                AcademicYear = e.AcademicYear,
+                SemesterInstance = e.SemesterInstance,
                 Program = e.Program,
-                Semester = e.Semester,
                 ExamType = e.ExamType
             })
             .FirstOrDefaultAsync();
@@ -337,19 +335,19 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         List<SelectOption> semesters;
         if (examSchedule != null && examSchedule.ProgramId > 0)
         {
-            var assignedSemesterIds = await context.ProgramSemesters
+            semesters = await context.SemesterInstances
                 .AsNoTracking()
-                .Where(ps => ps.ProgramId == examSchedule.ProgramId && ps.IsActive)
-                .Select(ps => ps.SemesterId)
+                .Where(si => si.Semester != null
+                             && si.Semester!.ProgramSemesters.Any(ps => ps.ProgramId == examSchedule.ProgramId && ps.IsActive))
+                .Include(si => si.Semester)
+                .Include(si => si.AcademicYear)
+                .OrderBy(si => si.Semester!.Number)
+                .Select(si => new SelectOption
+                {
+                    Id = si.Id,
+                    Name = si.Semester!.Name + " (" + si.Semester!.Code + ") - " + si.AcademicYear!.AcademicYearName
+                })
                 .ToListAsync();
-            var semestersQuery = context.Semesters.AsNoTracking()
-                .Where(s => assignedSemesterIds.Contains(s.Id));
-            var allowUpperSemesters = examSchedule.ProgramId > 0
-                                      && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == examSchedule.ProgramId && p.Duration >= 10);
-            if (!allowUpperSemesters)
-                semestersQuery = semestersQuery.Where(s => s.Number <= 8);
-            semesters = [.. (await semestersQuery.OrderBy(s => s.Number).ToListAsync())
-                .Select(s => new SelectOption { Id = s.Id, Name = s.Name + " (" + s.Code + ")" })];
         }
         else
         {
@@ -367,27 +365,184 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
     public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
     {
-        var allowUpperSemesters = programId is > 0
-                                  && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == programId.Value && p.Duration >= 10);
+        var query = context.SemesterInstances.AsNoTracking()
+            .Where(si => si.AcademicYearId == academicYearId
+                         && si.Semester != null
+                         && (programId == null || si.Semester!.ProgramSemesters.Any(ps => ps.ProgramId == programId.Value && ps.IsActive)));
 
-        var assignedSemesterIds = programId is > 0
-            ? await context.ProgramSemesters
-                .AsNoTracking()
-                .Where(ps => ps.ProgramId == programId.Value && ps.IsActive)
-                .Select(ps => ps.SemesterId)
-                .ToListAsync()
-            : await context.Semesters.AsNoTracking().Select(s => s.Id).ToListAsync();
-
-        return await context.Semesters.AsNoTracking()
-            .Where(s => assignedSemesterIds.Contains(s.Id)
-                        && (s.Number <= 8 || allowUpperSemesters))
-            .OrderBy(s => s.Number)
-            .Select(s => new SelectOption
+        return await query
+            .Include(si => si.Semester)
+            .OrderBy(si => si.Semester!.Number)
+            .Select(si => new SelectOption
             {
-                Id = s.Id,
-                Name = s.Name + " (" + s.Code + ")"
+                Id = si.Id,
+                Name = si.Semester!.Name + " (" + si.Semester!.Code + ")"
             })
             .ToListAsync();
+    }
+
+    public async Task<ExamScheduleDetailsDto?> GetExamScheduleDetailsAsync(int id)
+    {
+        var schedule = await GetExamScheduleByIdAsync(id);
+        if (schedule == null) return null;
+
+        var registrations = await context.ExamRegistrations
+            .Where(r => r.ExamScheduleId == id)
+            .ToListAsync();
+
+        var examSlots = await context.ExamSlots
+            .Where(es => es.ExamScheduleId == id)
+            .Include(es => es.SubjectOffering)
+                .ThenInclude(so => so!.SubjectCatalog)
+            .Include(es => es.ExamCenter)
+            .ToListAsync();
+
+        var offeringQuery = context.SubjectOfferings
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
+        var subjectOfferings = await offeringQuery
+            .Include(so => so.SubjectCatalog)
+            .OrderBy(so => so.DisplayOrder)
+            .ThenBy(so => so.Id)
+            .ToListAsync();
+
+        var examCenters = await context.ExamCenters
+            .Where(ec => ec.IsActive && ec.ExamScheduleId == id)
+            .OrderBy(ec => ec.Code)
+            .Select(ec => new SelectOption { Id = ec.Id, Name = ec.Code ?? $"Center {ec.Id}" })
+            .ToListAsync();
+
+        var batches = await context.Batches
+            .Where(b => b.AcademicYearId == schedule.SemesterInstance!.AcademicYearId && b.IsActive)
+            .OrderBy(b => b.BatchName)
+            .Select(b => new SelectOption { Id = b.Id, Name = b.BatchName })
+            .ToListAsync();
+
+        return new ExamScheduleDetailsDto
+        {
+            Schedule = schedule,
+            TotalRegistrations = registrations.Count,
+            PaidCount = registrations.Count(r => r.FeeEnclosed.HasValue && r.FeeEnclosed > 0),
+            PendingCount = registrations.Count(r => !r.FeeEnclosed.HasValue || r.FeeEnclosed == 0),
+            RegisteredCount = registrations.Count(r => r.Status >= Domain.Enums.RegistrationStatus.CollegeVerified),
+            PendingVerificationCount = registrations.Count(r => r.Status == Domain.Enums.RegistrationStatus.Pending),
+            ExamSlots = examSlots,
+            SubjectOfferings = subjectOfferings,
+            ExamCenters = examCenters,
+            Batches = batches,
+            ExistingSlotsByOfferingId = examSlots.ToDictionary(
+                es => es.SubjectOfferingId,
+                es => es)
+        };
+    }
+
+    public async Task<ExamSlotSaveResultDto> SaveExamSlotsAsync(int examScheduleId, int batchId, int[] subjectOfferingId, int[] examCenterId, string[]? examDate, string[]? startTime, string[]? endTime, string[]? remarks)
+    {
+        var schedule = await context.ExamSchedules.FindAsync(examScheduleId);
+        if (schedule == null)
+            return new ExamSlotSaveResultDto { Errors = ["Exam schedule not found."] };
+
+        var validOfferingQuery = context.SubjectOfferings
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
+        var validOfferingIds = await validOfferingQuery.Select(so => so.Id).ToHashSetAsync();
+
+        var existingSlots = await context.ExamSlots
+            .Where(es => es.ExamScheduleId == examScheduleId)
+            .ToDictionaryAsync(es => es.SubjectOfferingId);
+
+        var result = new ExamSlotSaveResultDto();
+        for (var i = 0; i < subjectOfferingId.Length; i++)
+        {
+            var offeringId = subjectOfferingId[i];
+            if (!validOfferingIds.Contains(offeringId)) continue;
+
+            var date = (i < (examDate?.Length ?? 0) ? examDate![i] : null)?.Trim();
+            if (string.IsNullOrEmpty(date)) continue;
+
+            if (!DateOnly.TryParse(date, out var parsedDate))
+            {
+                result.Errors.Add($"Subject '{offeringId}' has an invalid exam date '{date}'. Use YYYY-MM-DD.");
+                continue;
+            }
+
+            if (schedule.StartDate.HasValue && parsedDate < schedule.StartDate.Value)
+                result.Errors.Add($"Subject '{offeringId}' exam date {date} is before the schedule start date {schedule.StartDate.Value:yyyy-MM-dd}.");
+            if (schedule.EndDate.HasValue && parsedDate > schedule.EndDate.Value)
+                result.Errors.Add($"Subject '{offeringId}' exam date {date} is after the schedule end date {schedule.EndDate.Value:yyyy-MM-dd}.");
+        }
+
+        if (result.Errors.Count > 0)
+            return result;
+
+        for (var i = 0; i < subjectOfferingId.Length; i++)
+        {
+            var offeringId = subjectOfferingId[i];
+            if (!validOfferingIds.Contains(offeringId)) continue;
+
+            var centerId = i < examCenterId.Length ? examCenterId[i] : 0;
+            var date = (i < (examDate?.Length ?? 0) ? examDate![i] : null)?.Trim();
+            var startText = i < (startTime?.Length ?? 0) ? startTime![i] : null;
+            var endText = i < (endTime?.Length ?? 0) ? endTime![i] : null;
+            var remark = (i < (remarks?.Length ?? 0) ? remarks![i] : null)?.Trim();
+
+            var start = TimeOnly.TryParse(startText, out var startParsed) ? startParsed : schedule.StartTime;
+            var end = TimeOnly.TryParse(endText, out var endParsed) ? endParsed : schedule.EndTime;
+
+            if (existingSlots.TryGetValue(offeringId, out var slot))
+            {
+                if (centerId > 0) slot.ExamCenterId = centerId;
+                if (batchId > 0) slot.BatchId = batchId;
+                slot.ExamDate = string.IsNullOrEmpty(date) ? null : date;
+                slot.StartTime = start;
+                slot.EndTime = end;
+                slot.Remarks = string.IsNullOrEmpty(remark) ? null : remark;
+                result.Updated++;
+            }
+            else if (centerId > 0 && batchId > 0)
+            {
+                context.ExamSlots.Add(new ExamSlot
+                {
+                    ExamScheduleId = examScheduleId,
+                    SubjectOfferingId = offeringId,
+                    ExamCenterId = centerId,
+                    BatchId = batchId,
+                    ExamDate = string.IsNullOrEmpty(date) ? null : date,
+                    StartTime = start,
+                    EndTime = end,
+                    Remarks = string.IsNullOrEmpty(remark) ? null : remark,
+                    TenantId = schedule.TenantId
+                });
+                result.Added++;
+            }
+        }
+
+        if (result.Added > 0 || result.Updated > 0)
+            await context.SaveChangesAsync();
+
+        return result;
+    }
+
+    public async Task DeleteExamSlotAsync(int slotId)
+    {
+        var slot = await context.ExamSlots.FindAsync(slotId);
+        if (slot != null)
+        {
+            context.ExamSlots.Remove(slot);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<Dictionary<int, int>> GetRegistrationCountsAsync(List<int> scheduleIds)
+    {
+        return await context.ExamRegistrations
+            .Where(r => scheduleIds.Contains(r.ExamScheduleId))
+            .GroupBy(r => r.ExamScheduleId)
+            .Select(g => new { ScheduleId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ScheduleId, x => x.Count);
+    }
+
+    public async Task<int> GetRegistrationCountAsync(int scheduleId)
+    {
+        return await context.ExamRegistrations.CountAsync(r => r.ExamScheduleId == scheduleId);
     }
 
     private IQueryable<ExamSchedule> BuildQuery(string? search, string sort, string sortDir, string? examTypeName = null)
@@ -403,7 +558,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
                 (s.ExamScheduleName != null && s.ExamScheduleName.Contains(search)) ||
                 (s.ExamScheduleCode != null && s.ExamScheduleCode.Contains(search)) ||
                 (s.Remarks != null && s.Remarks.Contains(search)) ||
-                (s.AcademicYear != null && s.AcademicYear.AcademicYearName != null && s.AcademicYear.AcademicYearName.Contains(search)) ||
+                (s.SemesterInstance != null && s.SemesterInstance.AcademicYear != null && s.SemesterInstance.AcademicYear.AcademicYearName != null && s.SemesterInstance.AcademicYear.AcademicYearName.Contains(search)) ||
                 (s.Program != null && s.Program.ProgramName != null && s.Program.ProgramName.Contains(search)) ||
                 (s.ExamType != null && s.ExamType.Name != null && s.ExamType.Name.Contains(search)));
         }
@@ -414,8 +569,8 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             "name" => descending ? query.OrderByDescending(e => e.ExamScheduleName) : query.OrderBy(e => e.ExamScheduleName),
             "code" => descending ? query.OrderByDescending(e => e.ExamScheduleCode) : query.OrderBy(e => e.ExamScheduleCode),
             "academicyear" => descending
-                ? query.OrderByDescending(e => e.AcademicYear != null ? e.AcademicYear.AcademicYearName : string.Empty)
-                : query.OrderBy(e => e.AcademicYear != null ? e.AcademicYear.AcademicYearName : string.Empty),
+                ? query.OrderByDescending(e => e.SemesterInstance != null && e.SemesterInstance.AcademicYear != null ? e.SemesterInstance.AcademicYear.AcademicYearName : string.Empty)
+                : query.OrderBy(e => e.SemesterInstance != null && e.SemesterInstance.AcademicYear != null ? e.SemesterInstance.AcademicYear.AcademicYearName : string.Empty),
             "level" => descending
                 ? query.OrderByDescending(e => e.Program != null ? e.Program.ProgramName : string.Empty)
                 : query.OrderBy(e => e.Program != null ? e.Program.ProgramName : string.Empty),

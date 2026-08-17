@@ -170,7 +170,7 @@ public static class TestData
         DisplayOrder = semesterId
     };
 
-    public static ExamSchedule Schedule(int id, int semesterId, int examTypeId, DateOnly? endDate,
+    public static ExamSchedule Schedule(int id, int semesterInstanceId, int examTypeId, DateOnly? endDate,
         DateTime? admissionCardReleaseDate, int programId = ProgramId, bool isActive = true)
     {
         return new ExamSchedule
@@ -183,9 +183,8 @@ public static class TestData
             StartDate = endDate?.AddDays(-15),
             EndDate = endDate,
             IsActive = isActive,
-            AcademicYearId = AcademicYearId,
             ProgramId = programId,
-            SemesterId = semesterId,
+            SemesterInstanceId = semesterInstanceId,
             ExamTypeId = examTypeId,
             AdmissionCardReleaseDate = admissionCardReleaseDate,
             StartTime = new TimeOnly(10, 0),

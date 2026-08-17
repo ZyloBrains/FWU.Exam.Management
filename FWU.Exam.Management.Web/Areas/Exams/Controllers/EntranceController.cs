@@ -12,14 +12,16 @@ using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 
 namespace FWU.Exam.Management.Web.Areas.Exams.Controllers;
 
 [Area("Exams")]
-public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, IAuditLogWriter auditLogWriter) : Controller
+public class EntranceController(IEntranceExamApplicationService service, IExamScheduleService examScheduleService, IESewaService esewaService, IFileUploadHelper fileUploadHelper, IAuditLogWriter auditLogWriter, AppDbContext context) : Controller
 {
 
     // --- Public actions (no auth required) ---
@@ -277,7 +279,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         ViewBag.EntranceFee = voucher.Amount;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
-        ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+        ViewBag.SelectedAcademicYear = schedule?.SemesterInstance?.AcademicYear?.AcademicYearName;
 
         // Check for existing application linked to this voucher
         var existing = await service.GetApplicationByVoucherIdAsync(voucherId);
@@ -298,7 +300,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             ApplicationVoucherId = voucherId,
             PaymentVerified = true,
-            AcademicYearId = schedule?.AcademicYearId ?? 0,
+            AcademicYearId = schedule?.SemesterInstance?.AcademicYearId ?? 0,
             CollegeId = schedule?.CollegeId ?? 0,
             ProgramId = schedule?.ProgramId ?? 0
         });
@@ -354,7 +356,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         var schedule = (await service.GetVoucherByIdAsync(voucherId))?.ExamSchedule;
         ViewBag.SelectedProgram = schedule?.Program?.ProgramName;
         ViewBag.SelectedCollege = schedule?.College?.Name;
-        ViewBag.SelectedAcademicYear = schedule?.AcademicYear?.AcademicYearName;
+        ViewBag.SelectedAcademicYear = schedule?.SemesterInstance?.AcademicYear?.AcademicYearName;
 
         return View(application);
     }
@@ -658,18 +660,23 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     public async Task<IActionResult> CreateSchedule(ExamSchedule model)
     {
         ModelState.Remove(nameof(model.ExamTypeId));
-        ModelState.Remove(nameof(model.SemesterId));
+        ModelState.Remove(nameof(model.SemesterInstanceId));
         var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
-            model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
+            model.SemesterInstanceId = await context.SemesterInstances.AsNoTracking()
+                .Include(si => si.Semester)
+                .OrderBy(si => si.Semester!.Number)
+                .Select(si => si.Id)
+                .FirstOrDefaultAsync();
+            if (model.SemesterInstanceId == 0) model.SemesterInstanceId = 1;
             model.ExamScheduleCode ??= $"ENT-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
             try
             {
                 await examScheduleService.CreateExamScheduleAsync(model);
-                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Entrance exam schedule created (Code {model.ExamScheduleCode})", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, academicYearId = model.AcademicYearId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
+                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleCreated, $"Entrance exam schedule created (Code {model.ExamScheduleCode})", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, semesterInstanceId = model.SemesterInstanceId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule created successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
             }
@@ -703,18 +710,23 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         if (id != model.Id) return NotFound();
 
         ModelState.Remove(nameof(model.ExamTypeId));
-        ModelState.Remove(nameof(model.SemesterId));
+        ModelState.Remove(nameof(model.SemesterInstanceId));
         var sl = await examScheduleService.GetSelectListDataAsync();
 
         if (ModelState.IsValid)
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
-            model.SemesterId = sl.Semesters.FirstOrDefault()?.Id ?? 1;
+            model.SemesterInstanceId = await context.SemesterInstances.AsNoTracking()
+                .Include(si => si.Semester)
+                .OrderBy(si => si.Semester!.Number)
+                .Select(si => si.Id)
+                .FirstOrDefaultAsync();
+            if (model.SemesterInstanceId == 0) model.SemesterInstanceId = 1;
             try
             {
                 await examScheduleService.UpdateExamScheduleAsync(model);
                 await examScheduleService.DeactivateExpiredSchedulesAsync();
-                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Entrance exam schedule {model.Id} updated", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, academicYearId = model.AcademicYearId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
+                await auditLogWriter.LogAsync(ActivityTypes.ExamScheduleUpdated, $"Entrance exam schedule {model.Id} updated", new { scheduleId = model.Id, code = model.ExamScheduleCode, programId = model.ProgramId, semesterInstanceId = model.SemesterInstanceId, type = "Entrance" }, entityName: "ExamSchedule", entityId: model.Id.ToString());
                 TempData["SuccessMessage"] = "Entrance exam schedule updated successfully!";
                 return RedirectToAction(nameof(ManageSchedule));
             }
@@ -758,7 +770,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
     private void PopulateScheduleDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? model = null)
     {
         ViewBag.ProgramId = new SelectList(selectLists.Programs, "Id", "Name", model?.ProgramId);
-        ViewBag.AcademicYearId = new SelectList(selectLists.AcademicYears, "Id", "Name", model?.AcademicYearId);
+        ViewBag.SemesterInstanceId = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text", model?.SemesterInstanceId);
     }
 
     private async Task PopulateStepSelectListsAsync(EntranceExamApplicationSelectListsDto selectLists)

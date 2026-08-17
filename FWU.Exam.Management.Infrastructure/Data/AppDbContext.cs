@@ -269,9 +269,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSchedule>()
-            .HasOne(es => es.AcademicYear)
-            .WithMany(ay => ay.ExamSchedules)
-            .HasForeignKey(es => es.AcademicYearId)
+            .HasOne(es => es.SemesterInstance)
+            .WithMany()
+            .HasForeignKey(es => es.SemesterInstanceId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSchedule>()

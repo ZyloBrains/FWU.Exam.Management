@@ -77,7 +77,7 @@ public class TheoryMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var yearIds = await ScopedScheduleQuery(effectiveCollege)
-            .Select(es => es.AcademicYearId)
+            .Select(es => es.SemesterInstance!.AcademicYearId)
             .Distinct()
             .ToListAsync();
 
@@ -95,7 +95,7 @@ public class TheoryMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var levelIds = await ScopedScheduleQuery(effectiveCollege)
-            .Where(es => es.AcademicYearId == academicYearId && es.Program != null)
+            .Where(es => es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId && es.Program != null)
             .Select(es => es.Program!.LevelId)
             .Distinct()
             .ToListAsync();
@@ -114,7 +114,7 @@ public class TheoryMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         return await ScopedScheduleQuery(effectiveCollege)
-            .Where(es => es.AcademicYearId == academicYearId
+            .Where(es => es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId
                 && es.Program != null
                 && es.Program.LevelId == levelId)
             .OrderBy(es => es.ExamScheduleName)
@@ -127,10 +127,10 @@ public class TheoryMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(es => es.Program)
                 .ThenInclude(p => p!.Level)
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
@@ -138,10 +138,10 @@ public class TheoryMarksService(
         return new ScheduleDetailDto
         {
             ExamScheduleId = schedule.Id,
-            AcademicYearName = schedule.AcademicYear?.AcademicYearName ?? "",
+            AcademicYearName = schedule.SemesterInstance?.AcademicYear?.AcademicYearName ?? "",
             LevelName = schedule.Program?.Level?.LevelName ?? "",
             ProgramName = schedule.Program?.ProgramName ?? "",
-            SemesterName = schedule.Semester?.Name ?? "",
+            SemesterName = schedule.SemesterInstance?.Semester?.Name ?? "",
             ExamTypeName = schedule.ExamType?.Name ?? ""
         };
     }
@@ -158,7 +158,7 @@ public class TheoryMarksService(
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .Where(so => so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterId
+                && so.SemesterId == schedule.SemesterInstance!.SemesterId
                 && so.HasTheory)
             .OrderBy(so => so.DisplayOrder)
             .ThenBy(so => so.Id)
@@ -215,7 +215,7 @@ public class TheoryMarksService(
             .AsNoTracking()
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId
                 && so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterId)
+                && so.SemesterId == schedule.SemesterInstance!.SemesterId)
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var examRegistrations = await context.ExamRegistrations
@@ -275,7 +275,7 @@ public class TheoryMarksService(
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
                 && so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterId)
+                && so.SemesterId == schedule.SemesterInstance!.SemesterId)
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var validRegistrationIds = await context.ExamRegistrations

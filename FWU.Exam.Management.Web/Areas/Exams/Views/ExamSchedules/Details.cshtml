@@ -43,7 +43,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
-                    <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.AcademicYear!.AcademicYearName)</p>
+                    <p class="mt-1 text-gray-800">@(Model.SemesterInstance?.AcademicYear?.AcademicYearName ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
@@ -51,7 +51,7 @@
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Semester</p>
-                    <p class="mt-1 text-gray-800">@(Model.Semester?.Name ?? "-")</p>
+                    <p class="mt-1 text-gray-800">@(Model.SemesterInstance?.Semester?.Name ?? "-")</p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Exam Type</p>
