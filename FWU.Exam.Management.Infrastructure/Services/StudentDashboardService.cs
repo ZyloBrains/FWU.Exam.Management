@@ -274,6 +274,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Include(rr => rr.AcademicYear)
             .Include(rr => rr.Program)
+                .ThenInclude(p => p!.Faculty)
             .Include(rr => rr.ExamType)
             .Include(rr => rr.College)
             .Where(rr => rr.RegistrationNumber != null && rr.RegistrationNumber == registrationNumber)
@@ -719,7 +720,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(es => es.Level)
             .Include(es => es.ExamType)
             .Include(es => es.AcademicYear)
+            .Include(es => es.College)
             .Include(es => es.Program)
+                .ThenInclude(p => p!.Faculty)
             .Where(es => ids.Contains(es.Id))
             .ToListAsync();
     }

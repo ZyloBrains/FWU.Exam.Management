@@ -4,16 +4,19 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace FWU.Exam.Management.Infrastructure.Migrations
+namespace FWU.Exam.Management.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260816160536_AddGradeGroupAndGradePoint")]
+    partial class AddGradeGroupAndGradePoint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1497,14 +1500,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
-                    b.Property<string>("GradeLetterPractical")
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
-                    b.Property<string>("GradeLetterTheory")
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -2932,9 +2927,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
-                    b.Property<int?>("LevelId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Part")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -3012,8 +3004,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasIndex("ExamScheduleId");
 
                     b.HasIndex("ExamTypeId");
-
-                    b.HasIndex("LevelId");
 
                     b.HasIndex("ProgramsId");
 
@@ -5436,11 +5426,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Level", "Level")
-                        .WithMany()
-                        .HasForeignKey("LevelId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
                         .WithMany()
                         .HasForeignKey("ProgramsId")
@@ -5460,8 +5445,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("ExamSchedule");
 
                     b.Navigation("ExamType");
-
-                    b.Navigation("Level");
 
                     b.Navigation("Program");
 

@@ -103,6 +103,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
     public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
+    public DbSet<GradeGroup> GradeGroups { get; set; } = null!;
+    public DbSet<GradePoint> GradePoints { get; set; } = null!;
     public DbSet<EntranceExamApplication> EntranceExamApplications { get; set; } = null!;
     public DbSet<ApplicationVoucher> ApplicationVouchers { get; set; } = null!;
     public DbSet<PaymentRequestLog> PaymentRequestLogs { get; set; } = null!;
@@ -467,6 +469,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ResultRecord>()
+            .HasOne(rr => rr.Level)
+            .WithMany()
+            .HasForeignKey(rr => rr.LevelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ResultRecord>()
             .ToTable("ResultRecords")
             .HasKey(rr => rr.Id);
 
@@ -778,6 +786,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(gs => gs.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<GradingScheme>()
+            .HasOne(gs => gs.GradeGroup)
+            .WithMany()
+            .HasForeignKey(gs => gs.GradeGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GradeGroup>()
+            .HasIndex(gg => gg.GradeGroupName);
+
+        builder.Entity<GradeGroup>(e => e.Property(x => x.Id).ValueGeneratedNever());
+        builder.Entity<GradePoint>(e => e.Property(x => x.Id).ValueGeneratedNever());
+
+        builder.Entity<GradePoint>()
+            .HasOne(gp => gp.GradeGroup)
+            .WithMany(gg => gg.GradePoints)
+            .HasForeignKey(gp => gp.GradeGroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GradePoint>()
+            .HasIndex(gp => new { gp.GradeGroupId, gp.ObtainedMark })
+            .IsUnique();
+
         builder.Entity<GradeDefinition>()
             .HasOne(gd => gd.GradingScheme)
             .WithMany(gs => gs.GradeDefinitions)
@@ -812,6 +842,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<GradeDefinition>(e => e.Property(x => x.GradePoint).HasPrecision(5, 2));
         builder.Entity<GradeDefinition>(e => e.Property(x => x.MaxPercentage).HasPrecision(5, 2));
         builder.Entity<GradeDefinition>(e => e.Property(x => x.MinPercentage).HasPrecision(5, 2));
+        builder.Entity<GradePoint>(e => e.Property(x => x.GradePointValue).HasPrecision(5, 2));
 
         builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA).HasPrecision(5, 2));
         builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA2).HasPrecision(5, 2));

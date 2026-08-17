@@ -19,6 +19,9 @@ public class GradingScheme : IAuditable
     [Display(Name = "Academic Year")]
     public int? AcademicYearId { get; set; }
 
+    [Display(Name = "Grade Group")]
+    public int? GradeGroupId { get; set; }
+
     [MaxLength(500)]
     [Display(Name = "Description")]
     public string? Description { get; set; }
@@ -28,5 +31,6 @@ public class GradingScheme : IAuditable
 
     public virtual Program? Program { get; set; }
     public virtual AcademicYear? AcademicYear { get; set; }
+    public virtual GradeGroup? GradeGroup { get; set; }
     public virtual ICollection<GradeDefinition> GradeDefinitions { get; set; } = [];
 }

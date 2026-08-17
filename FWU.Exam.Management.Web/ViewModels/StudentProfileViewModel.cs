@@ -98,6 +98,7 @@ public class MarksheetViewModel
     public string? RegistrationNumber { get; set; }
     public string? StudentName { get; set; }
     public string? Program { get; set; }
+    public string? Faculty { get; set; }
     public string? ExamSchedule { get; set; }
     public string? Semester { get; set; }
     public int? SemesterId { get; set; }
@@ -132,6 +133,10 @@ public class MarksheetSubjectViewModel
     public string? Grade { get; set; }
     public decimal? GradeValue { get; set; }
     public decimal? GradePoint { get; set; }
+    public string? TheoryGrade { get; set; }
+    public decimal? TheoryGradePoint { get; set; }
+    public string? PracticalGrade { get; set; }
+    public decimal? PracticalGradePoint { get; set; }
     public bool IsPassed { get; set; }
     public string? Status { get; set; }
 }
