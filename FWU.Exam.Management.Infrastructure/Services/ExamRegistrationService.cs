@@ -456,20 +456,47 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Distinct()
             .ToList();
 
+        var scheduleKeys = items
+            .Where(i => i.ExamSchedule != null)
+            .Select(i => (i.ExamSchedule!.ProgramId, i.ExamSchedule.AcademicYearId))
+            .Distinct()
+            .ToList();
+
+        var curriculumVersionMap = new Dictionary<(int ProgramId, int AcademicYearId), int?>();
+        foreach (var key in scheduleKeys)
+        {
+            curriculumVersionMap[key] = await CurriculumVersionResolver.ResolveAsync(
+                context, key.ProgramId, key.AcademicYearId);
+        }
+
         var programIds = subjectKeys.Select(k => k.ProgramId).Distinct().ToList();
         var semesterIds = subjectKeys.Select(k => k.SemesterId).Distinct().ToList();
+
+        var semesterNumberMap = await context.Semesters
+            .AsNoTracking()
+            .Where(s => semesterIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.Number })
+            .ToListAsync();
+
+        var semesterIdToNumber = semesterNumberMap.ToDictionary(s => s.Id, s => s.Number);
+        var semesterNumbers = semesterNumberMap.Select(s => s.Number).Distinct().ToList();
+
+        var activeVersionIds = curriculumVersionMap.Values.Where(v => v.HasValue).Select(v => v!.Value).Distinct().ToHashSet();
 
         var offerings = subjectKeys.Count > 0
             ? await context.SubjectOfferings
                 .AsNoTracking()
                 .Include(so => so.SubjectCatalog)
-                .Where(so => programIds.Contains(so.ProgramId) && semesterIds.Contains(so.SemesterId))
+                .Include(so => so.Semester)
+                .Where(so => programIds.Contains(so.ProgramId)
+                          && so.Semester != null && semesterNumbers.Contains(so.Semester.Number)
+                          && (activeVersionIds.Count == 0 || (so.CurriculumVersionId != null && activeVersionIds.Contains(so.CurriculumVersionId.Value)) || so.CurriculumVersionId == null))
                 .OrderBy(so => so.DisplayOrder)
                 .ToListAsync()
             : [];
 
         var offeringLookup = offerings
-            .GroupBy(so => (so.ProgramId, so.SemesterId))
+            .GroupBy(so => (so.ProgramId, semesterIdToNumber.GetValueOrDefault(so.SemesterId)))
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var forms = items.Select(er =>
@@ -519,9 +546,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
             var schedule = er.ExamSchedule;
             var subjects = new List<ExamFormSubjectDto>();
-            if (schedule != null && offeringLookup.TryGetValue((schedule.ProgramId, schedule.SemesterId), out var scheduleOfferings))
+            if (schedule != null
+                && semesterIdToNumber.TryGetValue(schedule.SemesterId, out var scheduleSemNumber)
+                && offeringLookup.TryGetValue((schedule.ProgramId, scheduleSemNumber), out var scheduleOfferings))
             {
-                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null);
+                var resolvedVersion = curriculumVersionMap.GetValueOrDefault((schedule.ProgramId, schedule.AcademicYearId));
+                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null
+                    && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null));
                 if (selectedSubjectIds is { Count: > 0 })
                     eligible = eligible.Where(so => selectedSubjectIds.Contains(so.Id));
                 else

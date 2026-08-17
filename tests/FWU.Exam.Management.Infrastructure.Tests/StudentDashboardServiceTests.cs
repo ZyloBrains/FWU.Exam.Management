@@ -246,6 +246,40 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_MatchesOfferingsAcrossYearsBySemesterNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.AcademicYears.Add(TestData.AcademicYear(2014, "2014"));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2022, "2022"));
+
+            // Semesters for AcademicYear 2014
+            var sem2014 = TestData.Semester(50, 10, 2);
+            sem2014.AcademicYearId = 2014;
+            ctx.Semesters.Add(sem2014);
+
+            // Semesters for AcademicYear 2022
+            var sem2022 = TestData.Semester(51, 20, 2);
+            sem2022.AcademicYearId = 2022;
+            ctx.Semesters.Add(sem2022);
+
+            // Offering linked to 2014's Semester 2 (SemesterId=50)
+            var offering = TestData.Offering(210, 50, TestData.ProgramId);
+            ctx.SubjectOfferings.Add(offering);
+
+            // Schedule for 2022's Semester 2 (SemesterId=51) — different ID, same Number
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 51, TestData.Regular, Past, null, academicYearId: 2022));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        // Should find offering 210 (Semester.Number=2 in 2014) even though schedule uses SemesterId=51 (Number=2 in 2022)
+        Assert.Contains(offerings, o => o.Id == 210);
+    }
+
+    [Fact]
     public async Task GetSubjectOfferingsForStudentAsync_ReturnsActiveVersionOfferingsForEnrolledSemester()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>

@@ -154,12 +154,24 @@ public class TheoryMarksService(
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
-        return await context.SubjectOfferings
+        var semesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.AcademicYearId);
+
+        var query = context.SubjectOfferings
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .Where(so => so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterId
-                && so.HasTheory)
+                      && so.Semester != null && so.Semester.Number == semesterNumber
+                      && so.HasTheory);
+        if (curriculumVersionId.HasValue)
+            query = query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+
+        return await query
             .OrderBy(so => so.DisplayOrder)
             .ThenBy(so => so.Id)
             .Select(so => new SubjectOptionDto
@@ -211,11 +223,20 @@ public class TheoryMarksService(
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
+        var semesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.AcademicYearId);
+
         var subjectOffering = await context.SubjectOfferings
             .AsNoTracking()
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId
                 && so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterId)
+                && so.Semester != null && so.Semester.Number == semesterNumber
+                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var examRegistrations = await context.ExamRegistrations
@@ -272,10 +293,19 @@ public class TheoryMarksService(
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
+        var semesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.AcademicYearId);
+
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
                 && so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterId)
+                && so.Semester != null && so.Semester.Number == semesterNumber
+                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var validRegistrationIds = await context.ExamRegistrations

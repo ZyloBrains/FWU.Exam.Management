@@ -9,6 +9,7 @@ using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using FWU.Exam.Management.Web.Authorization;
 using FWU.Exam.Management.Web.Helpers;
@@ -161,8 +162,20 @@ public class ExamSchedulesController(
         ViewBag.PendingVerificationCount = registrations.Count(r => r.Status == RegistrationStatus.Pending);
         ViewBag.ExamSlots = examSlots;
 
+        var scheduleSemesterNumber = await context.Semesters
+            .Where(s => s.Id == examSchedule.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, examSchedule.ProgramId, examSchedule.AcademicYearId);
+
         var offeringQuery = context.SubjectOfferings
-            .Where(so => so.ProgramId == examSchedule.ProgramId && so.SemesterId == examSchedule.SemesterId);
+            .Where(so => so.ProgramId == examSchedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == scheduleSemesterNumber);
+        if (curriculumVersionId.HasValue)
+            offeringQuery = offeringQuery.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+
         var subjectOfferings = await offeringQuery
             .Include(so => so.SubjectCatalog)
             .OrderBy(so => so.DisplayOrder)
@@ -195,8 +208,19 @@ public class ExamSchedulesController(
         var schedule = await context.ExamSchedules.FindAsync(examScheduleId);
         if (schedule == null) return NotFound();
 
+        var validSemesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var validCurriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.AcademicYearId);
+
         var validOfferingQuery = context.SubjectOfferings
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == validSemesterNumber);
+        if (validCurriculumVersionId.HasValue)
+            validOfferingQuery = validOfferingQuery.Where(so => so.CurriculumVersionId == validCurriculumVersionId.Value);
         var validOfferingIds = await validOfferingQuery.Select(so => so.Id).ToHashSetAsync();
 
         var existingSlots = await context.ExamSlots
