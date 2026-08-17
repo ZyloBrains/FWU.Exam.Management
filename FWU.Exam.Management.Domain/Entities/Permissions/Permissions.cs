@@ -327,8 +327,9 @@ public static class Permissions
     public const string ExamSubjectResultsEdit = "examsubjectresults.edit";
     public const string ExamSubjectResultsDelete = "examsubjectresults.delete";
 
-    // Result Records (read-only)
+    // Result Records
     public const string ResultRecordsView = "resultrecords.view";
+    public const string ResultRecordsManage = "resultrecords.manage";
 
     // Exam Centers
     public const string ExamCentersView = "examcenters.view";
@@ -605,6 +606,7 @@ public static class Permissions
         (ExamSubjectResultsDelete, "Delete Subject Results", GroupExamSubjectResults, "Delete subject results"),
 
         (ResultRecordsView, "View Result Records", GroupResultRecords, "View published result records"),
+        (ResultRecordsManage, "Manage Result Records", GroupResultRecords, "Publish and manage result records"),
 
         (ExamCentersView, "View Exam Centers", GroupExamCenters, "View exam center list"),
         (ExamCentersCreate, "Create Exam Centers", GroupExamCenters, "Create new exam centers"),
@@ -685,7 +687,7 @@ public static class Permissions
             GradingSchemesView, GradingSchemesCreate, GradingSchemesEdit,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify, ExamRegistrationApprove,
             ExamSubjectResultsView, ExamSubjectResultsCreate, ExamSubjectResultsEdit,
-            ResultRecordsView,
+            ResultRecordsView, ResultRecordsManage,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
             TheoryMarksView, TheoryMarksSubmit,
@@ -737,7 +739,7 @@ public static class Permissions
             GradingSchemesView,
             ExamRegistrationView, ExamRegistrationCreate, ExamRegistrationEdit, ExamRegistrationVerify,
             ExamSubjectResultsView,
-            ResultRecordsView,
+            ResultRecordsView, ResultRecordsManage,
 
             MarksEntryView, MarksEntrySubmit, MarksEntryImport, MarksEntryExport,
             PracticalMarksView, PracticalMarksSubmit,

@@ -23,10 +23,12 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
                 Name = e.Name,
                 ProgramId = e.ProgramId,
                 AcademicYearId = e.AcademicYearId,
+                GradeGroupId = e.GradeGroupId,
                 Description = e.Description,
                 IsActive = e.IsActive,
                 Program = e.Program,
                 AcademicYear = e.AcademicYear,
+                GradeGroup = e.GradeGroup,
                 GradeDefinitions = e.GradeDefinitions
             })
             .ToListAsync();
@@ -44,10 +46,12 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
                 Name = e.Name,
                 ProgramId = e.ProgramId,
                 AcademicYearId = e.AcademicYearId,
+                GradeGroupId = e.GradeGroupId,
                 Description = e.Description,
                 IsActive = e.IsActive,
                 Program = e.Program,
                 AcademicYear = e.AcademicYear,
+                GradeGroup = e.GradeGroup,
                 GradeDefinitions = e.GradeDefinitions
             })
             .ToListAsync();
@@ -59,6 +63,7 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
             .AsNoTracking()
             .Include(e => e.Program)
             .Include(e => e.AcademicYear)
+            .Include(e => e.GradeGroup)
             .Include(e => e.GradeDefinitions)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
@@ -80,6 +85,7 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
         existing.Name = gradingScheme.Name;
         existing.ProgramId = gradingScheme.ProgramId;
         existing.AcademicYearId = gradingScheme.AcademicYearId;
+        existing.GradeGroupId = gradingScheme.GradeGroupId;
         existing.Description = gradingScheme.Description;
         existing.IsActive = gradingScheme.IsActive;
 
@@ -152,11 +158,13 @@ public class GradingSchemeService(AppDbContext context, IUserContext userContext
         }
         var programs = await programsQuery.ToListAsync();
         var academicYears = await context.AcademicYears.AsNoTracking().ToListAsync();
+        var gradeGroups = await context.GradeGroups.AsNoTracking().ToListAsync();
 
         return new GradingSchemeSelectListsDto
         {
             Programs = programs.Select(p => new SelectOption { Id = p.Id, Name = p.ProgramName }).ToList(),
-            AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList()
+            AcademicYears = academicYears.Select(ay => new SelectOption { Id = ay.Id, Name = ay.AcademicYearName }).ToList(),
+            GradeGroups = gradeGroups.Select(g => new SelectOption { Id = g.Id, Name = g.GradeGroupName }).ToList()
         };
     }
 

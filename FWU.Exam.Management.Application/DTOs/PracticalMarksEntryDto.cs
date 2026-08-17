@@ -4,6 +4,7 @@ public class PracticalMarksPageViewModel
 {
     public bool IsSuperAdmin { get; set; }
     public bool IsFacultyAdmin { get; set; }
+    public bool IsCollegeAdmin { get; set; }
     public List<SelectOption> Faculties { get; set; } = [];
     public List<SelectOption> Colleges { get; set; } = [];
 }

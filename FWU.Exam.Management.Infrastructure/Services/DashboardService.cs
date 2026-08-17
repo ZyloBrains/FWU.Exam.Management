@@ -57,7 +57,7 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
         var totalPrograms = await context.Programs
             .CountAsync(p => p.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
         var totalExamSchedules = await context.ExamSchedules
-            .CountAsync(es => es.CollegeId == collegeId);
+            .CountAsync(es => es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
         var totalSubjects = await context.SubjectCatalogs
             .CountAsync(sc => sc.SubjectOfferings!.Any(so =>
                 so.Program != null && so.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId)));
@@ -68,7 +68,7 @@ public class DashboardService(AppDbContext context, UserManager<AppUser> userMan
         var activePrograms = await context.Programs
             .CountAsync(p => p.IsActive && p.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
         var activeExamSchedules = await context.ExamSchedules
-            .CountAsync(es => es.CollegeId == collegeId && es.IsActive);
+            .CountAsync(es => es.IsActive && es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == collegeId));
         var totalColleges = await context.Colleges.CountAsync(c => c.Id == collegeId);
         var activeColleges = await context.Colleges.CountAsync(c => c.Id == collegeId && c.IsActive);
         var totalStudents = await context.StudentRegistrations.CountAsync(s => s.CollegeId == collegeId);

@@ -11,7 +11,8 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class TheoryMarksService(
     AppDbContext context,
-    IUserContext userContext) : ITheoryMarksService
+    IUserContext userContext,
+    IGradeCalculationService gradeCalculationService) : ITheoryMarksService
 {
     public async Task<TheoryMarksPageViewModel> GetTheoryMarksPageAsync()
     {
@@ -313,6 +314,7 @@ public class TheoryMarksService(
                 }
 
                 entity.ObtainedMarksTheory = student.Theory;
+                gradeCalculationService.AssignGrades(entity, subjectOffering);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {
