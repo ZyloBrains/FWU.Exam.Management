@@ -1111,12 +1111,13 @@ public class StudentDashboardController(
                 RegistrationNumber = rr.RegistrationNumber,
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
+                Faculty = rr.Program?.Faculty?.Name,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
                 Semester = rr.ExamSchedule?.Semester?.Name,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
-                College = rr.College?.Name,
+                College = registration.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
@@ -1134,17 +1135,29 @@ public class StudentDashboardController(
             if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
                 var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId, gradePointMap);
+                var computedResult = !subjects.Any() ? "Pending"
+                    : subjects.Any(s => s.Status == "Fail") ? "Fail"
+                    : subjects.All(s => s.Status == "Pass") ? "Pass"
+                    : "Pending";
+                var totalCredits = subjects.Sum(s => s.CreditHours ?? 0f);
+                var totalGradePoints = subjects.Sum(s => s.GradePoint ?? 0m);
+                var gpa = totalCredits > 0 ? (totalGradePoints / (decimal)totalCredits) : (decimal?)null;
                 marksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
+                    Program = er.ExamSchedule?.Program?.ProgramName,
+                    Faculty = er.ExamSchedule?.Program?.Faculty?.Name,
+                    AcademicYear = er.ExamSchedule?.AcademicYear?.AcademicYearName,
+                    College = registration.College?.Name,
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
                     SymbolNumber = MarksheetSymbolNumber(er),
-                    Result = "Pending",
+                    Result = computedResult,
+                    TotalGpa = gpa?.ToString("0.00"),
                     Subjects = subjects
                 });
             }
@@ -1191,6 +1204,7 @@ public class StudentDashboardController(
                 RegistrationNumber = rr.RegistrationNumber,
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
+                Faculty = rr.Program?.Faculty?.Name,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
                 Semester = rr.ExamSchedule?.Semester?.Name,
                 SemesterId = rr.ExamSchedule?.Semester?.Id,
@@ -1199,7 +1213,7 @@ public class StudentDashboardController(
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
-                College = rr.College?.Name,
+                College = registration.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
@@ -1215,10 +1229,21 @@ public class StudentDashboardController(
             if (!allMarksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
                 var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId, gradePointMap);
+                var computedResult = !subjects.Any() ? "Pending"
+                    : subjects.Any(s => s.Status == "Fail") ? "Fail"
+                    : subjects.All(s => s.Status == "Pass") ? "Pass"
+                    : "Pending";
+                var totalCredits = subjects.Sum(s => s.CreditHours ?? 0f);
+                var totalGradePoints = subjects.Sum(s => s.GradePoint ?? 0m);
+                var gpa = totalCredits > 0 ? (totalGradePoints / (decimal)totalCredits) : (decimal?)null;
                 allMarksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
+                    Program = er.ExamSchedule?.Program?.ProgramName,
+                    Faculty = er.ExamSchedule?.Program?.Faculty?.Name,
+                    AcademicYear = er.ExamSchedule?.AcademicYear?.AcademicYearName,
+                    College = registration.College?.Name,
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     SemesterId = er.ExamSchedule?.Semester?.Id,
@@ -1228,7 +1253,8 @@ public class StudentDashboardController(
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
                     SymbolNumber = MarksheetSymbolNumber(er),
-                    Result = "Pending",
+                    Result = computedResult,
+                    TotalGpa = gpa?.ToString("0.00"),
                     Subjects = subjects
                 });
             }
@@ -1393,6 +1419,11 @@ public class StudentDashboardController(
                     ? (creditHours.HasValue ? gradeValue.Value * creditHours.Value : gradeValue.Value)
                     : (decimal?)null;
 
+                var theoryLetter = esr.GradeLetterTheory?.Trim().ToUpperInvariant();
+                var practicalLetter = esr.GradeLetterPractical?.Trim().ToUpperInvariant();
+                var theoryGv = !string.IsNullOrEmpty(theoryLetter) && gradePointByLetter.TryGetValue(theoryLetter, out var tv) ? tv : (decimal?)null;
+                var practicalGv = !string.IsNullOrEmpty(practicalLetter) && gradePointByLetter.TryGetValue(practicalLetter, out var pv) ? pv : (decimal?)null;
+
                 return new MarksheetSubjectViewModel
                 {
                     ExamSubjectResultId = esr.Id,
@@ -1406,6 +1437,10 @@ public class StudentDashboardController(
                     Grade = gradeLetter,
                     GradeValue = gradeValue,
                     GradePoint = gradePoint,
+                    TheoryGrade = theoryLetter,
+                    TheoryGradePoint = theoryGv,
+                    PracticalGrade = practicalLetter,
+                    PracticalGradePoint = practicalGv,
                     IsPassed = hasGrade && !isFailed,
                     Status = !hasGrade ? "Pending"
                         : isSubmitted && isFailed ? "Fail"

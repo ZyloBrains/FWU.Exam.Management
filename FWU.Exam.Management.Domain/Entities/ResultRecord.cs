@@ -112,9 +112,8 @@ public class ResultRecord : ITenantScoped
     [Display(Name = "Student Name")]
     public string? StudentName { get; set; }
 
-    [Range(1, int.MaxValue)]
     [Display(Name = "Result Record Master")]
-    public int ResultRecordMasterId { get; set; }
+    public int? ResultRecordMasterId { get; set; }
 
     [Display(Name = "Exam Schedule")]
     public int? ExamScheduleId { get; set; }

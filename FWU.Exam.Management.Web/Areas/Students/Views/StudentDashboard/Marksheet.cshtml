@@ -79,6 +79,10 @@
                                 <span><i class="fas fa-clipboard-list text-gray-400 mr-1"></i>@marksheet.ExamType</span>
                             }
                             <span><i class="far fa-building text-gray-400 mr-1"></i>@marksheet.Program</span>
+                            @if (!string.IsNullOrEmpty(marksheet.Faculty))
+                            {
+                                <span><i class="fas fa-book-open text-gray-400 mr-1"></i>@marksheet.Faculty</span>
+                            }
                             @if (!string.IsNullOrEmpty(marksheet.College))
                             {
                                 <span><i class="fas fa-university text-gray-400 mr-1"></i>@marksheet.College</span>
@@ -90,7 +94,7 @@
                 <div class="flex items-center gap-2 shrink-0">
                     <button @@click="printScheduleId = @marksheet.ExamScheduleId; $nextTick(() => window.print())"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
-                        <i class="fas fa-print text-xs"></i> Print
+                        <i class="fas fa-download text-xs"></i> Download
                     </button>
                     <button @@click="expandedMarksheet = expandedMarksheet === '@msId' ? null : '@msId'"
                             class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
@@ -114,6 +118,8 @@
                                     <th class="px-5 py-2 text-xs font-medium text-gray-400 uppercase w-8">#</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-left">Subject</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Grade</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">TH</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">PR</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Status</th>
                                     <th class="px-4 py-2 text-xs font-medium text-gray-400 uppercase text-center">Action</th>
                                 </tr>
@@ -151,6 +157,34 @@
                                             else
                                             {
                                                 <span class="px-2 py-0.5 text-xs font-semibold rounded-full @gradeColor">@subject.Grade</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5 text-center text-xs text-gray-700">
+                                            @if (subject.TheoryGradePoint.HasValue)
+                                            {
+                                                <span>@(subject.TheoryGradePoint?.ToString("0.##"))</span>
+                                                if (!string.IsNullOrEmpty(subject.TheoryGrade))
+                                                {
+                                                    <span class="text-[10px] text-gray-400 ml-0.5">(@subject.TheoryGrade)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
+                                            }
+                                        </td>
+                                        <td class="px-4 py-2.5 text-center text-xs text-gray-700">
+                                            @if (subject.PracticalGradePoint.HasValue)
+                                            {
+                                                <span>@(subject.PracticalGradePoint?.ToString("0.##"))</span>
+                                                if (!string.IsNullOrEmpty(subject.PracticalGrade))
+                                                {
+                                                    <span class="text-[10px] text-gray-400 ml-0.5">(@subject.PracticalGrade)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
                                             }
                                         </td>
                                         <td class="px-4 py-2.5 text-center">
@@ -254,7 +288,7 @@
                     <span class="info-value">@(marksheet.SymbolNumber ?? "-")</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Campus:</span>
+                    <span class="info-label">College:</span>
                     <span class="info-value">@(marksheet.College ?? "-")</span>
                 </div>
                 <div class="info-row">
@@ -265,6 +299,13 @@
                     <span class="info-label">Program:</span>
                     <span class="info-value">@(marksheet.Program ?? "-")</span>
                 </div>
+                @if (!string.IsNullOrEmpty(marksheet.Faculty))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Faculty:</span>
+                        <span class="info-value">@(marksheet.Faculty)</span>
+                    </div>
+                }
                 <div class="info-row">
                     <span class="info-label">Exam Schedule:</span>
                     <span class="info-value">@(marksheet.ExamSchedule ?? "-")</span>
@@ -290,7 +331,7 @@
                             <th rowspan="2">Course Code</th>
                             <th rowspan="2">Course Title</th>
                             <th rowspan="2">Credit Hrs</th>
-                            <th colspan="2">Obtained Marks</th>
+                            <th colspan="2">Grade Letter</th>
                             <th rowspan="2">Final Grade</th>
                             <th rowspan="2">Grade Value</th>
                             <th rowspan="2">Grade Point</th>
@@ -308,8 +349,8 @@
                                 <td>@(subject.SubjectCode ?? "-")</td>
                                 <td>@(subject.SubjectName ?? "-")</td>
                                 <td>@(subject.CreditHours?.ToString("0.#") ?? "-")</td>
-                                <td>@(string.IsNullOrEmpty(marksheet.TheoryGrade) ? "-" : marksheet.TheoryGrade)</td>
-                                <td>@(string.IsNullOrEmpty(marksheet.PracticalGrade) ? "-" : marksheet.PracticalGrade)</td>
+                                <td>@(subject.TheoryGrade ?? "-")</td>
+                                <td>@(subject.PracticalGrade ?? "-")</td>
                                 <td>@(subject.Grade ?? "")</td>
                                 <td>@(subject.GradeValue?.ToString("0.00") ?? "-")</td>
                                 <td>@(subject.GradePoint?.ToString("0.00") ?? "-")</td>

@@ -328,7 +328,7 @@
                         <span class="info-value">@(marksheet.SymbolNumber ?? "-")</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Campus:</span>
+                        <span class="info-label">College:</span>
                         <span class="info-value">@(marksheet.College ?? "-")</span>
                     </div>
                     <div class="info-row">
@@ -339,6 +339,13 @@
                         <span class="info-label">Program:</span>
                         <span class="info-value">@(marksheet.Program ?? "-")</span>
                     </div>
+                    @if (!string.IsNullOrEmpty(marksheet.Faculty))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Faculty:</span>
+                            <span class="info-value">@(marksheet.Faculty)</span>
+                        </div>
+                    }
                     <div class="info-row">
                         <span class="info-label">Exam Schedule:</span>
                         <span class="info-value">@(marksheet.ExamSchedule ?? "-")</span>
@@ -365,7 +372,7 @@
                                 <th rowspan="2">Course Code</th>
                                 <th rowspan="2">Course Title</th>
                                 <th rowspan="2">Credit Hrs</th>
-                                <th colspan="2">Obtained Marks</th>
+                                <th colspan="2">Grade Letter</th>
                                 <th rowspan="2">Final Grade</th>
                                 <th rowspan="2">Grade Value</th>
                                 <th rowspan="2">Grade Point</th>
@@ -383,8 +390,8 @@
                                     <td>@(subject.SubjectCode ?? "-")</td>
                                     <td>@(subject.SubjectName ?? "-")</td>
                                     <td>@(subject.CreditHours?.ToString("0.#") ?? "-")</td>
-                                    <td>@(string.IsNullOrEmpty(marksheet.TheoryGrade) ? "-" : marksheet.TheoryGrade)</td>
-                                    <td>@(string.IsNullOrEmpty(marksheet.PracticalGrade) ? "-" : marksheet.PracticalGrade)</td>
+                                    <td>@(subject.TheoryGrade ?? "-")</td>
+                                    <td>@(subject.PracticalGrade ?? "-")</td>
                                     <td>@(subject.Grade ?? "")</td>
                                     <td>@(subject.GradeValue?.ToString("0.00") ?? "-")</td>
                                     <td>@(subject.GradePoint?.ToString("0.00") ?? "-")</td>

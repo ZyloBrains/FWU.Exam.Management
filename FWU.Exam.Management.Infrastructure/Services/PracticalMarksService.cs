@@ -19,7 +19,8 @@ public class PracticalMarksService(
         var vm = new PracticalMarksPageViewModel
         {
             IsSuperAdmin = userContext.IsSuperAdmin,
-            IsFacultyAdmin = userContext.IsFacultyAdmin
+            IsFacultyAdmin = userContext.IsFacultyAdmin,
+            IsCollegeAdmin = userContext.IsCollegeAdmin
         };
 
         if (userContext.IsSuperAdmin)
@@ -27,6 +28,10 @@ public class PracticalMarksService(
             vm.Faculties = await GetFacultiesAsync();
         }
         else if (userContext.IsFacultyAdmin)
+        {
+            vm.Colleges = await GetCollegesAsync(null);
+        }
+        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
             vm.Colleges = await GetCollegesAsync(null);
         }
@@ -48,6 +53,16 @@ public class PracticalMarksService(
 
     public async Task<List<SelectOption>> GetCollegesAsync(int? facultyId)
     {
+        if (userContext.IsCollegeAdmin)
+        {
+            if (!userContext.CollegeId.HasValue) return [];
+            return await context.Colleges
+                .AsNoTracking()
+                .Where(c => c.Id == userContext.CollegeId.Value)
+                .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+                .ToListAsync();
+        }
+
         if (userContext.IsFacultyAdmin)
         {
             var collegeIds = userContext.FacultyCollegeIds;
@@ -363,6 +378,13 @@ public class PracticalMarksService(
 
     private int GetEffectiveCollegeId(int? requestedCollegeId)
     {
+        if (userContext.IsCollegeAdmin)
+        {
+            if (userContext.CollegeId is not int collegeId)
+                throw new UnauthorizedAccessException("No college associated with your account.");
+            return collegeId;
+        }
+
         if (userContext.IsFacultyAdmin)
         {
             if (!requestedCollegeId.HasValue)
