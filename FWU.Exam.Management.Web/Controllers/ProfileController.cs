@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
@@ -618,13 +619,12 @@ public class ProfileController(
             var enrollment = await context.SemesterEnrollments
                 .AsNoTracking()
                 .Where(se => se.StudentAdmissionId == admission.Id && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
-                .Include(se => se.Semester)
-                .OrderByDescending(se => se.Semester!.Year)
-                .ThenByDescending(se => se.Semester!.Number)
+                .Include(se => se.SemesterInstance).ThenInclude(si => si!.Semester)
+                .OrderByDescending(se => se.SemesterInstance!.Semester!.Number)
                 .FirstOrDefaultAsync();
-            if (enrollment?.Semester != null)
+            if (enrollment?.SemesterInstance?.Semester != null)
             {
-                vm.CurrentSemester = $"{enrollment.Semester.Name} ({enrollment.Semester.Year})";
+                vm.CurrentSemester = SemesterDisplayHelper.Format(enrollment.SemesterInstance.Semester);
             }
         }
         else if (registration?.Program != null)

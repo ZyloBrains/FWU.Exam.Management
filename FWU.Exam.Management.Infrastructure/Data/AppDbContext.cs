@@ -82,6 +82,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ResultRecord> ResultRecords { get; set; } = null!;
     public DbSet<Semester> Semesters { get; set; } = null!;
     public DbSet<SemesterEnrollment> SemesterEnrollments { get; set; } = null!;
+    public DbSet<SemesterInstance> SemesterInstances { get; set; } = null!;
     public DbSet<StudentAdmission> StudentAdmissions { get; set; } = null!;
     public DbSet<StudentCategory> StudentCategories { get; set; } = null!;
     public DbSet<StudentGuardian> StudentGuardians { get; set; } = null!;
@@ -985,6 +986,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<ProgramSemester>()
             .HasIndex(ps => new { ps.ProgramId, ps.SemesterId })
             .IsUnique();
+
+        builder.Entity<SemesterInstance>()
+            .HasOne(si => si.Semester)
+            .WithMany()
+            .HasForeignKey(si => si.SemesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterInstance>()
+            .HasOne(si => si.AcademicYear)
+            .WithMany()
+            .HasForeignKey(si => si.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterInstance>()
+            .HasIndex(si => new { si.SemesterId, si.AcademicYearId })
+            .IsUnique();
+
+        builder.Entity<SemesterEnrollment>()
+            .HasOne(se => se.SemesterInstance)
+            .WithMany(si => si.SemesterEnrollments)
+            .HasForeignKey(se => se.SemesterInstanceId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
             .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })

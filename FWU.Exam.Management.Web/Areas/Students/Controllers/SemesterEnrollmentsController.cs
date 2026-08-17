@@ -23,13 +23,13 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 [Authorize(Roles = Role.BackOfficeRoles)]
 public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollmentService, UserManager<AppUser> userManager, IUserContext userContext, AppDbContext context) : Controller
 {
-    private static SelectList SemesterSelectList(IEnumerable<Semester> semesters, string? programShortName, int? selectedId = null)
+    private static SelectList SemesterInstanceSelectList(IEnumerable<SemesterInstance> instances, string? programShortName, int? selectedId = null)
     {
         return new SelectList(
-            semesters.Select(s => new SelectListItem
+            instances.Select(si => new SelectListItem
             {
-                Value = s.Id.ToString(),
-                Text = SemesterDisplayHelper.FormatForProgram(s, programShortName)
+                Value = si.Id.ToString(),
+                Text = SemesterDisplayHelper.FormatForProgram(si.Semester, programShortName, si.AcademicYear?.AcademicYearName)
             }),
             "Value", "Text", selectedId?.ToString());
     }
@@ -100,15 +100,18 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
     [HttpGet]
     public async Task<IActionResult> GetSemesterOptions(int? academicYearId, int? programId)
     {
-        var semesterQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).AsQueryable();
-        if (academicYearId.HasValue)
-            semesterQuery = semesterQuery.Where(s => s.AcademicYearId == academicYearId.Value);
-        if (programId.HasValue)
-            semesterQuery = semesterQuery.Where(s => s.ProgramSemesters.Any(ps => ps.ProgramId == programId.Value && ps.IsActive));
+        if (!academicYearId.HasValue || !programId.HasValue)
+            return Json(Array.Empty<object>());
 
-        var items = await semesterQuery
-            .OrderBy(s => s.Year).ThenBy(s => s.Number)
-            .Select(s => new { id = s.Id, name = SemesterDisplayHelper.Format(s) })
+        var items = await context.SemesterInstances
+            .AsNoTracking()
+            .Include(si => si.Semester)
+            .Include(si => si.AcademicYear)
+            .Where(si => si.AcademicYearId == academicYearId.Value
+                      && context.ProgramSemesters.Any(ps =>
+                          ps.ProgramId == programId.Value && ps.IsActive && ps.SemesterId == si.SemesterId))
+            .OrderBy(si => si.Semester!.Number)
+            .Select(si => new { id = si.Id, name = SemesterDisplayHelper.Format(si.Semester, si.AcademicYear!.AcademicYearName) })
             .ToListAsync();
         return Json(items);
     }
@@ -131,15 +134,21 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
 
         await PopulateFilterDropdownsAsync(collegeId, programId, semesterId, academicYearId);
 
-        var allSemestersQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).AsQueryable();
+        var allSemestersQuery = context.SemesterInstances.AsNoTracking()
+            .Include(si => si.Semester)
+            .Include(si => si.AcademicYear)
+            .AsQueryable();
         if (academicYearId.HasValue)
-            allSemestersQuery = allSemestersQuery.Where(s => s.AcademicYearId == academicYearId.Value);
-        var allSemesters = await allSemestersQuery.OrderBy(s => s.Year).ThenBy(s => s.Number).ToListAsync();
+            allSemestersQuery = allSemestersQuery.Where(si => si.AcademicYearId == academicYearId.Value);
+        if (programId.HasValue)
+            allSemestersQuery = allSemestersQuery.Where(si => context.ProgramSemesters.Any(ps =>
+                ps.ProgramId == programId.Value && ps.IsActive && ps.SemesterId == si.SemesterId));
+        var allSemesters = await allSemestersQuery.OrderBy(si => si.Semester!.Number).ToListAsync();
 
         ViewData["SemesterFilter"] = new SelectList(
-            allSemesters.Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }), "Id", "Name", semesterId);
+            allSemesters.Select(si => new { si.Id, Name = SemesterDisplayHelper.Format(si.Semester, si.AcademicYear!.AcademicYearName) }), "Id", "Name", semesterId);
         ViewBag.EnrollSemesterList = new SelectList(
-            allSemesters.Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }), "Id", "Name", semesterId);
+            allSemesters.Select(si => new { si.Id, Name = SemesterDisplayHelper.Format(si.Semester, si.AcademicYear!.AcademicYearName) }), "Id", "Name", semesterId);
 
         var hasFilters = !string.IsNullOrWhiteSpace(search) || academicYearId.HasValue || collegeId.HasValue || programId.HasValue || semesterId.HasValue;
         ViewBag.HasFilters = hasFilters;
@@ -204,10 +213,11 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         if (enrollment == null) return NotFound();
 
         var admission = await context.StudentAdmissions.AsNoTracking().FirstOrDefaultAsync(a => a.Id == enrollment.StudentAdmissionId);
-        var semesters = admission != null
-            ? await enrollmentService.GetSemestersByProgramAsync(admission.ProgramsId, admission.AcademicYearId)
-            : await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
-        ViewBag.SemesterId = SemesterSelectList(semesters, admission?.Program?.ShortName, enrollment.SemesterId);
+        var semesterInstances = admission != null
+            ? await enrollmentService.GetSemesterInstancesByProgramAsync(admission.ProgramsId, admission.AcademicYearId)
+            : await context.SemesterInstances.AsNoTracking()
+                .Include(si => si.Semester).Include(si => si.AcademicYear).ToListAsync();
+        ViewBag.SemesterId = SemesterInstanceSelectList(semesterInstances, admission?.Program?.ShortName, enrollment.SemesterInstanceId);
         ViewBag.EnrollmentStatusList = new SelectList(Enum.GetValues<StudentEnrollmentStatus>(), enrollment.EnrollmentStatus);
         ViewBag.EnrollmentTypeList = new SelectList(Enum.GetValues<EnrollmentType>(), enrollment.EnrollmentType);
         ViewBag.PaymentStatusList = new SelectList(Enum.GetValues<PaymentStatus>(), enrollment.PaymentStatus);
@@ -385,14 +395,20 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         ViewData["ShowCollegeFilter"] = userContext.IsSuperAdmin || userContext.IsFacultyAdmin;
         ViewData["ProgramFilter"] = new SelectList(
             await programQuery.OrderBy(p => p.ProgramName).Select(p => new { p.Id, p.ProgramName }).ToListAsync(), "Id", "ProgramName", programId);
-        var semesterQuery = context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).AsQueryable();
+        var semesterQuery = context.SemesterInstances.AsNoTracking()
+            .Include(si => si.Semester)
+            .Include(si => si.AcademicYear)
+            .AsQueryable();
         if (academicYearId.HasValue)
-            semesterQuery = semesterQuery.Where(s => s.AcademicYearId == academicYearId.Value);
+            semesterQuery = semesterQuery.Where(si => si.AcademicYearId == academicYearId.Value);
         if (programId.HasValue)
-            semesterQuery = semesterQuery.Where(s => s.ProgramSemesters.Any(ps => ps.ProgramId == programId.Value && ps.IsActive));
+            semesterQuery = semesterQuery.Where(si => context.ProgramSemesters.Any(ps =>
+                ps.ProgramId == programId.Value && ps.IsActive && ps.SemesterId == si.SemesterId));
 
         ViewData["SemesterFilter"] = new SelectList(
-            await semesterQuery.OrderBy(s => s.Year).ThenBy(s => s.Number).Select(s => new { s.Id, Name = SemesterDisplayHelper.Format(s) }).ToListAsync(), "Id", "Name", semesterId);
+            await semesterQuery.OrderBy(si => si.Semester!.Number)
+                .Select(si => new { si.Id, Name = SemesterDisplayHelper.Format(si.Semester, si.AcademicYear!.AcademicYearName) })
+                .ToListAsync(), "Id", "Name", semesterId);
         ViewData["AcademicYearFilter"] = await GetAcademicYearsAsync(academicYearId);
     }
 

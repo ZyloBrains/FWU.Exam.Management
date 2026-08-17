@@ -11,9 +11,9 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class SemesterEnrollmentService(AppDbContext context, IUserContext userContext) : ISemesterEnrollmentService
 {
-    public async Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    public async Task<(List<SemesterEnrollmentListItemDto> Items, int TotalCount)> GetEnrollmentsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
     {
-        var query = BuildQuery(search, admissionId, collegeId, programId, semesterId, academicYearId);
+        var query = BuildQuery(search, admissionId, collegeId, programId, semesterInstanceId, academicYearId);
         var totalCount = await query.CountAsync();
 
         query = sortDir.ToLower() == "desc"
@@ -29,9 +29,9 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return (items, totalCount);
     }
 
-    public async Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    public async Task<List<SemesterEnrollmentListItemDto>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
     {
-        var query = BuildQuery(search, admissionId, collegeId, programId, semesterId, academicYearId);
+        var query = BuildQuery(search, admissionId, collegeId, programId, semesterInstanceId, academicYearId);
 
         query = sortDir.ToLower() == "desc"
             ? query.OrderByDescending(GetSortProperty(sort))
@@ -51,7 +51,8 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 .ThenInclude(sa => sa!.College)
             .Include(se => se.StudentAdmission)
                 .ThenInclude(sa => sa!.Program)
-            .Include(se => se.Semester)
+            .Include(se => se.SemesterInstance)
+                .ThenInclude(si => si!.Semester)
             .AsNoTracking()
             .FirstOrDefaultAsync(se => se.Id == id);
     }
@@ -94,19 +95,24 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return await query.ToListAsync();
     }
 
-    public async Task<List<Semester>> GetSemestersByProgramAsync(int programId, int? academicYearId = null)
+    public async Task<List<SemesterInstance>> GetSemesterInstancesByProgramAsync(int programId, int? academicYearId = null)
     {
-        return await context.ProgramSemesters
-            .Include(ps => ps.Semester)
-                .ThenInclude(s => s!.AcademicYear)
-            .Where(ps => ps.ProgramId == programId && ps.IsActive)
-            .Select(ps => ps.Semester!)
-            .OrderBy(s => s.Number)
-            .AsNoTracking()
+        var query = context.SemesterInstances
+            .Include(si => si.Semester)
+            .Include(si => si.AcademicYear)
+            .Where(si => context.ProgramSemesters.Any(ps =>
+                ps.ProgramId == programId && ps.IsActive && ps.SemesterId == si.SemesterId))
+            .AsNoTracking();
+
+        if (academicYearId.HasValue)
+            query = query.Where(si => si.AcademicYearId == academicYearId.Value);
+
+        return await query
+            .OrderBy(si => si.Semester!.Number)
             .ToListAsync();
     }
 
-    public async Task<(List<SemesterEnrollmentCandidateDto> Items, int TotalCount)> GetEnrollmentCandidatesAsync(string? search, int? academicYearId, int? collegeId, int? programId, int? semesterId, int page = 1, int pageSize = 25)
+    public async Task<(List<SemesterEnrollmentCandidateDto> Items, int TotalCount)> GetEnrollmentCandidatesAsync(string? search, int? academicYearId, int? collegeId, int? programId, int? semesterInstanceId, int page = 1, int pageSize = 25)
     {
         var query = BuildCandidateQuery(search, academicYearId, collegeId, programId);
 
@@ -127,8 +133,8 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                 ProgramName = sa.Program != null ? sa.Program.ProgramName : null,
                 CollegeName = sa.College != null ? sa.College.Name : null,
                 AcademicYearName = sa.AcademicYear != null ? sa.AcademicYear.AcademicYearCode : null,
-                IsEnrolled = semesterId.HasValue && context.SemesterEnrollments.Any(se =>
-                    se.StudentAdmissionId == sa.Id && se.SemesterId == semesterId.Value)
+                IsEnrolled = semesterInstanceId.HasValue && context.SemesterEnrollments.Any(se =>
+                    se.StudentAdmissionId == sa.Id && se.SemesterInstanceId == semesterInstanceId.Value)
             })
             .ToListAsync();
 
@@ -165,7 +171,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return query;
     }
 
-    public async Task<(int Created, int Skipped)> BulkCreateAllEnrollmentsAsync(string? search, int? academicYearId, int? collegeId, int? programId, int semesterId, EnrollmentType? enrollmentType = null)
+    public async Task<(int Created, int Skipped)> BulkCreateAllEnrollmentsAsync(string? search, int? academicYearId, int? collegeId, int? programId, int semesterInstanceId, EnrollmentType? enrollmentType = null)
     {
         var admissionIds = await BuildCandidateQuery(search, academicYearId, collegeId, programId)
             .Select(sa => sa.Id)
@@ -174,10 +180,10 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         if (admissionIds.Count == 0)
             return (0, 0);
 
-        return await BulkCreateEnrollmentsAsync(admissionIds, semesterId, enrollmentType);
+        return await BulkCreateEnrollmentsAsync(admissionIds, semesterInstanceId, enrollmentType);
     }
 
-    public async Task<(int Created, int Skipped)> BulkCreateEnrollmentsAsync(List<int> admissionIds, int semesterId, EnrollmentType? enrollmentType = null)
+    public async Task<(int Created, int Skipped)> BulkCreateEnrollmentsAsync(List<int> admissionIds, int semesterInstanceId, EnrollmentType? enrollmentType = null)
     {
         if (admissionIds == null || admissionIds.Count == 0)
             return (0, 0);
@@ -198,7 +204,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         var scopedIds = admissions.Select(a => a.Id).ToList();
 
         var alreadyEnrolled = await context.SemesterEnrollments
-            .Where(se => se.SemesterId == semesterId && scopedIds.Contains(se.StudentAdmissionId))
+            .Where(se => se.SemesterInstanceId == semesterInstanceId && scopedIds.Contains(se.StudentAdmissionId))
             .Select(se => se.StudentAdmissionId)
             .ToListAsync();
 
@@ -212,7 +218,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             {
                 TenantId = admission.TenantId,
                 StudentAdmissionId = admission.Id,
-                SemesterId = semesterId,
+                SemesterInstanceId = semesterInstanceId,
                 EnrollmentStatus = StudentEnrollmentStatus.Active,
                 EnrollmentType = resolvedType,
                 PaymentStatus = PaymentStatus.Pending,
@@ -243,22 +249,29 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             .AnyAsync(se => se.StudentAdmissionId == admissionId);
         if (alreadyEnrolled) return false;
 
-        var firstSemester = await context.ProgramSemesters
+        var firstProgramSemester = await context.ProgramSemesters
             .AsNoTracking()
             .Where(ps => ps.ProgramId == admission.ProgramsId && ps.IsActive)
-            .Include(ps => ps.Semester)
-            .OrderBy(ps => ps.Semester!.Year)
-            .ThenBy(ps => ps.Semester!.Number)
-            .ThenBy(ps => ps.DisplayOrder)
-            .Select(ps => ps.Semester!)
+            .OrderBy(ps => ps.DisplayOrder)
             .FirstOrDefaultAsync();
+        if (firstProgramSemester == null) return false;
+
+        var firstSemester = await context.Semesters
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == firstProgramSemester.SemesterId);
         if (firstSemester == null) return false;
+
+        var currentAcademicYearId = admission.AcademicYearId;
+        var semesterInstance = await context.SemesterInstances
+            .AsNoTracking()
+            .FirstOrDefaultAsync(si => si.SemesterId == firstSemester.Id && si.AcademicYearId == currentAcademicYearId);
+        if (semesterInstance == null) return false;
 
         context.SemesterEnrollments.Add(new SemesterEnrollment
         {
             TenantId = admission.TenantId,
             StudentAdmissionId = admission.Id,
-            SemesterId = firstSemester.Id,
+            SemesterInstanceId = semesterInstance.Id,
             EnrollmentStatus = StudentEnrollmentStatus.Active,
             EnrollmentType = EnrollmentType.FullTime,
             PaymentStatus = PaymentStatus.Pending,
@@ -282,15 +295,17 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         var activeEnrollments = await context.SemesterEnrollments
             .AsNoTracking()
             .Include(se => se.StudentAdmission)
-            .Include(se => se.Semester)
+            .Include(se => se.SemesterInstance)
+                .ThenInclude(si => si!.Semester)
             .Where(se => se.EnrollmentStatus == StudentEnrollmentStatus.Active)
             .ToListAsync();
 
         foreach (var enrollment in activeEnrollments)
         {
             var admission = enrollment.StudentAdmission;
-            var semester = enrollment.Semester;
-            if (admission == null || semester == null) continue;
+            var semesterInstance = enrollment.SemesterInstance;
+            var semester = semesterInstance?.Semester;
+            if (admission == null || semesterInstance == null || semester == null) continue;
 
             var mainSchedule = await GetMainExamScheduleAsync(admission.ProgramsId, semester.Id);
             if (mainSchedule == null) continue;
@@ -317,22 +332,35 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                              && er.Status != RegistrationStatus.Rejected);
             if (!submittedExamForm) continue;
 
-            var programSemesters = await GetSemestersByProgramAsync(admission.ProgramsId);
-            var nextSemester = programSemesters
-                .FirstOrDefault(s => s.Year == semester.Year && s.Number == semester.Number + 1)
-                ?? programSemesters
-                    .FirstOrDefault(s => s.Year == semester.Year + 1 && s.Number == 1);
+            var programSemesters = await context.ProgramSemesters
+                .AsNoTracking()
+                .Where(ps => ps.ProgramId == admission.ProgramsId && ps.IsActive)
+                .Include(ps => ps.Semester)
+                .OrderBy(ps => ps.DisplayOrder)
+                .ToListAsync();
+
+            var currentOrder = programSemesters.FirstOrDefault(ps => ps.SemesterId == semester.Id)?.DisplayOrder ?? 0;
+            var nextProgramSemester = programSemesters.FirstOrDefault(ps => ps.DisplayOrder == currentOrder + 1);
+            if (nextProgramSemester == null) continue;
+
+            var nextSemester = nextProgramSemester.Semester;
             if (nextSemester == null) continue;
 
+            var nextSemesterInstance = await context.SemesterInstances
+                .AsNoTracking()
+                .FirstOrDefaultAsync(si => si.SemesterId == nextSemester.Id
+                                        && si.AcademicYearId == semesterInstance.AcademicYearId);
+            if (nextSemesterInstance == null) continue;
+
             var alreadyEnrolled = await context.SemesterEnrollments
-                .AnyAsync(se => se.StudentAdmissionId == admission.Id && se.SemesterId == nextSemester.Id);
+                .AnyAsync(se => se.StudentAdmissionId == admission.Id && se.SemesterInstanceId == nextSemesterInstance.Id);
             if (alreadyEnrolled) continue;
 
             context.SemesterEnrollments.Add(new SemesterEnrollment
             {
                 TenantId = admission.TenantId,
                 StudentAdmissionId = admission.Id,
-                SemesterId = nextSemester.Id,
+                SemesterInstanceId = nextSemesterInstance.Id,
                 EnrollmentStatus = StudentEnrollmentStatus.Active,
                 EnrollmentType = enrollment.EnrollmentType,
                 PaymentStatus = PaymentStatus.Pending,
@@ -371,14 +399,15 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         return schedules.FirstOrDefault();
     }
 
-    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterId = null, int? academicYearId = null)
+    private IQueryable<SemesterEnrollment> BuildQuery(string? search, int? admissionId = null, int? collegeId = null, int? programId = null, int? semesterInstanceId = null, int? academicYearId = null)
     {
         var query = context.SemesterEnrollments
             .Include(se => se.StudentAdmission)
                 .ThenInclude(sa => sa!.College)
             .Include(se => se.StudentAdmission)
                 .ThenInclude(sa => sa!.Program)
-            .Include(se => se.Semester)
+            .Include(se => se.SemesterInstance)
+                .ThenInclude(si => si!.Semester)
             .AsNoTracking();
 
         if (admissionId.HasValue)
@@ -390,8 +419,8 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         if (programId.HasValue)
             query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.ProgramsId == programId.Value);
 
-        if (semesterId.HasValue)
-            query = query.Where(se => se.SemesterId == semesterId.Value);
+        if (semesterInstanceId.HasValue)
+            query = query.Where(se => se.SemesterInstanceId == semesterInstanceId.Value);
 
         if (academicYearId.HasValue)
             query = query.Where(se => se.StudentAdmission != null && se.StudentAdmission.AcademicYearId == academicYearId.Value);
@@ -406,7 +435,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         {
             var term = search.Trim();
             query = query.Where(se =>
-                (se.Semester != null && se.Semester.Name != null && se.Semester.Name.Contains(term)) ||
+                (se.SemesterInstance != null && se.SemesterInstance.Semester != null && se.SemesterInstance.Semester.Name != null && se.SemesterInstance.Semester.Name.Contains(term)) ||
                 (se.StudentAdmission != null && se.StudentAdmission.CollegeRollNumber != null && se.StudentAdmission.CollegeRollNumber.Contains(term)) ||
                 (se.StudentAdmission != null && (se.StudentAdmission.FirstName + (se.StudentAdmission.MiddleName != null ? " " + se.StudentAdmission.MiddleName : "") + (se.StudentAdmission.LastName != null ? " " + se.StudentAdmission.LastName : "")).Contains(term)));
         }
@@ -422,7 +451,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             CollegeRollNumber = se.StudentAdmission!.CollegeRollNumber,
             ProgramName = se.StudentAdmission!.Program != null ? se.StudentAdmission.Program.ProgramName : null,
             CollegeName = se.StudentAdmission!.College != null ? se.StudentAdmission.College.Name : null,
-            SemesterName = se.Semester != null ? se.Semester.Name : null,
+            SemesterName = se.SemesterInstance != null && se.SemesterInstance.Semester != null ? se.SemesterInstance.Semester.Name : null,
             AcademicYearName = se.StudentAdmission != null && se.StudentAdmission.AcademicYear != null ? se.StudentAdmission.AcademicYear.AcademicYearCode : null,
             EnrollmentStatus = se.EnrollmentStatus,
             EnrollmentType = se.EnrollmentType,
@@ -436,7 +465,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
     {
         return sort.ToLower() switch
         {
-            "semester" => se => se.Semester!.Name!,
+            "semester" => se => se.SemesterInstance != null && se.SemesterInstance.Semester != null ? se.SemesterInstance.Semester.Name! : "",
             "studentname" => se => se.StudentAdmission!.CollegeRollNumber!,
             "enrollmentstatus" => se => se.EnrollmentStatus,
             "enrollmenttype" => se => se.EnrollmentType,

@@ -266,8 +266,7 @@ public class ProgramsController(IProgramService programService, ISemesterService
         var assignableSemesters = await semesterService.GetAssignableSemestersAsync(userContext);
 
         var groups = assignableSemesters
-            .GroupBy(s => s.AcademicYear != null ? s.AcademicYear.AcademicYearName : "Other")
-            .OrderByDescending(g => g.Key)
+            .GroupBy(s => "Semesters")
             .Select(g => new ProgramSemesterGroup
             {
                 Title = g.Key,

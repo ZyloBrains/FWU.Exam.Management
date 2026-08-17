@@ -93,12 +93,25 @@ public static class TestData
         ctx.ExamTypes.Add(new ExamType { Id = Supplementary, Name = "Supplementary", Code = "3", IsActive = true });
         ctx.ExamTypes.Add(new ExamType { Id = Entrance, Name = "Entrance", Code = "4", IsActive = true });
 
-        ctx.Semesters.Add(Semester(1, 1, 1));
-        ctx.Semesters.Add(Semester(2, 1, 2));
-        ctx.Semesters.Add(Semester(3, 2, 3));
-        ctx.Semesters.Add(Semester(4, 2, 4));
-        ctx.Semesters.Add(Semester(5, 3, 5));
-        ctx.Semesters.Add(Semester(6, 3, 6));
+        ctx.Semesters.Add(Semester(1, 1));
+        ctx.Semesters.Add(Semester(2, 2));
+        ctx.Semesters.Add(Semester(3, 3));
+        ctx.Semesters.Add(Semester(4, 4));
+        ctx.Semesters.Add(Semester(5, 5));
+        ctx.Semesters.Add(Semester(6, 6));
+
+        for (var semId = 1; semId <= 6; semId++)
+        {
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = semId,
+                TenantId = TenantId,
+                SemesterId = semId,
+                AcademicYearId = AcademicYearId,
+                StartDate = DateTime.UtcNow.AddYears(-1),
+                EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6)
+            });
+        }
 
         for (var semId = 1; semId <= 6; semId++)
         {
@@ -140,16 +153,12 @@ public static class TestData
         IsActive = true
     };
 
-    public static Semester Semester(int id, int year, int number) => new()
+    public static Semester Semester(int id, int number) => new()
     {
         Id = id,
-        Year = year,
         Number = number,
-        Name = $"Semester {year}.{number}",
-        Code = $"SEM{year}{number}",
-        StartDate = DateTime.UtcNow.AddYears(-1),
-        EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6),
-        AcademicYearId = AcademicYearId
+        Name = $"Semester {number}",
+        Code = $"SEM{number}"
     };
 
     public static ProgramSemester ProgramSemester(int id, int semesterId, int programId) => new()
@@ -235,13 +244,13 @@ public static class TestData
         AppUserId = userId
     };
 
-    public static SemesterEnrollment Enrollment(int id, int admissionId, int semesterId,
+    public static SemesterEnrollment Enrollment(int id, int admissionId, int semesterInstanceId,
         StudentEnrollmentStatus status = StudentEnrollmentStatus.Active) => new()
     {
         Id = id,
         TenantId = TenantId,
         StudentAdmissionId = admissionId,
-        SemesterId = semesterId,
+        SemesterInstanceId = semesterInstanceId,
         EnrollmentStatus = status,
         EnrollmentType = EnrollmentType.FullTime,
         PaymentStatus = PaymentStatus.Paid,

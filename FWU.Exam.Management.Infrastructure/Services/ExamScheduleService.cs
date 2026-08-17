@@ -335,10 +335,15 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var programs = await programsQuery.ToListAsync();
 
         List<SelectOption> semesters;
-        if (examSchedule != null && examSchedule.AcademicYearId > 0)
+        if (examSchedule != null && examSchedule.ProgramId > 0)
         {
-            var semestersQuery = context.Semesters.AsNoTracking().ApplyScope(userContext)
-                .Where(s => s.AcademicYearId == examSchedule.AcademicYearId);
+            var assignedSemesterIds = await context.ProgramSemesters
+                .AsNoTracking()
+                .Where(ps => ps.ProgramId == examSchedule.ProgramId && ps.IsActive)
+                .Select(ps => ps.SemesterId)
+                .ToListAsync();
+            var semestersQuery = context.Semesters.AsNoTracking()
+                .Where(s => assignedSemesterIds.Contains(s.Id));
             var allowUpperSemesters = examSchedule.ProgramId > 0
                                       && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == examSchedule.ProgramId && p.Duration >= 10);
             if (!allowUpperSemesters)
@@ -365,9 +370,16 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var allowUpperSemesters = programId is > 0
                                   && await context.Programs.AsNoTracking().AnyAsync(p => p.Id == programId.Value && p.Duration >= 10);
 
+        var assignedSemesterIds = programId is > 0
+            ? await context.ProgramSemesters
+                .AsNoTracking()
+                .Where(ps => ps.ProgramId == programId.Value && ps.IsActive)
+                .Select(ps => ps.SemesterId)
+                .ToListAsync()
+            : await context.Semesters.AsNoTracking().Select(s => s.Id).ToListAsync();
+
         return await context.Semesters.AsNoTracking()
-            .ApplyScope(userContext)
-            .Where(s => s.AcademicYearId == academicYearId
+            .Where(s => assignedSemesterIds.Contains(s.Id)
                         && (s.Number <= 8 || allowUpperSemesters))
             .OrderBy(s => s.Number)
             .Select(s => new SelectOption

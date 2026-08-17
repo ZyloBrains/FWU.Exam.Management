@@ -386,7 +386,7 @@ public class StudentDashboardServiceTests
         Assert.NotNull(rr.ExamSchedule);
         Assert.Equal("Schedule 21", rr.ExamSchedule!.ExamScheduleName);
         Assert.NotNull(rr.ExamSchedule.Semester);
-        Assert.Equal(1, rr.ExamSchedule.Semester!.Year);
+        Assert.Equal(1, rr.ExamSchedule.Semester!.Number);
     }
 
     [Fact]

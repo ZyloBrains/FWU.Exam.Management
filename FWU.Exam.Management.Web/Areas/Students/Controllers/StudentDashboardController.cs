@@ -297,7 +297,7 @@ public class StudentDashboardController(
             forms.Add(new ExamFormViewModel
             {
                 ExamScheduleId = schedule.Id,
-                Semester = $"{schedule.Semester?.Year ?? 0} / {schedule.Semester?.Number ?? 0}",
+                Semester = $"Semester {schedule.Semester?.Number ?? 0}",
                 ExamScheduleName = schedule.ExamScheduleName,
                 HasPaid = hasPaid,
                 HasAdmitCard = hasAdmitCard,
@@ -1194,7 +1194,7 @@ public class StudentDashboardController(
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
                 Semester = rr.ExamSchedule?.Semester?.Name,
                 SemesterId = rr.ExamSchedule?.Semester?.Id,
-                SemesterYear = rr.ExamSchedule?.Semester?.Year ?? 0,
+                SemesterYear = rr.ExamSchedule?.Semester?.Number ?? 0,
                 SemesterNumber = rr.ExamSchedule?.Semester?.Number ?? 0,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
@@ -1222,7 +1222,7 @@ public class StudentDashboardController(
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
                     Semester = er.ExamSchedule?.Semester?.Name,
                     SemesterId = er.ExamSchedule?.Semester?.Id,
-                    SemesterYear = er.ExamSchedule?.Semester?.Year ?? 0,
+                    SemesterYear = er.ExamSchedule?.Semester?.Number ?? 0,
                     SemesterNumber = er.ExamSchedule?.Semester?.Number ?? 0,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,

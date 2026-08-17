@@ -161,9 +161,7 @@ public class SubjectOfferingService : ISubjectOfferingService
         return await _context.SubjectOfferings
             .AsNoTracking()
             .Where(so => so.ProgramId == programId
-                         && so.CurriculumVersionId == curriculumVersionId
-                         && so.Semester != null
-                         && so.Semester.AcademicYearId == academicYearId)
+                         && so.CurriculumVersionId == curriculumVersionId)
             .GroupBy(so => so.SemesterId)
             .Select(g => new
             {
@@ -185,25 +183,22 @@ public class SubjectOfferingService : ISubjectOfferingService
 
     public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
     {
-        var cap = 8;
-        if (programId is > 0)
-        {
-            var duration = await _context.Programs.AsNoTracking()
-                .Where(p => p.Id == programId.Value)
-                .Select(p => (int?)p.Duration)
-                .FirstOrDefaultAsync();
-            if (duration is > 0) cap = duration.Value;
-        }
+        var assignedSemesterIds = programId is > 0
+            ? await _context.ProgramSemesters
+                .AsNoTracking()
+                .Where(ps => ps.ProgramId == programId.Value && ps.IsActive)
+                .Select(ps => ps.SemesterId)
+                .ToListAsync()
+            : null;
 
         return await _context.Semesters
             .AsNoTracking()
-            .ApplyScope(_userContext)
-            .Where(s => s.AcademicYearId == academicYearId && s.Number <= cap)
+            .Where(s => (assignedSemesterIds == null || assignedSemesterIds.Contains(s.Id)))
             .OrderBy(s => s.Number)
             .Select(s => new SelectOption
             {
                 Id = s.Id,
-                Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+                Name = s.Name + " (" + s.Code + ")"
             })
             .ToListAsync();
     }
@@ -213,7 +208,6 @@ public class SubjectOfferingService : ISubjectOfferingService
         var groups = await _context.SubjectOfferings
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId)
             .GroupBy(so => so.ProgramId)
             .Select(g => new
             {
@@ -251,8 +245,7 @@ public class SubjectOfferingService : ISubjectOfferingService
 
         return await _context.Semesters
             .AsNoTracking()
-            .ApplyScope(_userContext)
-            .Where(s => assignedSemesterIds.Contains(s.Id) && s.AcademicYearId == academicYearId)
+            .Where(s => assignedSemesterIds.Contains(s.Id))
             .OrderBy(s => s.Number)
             .Select(s => new SemesterOfferingSummary
             {
@@ -277,8 +270,7 @@ public class SubjectOfferingService : ISubjectOfferingService
 
         return await _context.Semesters
             .AsNoTracking()
-            .ApplyScope(_userContext)
-            .Where(s => s.AcademicYearId == academicYearId && s.Number <= cap)
+            .Where(s => s.Number <= cap)
             .OrderBy(s => s.Number)
             .Select(s => new SemesterOfferingSummary
             {
@@ -384,8 +376,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .ToListAsync();
 
         var semesters = await _context.Semesters
-            .Include(s => s.AcademicYear)
-            .OrderByDescending(s => s.Id)
+            .OrderBy(s => s.Number)
             .AsNoTracking()
             .ToListAsync();
 
@@ -464,8 +455,6 @@ public class SubjectOfferingService : ISubjectOfferingService
             .AsNoTracking()
             .ApplyScope(_userContext);
 
-        if (academicYearId is > 0)
-            query = query.Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId.Value);
         if (programId is > 0)
             query = query.Where(so => so.ProgramId == programId.Value);
         if (semesterId is > 0)

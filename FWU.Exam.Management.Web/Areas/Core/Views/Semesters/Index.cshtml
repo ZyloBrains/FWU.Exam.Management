@@ -98,18 +98,6 @@
                class="px-3 py-1.5 rounded-full @(currentSort == "number" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
             Number @(currentSort == "number" ? (currentSortDir == "asc" ? "\u2191" : "\u2193") : "")
         </a>
-        <a asp-action="Index" asp-area="Core" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="year" asp-route-sortDir="@(currentSort == "year" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort == "year" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Year @(currentSort == "year" ? (currentSortDir == "asc" ? "\u2191" : "\u2193") : "")
-        </a>
-        <a asp-action="Index" asp-area="Core" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="startdate" asp-route-sortDir="@(currentSort == "startdate" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort == "startdate" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            Start Date @(currentSort == "startdate" ? (currentSortDir == "asc" ? "\u2191" : "\u2193") : "")
-        </a>
-        <a asp-action="Index" asp-area="Core" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="enddate" asp-route-sortDir="@(currentSort == "enddate" && currentSortDir == "asc" ? "desc" : "asc")"
-               class="px-3 py-1.5 rounded-full @(currentSort == "enddate" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
-            End Date @(currentSort == "enddate" ? (currentSortDir == "asc" ? "\u2191" : "\u2193") : "")
-        </a>
         <a asp-action="Index" asp-area="Core" asp-route-search="@currentSearch" asp-route-pageSize="@pageSize" asp-route-sort="remark" asp-route-sortDir="@(currentSort == "remark" && currentSortDir == "asc" ? "desc" : "asc")"
                class="px-3 py-1.5 rounded-full @(currentSort == "remark" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600") hover:bg-indigo-50">
             Remark @(currentSort == "remark" ? (currentSortDir == "asc" ? "\u2191" : "\u2193") : "")
@@ -125,9 +113,6 @@
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Number</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Year</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Start Date</th>
-                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">End Date</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Remark</th>
                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-right">Actions</th>
                 </tr>
@@ -144,9 +129,6 @@
                         <td class="px-4 py-3 font-medium text-gray-800">@item.Code</td>
                         <td class="px-4 py-3 text-gray-800">@item.Name</td>
                         <td class="px-4 py-3 text-gray-600">@item.Number</td>
-                        <td class="px-4 py-3 text-gray-600">@item.Year</td>
-                        <td class="px-4 py-3 text-gray-600">@item.StartDate.ToString("yyyy-MM-dd")</td>
-                        <td class="px-4 py-3 text-gray-600">@item.EndDate.ToString("yyyy-MM-dd")</td>
                         <td class="px-4 py-3 text-gray-600">@(item.Remark ?? "-")</td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
@@ -201,12 +183,6 @@
                 <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                     <div class="text-gray-500">Number</div>
                     <div class="text-gray-800">@item.Number</div>
-                    <div class="text-gray-500">Year</div>
-                    <div class="text-gray-800">@item.Year</div>
-                    <div class="text-gray-500">Start Date</div>
-                    <div class="text-gray-800">@item.StartDate.ToString("yyyy-MM-dd")</div>
-                    <div class="text-gray-500">End Date</div>
-                    <div class="text-gray-800">@item.EndDate.ToString("yyyy-MM-dd")</div>
                     <div class="text-gray-500">Remark</div>
                     <div class="text-gray-800">@(item.Remark ?? "-")</div>
                 </div>

@@ -198,7 +198,6 @@ public class CurriculumVersionService : ICurriculumVersionService
 
         var targetSemesters = await _context.Semesters
             .AsNoTracking()
-            .Where(s => s.AcademicYearId == targetAcademicYearId)
             .ToListAsync();
 
         var semesterMap = targetSemesters.ToDictionary(s => s.Number);
