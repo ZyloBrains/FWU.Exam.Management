@@ -305,33 +305,6 @@ public class SubjectOfferingService : ISubjectOfferingService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<CurriculumVersion?> GetOrCreateDefaultCurriculumVersionAsync(int programId, int academicYearId)
-    {
-        var existing = await _context.CurriculumVersions
-            .AsNoTracking()
-            .Where(cv => cv.ProgramId == programId && cv.EffectiveAcademicYearId == academicYearId)
-            .OrderByDescending(cv => cv.IsActive)
-            .ThenByDescending(cv => cv.Id)
-            .FirstOrDefaultAsync();
-        if (existing != null) return existing;
-
-        var program = await _context.Programs.AsNoTracking().FirstOrDefaultAsync(p => p.Id == programId);
-        var year = await _context.AcademicYears.AsNoTracking().FirstOrDefaultAsync(a => a.Id == academicYearId);
-        if (program == null || year == null) return null;
-
-        var version = new CurriculumVersion
-        {
-            Name = $"Default - {program.ProgramName} ({year.AcademicYearName})",
-            ProgramId = programId,
-            EffectiveAcademicYearId = academicYearId,
-            Description = "Auto-created curriculum version for subject offerings.",
-            IsActive = true
-        };
-        _context.CurriculumVersions.Add(version);
-        await _context.SaveChangesAsync();
-        return version;
-    }
-
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForDeletionAsync(List<int> ids)
     {
         if (ids == null || ids.Count == 0) return new List<SubjectOffering>();
@@ -404,8 +377,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             query = query.Where(cv => cv.EffectiveAcademicYearId == academicYearId.Value);
 
         return await query
-            .OrderBy(cv => cv.Program != null ? cv.Program.ProgramName : "")
-            .ThenByDescending(cv => cv.EffectiveAcademicYearId)
+            .OrderByDescending(cv => cv.Id)
             .Select(cv => new SelectOption
             {
                 Id = cv.Id,

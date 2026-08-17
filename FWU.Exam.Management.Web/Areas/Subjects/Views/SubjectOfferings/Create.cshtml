@@ -44,7 +44,7 @@
                     <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Curriculum Version</label>
                     <select asp-for="CurriculumVersionId" asp-items="ViewBag.CurriculumVersionId"
                             class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">Auto-create default version</option>
+                        <option value="">-- Select Curriculum Version --</option>
                     </select>
                     <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
@@ -333,7 +333,7 @@
             if ($el.hasClass('select2-hidden-accessible')) {
                 $el.select2('destroy');
             }
-            $el.empty().append('<option value="">Auto-create default version</option>');
+            $el.empty().append('<option value="">-- Select Curriculum Version --</option>');
         }
 
         function loadSemestersAlpine() {

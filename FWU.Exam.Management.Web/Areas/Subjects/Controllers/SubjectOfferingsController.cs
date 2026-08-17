@@ -240,14 +240,8 @@ public class SubjectOfferingsController : Controller
         if (model.AcademicYearId <= 0)
             ModelState.AddModelError(nameof(model.AcademicYearId), "Academic Year is required.");
 
-        if (model.ProgramId > 0 && model.AcademicYearId > 0 && model.CurriculumVersionId <= 0)
-        {
-            var autoVersion = await _subjectOfferingService.GetOrCreateDefaultCurriculumVersionAsync(model.ProgramId, model.AcademicYearId);
-            if (autoVersion != null)
-                model.CurriculumVersionId = autoVersion.Id;
-            else
-                ModelState.AddModelError(nameof(model.CurriculumVersionId), "Curriculum Version is required.");
-        }
+        if (model.CurriculumVersionId <= 0)
+            ModelState.AddModelError(nameof(model.CurriculumVersionId), "Curriculum Version is required.");
 
         var groups = model.Semesters ?? new List<SemesterSubjectOfferingGroup>();
         var populated = groups.Where(g => g.Subjects is { Count: > 0 }).ToList();

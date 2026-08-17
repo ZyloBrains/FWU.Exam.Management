@@ -85,12 +85,7 @@
                     <span class="font-semibold text-gray-700">@(ViewBag.SubjectCount ?? 0)</span> subject offering(s) across semesters
                 </p>
             </div>
-            @if (HasPerm("subjectofferings.create"))
-            {
-                <a asp-area="Subjects" asp-controller="CurriculumVersions" asp-action="Manage" asp-route-id="@Model!.Id" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
-                    <i class="fas fa-pen text-xs"></i> Manage Subjects
-                </a>
-            }
+
         </div>
 
         @{
