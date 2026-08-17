@@ -3097,6 +3097,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ProgramId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Remark")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -3114,9 +3117,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("AcademicYearId");
 
+                    b.HasIndex("ProgramId");
+
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("SemesterId", "AcademicYearId")
+                    b.HasIndex("SemesterId", "AcademicYearId", "ProgramId")
                         .IsUnique();
 
                     b.ToTable("SemesterInstances");
@@ -5456,6 +5461,12 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.Semester", "Semester")
                         .WithMany()
                         .HasForeignKey("SemesterId")
@@ -5469,6 +5480,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("AcademicYear");
+
+                    b.Navigation("Program");
 
                     b.Navigation("Semester");
 

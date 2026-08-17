@@ -11,18 +11,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_ExamSchedules_AcademicYears_AcademicYearId",
-                table: "ExamSchedules");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_ExamSchedules_Semesters_SemesterId",
-                table: "ExamSchedules");
-
-            migrationBuilder.DropIndex(
-                name: "IX_SemesterInstances_SemesterId_AcademicYearId",
-                table: "SemesterInstances");
-
             migrationBuilder.DropIndex(
                 name: "IX_ExamSchedules_AcademicYearId",
                 table: "ExamSchedules");
@@ -45,13 +33,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 table: "ExamSchedules",
                 newName: "IX_ExamSchedules_SemesterInstanceId");
 
-            migrationBuilder.AddColumn<int>(
-                name: "ProgramId",
-                table: "SemesterInstances",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
-
             migrationBuilder.AddColumn<DateTime>(
                 name: "EndDate",
                 table: "AcademicYears",
@@ -69,18 +50,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 table: "AcademicYears",
                 type: "int",
                 nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemesterInstances_ProgramId",
-                table: "SemesterInstances",
-                column: "ProgramId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemesterInstances_SemesterId_AcademicYearId_ProgramId",
-                table: "SemesterInstances",
-                columns: new[] { "SemesterId", "AcademicYearId", "ProgramId" },
-                unique: true);
+                defaultValue: 1);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AcademicYears_TenantId_AcademicYearCode",
@@ -103,14 +73,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 principalTable: "SemesterInstances",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_SemesterInstances_Programs_ProgramId",
-                table: "SemesterInstances",
-                column: "ProgramId",
-                principalTable: "Programs",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
@@ -124,25 +86,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 name: "FK_ExamSchedules_SemesterInstances_SemesterInstanceId",
                 table: "ExamSchedules");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_SemesterInstances_Programs_ProgramId",
-                table: "SemesterInstances");
-
-            migrationBuilder.DropIndex(
-                name: "IX_SemesterInstances_ProgramId",
-                table: "SemesterInstances");
-
-            migrationBuilder.DropIndex(
-                name: "IX_SemesterInstances_SemesterId_AcademicYearId_ProgramId",
-                table: "SemesterInstances");
-
             migrationBuilder.DropIndex(
                 name: "IX_AcademicYears_TenantId_AcademicYearCode",
                 table: "AcademicYears");
-
-            migrationBuilder.DropColumn(
-                name: "ProgramId",
-                table: "SemesterInstances");
 
             migrationBuilder.DropColumn(
                 name: "EndDate",
@@ -172,12 +118,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                 type: "int",
                 nullable: false,
                 defaultValue: 0);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SemesterInstances_SemesterId_AcademicYearId",
-                table: "SemesterInstances",
-                columns: new[] { "SemesterId", "AcademicYearId" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExamSchedules_AcademicYearId",
