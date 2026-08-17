@@ -102,6 +102,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
+            .Include(s => s.CurriculumVersion)
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id);
     }

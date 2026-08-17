@@ -55,7 +55,7 @@
                     </div>
                     <div>
                         <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Curriculum Version</label>
-                        <select asp-for="CurriculumVersionId" id="CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                        <select asp-for="CurriculumVersionId" id="CurriculumVersionId" asp-items="ViewBag.CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                             <option value="">-- Select Curriculum Version --</option>
                         </select>
                         <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>

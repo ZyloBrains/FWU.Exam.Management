@@ -414,7 +414,7 @@ public class SubjectOfferingsController : Controller
 
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
-        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name");
+        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", subjectOffering.CurriculumVersion?.EffectiveAcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = SemesterSelectList(semesters, subjectOffering.SemesterId);
         ViewData["CurriculumVersionId"] = new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(subjectOffering.ProgramId), "Id", "Name", subjectOffering.CurriculumVersionId);

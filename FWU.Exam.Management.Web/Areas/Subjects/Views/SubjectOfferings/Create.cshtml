@@ -352,20 +352,20 @@
             }
         }
 
-        function loadCurriculumVersions(academicYearId, selectedId) {
+        function loadCurriculumVersions(selectedId) {
             var programId = $('#ProgramId').val();
             var versionSelect = $('#CurriculumVersionId');
 
             resetSelect2(versionSelect);
 
-            if (!programId || !academicYearId) {
+            if (!programId) {
                 versionSelect.prop('disabled', true);
                 versionSelect.select2({ width: 'resolve' });
                 return;
             }
 
             versionSelect.prop('disabled', false);
-            $.get(tenantUrl("/Subjects/SubjectOfferings/GetCurriculumVersionsByProgram"), { programId: programId, academicYearId: academicYearId }, function (data) {
+            $.get(tenantUrl("/Subjects/SubjectOfferings/GetCurriculumVersionsByProgram"), { programId: programId }, function (data) {
                 $.each(data, function (index, item) {
                     versionSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
                 });
@@ -379,14 +379,12 @@
         }
 
         $("#AcademicYearId").change(function () {
-            resetSelect2($('#CurriculumVersionId'));
             loadSemestersAlpine();
-            loadCurriculumVersions($(this).val());
         });
 
         $("#ProgramId").change(function () {
+            loadCurriculumVersions();
             loadSemestersAlpine();
-            loadCurriculumVersions($("#AcademicYearId").val());
         });
 
         $("#CurriculumVersionId").change(function () {
