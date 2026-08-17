@@ -100,8 +100,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         var query = context.SemesterInstances
             .Include(si => si.Semester)
             .Include(si => si.AcademicYear)
-            .Where(si => context.ProgramSemesters.Any(ps =>
-                ps.ProgramId == programId && ps.IsActive && ps.SemesterId == si.SemesterId))
+            .Where(si => si.ProgramId == programId)
             .AsNoTracking();
 
         if (academicYearId.HasValue)
@@ -264,7 +263,7 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
         var currentAcademicYearId = admission.AcademicYearId;
         var semesterInstance = await context.SemesterInstances
             .AsNoTracking()
-            .FirstOrDefaultAsync(si => si.SemesterId == firstSemester.Id && si.AcademicYearId == currentAcademicYearId);
+            .FirstOrDefaultAsync(si => si.SemesterId == firstSemester.Id && si.AcademicYearId == currentAcademicYearId && si.ProgramId == admission.ProgramsId);
         if (semesterInstance == null) return false;
 
         context.SemesterEnrollments.Add(new SemesterEnrollment
@@ -349,7 +348,8 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
             var nextSemesterInstance = await context.SemesterInstances
                 .AsNoTracking()
                 .FirstOrDefaultAsync(si => si.SemesterId == nextSemester.Id
-                                        && si.AcademicYearId == semesterInstance.AcademicYearId);
+                                        && si.AcademicYearId == semesterInstance.AcademicYearId
+                                        && si.ProgramId == admission.ProgramsId);
             if (nextSemesterInstance == null) continue;
 
             var alreadyEnrolled = await context.SemesterEnrollments

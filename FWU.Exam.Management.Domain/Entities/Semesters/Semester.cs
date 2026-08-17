@@ -1,5 +1,4 @@
 using FWU.Exam.Management.Domain.Entities.Subjects;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace FWU.Exam.Management.Domain.Entities.Semesters;

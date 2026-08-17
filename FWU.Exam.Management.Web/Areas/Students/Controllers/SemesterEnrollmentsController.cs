@@ -108,8 +108,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
             .Include(si => si.Semester)
             .Include(si => si.AcademicYear)
             .Where(si => si.AcademicYearId == academicYearId.Value
-                      && context.ProgramSemesters.Any(ps =>
-                          ps.ProgramId == programId.Value && ps.IsActive && ps.SemesterId == si.SemesterId))
+                      && si.ProgramId == programId.Value)
             .OrderBy(si => si.Semester!.Number)
             .Select(si => new { id = si.Id, name = SemesterDisplayHelper.Format(si.Semester, si.AcademicYear!.AcademicYearName) })
             .ToListAsync();
@@ -141,8 +140,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         if (academicYearId.HasValue)
             allSemestersQuery = allSemestersQuery.Where(si => si.AcademicYearId == academicYearId.Value);
         if (programId.HasValue)
-            allSemestersQuery = allSemestersQuery.Where(si => context.ProgramSemesters.Any(ps =>
-                ps.ProgramId == programId.Value && ps.IsActive && ps.SemesterId == si.SemesterId));
+            allSemestersQuery = allSemestersQuery.Where(si => si.ProgramId == programId.Value);
         var allSemesters = await allSemestersQuery.OrderBy(si => si.Semester!.Number).ToListAsync();
 
         ViewData["SemesterFilter"] = new SelectList(
@@ -402,8 +400,7 @@ public class SemesterEnrollmentsController(ISemesterEnrollmentService enrollment
         if (academicYearId.HasValue)
             semesterQuery = semesterQuery.Where(si => si.AcademicYearId == academicYearId.Value);
         if (programId.HasValue)
-            semesterQuery = semesterQuery.Where(si => context.ProgramSemesters.Any(ps =>
-                ps.ProgramId == programId.Value && ps.IsActive && ps.SemesterId == si.SemesterId));
+            semesterQuery = semesterQuery.Where(si => si.ProgramId == programId.Value);
 
         ViewData["SemesterFilter"] = new SelectList(
             await semesterQuery.OrderBy(si => si.Semester!.Number)

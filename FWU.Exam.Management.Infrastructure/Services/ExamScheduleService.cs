@@ -337,8 +337,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         {
             semesters = await context.SemesterInstances
                 .AsNoTracking()
-                .Where(si => si.Semester != null
-                             && si.Semester!.ProgramSemesters.Any(ps => ps.ProgramId == examSchedule.ProgramId && ps.IsActive))
+                .Where(si => si.ProgramId == examSchedule.ProgramId)
                 .Include(si => si.Semester)
                 .Include(si => si.AcademicYear)
                 .OrderBy(si => si.Semester!.Number)
@@ -368,7 +367,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         var query = context.SemesterInstances.AsNoTracking()
             .Where(si => si.AcademicYearId == academicYearId
                          && si.Semester != null
-                         && (programId == null || si.Semester!.ProgramSemesters.Any(ps => ps.ProgramId == programId.Value && ps.IsActive)));
+                         && (programId == null || si.ProgramId == programId.Value));
 
         return await query
             .Include(si => si.Semester)

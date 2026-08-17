@@ -52,6 +52,17 @@
                         <input asp-for="Remark" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Enter remark" />
                         <span asp-validation-for="Remark" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
+                    <div>
+                        <label asp-for="StartDate" class="text-xs sm:text-sm font-medium text-gray-700">Start Date</label>
+                        <input asp-for="StartDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" />
+                        <span asp-validation-for="StartDate" class="text-xs text-red-500 mt-1 block"></span>
+                        <p class="text-xs text-gray-400 mt-1">Semester instances will be auto-created for this period</p>
+                    </div>
+                    <div>
+                        <label asp-for="EndDate" class="text-xs sm:text-sm font-medium text-gray-700">End Date</label>
+                        <input asp-for="EndDate" type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" />
+                        <span asp-validation-for="EndDate" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
                 </div>
             </div>
 

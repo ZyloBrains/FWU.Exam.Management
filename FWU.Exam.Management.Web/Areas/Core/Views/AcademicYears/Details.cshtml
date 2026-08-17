@@ -46,6 +46,14 @@
                     <p class="mt-1 text-gray-800">@(string.IsNullOrEmpty(Model.Remark) ? "—" : Model.Remark)</p>
                 </div>
                 <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Start Date</p>
+                    <p class="mt-1 text-gray-800">@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                </div>
+                <div>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">End Date</p>
+                    <p class="mt-1 text-gray-800">@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "—")</p>
+                </div>
+                <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
                     <div class="mt-1 flex gap-3">
                         @if (Model.IsRunning)

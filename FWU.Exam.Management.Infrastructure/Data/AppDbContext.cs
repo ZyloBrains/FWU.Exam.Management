@@ -958,7 +958,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .IsUnique();
 
         builder.Entity<AcademicYear>()
-            .HasIndex(ay => ay.AcademicYearCode)
+            .HasIndex(ay => new { ay.TenantId, ay.AcademicYearCode })
             .IsUnique();
 
         builder.Entity<ExamSchedule>()
@@ -1000,7 +1000,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<SemesterInstance>()
-            .HasIndex(si => new { si.SemesterId, si.AcademicYearId })
+            .HasOne(si => si.Program)
+            .WithMany()
+            .HasForeignKey(si => si.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterInstance>()
+            .HasIndex(si => new { si.SemesterId, si.AcademicYearId, si.ProgramId })
             .IsUnique();
 
         builder.Entity<SemesterEnrollment>()

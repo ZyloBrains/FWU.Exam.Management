@@ -350,6 +350,8 @@ public class StudentDashboardServiceTests
                 IsActive = true
             });
 
+            ctx.AcademicYears.Local.Single(a => a.Id == TestData.AcademicYearId).TenantId = 2;
+
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
 
             ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });

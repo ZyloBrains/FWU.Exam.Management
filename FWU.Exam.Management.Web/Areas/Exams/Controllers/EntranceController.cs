@@ -667,6 +667,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterInstanceId = await context.SemesterInstances.AsNoTracking()
+                .Where(si => si.ProgramId == model.ProgramId && si.Semester != null)
                 .Include(si => si.Semester)
                 .OrderBy(si => si.Semester!.Number)
                 .Select(si => si.Id)
@@ -717,6 +718,7 @@ public class EntranceController(IEntranceExamApplicationService service, IExamSc
         {
             model.ExamTypeId = sl.ExamTypes.FirstOrDefault(et => et.Name == "Entrance")?.Id ?? 1;
             model.SemesterInstanceId = await context.SemesterInstances.AsNoTracking()
+                .Where(si => si.ProgramId == model.ProgramId && si.Semester != null)
                 .Include(si => si.Semester)
                 .OrderBy(si => si.Semester!.Number)
                 .Select(si => si.Id)

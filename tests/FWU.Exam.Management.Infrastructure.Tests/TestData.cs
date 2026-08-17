@@ -54,6 +54,7 @@ public static class TestData
         ctx.AcademicYears.Add(new AcademicYear
         {
             Id = AcademicYearId,
+            TenantId = TenantId,
             AcademicYearCode = "2081",
             AcademicYearName = "2081",
             AcademicYearNameNepali = "2081",
@@ -108,6 +109,7 @@ public static class TestData
                 TenantId = TenantId,
                 SemesterId = semId,
                 AcademicYearId = AcademicYearId,
+                ProgramId = ProgramId,
                 StartDate = DateTime.UtcNow.AddYears(-1),
                 EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6)
             });

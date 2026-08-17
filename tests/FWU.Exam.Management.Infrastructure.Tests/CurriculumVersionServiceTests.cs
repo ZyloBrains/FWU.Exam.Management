@@ -22,6 +22,7 @@ public class CurriculumVersionServiceTests
         ctx.AcademicYears.Add(new AcademicYear
         {
             Id = TargetAcademicYearId,
+            TenantId = TestData.TenantId,
             AcademicYearCode = "2082",
             AcademicYearName = "2082",
             AcademicYearNameNepali = "2082",

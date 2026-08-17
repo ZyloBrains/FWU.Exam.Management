@@ -122,7 +122,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
     [RequirePermission("academicyears.create")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
+    public async Task<IActionResult> Create([Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,StartDate,EndDate,IsRunning,IsActive")] AcademicYear academicYear)
     {
         if (ModelState.IsValid)
         {
@@ -152,7 +152,7 @@ public class AcademicYearsController(IAcademicYearService academicYearService) :
     [RequirePermission("academicyears.edit")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,IsRunning,IsActive")] AcademicYear academicYear)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,AcademicYearCode,AcademicYearCodeNepali,AcademicYearName,AcademicYearNameNepali,Remark,StartDate,EndDate,IsRunning,IsActive")] AcademicYear academicYear)
     {
         if (id != academicYear.Id)
         {
