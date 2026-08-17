@@ -19,9 +19,9 @@ public class PublishResultsService(
     {
         var schedule = await context.ExamSchedules
             .AsNoTracking()
-            .Include(s => s.AcademicYear)
             .Include(s => s.Program)
-            .Include(s => s.Semester)
+            .Include(s => s.SemesterInstance)
+            .ThenInclude(x => x.AcademicYear)
             .Include(s => s.ExamType)
             .Include(s => s.Level)
             .FirstOrDefaultAsync(s => s.Id == examScheduleId);
@@ -47,7 +47,7 @@ public class PublishResultsService(
         var subjectOfferings = await context.SubjectOfferings
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId)
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance.SemesterId)
             .ToListAsync();
 
         var subjectOfferingMap = subjectOfferings.ToDictionary(so => so.Id);
@@ -140,8 +140,8 @@ public class PublishResultsService(
             CollegeId = collegeId,
             CollegeName = college?.Name,
             ProgramName = schedule.Program?.ProgramName,
-            SemesterName = schedule.Semester?.Name,
-            AcademicYearName = schedule.AcademicYear?.AcademicYearName,
+            SemesterName = schedule.SemesterInstance?.Semester.Name,
+            AcademicYearName = schedule.SemesterInstance?.AcademicYear.AcademicYearName,
             Students = students,
             TotalStudents = students.Count,
             SubjectsCount = subjectOfferings.Count
@@ -159,17 +159,14 @@ public class PublishResultsService(
 
         var schedule = await context.ExamSchedules
             .AsNoTracking()
-            .Include(s => s.AcademicYear)
-            .Include(s => s.Semester)
+            .Include(s => s.SemesterInstance)
+            .ThenInclude(x => x.AcademicYear)
             .Include(s => s.ExamType)
             .Include(s => s.Level)
             .FirstOrDefaultAsync(s => s.Id == examScheduleId);
 
         if (schedule == null)
             return new PublishResultsResultDto { Success = false, Message = "Exam schedule not found." };
-
-        var yearStr = RomanNumeral(schedule.Semester!.Year);
-        var partStr = RomanNumeral(schedule.Semester.Number <= 2 ? 1 : schedule.Semester.Number <= 4 ? 2 : 3);
 
         var existingRecords = await context.ResultRecords
             .Where(r => r.ExamScheduleId == examScheduleId && r.CollegeId == collegeId)
@@ -208,13 +205,13 @@ public class PublishResultsService(
             var record = new ResultRecord
             {
                 TenantId = schedule.TenantId,
-                AcademicYearId = schedule.AcademicYearId,
+                AcademicYearId = schedule.SemesterInstance.AcademicYearId,
                 LevelId = schedule.LevelId,
                 ProgramsId = schedule.ProgramId,
                 ExamTypeId = schedule.ExamTypeId,
                 CollegeId = collegeId,
-                Year = yearStr,
-                Part = partStr,
+                Year = "0",
+                Part = "0",
                 RegistrationNumber = student.RegistrationNumber,
                 SymbolNumber = student.SymbolNumber ?? "",
                 DateOfBirthBs = student.DateOfBirthBs ?? "",

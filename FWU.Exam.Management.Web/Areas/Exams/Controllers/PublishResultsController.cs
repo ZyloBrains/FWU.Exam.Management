@@ -22,9 +22,9 @@ public class PublishResultsController(
     {
         var schedule = await context.ExamSchedules
             .AsNoTracking()
-            .Include(s => s.AcademicYear)
+            .Include(s => s.SemesterInstance)
+            .ThenInclude(s => s.AcademicYear)
             .Include(s => s.Program)
-            .Include(s => s.Semester)
             .Include(s => s.ExamType)
             .FirstOrDefaultAsync(s => s.Id == examScheduleId);
 
@@ -45,8 +45,8 @@ public class PublishResultsController(
         ViewBag.ExamScheduleId = examScheduleId;
         ViewBag.ScheduleName = schedule.ExamScheduleName;
         ViewBag.ProgramName = schedule.Program?.ProgramName;
-        ViewBag.SemesterName = schedule.Semester?.Name;
-        ViewBag.AcademicYearName = schedule.AcademicYear?.AcademicYearName;
+        ViewBag.SemesterName = schedule.SemesterInstance?.Semester.Name;
+        ViewBag.AcademicYearName = schedule.SemesterInstance.AcademicYear?.AcademicYearName;
         ViewBag.ExamTypeName = schedule.ExamType?.Name;
 
         if (!collegeId.HasValue)

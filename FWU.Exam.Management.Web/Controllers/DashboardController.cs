@@ -63,7 +63,7 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         {
             vm.ExamSchedules = await context.ExamSchedules
                 .Include(es => es.Program).ThenInclude(p => p!.CollegePrograms)
-                .Include(es => es.Semester)
+                .Include(es => es.SemesterInstance)
                 .Where(es => es.IsActive && es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value))
                 .OrderByDescending(es => es.StartDate)
                 .Take(10)
