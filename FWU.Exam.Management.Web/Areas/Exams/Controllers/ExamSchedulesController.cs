@@ -3,6 +3,7 @@ using ClosedXML.Excel;
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -170,17 +171,26 @@ public class ExamSchedulesController(
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
             context, examSchedule.ProgramId, examSchedule.AcademicYearId);
 
-        var offeringQuery = context.SubjectOfferings
+        var offeringBase = context.SubjectOfferings
             .Where(so => so.ProgramId == examSchedule.ProgramId
                       && so.Semester != null && so.Semester.Number == scheduleSemesterNumber);
-        if (curriculumVersionId.HasValue)
-            offeringQuery = offeringQuery.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
 
-        var subjectOfferings = await offeringQuery
-            .Include(so => so.SubjectCatalog)
-            .OrderBy(so => so.DisplayOrder)
-            .ThenBy(so => so.Id)
-            .ToListAsync();
+        List<SubjectOffering> subjectOfferings;
+        if (curriculumVersionId.HasValue)
+        {
+            subjectOfferings = await offeringBase.Where(so => so.CurriculumVersionId == curriculumVersionId.Value)
+                .Include(so => so.SubjectCatalog).OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id).ToListAsync();
+            if (subjectOfferings.Count == 0)
+            {
+                subjectOfferings = await offeringBase.Where(so => so.CurriculumVersionId == null)
+                    .Include(so => so.SubjectCatalog).OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id).ToListAsync();
+            }
+        }
+        else
+        {
+            subjectOfferings = await offeringBase.Where(so => so.CurriculumVersionId == null)
+                .Include(so => so.SubjectCatalog).OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id).ToListAsync();
+        }
         ViewBag.SubjectOfferings = subjectOfferings;
         ViewBag.ExistingSlotsByOfferingId = examSlots.ToDictionary(es => es.SubjectOfferingId);
 
@@ -216,12 +226,28 @@ public class ExamSchedulesController(
         var validCurriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
             context, schedule.ProgramId, schedule.AcademicYearId);
 
-        var validOfferingQuery = context.SubjectOfferings
+        var validOfferingBase = context.SubjectOfferings
             .Where(so => so.ProgramId == schedule.ProgramId
                       && so.Semester != null && so.Semester.Number == validSemesterNumber);
+        HashSet<int> validOfferingIds;
         if (validCurriculumVersionId.HasValue)
-            validOfferingQuery = validOfferingQuery.Where(so => so.CurriculumVersionId == validCurriculumVersionId.Value);
-        var validOfferingIds = await validOfferingQuery.Select(so => so.Id).ToHashSetAsync();
+        {
+            validOfferingIds = await validOfferingBase
+                .Where(so => so.CurriculumVersionId == validCurriculumVersionId.Value)
+                .Select(so => so.Id).ToHashSetAsync();
+            if (validOfferingIds.Count == 0)
+            {
+                validOfferingIds = await validOfferingBase
+                    .Where(so => so.CurriculumVersionId == null)
+                    .Select(so => so.Id).ToHashSetAsync();
+            }
+        }
+        else
+        {
+            validOfferingIds = await validOfferingBase
+                .Where(so => so.CurriculumVersionId == null)
+                .Select(so => so.Id).ToHashSetAsync();
+        }
 
         var existingSlots = await context.ExamSlots
             .Where(es => es.ExamScheduleId == examScheduleId)

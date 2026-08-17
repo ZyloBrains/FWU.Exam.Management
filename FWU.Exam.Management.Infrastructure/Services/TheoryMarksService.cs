@@ -168,23 +168,28 @@ public class TheoryMarksService(
             .Where(so => so.ProgramId == schedule.ProgramId
                       && so.Semester != null && so.Semester.Number == semesterNumber
                       && so.HasTheory);
-        if (curriculumVersionId.HasValue)
-            query = query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
 
-        return await query
-            .OrderBy(so => so.DisplayOrder)
-            .ThenBy(so => so.Id)
-            .Select(so => new SubjectOptionDto
-            {
-                Id = so.Id,
-                Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
-                Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
-                HasTheory = so.HasTheory,
-                HasPractical = so.HasPractical,
-                TheoryFullMarks = so.TheoryFullMarks,
-                InternalTheoryFullMarks = so.InternalTheoryFullMarks
-            })
-            .ToListAsync();
+        Func<IQueryable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>, IQueryable<SubjectOptionDto>> project = q =>
+            q.OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+             .Select(so => new SubjectOptionDto
+             {
+                 Id = so.Id,
+                 Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
+                 Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
+                 HasTheory = so.HasTheory,
+                 HasPractical = so.HasPractical,
+                 TheoryFullMarks = so.TheoryFullMarks,
+                 InternalTheoryFullMarks = so.InternalTheoryFullMarks
+             });
+
+        if (curriculumVersionId.HasValue)
+        {
+            var versioned = await project(query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value))
+                .ToListAsync();
+            if (versioned.Count > 0) return versioned;
+        }
+
+        return await project(query.Where(so => so.CurriculumVersionId == null)).ToListAsync();
     }
 
     public async Task<SubjectDetailDto> GetSubjectDetailAsync(int subjectOfferingId, int collegeId)
@@ -236,7 +241,7 @@ public class TheoryMarksService(
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId
                 && so.ProgramId == schedule.ProgramId
                 && so.Semester != null && so.Semester.Number == semesterNumber
-                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value))
+                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var examRegistrations = await context.ExamRegistrations
@@ -305,7 +310,7 @@ public class TheoryMarksService(
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
                 && so.ProgramId == schedule.ProgramId
                 && so.Semester != null && so.Semester.Number == semesterNumber
-                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value))
+                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var validRegistrationIds = await context.ExamRegistrations

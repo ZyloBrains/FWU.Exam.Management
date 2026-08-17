@@ -148,11 +148,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                       && so.Semester != null && so.Semester.Number == semesterNumber);
 
         if (curriculumVersionId.HasValue)
-            query = query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+        {
+            var versioned = await query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value)
+                .OrderBy(so => so.DisplayOrder).ToListAsync();
+            if (versioned.Count > 0) return versioned;
+        }
 
-        return await query
-            .OrderBy(so => so.DisplayOrder)
-            .ToListAsync();
+        return await query.Where(so => so.CurriculumVersionId == null)
+            .OrderBy(so => so.DisplayOrder).ToListAsync();
     }
 
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForStudentAsync(string userId, int programId)
@@ -170,11 +173,11 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         if (academicYearId == null && admission == null)
         {
             var user = await context.Users.FindAsync(userId);
-            if (user?.Email != null)
+            if (user?.UserName != null)
             {
                 var registration = await context.StudentRegistrations!
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(sr => (sr.Email != null && sr.Email == user.Email) || sr.RegistrationNumber == user.Email);
+                    .FirstOrDefaultAsync(sr => sr.RegistrationNumber == user.UserName);
                 if (registration != null && registration.AcademicYearId != 0)
                 {
                     academicYearId = registration.AcademicYearId;
@@ -208,31 +211,43 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                     .Where(so => so.Semester != null && so.Semester.Number == enrolledSemesterNumber);
 
                 if (curriculumVersionId.HasValue)
-                    enrolledQuery = enrolledQuery.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+                {
+                    var versioned = await enrolledQuery.Where(so => so.CurriculumVersionId == curriculumVersionId.Value)
+                        .OrderBy(so => so.DisplayOrder).ToListAsync();
+                    if (versioned.Count > 0) return versioned;
+                }
 
-                return await enrolledQuery
-                    .OrderBy(so => so.DisplayOrder)
-                    .ToListAsync();
+                return await enrolledQuery.Where(so => so.CurriculumVersionId == null)
+                    .OrderBy(so => so.DisplayOrder).ToListAsync();
             }
         }
 
         if (!academicYearId.HasValue) return new List<SubjectOffering>();
 
         var fallbackQuery = query.Where(so => so.Semester != null);
+
         if (curriculumVersionId.HasValue)
-            fallbackQuery = fallbackQuery.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+        {
+            var versionedFallback = fallbackQuery.Where(so => so.CurriculumVersionId == curriculumVersionId.Value);
+            var firstSemVer = await versionedFallback
+                .Select(so => (int?)so.Semester!.Number).OrderBy(n => n).FirstOrDefaultAsync();
+            if (firstSemVer.HasValue)
+            {
+                return await versionedFallback
+                    .Where(so => so.Semester!.Number == firstSemVer.Value)
+                    .OrderBy(so => so.DisplayOrder).ToListAsync();
+            }
+        }
 
-        var firstSemesterNumber = await fallbackQuery
-            .Select(so => (int?)so.Semester!.Number)
-            .OrderBy(n => n)
-            .FirstOrDefaultAsync();
+        var firstSemNull = await fallbackQuery
+            .Where(so => so.CurriculumVersionId == null)
+            .Select(so => (int?)so.Semester!.Number).OrderBy(n => n).FirstOrDefaultAsync();
 
-        if (!firstSemesterNumber.HasValue) return new List<SubjectOffering>();
+        if (!firstSemNull.HasValue) return new List<SubjectOffering>();
 
         return await fallbackQuery
-            .Where(so => so.Semester != null && so.Semester.Number == firstSemesterNumber.Value)
-            .OrderBy(so => so.DisplayOrder)
-            .ToListAsync();
+            .Where(so => so.CurriculumVersionId == null && so.Semester!.Number == firstSemNull.Value)
+            .OrderBy(so => so.DisplayOrder).ToListAsync();
     }
 
     public async Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId)
@@ -659,23 +674,19 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .ToList();
     }
 
-    private async Task<StudentAdmission?> ResolveStudentAdmissionAsync(string userId, string? email = null)
+    private async Task<StudentAdmission?> ResolveStudentAdmissionAsync(string userId)
     {
         var admission = await context.StudentAdmissions!
             .AsNoTracking()
             .FirstOrDefaultAsync(sa => sa.AppUserId == userId);
         if (admission != null) return admission;
 
-        if (string.IsNullOrEmpty(email))
-        {
-            var user = await context.Users.FindAsync(userId);
-            email = user?.Email;
-        }
-        if (string.IsNullOrEmpty(email)) return null;
+        var user = await context.Users.FindAsync(userId);
+        if (user?.UserName == null) return null;
 
         var sr = await context.StudentRegistrations!
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Email != null && s.Email == email);
+            .FirstOrDefaultAsync(s => s.RegistrationNumber == user.UserName);
         if (sr == null) return null;
 
         if (sr.StudentAdmissionId.HasValue)
