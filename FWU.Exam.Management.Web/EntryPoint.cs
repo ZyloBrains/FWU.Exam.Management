@@ -267,6 +267,9 @@ public partial class EntryPoint
             await RunSeederAsync(services, AcademicYearSeeder.SeedAcademicYearsAsync);
             await RunSeederAsync(services, FacultySeeder.SeedFacultiesAsync);
             await RunSeederAsync(services, ProgramSeeder.SeedProgramsAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedSemestersAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedProgramSemestersAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedSemesterInstancesAsync);
             await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
             await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
             await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
