@@ -356,18 +356,69 @@
 @section Scripts {
     <script>
         $(function () {
+            var storageKey = 'batchEnroll_selectedIds';
+
+            function getStoredIds() {
+                try { return JSON.parse(sessionStorage.getItem(storageKey)) || []; }
+                catch (e) { return []; }
+            }
+
+            function saveStoredIds(ids) {
+                sessionStorage.setItem(storageKey, JSON.stringify(ids));
+            }
+
+            function syncStoredIds() {
+                var stored = getStoredIds();
+                $('input[name="admissionIds"]:visible').each(function () {
+                    var val = String($(this).val());
+                    if ($(this).is(':checked')) {
+                        if (stored.indexOf(val) === -1) stored.push(val);
+                    } else {
+                        stored = stored.filter(function (id) { return id !== val; });
+                    }
+                });
+                saveStoredIds(stored);
+            }
+
+            function restoreCheckboxes() {
+                var stored = getStoredIds();
+                $('input[name="admissionIds"]:visible').each(function () {
+                    var val = String($(this).val());
+                    if (stored.indexOf(val) !== -1 && !$(this).prop('disabled')) {
+                        $(this).prop('checked', true);
+                    }
+                });
+            }
+
             function updateSelectionCount() {
-                var n = $('input[name="admissionIds"]:checked:not(:disabled):visible').length;
-                $('#selectedCount').text(n);
+                var stored = getStoredIds();
+                $('#selectedCount').text(stored.length);
             }
 
             $('#selectAll').change(function () {
                 $('input[name="admissionIds"]:not(:disabled):visible').prop('checked', this.checked);
+                syncStoredIds();
                 updateSelectionCount();
             });
 
-            $('input[name="admissionIds"]:visible').change(updateSelectionCount);
+            $('input[name="admissionIds"]:visible').change(function () {
+                syncStoredIds();
+                updateSelectionCount();
+            });
+
+            restoreCheckboxes();
             updateSelectionCount();
+
+            $('form[method="post"]').on('submit', function () {
+                var $form = $(this);
+                var stored = getStoredIds();
+                stored.forEach(function (id) {
+                    if ($('input[name="admissionIds"][value="' + id + '"]').length === 0) {
+                        $('<input type="hidden" name="admissionIds" value="' + id + '" />').appendTo($form);
+                    }
+                });
+                sessionStorage.removeItem(storageKey);
+            });
         });
     </script>
 }
