@@ -303,6 +303,10 @@ public class ExamSchedulesController(
 
     private void PopulateDropdowns(ExamScheduleSelectListsDto selectLists, ExamSchedule? examSchedule = null)
     {
+        int? academicYearId = examSchedule?.SemesterInstanceId > 0
+            ? examSchedule.SemesterInstance?.AcademicYearId
+            : null;
+        ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", academicYearId);
         ViewData["ExamTypeId"] = new SelectList(selectLists.ExamTypes, "Id", "Name", examSchedule?.ExamTypeId);
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", examSchedule?.ProgramId);
         ViewData["SemesterInstanceId"] = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text", examSchedule?.SemesterInstanceId);
@@ -313,6 +317,13 @@ public class ExamSchedulesController(
     {
         var semesters = await examScheduleService.GetSemestersByAcademicYearAsync(academicYearId, programId);
         return Json(semesters);
+    }
+
+    [HttpGet]
+    public async Task<JsonResult> GetProgramsByAcademicYear(int academicYearId)
+    {
+        var programs = await examScheduleService.GetProgramsByAcademicYearAsync(academicYearId);
+        return Json(programs);
     }
 
     [HttpGet]

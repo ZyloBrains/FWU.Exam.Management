@@ -209,6 +209,8 @@ public class SubjectOfferingService : ISubjectOfferingService
         var groups = await _context.SubjectOfferings
             .AsNoTracking()
             .ApplyScope(_userContext)
+            .Where(so => so.CurriculumVersion != null
+                && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId)
             .GroupBy(so => so.ProgramId)
             .Select(g => new
             {
@@ -253,7 +255,11 @@ public class SubjectOfferingService : ISubjectOfferingService
                 SemesterId = s.Id,
                 SemesterNumber = s.Number,
                 SemesterName = s.Name!,
-                SubjectCount = _context.SubjectOfferings.Count(so => so.ProgramId == programId && so.SemesterId == s.Id)
+                SubjectCount = _context.SubjectOfferings.Count(so =>
+                    so.ProgramId == programId
+                    && so.SemesterId == s.Id
+                    && so.CurriculumVersion != null
+                    && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId)
             })
             .ToListAsync();
     }
@@ -278,7 +284,11 @@ public class SubjectOfferingService : ISubjectOfferingService
                 SemesterId = s.Id,
                 SemesterNumber = s.Number,
                 SemesterName = s.Name!,
-                SubjectCount = _context.SubjectOfferings.Count(so => so.ProgramId == programId && so.SemesterId == s.Id)
+                SubjectCount = _context.SubjectOfferings.Count(so =>
+                    so.ProgramId == programId
+                    && so.SemesterId == s.Id
+                    && so.CurriculumVersion != null
+                    && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId)
             })
             .ToListAsync();
     }
@@ -425,9 +435,13 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(so => so.SubjectCatalog)
             .Include(so => so.Program)
             .Include(so => so.Semester)
+            .Include(so => so.CurriculumVersion)
             .AsNoTracking()
             .ApplyScope(_userContext);
 
+        if (academicYearId is > 0)
+            query = query.Where(so => so.CurriculumVersion != null
+                && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId.Value);
         if (programId is > 0)
             query = query.Where(so => so.ProgramId == programId.Value);
         if (semesterId is > 0)

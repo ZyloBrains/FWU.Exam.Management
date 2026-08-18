@@ -380,6 +380,18 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .ToListAsync();
     }
 
+    public async Task<List<SelectOption>> GetProgramsByAcademicYearAsync(int academicYearId)
+    {
+        return await context.SemesterInstances
+            .AsNoTracking()
+            .Where(si => si.AcademicYearId == academicYearId)
+            .Select(si => new { si.ProgramId, si.Program!.ProgramName })
+            .Distinct()
+            .OrderBy(p => p.ProgramName)
+            .Select(p => new SelectOption { Id = p.ProgramId, Name = p.ProgramName })
+            .ToListAsync();
+    }
+
     public async Task<ExamScheduleDetailsDto?> GetExamScheduleDetailsAsync(int id)
     {
         var schedule = await GetExamScheduleByIdAsync(id);
