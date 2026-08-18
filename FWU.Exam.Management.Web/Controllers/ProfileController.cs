@@ -80,7 +80,7 @@ public class ProfileController(
             if (errors.Count > 0)
                 return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
 
-            user.FullName = fullName.Trim();
+            user.FullName = fullName!.Trim();
             user.Designation = string.IsNullOrWhiteSpace(designation) ? null : designation.Trim();
         }
 
