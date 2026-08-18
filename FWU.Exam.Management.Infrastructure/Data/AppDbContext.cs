@@ -540,7 +540,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         builder.Entity<SubjectOffering>()
             .HasIndex(so => new { so.CurriculumVersionId, so.SubjectCatalogId, so.ProgramId, so.SemesterId })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[IsActive] = 1");
 
         builder.Entity<CurriculumVersion>()
             .HasOne(cv => cv.Program)

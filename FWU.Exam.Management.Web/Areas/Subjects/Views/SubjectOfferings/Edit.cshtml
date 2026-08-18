@@ -69,6 +69,10 @@
                     </div>
                     <div class="flex items-center gap-6 pt-6">
                         <div class="flex items-center gap-2">
+                            <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
+                            <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
+                        </div>
+                        <div class="flex items-center gap-2">
                             <input asp-for="IsCompulsory" type="checkbox" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
                             <label asp-for="IsCompulsory" class="text-xs sm:text-sm font-medium text-gray-700">Compulsory</label>
                         </div>

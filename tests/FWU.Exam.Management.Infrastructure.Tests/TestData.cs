@@ -201,6 +201,7 @@ public static class TestData
         SubjectCatalogId = 1,
         ProgramId = programId,
         SemesterId = semesterId,
+        IsActive = true,
         IsCompulsory = true,
         DisplayOrder = 1,
         HasTheory = true,

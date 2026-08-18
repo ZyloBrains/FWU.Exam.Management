@@ -30,6 +30,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
+            .Where(s => s.IsActive)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
 
@@ -78,6 +79,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(s => s.SubjectCatalog)
             .Include(s => s.Program)
             .Include(s => s.Semester)
+            .Where(s => s.IsActive)
             .AsNoTracking();
         query = query.ApplyScope(_userContext);
 
@@ -125,12 +127,12 @@ public class SubjectOfferingService : ISubjectOfferingService
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteSubjectOfferingAsync(int id)
+    public async Task ArchiveSubjectOfferingAsync(int id)
     {
         var subjectOffering = await _context.SubjectOfferings.FindAsync(id);
         if (subjectOffering != null)
         {
-            _context.SubjectOfferings.Remove(subjectOffering);
+            subjectOffering.IsActive = false;
             await _context.SaveChangesAsync();
         }
     }
@@ -150,7 +152,8 @@ public class SubjectOfferingService : ISubjectOfferingService
     public async Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null)
     {
         return await _context.SubjectOfferings
-            .Where(so => so.ProgramId == programId
+            .Where(so => so.IsActive
+                         && so.ProgramId == programId
                          && so.SemesterId == semesterId
                          && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId))
             .Select(so => so.SubjectCatalogId)
@@ -161,7 +164,8 @@ public class SubjectOfferingService : ISubjectOfferingService
     {
         return await _context.SubjectOfferings
             .AsNoTracking()
-            .Where(so => so.ProgramId == programId
+            .Where(so => so.IsActive
+                         && so.ProgramId == programId
                          && so.CurriculumVersionId == curriculumVersionId)
             .GroupBy(so => so.SemesterId)
             .Select(g => new
@@ -209,7 +213,8 @@ public class SubjectOfferingService : ISubjectOfferingService
         var groups = await _context.SubjectOfferings
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.CurriculumVersion != null
+            .Where(so => so.IsActive
+                && so.CurriculumVersion != null
                 && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId)
             .GroupBy(so => so.ProgramId)
             .Select(g => new
@@ -256,7 +261,8 @@ public class SubjectOfferingService : ISubjectOfferingService
                 SemesterNumber = s.Number,
                 SemesterName = s.Name!,
                 SubjectCount = _context.SubjectOfferings.Count(so =>
-                    so.ProgramId == programId
+                    so.IsActive
+                    && so.ProgramId == programId
                     && so.SemesterId == s.Id
                     && so.CurriculumVersion != null
                     && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId)
@@ -285,7 +291,8 @@ public class SubjectOfferingService : ISubjectOfferingService
                 SemesterNumber = s.Number,
                 SemesterName = s.Name!,
                 SubjectCount = _context.SubjectOfferings.Count(so =>
-                    so.ProgramId == programId
+                    so.IsActive
+                    && so.ProgramId == programId
                     && so.SemesterId == s.Id
                     && so.CurriculumVersion != null
                     && so.CurriculumVersion.EffectiveAcademicYearId == academicYearId)
@@ -316,14 +323,6 @@ public class SubjectOfferingService : ISubjectOfferingService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<SubjectOffering>> GetSubjectOfferingsForDeletionAsync(List<int> ids)
-    {
-        if (ids == null || ids.Count == 0) return new List<SubjectOffering>();
-        return await _context.SubjectOfferings
-            .Where(so => ids.Contains(so.Id))
-            .ToListAsync();
-    }
-
     public async Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null)
     {
         var query = _context.SubjectOfferings
@@ -332,7 +331,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(so => so.Semester)
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.ProgramId == programId);
+            .Where(so => so.IsActive && so.ProgramId == programId);
 
         if (semesterId.HasValue)
             query = query.Where(so => so.SemesterId == semesterId.Value);
@@ -415,7 +414,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(so => so.Semester)
             .AsNoTracking()
             .ApplyScope(_userContext)
-            .Where(so => so.CurriculumVersionId == curriculumVersionId)
+            .Where(so => so.IsActive && so.CurriculumVersionId == curriculumVersionId)
             .OrderBy(so => so.Semester != null ? so.Semester.Number : 0)
             .ThenBy(so => so.DisplayOrder)
             .ThenBy(so => so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "")
@@ -436,6 +435,7 @@ public class SubjectOfferingService : ISubjectOfferingService
             .Include(so => so.Program)
             .Include(so => so.Semester)
             .Include(so => so.CurriculumVersion)
+            .Where(so => so.IsActive)
             .AsNoTracking()
             .ApplyScope(_userContext);
 

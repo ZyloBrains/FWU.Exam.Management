@@ -423,7 +423,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering, int academicYearId)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsActive,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering, int academicYearId)
     {
         if (id != subjectOffering.Id) return NotFound();
 
@@ -504,44 +504,34 @@ public class SubjectOfferingsController : Controller
     }
 
     [RequirePermission("subjectofferings.delete")]
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var subjectOffering = await _subjectOfferingService.GetSubjectOfferingByIdAsync(id.Value);
-        if (subjectOffering == null) return NotFound();
-
-        return View(subjectOffering);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    [RequirePermission("subjectofferings.delete")]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> Archive(int id)
     {
         try
         {
-            await _subjectOfferingService.DeleteSubjectOfferingAsync(id);
-            TempData["SuccessMessage"] = "Subject offering deleted successfully!";
-            return RedirectToAction(nameof(Index));
-        }
-        catch (DbUpdateException)
-        {
-            TempData["ErrorMessage"] = "Cannot delete this record because it is referenced by other records. Please remove or reassign dependent records first.";
-            return RedirectToAction(nameof(Index));
+            await _subjectOfferingService.ArchiveSubjectOfferingAsync(id);
+            TempData["SuccessMessage"] = "Subject offering archived successfully!";
         }
         catch (Exception ex)
         {
-            TempData["ErrorMessage"] = $"An error occurred while deleting: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            TempData["ErrorMessage"] = $"An error occurred while archiving: {ex.Message}";
         }
+        return RedirectToAction(nameof(Index));
     }
-        [RequirePermission("subjectofferings.delete")]
+
+    [RequirePermission("subjectofferings.delete")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteAjax(int id)
+    public async Task<IActionResult> ArchiveAjax(int id)
     {
-        try { await _subjectOfferingService.DeleteSubjectOfferingAsync(id); return Json(new { success = true, message = "Subject offering deleted successfully!" }); } catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
+        try
+        {
+            await _subjectOfferingService.ArchiveSubjectOfferingAsync(id);
+            return Json(new { success = true, message = "Subject offering archived successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 
 }

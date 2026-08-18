@@ -82,4 +82,20 @@ public class SubjectOfferingServiceTests
 
         Assert.False(result);
     }
+
+    [Fact]
+    public async Task ArchiveSubjectOfferingAsync_SetsIsActiveToFalse()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+        });
+
+        var service = CreateService(db);
+        await service.ArchiveSubjectOfferingAsync(OfferingId);
+
+        var offering = await db.Context.SubjectOfferings.FindAsync(OfferingId);
+        Assert.NotNull(offering);
+        Assert.False(offering.IsActive);
+    }
 }

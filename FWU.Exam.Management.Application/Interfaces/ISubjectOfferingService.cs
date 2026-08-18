@@ -15,7 +15,7 @@ public interface ISubjectOfferingService
     Task CreateSubjectOfferingAsync(SubjectOffering subjectOffering);
     Task CreateSubjectOfferingsAsync(List<SubjectOffering> subjectOfferings);
     Task UpdateSubjectOfferingAsync(SubjectOffering subjectOffering);
-    Task DeleteSubjectOfferingAsync(int id);
+    Task ArchiveSubjectOfferingAsync(int id);
     Task<bool> SubjectOfferingExistsAsync(int id);
     Task<bool> IsSubjectOfferingReferencedAsync(int id);
     Task<List<int>> GetExistingSubjectCatalogIdsAsync(int programId, int semesterId, int? curriculumVersionId = null);
@@ -26,7 +26,6 @@ public interface ISubjectOfferingService
     Task<List<SemesterOfferingSummary>> GetSemestersByProgramAsync(int programId, int academicYearId);
     Task<List<SemesterOfferingSummary>> GetSemestersForOfferingAsync(int programId, int academicYearId);
     Task EnsureSemesterAssignedToProgramAsync(int programId, int semesterId);
-    Task<List<SubjectOffering>> GetSubjectOfferingsForDeletionAsync(List<int> ids);
     Task<List<SubjectOffering>> GetSubjectOfferingsAsync(int programId, int? semesterId = null);
     Task<(List<SubjectCatalog> SubjectCatalogs, List<Program> Programs, List<Semester> Semesters)> GetSelectListsAsync(int? subjectCatalogId = null, int? programId = null, int? semesterId = null);
     Task<bool> IsSemesterAssignedToProgramAsync(int programId, int semesterId);
