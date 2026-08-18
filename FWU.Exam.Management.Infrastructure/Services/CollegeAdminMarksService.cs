@@ -15,7 +15,6 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class CollegeAdminMarksService(
     AppDbContext context,
     IUserContext userContext,
-    ICollegeAdminSubjectAssignmentService assignmentService,
     IGradeCalculationService gradeCalculationService,
     IAuditLogWriter auditLogWriter) : ICollegeAdminMarksService
 {
