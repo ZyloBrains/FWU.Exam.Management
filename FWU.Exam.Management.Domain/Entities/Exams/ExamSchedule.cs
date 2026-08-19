@@ -73,12 +73,6 @@ public class ExamSchedule : ITenantScoped
     public string? ExamScheduleCode { get; set; }
 
     [Range(1, int.MaxValue)]
-    [Display(Name = "Batch Year")]
-    public int AcademicYearId { get; set; }
-
-    public virtual AcademicYear? AcademicYear { get; set; }
-
-    [Range(1, int.MaxValue)]
     [Display(Name = "Program")]
     public int ProgramId { get; set; }
 
@@ -86,9 +80,9 @@ public class ExamSchedule : ITenantScoped
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Semester")]
-    public int SemesterId { get; set; }
+    public int SemesterInstanceId { get; set; }
 
-    public virtual Semester? Semester { get; set; }
+    public virtual SemesterInstance? SemesterInstance { get; set; }
 
     [Range(1, int.MaxValue)]
     [Display(Name = "Exam Type")]

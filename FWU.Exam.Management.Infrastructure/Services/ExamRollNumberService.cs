@@ -11,14 +11,15 @@ public class ExamRollNumberService(AppDbContext context) : IExamRollNumberServic
     {
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
-            .Include(s => s.AcademicYear)
+            .Include(s => s.SemesterInstance)
+                .ThenInclude(si => si!.AcademicYear)
             .FirstOrDefaultAsync(s => s.Id == examScheduleId);
 
-        if (schedule?.AcademicYear == null)
+        if (schedule?.SemesterInstance?.AcademicYear == null)
             throw new InvalidOperationException("Exam schedule or academic year not found.");
 
-        var academicYearBs = schedule.AcademicYear.AcademicYearCodeNepali
-            ?? schedule.AcademicYear.AcademicYearCode
+        var academicYearBs = schedule.SemesterInstance.AcademicYear.AcademicYearCodeNepali
+            ?? schedule.SemesterInstance.AcademicYear.AcademicYearCode
             ?? DateTime.UtcNow.Year.ToString();
 
         var setup = await context.ExamRollNumberSetup!

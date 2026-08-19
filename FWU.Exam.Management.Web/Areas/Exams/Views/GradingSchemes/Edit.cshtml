@@ -45,6 +45,13 @@
                         <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
+                        <label asp-for="GradeGroupId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Grade Group</label>
+                        <select asp-for="GradeGroupId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.GradeGroupId">
+                            <option value="">-- Select Grade Group (optional) --</option>
+                        </select>
+                        <span asp-validation-for="GradeGroupId" class="text-xs text-red-500 mt-1 block"></span>
+                    </div>
+                    <div>
                         <label asp-for="Description" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
                         <textarea asp-for="Description" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                         <span asp-validation-for="Description" class="text-xs text-red-500 mt-1 block"></span>

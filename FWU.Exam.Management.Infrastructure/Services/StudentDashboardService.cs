@@ -63,14 +63,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
     public async Task<List<ExamSchedule>> GetExamSchedulesForStudentAsync(StudentRegistration student, string userId)
     {
-        var enrolledSemesterIds = await context.SemesterEnrollments!
+        var enrolledSemesterInstanceIds = await context.SemesterEnrollments!
             .AsNoTracking()
             .Where(se => se.StudentAdmissionId == student.StudentAdmissionId)
-            .Select(se => se.SemesterId)
+            .Select(se => (int?)se.SemesterInstanceId)
             .Distinct()
             .ToListAsync();
 
-        if (enrolledSemesterIds.Count == 0) return [];
+        if (enrolledSemesterInstanceIds.Count == 0) return [];
 
         var query = context.ExamSchedules!
             .AsNoTracking()
@@ -78,11 +78,11 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(es => es.ExamType)
             .Include(es => es.Program)
             .Include(es => es.Level)
-            .Include(es => es.Semester)
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Where(es => es.IsActive
                       && es.ProgramId == student.ProgramId
-                      && enrolledSemesterIds.Contains(es.SemesterId)
+                      && enrolledSemesterInstanceIds.Contains(es.SemesterInstanceId)
                       && es.ExamType!.Name != "Entrance");
 
         if (student.LevelId != 0)
@@ -112,7 +112,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
             if (isSupplementary)
             {
-                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterId, student.ProgramId ?? 0);
+                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterInstance!.SemesterId, student.ProgramId ?? 0);
                 if (!hasFailed)
                     continue;
             }
@@ -131,11 +131,17 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         if (schedule == null) return new List<SubjectOffering>();
 
+        var semesterId = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => si.Id == schedule.SemesterInstanceId)
+            .Select(si => si.SemesterId)
+            .FirstOrDefaultAsync();
+
         var query = context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .ThenInclude(sc => sc!.SubjectType)
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterId);
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == semesterId);
 
         return await query
             .OrderBy(so => so.DisplayOrder)
@@ -168,7 +174,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                           && se.EnrollmentStatus == StudentEnrollmentStatus.Active
                           && se.DropDate == null)
                 .OrderByDescending(se => se.EnrolledDate)
-                .Select(se => (int?)se.SemesterId)
+                .Select(se => (int?)se.SemesterInstance!.SemesterId)
                 .FirstOrDefaultAsync();
 
             if (enrolledSemesterId.HasValue)
@@ -205,7 +211,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
         if (!academicYearId.HasValue) return new List<SubjectOffering>();
 
-        query = query.Where(so => so.Semester != null && so.Semester.AcademicYearId == academicYearId.Value);
+        var programSemesterIds = await context.ProgramSemesters
+            .AsNoTracking()
+            .Where(ps => ps.ProgramId == programId && ps.IsActive)
+            .Select(ps => ps.SemesterId)
+            .ToListAsync();
+
+        query = query.Where(so => programSemesterIds.Contains(so.SemesterId));
 
         var firstSemesterNumber = await query
             .Where(so => so.Semester != null)
@@ -274,6 +286,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Include(rr => rr.AcademicYear)
             .Include(rr => rr.Program)
+                .ThenInclude(p => p!.Faculty)
             .Include(rr => rr.ExamType)
             .Include(rr => rr.College)
             .Where(rr => rr.RegistrationNumber != null && rr.RegistrationNumber == registrationNumber)
@@ -309,9 +322,9 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(es => es.Program)
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.Level)
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
     }
 
@@ -398,7 +411,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         var schedule = await context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId);
 
         if (schedule == null)
@@ -486,7 +499,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         context.ApplicationVouchers!.Add(voucher);
         await context.SaveChangesAsync();
 
-        var academicYearId = schedule.AcademicYearId;
+        var academicYearId = schedule.SemesterInstance!.AcademicYearId;
 
         int? semesterEnrollmentId = null;
         if (admission != null)
@@ -494,7 +507,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             semesterEnrollmentId = await context.SemesterEnrollments!
                 .AsNoTracking()
                 .Where(se => se.StudentAdmissionId == admission.Id
-                          && se.SemesterId == schedule.SemesterId
+                          && se.SemesterInstanceId == schedule.SemesterInstanceId
                           && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
                 .Select(se => (int?)se.Id)
                 .FirstOrDefaultAsync();
@@ -559,7 +572,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == admission.ProgramsId
-                      && es.SemesterId != semesterId
+                      && es.SemesterInstance!.SemesterId != semesterId
                       && es.ExamType != null
                       && es.ExamType.Name != "Entrance")
             .Select(es => es.Id)
@@ -597,10 +610,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Where(se => se.StudentAdmissionId == admission.Id
                       && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
-            .OrderByDescending(se => se.Semester!.Year)
-            .ThenByDescending(se => se.Semester!.Number)
+            .OrderByDescending(se => se.SemesterInstance!.AcademicYearId)
+            .ThenByDescending(se => se.SemesterInstance!.Semester!.Number)
             .ThenByDescending(se => se.EnrolledDate)
-            .Select(se => (int?)se.SemesterId)
+            .Select(se => (int?)se.SemesterInstance!.SemesterId)
             .FirstOrDefaultAsync();
     }
 
@@ -618,7 +631,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .IgnoreQueryFilters()
             .Where(es => es.IsActive
                       && es.ProgramId == programId
-                      && es.SemesterId == semesterId)
+                      && es.SemesterInstance!.SemesterId == semesterId)
             .Select(es => es.Id)
             .ToListAsync();
 
@@ -715,11 +728,12 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return await context.ExamSchedules!
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.Level)
             .Include(es => es.ExamType)
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(es => es.Program)
+                .ThenInclude(p => p!.Faculty)
             .Where(es => ids.Contains(es.Id))
             .ToListAsync();
     }

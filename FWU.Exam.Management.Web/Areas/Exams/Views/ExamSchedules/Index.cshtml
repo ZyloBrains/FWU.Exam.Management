@@ -94,7 +94,7 @@
                             <div class="font-medium text-gray-800">@item.ExamScheduleName</div>
                             <div class="text-xs text-gray-500">@item.ExamScheduleCode</div>
                         </td>
-                        <td class="px-4 py-3 text-gray-600">@item.AcademicYear?.AcademicYearName</td>
+                        <td class="px-4 py-3 text-gray-600">@(item.SemesterInstance?.AcademicYear?.AcademicYearName ?? "-")</td>
                         <td class="px-4 py-3 text-gray-600">@item.Program?.ProgramName</td>
                         <td class="px-4 py-3 text-gray-600">@item.ExamType?.Name</td>
                         <td class="px-4 py-3 text-gray-600 text-xs">
@@ -207,7 +207,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-100 pt-3">
                         <div class="text-gray-500">Academic Year</div>
-                        <div class="text-gray-800">@(item.AcademicYear?.AcademicYearName ?? "-")</div>
+                        <div class="text-gray-800">@(item.SemesterInstance?.AcademicYear?.AcademicYearName ?? "-")</div>
                         <div class="text-gray-500">Program</div>
                         <div class="text-gray-800">@(item.Program?.ProgramName ?? "-")</div>
                         <div class="text-gray-500">Exam Type</div>

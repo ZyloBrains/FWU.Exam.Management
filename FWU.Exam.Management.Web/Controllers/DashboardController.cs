@@ -7,6 +7,7 @@ using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FWU.Exam.Management.Web.Controllers;
 
@@ -57,6 +58,16 @@ public class DashboardController(IDashboardService dashboardService, IStudentDas
         if (primaryRole == Role.Student)
         {
             await PopulateStudentData(vm, user);
+        }
+        else if (primaryRole == Role.CollegeAdmin && user.CollegeId.HasValue)
+        {
+            vm.ExamSchedules = await context.ExamSchedules
+                .Include(es => es.Program).ThenInclude(p => p!.CollegePrograms)
+                .Include(es => es.SemesterInstance)
+                .Where(es => es.IsActive && es.Program != null && es.Program.CollegePrograms!.Any(cp => cp.CollegeId == user.CollegeId.Value))
+                .OrderByDescending(es => es.StartDate)
+                .Take(10)
+                .ToListAsync();
         }
 
         return primaryRole switch

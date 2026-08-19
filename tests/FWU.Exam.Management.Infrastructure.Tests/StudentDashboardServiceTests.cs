@@ -350,6 +350,8 @@ public class StudentDashboardServiceTests
                 IsActive = true
             });
 
+            ctx.AcademicYears.Local.Single(a => a.Id == TestData.AcademicYearId).TenantId = 2;
+
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
 
             ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });
@@ -385,8 +387,8 @@ public class StudentDashboardServiceTests
         Assert.Equal(21, rr.ExamScheduleId);
         Assert.NotNull(rr.ExamSchedule);
         Assert.Equal("Schedule 21", rr.ExamSchedule!.ExamScheduleName);
-        Assert.NotNull(rr.ExamSchedule.Semester);
-        Assert.Equal(1, rr.ExamSchedule.Semester!.Year);
+        Assert.NotNull(rr.ExamSchedule.SemesterInstance?.Semester);
+        Assert.Equal(1, rr.ExamSchedule.SemesterInstance!.Semester!.Number);
     }
 
     [Fact]
@@ -413,6 +415,7 @@ public class StudentDashboardServiceTests
             ctx.SubjectCatalogs.Add(new SubjectCatalog
             {
                 Id = 7,
+                TenantId = 2,
                 SubjectCode = "SUB7",
                 SubjectName = "Subject 7",
                 SubjectTypeId = 1,

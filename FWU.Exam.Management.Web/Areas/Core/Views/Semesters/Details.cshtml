@@ -40,22 +40,6 @@
                 <p class="text-xs sm:text-sm font-medium text-gray-600">Number</p>
                 <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Number)</p>
             </div>
-            <div>
-                <p class="text-xs sm:text-sm font-medium text-gray-600">Year</p>
-                <p class="mt-1 text-gray-800">@Html.DisplayFor(model => model.Year)</p>
-            </div>
-            <div>
-                <p class="text-xs sm:text-sm font-medium text-gray-600">Start Date</p>
-                <p class="mt-1 text-gray-800">@Model.StartDate.ToString("yyyy-MM-dd")</p>
-            </div>
-            <div>
-                <p class="text-xs sm:text-sm font-medium text-gray-600">End Date</p>
-                <p class="mt-1 text-gray-800">@Model.EndDate.ToString("yyyy-MM-dd")</p>
-            </div>
-            <div>
-                <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
-                <p class="mt-1 text-gray-800">@(Model.AcademicYear?.AcademicYearName ?? "-")</p>
-            </div>
             <div class="md:col-span-2">
                 <p class="text-xs sm:text-sm font-medium text-gray-600">Remark</p>
                 <p class="mt-1 text-gray-800">@(Model.Remark ?? "-")</p>

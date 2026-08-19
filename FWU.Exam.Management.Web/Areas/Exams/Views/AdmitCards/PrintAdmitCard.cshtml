@@ -319,7 +319,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Semester</span>
-                    <span class="info-value">@(Model.ExamSchedule?.Semester?.Name ?? Model.Semester ?? "-")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.SemesterInstance?.Semester?.Name ?? Model.Semester ?? "-")</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Exam Type</span>
@@ -327,7 +327,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Year</span>
-                    <span class="info-value">@(Model.ExamSchedule?.AcademicYear?.AcademicYearCode ?? Model.Year ?? "-")</span>
+                    <span class="info-value">@(Model.ExamSchedule?.SemesterInstance?.AcademicYear?.AcademicYearCode ?? Model.Year ?? "-")</span>
                 </div>
             </div>
         </div>

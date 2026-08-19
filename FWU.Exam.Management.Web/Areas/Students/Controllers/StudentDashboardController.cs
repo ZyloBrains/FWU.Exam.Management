@@ -297,7 +297,7 @@ public class StudentDashboardController(
             forms.Add(new ExamFormViewModel
             {
                 ExamScheduleId = schedule.Id,
-                Semester = $"{schedule.Semester?.Year ?? 0} / {schedule.Semester?.Number ?? 0}",
+                Semester = $"Semester {schedule.SemesterInstance?.Semester?.Number ?? 0}",
                 ExamScheduleName = schedule.ExamScheduleName,
                 HasPaid = hasPaid,
                 HasAdmitCard = hasAdmitCard,
@@ -416,7 +416,7 @@ public class StudentDashboardController(
         var isSupplementary = schedule.ExamType?.Name == "Supplementary";
         if (isSupplementary)
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterId, programId);
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance!.SemesterId, programId);
             if (!hasFailed)
             {
                 TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
@@ -447,7 +447,7 @@ public class StudentDashboardController(
             hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterId);
+        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterInstance!.SemesterId);
         var isRegular = failedSubjectIds.Count == 0;
 
         var failedSet = new HashSet<int>(failedSubjectIds);
@@ -471,11 +471,11 @@ public class StudentDashboardController(
             ExamScheduleId = examScheduleId,
             ExamScheduleName = schedule.ExamScheduleName,
             ProgramName = schedule.Program?.ProgramName,
-            SemesterName = schedule.Semester?.Name,
+            SemesterName = schedule.SemesterInstance?.Semester?.Name,
             StudentName = user.FullName,
             RegistrationNumber = registration.RegistrationNumber,
             EndDateBs = schedule.EndDateBs,
-            AcademicYearName = schedule.AcademicYear?.AcademicYearName,
+            AcademicYearName = schedule.SemesterInstance?.AcademicYear?.AcademicYearName,
             ExamTypeName = schedule.ExamType?.Name,
             TotalExamFee = examFee,
             HasESewa = hasESewa,
@@ -1093,7 +1093,7 @@ public class StudentDashboardController(
 
         var resultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var examRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
-        var gradePointMap = await GetGradePointMapAsync();
+        var gradePointMap = await GetGradePointMapAsync(registration.ProgramId);
 
         var marksheets = new List<MarksheetViewModel>();
 
@@ -1111,12 +1111,13 @@ public class StudentDashboardController(
                 RegistrationNumber = rr.RegistrationNumber,
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
+                Faculty = rr.Program?.Faculty?.Name,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
-                Semester = rr.ExamSchedule?.Semester?.Name,
+                Semester = rr.ExamSchedule?.SemesterInstance?.Semester?.Name,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
-                College = rr.College?.Name,
+                College = registration.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
@@ -1134,17 +1135,29 @@ public class StudentDashboardController(
             if (!marksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
                 var subjects = GetMarksheetSubjects(examRegistrations, er.ExamScheduleId, gradePointMap);
+                var computedResult = !subjects.Any() ? "Pending"
+                    : subjects.Any(s => s.Status == "Fail") ? "Fail"
+                    : subjects.All(s => s.Status == "Pass") ? "Pass"
+                    : "Pending";
+                var totalCredits = subjects.Sum(s => s.CreditHours ?? 0f);
+                var totalGradePoints = subjects.Sum(s => s.GradePoint ?? 0m);
+                var gpa = totalCredits > 0 ? (totalGradePoints / (decimal)totalCredits) : (decimal?)null;
                 marksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
+                    Program = er.ExamSchedule?.Program?.ProgramName,
+                    Faculty = er.ExamSchedule?.Program?.Faculty?.Name,
+                    AcademicYear = er.ExamSchedule?.SemesterInstance?.AcademicYear?.AcademicYearName,
+                    College = registration.College?.Name,
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
-                    Semester = er.ExamSchedule?.Semester?.Name,
+                    Semester = er.ExamSchedule?.SemesterInstance?.Semester?.Name,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
                     SymbolNumber = MarksheetSymbolNumber(er),
-                    Result = "Pending",
+                    Result = computedResult,
+                    TotalGpa = gpa?.ToString("0.00"),
                     Subjects = subjects
                 });
             }
@@ -1154,7 +1167,7 @@ public class StudentDashboardController(
 
         ViewBag.StudentRegistration = registration;
 
-        return View(sorted);
+        return View("Marksheet", sorted);
     }
 
     private static string? MarksheetSymbolNumber(ExamRegistration? er)
@@ -1175,7 +1188,7 @@ public class StudentDashboardController(
 
         var allResultRecords = await dashboardService.GetResultRecordsAsync(registration.RegistrationNumber);
         var allExamRegistrations = await dashboardService.GetStudentExamRegistrationsAsync(user.Id);
-        var gradePointMap = await GetGradePointMapAsync();
+        var gradePointMap = await GetGradePointMapAsync(registration.ProgramId);
 
         var allMarksheets = new List<MarksheetViewModel>();
 
@@ -1191,15 +1204,16 @@ public class StudentDashboardController(
                 RegistrationNumber = rr.RegistrationNumber,
                 StudentName = rr.StudentName,
                 Program = rr.Program?.ProgramName,
+                Faculty = rr.Program?.Faculty?.Name,
                 ExamSchedule = rr.ExamSchedule?.ExamScheduleName,
-                Semester = rr.ExamSchedule?.Semester?.Name,
-                SemesterId = rr.ExamSchedule?.Semester?.Id,
-                SemesterYear = rr.ExamSchedule?.Semester?.Year ?? 0,
-                SemesterNumber = rr.ExamSchedule?.Semester?.Number ?? 0,
+                Semester = rr.ExamSchedule?.SemesterInstance?.Semester?.Name,
+                SemesterId = rr.ExamSchedule?.SemesterInstance?.Semester?.Id,
+                SemesterYear = rr.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
+                SemesterNumber = rr.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
                 Level = rr.ExamSchedule?.Level?.LevelName,
                 ExamType = rr.ExamType?.Name,
                 AcademicYear = rr.AcademicYear?.AcademicYearName,
-                College = rr.College?.Name,
+                College = registration.College?.Name,
                 TotalGpa = rr.Gpa,
                 Result = rr.Result,
                 TheoryGrade = rr.TheoryObtainedGrade,
@@ -1215,20 +1229,32 @@ public class StudentDashboardController(
             if (!allMarksheets.Any(m => m.ExamScheduleId == er.ExamScheduleId))
             {
                 var subjects = GetMarksheetSubjects(allExamRegistrations, er.ExamScheduleId, gradePointMap);
+                var computedResult = !subjects.Any() ? "Pending"
+                    : subjects.Any(s => s.Status == "Fail") ? "Fail"
+                    : subjects.All(s => s.Status == "Pass") ? "Pass"
+                    : "Pending";
+                var totalCredits = subjects.Sum(s => s.CreditHours ?? 0f);
+                var totalGradePoints = subjects.Sum(s => s.GradePoint ?? 0m);
+                var gpa = totalCredits > 0 ? (totalGradePoints / (decimal)totalCredits) : (decimal?)null;
                 allMarksheets.Add(new MarksheetViewModel
                 {
                     RegistrationNumber = registration.RegistrationNumber,
                     StudentName = registration.FirstName.GetFullName(registration.MiddleName, registration.LastName),
+                    Program = er.ExamSchedule?.Program?.ProgramName,
+                    Faculty = er.ExamSchedule?.Program?.Faculty?.Name,
+                    AcademicYear = er.ExamSchedule?.SemesterInstance?.AcademicYear?.AcademicYearName,
+                    College = registration.College?.Name,
                     ExamSchedule = er.ExamSchedule?.ExamScheduleName,
-                    Semester = er.ExamSchedule?.Semester?.Name,
-                    SemesterId = er.ExamSchedule?.Semester?.Id,
-                    SemesterYear = er.ExamSchedule?.Semester?.Year ?? 0,
-                    SemesterNumber = er.ExamSchedule?.Semester?.Number ?? 0,
+                    Semester = er.ExamSchedule?.SemesterInstance?.Semester?.Name,
+                    SemesterId = er.ExamSchedule?.SemesterInstance?.Semester?.Id,
+                    SemesterYear = er.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
+                    SemesterNumber = er.ExamSchedule?.SemesterInstance?.Semester?.Number ?? 0,
                     Level = er.ExamSchedule?.Level?.LevelName,
                     ExamType = er.ExamSchedule?.ExamType?.Name,
                     ExamScheduleId = er.ExamScheduleId,
                     SymbolNumber = MarksheetSymbolNumber(er),
-                    Result = "Pending",
+                    Result = computedResult,
+                    TotalGpa = gpa?.ToString("0.00"),
                     Subjects = subjects
                 });
             }
@@ -1393,6 +1419,11 @@ public class StudentDashboardController(
                     ? (creditHours.HasValue ? gradeValue.Value * creditHours.Value : gradeValue.Value)
                     : (decimal?)null;
 
+                var theoryLetter = esr.GradeLetterTheory?.Trim().ToUpperInvariant();
+                var practicalLetter = esr.GradeLetterPractical?.Trim().ToUpperInvariant();
+                var theoryGv = !string.IsNullOrEmpty(theoryLetter) && gradePointByLetter.TryGetValue(theoryLetter, out var tv) ? tv : (decimal?)null;
+                var practicalGv = !string.IsNullOrEmpty(practicalLetter) && gradePointByLetter.TryGetValue(practicalLetter, out var pv) ? pv : (decimal?)null;
+
                 return new MarksheetSubjectViewModel
                 {
                     ExamSubjectResultId = esr.Id,
@@ -1406,6 +1437,10 @@ public class StudentDashboardController(
                     Grade = gradeLetter,
                     GradeValue = gradeValue,
                     GradePoint = gradePoint,
+                    TheoryGrade = theoryLetter,
+                    TheoryGradePoint = theoryGv,
+                    PracticalGrade = practicalLetter,
+                    PracticalGradePoint = practicalGv,
                     IsPassed = hasGrade && !isFailed,
                     Status = !hasGrade ? "Pending"
                         : isSubmitted && isFailed ? "Fail"
@@ -1417,23 +1452,46 @@ public class StudentDashboardController(
             .ToList();
     }
 
-    private async Task<Dictionary<string, decimal>> GetGradePointMapAsync()
+    private async Task<Dictionary<string, decimal>> GetGradePointMapAsync(int? programId)
     {
         var map = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
-        var definitions = await context.GradingSchemes
-            .AsNoTracking()
-            .Include(gs => gs.GradeDefinitions)
-            .Where(gs => gs.IsActive)
-            .SelectMany(gs => gs.GradeDefinitions)
-            .ToListAsync();
-
-        foreach (var gd in definitions.OrderBy(gd => gd.DisplayOrder))
+        if (programId.HasValue)
         {
-            var letter = gd.GradeLetter?.Trim().ToUpperInvariant();
-            if (!string.IsNullOrEmpty(letter))
+            var scheme = await context.GradingSchemes
+                .AsNoTracking()
+                .Include(gs => gs.GradeDefinitions)
+                .Where(gs => gs.ProgramId == programId.Value && gs.IsActive)
+                .OrderByDescending(gs => gs.GradeGroupId.HasValue)
+                .ThenBy(gs => gs.Id)
+                .FirstOrDefaultAsync();
+
+            if (scheme?.GradeGroupId.HasValue == true)
             {
-                map.TryAdd(letter, gd.GradePoint);
+                var gradePoints = await context.GradePoints
+                    .AsNoTracking()
+                    .Where(gp => gp.GradeGroupId == scheme.GradeGroupId.Value)
+                    .ToListAsync();
+
+                foreach (var gp in gradePoints.OrderByDescending(gp => gp.GradePointValue))
+                {
+                    var letter = gp.Grade?.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrEmpty(letter))
+                    {
+                        map.TryAdd(letter, gp.GradePointValue);
+                    }
+                }
+            }
+            else if (scheme?.GradeDefinitions != null)
+            {
+                foreach (var gd in scheme.GradeDefinitions.OrderBy(gd => gd.DisplayOrder))
+                {
+                    var letter = gd.GradeLetter?.Trim().ToUpperInvariant();
+                    if (!string.IsNullOrEmpty(letter))
+                    {
+                        map.TryAdd(letter, gd.GradePoint);
+                    }
+                }
             }
         }
 

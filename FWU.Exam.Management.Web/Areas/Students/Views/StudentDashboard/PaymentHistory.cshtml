@@ -26,7 +26,7 @@
             @foreach (var payment in Model)
             {
                 var scheduleName = payment.ExamSchedule?.ExamScheduleName ?? "Exam Fee";
-                var semesterName = payment.ExamSchedule?.Semester?.Name ?? "";
+                var semesterName = payment.ExamSchedule?.SemesterInstance?.Semester?.Name ?? "";
                 var isPaid = payment.PaymentRequestLogStatus == 1;
                 var statusColors = isPaid
                     ? "bg-emerald-50 border-emerald-200 text-emerald-700"

@@ -1,0 +1,13 @@
+GradeGroupId,GradeGroupName,Remarks,CreatedBy,CreatedDate
+1,UG New,UG all except BA LLB,,
+2,UG Old,NULL,,
+3,UG BA.LLB New,NULL,,
+4,Graduate New,NULL,,
+5,Graduate Old,NULL,,
+6,UG AG Old,NULL,,
+7,UG BE Old,NULL,,
+8,MPhil,NULL,,
+9,UG New,From 2025,,
+10,BSC MLT,From 2024,,
+11,BPH,From 2025,,
+12,Graduate New 2081,From 2025,,

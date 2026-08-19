@@ -27,6 +27,9 @@ public class SubjectOffering : ITenantScoped
     [Display(Name = "Curriculum Version")]
     public int? CurriculumVersionId { get; set; }
 
+    [Display(Name = "Is Active")]
+    public bool IsActive { get; set; } = true;
+
     [Display(Name = "Is Compulsory")]
     public bool IsCompulsory { get; set; }
 

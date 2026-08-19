@@ -47,15 +47,21 @@
                 <h2 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 border-b pb-1">Academic Details</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="AcademicYearId" id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.AcademicYearId">
+                        <label class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Batch Year <span class="text-red-500">*</span></label>
+                        <select id="AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">-- Select Batch Year --</option>
+                            @if (ViewBag.AcademicYearId is SelectList academicYears)
+                            {
+                                foreach (var ay in academicYears)
+                                {
+                                    <option value="@ay.Value">@ay.Text</option>
+                                }
+                            }
                         </select>
-                        <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
                         <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
+                        <select asp-for="ProgramId" id="ProgramId" disabled="disabled" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
@@ -68,11 +74,11 @@
                         <span asp-validation-for="ExamTypeId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="SemesterId" id="SemesterId" disabled="disabled" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.SemesterId">
+                        <label asp-for="SemesterInstanceId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
+                        <select asp-for="SemesterInstanceId" id="SemesterInstanceId" disabled="disabled" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">-- Select Semester --</option>
                         </select>
-                        <span asp-validation-for="SemesterId" class="text-xs text-red-500 mt-1 block"></span>
+                        <span asp-validation-for="SemesterInstanceId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                 </div>
             </div>
@@ -191,47 +197,58 @@
     }
 
     <script>
-        $(function () {
-            $('.select2').select2({ width: 'resolve' });
-        });
+        function resetSelect(selectId, placeholder) {
+            var el = $(selectId);
+            if (el.data('select2')) el.select2('destroy');
+            el.empty().append('<option value="">' + placeholder + '</option>');
+            el.prop('disabled', true).select2({ width: 'resolve' });
+        }
 
-        var initialSemesterId = '@(Model?.SemesterId ?? 0)';
+        function loadPrograms(academicYearId) {
+            resetSelect('#ProgramId', '-- Select Program --');
+            resetSelect('#SemesterInstanceId', '-- Select Semester --');
 
-        function renderSemesters(academicYearId, programId, selectedId) {
-            var semesterSelect = $('#SemesterId');
+            if (!academicYearId) return;
 
-            if (semesterSelect.data('select2')) {
-                semesterSelect.select2('destroy');
-            }
-
-            semesterSelect.empty().append('<option value="">-- Select Semester --</option>');
-
-            if (!academicYearId) {
-                semesterSelect.prop('disabled', true).select2({ width: 'resolve' });
-                return;
-            }
-
-            $.get(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
-                $.each(data, function (index, item) {
-                    semesterSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+            $.getJSON(tenantUrl("/Exams/ExamSchedules/GetProgramsByAcademicYear"), { academicYearId: academicYearId }, function (data) {
+                var el = $('#ProgramId');
+                $.each(data, function (i, p) {
+                    el.append('<option value="' + p.id + '">' + p.name + '</option>');
                 });
-                if (selectedId) semesterSelect.val(selectedId);
-                semesterSelect.prop('disabled', false);
-                semesterSelect.select2({ width: 'resolve' });
+                el.prop('disabled', false).select2({ width: 'resolve' });
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            renderSemesters($(this).val(), $("#ProgramId").val());
-        });
+        function loadSemesters(academicYearId, programId) {
+            resetSelect('#SemesterInstanceId', '-- Select Semester --');
 
-        $("#ProgramId").change(function () {
-            if ($("#AcademicYearId").val()) {
-                renderSemesters($("#AcademicYearId").val(), $(this).val());
-            }
-        });
+            if (!academicYearId || !programId) return;
 
-        renderSemesters($("#AcademicYearId").val(), $("#ProgramId").val(), initialSemesterId);
+            $.getJSON(tenantUrl("/Exams/ExamSchedules/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
+                var el = $('#SemesterInstanceId');
+                $.each(data, function (i, s) {
+                    el.append('<option value="' + s.id + '">' + s.name + '</option>');
+                });
+                el.prop('disabled', false).select2({ width: 'resolve' });
+            });
+        }
+
+        $(function () {
+            $('#AcademicYearId').select2({ width: 'resolve' });
+
+            $('#AcademicYearId').on('change', function () {
+                loadPrograms($(this).val());
+            });
+
+            $('#ProgramId').on('change', function () {
+                var pid = $(this).val();
+                if (pid) {
+                    loadSemesters($('#AcademicYearId').val(), pid);
+                } else {
+                    resetSelect('#SemesterInstanceId', '-- Select Semester --');
+                }
+            });
+        });
 
         var startDateTimer;
         var endDateTimer;

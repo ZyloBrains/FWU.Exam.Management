@@ -250,11 +250,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 .ThenInclude(es => es!.Program)
                     .ThenInclude(p => p!.Level)
             .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es!.Semester)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.Semester)
             .Include(er => er.ExamSchedule)
                 .ThenInclude(es => es!.ExamType)
             .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es!.AcademicYear)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.AcademicYear)
             .Include(er => er.College)
             .Include(er => er.Program)
             .Include(er => er.AcademicYear)
@@ -302,11 +304,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 .ThenInclude(es => es!.Program)
                     .ThenInclude(p => p!.Level)
             .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es!.Semester)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.Semester)
             .Include(er => er.ExamSchedule)
                 .ThenInclude(es => es!.ExamType)
             .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es!.AcademicYear)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.AcademicYear)
             .Include(er => er.College)
             .Include(er => er.Program)
             .Include(er => er.AcademicYear)
@@ -452,7 +456,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
         var subjectKeys = items
             .Where(i => i.ExamSchedule != null)
-            .Select(i => (i.ExamSchedule!.ProgramId, i.ExamSchedule.SemesterId))
+            .Select(i => (i.ExamSchedule!.ProgramId, i.ExamSchedule.SemesterInstance!.SemesterId))
             .Distinct()
             .ToList();
 
@@ -519,7 +523,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
             var schedule = er.ExamSchedule;
             var subjects = new List<ExamFormSubjectDto>();
-            if (schedule != null && offeringLookup.TryGetValue((schedule.ProgramId, schedule.SemesterId), out var scheduleOfferings))
+            if (schedule != null && offeringLookup.TryGetValue((schedule.ProgramId, schedule.SemesterInstance!.SemesterId), out var scheduleOfferings))
             {
                 var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null);
                 if (selectedSubjectIds is { Count: > 0 })
@@ -550,9 +554,9 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 ExamScheduleName = schedule?.ExamScheduleName,
                 ProgramName = er.Program?.ProgramName ?? schedule?.Program?.ProgramName,
                 LevelName = schedule?.Program?.Level?.LevelName ?? er.Program?.Level?.LevelName,
-                SemesterName = schedule?.Semester?.Name,
+                SemesterName = schedule?.SemesterInstance?.Semester?.Name,
                 ExamTypeName = schedule?.ExamType?.Name,
-                AcademicYearName = er.AcademicYear?.AcademicYearName ?? schedule?.AcademicYear?.AcademicYearName,
+                AcademicYearName = er.AcademicYear?.AcademicYearName ?? schedule?.SemesterInstance?.AcademicYear?.AcademicYearName,
                 FeeEnclosed = er.FeeEnclosed,
                 PaidAmount = paidAmount ?? er.FeeEnclosed,
                 PhotoPath = photoPath,

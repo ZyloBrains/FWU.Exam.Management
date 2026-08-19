@@ -14,7 +14,7 @@ public class SemesterService(AppDbContext context) : ISemesterService
 {
     public async Task<(List<Semester> Items, int TotalCount)> GetSemestersAsync(int page, int pageSize, string? search, string sort, string sortDir, IUserContext userContext)
     {
-        var query = context.Semesters.AsNoTracking().ApplyScope(userContext);
+        var query = context.Semesters.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -39,7 +39,7 @@ public class SemesterService(AppDbContext context) : ISemesterService
 
     public async Task<List<Semester>> GetFilteredItemsAsync(int page, int pageSize, string? search, string sort, string sortDir, IUserContext userContext)
     {
-        var query = context.Semesters.AsNoTracking().ApplyScope(userContext);
+        var query = context.Semesters.AsNoTracking();
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -61,8 +61,8 @@ public class SemesterService(AppDbContext context) : ISemesterService
         return await context.ProgramSemesters
             .AsNoTracking()
             .Where(ps => ps.ProgramId == programId && ps.IsActive)
+            .OrderBy(ps => ps.DisplayOrder)
             .Select(ps => ps.Semester!)
-            .OrderBy(s => s.Number)
             .ToListAsync();
     }
 
@@ -79,10 +79,7 @@ public class SemesterService(AppDbContext context) : ISemesterService
     {
         return await context.Semesters
             .AsNoTracking()
-            .Include(s => s.AcademicYear)
-            .ApplyScope(userContext)
-            .OrderBy(s => s.AcademicYearId)
-            .ThenBy(s => s.Number)
+            .OrderBy(s => s.Number)
             .ToListAsync();
     }
 
@@ -168,9 +165,6 @@ public class SemesterService(AppDbContext context) : ISemesterService
             "code" => s => s.Code ?? "",
             "name" => s => s.Name ?? "",
             "number" => s => s.Number,
-            "year" => s => s.Year,
-            "startdate" => s => s.StartDate,
-            "enddate" => s => s.EndDate,
             "remark" => s => s.Remark ?? "",
             _ => s => s.Name ?? ""
         };

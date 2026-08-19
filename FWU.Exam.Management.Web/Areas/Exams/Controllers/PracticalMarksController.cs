@@ -22,6 +22,7 @@ public class PracticalMarksController(IPracticalMarksService practicalMarksServi
             SaveAction = "SavePracticalMarks",
             IsSuperAdmin = page.IsSuperAdmin,
             IsFacultyAdmin = page.IsFacultyAdmin,
+            IsCollegeAdmin = page.IsCollegeAdmin,
             Faculties = page.Faculties,
             Colleges = page.Colleges
         };
