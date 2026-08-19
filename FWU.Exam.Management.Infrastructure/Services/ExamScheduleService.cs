@@ -362,14 +362,16 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         };
     }
 
-    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int? programId = null)
+    public async Task<List<SelectOption>> GetSemestersByAcademicYearAsync(int academicYearId, int programId)
     {
-        var query = context.SemesterInstances.AsNoTracking()
+        return await context.SemesterInstances.AsNoTracking()
             .Where(si => si.AcademicYearId == academicYearId
+                         && si.ProgramId == programId
                          && si.Semester != null
-                         && (programId == null || si.ProgramId == programId.Value));
-
-        return await query
+                         && context.ProgramSemesters.Any(ps =>
+                             ps.ProgramId == programId
+                             && ps.SemesterId == si.SemesterId
+                             && ps.IsActive))
             .Include(si => si.Semester)
             .OrderBy(si => si.Semester!.Number)
             .Select(si => new SelectOption

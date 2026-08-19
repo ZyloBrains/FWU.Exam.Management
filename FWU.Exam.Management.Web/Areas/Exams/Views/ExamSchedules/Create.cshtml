@@ -236,12 +236,17 @@
         $(function () {
             $('#AcademicYearId').select2({ width: 'resolve' });
 
-            $('#AcademicYearId').change(function () {
+            $('#AcademicYearId').on('change', function () {
                 loadPrograms($(this).val());
             });
 
-            $('#ProgramId').change(function () {
-                loadSemesters($('#AcademicYearId').val(), $(this).val());
+            $('#ProgramId').on('change', function () {
+                var pid = $(this).val();
+                if (pid) {
+                    loadSemesters($('#AcademicYearId').val(), pid);
+                } else {
+                    resetSelect('#SemesterInstanceId', '-- Select Semester --');
+                }
             });
         });
 
