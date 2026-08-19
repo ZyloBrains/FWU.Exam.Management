@@ -19,34 +19,11 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         var totalCount = await query.CountAsync();
         var items = await query
+            .Include(e => e.SemesterInstance)
+                .ThenInclude(si => si!.AcademicYear)
+            .Include(e => e.Program)
+            .Include(e => e.ExamType)
             .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(e => new ExamSchedule
-            {
-                Id = e.Id,
-                ProgramId = e.ProgramId,
-                ExamTypeId = e.ExamTypeId,
-                ExamScheduleName = e.ExamScheduleName,
-                StartDateBs = e.StartDateBs,
-                EndDateBs = e.EndDateBs,
-                StartDate = e.StartDate,
-                EndDate = e.EndDate,
-                PublishedDate = e.PublishedDate,
-                StartTime = e.StartTime,
-                EndTime = e.EndTime,
-                Remarks = e.Remarks,
-                IsActive = e.IsActive,
-                ExtendedDate = e.ExtendedDate,
-                ExtendedDateCharge = e.ExtendedDateCharge,
-                ExamFee = e.ExamFee,
-                PracticalSubjectFee = e.PracticalSubjectFee,
-                AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
-                ExamScheduleCode = e.ExamScheduleCode,
-                SemesterInstanceId = e.SemesterInstanceId,
-                SemesterInstance = e.SemesterInstance,
-                Program = e.Program,
-                ExamType = e.ExamType
-            })
             .Take(pageSize)
             .ToListAsync();
 
@@ -110,33 +87,12 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         return await context.ExamSchedules
             .AsNoTracking()
             .Where(e => e.Id == id)
-            .Select(e => new ExamSchedule
-            {
-                Id = e.Id,
-                TenantId = e.TenantId,
-                ProgramId = e.ProgramId,
-                SemesterInstanceId = e.SemesterInstanceId,
-                ExamTypeId = e.ExamTypeId,
-                ExamScheduleName = e.ExamScheduleName,
-                StartDateBs = e.StartDateBs,
-                EndDateBs = e.EndDateBs,
-                StartDate = e.StartDate,
-                EndDate = e.EndDate,
-                PublishedDate = e.PublishedDate,
-                StartTime = e.StartTime,
-                EndTime = e.EndTime,
-                Remarks = e.Remarks,
-                IsActive = e.IsActive,
-                ExtendedDate = e.ExtendedDate,
-                ExtendedDateCharge = e.ExtendedDateCharge,
-                ExamFee = e.ExamFee,
-                PracticalSubjectFee = e.PracticalSubjectFee,
-                AdmissionCardReleaseDate = e.AdmissionCardReleaseDate,
-                ExamScheduleCode = e.ExamScheduleCode,
-                SemesterInstance = e.SemesterInstance,
-                Program = e.Program,
-                ExamType = e.ExamType
-            })
+            .Include(e => e.SemesterInstance)
+                .ThenInclude(si => si!.AcademicYear)
+            .Include(e => e.SemesterInstance)
+                .ThenInclude(si => si!.Semester)
+            .Include(e => e.Program)
+            .Include(e => e.ExamType)
             .FirstOrDefaultAsync();
     }
 
@@ -144,6 +100,16 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
     {
         ValidateScheduleDates(examSchedule, existing: null);
         EnsureBsDates(examSchedule);
+
+        if (!string.IsNullOrWhiteSpace(examSchedule.ExamScheduleCode) &&
+            await context.ExamSchedules.AnyAsync(e =>
+                e.TenantId == examSchedule.TenantId &&
+                e.ExamScheduleCode == examSchedule.ExamScheduleCode))
+        {
+            throw new InvalidOperationException(
+                $"An exam schedule with code '{examSchedule.ExamScheduleCode}' already exists. Please use a different code.");
+        }
+
         context.ExamSchedules.Add(examSchedule);
         await context.SaveChangesAsync();
     }
@@ -156,6 +122,16 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         ValidateScheduleDates(examSchedule, existing);
         EnsureBsDates(examSchedule);
+
+        if (!string.IsNullOrWhiteSpace(examSchedule.ExamScheduleCode) &&
+            await context.ExamSchedules.AnyAsync(e =>
+                e.TenantId == examSchedule.TenantId &&
+                e.ExamScheduleCode == examSchedule.ExamScheduleCode &&
+                e.Id != examSchedule.Id))
+        {
+            throw new InvalidOperationException(
+                $"An exam schedule with code '{examSchedule.ExamScheduleCode}' already exists. Please use a different code.");
+        }
 
         if (examSchedule.ExtendedDate.HasValue && examSchedule.EndDate.HasValue)
         {
@@ -412,11 +388,15 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
 
         var offeringQuery = context.SubjectOfferings
             .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
-        var subjectOfferings = await offeringQuery
+        var allSubjectOfferings = await offeringQuery
             .Include(so => so.SubjectCatalog)
             .OrderBy(so => so.DisplayOrder)
             .ThenBy(so => so.Id)
             .ToListAsync();
+        var subjectOfferings = allSubjectOfferings
+            .GroupBy(so => so.SubjectCatalogId)
+            .Select(g => g.First())
+            .ToList();
 
         var examCenters = await context.ExamCenters
             .Where(ec => ec.IsActive && ec.ExamScheduleId == id)
