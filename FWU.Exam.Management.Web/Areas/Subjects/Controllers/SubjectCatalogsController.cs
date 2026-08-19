@@ -319,7 +319,7 @@ public class SubjectCatalogsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [RequirePermission("subjects.edit")]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,SubjectCode,SubjectName,ShortName,Description,CreditHours,SubjectTypeId,IsActive")] SubjectCatalog subjectCatalog)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCode,SubjectName,ShortName,Description,CreditHours,SubjectTypeId,IsActive")] SubjectCatalog subjectCatalog)
     {
         if (id != subjectCatalog.Id) return NotFound();
 
