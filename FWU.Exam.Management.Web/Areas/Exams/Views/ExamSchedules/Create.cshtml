@@ -61,7 +61,7 @@
                     </div>
                     <div>
                         <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1"></label>
-                        <select asp-for="ProgramId" id="ProgramId" disabled="disabled" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <select asp-for="ProgramId" id="ProgramId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" asp-items="ViewBag.ProgramId">
                             <option value="">-- Select Program --</option>
                         </select>
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
@@ -204,21 +204,6 @@
             el.prop('disabled', true).select2({ width: 'resolve' });
         }
 
-        function loadPrograms(academicYearId) {
-            resetSelect('#ProgramId', '-- Select Program --');
-            resetSelect('#SemesterInstanceId', '-- Select Semester --');
-
-            if (!academicYearId) return;
-
-            $.getJSON(tenantUrl("/Exams/ExamSchedules/GetProgramsByAcademicYear"), { academicYearId: academicYearId }, function (data) {
-                var el = $('#ProgramId');
-                $.each(data, function (i, p) {
-                    el.append('<option value="' + p.id + '">' + p.name + '</option>');
-                });
-                el.prop('disabled', false).select2({ width: 'resolve' });
-            });
-        }
-
         function loadSemesters(academicYearId, programId) {
             resetSelect('#SemesterInstanceId', '-- Select Semester --');
 
@@ -235,9 +220,13 @@
 
         $(function () {
             $('#AcademicYearId').select2({ width: 'resolve' });
+            $('#ProgramId').select2({ width: 'resolve' });
 
             $('#AcademicYearId').on('change', function () {
-                loadPrograms($(this).val());
+                var pid = $('#ProgramId').val();
+                if (pid) {
+                    loadSemesters($(this).val(), pid);
+                }
             });
 
             $('#ProgramId').on('change', function () {
