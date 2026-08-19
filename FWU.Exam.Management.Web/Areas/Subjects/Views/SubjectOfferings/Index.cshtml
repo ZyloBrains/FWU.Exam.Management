@@ -22,7 +22,7 @@
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Subject Offerings</h1>
                 <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
-                    Filter by academic year, program and semester, then search to view subject offerings.
+                    Filter by program, semester and curriculum version, then search to view subject offerings.
                 </p>
             </div>
         </div>
@@ -37,21 +37,21 @@
                      x-transition
                      class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
                     <a asp-action="ExportToCsv" asp-area="Subjects"
-                       asp-route-academicYearId="@(ViewBag.CurrentAcademicYearId as int?)"
+                       asp-route-curriculumVersionId="@(ViewBag.CurrentCurriculumVersionId as int?)"
                        asp-route-programId="@(ViewBag.CurrentProgramId as int?)"
                        asp-route-semesterId="@(ViewBag.CurrentSemesterId as int?)"
                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-csv text-blue-600"></i> Export CSV
                     </a>
                     <a asp-action="ExportToPdf" asp-area="Subjects"
-                       asp-route-academicYearId="@(ViewBag.CurrentAcademicYearId as int?)"
+                       asp-route-curriculumVersionId="@(ViewBag.CurrentCurriculumVersionId as int?)"
                        asp-route-programId="@(ViewBag.CurrentProgramId as int?)"
                        asp-route-semesterId="@(ViewBag.CurrentSemesterId as int?)"
                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-file-pdf text-red-600"></i> Export PDF
                     </a>
                     <a asp-action="ExportToExcel" asp-area="Subjects"
-                       asp-route-academicYearId="@(ViewBag.CurrentAcademicYearId as int?)"
+                       asp-route-curriculumVersionId="@(ViewBag.CurrentCurriculumVersionId as int?)"
                        asp-route-programId="@(ViewBag.CurrentProgramId as int?)"
                        asp-route-semesterId="@(ViewBag.CurrentSemesterId as int?)"
                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -73,24 +73,24 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <form method="get" asp-action="Index" asp-area="Subjects" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Academic Year</label>
-                <select id="AcademicYearId" name="academicYearId" asp-items="ViewBag.AcademicYearId"
-                        class="select2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">-- Select Academic Year --</option>
-                </select>
-            </div>
-            <div>
                 <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Program</label>
-                <select id="ProgramId" name="programId"
+                <select id="ProgramId" name="programId" asp-items="ViewBag.ProgramId"
                         class="select2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">-- Select Program --</option>
                 </select>
             </div>
             <div>
                 <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Semester</label>
-                <select id="SemesterId" name="semesterId"
+                <select id="SemesterId" name="semesterId" asp-items="ViewBag.SemesterId"
                         class="select2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     <option value="">-- Select Semester --</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Curriculum Version</label>
+                <select id="CurriculumVersionId" name="curriculumVersionId" asp-items="ViewBag.CurriculumVersionId"
+                        class="select2 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">-- Select Curriculum Version --</option>
                 </select>
             </div>
             <div class="flex items-end gap-2">
@@ -154,6 +154,7 @@
     <script>
         var initialProgramId = '@(ViewBag.InitialProgramId ?? 0)';
         var initialSemesterId = '@(ViewBag.InitialSemesterId ?? 0)';
+        var initialCurriculumVersionId = '@(ViewBag.InitialCurriculumVersionId ?? 0)';
 
         function initSelect2(selector) {
             if ($(selector).hasClass('select2-hidden-accessible')) {
@@ -162,14 +163,14 @@
             $(selector).select2({ width: 'resolve' });
         }
 
-        function loadSemesters(programId, academicYearId, preferredSemesterId) {
-            if (!programId || !academicYearId) {
+        function loadSemesters(programId, preferredSemesterId) {
+            if (!programId) {
                 $('#SemesterId').html('<option value="">-- Select Semester --</option>');
                 initSelect2('#SemesterId');
                 return;
             }
 
-            $.getJSON(tenantUrl("/Subjects/SubjectOfferings/GetSemestersByProgram"), { programId: programId, academicYearId: academicYearId }, function (data) {
+            $.getJSON(tenantUrl("/Subjects/SubjectOfferings/GetSemestersByProgram"), { programId: programId }, function (data) {
                 var html = '<option value="">-- Select Semester --</option>' + data.map(function (s) {
                     return '<option value="' + s.semesterId + '">' + s.semesterName + '</option>';
                 }).join('');
@@ -185,32 +186,27 @@
             });
         }
 
-        function loadPrograms(academicYearId, preferredProgramId, preferredSemesterId) {
-            $('#ProgramId').html('<option value="">-- Select Program --</option>');
-            initSelect2('#ProgramId');
-            $('#SemesterId').html('<option value="">-- Select Semester --</option>');
-            initSelect2('#SemesterId');
+        function loadCurriculumVersions(programId, preferredVersionId) {
+            var versionSelect = $('#CurriculumVersionId');
+            if (!programId) {
+                versionSelect.html('<option value="">-- Select Curriculum Version --</option>');
+                initSelect2('#CurriculumVersionId');
+                return;
+            }
 
-            if (!academicYearId) return;
-
-            $.getJSON(tenantUrl("/Subjects/SubjectOfferings/GetProgramsByAcademicYear"), { academicYearId: academicYearId }, function (data) {
-                var html = '<option value="">-- Select Program --</option>' + data.map(function (p) {
-                    return '<option value="' + p.programId + '">' + p.programName + '</option>';
+            $.getJSON(tenantUrl("/Subjects/SubjectOfferings/GetCurriculumVersionsByProgram"), { programId: programId }, function (data) {
+                var html = '<option value="">-- Select Curriculum Version --</option>' + data.map(function (v) {
+                    return '<option value="' + v.id + '">' + v.name + '</option>';
                 }).join('');
-                $('#ProgramId').html(html);
-                initSelect2('#ProgramId');
+                versionSelect.html(html);
+                initSelect2('#CurriculumVersionId');
 
-                var target = null;
-                if (preferredProgramId && data.some(function (p) { return p.programId == preferredProgramId; })) {
-                    target = preferredProgramId;
-                }
-                if (target) {
-                    $('#ProgramId').val(String(target));
-                    loadSemesters(target, academicYearId, preferredSemesterId);
+                if (preferredVersionId && data.some(function (v) { return v.id == preferredVersionId; })) {
+                    versionSelect.val(String(preferredVersionId));
                 }
             }).fail(function () {
-                $('#ProgramId').html('<option value="">-- Select Program --</option>');
-                initSelect2('#ProgramId');
+                versionSelect.html('<option value="">-- Select Curriculum Version --</option>');
+                initSelect2('#CurriculumVersionId');
             });
         }
 
@@ -235,24 +231,19 @@
         }
 
         $(function () {
-            initSelect2('#AcademicYearId');
             initSelect2('#ProgramId');
             initSelect2('#SemesterId');
-
-            $('#AcademicYearId').change(function () {
-                var ay = $(this).val();
-                loadPrograms(ay, null, null);
-            });
+            initSelect2('#CurriculumVersionId');
 
             $('#ProgramId').change(function () {
                 var pid = $(this).val();
-                var ay = $('#AcademicYearId').val();
-                loadSemesters(pid, ay, null);
+                loadSemesters(pid, null);
+                loadCurriculumVersions(pid, null);
             });
 
-            var ay = $('#AcademicYearId').val();
-            if (ay) {
-                loadPrograms(ay, initialProgramId, initialSemesterId);
+            if (initialProgramId) {
+                loadSemesters(initialProgramId, initialSemesterId);
+                loadCurriculumVersions(initialProgramId, initialCurriculumVersionId);
             }
         });
     </script>

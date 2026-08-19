@@ -23,7 +23,7 @@
         <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2 mb-4"></div>
 
         <div class="bg-white rounded-lg shadow border border-gray-200 p-4 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label asp-for="ProgramId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Program</label>
                     <select asp-for="ProgramId" asp-items="ViewBag.ProgramId"
@@ -31,14 +31,6 @@
                         <option value="">-- Select Program --</option>
                     </select>
                     <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
-                </div>
-                <div>
-                    <label asp-for="AcademicYearId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Academic Year</label>
-                    <select asp-for="AcademicYearId" asp-items="ViewBag.AcademicYearId"
-                            class="select2 w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">-- Select Academic Year --</option>
-                    </select>
-                    <span asp-validation-for="AcademicYearId" class="text-xs text-red-500 mt-1 block"></span>
                 </div>
                 <div>
                     <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-2">Curriculum Version</label>
@@ -221,7 +213,7 @@
                     }));
                     this.statusMessage = this.semesters.length
                         ? 'Add subjects for each semester below, then click Save.'
-                        : 'Select a program and academic year to load its semesters.';
+                        : 'Select a program and curriculum version to load its semesters.';
                 },
 
                 get totalSelected() {
@@ -280,14 +272,14 @@
 
                 async loadSemesters() {
                     const programId = document.getElementById('ProgramId').value;
-                    const academicYearId = document.getElementById('AcademicYearId').value;
-                    if (!programId || !academicYearId) {
+                    const curriculumVersionId = document.getElementById('CurriculumVersionId').value;
+                    if (!programId || !curriculumVersionId) {
                         this.semesters = [];
-                        this.statusMessage = 'Select a program and academic year to load its semesters.';
+                        this.statusMessage = 'Select a program and curriculum version to load its semesters.';
                         return;
                     }
                     try {
-                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetSemestersForCreate?programId=${programId}&academicYearId=${academicYearId}`));
+                        const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetSemestersForCreate?programId=${programId}&curriculumVersionId=${curriculumVersionId}`));
                         const data = await resp.json();
                         this.semesters = data.map(s => ({
                             semesterId: s.semesterId,
@@ -299,7 +291,7 @@
                         }));
                         this.statusMessage = this.semesters.length
                             ? 'Add subjects for each semester below, then click Save.'
-                            : 'No semesters were found for the selected academic year.';
+                            : 'No semesters were found for the selected curriculum version.';
                         await this.refreshExistingSubjects();
                     } catch (e) {
                         this.semesters = [];
@@ -309,10 +301,9 @@
 
                 async refreshExistingSubjects() {
                     const programId = document.getElementById('ProgramId').value;
-                    const academicYearId = document.getElementById('AcademicYearId').value;
                     const curriculumVersionId = document.getElementById('CurriculumVersionId').value;
-                    if (!programId || !academicYearId || !curriculumVersionId) return;
-                    const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjectsBySemesters?programId=${programId}&academicYearId=${academicYearId}&curriculumVersionId=${curriculumVersionId}`));
+                    if (!programId || !curriculumVersionId) return;
+                    const resp = await fetch(tenantUrl(`/Subjects/SubjectOfferings/GetExistingSubjectsBySemesters?programId=${programId}&curriculumVersionId=${curriculumVersionId}`));
                     const data = await resp.json();
                     this.semesters.forEach(sem => {
                         sem.existingSubjectIds = data[sem.semesterId] || [];
@@ -378,21 +369,17 @@
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            loadSemestersAlpine();
-        });
-
         $("#ProgramId").change(function () {
             loadCurriculumVersions();
             loadSemestersAlpine();
         });
 
         $("#CurriculumVersionId").change(function () {
-            refreshExistingSubjects();
+            loadSemestersAlpine();
         });
 
         $(function () {
-            if (!$("#AcademicYearId").val()) {
+            if (!$("#CurriculumVersionId").val()) {
                 loadSemestersAlpine();
             }
         });

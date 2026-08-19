@@ -39,23 +39,43 @@ public class SubjectOfferingsController : Controller
             "Value", "Text", selectedId?.ToString());
     }
 
-    public async Task<IActionResult> Index(int? academicYearId, int? programId, int? semesterId)
+    public async Task<IActionResult> Index(int? curriculumVersionId, int? programId, int? semesterId)
     {
-        var academicYears = await _subjectOfferingService.GetAcademicYearsAsync();
-        var selectedYear = academicYearId ?? academicYears.FirstOrDefault()?.Id;
-        ViewData["AcademicYearId"] = new SelectList(academicYears, "Id", "Name", selectedYear);
-        ViewBag.SelectedAcademicYearId = selectedYear;
+        var (_, programs, _) = await _subjectOfferingService.GetSelectListsAsync();
+        ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", programId);
+
+        if (programId is > 0)
+        {
+            var semesters = await _subjectOfferingService.GetSemestersByProgramAsync(programId.Value, curriculumVersionId ?? 0);
+            ViewData["SemesterId"] = new SelectList(semesters.Select(s => new { s.SemesterId, s.SemesterName }), "SemesterId", "SemesterName", semesterId);
+        }
+        else
+        {
+            ViewData["SemesterId"] = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
+        }
+
+        if (programId is > 0)
+        {
+            var versions = await _subjectOfferingService.GetCurriculumVersionsAsync(programId);
+            ViewData["CurriculumVersionId"] = new SelectList(versions, "Id", "Name", curriculumVersionId);
+        }
+        else
+        {
+            ViewData["CurriculumVersionId"] = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
+        }
+
         ViewBag.InitialProgramId = programId;
         ViewBag.InitialSemesterId = semesterId;
-        ViewBag.CurrentAcademicYearId = academicYearId;
+        ViewBag.InitialCurriculumVersionId = curriculumVersionId;
         ViewBag.CurrentProgramId = programId;
         ViewBag.CurrentSemesterId = semesterId;
+        ViewBag.CurrentCurriculumVersionId = curriculumVersionId;
 
-        var searched = academicYearId is > 0 || programId is > 0 || semesterId is > 0;
+        var searched = curriculumVersionId is > 0 || programId is > 0 || semesterId is > 0;
         ViewBag.Searched = searched;
 
         var items = searched
-            ? await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId)
+            ? await _subjectOfferingService.GetSearchResultsAsync(curriculumVersionId, programId, semesterId)
             : new List<SubjectOffering>();
         ViewBag.ResultCount = items.Count;
 
@@ -63,9 +83,9 @@ public class SubjectOfferingsController : Controller
     }
 
 
-    public async Task<IActionResult> ExportToCsv(int? academicYearId, int? programId, int? semesterId)
+    public async Task<IActionResult> ExportToCsv(int? curriculumVersionId, int? programId, int? semesterId)
     {
-        var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
+        var items = await _subjectOfferingService.GetSearchResultsAsync(curriculumVersionId, programId, semesterId);
 
         var sb = new StringBuilder();
         sb.AppendLine("Subject,Program,Semester,Compulsory,Theory Marks,Practical Marks,Internal Theory Marks");
@@ -87,9 +107,9 @@ public class SubjectOfferingsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ExportToExcel(int? academicYearId, int? programId, int? semesterId)
+    public async Task<IActionResult> ExportToExcel(int? curriculumVersionId, int? programId, int? semesterId)
     {
-        var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
+        var items = await _subjectOfferingService.GetSearchResultsAsync(curriculumVersionId, programId, semesterId);
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Subject Offerings");
@@ -126,9 +146,9 @@ public class SubjectOfferingsController : Controller
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
-    public async Task<IActionResult> ExportToPdf(int? academicYearId, int? programId, int? semesterId)
+    public async Task<IActionResult> ExportToPdf(int? curriculumVersionId, int? programId, int? semesterId)
     {
-        var items = await _subjectOfferingService.GetSearchResultsAsync(academicYearId, programId, semesterId);
+        var items = await _subjectOfferingService.GetSearchResultsAsync(curriculumVersionId, programId, semesterId);
 
         ViewBag.CurrentPage = 1;
         ViewBag.PageSize = items.Count;
@@ -146,44 +166,37 @@ public class SubjectOfferingsController : Controller
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetExistingSubjectsBySemesters(int programId, int curriculumVersionId, int academicYearId)
+    public async Task<JsonResult> GetExistingSubjectsBySemesters(int programId, int curriculumVersionId)
     {
-        var result = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(programId, curriculumVersionId, academicYearId);
+        var result = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(programId, curriculumVersionId);
         return Json(result);
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetCurriculumVersionsByProgram(int programId, int? academicYearId = null)
+    public async Task<JsonResult> GetCurriculumVersionsByProgram(int programId)
     {
-        var versions = await _subjectOfferingService.GetCurriculumVersionsAsync(programId, academicYearId);
+        var versions = await _subjectOfferingService.GetCurriculumVersionsAsync(programId);
         return Json(versions.Select(v => new { id = v.Id, name = v.Name }));
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetSemestersByAcademicYear(int academicYearId, int? programId = null)
+    public async Task<JsonResult> GetSemestersByCurriculumVersion(int curriculumVersionId, int? programId = null)
     {
-        var semesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId, programId);
+        var semesters = await _subjectOfferingService.GetSemestersByCurriculumVersionAsync(curriculumVersionId, programId);
         return Json(semesters.Select(s => new { id = s.Id, name = s.Name }));
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetProgramsByAcademicYear(int academicYearId)
+    public async Task<JsonResult> GetSemestersByProgram(int programId, int? curriculumVersionId = null)
     {
-        var programs = await _subjectOfferingService.GetProgramsByAcademicYearAsync(academicYearId);
-        return Json(programs.Select(p => new { p.ProgramId, p.ProgramName, p.SemesterCount, p.SubjectCount }));
-    }
-
-    [HttpGet]
-    public async Task<JsonResult> GetSemestersByProgram(int programId, int academicYearId)
-    {
-        var semesters = await _subjectOfferingService.GetSemestersByProgramAsync(programId, academicYearId);
+        var semesters = await _subjectOfferingService.GetSemestersByProgramAsync(programId, curriculumVersionId ?? 0);
         return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
     }
 
     [HttpGet]
-    public async Task<JsonResult> GetSemestersForCreate(int programId, int academicYearId)
+    public async Task<JsonResult> GetSemestersForCreate(int programId, int curriculumVersionId)
     {
-        var semesters = await _subjectOfferingService.GetSemestersForOfferingAsync(programId, academicYearId);
+        var semesters = await _subjectOfferingService.GetSemestersForOfferingAsync(programId, curriculumVersionId);
         return Json(semesters.Select(s => new { s.SemesterId, s.SemesterNumber, s.SemesterName, s.SubjectCount }));
     }
 
@@ -195,23 +208,21 @@ public class SubjectOfferingsController : Controller
             ? await _subjectOfferingService.GetCurriculumVersionByIdAsync(curriculumVersionId.Value)
             : null;
 
-        ViewData["AcademicYearId"] = new SelectList(
-            await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", version?.EffectiveAcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", version?.ProgramId);
         ViewData["CurriculumVersionId"] = version != null
-            ? new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(version.ProgramId, version.EffectiveAcademicYearId), "Id", "Name", version.Id)
+            ? new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(version.ProgramId), "Id", "Name", version.Id)
             : new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
 
         var semesterJson = new List<object>();
         var initialExisting = new Dictionary<int, List<int>>();
         if (version != null)
         {
-            var yearSemesters = await _subjectOfferingService.GetSemestersForOfferingAsync(version.ProgramId, version.EffectiveAcademicYearId);
+            var yearSemesters = await _subjectOfferingService.GetSemestersForOfferingAsync(version.ProgramId, version.Id);
             foreach (var s in yearSemesters)
             {
                 semesterJson.Add(new { semesterId = s.SemesterId, semesterName = s.SemesterName, subjects = Array.Empty<object>() });
             }
-            initialExisting = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(version.ProgramId, version.Id, version.EffectiveAcademicYearId);
+            initialExisting = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(version.ProgramId, version.Id);
         }
 
         ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
@@ -237,9 +248,6 @@ public class SubjectOfferingsController : Controller
         if (model.ProgramId <= 0)
             ModelState.AddModelError(nameof(model.ProgramId), "Program is required.");
 
-        if (model.AcademicYearId <= 0)
-            ModelState.AddModelError(nameof(model.AcademicYearId), "Academic Year is required.");
-
         if (model.CurriculumVersionId <= 0)
             ModelState.AddModelError(nameof(model.CurriculumVersionId), "Curriculum Version is required.");
 
@@ -261,33 +269,26 @@ public class SubjectOfferingsController : Controller
             }
         }
 
-        if (model.AcademicYearId > 0 && model.ProgramId > 0)
-        {
-            var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(model.AcademicYearId, model.ProgramId);
-            var yearIds = yearSemesters.Select(s => s.Id).ToHashSet();
-            foreach (var group in populated)
-            {
-                if (!yearIds.Contains(group.SemesterId))
-                    ModelState.AddModelError(nameof(model.AcademicYearId), $"Semester \"{group.SemesterName}\" does not belong to the selected academic year.");
-            }
-        }
-
         if (model.ProgramId > 0 && model.CurriculumVersionId > 0)
         {
             if (!await _subjectOfferingService.IsCurriculumVersionForProgramAsync(model.CurriculumVersionId, model.ProgramId))
                 ModelState.AddModelError(nameof(model.CurriculumVersionId), "The selected curriculum version does not belong to the selected program.");
         }
 
-        if (model.CurriculumVersionId > 0 && model.AcademicYearId > 0)
+        if (model.CurriculumVersionId > 0 && model.ProgramId > 0)
         {
-            var version = await _subjectOfferingService.GetCurriculumVersionByIdAsync(model.CurriculumVersionId);
-            if (version is not null && version.EffectiveAcademicYearId != model.AcademicYearId)
-                ModelState.AddModelError(nameof(model.AcademicYearId), "The academic year must match the curriculum version's effective academic year.");
+            var cvSemesters = await _subjectOfferingService.GetSemestersByCurriculumVersionAsync(model.CurriculumVersionId, model.ProgramId);
+            var cvSemesterIds = cvSemesters.Select(s => s.Id).ToHashSet();
+            foreach (var group in populated)
+            {
+                if (!cvSemesterIds.Contains(group.SemesterId))
+                    ModelState.AddModelError(nameof(model.CurriculumVersionId), $"Semester \"{group.SemesterName}\" does not belong to the selected curriculum version's academic year.");
+            }
         }
 
         if (ModelState.IsValid)
         {
-            var existingBySemester = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId, model.AcademicYearId);
+            var existingBySemester = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId);
             foreach (var group in populated)
             {
                 if (existingBySemester.TryGetValue(group.SemesterId, out var existing))
@@ -348,10 +349,9 @@ public class SubjectOfferingsController : Controller
     private async Task PopulateCreateViewDataOnErrorAsync(SubjectOfferingBulkCreateViewModel model)
     {
         var (subjectCatalogs, programs, _) = await _subjectOfferingService.GetSelectListsAsync();
-        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", model.AcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", model.ProgramId);
         ViewData["CurriculumVersionId"] = model.ProgramId > 0
-            ? new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(model.ProgramId, model.AcademicYearId > 0 ? model.AcademicYearId : null), "Id", "Name", model.CurriculumVersionId)
+            ? new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(model.ProgramId), "Id", "Name", model.CurriculumVersionId)
             : new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text");
 
         ViewBag.SubjectCatalogsJson = JsonSerializer.Serialize(subjectCatalogs.Select(s => new
@@ -397,9 +397,9 @@ public class SubjectOfferingsController : Controller
         ViewBag.InitialSemestersJson = JsonSerializer.Serialize(semesterJson);
 
         ViewBag.InitialExistingJson = "{}";
-        if (model.ProgramId > 0 && model.CurriculumVersionId > 0 && model.AcademicYearId > 0)
+        if (model.ProgramId > 0 && model.CurriculumVersionId > 0)
         {
-            var existing = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId, model.AcademicYearId);
+            var existing = await _subjectOfferingService.GetExistingSubjectCatalogIdsBySemesterAsync(model.ProgramId, model.CurriculumVersionId);
             ViewBag.InitialExistingJson = JsonSerializer.Serialize(existing);
         }
     }
@@ -414,7 +414,6 @@ public class SubjectOfferingsController : Controller
 
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
-        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", subjectOffering.CurriculumVersion?.EffectiveAcademicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = SemesterSelectList(semesters, subjectOffering.SemesterId);
         ViewData["CurriculumVersionId"] = new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(subjectOffering.ProgramId), "Id", "Name", subjectOffering.CurriculumVersionId);
@@ -423,7 +422,7 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsActive,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering, int academicYearId)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsActive,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering)
     {
         if (id != subjectOffering.Id) return NotFound();
 
@@ -451,17 +450,10 @@ public class SubjectOfferingsController : Controller
                 "The evaluation scheme (marks) cannot be edited once the subject has been used in exams or assigned to college admins. Other fields can still be updated.");
         }
 
-        if (academicYearId > 0 && subjectOffering.SemesterId > 0)
-        {
-            var yearSemesters = await _subjectOfferingService.GetSemestersByAcademicYearAsync(academicYearId);
-            if (!yearSemesters.Any(s => s.Id == subjectOffering.SemesterId))
-                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester does not belong to the selected academic year.");
-        }
-
         if (subjectOffering.ProgramId > 0 && subjectOffering.SemesterId > 0)
         {
             if (!await _subjectOfferingService.IsSemesterAssignedToProgramAsync(subjectOffering.ProgramId, subjectOffering.SemesterId))
-                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs â†’ Semesters.");
+                ModelState.AddModelError(nameof(subjectOffering.SemesterId), "The selected semester is not assigned to the selected program. Assign it first via Programs \u2192 Semesters.");
         }
 
         if (subjectOffering.ProgramId > 0 && subjectOffering.CurriculumVersionId is > 0)
@@ -496,7 +488,6 @@ public class SubjectOfferingsController : Controller
         }
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
-        ViewData["AcademicYearId"] = new SelectList(await _subjectOfferingService.GetAcademicYearsAsync(), "Id", "Name", academicYearId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
         ViewData["SemesterId"] = SemesterSelectList(semesters, subjectOffering.SemesterId);
         ViewData["CurriculumVersionId"] = new SelectList(await _subjectOfferingService.GetCurriculumVersionsAsync(subjectOffering.ProgramId), "Id", "Name", subjectOffering.CurriculumVersionId);
