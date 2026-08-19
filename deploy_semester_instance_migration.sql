@@ -1,11 +1,12 @@
 -- ============================================================
 -- PRODUCTION DATA MIGRATION SCRIPT
 -- ============================================================
--- Covers all 4 unpushed commits on develop:
+-- Covers all 5 unpushed commits on develop:
 --   49dc895  Tenant scoped subject catalog
 --   be80895  Introduce semesterInstance
 --   d79122c  Fix examschedules for running semester instances
 --   3beb22e  Academic year is tenant-scoped and refactors
+--   8265cc2  Add active flag in the subjectOffering
 --
 -- PREREQUISITES:
 --   - Run BEFORE deploying the new application code
@@ -19,7 +20,8 @@
 --   4. Updates ExamSchedules.SemesterId -> SemesterInstanceId, drops ExamSchedules.AcademicYearId
 --   5. Simplifies Semesters table (removes Year, StartDate, EndDate, AcademicYearId)
 --   6. Adds TenantId to AcademicYears and SubjectCatalogs
---   7. Registers all EF migrations so they don't re-run
+--   7. Adds IsActive to SubjectOfferings and recreates its unique index (filtered)
+--   8. Registers all EF migrations so they don't re-run
 --
 -- IDEMPOTENCY:
 --   Safe to re-run. Checks preconditions before each operation.
@@ -734,6 +736,56 @@ BEGIN
     END
 
     -- ============================================================
+    -- PHASE 16b: DDL - Add IsActive to SubjectOfferings
+    -- (migration 20260818183135_AddIsActiveToSubjectOffering)
+    -- ============================================================
+
+    IF NOT EXISTS (
+        SELECT 1 FROM __EFMigrationsHistory
+        WHERE MigrationId = ''20260818183135_AddIsActiveToSubjectOffering''
+    )
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = ''SubjectOfferings'' AND COLUMN_NAME = ''IsActive''
+        )
+        BEGIN
+            ALTER TABLE [SubjectOfferings] ADD [IsActive] bit NOT NULL CONSTRAINT [DF_SubjectOfferings_IsActive] DEFAULT (1);
+            PRINT ''Added SubjectOfferings.IsActive column.'';
+        END
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM __EFMigrationsHistory
+        WHERE MigrationId = ''20260818183135_AddIsActiveToSubjectOffering''
+    )
+    BEGIN
+        IF EXISTS (
+            SELECT 1 FROM SYS.INDEXES
+            WHERE name = ''IX_SubjectOfferings_CurriculumVersionId_SubjectCatalogId_ProgramId_SemesterId'' AND object_id = OBJECT_ID(''SubjectOfferings'')
+        )
+        BEGIN
+            DROP INDEX IX_SubjectOfferings_CurriculumVersionId_SubjectCatalogId_ProgramId_SemesterId ON SubjectOfferings;
+            PRINT ''Dropped old IX_SubjectOfferings_CurriculumVersionId_SubjectCatalogId_ProgramId_SemesterId.'';
+        END
+
+        CREATE UNIQUE INDEX IX_SubjectOfferings_CurriculumVersionId_SubjectCatalogId_ProgramId_SemesterId
+            ON SubjectOfferings ([CurriculumVersionId], [SubjectCatalogId], [ProgramId], [SemesterId])
+            WHERE [IsActive] = 1;
+        PRINT ''Created filtered IX_SubjectOfferings_CurriculumVersionId_SubjectCatalogId_ProgramId_SemesterId.'';
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM __EFMigrationsHistory
+        WHERE MigrationId = ''20260818183135_AddIsActiveToSubjectOffering''
+    )
+    BEGIN
+        INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+        VALUES (''20260818183135_AddIsActiveToSubjectOffering'', ''10.0.7'');
+        PRINT ''Registered migration: AddIsActiveToSubjectOffering'';
+    END
+
+    -- ============================================================
     -- PHASE 17: VERIFICATION QUERIES
     -- ============================================================
 
@@ -813,18 +865,21 @@ BEGIN
         SET @NewColsCheck = @NewColsCheck + 1;
     IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ''ExamSchedules'' AND COLUMN_NAME = ''SemesterInstanceId'')
         SET @NewColsCheck = @NewColsCheck + 1;
-    PRINT ''New columns present: '' + CAST(@NewColsCheck AS NVARCHAR(10)) + '' (should be 4)'';
+    IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ''SubjectOfferings'' AND COLUMN_NAME = ''IsActive'')
+        SET @NewColsCheck = @NewColsCheck + 1;
+    PRINT ''New columns present: '' + CAST(@NewColsCheck AS NVARCHAR(10)) + '' (should be 5)'';
 
     DECLARE @MigrationCount INT;
     SELECT @MigrationCount = COUNT(*) FROM __EFMigrationsHistory
     WHERE MigrationId IN (
         ''20260816152655_AddTenantScopingToSubjectCatalog'',
         ''20260817024022_SemesterInstances'',
-        ''20260817054948_TenantScopedAcademicYearAndSemesterInstanceProgramId''
+        ''20260817054948_TenantScopedAcademicYearAndSemesterInstanceProgramId'',
+        ''20260818183135_AddIsActiveToSubjectOffering''
     );
-    PRINT ''EF Migrations registered: '' + CAST(@MigrationCount AS NVARCHAR(10)) + '' (should be 3)'';
+    PRINT ''EF Migrations registered: '' + CAST(@MigrationCount AS NVARCHAR(10)) + '' (should be 4)'';
 
-    IF @OrphanCheck1 = 0 AND @OrphanCheck2 = 0 AND @DupeCheck = 0 AND @OldColsCheck = 0 AND @NewColsCheck = 4 AND @MigrationCount = 3
+    IF @OrphanCheck1 = 0 AND @OrphanCheck2 = 0 AND @DupeCheck = 0 AND @OldColsCheck = 0 AND @NewColsCheck = 5 AND @MigrationCount = 4
     BEGIN
         PRINT '''';
         PRINT ''*** ALL CHECKS PASSED - Migration successful! ***'';

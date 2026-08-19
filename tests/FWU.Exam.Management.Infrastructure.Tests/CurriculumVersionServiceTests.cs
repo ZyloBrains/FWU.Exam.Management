@@ -59,7 +59,7 @@ public class CurriculumVersionServiceTests
         Assert.True(copied.IsActive);
 
         var source = await db.Context.CurriculumVersions.AsNoTracking().SingleAsync(c => c.Id == SourceVersionId);
-        Assert.False(source.IsActive);
+        Assert.True(source.IsActive);
 
         var copiedOfferings = await db.Context.SubjectOfferings
             .Where(o => o.CurriculumVersionId == copied.Id)
@@ -105,7 +105,26 @@ public class CurriculumVersionServiceTests
     }
 
     [Fact]
-    public async Task CreateCurriculumVersionAsync_DeactivatesOtherActiveVersionsOfSameProgram()
+    public async Task CreateCurriculumVersionAsync_DeactivatesOtherVersions_SameProgram_SameYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), SeedCopyScenario);
+        var service = CreateService(db);
+
+        await service.CreateCurriculumVersionAsync(new CurriculumVersion
+        {
+            TenantId = TestData.TenantId,
+            Name = "New Active",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = TestData.AcademicYearId,
+            IsActive = true
+        });
+
+        var all = await db.Context.CurriculumVersions.AsNoTracking().ToListAsync();
+        Assert.Single(all, v => v.IsActive);
+    }
+
+    [Fact]
+    public async Task CreateCurriculumVersionAsync_AllowsMultipleActive_DifferentYears()
     {
         using var db = new TestDb(TestTenantContext.Standard(), SeedCopyScenario);
         var service = CreateService(db);
@@ -120,7 +139,7 @@ public class CurriculumVersionServiceTests
         });
 
         var all = await db.Context.CurriculumVersions.AsNoTracking().ToListAsync();
-        Assert.Single(all, v => v.IsActive);
+        Assert.Equal(2, all.Count(v => v.IsActive));
     }
 
     [Fact]

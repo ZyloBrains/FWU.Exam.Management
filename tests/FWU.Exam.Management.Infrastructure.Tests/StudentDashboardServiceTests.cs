@@ -212,6 +212,63 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetSubjectOfferingsForStudentAsync_ResolvesVersionByEnrolledSemesterAcademicYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            var secondYear = new AcademicYear
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                AcademicYearCode = "2082",
+                AcademicYearName = "2082",
+                AcademicYearNameNepali = "2082",
+                IsActive = true,
+                IsRunning = false
+            };
+            ctx.AcademicYears.Add(secondYear);
+
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 5,
+                TenantId = TestData.TenantId,
+                Name = "Version 2081",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 6,
+                TenantId = TestData.TenantId,
+                Name = "Version 2082",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2,
+                IsActive = true
+            });
+
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 5;
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).SubjectCatalogId = 1;
+            var offering210 = TestData.Offering(210, 2, TestData.ProgramId);
+            offering210.CurriculumVersionId = 6;
+            offering210.SubjectCatalogId = 1;
+            ctx.SubjectOfferings.Add(offering210);
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForStudentAsync(UserId, TestData.ProgramId);
+
+        var offering = Assert.Single(offerings);
+        Assert.Equal(102, offering.Id);
+    }
+
+    [Fact]
     public async Task GetExamSchedulesForStudentAsync_HidesSchedule_WhenStartDateIsInFuture()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
