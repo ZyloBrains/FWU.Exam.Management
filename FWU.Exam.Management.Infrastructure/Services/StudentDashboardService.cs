@@ -158,38 +158,44 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .Include(so => so.Semester)
             .Where(so => so.ProgramId == programId);
 
-        var activeVersionId = await context.CurriculumVersions!
-            .AsNoTracking()
-            .Where(cv => cv.ProgramId == programId && cv.IsActive)
-            .Select(cv => (int?)cv.Id)
-            .FirstOrDefaultAsync();
-
         var academicYearId = admission?.AcademicYearId;
 
         if (admission != null)
         {
-            var enrolledSemesterId = await context.Set<SemesterEnrollment>()
+            var enrollment = await context.Set<SemesterEnrollment>()
                 .AsNoTracking()
                 .Where(se => se.StudentAdmissionId == admission.Id
                           && se.EnrollmentStatus == StudentEnrollmentStatus.Active
                           && se.DropDate == null)
                 .OrderByDescending(se => se.EnrolledDate)
-                .Select(se => (int?)se.SemesterInstance!.SemesterId)
+                .Select(se => new { se.SemesterInstance!.SemesterId, se.SemesterInstance.AcademicYearId })
                 .FirstOrDefaultAsync();
 
-            if (enrolledSemesterId.HasValue)
+            if (enrollment?.SemesterId != null)
             {
+                int? activeVersionId = null;
+                if (enrollment.AcademicYearId != 0)
+                {
+                    activeVersionId = await context.CurriculumVersions!
+                        .AsNoTracking()
+                        .Where(cv => cv.ProgramId == programId
+                                  && cv.EffectiveAcademicYearId == enrollment.AcademicYearId
+                                  && cv.IsActive)
+                        .Select(cv => (int?)cv.Id)
+                        .FirstOrDefaultAsync();
+                }
+
                 if (activeVersionId.HasValue)
                 {
                     return await query
-                        .Where(so => so.SemesterId == enrolledSemesterId.Value
+                        .Where(so => so.SemesterId == enrollment.SemesterId
                                   && so.CurriculumVersionId == activeVersionId.Value)
                         .OrderBy(so => so.DisplayOrder)
                         .ToListAsync();
                 }
 
                 return await query
-                    .Where(so => so.SemesterId == enrolledSemesterId.Value)
+                    .Where(so => so.SemesterId == enrollment.SemesterId)
                     .OrderBy(so => so.DisplayOrder)
                     .ToListAsync();
             }

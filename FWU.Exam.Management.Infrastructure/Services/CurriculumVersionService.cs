@@ -78,7 +78,7 @@ public class CurriculumVersionService : ICurriculumVersionService
     public async Task CreateCurriculumVersionAsync(CurriculumVersion curriculumVersion)
     {
         if (curriculumVersion.IsActive)
-            await DeactivateOtherVersionsAsync(curriculumVersion.ProgramId, null);
+            await DeactivateOtherVersionsAsync(curriculumVersion.ProgramId, curriculumVersion.EffectiveAcademicYearId, null);
         _context.CurriculumVersions.Add(curriculumVersion);
         await _context.SaveChangesAsync();
     }
@@ -95,7 +95,7 @@ public class CurriculumVersionService : ICurriculumVersionService
         existing.IsActive = curriculumVersion.IsActive;
 
         if (existing.IsActive)
-            await DeactivateOtherVersionsAsync(existing.ProgramId, existing.Id);
+            await DeactivateOtherVersionsAsync(existing.ProgramId, existing.EffectiveAcademicYearId, existing.Id);
         await _context.SaveChangesAsync();
     }
 
@@ -217,7 +217,7 @@ public class CurriculumVersionService : ICurriculumVersionService
             IsActive = true
         };
 
-        await DeactivateOtherVersionsAsync(source.ProgramId, null);
+        await DeactivateOtherVersionsAsync(source.ProgramId, targetAcademicYearId, null);
         _context.CurriculumVersions.Add(newVersion);
         await _context.SaveChangesAsync();
 
@@ -261,10 +261,13 @@ public class CurriculumVersionService : ICurriculumVersionService
         return newVersion;
     }
 
-    private async Task DeactivateOtherVersionsAsync(int programId, int? exceptId)
+    private async Task DeactivateOtherVersionsAsync(int programId, int effectiveAcademicYearId, int? exceptId)
     {
         var others = await _context.CurriculumVersions
-            .Where(c => c.ProgramId == programId && c.IsActive && (!exceptId.HasValue || c.Id != exceptId.Value))
+            .Where(c => c.ProgramId == programId
+                      && c.EffectiveAcademicYearId == effectiveAcademicYearId
+                      && c.IsActive
+                      && (!exceptId.HasValue || c.Id != exceptId.Value))
             .ToListAsync();
         foreach (var v in others)
             v.IsActive = false;
