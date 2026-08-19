@@ -199,25 +199,6 @@
             el.prop('disabled', true).select2({ width: 'resolve' });
         }
 
-        function loadPrograms(academicYearId, preferredProgramId) {
-            resetSelect('#ProgramId', '-- Select Program --');
-            resetSelect('#SemesterInstanceId', '-- Select Semester --');
-
-            if (!academicYearId) return;
-
-            $.getJSON(tenantUrl("/Exams/ExamSchedules/GetProgramsByAcademicYear"), { academicYearId: academicYearId }, function (data) {
-                var el = $('#ProgramId');
-                $.each(data, function (i, p) {
-                    el.append('<option value="' + p.id + '">' + p.name + '</option>');
-                });
-                el.prop('disabled', false).select2({ width: 'resolve' });
-
-                if (preferredProgramId && data.some(function (p) { return p.id == preferredProgramId; })) {
-                    el.val(String(preferredProgramId)).trigger('change');
-                }
-            });
-        }
-
         function loadSemesters(academicYearId, programId, preferredSemesterId) {
             resetSelect('#SemesterInstanceId', '-- Select Semester --');
 
@@ -240,7 +221,10 @@
             $('#AcademicYearId').select2({ width: 'resolve' });
 
             $('#AcademicYearId').change(function () {
-                loadPrograms($(this).val());
+                var pid = $('#ProgramId').val();
+                if (pid) {
+                    loadSemesters($(this).val(), pid);
+                }
             });
 
             $('#ProgramId').on('change', function () {
@@ -252,10 +236,9 @@
                 }
             });
 
-            if (initialAcademicYearId && initialAcademicYearId !== '0') {
-                $('#AcademicYearId').val(initialAcademicYearId).trigger('change');
-                loadPrograms(initialAcademicYearId, initialProgramId);
-                if (initialProgramId && initialProgramId !== '0') {
+            if (initialProgramId && initialProgramId !== '0') {
+                if (initialAcademicYearId && initialAcademicYearId !== '0') {
+                    $('#AcademicYearId').val(initialAcademicYearId).trigger('change');
                     loadSemesters(initialAcademicYearId, initialProgramId, initialSemesterInstanceId);
                 }
             }
