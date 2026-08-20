@@ -108,7 +108,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             if (effectiveEnd.HasValue && effectiveEnd.Value < today)
                 continue;
 
-            var isSupplementary = schedule.ExamType?.Name == "Supplementary";
+            var isSupplementary = IsReExamType(schedule.ExamType?.Name);
 
             if (isSupplementary)
             {
@@ -530,7 +530,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             Status = RegistrationStatus.Pending,
             IsActive = true,
             IsAppliedByStudent = true,
-            ApplicationVoucherId = voucher.Id
+            ApplicationVoucherId = voucher.Id,
+            IsSupplementary = IsReExamType(schedule.ExamType?.Name)
         };
 
         context.ExamRegistrations!.Add(registration);
@@ -547,10 +548,50 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .ToListAsync();
         var subjectOfferingDict = subjectOfferings.ToDictionary(so => so.Id);
 
+        HashSet<int>? previousScheduleIds = null;
+        if (registration.IsSupplementary)
+        {
+            previousScheduleIds = await context.ExamSchedules!
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(es => es.IsActive
+                          && es.ProgramId == programsId
+                          && es.SemesterInstance!.SemesterId == schedule.SemesterInstance!.SemesterId
+                          && es.Id != examScheduleId
+                          && es.ExamType != null
+                          && es.ExamType.Name != "Entrance")
+                .Select(es => es.Id)
+                .ToHashSetAsync();
+        }
+
         foreach (var subjectOfferingId in subjectOfferingIds)
         {
             if (!subjectOfferingDict.TryGetValue(subjectOfferingId, out var subjectOffering))
                 continue;
+
+            float? carriedPractical = null;
+            float? carriedPracticalInternal = null;
+            float? carriedTheoryInternal = null;
+
+            if (registration.IsSupplementary && previousScheduleIds != null && previousScheduleIds.Count > 0)
+            {
+                var previousResult = await context.ExamSubjectResults!
+                    .AsNoTracking()
+                    .Where(esr => esr.SubjectOfferingId == subjectOfferingId
+                               && previousScheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                               && esr.ExamRegistration != null
+                               && esr.ExamRegistration.IsActive
+                               && esr.IsActive)
+                    .OrderByDescending(esr => esr.Id)
+                    .FirstOrDefaultAsync();
+
+                if (previousResult != null)
+                {
+                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
+                    carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
+                }
+            }
 
             context.ExamSubjectResults!.Add(new ExamSubjectResult
             {
@@ -561,7 +602,11 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                 IsTheoryRegistered = subjectOffering.HasTheory,
                 IsPracticalRegistered = subjectOffering.HasPractical,
                 IsActive = true,
-                IsSubmitted = false
+                IsSubmitted = false,
+                IsSupplementary = registration.IsSupplementary,
+                ObtainedMarksPractical = carriedPractical,
+                ObtainedMarksPracticalInternal = carriedPracticalInternal,
+                ObtainedMarksTheoryInternal = carriedTheoryInternal
             });
         }
 
@@ -750,6 +795,14 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         var upper = gradeLetter.Trim().ToUpperInvariant();
         return upper is "F" or "NG";
     }
+
+    private static readonly HashSet<string> ReExamTypeNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Supplementary", "Partial", "Chance", "Special Chance"
+    };
+
+    public static bool IsReExamType(string? examTypeName) =>
+        !string.IsNullOrEmpty(examTypeName) && ReExamTypeNames.Contains(examTypeName);
 
     public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {

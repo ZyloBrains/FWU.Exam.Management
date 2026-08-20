@@ -98,7 +98,15 @@ public class PublishResultsService(
                     totalCreditHours += creditHours;
                 }
 
-                if (!overall.IsPass) hasFail = true;
+                if (reg.IsSupplementary)
+                {
+                    if (!gradeCalculationService.IsStudentPassing(theory, practical, offering, true))
+                        hasFail = true;
+                }
+                else
+                {
+                    if (!overall.IsPass) hasFail = true;
+                }
 
                 subjectDtos.Add(new PublishResultsSubjectDto
                 {

@@ -419,7 +419,8 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ExamForms));
         }
 
-        var isSupplementary = schedule.ExamType?.Name == "Supplementary";
+        var reExamTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Supplementary", "Partial", "Chance", "Special Chance" };
+        var isSupplementary = !string.IsNullOrEmpty(schedule.ExamType?.Name) && reExamTypes.Contains(schedule.ExamType.Name);
         if (isSupplementary)
         {
             var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
@@ -498,7 +499,17 @@ public class StudentDashboardController(
             }).ToList()
         };
 
-        vm.TotalPracticalFee = subjectList.Where(s => vm.SelectedSubjectIds.Contains(s.SubjectOfferingId)).Sum(s => s.PracticalFee);
+        if (!isRegular)
+        {
+            foreach (var s in vm.Subjects)
+                s.PracticalFee = 0;
+            vm.TotalPracticalFee = 0;
+        }
+        else
+        {
+            vm.TotalPracticalFee = subjectList.Where(s => vm.SelectedSubjectIds.Contains(s.SubjectOfferingId)).Sum(s => s.PracticalFee);
+        }
+
         vm.GrandTotal = vm.TotalExamFee + vm.TotalPracticalFee;
 
         return View(vm);
