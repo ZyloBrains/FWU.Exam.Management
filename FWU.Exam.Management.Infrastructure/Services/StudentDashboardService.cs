@@ -141,7 +141,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .ThenInclude(sc => sc!.SubjectType)
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == semesterId);
+            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == semesterId && so.IsActive);
 
         return await query
             .OrderBy(so => so.DisplayOrder)
@@ -156,7 +156,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
             .Include(so => so.Semester)
-            .Where(so => so.ProgramId == programId);
+            .Where(so => so.ProgramId == programId && so.IsActive);
 
         var academicYearId = admission?.AcademicYearId;
 
