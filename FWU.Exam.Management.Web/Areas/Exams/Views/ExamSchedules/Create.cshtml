@@ -239,6 +239,12 @@
             });
         });
 
+        $('#examScheduleForm').on('submit', function () {
+            var btn = $(this).find('button[type="submit"]');
+            if (btn.prop('disabled')) return false;
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Creating...');
+        });
+
         var startDateTimer;
         var endDateTimer;
         $("#StartDate").on("input", function () {
