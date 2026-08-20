@@ -44,6 +44,99 @@ public class ProfileController(
         };
     }
 
+    public async Task<IActionResult> Edit()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var roles = (await userManager.GetRolesAsync(user)).ToList();
+        var primaryRole = roles.FirstOrDefault() ?? Role.Student;
+        var isStudent = roles.Contains(Role.Student);
+
+        var baseVm = await BuildBaseViewModelAsync(user, roles, primaryRole);
+
+        var vm = new EditProfileViewModel
+        {
+            UserId = baseVm.UserId,
+            FullName = baseVm.FullName,
+            Email = baseVm.Email,
+            UserName = baseVm.UserName,
+            RoleLabel = baseVm.RoleLabel,
+            Designation = baseVm.Designation,
+            ProfilePath = baseVm.ProfilePath,
+            SignaturePath = baseVm.SignaturePath,
+            PhoneNumber = baseVm.PhoneNumber,
+            IsActive = baseVm.IsActive,
+            EmailConfirmed = baseVm.EmailConfirmed,
+            TwoFactorEnabled = baseVm.TwoFactorEnabled,
+            ValidFrom = baseVm.ValidFrom,
+            ValidTo = baseVm.ValidTo,
+            Roles = baseVm.Roles,
+            TenantCode = baseVm.TenantCode,
+            TenantName = baseVm.TenantName,
+            TenantLogo = baseVm.TenantLogo,
+            OrganizationName = baseVm.OrganizationName,
+            OrganizationLogo = baseVm.OrganizationLogo,
+            CoverImagePath = baseVm.CoverImagePath,
+            CanUploadSignature = baseVm.CanUploadSignature,
+        };
+
+        if (isStudent)
+        {
+            var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
+            if (registration != null)
+            {
+                Address? permanentAddress = registration.PermanentAddress;
+                if (registration.PermanentAddressId is int permanentAddressId && permanentAddress?.LocalLevel == null)
+                {
+                    permanentAddress = await context.Addresses
+                        .AsNoTracking()
+                        .Include(a => a.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+                        .FirstOrDefaultAsync(a => a.Id == permanentAddressId);
+                }
+
+                vm.PermanentLocalLevelId = permanentAddress?.LocalLevelId;
+                vm.PermanentDistrictId = permanentAddress?.LocalLevel?.DistrictId;
+                vm.PermanentProvinceId = permanentAddress?.LocalLevel?.District?.ProvinceId;
+                vm.RegistrationGenderId = registration.GenderId;
+                vm.RegistrationEthnicityId = registration.EthnicityId;
+            }
+
+            vm.Provinces = await context.Provinces
+                .AsNoTracking()
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.ProvinceName)
+                .Select(p => new DropdownItem { Id = p.Id, Name = p.ProvinceName })
+                .ToListAsync();
+            vm.Districts = await context.Districts
+                .AsNoTracking()
+                .Where(d => d.IsActive)
+                .OrderBy(d => d.DistrictName)
+                .Select(d => new DropdownItem { Id = d.Id, Name = d.DistrictName, ParentId = d.ProvinceId })
+                .ToListAsync();
+            vm.LocalLevels = await context.LocalLevels
+                .AsNoTracking()
+                .Where(l => l.IsActive)
+                .OrderBy(l => l.LocalLevelName)
+                .Select(l => new DropdownItem { Id = l.Id, Name = l.LocalLevelName, ParentId = l.DistrictId })
+                .ToListAsync();
+            vm.Genders = await context.Genders
+                .AsNoTracking()
+                .Where(g => g.IsActive)
+                .OrderBy(g => g.GenderName)
+                .Select(g => new DropdownItem { Id = g.Id, Name = g.GenderName })
+                .ToListAsync();
+            vm.Ethnicities = await context.Ethnicities
+                .AsNoTracking()
+                .Where(e => e.IsActive)
+                .OrderBy(e => e.EthnicityName)
+                .Select(e => new DropdownItem { Id = e.Id, Name = e.EthnicityName })
+                .ToListAsync();
+        }
+
+        return View("EditProfile", vm);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(
@@ -166,8 +259,15 @@ public class ProfileController(
 
         if (roles.Contains(Role.Student) && registration != null)
         {
-            if (user.Email != null)
-                registration.Email = user.Email;
+            if (user.Email != null && user.Email != registration.Email)
+            {
+                var emailTaken = await context.StudentRegistrations
+                    .AnyAsync(sr => sr.Id != registration.Id && sr.Email == user.Email);
+                if (!emailTaken)
+                {
+                    registration.Email = user.Email;
+                }
+            }
             registration.ContactNumber = user.PhoneNumber;
 
             if (localLevelId is > 0)

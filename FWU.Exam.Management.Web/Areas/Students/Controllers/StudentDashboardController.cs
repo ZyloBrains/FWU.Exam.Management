@@ -382,6 +382,12 @@ public class StudentDashboardController(
         var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
         if (schedule == null) return NotFound("Exam schedule not found.");
 
+        if (schedule.SemesterInstance == null)
+        {
+            TempData["ErrorMessage"] = "Exam schedule configuration is incomplete. Please contact support.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
         if (IsScheduleDeadlinePassed(schedule))
         {
             TempData["ErrorMessage"] = "The deadline for this exam form has passed.";
@@ -416,7 +422,7 @@ public class StudentDashboardController(
         var isSupplementary = schedule.ExamType?.Name == "Supplementary";
         if (isSupplementary)
         {
-            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance!.SemesterId, programId);
+            var hasFailed = await dashboardService.HasFailedSubjectsInSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
             if (!hasFailed)
             {
                 TempData["ErrorMessage"] = "You are not eligible for this supplementary exam.";
@@ -447,7 +453,7 @@ public class StudentDashboardController(
             hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterInstance!.SemesterId);
+        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterInstance.SemesterId);
         var isRegular = failedSubjectIds.Count == 0;
 
         var failedSet = new HashSet<int>(failedSubjectIds);

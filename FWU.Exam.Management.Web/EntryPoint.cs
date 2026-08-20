@@ -288,6 +288,8 @@ public partial class EntryPoint
         EmailTemplateHelper.SiteUrl = builder.Configuration["EmailSettings:SiteUrl"];
 
         // Configure the HTTP request pipeline.
+        app.UseForwardedHeaders();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
@@ -298,7 +300,6 @@ public partial class EntryPoint
         {
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
-            app.UseForwardedHeaders();
         }
 
         app.UseMiddleware<SecurityHeadersMiddleware>();

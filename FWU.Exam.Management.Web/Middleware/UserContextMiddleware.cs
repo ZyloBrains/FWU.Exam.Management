@@ -21,7 +21,7 @@ public class UserContextMiddleware(RequestDelegate next)
                 var dbContext = context.RequestServices.GetRequiredService<AppDbContext>();
                 var userContext = context.RequestServices.GetRequiredService<IUserContext>();
                 var tenantContext = context.RequestServices.GetRequiredService<ITenantContext>();
-
+                ;
                 var user = await dbContext.Users
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == userId);
