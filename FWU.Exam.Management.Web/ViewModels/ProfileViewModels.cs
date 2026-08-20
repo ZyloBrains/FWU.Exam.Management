@@ -127,3 +127,24 @@ public class MandatoryProfileFieldStatusViewModel
     public string Name { get; set; } = string.Empty;
     public bool IsComplete { get; set; }
 }
+
+public class EditProfileViewModel : ProfileBaseViewModel
+{
+    public int? PermanentProvinceId { get; set; }
+    public int? PermanentDistrictId { get; set; }
+    public int? PermanentLocalLevelId { get; set; }
+    public int? RegistrationGenderId { get; set; }
+    public int? RegistrationEthnicityId { get; set; }
+    public List<DropdownItem> Provinces { get; set; } = [];
+    public List<DropdownItem> Districts { get; set; } = [];
+    public List<DropdownItem> LocalLevels { get; set; } = [];
+    public List<DropdownItem> Genders { get; set; } = [];
+    public List<DropdownItem> Ethnicities { get; set; } = [];
+}
+
+public class DropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int? ParentId { get; set; }
+}
