@@ -259,8 +259,15 @@ public class ProfileController(
 
         if (roles.Contains(Role.Student) && registration != null)
         {
-            if (user.Email != null)
-                registration.Email = user.Email;
+            if (user.Email != null && user.Email != registration.Email)
+            {
+                var emailTaken = await context.StudentRegistrations
+                    .AnyAsync(sr => sr.Id != registration.Id && sr.Email == user.Email);
+                if (!emailTaken)
+                {
+                    registration.Email = user.Email;
+                }
+            }
             registration.ContactNumber = user.PhoneNumber;
 
             if (localLevelId is > 0)

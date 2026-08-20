@@ -22,14 +22,6 @@
 }
 
 <div class="space-y-6">
-    <nav class="flex items-center gap-2 text-sm text-gray-500">
-        <a asp-controller="Profile" asp-action="Index" class="hover:text-admin-blue transition-colors">
-            <i class="fas fa-id-badge mr-1"></i>My Profile
-        </a>
-        <i class="fas fa-chevron-right text-xs text-gray-400"></i>
-        <span class="text-gray-800 font-medium">Edit Profile</span>
-    </nav>
-
     @if (TempData["ErrorMessage"] is string errorMsg)
     {
         <div class="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700 flex items-start gap-3">
@@ -87,16 +79,20 @@
 
                     @if (Model.CanUploadSignature)
                     {
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
-                            <div class="flex items-center gap-4 mb-2">
-                                <div class="w-full sm:w-32 h-12 border border-gray-200 rounded-lg bg-white flex items-center justify-center overflow-hidden shrink-0">
+                        <div class="flex items-center gap-3 sm:gap-4">
+                            <div class="relative shrink-0">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full ring-2 ring-admin-blue/30 overflow-hidden bg-white flex items-center justify-center border border-gray-200">
                                     <img src="@Model.SignaturePath" alt="Signature" id="editSignaturePreview"
-                                         class="max-h-full max-w-full object-contain @(string.IsNullOrEmpty(Model.SignaturePath) ? "hidden" : "")" />
-                                    <span class="text-xs text-gray-400 @(string.IsNullOrEmpty(Model.SignaturePath) ? "" : "hidden")" id="editSignatureEmpty">No signature</span>
+                                         class="w-full h-full object-contain p-1 @(string.IsNullOrEmpty(Model.SignaturePath) ? "hidden" : "")" />
+                                    <span class="text-xs text-gray-400 @(string.IsNullOrEmpty(Model.SignaturePath) ? "" : "hidden")" id="editSignatureEmpty">
+                                        <i class="fas fa-pen-nib text-lg text-gray-300"></i>
+                                    </span>
                                 </div>
+                            </div>
+                            <div class="min-w-0">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
                                 <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
-                                    <i class="fas fa-pen-nib"></i> @(string.IsNullOrEmpty(Model.SignaturePath) ? "Upload" : "Change")
+                                    <i class="fas fa-camera"></i> @(string.IsNullOrEmpty(Model.SignaturePath) ? "Upload Signature" : "Change Signature")
                                     <input type="file" name="signature" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
                                            x-data
                                            x-on:change="
@@ -112,8 +108,8 @@
                                                    r.readAsDataURL(f);
                                                }" />
                                 </label>
+                                <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB</p>
                             </div>
-                            <p class="text-xs text-gray-400">JPG, PNG, GIF or WebP up to 5 MB</p>
                         </div>
                     }
                 </div>
