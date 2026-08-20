@@ -134,7 +134,7 @@ public class ProfileController(
                 .ToListAsync();
         }
 
-        return View(vm);
+        return View("EditProfile", vm);
     }
 
     [HttpPost]
