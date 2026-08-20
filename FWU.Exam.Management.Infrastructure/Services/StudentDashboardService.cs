@@ -613,45 +613,6 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         await context.SaveChangesAsync();
     }
 
-    public async Task<List<int>> GetFailedSubjectOfferingIdsAsync(string userId, int semesterId)
-    {
-        var admission = await ResolveStudentAdmissionAsync(userId);
-        if (admission == null) return [];
-
-        var scheduleIds = await context.ExamSchedules!
-            .AsNoTracking()
-            .IgnoreQueryFilters()
-            .Where(es => es.IsActive
-                      && es.ProgramId == admission.ProgramsId
-                      && es.SemesterInstance!.SemesterId != semesterId
-                      && es.ExamType != null
-                      && es.ExamType.Name != "Entrance")
-            .Select(es => es.Id)
-            .ToListAsync();
-
-        if (scheduleIds.Count == 0) return [];
-
-        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
-
-        var results = await context.ExamRegistrations!
-            .AsNoTracking()
-            .Where(er => scheduleIds.Contains(er.ExamScheduleId) && er.IsActive
-                      && (studentErIds.Count == 0 || studentErIds.Contains(er.Id)))
-            .SelectMany(er => er.ExamSubjectResults!)
-            .Where(esr => esr.IsActive)
-            .ToListAsync();
-
-        var latestPerSubject = results
-            .GroupBy(esr => esr.SubjectOfferingId)
-            .Select(g => g.OrderByDescending(esr => esr.Id).First())
-            .ToList();
-
-        return latestPerSubject
-            .Where(esr => IsFailedGrade(esr.GradeLetter))
-            .Select(esr => esr.SubjectOfferingId)
-            .ToList();
-    }
-
     public async Task<int?> GetCurrentSemesterIdForStudentAsync(string userId)
     {
         var admission = await ResolveStudentAdmissionAsync(userId);

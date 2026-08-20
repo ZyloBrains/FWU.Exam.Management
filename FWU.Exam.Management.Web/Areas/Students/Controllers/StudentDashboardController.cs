@@ -454,7 +454,7 @@ public class StudentDashboardController(
             hasESewa = await context.ESewaConfigurations.AnyAsync();
         }
 
-        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsAsync(user.Id, schedule.SemesterInstance.SemesterId);
+        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsForSemesterAsync(user.Id, schedule.SemesterInstance.SemesterId, programId);
         var isRegular = failedSubjectIds.Count == 0;
 
         var failedSet = new HashSet<int>(failedSubjectIds);
