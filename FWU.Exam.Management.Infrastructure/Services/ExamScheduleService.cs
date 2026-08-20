@@ -387,7 +387,7 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .ToListAsync();
 
         var offeringQuery = context.SubjectOfferings
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
+            .Where(so => so.IsActive && so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
         var allSubjectOfferings = await offeringQuery
             .Include(so => so.SubjectCatalog)
             .OrderBy(so => so.DisplayOrder)
