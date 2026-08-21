@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data;
@@ -123,7 +124,7 @@ public class ReportsController(AppDbContext context, IUserContext userContext) :
                 .Select(s => new
                 {
                     s.Id,
-                    Name = s.Name + " (" + s.Code + " - " + s.AcademicYear!.AcademicYearName + ")"
+                    Name = SemesterDisplayHelper.Format(s)
                 })
                 .ToListAsync(),
             "Id", "Name", filter.SemesterId);

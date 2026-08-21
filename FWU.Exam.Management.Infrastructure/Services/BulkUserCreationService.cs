@@ -165,6 +165,7 @@ public class BulkUserCreationService(
                 var batch = registrationIds.Skip(i * BatchSize).Take(BatchSize).ToList();
 
                 var registrations = await scopedContext.StudentRegistrations
+                    .Include(s => s.StudentAdmission)
                     .Where(s => batch.Contains(s.Id))
                     .ToListAsync();
 
@@ -220,6 +221,9 @@ public class BulkUserCreationService(
 
                         await scopedUserManager.AddToRoleAsync(user, Role.Student);
                         await scopedUserManager.AddClaimAsync(user, new Claim("must_change_password", "true"));
+
+                        if (reg.StudentAdmission != null)
+                            reg.StudentAdmission.AppUserId = user.Id;
 
                         // Add to pre-loaded sets so duplicates within same batch are caught
                         existingUserNameSet.Add(loginId);

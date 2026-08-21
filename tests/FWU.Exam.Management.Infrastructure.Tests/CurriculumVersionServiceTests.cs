@@ -22,34 +22,12 @@ public class CurriculumVersionServiceTests
         ctx.AcademicYears.Add(new AcademicYear
         {
             Id = TargetAcademicYearId,
+            TenantId = TestData.TenantId,
             AcademicYearCode = "2082",
             AcademicYearName = "2082",
             AcademicYearNameNepali = "2082",
             IsActive = true,
             IsRunning = false
-        });
-
-        ctx.Semesters.Add(new Semester
-        {
-            Id = 7,
-            Year = 2,
-            Number = 1,
-            Name = "Semester 2.1",
-            Code = "SEM21",
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddMonths(6),
-            AcademicYearId = TargetAcademicYearId
-        });
-        ctx.Semesters.Add(new Semester
-        {
-            Id = 8,
-            Year = 2,
-            Number = 2,
-            Name = "Semester 2.2",
-            Code = "SEM22",
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddMonths(6),
-            AcademicYearId = TargetAcademicYearId
         });
 
         ctx.CurriculumVersions.Add(new CurriculumVersion
@@ -81,29 +59,28 @@ public class CurriculumVersionServiceTests
         Assert.True(copied.IsActive);
 
         var source = await db.Context.CurriculumVersions.AsNoTracking().SingleAsync(c => c.Id == SourceVersionId);
-        Assert.False(source.IsActive);
+        Assert.True(source.IsActive);
 
         var copiedOfferings = await db.Context.SubjectOfferings
             .Where(o => o.CurriculumVersionId == copied.Id)
             .ToListAsync();
 
-        Assert.Equal(2, copiedOfferings.Count);
+        Assert.Equal(3, copiedOfferings.Count);
 
         var semesterNumbers = copiedOfferings
             .Select(o => db.Context.Semesters.AsNoTracking().Single(s => s.Id == o.SemesterId).Number)
             .OrderBy(n => n)
             .ToList();
-        Assert.Equal(new[] { 1, 2 }, semesterNumbers);
+        Assert.Equal(new[] { 1, 2, 3 }, semesterNumbers);
         Assert.All(copiedOfferings, o => Assert.Equal(TestData.ProgramId, o.ProgramId));
     }
 
     [Fact]
-    public async Task CopyCurriculumVersionAsync_SkipsOfferings_WhenTargetYearHasNoMatchingSemesterNumber()
+    public async Task CopyCurriculumVersionAsync_SkipsOfferings_WhenSourceVersionNotSet()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
             SeedCopyScenario(ctx);
-            ctx.SubjectOfferings.Local.First(o => o.Id == 104).CurriculumVersionId = SourceVersionId;
         });
         var service = CreateService(db);
 
@@ -113,7 +90,7 @@ public class CurriculumVersionServiceTests
         var copiedOfferings = await db.Context.SubjectOfferings
             .Where(o => o.CurriculumVersionId == copied.Id)
             .ToListAsync();
-        Assert.Equal(2, copiedOfferings.Count);
+        Assert.Equal(3, copiedOfferings.Count);
     }
 
     [Fact]
@@ -128,7 +105,26 @@ public class CurriculumVersionServiceTests
     }
 
     [Fact]
-    public async Task CreateCurriculumVersionAsync_DeactivatesOtherActiveVersionsOfSameProgram()
+    public async Task CreateCurriculumVersionAsync_DeactivatesOtherVersions_SameProgram_SameYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), SeedCopyScenario);
+        var service = CreateService(db);
+
+        await service.CreateCurriculumVersionAsync(new CurriculumVersion
+        {
+            TenantId = TestData.TenantId,
+            Name = "New Active",
+            ProgramId = TestData.ProgramId,
+            EffectiveAcademicYearId = TestData.AcademicYearId,
+            IsActive = true
+        });
+
+        var all = await db.Context.CurriculumVersions.AsNoTracking().ToListAsync();
+        Assert.Single(all, v => v.IsActive);
+    }
+
+    [Fact]
+    public async Task CreateCurriculumVersionAsync_AllowsMultipleActive_DifferentYears()
     {
         using var db = new TestDb(TestTenantContext.Standard(), SeedCopyScenario);
         var service = CreateService(db);
@@ -143,7 +139,7 @@ public class CurriculumVersionServiceTests
         });
 
         var all = await db.Context.CurriculumVersions.AsNoTracking().ToListAsync();
-        Assert.Single(all, v => v.IsActive);
+        Assert.Equal(2, all.Count(v => v.IsActive));
     }
 
     [Fact]

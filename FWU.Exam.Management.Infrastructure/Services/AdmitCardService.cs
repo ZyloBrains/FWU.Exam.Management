@@ -80,7 +80,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 .ThenInclude(er => er!.ApplicationVoucher)
                     .ThenInclude(v => v!.StudentRegistration)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s!.Semester)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(e => e.ExamSchedule)
                 .ThenInclude(s => s!.Program)
                     .ThenInclude(p => p!.Level)
@@ -89,7 +89,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             .Include(e => e.ExamSchedule)
                 .ThenInclude(s => s!.ExamType)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s!.AcademicYear)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(e => e.StudentRegistration)
             .Where(ac => ac.IsActive)
             .ApplyScope(userContext);
@@ -125,7 +125,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 .ThenInclude(er => er!.ApplicationVoucher)
                     .ThenInclude(v => v!.StudentRegistration)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s!.Semester)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(e => e.ExamSchedule)
                 .ThenInclude(s => s!.Program)
                     .ThenInclude(p => p!.Level)
@@ -134,7 +134,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
             .Include(e => e.ExamSchedule)
                 .ThenInclude(s => s!.ExamType)
             .Include(e => e.ExamSchedule)
-                .ThenInclude(s => s!.AcademicYear)
+                .ThenInclude(s => s!.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(e => e.StudentRegistration)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
@@ -158,7 +158,7 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 .AsNoTracking()
                 .Include(so => so.SubjectCatalog)
                 .Where(so => so.ProgramId == admitCard.ExamSchedule.ProgramId
-                          && so.SemesterId == admitCard.ExamSchedule.SemesterId);
+                          && so.SemesterId == admitCard.ExamSchedule.SemesterInstance!.SemesterId);
 
             var subjectOfferings = await offeringQuery
                 .OrderBy(so => so.DisplayOrder)
@@ -215,13 +215,13 @@ public class AdmitCardService(AppDbContext context, IUserContext userContext, IT
                 ?? admitCard.ExamRegistration?.Program?.ProgramName;
 
         if (string.IsNullOrEmpty(admitCard.Semester))
-            admitCard.Semester = admitCard.ExamSchedule?.Semester?.Name;
+            admitCard.Semester = admitCard.ExamSchedule?.SemesterInstance?.Semester?.Name;
 
         if (string.IsNullOrEmpty(admitCard.ExamType))
             admitCard.ExamType = admitCard.ExamSchedule?.ExamType?.Name;
 
         if (string.IsNullOrEmpty(admitCard.Year))
-            admitCard.Year = admitCard.ExamSchedule?.AcademicYear?.AcademicYearCode;
+            admitCard.Year = admitCard.ExamSchedule?.SemesterInstance?.AcademicYear?.AcademicYearCode;
 
         if (string.IsNullOrEmpty(admitCard.ExamRollNo))
             admitCard.ExamRollNo = admitCard.ExamRegistration?.ExamRollNumber

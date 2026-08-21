@@ -49,6 +49,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -59,9 +62,15 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AcademicYearCode")
+                    b.HasIndex("TenantId", "AcademicYearCode")
                         .IsUnique();
 
                     b.ToTable("AcademicYears");
@@ -1193,6 +1202,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<bool?>("IsAppliedByStudent")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSupplementary")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("ProgramsId")
                         .HasColumnType("int");
 
@@ -1309,9 +1321,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AcademicYearId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("AdmissionCardReleaseDate")
                         .HasColumnType("datetime2");
 
@@ -1371,7 +1380,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("SemesterId")
+                    b.Property<int>("SemesterInstanceId")
                         .HasColumnType("int");
 
                     b.Property<DateOnly?>("StartDate")
@@ -1389,8 +1398,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AcademicYearId");
-
                     b.HasIndex("CollegeId");
 
                     b.HasIndex("ExamTypeId");
@@ -1399,7 +1406,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("ProgramId");
 
-                    b.HasIndex("SemesterId");
+                    b.HasIndex("SemesterInstanceId");
 
                     b.HasIndex("TenantId", "ExamScheduleCode")
                         .IsUnique()
@@ -1497,6 +1504,14 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
+                    b.Property<string>("GradeLetterPractical")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("GradeLetterTheory")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -1513,6 +1528,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsSubmitted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSupplementary")
                         .HasColumnType("bit");
 
                     b.Property<bool?>("IsTheoryRegistered")
@@ -1803,6 +1821,62 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.ToTable("GradeDefinitions");
                 });
 
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradeGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GradeGroupName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradeGroupName");
+
+                    b.ToTable("GradeGroups");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradePoint", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Grade")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<int>("GradeGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("GradePointValue")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("ObtainedMark")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GradeGroupId", "ObtainedMark")
+                        .IsUnique();
+
+                    b.ToTable("GradePoints");
+                });
+
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradingScheme", b =>
                 {
                     b.Property<int>("Id")
@@ -1824,6 +1898,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int?>("GradeGroupId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -1844,6 +1921,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AcademicYearId");
+
+                    b.HasIndex("GradeGroupId");
 
                     b.HasIndex("ProgramId");
 
@@ -2863,6 +2942,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)");
 
+                    b.Property<int?>("LevelId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Part")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -2887,7 +2969,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("ResultRecordMasterId")
+                    b.Property<int?>("ResultRecordMasterId")
                         .HasColumnType("int");
 
                     b.Property<string>("Sex")
@@ -2941,6 +3023,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("ExamTypeId");
 
+                    b.HasIndex("LevelId");
+
                     b.HasIndex("ProgramsId");
 
                     b.HasIndex("TenantId");
@@ -2986,16 +3070,10 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AcademicYearId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -3009,15 +3087,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("AcademicYearId");
 
                     b.HasIndex("Code")
                         .IsUnique()
@@ -3065,7 +3135,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int>("ResultStatus")
                         .HasColumnType("int");
 
-                    b.Property<int>("SemesterId")
+                    b.Property<int>("SemesterInstanceId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("SemesterResultDate")
@@ -3085,13 +3155,57 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SemesterId");
+                    b.HasIndex("SemesterInstanceId");
 
                     b.HasIndex("StudentAdmissionId");
 
                     b.HasIndex("TenantId");
 
                     b.ToTable("SemesterEnrollments");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.SemesterInstance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcademicYearId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProgramId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Remark")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SemesterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcademicYearId");
+
+                    b.HasIndex("ProgramId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("SemesterId", "AcademicYearId", "ProgramId")
+                        .IsUnique();
+
+                    b.ToTable("SemesterInstances");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.SmsConfiguration", b =>
@@ -3814,11 +3928,16 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int>("SubjectTypeId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TenantId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SubjectCode");
 
                     b.HasIndex("SubjectTypeId");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("SubjectCatalogs");
                 });
@@ -3851,6 +3970,9 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Property<float?>("InternalTheoryPassMarks")
                         .HasColumnType("real");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsCompulsory")
                         .HasColumnType("bit");
@@ -3891,7 +4013,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.HasIndex("CurriculumVersionId", "SubjectCatalogId", "ProgramId", "SemesterId")
                         .IsUnique()
-                        .HasFilter("[CurriculumVersionId] IS NOT NULL");
+                        .HasFilter("[IsActive] = 1");
 
                     b.ToTable("SubjectOfferings");
                 });
@@ -4345,6 +4467,17 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("UserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.AcademicYear", b =>
+                {
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.ApplicationVoucher", b =>
@@ -4858,12 +4991,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Exams.ExamSchedule", b =>
                 {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
-                        .WithMany("ExamSchedules")
-                        .HasForeignKey("AcademicYearId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Colleges.College", "College")
                         .WithMany()
                         .HasForeignKey("CollegeId");
@@ -4884,10 +5011,10 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.Semester", "Semester")
-                        .WithMany("ExamSchedules")
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.SemesterInstance", "SemesterInstance")
+                        .WithMany()
+                        .HasForeignKey("SemesterInstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
@@ -4895,8 +5022,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("AcademicYear");
 
                     b.Navigation("College");
 
@@ -4906,7 +5031,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Navigation("Program");
 
-                    b.Navigation("Semester");
+                    b.Navigation("SemesterInstance");
 
                     b.Navigation("Tenant");
                 });
@@ -5052,11 +5177,27 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("GradingScheme");
                 });
 
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradePoint", b =>
+                {
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.GradeGroup", "GradeGroup")
+                        .WithMany("GradePoints")
+                        .HasForeignKey("GradeGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GradeGroup");
+                });
+
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradingScheme", b =>
                 {
                     b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
                         .WithMany()
                         .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.GradeGroup", "GradeGroup")
+                        .WithMany()
+                        .HasForeignKey("GradeGroupId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
@@ -5066,6 +5207,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("AcademicYear");
+
+                    b.Navigation("GradeGroup");
 
                     b.Navigation("Program");
                 });
@@ -5344,6 +5487,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Level", "Level")
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
                         .WithMany()
                         .HasForeignKey("ProgramsId")
@@ -5363,6 +5511,8 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("ExamSchedule");
 
                     b.Navigation("ExamType");
+
+                    b.Navigation("Level");
 
                     b.Navigation("Program");
 
@@ -5388,23 +5538,12 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("Semester");
                 });
 
-            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.Semester", b =>
-                {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
-                        .WithMany()
-                        .HasForeignKey("AcademicYearId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AcademicYear");
-                });
-
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment", b =>
                 {
-                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.Semester", "Semester")
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.SemesterInstance", "SemesterInstance")
                         .WithMany("SemesterEnrollments")
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("SemesterInstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FWU.Exam.Management.Domain.Entities.Students.StudentAdmission", "StudentAdmission")
@@ -5419,9 +5558,44 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Semester");
+                    b.Navigation("SemesterInstance");
 
                     b.Navigation("StudentAdmission");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.SemesterInstance", b =>
+                {
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.AcademicYear", "AcademicYear")
+                        .WithMany()
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Program", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Semesters.Semester", "Semester")
+                        .WithMany()
+                        .HasForeignKey("SemesterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AcademicYear");
+
+                    b.Navigation("Program");
+
+                    b.Navigation("Semester");
 
                     b.Navigation("Tenant");
                 });
@@ -5660,7 +5834,14 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FWU.Exam.Management.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("SubjectType");
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering", b =>
@@ -5829,8 +6010,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
                     b.Navigation("ExamRegistrations");
 
-                    b.Navigation("ExamSchedules");
-
                     b.Navigation("StudentRegistrations");
                 });
 
@@ -5919,6 +6098,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Navigation("StudentRegistrations");
                 });
 
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradeGroup", b =>
+                {
+                    b.Navigation("GradePoints");
+                });
+
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.GradingScheme", b =>
                 {
                     b.Navigation("GradeDefinitions");
@@ -5987,11 +6171,7 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.Semester", b =>
                 {
-                    b.Navigation("ExamSchedules");
-
                     b.Navigation("ProgramSemesters");
-
-                    b.Navigation("SemesterEnrollments");
 
                     b.Navigation("SubjectOfferings");
                 });
@@ -5999,6 +6179,11 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.SemesterEnrollment", b =>
                 {
                     b.Navigation("ExamRegistrations");
+                });
+
+            modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Semesters.SemesterInstance", b =>
+                {
+                    b.Navigation("SemesterEnrollments");
                 });
 
             modelBuilder.Entity("FWU.Exam.Management.Domain.Entities.Students.StudentAdmission", b =>

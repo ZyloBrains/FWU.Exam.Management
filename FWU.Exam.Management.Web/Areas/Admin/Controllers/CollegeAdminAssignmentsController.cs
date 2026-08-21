@@ -114,7 +114,7 @@ public class CollegeAdminAssignmentsController(
             programsQuery = programsQuery.Where(p => p.FacultyId == userContext.FacultyId.Value);
         ViewBag.ProgramId = new SelectList(await programsQuery.ToListAsync(), "Id", "ProgramName");
 
-        var semesters = await context.Semesters.AsNoTracking().Include(s => s.AcademicYear).ApplyScope(userContext).ToListAsync();
+        var semesters = await context.Semesters.AsNoTracking().ApplyScope(userContext).ToListAsync();
         ViewBag.SemesterId = new SelectList(
             semesters.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = SemesterDisplayHelper.Format(s) }),
             "Value", "Text");

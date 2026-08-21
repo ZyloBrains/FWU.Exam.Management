@@ -54,6 +54,7 @@ public static class TestData
         ctx.AcademicYears.Add(new AcademicYear
         {
             Id = AcademicYearId,
+            TenantId = TenantId,
             AcademicYearCode = "2081",
             AcademicYearName = "2081",
             AcademicYearNameNepali = "2081",
@@ -86,19 +87,33 @@ public static class TestData
         ctx.StudentCategories.Add(new StudentCategory { Id = 1, StudentCategoryName = "Regular", IsActive = true });
 
         ctx.SubjectTypes.Add(new SubjectType { Id = 1, Code = "TH", Name = "Theory", IsActive = true });
-        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 1, SubjectCode = "SUB1", SubjectName = "Subject 1", SubjectTypeId = 1, IsActive = true });
+        ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 1, TenantId = TenantId, SubjectCode = "SUB1", SubjectName = "Subject 1", SubjectTypeId = 1, IsActive = true });
 
         ctx.ExamTypes.Add(new ExamType { Id = Regular, Name = "Regular", Code = "1", IsActive = true });
         ctx.ExamTypes.Add(new ExamType { Id = Partial, Name = "Partial", Code = "2", IsActive = true });
         ctx.ExamTypes.Add(new ExamType { Id = Supplementary, Name = "Supplementary", Code = "3", IsActive = true });
         ctx.ExamTypes.Add(new ExamType { Id = Entrance, Name = "Entrance", Code = "4", IsActive = true });
 
-        ctx.Semesters.Add(Semester(1, 1, 1));
-        ctx.Semesters.Add(Semester(2, 1, 2));
-        ctx.Semesters.Add(Semester(3, 2, 3));
-        ctx.Semesters.Add(Semester(4, 2, 4));
-        ctx.Semesters.Add(Semester(5, 3, 5));
-        ctx.Semesters.Add(Semester(6, 3, 6));
+        ctx.Semesters.Add(Semester(1, 1));
+        ctx.Semesters.Add(Semester(2, 2));
+        ctx.Semesters.Add(Semester(3, 3));
+        ctx.Semesters.Add(Semester(4, 4));
+        ctx.Semesters.Add(Semester(5, 5));
+        ctx.Semesters.Add(Semester(6, 6));
+
+        for (var semId = 1; semId <= 6; semId++)
+        {
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = semId,
+                TenantId = TenantId,
+                SemesterId = semId,
+                AcademicYearId = AcademicYearId,
+                ProgramId = ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-1),
+                EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6)
+            });
+        }
 
         for (var semId = 1; semId <= 6; semId++)
         {
@@ -143,23 +158,19 @@ public static class TestData
     public static AcademicYear AcademicYear(int id, string name) => new()
     {
         Id = id,
+        TenantId = TenantId,
         AcademicYearCode = name,
         AcademicYearName = name,
-        AcademicYearNameNepali = name,
         IsActive = true,
         IsRunning = false
     };
 
-    public static Semester Semester(int id, int year, int number) => new()
+    public static Semester Semester(int id, int number) => new()
     {
         Id = id,
-        Year = year,
         Number = number,
-        Name = $"Semester {year}.{number}",
-        Code = $"SEM{year}{number}",
-        StartDate = DateTime.UtcNow.AddYears(-1),
-        EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6),
-        AcademicYearId = AcademicYearId
+        Name = $"Semester {number}",
+        Code = $"SEM{number}"
     };
 
     public static ProgramSemester ProgramSemester(int id, int semesterId, int programId) => new()
@@ -171,8 +182,8 @@ public static class TestData
         DisplayOrder = semesterId
     };
 
-    public static ExamSchedule Schedule(int id, int semesterId, int examTypeId, DateOnly? endDate,
-        DateTime? admissionCardReleaseDate, int programId = ProgramId, bool isActive = true, int academicYearId = AcademicYearId)
+    public static ExamSchedule Schedule(int id, int semesterInstanceId, int examTypeId, DateOnly? endDate,
+        DateTime? admissionCardReleaseDate, int programId = ProgramId, bool isActive = true)
     {
         return new ExamSchedule
         {
@@ -184,9 +195,8 @@ public static class TestData
             StartDate = endDate?.AddDays(-15),
             EndDate = endDate,
             IsActive = isActive,
-            AcademicYearId = academicYearId,
             ProgramId = programId,
-            SemesterId = semesterId,
+            SemesterInstanceId = semesterInstanceId,
             ExamTypeId = examTypeId,
             AdmissionCardReleaseDate = admissionCardReleaseDate,
             StartTime = new TimeOnly(10, 0),
@@ -201,6 +211,7 @@ public static class TestData
         SubjectCatalogId = 1,
         ProgramId = programId,
         SemesterId = semesterId,
+        IsActive = true,
         IsCompulsory = true,
         DisplayOrder = 1,
         HasTheory = true,
@@ -245,13 +256,13 @@ public static class TestData
         AppUserId = userId
     };
 
-    public static SemesterEnrollment Enrollment(int id, int admissionId, int semesterId,
+    public static SemesterEnrollment Enrollment(int id, int admissionId, int semesterInstanceId,
         StudentEnrollmentStatus status = StudentEnrollmentStatus.Active) => new()
     {
         Id = id,
         TenantId = TenantId,
         StudentAdmissionId = admissionId,
-        SemesterId = semesterId,
+        SemesterInstanceId = semesterInstanceId,
         EnrollmentStatus = status,
         EnrollmentType = EnrollmentType.FullTime,
         PaymentStatus = PaymentStatus.Paid,

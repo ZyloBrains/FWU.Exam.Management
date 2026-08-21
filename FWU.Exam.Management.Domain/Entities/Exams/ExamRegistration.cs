@@ -95,6 +95,9 @@ public class ExamRegistration : ITenantScoped
     [Display(Name = "Semester Enrollment")]
     public int? SemesterEnrollmentId { get; set; }
 
+    [Display(Name = "Is Supplementary")]
+    public bool IsSupplementary { get; set; }
+
     public virtual SemesterEnrollment? SemesterEnrollment { get; set; }
 
     public virtual AcademicYear? AcademicYear { get; set; }

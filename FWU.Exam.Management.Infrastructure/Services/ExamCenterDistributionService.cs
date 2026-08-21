@@ -14,12 +14,13 @@ public class ExamCenterDistributionService(AppDbContext context) : IExamCenterDi
             .Include(er => er.College)
                 .ThenInclude(c => c!.CollegeFaculties)
             .Include(er => er.ExamSchedule)
-                .ThenInclude(es => es!.AcademicYear)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.AcademicYear)
             .OrderBy(er => er.Id)
             .ToListAsync();
 
         var examSchedule = registrations.FirstOrDefault()?.ExamSchedule;
-        var academicYearCode = examSchedule?.AcademicYear?.AcademicYearCode
+        var academicYearCode = examSchedule?.SemesterInstance?.AcademicYear?.AcademicYearCode
             ?? DateTime.Now.Year.ToString();
         var yy = academicYearCode.Length >= 2
             ? academicYearCode[^2..]

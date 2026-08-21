@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
@@ -192,8 +193,8 @@ public class StudentDashboardServiceTests
             v2Offering.CurriculumVersionId = 2;
             ctx.SubjectOfferings.Add(v2Offering);
 
-            // Batch year 1 resolves to version 1 (exact EffectiveAcademicYearId match).
-            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null, academicYearId: 1));
+            // Batch year 1 resolves to version 1 (latest EffectiveAcademicYearId <= 1).
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null));
         });
         var service = CreateService(db);
 
@@ -236,7 +237,17 @@ public class StudentDashboardServiceTests
             ctx.SubjectOfferings.Add(v2Offering);
 
             // Batch year 2025 sits between the two versions; must use the 2024 one.
-            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null, academicYearId: 2025));
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 20,
+                TenantId = TestData.TenantId,
+                SemesterId = 2,
+                AcademicYearId = 2025,
+                ProgramId = TestData.ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-1),
+                EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6)
+            });
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 20, TestData.Regular, Past, null));
         });
         var service = CreateService(db);
 
@@ -254,22 +265,45 @@ public class StudentDashboardServiceTests
             ctx.AcademicYears.Add(TestData.AcademicYear(2014, "2014"));
             ctx.AcademicYears.Add(TestData.AcademicYear(2022, "2022"));
 
-            // Semesters for AcademicYear 2014
-            var sem2014 = TestData.Semester(50, 10, 2);
-            sem2014.AcademicYearId = 2014;
+            // Two global semesters with the same Number (2)
+            var sem2014 = TestData.Semester(50, 2);
+            sem2014.Name = "Semester 2 (2014)";
+            sem2014.Code = "SEM2-2014";
             ctx.Semesters.Add(sem2014);
 
-            // Semesters for AcademicYear 2022
-            var sem2022 = TestData.Semester(51, 20, 2);
-            sem2022.AcademicYearId = 2022;
+            var sem2022 = TestData.Semester(51, 2);
+            sem2022.Name = "Semester 2 (2022)";
+            sem2022.Code = "SEM2-2022";
             ctx.Semesters.Add(sem2022);
+
+            // Instances bind each semester to a different academic year
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 50,
+                TenantId = TestData.TenantId,
+                SemesterId = 50,
+                AcademicYearId = 2014,
+                ProgramId = TestData.ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-12),
+                EndDate = DateTime.UtcNow.AddYears(-12).AddMonths(6)
+            });
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 51,
+                TenantId = TestData.TenantId,
+                SemesterId = 51,
+                AcademicYearId = 2022,
+                ProgramId = TestData.ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-4),
+                EndDate = DateTime.UtcNow.AddYears(-4).AddMonths(6)
+            });
 
             // Offering linked to 2014's Semester 2 (SemesterId=50)
             var offering = TestData.Offering(210, 50, TestData.ProgramId);
             ctx.SubjectOfferings.Add(offering);
 
-            // Schedule for 2022's Semester 2 (SemesterId=51) — different ID, same Number
-            ctx.ExamSchedules.Add(TestData.Schedule(31, 51, TestData.Regular, Past, null, academicYearId: 2022));
+            // Schedule for 2022's Semester 2 (SemesterInstanceId=51) — different ID, same Number
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 51, TestData.Regular, Past, null));
         });
         var service = CreateService(db);
 
@@ -327,6 +361,63 @@ public class StudentDashboardServiceTests
         var offerings = await service.GetSubjectOfferingsForStudentAsync(UserId, TestData.ProgramId);
 
         Assert.Equal(new[] { 102, 210 }, offerings.Select(o => o.Id).OrderBy(id => id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForStudentAsync_ResolvesVersionByEnrolledSemesterAcademicYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            var secondYear = new AcademicYear
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                AcademicYearCode = "2082",
+                AcademicYearName = "2082",
+                AcademicYearNameNepali = "2082",
+                IsActive = true,
+                IsRunning = false
+            };
+            ctx.AcademicYears.Add(secondYear);
+
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 5,
+                TenantId = TestData.TenantId,
+                Name = "Version 2081",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = TestData.AcademicYearId,
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 6,
+                TenantId = TestData.TenantId,
+                Name = "Version 2082",
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2,
+                IsActive = true
+            });
+
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 5;
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).SubjectCatalogId = 1;
+            var offering210 = TestData.Offering(210, 2, TestData.ProgramId);
+            offering210.CurriculumVersionId = 6;
+            offering210.SubjectCatalogId = 1;
+            ctx.SubjectOfferings.Add(offering210);
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForStudentAsync(UserId, TestData.ProgramId);
+
+        var offering = Assert.Single(offerings);
+        Assert.Equal(102, offering.Id);
     }
 
     [Fact]
@@ -468,6 +559,8 @@ public class StudentDashboardServiceTests
                 IsActive = true
             });
 
+            ctx.AcademicYears.Local.Single(a => a.Id == TestData.AcademicYearId).TenantId = 2;
+
             ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular, Past, null));
 
             ctx.Faculties.Add(new Faculty { Id = 5, Name = "Engineering", OfficeCode = "L091", TenantId = 2 });
@@ -503,8 +596,8 @@ public class StudentDashboardServiceTests
         Assert.Equal(21, rr.ExamScheduleId);
         Assert.NotNull(rr.ExamSchedule);
         Assert.Equal("Schedule 21", rr.ExamSchedule!.ExamScheduleName);
-        Assert.NotNull(rr.ExamSchedule.Semester);
-        Assert.Equal(1, rr.ExamSchedule.Semester!.Year);
+        Assert.NotNull(rr.ExamSchedule.SemesterInstance?.Semester);
+        Assert.Equal(1, rr.ExamSchedule.SemesterInstance!.Semester!.Number);
     }
 
     [Fact]
@@ -531,6 +624,7 @@ public class StudentDashboardServiceTests
             ctx.SubjectCatalogs.Add(new SubjectCatalog
             {
                 Id = 7,
+                TenantId = 2,
                 SubjectCode = "SUB7",
                 SubjectName = "Subject 7",
                 SubjectTypeId = 1,

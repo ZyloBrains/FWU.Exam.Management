@@ -137,8 +137,8 @@
                                                 }
                                                 @if (HasPerm("subjectofferings.delete"))
                                                 {
-                                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); deleteRecord('@item.Id')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Delete">
-                                                        <i class="fas fa-trash text-xs"></i>
+                                                    <a href="javascript:void(0)" onclick="event.stopPropagation(); archiveRecord('@item.Id')" class="p-1.5 text-orange-600 hover:bg-orange-50 rounded-md" title="Archive">
+                                                        <i class="fas fa-box-archive text-xs"></i>
                                                     </a>
                                                 }
                                             </div>

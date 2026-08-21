@@ -1,8 +1,8 @@
 @{
     var statusMessage = TempData["StatusMessage"]?.ToString();
     var errorMessages = ViewData.ModelState
-        .Where(ms => ms.Key == string.Empty)
-        .SelectMany(ms => ms.Value.Errors)
+        .Where(ms => ms.Key == string.Empty && ms.Value != null)
+        .SelectMany(ms => ms.Value!.Errors)
         .Select(e => e.ErrorMessage)
         .Where(m => !string.IsNullOrWhiteSpace(m))
         .ToList();

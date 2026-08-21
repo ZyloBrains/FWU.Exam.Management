@@ -15,7 +15,6 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 public class CollegeAdminMarksService(
     AppDbContext context,
     IUserContext userContext,
-    ICollegeAdminSubjectAssignmentService assignmentService,
     IGradeCalculationService gradeCalculationService,
     IAuditLogWriter auditLogWriter) : ICollegeAdminMarksService
 {
@@ -99,7 +98,7 @@ public class CollegeAdminMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var yearIds = await ScopedScheduleQuery(effectiveCollege)
-            .Select(es => es.AcademicYearId)
+            .Select(es => es.SemesterInstance!.AcademicYearId)
             .Distinct()
             .ToListAsync();
 
@@ -117,7 +116,7 @@ public class CollegeAdminMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var levelIds = await ScopedScheduleQuery(effectiveCollege)
-            .Where(es => es.AcademicYearId == academicYearId && es.Program != null)
+            .Where(es => es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId && es.Program != null)
             .Select(es => es.Program!.LevelId)
             .Distinct()
             .ToListAsync();
@@ -136,7 +135,7 @@ public class CollegeAdminMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         return await ScopedScheduleQuery(effectiveCollege)
-            .Where(es => es.AcademicYearId == academicYearId
+            .Where(es => es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId
                 && es.Program != null
                 && es.Program.LevelId == levelId)
             .OrderBy(es => es.ExamScheduleName)
@@ -149,10 +148,10 @@ public class CollegeAdminMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(es => es.Program)
                 .ThenInclude(p => p!.Level)
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
@@ -160,10 +159,10 @@ public class CollegeAdminMarksService(
         return new ScheduleDetailDto
         {
             ExamScheduleId = schedule.Id,
-            AcademicYearName = schedule.AcademicYear?.AcademicYearName ?? "",
+            AcademicYearName = schedule.SemesterInstance?.AcademicYear?.AcademicYearName ?? "",
             LevelName = schedule.Program?.Level?.LevelName ?? "",
             ProgramName = schedule.Program?.ProgramName ?? "",
-            SemesterName = schedule.Semester?.Name ?? "",
+            SemesterName = schedule.SemesterInstance?.Semester?.Name ?? "",
             ExamTypeName = schedule.ExamType?.Name ?? ""
         };
     }
@@ -177,12 +176,12 @@ public class CollegeAdminMarksService(
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
         var semesterNumber = await context.Semesters
-            .Where(s => s.Id == schedule.SemesterId)
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.AcademicYearId);
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
         var query = context.SubjectOfferings
             .AsNoTracking()
@@ -250,12 +249,12 @@ public class CollegeAdminMarksService(
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
         var semesterNumber = await context.Semesters
-            .Where(s => s.Id == schedule.SemesterId)
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.AcademicYearId);
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
         var subjectOffering = await context.SubjectOfferings
             .AsNoTracking()
@@ -321,12 +320,12 @@ public class CollegeAdminMarksService(
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
         var semesterNumber = await context.Semesters
-            .Where(s => s.Id == schedule.SemesterId)
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.AcademicYearId);
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
@@ -371,6 +370,7 @@ public class CollegeAdminMarksService(
 
                 entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
                 entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
+                gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {

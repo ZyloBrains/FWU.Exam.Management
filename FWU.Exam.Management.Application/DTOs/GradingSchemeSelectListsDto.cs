@@ -6,4 +6,5 @@ public class GradingSchemeSelectListsDto
 {
     public List<SelectOption> Programs { get; set; } = [];
     public List<SelectOption> AcademicYears { get; set; } = [];
+    public List<SelectOption> GradeGroups { get; set; } = [];
 }

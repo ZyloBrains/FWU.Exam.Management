@@ -127,6 +127,10 @@
         {
             <div class="px-4 sm:px-6 py-3 bg-blue-50 border-b border-gray-200">
                 <h4 class="text-sm font-semibold text-blue-700 uppercase tracking-wider">Compulsory Subjects</h4>
+                @if (!Model.IsRegular)
+                {
+                    <p class="text-xs text-blue-600 mt-1">Practical fee waived — already passed in previous attempt. Only theory marks will be evaluated.</p>
+                }
             </div>
             <div class="fee-header">
                 <span></span>
@@ -135,7 +139,10 @@
                 <span class="text-left text-xs font-semibold text-gray-500">Code</span>
                 <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
                 <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
-                <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                @if (Model.IsRegular)
+                {
+                    <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                }
             </div>
             @for (int i = 0; i < compulsorySubjects.Count; i++)
             {
@@ -171,7 +178,10 @@
                         @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
                         else { <i class="fas fa-times text-gray-300"></i> }
                     </div>
-                    <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                    @if (Model.IsRegular)
+                    {
+                        <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                    }
                 </div>
             }
             <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
@@ -195,6 +205,10 @@
                                 Select One
                             </label>
                         </div>
+                        @if (!Model.IsRegular)
+                        {
+                            <p class="text-xs text-purple-600 mt-1">Practical fee waived — already passed in previous attempt.</p>
+                        }
                     </div>
                     <div class="fee-header">
                         <span></span>
@@ -203,7 +217,10 @@
                         <span class="text-left text-xs font-semibold text-gray-500">Code</span>
                         <span class="text-center text-xs font-semibold text-gray-500">Theory</span>
                         <span class="text-center text-xs font-semibold text-gray-500">Practical</span>
-                        <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                        @if (Model.IsRegular)
+                        {
+                            <span class="text-right text-xs font-semibold text-gray-500">Practical Fee</span>
+                        }
                     </div>
                     @for (int i = 0; i < groupSubjects.Count; i++)
                     {
@@ -249,7 +266,10 @@
                                 @if (subj.HasPractical) { <i class="fas fa-check text-green-500"></i> }
                                 else { <i class="fas fa-times text-gray-300"></i> }
                             </div>
-                            <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                            @if (Model.IsRegular)
+                            {
+                                <div class="c-fee text-sm font-semibold text-gray-800">Rs @subj.PracticalFee.ToString("N0")</div>
+                            }
                         </div>
                     }
                     <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
@@ -266,7 +286,7 @@
                 <span class="text-sm font-semibold text-gray-800" id="totalExamFee">Rs @Model.TotalExamFee.ToString("N0")</span>
             </div>
             <div class="flex items-center justify-between px-4 sm:px-6 py-3">
-                <span class="text-sm text-gray-600">Practical Fee:</span>
+                <span class="text-sm text-gray-600">Practical Fee@(Model.IsRegular ? "" : " (Waived)"):</span>
                 <span class="text-sm font-semibold text-gray-800" id="totalPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</span>
             </div>
             <div class="flex items-center justify-between px-4 sm:px-6 py-3 bg-blue-50">
@@ -283,7 +303,7 @@
             <p class="text-xl font-bold text-gray-800 mt-1" id="breakupExamFee">Rs @Model.TotalExamFee.ToString("N0")</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <p class="text-xs text-gray-500 uppercase tracking-wider">Practical Fee</p>
+            <p class="text-xs text-gray-500 uppercase tracking-wider">Practical Fee@(Model.IsRegular ? "" : " (Waived)")</p>
             <p class="text-xl font-bold text-gray-800 mt-1" id="breakupPracticalFee">Rs @Model.TotalPracticalFee.ToString("N0")</p>
         </div>
         <div class="bg-blue-600 rounded-xl shadow-sm p-5 text-white">

@@ -44,22 +44,6 @@
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Number</p>
                 <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Number)</p>
             </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Year</p>
-                <p class="text-gray-800 font-medium">@Html.DisplayFor(model => model.Year)</p>
-            </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</p>
-                <p class="text-gray-800 font-medium">@Model.StartDate.ToString("yyyy-MM-dd")</p>
-            </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</p>
-                <p class="text-gray-800 font-medium">@Model.EndDate.ToString("yyyy-MM-dd")</p>
-            </div>
-            <div>
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</p>
-                <p class="text-gray-800 font-medium">@(Model.AcademicYear?.AcademicYearName ?? "-")</p>
-            </div>
             <div class="md:col-span-2">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remark</p>
                 <p class="text-gray-800 font-medium">@(Model.Remark ?? "-")</p>

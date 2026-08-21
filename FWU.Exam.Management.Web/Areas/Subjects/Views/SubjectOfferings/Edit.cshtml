@@ -25,7 +25,7 @@
 
             <div class="border-b border-gray-200 pb-4 mb-2">
                 <h3 class="text-sm font-semibold text-gray-700 mb-3">Basic Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
                     <div>
                         <label asp-for="SubjectCatalogId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Subject</label>
                         <select asp-for="SubjectCatalogId" asp-items="ViewBag.SubjectCatalogId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
@@ -41,12 +41,6 @@
                         <span asp-validation-for="ProgramId" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div>
-                        <label class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Academic Year</label>
-                        <select id="AcademicYearId" name="academicYearId" asp-items="ViewBag.AcademicYearId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                            <option value="">-- Select Academic Year --</option>
-                        </select>
-                    </div>
-                    <div>
                         <label asp-for="SemesterId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Semester</label>
                         <select asp-for="SemesterId" asp-items="ViewBag.SemesterId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                             <option value="">-- Select Semester --</option>
@@ -55,7 +49,7 @@
                     </div>
                     <div>
                         <label asp-for="CurriculumVersionId" class="text-xs sm:text-sm font-medium text-gray-700 block mb-1">Curriculum Version</label>
-                        <select asp-for="CurriculumVersionId" id="CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                        <select asp-for="CurriculumVersionId" id="CurriculumVersionId" asp-items="ViewBag.CurriculumVersionId" class="select2 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                             <option value="">-- Select Curriculum Version --</option>
                         </select>
                         <span asp-validation-for="CurriculumVersionId" class="text-xs text-red-500 mt-1 block"></span>
@@ -68,6 +62,10 @@
                         <span asp-validation-for="DisplayOrder" class="text-xs text-red-500 mt-1 block"></span>
                     </div>
                     <div class="flex items-center gap-6 pt-6">
+                        <div class="flex items-center gap-2">
+                            <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
+                            <label asp-for="IsActive" class="text-xs sm:text-sm font-medium text-gray-700">Active</label>
+                        </div>
                         <div class="flex items-center gap-2">
                             <input asp-for="IsCompulsory" type="checkbox" class="w-4 h-4 text-amber-600 rounded focus:ring-amber-500" />
                             <label asp-for="IsCompulsory" class="text-xs sm:text-sm font-medium text-gray-700">Compulsory</label>
@@ -204,20 +202,20 @@
             });
         }
 
-        function loadSemesters(academicYearId, programId) {
+        function loadSemesters(programId, curriculumVersionId) {
             $('#SemesterId').select2('destroy');
             var semesterDropdown = $("#SemesterId");
             semesterDropdown.empty().append('<option value="">-- Select Semester --</option>');
 
-            if (!academicYearId) {
+            if (!programId) {
                 semesterDropdown.prop('disabled', true);
                 $('#SemesterId').select2({ width: 'resolve' });
                 return;
             }
 
-            $.get(tenantUrl("/Subjects/SubjectOfferings/GetSemestersByAcademicYear"), { academicYearId: academicYearId, programId: programId }, function (data) {
+            $.get(tenantUrl("/Subjects/SubjectOfferings/GetSemestersByProgram"), { programId: programId, curriculumVersionId: curriculumVersionId }, function (data) {
                 $.each(data, function (index, item) {
-                    semesterDropdown.append('<option value="' + item.id + '">' + item.name + '</option>');
+                    semesterDropdown.append('<option value="' + item.semesterId + '">' + item.semesterName + '</option>');
                 });
                 var initialSemesterId = '@Model.SemesterId';
                 if (initialSemesterId) semesterDropdown.val(initialSemesterId);
@@ -226,18 +224,20 @@
             });
         }
 
-        $("#AcademicYearId").change(function () {
-            loadSemesters($(this).val(), $("#ProgramId").val());
-        });
-
         $("#ProgramId").change(function () {
             loadCurriculumVersions($(this).val(), null);
-            if ($("#AcademicYearId").val()) {
-                loadSemesters($("#AcademicYearId").val(), $(this).val());
+            loadSemesters($(this).val(), null);
+        });
+
+        $("#CurriculumVersionId").change(function () {
+            var programId = $("#ProgramId").val();
+            var curriculumVersionId = $(this).val();
+            if (programId) {
+                loadSemesters(programId, curriculumVersionId);
             }
         });
 
-        loadSemesters($("#AcademicYearId").val(), $("#ProgramId").val());
+        loadSemesters($("#ProgramId").val(), '@Model.CurriculumVersionId');
         loadCurriculumVersions($("#ProgramId").val(), '@Model.CurriculumVersionId');
     </script>
 }

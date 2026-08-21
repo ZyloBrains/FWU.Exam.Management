@@ -233,6 +233,7 @@ public class GradingSchemesController(
     {
         ViewData["ProgramId"] = new SelectList(selectLists.Programs, "Id", "Name", gradingScheme?.ProgramId);
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", gradingScheme?.AcademicYearId);
+        ViewData["GradeGroupId"] = new SelectList(selectLists.GradeGroups, "Id", "Name", gradingScheme?.GradeGroupId);
     }
 
 

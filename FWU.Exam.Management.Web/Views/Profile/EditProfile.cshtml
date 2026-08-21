@@ -1,0 +1,266 @@
+@model FWU.Exam.Management.Web.ViewModels.EditProfileViewModel
+@using FWU.Exam.Management.Domain.Extensions
+
+@{
+    ViewData["Title"] = "Edit Profile";
+    var initials = Model.FullName.GetInitials();
+    var fallbackColor = "bg-gradient-to-br from-admin-blue-light to-admin-blue-dark";
+    var isStudent = Model.Roles.Contains("Student");
+    var profileDataJson = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        provinces = Model.Provinces.Select(p => new { id = p.Id, name = p.Name }),
+        districts = Model.Districts.Select(d => new { id = d.Id, name = d.Name, provinceId = d.ParentId }),
+        localLevels = Model.LocalLevels.Select(l => new { id = l.Id, name = l.Name, districtId = l.ParentId }),
+        genders = Model.Genders.Select(g => new { id = g.Id, name = g.Name }),
+        ethnicities = Model.Ethnicities.Select(e => new { id = e.Id, name = e.Name }),
+        provinceId = Model.PermanentProvinceId ?? 0,
+        districtId = Model.PermanentDistrictId ?? 0,
+        localLevelId = Model.PermanentLocalLevelId ?? 0,
+        genderId = Model.RegistrationGenderId ?? 0,
+        ethnicityId = Model.RegistrationEthnicityId ?? 0
+    });
+}
+
+<div class="space-y-6">
+    @if (TempData["ErrorMessage"] is string errorMsg)
+    {
+        <div class="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700 flex items-start gap-3">
+            <i class="fas fa-circle-exclamation mt-0.5 shrink-0"></i>
+            <span>@errorMsg</span>
+        </div>
+    }
+
+    <form asp-controller="Profile" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-5 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-admin-blue to-admin-blue-light">
+                <h1 class="text-white font-semibold text-base sm:text-lg flex items-center gap-2">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </h1>
+                <p class="text-blue-100 text-xs sm:text-sm mt-1">Update your personal information and profile settings.</p>
+            </div>
+
+            <div class="p-5 sm:p-6 space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="relative shrink-0">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full ring-2 ring-admin-blue/30 overflow-hidden @(string.IsNullOrEmpty(Model.ProfilePath) ? fallbackColor : "bg-white") flex items-center justify-center">
+                                <img src="@Model.ProfilePath" alt="avatar" id="editAvatarPreview"
+                                     class="w-full h-full object-cover @(string.IsNullOrEmpty(Model.ProfilePath) ? "hidden" : "")" />
+                                @if (string.IsNullOrEmpty(Model.ProfilePath))
+                                {
+                                    <span class="text-white text-xl sm:text-2xl font-bold" id="editAvatarInitials">@initials</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="min-w-0">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
+                            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
+                                <i class="fas fa-camera"></i> Choose Photo
+                                <input type="file" name="photo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
+                                       x-data
+                                       x-on:change="
+                                           const f = $event.target.files[0];
+                                           if (f) {
+                                               const r = new FileReader();
+                                               r.onload = e => {
+                                                   const img = document.getElementById('editAvatarPreview');
+                                                   const ini = document.getElementById('editAvatarInitials');
+                                                   if (img) { img.src = e.target.result; img.classList.remove('hidden'); }
+                                                   if (ini) ini.style.display = 'none';
+                                               };
+                                               r.readAsDataURL(f);
+                                           }" />
+                            </label>
+                            <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB</p>
+                        </div>
+                    </div>
+
+                    @if (Model.CanUploadSignature)
+                    {
+                        <div class="flex items-center gap-3 sm:gap-4">
+                            <div class="relative shrink-0">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full ring-2 ring-admin-blue/30 overflow-hidden bg-white flex items-center justify-center border border-gray-200">
+                                    <img src="@Model.SignaturePath" alt="Signature" id="editSignaturePreview"
+                                         class="w-full h-full object-contain p-1 @(string.IsNullOrEmpty(Model.SignaturePath) ? "hidden" : "")" />
+                                    <span class="text-xs text-gray-400 @(string.IsNullOrEmpty(Model.SignaturePath) ? "" : "hidden")" id="editSignatureEmpty">
+                                        <i class="fas fa-pen-nib text-lg text-gray-300"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="min-w-0">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Signature</label>
+                                <label class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-600 hover:border-admin-blue hover:text-admin-blue cursor-pointer transition-colors">
+                                    <i class="fas fa-camera"></i> @(string.IsNullOrEmpty(Model.SignaturePath) ? "Upload Signature" : "Change Signature")
+                                    <input type="file" name="signature" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden"
+                                           x-data
+                                           x-on:change="
+                                               const f = $event.target.files[0];
+                                               if (f) {
+                                                   const r = new FileReader();
+                                                   r.onload = e => {
+                                                       const img = document.getElementById('editSignaturePreview');
+                                                       const empty = document.getElementById('editSignatureEmpty');
+                                                       if (empty) empty.classList.add('hidden');
+                                                       if (img) { img.src = e.target.result; img.classList.remove('hidden'); }
+                                                   };
+                                                   r.readAsDataURL(f);
+                                               }" />
+                                </label>
+                                <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF or WebP up to 5 MB</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="border-t border-gray-100 pt-6">
+                    <h2 class="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                        <span class="w-6 h-6 rounded-lg bg-gradient-to-br from-admin-blue to-admin-blue-dark flex items-center justify-center shrink-0">
+                            <i class="fas fa-user text-white text-xs"></i>
+                        </span>
+                        Personal Information
+                    </h2>
+
+                    @if (!isStudent)
+                    {
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="FullName" class="block text-sm font-medium text-gray-700 mb-1">Full Name <span class="text-red-500">*</span></label>
+                                <input name="fullName" value="@Model.FullName" required maxlength="50"
+                                       class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors" />
+                            </div>
+                            <div>
+                                <label for="designation" class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                                <input name="designation" id="designation" value="@Model.Designation" maxlength="100"
+                                       class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 @(isStudent ? "" : "mt-4")">
+                        <div>
+                            <label for="phoneNumber" class="block text-sm font-medium text-gray-700 mb-1">Phone Number <span class="text-red-500">*</span></label>
+                            <input name="phoneNumber" id="phoneNumber" value="@Model.PhoneNumber" maxlength="15" inputmode="tel"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors" />
+                        </div>
+                        @if (!isStudent)
+                        {
+                            <div></div>
+                        }
+                    </div>
+                </div>
+
+                @if (isStudent)
+                {
+                    <script type="application/json" id="edit-profile-data">@Html.Raw(profileDataJson)</script>
+
+                    <div class="border-t border-gray-100 pt-6"
+                         x-data="editProfileDropdowns()">
+                        <h2 class="text-sm font-semibold text-gray-800 flex items-center gap-2 mb-1">
+                            <span class="w-6 h-6 rounded-lg bg-gradient-to-br from-admin-blue to-admin-blue-dark flex items-center justify-center shrink-0">
+                                <i class="fas fa-user-check text-white text-xs"></i>
+                            </span>
+                            Mandatory Details
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-red-50 text-red-600 border border-red-200">Required</span>
+                        </h2>
+                        <p class="text-xs text-amber-600 mb-4 ml-8">These fields are required on your exam forms and admit cards.</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label for="provinceId" class="block text-sm font-medium text-gray-700 mb-1">Province <span class="text-red-500">*</span></label>
+                                <select id="provinceId" name="provinceId" x-model="provinceId" x-on:change="districtId = 0; localLevelId = 0;"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                    <option value="0">Select Province</option>
+                                    <template x-for="p in provinces" :key="p.id">
+                                        <option :value="p.id" x-text="p.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="districtId" class="block text-sm font-medium text-gray-700 mb-1">District <span class="text-red-500">*</span></label>
+                                <select id="districtId" name="districtId" x-model="districtId" x-on:change="localLevelId = 0;"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                    <option value="0">Select District</option>
+                                    <template x-for="d in filteredDistricts" :key="d.id">
+                                        <option :value="d.id" x-text="d.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="localLevelId" class="block text-sm font-medium text-gray-700 mb-1">Local Level <span class="text-red-500">*</span></label>
+                                <select id="localLevelId" name="localLevelId" x-model="localLevelId"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                    <option value="0">Select Local Level</option>
+                                    <template x-for="l in filteredLocalLevels" :key="l.id">
+                                        <option :value="l.id" x-text="l.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="genderId" class="block text-sm font-medium text-gray-700 mb-1">Gender <span class="text-red-500">*</span></label>
+                                <select id="genderId" name="genderId" x-model="genderId"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                    <option value="0">Select Gender</option>
+                                    <template x-for="g in genders" :key="g.id">
+                                        <option :value="g.id" x-text="g.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-2 lg:col-span-2">
+                                <label for="ethnicityId" class="block text-sm font-medium text-gray-700 mb-1">Ethnicity <span class="text-red-500">*</span></label>
+                                <select id="ethnicityId" name="ethnicityId" x-model="ethnicityId"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-admin-blue/30 focus:border-admin-blue outline-none transition-colors">
+                                    <option value="0">Select Ethnicity</option>
+                                    <template x-for="e in ethnicities" :key="e.id">
+                                        <option :value="e.id" x-text="e.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="px-5 sm:px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                <a asp-controller="Profile" asp-action="Index"
+                   class="px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-semibold hover:opacity-95 transition-opacity shadow-md">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @if (isStudent)
+    {
+        <script>
+            function editProfileDropdowns() {
+                var data = JSON.parse(document.getElementById('edit-profile-data').textContent || '{}');
+                return {
+                    provinces: data.provinces || [],
+                    districts: data.districts || [],
+                    localLevels: data.localLevels || [],
+                    genders: data.genders || [],
+                    ethnicities: data.ethnicities || [],
+                    provinceId: Number(data.provinceId) || 0,
+                    districtId: Number(data.districtId) || 0,
+                    localLevelId: Number(data.localLevelId) || 0,
+                    genderId: Number(data.genderId) || 0,
+                    ethnicityId: Number(data.ethnicityId) || 0,
+                    get filteredDistricts() {
+                        return this.districts.filter(function (d) { return d.provinceId == this.provinceId; }.bind(this));
+                    },
+                    get filteredLocalLevels() {
+                        return this.localLevels.filter(function (l) { return l.districtId == this.districtId; }.bind(this));
+                    }
+                };
+            }
+        </script>
+    }
+}

@@ -82,6 +82,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<ResultRecord> ResultRecords { get; set; } = null!;
     public DbSet<Semester> Semesters { get; set; } = null!;
     public DbSet<SemesterEnrollment> SemesterEnrollments { get; set; } = null!;
+    public DbSet<SemesterInstance> SemesterInstances { get; set; } = null!;
     public DbSet<StudentAdmission> StudentAdmissions { get; set; } = null!;
     public DbSet<StudentCategory> StudentCategories { get; set; } = null!;
     public DbSet<StudentGuardian> StudentGuardians { get; set; } = null!;
@@ -103,6 +104,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
     public DbSet<UserAttachment> UserAttachments { get; set; } = null!;
     public DbSet<GradingScheme> GradingSchemes { get; set; } = null!;
     public DbSet<GradeDefinition> GradeDefinitions { get; set; } = null!;
+    public DbSet<GradeGroup> GradeGroups { get; set; } = null!;
+    public DbSet<GradePoint> GradePoints { get; set; } = null!;
     public DbSet<EntranceExamApplication> EntranceExamApplications { get; set; } = null!;
     public DbSet<ApplicationVoucher> ApplicationVouchers { get; set; } = null!;
     public DbSet<PaymentRequestLog> PaymentRequestLogs { get; set; } = null!;
@@ -268,9 +271,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSchedule>()
-            .HasOne(es => es.AcademicYear)
-            .WithMany(ay => ay.ExamSchedules)
-            .HasForeignKey(es => es.AcademicYearId)
+            .HasOne(es => es.SemesterInstance)
+            .WithMany()
+            .HasForeignKey(es => es.SemesterInstanceId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ExamSchedule>()
@@ -467,6 +470,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<ResultRecord>()
+            .HasOne(rr => rr.Level)
+            .WithMany()
+            .HasForeignKey(rr => rr.LevelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ResultRecord>()
             .ToTable("ResultRecords")
             .HasKey(rr => rr.Id);
 
@@ -531,7 +540,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
 
         builder.Entity<SubjectOffering>()
             .HasIndex(so => new { so.CurriculumVersionId, so.SubjectCatalogId, so.ProgramId, so.SemesterId })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[IsActive] = 1");
 
         builder.Entity<CurriculumVersion>()
             .HasOne(cv => cv.Program)
@@ -778,6 +788,28 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .HasForeignKey(gs => gs.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<GradingScheme>()
+            .HasOne(gs => gs.GradeGroup)
+            .WithMany()
+            .HasForeignKey(gs => gs.GradeGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GradeGroup>()
+            .HasIndex(gg => gg.GradeGroupName);
+
+        builder.Entity<GradeGroup>(e => e.Property(x => x.Id).ValueGeneratedNever());
+        builder.Entity<GradePoint>(e => e.Property(x => x.Id).ValueGeneratedNever());
+
+        builder.Entity<GradePoint>()
+            .HasOne(gp => gp.GradeGroup)
+            .WithMany(gg => gg.GradePoints)
+            .HasForeignKey(gp => gp.GradeGroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GradePoint>()
+            .HasIndex(gp => new { gp.GradeGroupId, gp.ObtainedMark })
+            .IsUnique();
+
         builder.Entity<GradeDefinition>()
             .HasOne(gd => gd.GradingScheme)
             .WithMany(gs => gs.GradeDefinitions)
@@ -812,6 +844,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<GradeDefinition>(e => e.Property(x => x.GradePoint).HasPrecision(5, 2));
         builder.Entity<GradeDefinition>(e => e.Property(x => x.MaxPercentage).HasPrecision(5, 2));
         builder.Entity<GradeDefinition>(e => e.Property(x => x.MinPercentage).HasPrecision(5, 2));
+        builder.Entity<GradePoint>(e => e.Property(x => x.GradePointValue).HasPrecision(5, 2));
 
         builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA).HasPrecision(5, 2));
         builder.Entity<EntranceExamApplication>(e => e.Property(x => x.PreviousGPA2).HasPrecision(5, 2));
@@ -957,7 +990,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
             .IsUnique();
 
         builder.Entity<AcademicYear>()
-            .HasIndex(ay => ay.AcademicYearCode)
+            .HasIndex(ay => new { ay.TenantId, ay.AcademicYearCode })
             .IsUnique();
 
         builder.Entity<ExamSchedule>()
@@ -985,6 +1018,34 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ILogger<AppDbC
         builder.Entity<ProgramSemester>()
             .HasIndex(ps => new { ps.ProgramId, ps.SemesterId })
             .IsUnique();
+
+        builder.Entity<SemesterInstance>()
+            .HasOne(si => si.Semester)
+            .WithMany()
+            .HasForeignKey(si => si.SemesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterInstance>()
+            .HasOne(si => si.AcademicYear)
+            .WithMany()
+            .HasForeignKey(si => si.AcademicYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterInstance>()
+            .HasOne(si => si.Program)
+            .WithMany()
+            .HasForeignKey(si => si.ProgramId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<SemesterInstance>()
+            .HasIndex(si => new { si.SemesterId, si.AcademicYearId, si.ProgramId })
+            .IsUnique();
+
+        builder.Entity<SemesterEnrollment>()
+            .HasOne(se => se.SemesterInstance)
+            .WithMany(si => si.SemesterEnrollments)
+            .HasForeignKey(se => se.SemesterInstanceId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<StudentRegistration>()
             .HasIndex(sr => new { sr.TenantId, sr.RegistrationNumber })

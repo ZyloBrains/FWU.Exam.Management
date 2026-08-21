@@ -63,7 +63,7 @@ public partial class EntryPoint
 
         builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
-            options.UseSqlServer(defaultConnection);
+            options.UseSqlServer(defaultConnection, sql => sql.CommandTimeout(120));
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditableSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
             options.AddInterceptors(serviceProvider.GetRequiredService<AuditLogInterceptor>());
@@ -247,6 +247,7 @@ public partial class EntryPoint
         builder.Services.AddScoped<IPracticalMarksService, PracticalMarksService>();
         builder.Services.AddScoped<ICollegeAdminSubjectAssignmentService, CollegeAdminSubjectAssignmentService>();
         builder.Services.AddScoped<IGradeCalculationService, GradeCalculationService>();
+        builder.Services.AddScoped<IPublishResultsService, PublishResultsService>();
         builder.Services.AddScoped<IAuditLogService, AuditLogService>();
         builder.Services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         builder.Services.AddScoped<IExamRollNumberService, ExamRollNumberService>();
@@ -267,8 +268,12 @@ public partial class EntryPoint
             await RunSeederAsync(services, AcademicYearSeeder.SeedAcademicYearsAsync);
             await RunSeederAsync(services, FacultySeeder.SeedFacultiesAsync);
             await RunSeederAsync(services, ProgramSeeder.SeedProgramsAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedSemestersAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedProgramSemestersAsync);
+            await RunSeederAsync(services, SemesterSeeder.SeedSemesterInstancesAsync);
             await RunSeederAsync(services, CollegeSeeder.SeedCollegesAsync);
             await RunSeederAsync(services, CollegeProgramSeeder.SeedCollegeProgramsAsync);
+            await RunSeederAsync(services, GradeGroupSeeder.SeedGradeGroupsAsync);
             await RunSeederAsync(services, GradingSeeder.SeedGradingDataAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedPaymentTypesAsync);
             await RunSeederAsync(services, ReferenceDataSeeder.SeedESewaConfigurationAsync);
@@ -283,6 +288,8 @@ public partial class EntryPoint
         EmailTemplateHelper.SiteUrl = builder.Configuration["EmailSettings:SiteUrl"];
 
         // Configure the HTTP request pipeline.
+        app.UseForwardedHeaders();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseMigrationsEndPoint();
@@ -293,7 +300,6 @@ public partial class EntryPoint
         {
             app.UseExceptionHandler("/Home/Error");
             app.UseHsts();
-            app.UseForwardedHeaders();
         }
 
         app.UseMiddleware<SecurityHeadersMiddleware>();

@@ -11,14 +11,16 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class PracticalMarksService(
     AppDbContext context,
-    IUserContext userContext) : IPracticalMarksService
+    IUserContext userContext,
+    IGradeCalculationService gradeCalculationService) : IPracticalMarksService
 {
     public async Task<PracticalMarksPageViewModel> GetPracticalMarksPageAsync()
     {
         var vm = new PracticalMarksPageViewModel
         {
             IsSuperAdmin = userContext.IsSuperAdmin,
-            IsFacultyAdmin = userContext.IsFacultyAdmin
+            IsFacultyAdmin = userContext.IsFacultyAdmin,
+            IsCollegeAdmin = userContext.IsCollegeAdmin
         };
 
         if (userContext.IsSuperAdmin)
@@ -26,6 +28,10 @@ public class PracticalMarksService(
             vm.Faculties = await GetFacultiesAsync();
         }
         else if (userContext.IsFacultyAdmin)
+        {
+            vm.Colleges = await GetCollegesAsync(null);
+        }
+        else if (userContext.IsCollegeAdmin && userContext.CollegeId.HasValue)
         {
             vm.Colleges = await GetCollegesAsync(null);
         }
@@ -47,6 +53,16 @@ public class PracticalMarksService(
 
     public async Task<List<SelectOption>> GetCollegesAsync(int? facultyId)
     {
+        if (userContext.IsCollegeAdmin)
+        {
+            if (!userContext.CollegeId.HasValue) return [];
+            return await context.Colleges
+                .AsNoTracking()
+                .Where(c => c.Id == userContext.CollegeId.Value)
+                .Select(c => new SelectOption { Id = c.Id, Name = c.Name })
+                .ToListAsync();
+        }
+
         if (userContext.IsFacultyAdmin)
         {
             var collegeIds = userContext.FacultyCollegeIds;
@@ -77,7 +93,7 @@ public class PracticalMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var yearIds = await ScopedScheduleQuery(effectiveCollege)
-            .Select(es => es.AcademicYearId)
+            .Select(es => es.SemesterInstance!.AcademicYearId)
             .Distinct()
             .ToListAsync();
 
@@ -95,7 +111,7 @@ public class PracticalMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var levelIds = await ScopedScheduleQuery(effectiveCollege)
-            .Where(es => es.AcademicYearId == academicYearId && es.Program != null)
+            .Where(es => es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId && es.Program != null)
             .Select(es => es.Program!.LevelId)
             .Distinct()
             .ToListAsync();
@@ -114,7 +130,7 @@ public class PracticalMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         return await ScopedScheduleQuery(effectiveCollege)
-            .Where(es => es.AcademicYearId == academicYearId
+            .Where(es => es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId
                 && es.Program != null
                 && es.Program.LevelId == levelId)
             .OrderBy(es => es.ExamScheduleName)
@@ -127,10 +143,10 @@ public class PracticalMarksService(
         var effectiveCollege = GetEffectiveCollegeId(collegeId);
 
         var schedule = await ScopedScheduleQuery(effectiveCollege)
-            .Include(es => es.AcademicYear)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.AcademicYear)
             .Include(es => es.Program)
                 .ThenInclude(p => p!.Level)
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance).ThenInclude(si => si!.Semester)
             .Include(es => es.ExamType)
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
@@ -138,10 +154,10 @@ public class PracticalMarksService(
         return new ScheduleDetailDto
         {
             ExamScheduleId = schedule.Id,
-            AcademicYearName = schedule.AcademicYear?.AcademicYearName ?? "",
+            AcademicYearName = schedule.SemesterInstance?.AcademicYear?.AcademicYearName ?? "",
             LevelName = schedule.Program?.Level?.LevelName ?? "",
             ProgramName = schedule.Program?.ProgramName ?? "",
-            SemesterName = schedule.Semester?.Name ?? "",
+            SemesterName = schedule.SemesterInstance?.Semester?.Name ?? "",
             ExamTypeName = schedule.ExamType?.Name ?? ""
         };
     }
@@ -155,12 +171,12 @@ public class PracticalMarksService(
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
         var semesterNumber = await context.Semesters
-            .Where(s => s.Id == schedule.SemesterId)
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.AcademicYearId);
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
         var query = context.SubjectOfferings
             .AsNoTracking()
@@ -233,12 +249,12 @@ public class PracticalMarksService(
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
         var semesterNumber = await context.Semesters
-            .Where(s => s.Id == schedule.SemesterId)
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.AcademicYearId);
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
         var subjectOffering = await context.SubjectOfferings
             .AsNoTracking()
@@ -303,12 +319,12 @@ public class PracticalMarksService(
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
         var semesterNumber = await context.Semesters
-            .Where(s => s.Id == schedule.SemesterId)
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
             .Select(s => (int?)s.Number)
             .FirstOrDefaultAsync();
 
         var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
-            context, schedule.ProgramId, schedule.AcademicYearId);
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
 
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
@@ -352,6 +368,7 @@ public class PracticalMarksService(
                 }
 
                 entity.ObtainedMarksPractical = student.Practical;
+                gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {
@@ -396,6 +413,13 @@ public class PracticalMarksService(
 
     private int GetEffectiveCollegeId(int? requestedCollegeId)
     {
+        if (userContext.IsCollegeAdmin)
+        {
+            if (userContext.CollegeId is not int collegeId)
+                throw new UnauthorizedAccessException("No college associated with your account.");
+            return collegeId;
+        }
+
         if (userContext.IsFacultyAdmin)
         {
             if (!requestedCollegeId.HasValue)

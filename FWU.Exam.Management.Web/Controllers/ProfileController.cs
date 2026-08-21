@@ -1,3 +1,4 @@
+using FWU.Exam.Management.Application.Helpers;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities;
@@ -43,6 +44,99 @@ public class ProfileController(
         };
     }
 
+    public async Task<IActionResult> Edit()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var roles = (await userManager.GetRolesAsync(user)).ToList();
+        var primaryRole = roles.FirstOrDefault() ?? Role.Student;
+        var isStudent = roles.Contains(Role.Student);
+
+        var baseVm = await BuildBaseViewModelAsync(user, roles, primaryRole);
+
+        var vm = new EditProfileViewModel
+        {
+            UserId = baseVm.UserId,
+            FullName = baseVm.FullName,
+            Email = baseVm.Email,
+            UserName = baseVm.UserName,
+            RoleLabel = baseVm.RoleLabel,
+            Designation = baseVm.Designation,
+            ProfilePath = baseVm.ProfilePath,
+            SignaturePath = baseVm.SignaturePath,
+            PhoneNumber = baseVm.PhoneNumber,
+            IsActive = baseVm.IsActive,
+            EmailConfirmed = baseVm.EmailConfirmed,
+            TwoFactorEnabled = baseVm.TwoFactorEnabled,
+            ValidFrom = baseVm.ValidFrom,
+            ValidTo = baseVm.ValidTo,
+            Roles = baseVm.Roles,
+            TenantCode = baseVm.TenantCode,
+            TenantName = baseVm.TenantName,
+            TenantLogo = baseVm.TenantLogo,
+            OrganizationName = baseVm.OrganizationName,
+            OrganizationLogo = baseVm.OrganizationLogo,
+            CoverImagePath = baseVm.CoverImagePath,
+            CanUploadSignature = baseVm.CanUploadSignature,
+        };
+
+        if (isStudent)
+        {
+            var registration = await studentDashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
+            if (registration != null)
+            {
+                Address? permanentAddress = registration.PermanentAddress;
+                if (registration.PermanentAddressId is int permanentAddressId && permanentAddress?.LocalLevel == null)
+                {
+                    permanentAddress = await context.Addresses
+                        .AsNoTracking()
+                        .Include(a => a.LocalLevel).ThenInclude(l => l!.District).ThenInclude(d => d!.Province)
+                        .FirstOrDefaultAsync(a => a.Id == permanentAddressId);
+                }
+
+                vm.PermanentLocalLevelId = permanentAddress?.LocalLevelId;
+                vm.PermanentDistrictId = permanentAddress?.LocalLevel?.DistrictId;
+                vm.PermanentProvinceId = permanentAddress?.LocalLevel?.District?.ProvinceId;
+                vm.RegistrationGenderId = registration.GenderId;
+                vm.RegistrationEthnicityId = registration.EthnicityId;
+            }
+
+            vm.Provinces = await context.Provinces
+                .AsNoTracking()
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.ProvinceName)
+                .Select(p => new DropdownItem { Id = p.Id, Name = p.ProvinceName })
+                .ToListAsync();
+            vm.Districts = await context.Districts
+                .AsNoTracking()
+                .Where(d => d.IsActive)
+                .OrderBy(d => d.DistrictName)
+                .Select(d => new DropdownItem { Id = d.Id, Name = d.DistrictName, ParentId = d.ProvinceId })
+                .ToListAsync();
+            vm.LocalLevels = await context.LocalLevels
+                .AsNoTracking()
+                .Where(l => l.IsActive)
+                .OrderBy(l => l.LocalLevelName)
+                .Select(l => new DropdownItem { Id = l.Id, Name = l.LocalLevelName, ParentId = l.DistrictId })
+                .ToListAsync();
+            vm.Genders = await context.Genders
+                .AsNoTracking()
+                .Where(g => g.IsActive)
+                .OrderBy(g => g.GenderName)
+                .Select(g => new DropdownItem { Id = g.Id, Name = g.GenderName })
+                .ToListAsync();
+            vm.Ethnicities = await context.Ethnicities
+                .AsNoTracking()
+                .Where(e => e.IsActive)
+                .OrderBy(e => e.EthnicityName)
+                .Select(e => new DropdownItem { Id = e.Id, Name = e.EthnicityName })
+                .ToListAsync();
+        }
+
+        return View("EditProfile", vm);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(
@@ -63,28 +157,23 @@ public class ProfileController(
         var roles = await userManager.GetRolesAsync(user);
         var primaryRole = roles.FirstOrDefault() ?? Role.Student;
         var isStudent = roles.Contains(Role.Student);
+        var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        var errors = new List<string>();
 
         if (!isStudent)
         {
             if (string.IsNullOrWhiteSpace(fullName))
-            {
-                TempData["ErrorMessage"] = "Full name is required.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (fullName.Length > 50)
-            {
-                TempData["ErrorMessage"] = "Full name cannot exceed 50 characters.";
-                return RedirectToAction(nameof(Index));
-            }
+                errors.Add("Full name is required.");
+            else if (fullName.Length > 50)
+                errors.Add("Full name cannot exceed 50 characters.");
 
             if (designation != null && designation.Length > 100)
-            {
-                TempData["ErrorMessage"] = "Designation cannot exceed 100 characters.";
-                return RedirectToAction(nameof(Index));
-            }
+                errors.Add("Designation cannot exceed 100 characters.");
 
-            user.FullName = fullName.Trim();
+            if (errors.Count > 0)
+                return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
+
+            user.FullName = fullName!.Trim();
             user.Designation = string.IsNullOrWhiteSpace(designation) ? null : designation.Trim();
         }
 
@@ -102,17 +191,31 @@ public class ProfileController(
         {
             var trimmedPhone = phoneNumber.Trim();
             if (trimmedPhone.Length is < 7 or > 15 || !System.Text.RegularExpressions.Regex.IsMatch(trimmedPhone, @"^\+?[0-9\s\-()]+$"))
-            {
-                TempData["ErrorMessage"] = "Phone number must be 7–15 digits and may include +, -, ( ) and spaces.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            user.PhoneNumber = trimmedPhone;
+                errors.Add("Phone number must be 7–15 digits and may include +, -, ( ) and spaces.");
+            else
+                user.PhoneNumber = trimmedPhone;
         }
         else
         {
             user.PhoneNumber = null;
         }
+
+        if (isStudent)
+        {
+            if (provinceId is null or <= 0)
+                errors.Add("Province is required.");
+            if (districtId is null or <= 0)
+                errors.Add("District is required.");
+            if (localLevelId is null or <= 0)
+                errors.Add("Local Level is required.");
+            if (genderId is null or <= 0)
+                errors.Add("Gender is required.");
+            if (ethnicityId is null or <= 0)
+                errors.Add("Ethnicity is required.");
+        }
+
+        if (errors.Count > 0)
+            return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
 
         if (photo != null && photo.Length > 0)
         {
@@ -125,8 +228,8 @@ public class ProfileController(
             catch (InvalidOperationException ex)
             {
                 logger.LogWarning("Profile photo upload rejected: {Message}", ex.Message);
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                errors.Add(ex.Message);
+                return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
             }
         }
 
@@ -142,24 +245,29 @@ public class ProfileController(
             catch (InvalidOperationException ex)
             {
                 logger.LogWarning("Signature upload rejected: {Message}", ex.Message);
-                TempData["ErrorMessage"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                errors.Add(ex.Message);
+                return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
             }
         }
 
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            foreach (var error in updateResult.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
-            TempData["ErrorMessage"] = "Failed to save profile. Please try again.";
-            return RedirectToAction(nameof(Index));
+            errors.AddRange(updateResult.Errors.Select(e => e.Description));
+            return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
         }
 
         if (roles.Contains(Role.Student) && registration != null)
         {
-            if (user.Email != null)
-                registration.Email = user.Email;
+            if (user.Email != null && user.Email != registration.Email)
+            {
+                var emailTaken = await context.StudentRegistrations
+                    .AnyAsync(sr => sr.Id != registration.Id && sr.Email == user.Email);
+                if (!emailTaken)
+                {
+                    registration.Email = user.Email;
+                }
+            }
             registration.ContactNumber = user.PhoneNumber;
 
             if (localLevelId is > 0)
@@ -169,14 +277,14 @@ public class ProfileController(
                     .FirstOrDefaultAsync(l => l.Id == localLevelId.Value && l.IsActive);
                 if (localLevel == null)
                 {
-                    TempData["ErrorMessage"] = "The selected local level is not valid.";
-                    return RedirectToAction(nameof(Index));
+                    errors.Add("The selected local level is not valid.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
                 }
 
                 if (districtId is > 0 && localLevel.DistrictId != districtId.Value)
                 {
-                    TempData["ErrorMessage"] = "The selected local level does not belong to the selected district.";
-                    return RedirectToAction(nameof(Index));
+                    errors.Add("The selected local level does not belong to the selected district.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
                 }
 
                 if (registration.PermanentAddressId.HasValue)
@@ -185,6 +293,13 @@ public class ProfileController(
                     if (address != null)
                     {
                         address.LocalLevelId = localLevelId.Value;
+                    }
+                    else
+                    {
+                        var newAddress = new Address { LocalLevelId = localLevelId.Value, IsActive = true };
+                        context.Addresses.Add(newAddress);
+                        await context.SaveChangesAsync();
+                        registration.PermanentAddressId = newAddress.Id;
                     }
                 }
                 else
@@ -203,14 +318,14 @@ public class ProfileController(
                     .FirstOrDefaultAsync(d => d.Id == districtId.Value && d.IsActive);
                 if (district == null)
                 {
-                    TempData["ErrorMessage"] = "The selected district is not valid.";
-                    return RedirectToAction(nameof(Index));
+                    errors.Add("The selected district is not valid.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
                 }
 
                 if (district.ProvinceId != provinceId.Value)
                 {
-                    TempData["ErrorMessage"] = "The selected district does not belong to the selected province.";
-                    return RedirectToAction(nameof(Index));
+                    errors.Add("The selected district does not belong to the selected province.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
                 }
             }
 
@@ -218,8 +333,8 @@ public class ProfileController(
             {
                 if (!await context.Genders.AnyAsync(g => g.Id == genderId.Value && g.IsActive))
                 {
-                    TempData["ErrorMessage"] = "The selected gender is not valid.";
-                    return RedirectToAction(nameof(Index));
+                    errors.Add("The selected gender is not valid.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
                 }
                 registration.GenderId = genderId.Value;
             }
@@ -228,8 +343,8 @@ public class ProfileController(
             {
                 if (!await context.Ethnicities.AnyAsync(e => e.Id == ethnicityId.Value && e.IsActive))
                 {
-                    TempData["ErrorMessage"] = "The selected ethnicity is not valid.";
-                    return RedirectToAction(nameof(Index));
+                    errors.Add("The selected ethnicity is not valid.");
+                    return isAjax ? Json(new { success = false, errors }) : BadRequestResponse(errors);
                 }
                 registration.EthnicityId = ethnicityId.Value;
             }
@@ -237,7 +352,21 @@ public class ProfileController(
             await context.SaveChangesAsync();
         }
 
+        if (isAjax)
+        {
+            var missingFields = isStudent
+                ? await studentDashboardService.GetMissingMandatoryProfileFieldsAsync(user.Id, user.Email, user.PhoneNumber, user.ProfilePath, user.SignaturePath)
+                : new List<string>();
+            return Json(new { success = true, message = "Profile updated successfully.", missingFields });
+        }
+
         TempData["SuccessMessage"] = "Profile updated successfully.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private IActionResult BadRequestResponse(List<string> errors)
+    {
+        TempData["ErrorMessage"] = string.Join(" ", errors);
         return RedirectToAction(nameof(Index));
     }
 
@@ -618,13 +747,12 @@ public class ProfileController(
             var enrollment = await context.SemesterEnrollments
                 .AsNoTracking()
                 .Where(se => se.StudentAdmissionId == admission.Id && se.EnrollmentStatus == StudentEnrollmentStatus.Active)
-                .Include(se => se.Semester)
-                .OrderByDescending(se => se.Semester!.Year)
-                .ThenByDescending(se => se.Semester!.Number)
+                .Include(se => se.SemesterInstance).ThenInclude(si => si!.Semester)
+                .OrderByDescending(se => se.SemesterInstance!.Semester!.Number)
                 .FirstOrDefaultAsync();
-            if (enrollment?.Semester != null)
+            if (enrollment?.SemesterInstance?.Semester != null)
             {
-                vm.CurrentSemester = $"{enrollment.Semester.Name} ({enrollment.Semester.Year})";
+                vm.CurrentSemester = SemesterDisplayHelper.Format(enrollment.SemesterInstance.Semester);
             }
         }
         else if (registration?.Program != null)

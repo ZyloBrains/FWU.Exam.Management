@@ -4,7 +4,7 @@
     ViewData["Title"] = "My Profile";
 }
 
-<div x-data="{ editProfileOpen: false, profilePromptOpen: @(Model.ShowProfileCompletionPopup ? "true" : "false") }" class="space-y-6">
+<div x-data="{ profilePromptOpen: @(Model.ShowProfileCompletionPopup ? "true" : "false") }" class="space-y-6">
     @if (TempData["SuccessMessage"] is string successMsg)
     {
         <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm" x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 5000)">
@@ -74,10 +74,10 @@
                                 class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             Close
                         </button>
-                        <button type="button" x-on:click="profilePromptOpen = false; editProfileOpen = true"
-                                class="flex-1 px-5 py-2 rounded-lg bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-medium hover:opacity-95 transition-opacity shadow-sm">
+                        <a asp-controller="Profile" asp-action="Edit"
+                           class="flex-1 px-5 py-2 rounded-lg bg-gradient-to-r from-admin-blue to-admin-blue-dark text-white text-sm font-medium hover:opacity-95 transition-opacity shadow-sm text-center">
                             <i class="fas fa-user-edit mr-1"></i> Complete Profile
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>

@@ -383,7 +383,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         return await context.ExamSchedules
             .AnyAsync(es => es.ProgramId == programId
                 && es.CollegeId == collegeId
-                && es.AcademicYearId == academicYearId
+                && es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId
                 && es.IsActive
                 && es.StartDate <= now
                 && es.EndDate >= now
@@ -650,7 +650,7 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
     public async Task<decimal?> GetEntranceFeeForProgramAsync(int programId, int academicYearId)
     {
         return await context.ExamSchedules
-            .Where(es => es.ProgramId == programId && es.AcademicYearId == academicYearId && es.IsActive)
+            .Where(es => es.ProgramId == programId && es.SemesterInstance != null && es.SemesterInstance.AcademicYearId == academicYearId && es.IsActive)
             .Select(es => es.ExamFee)
             .FirstOrDefaultAsync();
     }
@@ -665,8 +665,10 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
         return await context.ExamSchedules
             .Include(es => es.Program)
             .Include(es => es.College)
-            .Include(es => es.AcademicYear)
-            .Include(es => es.Semester)
+            .Include(es => es.SemesterInstance)
+                .ThenInclude(si => si!.AcademicYear)
+            .Include(es => es.SemesterInstance)
+                .ThenInclude(si => si!.Semester)
             .Where(es => es.IsActive && es.EndDate >= now && es.ExamFee != null && es.ExamTypeId == entranceTypeId)
             .OrderBy(es => es.EndDate)
             .Select(es => new AvailableScheduleDto
@@ -675,8 +677,8 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
                 ExamScheduleName = es.ExamScheduleName,
                 ProgramName = es.Program != null ? es.Program.ProgramName : null,
                 CollegeName = es.College != null ? es.College.Name : null,
-                AcademicYearName = es.AcademicYear != null ? es.AcademicYear.AcademicYearName : null,
-                SemesterName = es.Semester != null ? es.Semester.Name : null,
+                AcademicYearName = es.SemesterInstance != null && es.SemesterInstance.AcademicYear != null ? es.SemesterInstance.AcademicYear.AcademicYearName : null,
+                SemesterName = es.SemesterInstance != null && es.SemesterInstance.Semester != null ? es.SemesterInstance.Semester.Name : null,
                 ExamFee = es.ExamFee,
                 StartDate = es.StartDate,
                 EndDate = es.EndDate,
@@ -694,7 +696,8 @@ public class EntranceExamApplicationService(AppDbContext context, UserManager<Ap
             .Include(v => v.ExamSchedule)
                 .ThenInclude(es => es!.College)
             .Include(v => v.ExamSchedule)
-                .ThenInclude(es => es!.AcademicYear)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.AcademicYear)
             .AsNoTracking()
             .FirstOrDefaultAsync(v => v.Id == voucherId);
     }
