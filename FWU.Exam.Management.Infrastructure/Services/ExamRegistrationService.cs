@@ -148,6 +148,38 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         }
     }
 
+    public async Task<(bool Success, string Message)> RejectExamRegistrationAsync(int id, string? reason)
+    {
+        reason = reason?.Trim();
+        if (string.IsNullOrEmpty(reason))
+            return (false, "A rejection reason is required.");
+
+        var examRegistration = await context.ExamRegistrations
+            .Where(er => er.Id == id && er.IsAppliedByStudent == true && er.IsActive)
+            .ApplyScope(userContext)
+            .FirstOrDefaultAsync();
+
+        if (examRegistration == null)
+            return (false, "Exam form not found.");
+
+        if (examRegistration.Status != RegistrationStatus.Pending && examRegistration.Status != RegistrationStatus.CollegeVerified)
+            return (false, "Only pending or college-verified forms can be rejected.");
+
+        var hasAdmitCard = await context.AdmitCards!
+            .AsNoTracking()
+            .AnyAsync(ac => ac.ExamRegistrationId == id && ac.IsActive);
+        if (hasAdmitCard)
+            return (false, "This form cannot be rejected because an admit card has already been generated.");
+
+        var username = await ResolveUsernameAsync() ?? "unknown";
+        reason = reason.Length > 150 ? reason[..150] : reason;
+        examRegistration.Remarks = $"[Rejected by {username} on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC] {reason}";
+        examRegistration.Status = RegistrationStatus.Rejected;
+
+        await context.SaveChangesAsync();
+        return (true, "Exam form rejected.");
+    }
+
     private async Task<string?> ResolveUsernameAsync()
     {
         if (string.IsNullOrEmpty(userContext.UserId)) return null;
@@ -323,6 +355,267 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         return forms.FirstOrDefault();
     }
 
+    public async Task<ExamFormEditableSubjectsDto?> GetEditableSubjectsAsync(int examRegistrationId)
+    {
+        var er = await context.ExamRegistrations
+            .AsNoTracking()
+            .Where(e => e.Id == examRegistrationId && e.IsAppliedByStudent == true && e.IsActive)
+            .ApplyScope(userContext)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.Semester)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.AcademicYear)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.ExamType)
+            .FirstOrDefaultAsync();
+
+        if (er?.ExamSchedule?.SemesterInstance == null) return null;
+
+        var dto = new ExamFormEditableSubjectsDto
+        {
+            ExamRegistrationId = er.Id,
+            ExamScheduleName = er.ExamSchedule!.ExamScheduleName,
+            ExamTypeName = er.ExamSchedule.ExamType?.Name
+        };
+
+        var matchedLog = await FindConfirmedPaymentLogAsync(er);
+        var hasAdmitCard = await context.AdmitCards!
+            .AsNoTracking()
+            .AnyAsync(ac => ac.ExamRegistrationId == er.Id && ac.IsActive);
+
+        var editableStatus = er.Status == RegistrationStatus.Pending || er.Status == RegistrationStatus.CollegeVerified;
+        dto.CanEdit = matchedLog != null && !hasAdmitCard && editableStatus;
+        if (!dto.CanEdit)
+        {
+            dto.NotEditableReason = !editableStatus
+                ? "Subjects can only be changed before final approval."
+                : hasAdmitCard
+                    ? "An admit card has already been generated for this form."
+                    : "Payment has not been confirmed for this form yet.";
+        }
+
+        var selectedIds = ParseSelectedSubjectIds(matchedLog?.SelectedSubjectIds);
+
+        var schedule = er.ExamSchedule!;
+        var semesterNumber = schedule.SemesterInstance!.Semester?.Number ?? 0;
+        var resolvedVersion = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
+
+        var offerings = semesterNumber > 0
+            ? await context.SubjectOfferings
+                .AsNoTracking()
+                .Include(so => so.SubjectCatalog)
+                .Where(so => so.ProgramId == schedule.ProgramId
+                          && so.Semester != null && so.Semester.Number == semesterNumber
+                          && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null))
+                .OrderBy(so => so.DisplayOrder)
+                .ToListAsync()
+            : [];
+
+        dto.AvailableSubjects = offerings
+            .Where(so => so.SubjectCatalog != null)
+            .Select(so => new ExamFormSelectableSubjectDto
+            {
+                SubjectOfferingId = so.Id,
+                Code = so.SubjectCatalog!.SubjectCode,
+                Name = so.SubjectCatalog.SubjectName,
+                Theory = so.HasTheory,
+                Practical = so.HasPractical,
+                IsSelected = selectedIds.Contains(so.Id)
+            })
+            .ToList();
+
+        return dto;
+    }
+
+    public async Task<(bool Success, string Message)> UpdateRegistrationSubjectsAsync(int examRegistrationId, List<int> subjectOfferingIds)
+    {
+        var requestedIds = (subjectOfferingIds ?? [])
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        if (requestedIds.Count == 0)
+            return (false, "At least one subject must remain selected.");
+
+        var er = await context.ExamRegistrations
+            .Where(e => e.Id == examRegistrationId && e.IsAppliedByStudent == true && e.IsActive)
+            .ApplyScope(userContext)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.Semester)
+            .Include(er => er.ExamSchedule)
+                .ThenInclude(es => es!.SemesterInstance)
+                    .ThenInclude(si => si!.AcademicYear)
+            .FirstOrDefaultAsync();
+
+        if (er?.ExamSchedule?.SemesterInstance == null)
+            return (false, "Exam form not found.");
+
+        if (er.Status != RegistrationStatus.Pending && er.Status != RegistrationStatus.CollegeVerified)
+            return (false, "Subjects can only be changed before final approval.");
+
+        var hasAdmitCard = await context.AdmitCards!
+            .AsNoTracking()
+            .AnyAsync(ac => ac.ExamRegistrationId == er.Id && ac.IsActive);
+        if (hasAdmitCard)
+            return (false, "Subjects cannot be changed because an admit card has already been generated.");
+
+        var schedule = er.ExamSchedule!;
+        var semesterNumber = schedule.SemesterInstance!.Semester?.Number ?? 0;
+        var resolvedVersion = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
+
+        var validOfferings = await context.SubjectOfferings
+            .AsNoTracking()
+            .Where(so => requestedIds.Contains(so.Id)
+                      && so.ProgramId == schedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == semesterNumber
+                      && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null))
+            .ToDictionaryAsync(so => so.Id);
+
+        if (validOfferings.Count != requestedIds.Count)
+            return (false, "One or more selected subjects are not offered for this exam schedule.");
+
+        var matchedLog = await FindConfirmedPaymentLogAsync(er, asNoTracking: false);
+        if (matchedLog == null)
+            return (false, "Payment has not been confirmed for this form yet.");
+
+        var existingResults = await context.ExamSubjectResults!
+            .Where(esr => esr.ExamRegistrationId == er.Id)
+            .ToListAsync();
+
+        var activeByOffering = existingResults
+            .Where(esr => esr.IsActive)
+            .GroupBy(esr => esr.SubjectOfferingId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(esr => esr.Id).First());
+
+        var finalIds = validOfferings.Keys.ToHashSet();
+
+        foreach (var result in activeByOffering.Values.Where(r => !finalIds.Contains(r.SubjectOfferingId)))
+        {
+            result.IsActive = false;
+        }
+
+        HashSet<int>? previousScheduleIds = null;
+        if (er.IsSupplementary)
+        {
+            previousScheduleIds = await context.ExamSchedules!
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(es => es.IsActive
+                          && es.ProgramId == schedule.ProgramId
+                          && es.SemesterInstance!.SemesterId == schedule.SemesterInstance.SemesterId
+                          && es.Id != er.ExamScheduleId
+                          && es.ExamType != null
+                          && es.ExamType.Name != "Entrance")
+                .Select(es => es.Id)
+                .ToHashSetAsync();
+        }
+
+        foreach (var offeringId in finalIds.Where(id => !activeByOffering.ContainsKey(id)))
+        {
+            var offering = validOfferings[offeringId];
+
+            float? carriedPractical = null;
+            float? carriedPracticalInternal = null;
+            float? carriedTheoryInternal = null;
+
+            if (er.IsSupplementary && previousScheduleIds is { Count: > 0 })
+            {
+                var previousResult = await context.ExamSubjectResults!
+                    .AsNoTracking()
+                    .Where(esr => esr.SubjectOfferingId == offeringId
+                               && previousScheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                               && esr.ExamRegistration != null
+                               && esr.ExamRegistration.IsActive
+                               && esr.IsActive)
+                    .OrderByDescending(esr => esr.Id)
+                    .FirstOrDefaultAsync();
+
+                if (previousResult != null)
+                {
+                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
+                    carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
+                }
+            }
+
+            context.ExamSubjectResults!.Add(new ExamSubjectResult
+            {
+                TenantId = er.TenantId,
+                ExamRegistrationId = er.Id,
+                SubjectOfferingId = offeringId,
+                ExamScheduleId = er.ExamScheduleId,
+                ExamTypeId = schedule.ExamTypeId,
+                IsTheoryRegistered = offering.HasTheory,
+                IsPracticalRegistered = offering.HasPractical,
+                IsActive = true,
+                IsSubmitted = false,
+                IsSupplementary = er.IsSupplementary,
+                ObtainedMarksPractical = carriedPractical,
+                ObtainedMarksPracticalInternal = carriedPracticalInternal,
+                ObtainedMarksTheoryInternal = carriedTheoryInternal
+            });
+        }
+
+        matchedLog.SelectedSubjectIds = string.Join(",", finalIds.OrderBy(id => id));
+
+        await context.SaveChangesAsync();
+        return (true, "Subjects updated successfully.");
+    }
+
+    private async Task<PaymentRequestLog?> FindConfirmedPaymentLogAsync(ExamRegistration er, bool asNoTracking = true)
+    {
+        var logs = asNoTracking ? context.PaymentRequestLogs!.AsNoTracking() : context.PaymentRequestLogs!;
+
+        if (er.ApplicationVoucherId.HasValue)
+        {
+            var srId = await context.ApplicationVouchers!
+                .AsNoTracking()
+                .Where(v => v.Id == er.ApplicationVoucherId.Value)
+                .Select(v => (int?)v.StudentRegistrationId)
+                .FirstOrDefaultAsync();
+
+            if (srId.HasValue)
+            {
+                var log = await logs
+                    .Where(prl => prl.ExamScheduleId == er.ExamScheduleId
+                               && prl.StudentRegistrationId == srId.Value
+                               && prl.PaymentRequestLogStatus == 1)
+                    .OrderByDescending(pl => pl.Id)
+                    .FirstOrDefaultAsync();
+
+                if (log != null) return log;
+            }
+        }
+
+        if (er.CollegeId > 0)
+        {
+            return await logs
+                .Where(prl => prl.ExamScheduleId == er.ExamScheduleId
+                           && prl.CollegeId == er.CollegeId
+                           && prl.PaymentRequestLogStatus == 1)
+                .OrderByDescending(pl => pl.Id)
+                .FirstOrDefaultAsync();
+        }
+
+        return null;
+    }
+
+    private static HashSet<int> ParseSelectedSubjectIds(string? selectedSubjectIds)
+    {
+        return string.IsNullOrWhiteSpace(selectedSubjectIds)
+            ? []
+            : selectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
+                .Where(value => value.HasValue)
+                .Select(value => value!.Value)
+                .ToHashSet();
+    }
+
     public async Task<List<SelectOption>> GetFilterAcademicYearsAsync()
     {
         var scopedQuery = context.ExamRegistrations
@@ -467,20 +760,47 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Distinct()
             .ToList();
 
+        var scheduleKeys = items
+            .Where(i => i.ExamSchedule?.SemesterInstance != null)
+            .Select(i => (i.ExamSchedule!.ProgramId, i.ExamSchedule.SemesterInstance!.AcademicYearId))
+            .Distinct()
+            .ToList();
+
+        var curriculumVersionMap = new Dictionary<(int ProgramId, int AcademicYearId), int?>();
+        foreach (var key in scheduleKeys)
+        {
+            curriculumVersionMap[key] = await CurriculumVersionResolver.ResolveAsync(
+                context, key.ProgramId, key.AcademicYearId);
+        }
+
         var programIds = subjectKeys.Select(k => k.ProgramId).Distinct().ToList();
         var semesterIds = subjectKeys.Select(k => k.SemesterId).Distinct().ToList();
+
+        var semesterNumberMap = await context.Semesters
+            .AsNoTracking()
+            .Where(s => semesterIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.Number })
+            .ToListAsync();
+
+        var semesterIdToNumber = semesterNumberMap.ToDictionary(s => s.Id, s => s.Number);
+        var semesterNumbers = semesterNumberMap.Select(s => s.Number).Distinct().ToList();
+
+        var activeVersionIds = curriculumVersionMap.Values.Where(v => v.HasValue).Select(v => v!.Value).Distinct().ToHashSet();
 
         var offerings = subjectKeys.Count > 0
             ? await context.SubjectOfferings
                 .AsNoTracking()
                 .Include(so => so.SubjectCatalog)
-                .Where(so => programIds.Contains(so.ProgramId) && semesterIds.Contains(so.SemesterId))
+                .Include(so => so.Semester)
+                .Where(so => programIds.Contains(so.ProgramId)
+                          && so.Semester != null && semesterNumbers.Contains(so.Semester.Number)
+                          && (activeVersionIds.Count == 0 || (so.CurriculumVersionId != null && activeVersionIds.Contains(so.CurriculumVersionId.Value)) || so.CurriculumVersionId == null))
                 .OrderBy(so => so.DisplayOrder)
                 .ToListAsync()
             : [];
 
         var offeringLookup = offerings
-            .GroupBy(so => (so.ProgramId, so.SemesterId))
+            .GroupBy(so => (so.ProgramId, semesterIdToNumber.GetValueOrDefault(so.SemesterId)))
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var forms = items.Select(er =>
@@ -545,9 +865,13 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
 
             var schedule = er.ExamSchedule;
             var subjects = new List<ExamFormSubjectDto>();
-            if (schedule != null && offeringLookup.TryGetValue((schedule.ProgramId, schedule.SemesterInstance!.SemesterId), out var scheduleOfferings))
+            if (schedule?.SemesterInstance != null
+                && semesterIdToNumber.TryGetValue(schedule.SemesterInstance.SemesterId, out var scheduleSemNumber)
+                && offeringLookup.TryGetValue((schedule.ProgramId, scheduleSemNumber), out var scheduleOfferings))
             {
-                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null);
+                var resolvedVersion = curriculumVersionMap.GetValueOrDefault((schedule.ProgramId, schedule.SemesterInstance.AcademicYearId));
+                var eligible = scheduleOfferings.Where(so => so.SubjectCatalog != null
+                    && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null));
                 if (selectedSubjectIds is { Count: > 0 })
                     eligible = eligible.Where(so => selectedSubjectIds.Contains(so.Id));
                 else
@@ -556,6 +880,7 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 subjects = eligible
                     .Select(so => new ExamFormSubjectDto
                     {
+                        SubjectOfferingId = so.Id,
                         Code = so.SubjectCatalog!.SubjectCode,
                         Name = so.SubjectCatalog.SubjectName,
                         Theory = so.HasTheory,
@@ -563,6 +888,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     })
                     .ToList();
             }
+
+            var canEditSubjects = paymentConfirmed
+                && !admitCards.Any(ac => ac.ExamRegistrationId == er.Id)
+                && (er.Status == RegistrationStatus.Pending || er.Status == RegistrationStatus.CollegeVerified);
 
             return new ExamFormAdminDto
             {
@@ -592,7 +921,8 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 VerifiedByUsername = er.VerifiedByUsername,
                 VerifiedDate = er.VerifiedDate,
                 CanApprove = er.Status == RegistrationStatus.Pending,
-                CanAdminApprove = er.Status == RegistrationStatus.CollegeVerified
+                CanAdminApprove = er.Status == RegistrationStatus.CollegeVerified,
+                CanEditSubjects = canEditSubjects
             };
         }).ToList();
 

@@ -549,6 +549,11 @@ public class StudentRegistrationService(AppDbContext context, UserManager<AppUse
             }
         }
 
+        // The login identifier is the registration number; an account may already exist
+        // under it even when the email lookup above missed (e.g. the email was changed).
+        if (user == null && !string.IsNullOrWhiteSpace(loginId))
+            user = await userManager.FindByNameAsync(loginId);
+
         if (user == null)
         {
             user = new AppUser

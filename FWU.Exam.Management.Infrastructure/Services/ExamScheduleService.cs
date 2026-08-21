@@ -3,6 +3,7 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Helpers;
 using FWU.Exam.Management.Domain.Interfaces;
 using FWU.Exam.Management.Infrastructure;
@@ -386,13 +387,35 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
             .Include(es => es.ExamCenter)
             .ToListAsync();
 
-        var offeringQuery = context.SubjectOfferings
-            .Where(so => so.IsActive && so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
-        var allSubjectOfferings = await offeringQuery
-            .Include(so => so.SubjectCatalog)
-            .OrderBy(so => so.DisplayOrder)
-            .ThenBy(so => so.Id)
-            .ToListAsync();
+        var scheduleSemesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+
+        var offeringBase = context.SubjectOfferings
+            .Where(so => so.IsActive && so.ProgramId == schedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == scheduleSemesterNumber);
+
+        List<SubjectOffering> allSubjectOfferings;
+        if (curriculumVersionId.HasValue)
+        {
+            allSubjectOfferings = await offeringBase.Where(so => so.CurriculumVersionId == curriculumVersionId.Value)
+                .Include(so => so.SubjectCatalog).OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id).ToListAsync();
+            if (allSubjectOfferings.Count == 0)
+            {
+                allSubjectOfferings = await offeringBase.Where(so => so.CurriculumVersionId == null)
+                    .Include(so => so.SubjectCatalog).OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id).ToListAsync();
+            }
+        }
+        else
+        {
+            allSubjectOfferings = await offeringBase.Where(so => so.CurriculumVersionId == null)
+                .Include(so => so.SubjectCatalog).OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id).ToListAsync();
+        }
+
         var subjectOfferings = allSubjectOfferings
             .GroupBy(so => so.SubjectCatalogId)
             .Select(g => g.First())
@@ -434,9 +457,36 @@ public class ExamScheduleService(AppDbContext context, IUserContext userContext)
         if (schedule == null)
             return new ExamSlotSaveResultDto { Errors = ["Exam schedule not found."] };
 
-        var validOfferingQuery = context.SubjectOfferings
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId);
-        var validOfferingIds = await validOfferingQuery.Select(so => so.Id).ToHashSetAsync();
+        var validSemesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var validCurriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+
+        var validOfferingBase = context.SubjectOfferings
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == validSemesterNumber);
+        HashSet<int> validOfferingIds;
+        if (validCurriculumVersionId.HasValue)
+        {
+            validOfferingIds = await validOfferingBase
+                .Where(so => so.CurriculumVersionId == validCurriculumVersionId.Value)
+                .Select(so => so.Id).ToHashSetAsync();
+            if (validOfferingIds.Count == 0)
+            {
+                validOfferingIds = await validOfferingBase
+                    .Where(so => so.CurriculumVersionId == null)
+                    .Select(so => so.Id).ToHashSetAsync();
+            }
+        }
+        else
+        {
+            validOfferingIds = await validOfferingBase
+                .Where(so => so.CurriculumVersionId == null)
+                .Select(so => so.Id).ToHashSetAsync();
+        }
 
         var existingSlots = await context.ExamSlots
             .Where(es => es.ExamScheduleId == examScheduleId)

@@ -6,7 +6,11 @@
 
 <div class="space-y-6">
     <div class="flex items-center gap-3">
-        <a asp-action="Index" class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
+        <a asp-action="Index"
+           asp-route-programId="@(ViewBag.ReturnProgramId as int?)"
+           asp-route-semesterId="@(ViewBag.ReturnSemesterId as int?)"
+           asp-route-curriculumVersionId="@(ViewBag.ReturnCurriculumVersionId as int?)"
+           class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition">
             <i class="fas fa-arrow-left text-gray-600"></i>
         </a>
         <div class="flex items-center gap-3">
@@ -21,6 +25,9 @@
         <form asp-action="Edit" method="post" class="space-y-6">
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="TenantId" />
+            <input type="hidden" name="returnProgramId" value="@ViewBag.ReturnProgramId" />
+            <input type="hidden" name="returnSemesterId" value="@ViewBag.ReturnSemesterId" />
+            <input type="hidden" name="returnCurriculumVersionId" value="@ViewBag.ReturnCurriculumVersionId" />
             <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 rounded-lg p-2"></div>
 
             <div class="border-b border-gray-200 pb-4 mb-2">
@@ -140,7 +147,11 @@
                 <button type="submit" class="px-6 py-2 bg-amber-500 text-white text-sm font-semibold rounded-lg hover:bg-amber-600 transition shadow-md">
                     <i class="fas fa-save mr-1"></i> Update
                 </button>
-                <a asp-action="Index" class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
+                <a asp-action="Index"
+                   asp-route-programId="@(ViewBag.ReturnProgramId as int?)"
+                   asp-route-semesterId="@(ViewBag.ReturnSemesterId as int?)"
+                   asp-route-curriculumVersionId="@(ViewBag.ReturnCurriculumVersionId as int?)"
+                   class="px-6 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition shadow-md">
                     Cancel
                 </a>
             </div>
