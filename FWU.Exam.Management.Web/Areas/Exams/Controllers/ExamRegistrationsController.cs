@@ -327,7 +327,7 @@ public class ExamRegistrationsController(
         ViewData["ExamScheduleId"] = new SelectList(selectLists.ExamSchedules, "Id", "Name", examRegistration?.ExamScheduleId);
         ViewData["CollegeId"] = new SelectList(selectLists.Colleges, "Id", "Name", examRegistration?.CollegeId);
         ViewData["AcademicYearId"] = new SelectList(selectLists.AcademicYears, "Id", "Name", examRegistration?.AcademicYearId);
-        ViewData["ProgramsId"] = new SelectList(selectLists.Programs, "Id", "ProgramName", examRegistration?.ProgramsId);
+        ViewData["ProgramsId"] = new SelectList(selectLists.Programs, "Id", "Name", examRegistration?.ProgramsId);
         ViewData["ExamCenterId"] = new SelectList(selectLists.ExamCenters, "Id", "Name", examRegistration?.ExamCenterId);
     }
 
