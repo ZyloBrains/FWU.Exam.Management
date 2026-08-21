@@ -391,7 +391,10 @@ public class SemesterEnrollmentService(AppDbContext context, IUserContext userCo
                       && es.SemesterInstanceId == semesterId
                       && es.ExamType != null
                       && es.ExamType.Name != "Entrance"
-                      && es.ExamType.Name != "Supplementary")
+                      && es.ExamType.Name != "Supplementary"
+                      && es.ExamType.Name != "Partial"
+                      && es.ExamType.Name != "Chance"
+                      && es.ExamType.Name != "Special Chance")
             .OrderBy(es => es.ExamType!.Name == "Regular" ? 0 : 1)
             .ThenByDescending(es => es.Id)
             .ToListAsync();

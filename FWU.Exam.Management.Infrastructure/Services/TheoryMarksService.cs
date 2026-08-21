@@ -314,7 +314,7 @@ public class TheoryMarksService(
                 }
 
                 entity.ObtainedMarksTheory = student.Theory;
-                gradeCalculationService.AssignGrades(entity, subjectOffering);
+                gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {

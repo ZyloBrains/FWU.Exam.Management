@@ -338,4 +338,99 @@ public class GradeCalculationServiceTests
         Assert.True(service.IsStudentPassing(30, 25, offering));
         Assert.False(service.IsStudentPassing(30, 15, offering));
     }
+
+    [Fact]
+    public void IsStudentPassing_SkipsPracticalCheck_WhenSupplementary()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx => TestData.SeedBase(ctx));
+        var service = new GradeCalculationService(db.Context);
+        var offering = TheoryAndPracticalOffering();
+
+        Assert.True(service.IsStudentPassing(30, 15, offering, isSupplementary: true));
+        Assert.True(service.IsStudentPassing(25, null, offering, isSupplementary: true));
+        Assert.False(service.IsStudentPassing(20, null, offering, isSupplementary: true));
+    }
+
+    [Fact]
+    public void AssignGrades_UsesTheoryOnlyPass_ForSupplementaryStudent()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
+                ("A", 80, 100, 4.0m, true),
+                ("F", 0, 39, 0.0m, false)));
+        });
+
+        var service = new GradeCalculationService(db.Context);
+        var offering = TheoryAndPracticalOffering();
+        var result = new ExamSubjectResult
+        {
+            TenantId = TestData.TenantId,
+            ObtainedMarksTheory = 30,
+            ObtainedMarksTheoryInternal = 30,
+            ObtainedMarksPractical = 15,
+            ObtainedMarksPracticalInternal = null,
+            IsSupplementary = true
+        };
+
+        service.AssignGrades(result, offering, isSupplementary: true);
+
+        Assert.Equal(75f, result.ObtainedMarks);
+        Assert.Equal("Pass", result.Remarks);
+    }
+
+    [Fact]
+    public void AssignGrades_UsesTheoryOnlyPass_FailsWhenTheoryBelowPass_ForSupplementary()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
+                ("A", 80, 100, 4.0m, true),
+                ("F", 0, 39, 0.0m, false)));
+        });
+
+        var service = new GradeCalculationService(db.Context);
+        var offering = TheoryAndPracticalOffering();
+        var result = new ExamSubjectResult
+        {
+            TenantId = TestData.TenantId,
+            ObtainedMarksTheory = 20,
+            ObtainedMarksTheoryInternal = 30,
+            ObtainedMarksPractical = 45,
+            ObtainedMarksPracticalInternal = null,
+            IsSupplementary = true
+        };
+
+        service.AssignGrades(result, offering, isSupplementary: true);
+
+        Assert.Equal("Fail", result.Remarks);
+    }
+
+    [Fact]
+    public void AssignGrades_UsesCombinedPass_ForRegularStudent()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.GradingSchemes.Add(Scheme(1, TestData.ProgramId,
+                ("A", 80, 100, 4.0m, true),
+                ("F", 0, 39, 0.0m, false)));
+        });
+
+        var service = new GradeCalculationService(db.Context);
+        var offering = TheoryAndPracticalOffering();
+        var result = new ExamSubjectResult
+        {
+            TenantId = TestData.TenantId,
+            ObtainedMarksTheory = 15,
+            ObtainedMarksTheoryInternal = 10,
+            ObtainedMarksPractical = 10
+        };
+
+        service.AssignGrades(result, offering);
+
+        Assert.Equal("Fail", result.Remarks);
+    }
 }

@@ -1,6 +1,7 @@
 using FWU.Exam.Management.Application.DTOs;
 using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Domain.Interfaces;
@@ -424,6 +425,12 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                 g => g.Key,
                 g => g.OrderByDescending(pl => pl.Id).First());
 
+        var fallbackPaymentLogs = await context.PaymentRequestLogs!
+            .AsNoTracking()
+            .Where(prl => scheduleIds.Contains(prl.ExamScheduleId)
+                       && prl.CollegeId != null)
+            .ToListAsync();
+
         var admitCards = await context.AdmitCards!
             .AsNoTracking()
             .Where(ac => registrationIds.Contains(ac.ExamRegistrationId) && ac.IsActive)
@@ -505,20 +512,35 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
                     photoPath = studentUser.ProfilePath;
                     signaturePath = studentUser.SignaturePath;
                 }
+            }
 
-                if (paymentLogLookup.TryGetValue((er.ExamScheduleId, srId), out var pl))
-                {
-                    paymentConfirmed = true;
-                    invoiceNumber = pl.InvoiceNumber;
-                    paidAmount = pl.Amount;
-                    selectedSubjectIds = string.IsNullOrWhiteSpace(pl.SelectedSubjectIds)
-                        ? new HashSet<int>()
-                        : pl.SelectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                            .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
-                            .Where(value => value.HasValue)
-                            .Select(value => value!.Value)
-                            .ToHashSet();
-                }
+            PaymentRequestLog? matchedLog = null;
+            if (er.ApplicationVoucherId.HasValue
+                && erIdToSrId.TryGetValue(er.ApplicationVoucherId.Value, out var logSrId)
+                && paymentLogLookup.TryGetValue((er.ExamScheduleId, logSrId), out var voucherLog))
+            {
+                matchedLog = voucherLog;
+            }
+            else if (er.CollegeId > 0)
+            {
+                matchedLog = fallbackPaymentLogs
+                    .FirstOrDefault(fpl => fpl.ExamScheduleId == er.ExamScheduleId
+                                        && fpl.CollegeId == er.CollegeId
+                                        && fpl.PaymentRequestLogStatus == 1);
+            }
+
+            if (matchedLog != null)
+            {
+                paymentConfirmed = true;
+                invoiceNumber = matchedLog.InvoiceNumber;
+                paidAmount = matchedLog.Amount;
+                selectedSubjectIds = string.IsNullOrWhiteSpace(matchedLog.SelectedSubjectIds)
+                    ? new HashSet<int>()
+                    : matchedLog.SelectedSubjectIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(id => int.TryParse(id, out var value) ? value : (int?)null)
+                        .Where(value => value.HasValue)
+                        .Select(value => value!.Value)
+                        .ToHashSet();
             }
 
             var schedule = er.ExamSchedule;

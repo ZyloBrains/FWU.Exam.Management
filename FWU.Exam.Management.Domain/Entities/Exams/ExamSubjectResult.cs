@@ -83,6 +83,9 @@ public class ExamSubjectResult : IAuditable, ITenantScoped
 
     public DateTime? ExamStartedDateTime { get; set; }
 
+    [Display(Name = "Is Supplementary")]
+    public bool IsSupplementary { get; set; }
+
     [Display(Name = "Is Submitted")]
     public bool IsSubmitted { get; set; }
 

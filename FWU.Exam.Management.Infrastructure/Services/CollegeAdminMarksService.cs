@@ -334,7 +334,7 @@ public class CollegeAdminMarksService(
 
                 entity.ObtainedMarksTheoryInternal = student.TheoryInternal;
                 entity.ObtainedMarksPracticalInternal = student.PracticalInternal;
-                gradeCalculationService.AssignGrades(entity, subjectOffering);
+                gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {
