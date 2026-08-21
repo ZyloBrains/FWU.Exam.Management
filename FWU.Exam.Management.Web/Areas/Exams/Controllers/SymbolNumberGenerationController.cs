@@ -13,7 +13,7 @@ public class SymbolNumberGenerationController(
     ISymbolNumberService symbolNumberService,
     AppDbContext context) : Controller
 {
-    public async Task<IActionResult> Index(int? examScheduleId, int? startSequence)
+    public async Task<IActionResult> Index(int? examScheduleId, int? startSequence, int? sequenceWidth)
     {
         ViewData["ExamScheduleId"] = new SelectList(
             await context.ExamSchedules.AsNoTracking().OrderByDescending(es => es.Id).ToListAsync(),
@@ -21,18 +21,18 @@ public class SymbolNumberGenerationController(
 
         if (!examScheduleId.HasValue) return View(null);
 
-        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence);
+        var dto = await symbolNumberService.GetOverviewAsync(examScheduleId.Value, startSequence, sequenceWidth);
         return View(dto);
     }
 
     [HttpPost]
     [RequirePermission("examcenters.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Generate(int examScheduleId, int? startSequence)
+    public async Task<IActionResult> Generate(int examScheduleId, int? startSequence, int? sequenceWidth)
     {
         try
         {
-            var result = await symbolNumberService.GenerateAsync(examScheduleId, startSequence);
+            var result = await symbolNumberService.GenerateAsync(examScheduleId, startSequence, sequenceWidth);
             TempData["SuccessMessage"] = result.Message;
         }
         catch (InvalidOperationException ex)
@@ -40,7 +40,7 @@ public class SymbolNumberGenerationController(
             TempData["ErrorMessage"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(Index), new { examScheduleId, startSequence });
+        return RedirectToAction(nameof(Index), new { examScheduleId, startSequence, sequenceWidth });
     }
 
     [HttpPost]

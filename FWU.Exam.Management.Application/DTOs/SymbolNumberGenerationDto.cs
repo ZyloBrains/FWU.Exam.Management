@@ -4,6 +4,12 @@ public class SymbolNumberGenerationDto
 {
     public int ExamScheduleId { get; set; }
     public string? ExamScheduleName { get; set; }
+    public int ExamTypeId { get; set; }
+    public string? Prefix { get; set; }
+    public int SequenceWidth { get; set; }
+    public long RemainingCapacity { get; set; }
+    public bool NearCapacity { get; set; }
+    public bool OverCapacity { get; set; }
     public int TotalRegistrations { get; set; }
     public int AssignedCount { get; set; }
     public int UnassignedCount { get; set; }

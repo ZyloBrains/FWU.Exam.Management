@@ -10,25 +10,32 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 {
     public async Task<int> GetNextStartSequenceAsync(int examScheduleId)
     {
+        var examTypeId = await GetExamTypeIdAsync(examScheduleId);
+        var prefix = SymbolNumberDefaults.BuildPrefix(examTypeId);
         var symbols = await context.ExamRegistrations
             .AsNoTracking()
-            .Where(er => er.SymbolNumber != null && er.SymbolNumber.StartsWith(SymbolNumberDefaults.Prefix))
+            .Where(er => er.SymbolNumber != null && er.SymbolNumber.StartsWith(prefix))
             .Select(er => er.SymbolNumber!)
             .ToListAsync();
 
         var max = 0;
         foreach (var s in symbols)
         {
-            if (SymbolNumberDefaults.TryParseSequence(s, out var seq) && seq > max)
+            if (SymbolNumberDefaults.TryParseSequence(prefix, s, out var seq) && seq > max)
                 max = seq;
         }
 
         return max + 1;
     }
 
-    public async Task<SymbolNumberGenerationDto> GetOverviewAsync(int examScheduleId, int? startSequence = null)
+    public async Task<SymbolNumberGenerationDto> GetOverviewAsync(int examScheduleId, int? startSequence = null, int? sequenceWidth = null)
     {
+        var examTypeId = await GetExamTypeIdAsync(examScheduleId);
+        var prefix = SymbolNumberDefaults.BuildPrefix(examTypeId);
+        var width = NormalizeWidth(sequenceWidth);
+
         var registrations = await LoadEligibleAsync(examScheduleId);
+        var nextStart = startSequence ?? await GetNextStartSequenceAsync(examScheduleId);
 
         var dto = new SymbolNumberGenerationDto
         {
@@ -38,13 +45,23 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
                 .Where(es => es.Id == examScheduleId)
                 .Select(es => es.ExamScheduleName)
                 .FirstOrDefaultAsync(),
+            ExamTypeId = examTypeId,
+            Prefix = prefix,
+            SequenceWidth = width,
             TotalRegistrations = registrations.Count,
             AssignedCount = registrations.Count(r => !string.IsNullOrEmpty(r.SymbolNumber)),
             UnassignedCount = registrations.Count(r => string.IsNullOrEmpty(r.SymbolNumber)),
-            NextStartSequence = startSequence ?? await GetNextStartSequenceAsync(examScheduleId),
+            NextStartSequence = nextStart,
         };
 
-        SimulateAssignment(registrations, dto.NextStartSequence, out var blocks, out var counter);
+        var maxSeq = SymbolNumberDefaults.MaxSequence(width);
+        var existingMax = await GetMaxExistingSequenceAsync(prefix);
+        var effectiveLast = Math.Max(Math.Min(nextStart - 1, maxSeq), Math.Min(existingMax, maxSeq));
+        dto.RemainingCapacity = Math.Max(0, maxSeq - effectiveLast);
+        dto.OverCapacity = nextStart > maxSeq || dto.UnassignedCount > dto.RemainingCapacity;
+        dto.NearCapacity = !dto.OverCapacity && dto.RemainingCapacity <= maxSeq / 10;
+
+        SimulateAssignment(registrations, prefix, width, nextStart, out var blocks);
 
         foreach (var b in blocks.Values)
         {
@@ -78,8 +95,13 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         return dto;
     }
 
-    public async Task<SymbolNumberAssignmentResult> GenerateAsync(int examScheduleId, int? startSequence = null)
+    public async Task<SymbolNumberAssignmentResult> GenerateAsync(int examScheduleId, int? startSequence = null, int? sequenceWidth = null)
     {
+        var examTypeId = await GetExamTypeIdAsync(examScheduleId);
+        var prefix = SymbolNumberDefaults.BuildPrefix(examTypeId);
+        var width = NormalizeWidth(sequenceWidth);
+        var maxSeq = SymbolNumberDefaults.MaxSequence(width);
+
         var registrations = await LoadEligibleAsync(examScheduleId, asNoTracking: false);
 
         var result = new SymbolNumberAssignmentResult
@@ -90,18 +112,26 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 
         var start = startSequence ?? await GetNextStartSequenceAsync(examScheduleId);
         if (start < 1) start = SymbolNumberDefaults.DefaultStartSequence;
+        if (start > maxSeq)
+            throw new InvalidOperationException(
+                $"Start sequence {start} exceeds the maximum of {prefix}{new string('9', width)} for a {width}-digit sequence. Use a {width + 1}-digit width or a lower start.");
 
         var counter = start;
         foreach (var reg in registrations)
         {
             if (!string.IsNullOrEmpty(reg.SymbolNumber))
             {
-                if (SymbolNumberDefaults.TryParseSequence(reg.SymbolNumber, out var existing) && existing >= counter)
+                if (SymbolNumberDefaults.TryParseSequence(prefix, reg.SymbolNumber, out var existing) && existing >= counter)
                     counter = existing + 1;
                 continue;
             }
 
-            reg.SymbolNumber = SymbolNumberDefaults.Format(counter);
+            if (counter > maxSeq)
+                throw new InvalidOperationException(
+                    $"Sequence exhausted for prefix {prefix}: cannot assign beyond {prefix}{new string('9', width)}. " +
+                    $"Raise the sequence width to {width + 1} digits and regenerate the remaining students.");
+
+            reg.SymbolNumber = SymbolNumberDefaults.Format(prefix, counter, width);
             counter++;
             result.Assigned++;
         }
@@ -133,9 +163,14 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             throw new InvalidOperationException("Symbol number is too long (max 50 characters).");
 
         var reg = await context.ExamRegistrations
-            .FirstOrDefaultAsync(er => er.Id == registrationId);
-        if (reg == null)
-            throw new InvalidOperationException("Registration not found.");
+            .FirstOrDefaultAsync(er => er.Id == registrationId)
+            ?? throw new InvalidOperationException("Registration not found.");
+
+        var examTypeId = await GetExamTypeIdAsync(reg.ExamScheduleId);
+        if (!SymbolNumberDefaults.IsValidStrict(symbolNumber, examTypeId))
+            throw new InvalidOperationException(
+                $"Invalid format '{symbolNumber}'. Expected {{2-digit BS year}}{{exam type {examTypeId}}}{{4-5 digit sequence}}, e.g. " +
+                $"{SymbolNumberDefaults.BuildPrefix(examTypeId)}0585.");
 
         var duplicate = await context.ExamRegistrations
             .AnyAsync(er => er.Id != registrationId && er.SymbolNumber == symbolNumber);
@@ -147,6 +182,38 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
         await context.SaveChangesAsync();
         return old;
     }
+
+    private async Task<int> GetExamTypeIdAsync(int examScheduleId)
+    {
+        return await context.ExamSchedules
+            .AsNoTracking()
+            .Where(es => es.Id == examScheduleId)
+            .Select(es => es.ExamTypeId)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task<int> GetMaxExistingSequenceAsync(string prefix)
+    {
+        var symbols = await context.ExamRegistrations
+            .AsNoTracking()
+            .Where(er => er.SymbolNumber != null && er.SymbolNumber.StartsWith(prefix))
+            .Select(er => er.SymbolNumber!)
+            .ToListAsync();
+
+        var max = 0;
+        foreach (var s in symbols)
+        {
+            if (SymbolNumberDefaults.TryParseSequence(prefix, s, out var seq) && seq > max)
+                max = seq;
+        }
+
+        return max;
+    }
+
+    private static int NormalizeWidth(int? sequenceWidth) =>
+        sequenceWidth is >= SymbolNumberDefaults.DefaultSequenceDigits and <= SymbolNumberDefaults.MaxSequenceDigits
+            ? sequenceWidth.Value
+            : SymbolNumberDefaults.DefaultSequenceDigits;
 
     private async Task<List<Domain.Entities.Exams.ExamRegistration>> LoadEligibleAsync(int examScheduleId, bool asNoTracking = true)
     {
@@ -173,9 +240,10 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 
     private static void SimulateAssignment(
         List<Domain.Entities.Exams.ExamRegistration> registrations,
+        string prefix,
+        int width,
         int startSequence,
-        out Dictionary<(int?, int), BlockAccumulator> blocks,
-        out int finalCounter)
+        out Dictionary<(int?, int), BlockAccumulator> blocks)
     {
         blocks = [];
         var counter = Math.Max(startSequence, 1);
@@ -186,12 +254,12 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
             if (!string.IsNullOrEmpty(reg.SymbolNumber))
             {
                 symbol = reg.SymbolNumber;
-                if (SymbolNumberDefaults.TryParseSequence(symbol, out var existing) && existing >= counter)
+                if (SymbolNumberDefaults.TryParseSequence(prefix, symbol, out var existing) && existing >= counter)
                     counter = existing + 1;
             }
             else
             {
-                symbol = SymbolNumberDefaults.Format(counter);
+                symbol = SymbolNumberDefaults.Format(prefix, counter, width);
                 counter++;
             }
 
@@ -210,8 +278,6 @@ public class SymbolNumberService(AppDbContext context) : ISymbolNumberService
 
             block.Add(symbol, reg.IsSupplementary);
         }
-
-        finalCounter = counter;
     }
 
     private static string? ComposeName(Domain.Entities.Students.StudentAdmission? admission)
