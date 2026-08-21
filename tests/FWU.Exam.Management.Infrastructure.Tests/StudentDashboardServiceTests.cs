@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
@@ -146,7 +147,7 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetSubjectOfferingsForScheduleAsync_ReturnsAllSemesterOfferings()
+    public async Task GetSubjectOfferingsForScheduleAsync_FallsBackToAllOfferings_WhenNoCurriculumVersionMatches()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
         {
@@ -159,6 +160,157 @@ public class StudentDashboardServiceTests
         var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
 
         Assert.Equal(new[] { 102, 210 }, offerings.Select(o => o.Id).OrderBy(id => id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_ReturnsOnlyOfferingsForResolvedCurriculumVersion()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.AcademicYears.Add(TestData.AcademicYear(2, "2082"));
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 1,
+                Name = "Old",
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2,
+                Name = "New",
+                IsActive = true
+            });
+
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 1;
+            var v2Offering = TestData.Offering(210, 2, TestData.ProgramId);
+            v2Offering.CurriculumVersionId = 2;
+            ctx.SubjectOfferings.Add(v2Offering);
+
+            // Batch year 1 resolves to version 1 (latest EffectiveAcademicYearId <= 1).
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 2, TestData.Regular, Past, null));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        Assert.Equal(new[] { 102 }, offerings.Select(o => o.Id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_UsesLatestVersionAtOrBeforeBatchYear()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.AcademicYears.Add(TestData.AcademicYear(2024, "2024"));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2025, "2025"));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2026, "2026"));
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 1,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2024,
+                Name = "2024 Curriculum",
+                IsActive = true
+            });
+            ctx.CurriculumVersions.Add(new CurriculumVersion
+            {
+                Id = 2,
+                TenantId = TestData.TenantId,
+                ProgramId = TestData.ProgramId,
+                EffectiveAcademicYearId = 2026,
+                Name = "2026 Curriculum",
+                IsActive = true
+            });
+
+            ctx.SubjectOfferings.Local.First(o => o.Id == 102).CurriculumVersionId = 1;
+            var v2Offering = TestData.Offering(210, 2, TestData.ProgramId);
+            v2Offering.CurriculumVersionId = 2;
+            ctx.SubjectOfferings.Add(v2Offering);
+
+            // Batch year 2025 sits between the two versions; must use the 2024 one.
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 20,
+                TenantId = TestData.TenantId,
+                SemesterId = 2,
+                AcademicYearId = 2025,
+                ProgramId = TestData.ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-1),
+                EndDate = DateTime.UtcNow.AddYears(-1).AddMonths(6)
+            });
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 20, TestData.Regular, Past, null));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        Assert.Equal(new[] { 102 }, offerings.Select(o => o.Id));
+    }
+
+    [Fact]
+    public async Task GetSubjectOfferingsForScheduleAsync_MatchesOfferingsAcrossYearsBySemesterNumber()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.AcademicYears.Add(TestData.AcademicYear(2014, "2014"));
+            ctx.AcademicYears.Add(TestData.AcademicYear(2022, "2022"));
+
+            // Two global semesters with the same Number (2)
+            var sem2014 = TestData.Semester(50, 2);
+            sem2014.Name = "Semester 2 (2014)";
+            sem2014.Code = "SEM2-2014";
+            ctx.Semesters.Add(sem2014);
+
+            var sem2022 = TestData.Semester(51, 2);
+            sem2022.Name = "Semester 2 (2022)";
+            sem2022.Code = "SEM2-2022";
+            ctx.Semesters.Add(sem2022);
+
+            // Instances bind each semester to a different academic year
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 50,
+                TenantId = TestData.TenantId,
+                SemesterId = 50,
+                AcademicYearId = 2014,
+                ProgramId = TestData.ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-12),
+                EndDate = DateTime.UtcNow.AddYears(-12).AddMonths(6)
+            });
+            ctx.SemesterInstances.Add(new SemesterInstance
+            {
+                Id = 51,
+                TenantId = TestData.TenantId,
+                SemesterId = 51,
+                AcademicYearId = 2022,
+                ProgramId = TestData.ProgramId,
+                StartDate = DateTime.UtcNow.AddYears(-4),
+                EndDate = DateTime.UtcNow.AddYears(-4).AddMonths(6)
+            });
+
+            // Offering linked to 2014's Semester 2 (SemesterId=50)
+            var offering = TestData.Offering(210, 50, TestData.ProgramId);
+            ctx.SubjectOfferings.Add(offering);
+
+            // Schedule for 2022's Semester 2 (SemesterInstanceId=51) — different ID, same Number
+            ctx.ExamSchedules.Add(TestData.Schedule(31, 51, TestData.Regular, Past, null));
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForScheduleAsync(31);
+
+        // Should find offering 210 (Semester.Number=2 in 2014) even though schedule uses SemesterId=51 (Number=2 in 2022)
+        Assert.Contains(offerings, o => o.Id == 210);
     }
 
     [Fact]

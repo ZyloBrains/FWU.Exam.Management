@@ -175,23 +175,41 @@ public class CollegeAdminMarksService(
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
-        return await context.SubjectOfferings
+        var semesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+
+        var query = context.SubjectOfferings
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
-            .Where(so => so.ProgramId == schedule.ProgramId && so.SemesterId == schedule.SemesterInstance!.SemesterId)
-            .OrderBy(so => so.DisplayOrder)
-            .ThenBy(so => so.Id)
-            .Select(so => new SubjectOptionDto
-            {
-                Id = so.Id,
-                Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
-                Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
-                HasTheory = so.HasTheory,
-                HasPractical = so.HasPractical,
-                TheoryFullMarks = so.TheoryFullMarks,
-                InternalTheoryFullMarks = so.InternalTheoryFullMarks
-            })
-            .ToListAsync();
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == semesterNumber);
+
+        Func<IQueryable<FWU.Exam.Management.Domain.Entities.Subjects.SubjectOffering>, IQueryable<SubjectOptionDto>> project = q =>
+            q.OrderBy(so => so.DisplayOrder).ThenBy(so => so.Id)
+             .Select(so => new SubjectOptionDto
+             {
+                 Id = so.Id,
+                 Name = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectName : "Subject #" + so.Id,
+                 Code = so.SubjectCatalog != null ? so.SubjectCatalog.SubjectCode : "",
+                 HasTheory = so.HasTheory,
+                 HasPractical = so.HasPractical,
+                 TheoryFullMarks = so.TheoryFullMarks,
+                 InternalTheoryFullMarks = so.InternalTheoryFullMarks
+             });
+
+        if (curriculumVersionId.HasValue)
+        {
+            var versioned = await project(query.Where(so => so.CurriculumVersionId == curriculumVersionId.Value))
+                .ToListAsync();
+            if (versioned.Count > 0) return versioned;
+        }
+
+        return await project(query.Where(so => so.CurriculumVersionId == null)).ToListAsync();
     }
 
     public async Task<SubjectDetailDto> GetSubjectDetailAsync(int subjectOfferingId, int collegeId)
@@ -230,11 +248,20 @@ public class CollegeAdminMarksService(
             .FirstOrDefaultAsync(es => es.Id == examScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
+        var semesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+
         var subjectOffering = await context.SubjectOfferings
             .AsNoTracking()
             .FirstOrDefaultAsync(so => so.Id == subjectOfferingId
                 && so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterInstance!.SemesterId)
+                && so.Semester != null && so.Semester.Number == semesterNumber
+                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var examRegistrations = await context.ExamRegistrations
@@ -292,10 +319,19 @@ public class CollegeAdminMarksService(
             .FirstOrDefaultAsync(es => es.Id == dto.ExamScheduleId)
             ?? throw new KeyNotFoundException("Exam schedule not found.");
 
+        var semesterNumber = await context.Semesters
+            .Where(s => s.Id == schedule.SemesterInstance!.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var curriculumVersionId = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance!.AcademicYearId);
+
         var subjectOffering = await context.SubjectOfferings
             .FirstOrDefaultAsync(so => so.Id == dto.SubjectOfferingId
                 && so.ProgramId == schedule.ProgramId
-                && so.SemesterId == schedule.SemesterInstance!.SemesterId)
+                && so.Semester != null && so.Semester.Number == semesterNumber
+                && (curriculumVersionId == null || so.CurriculumVersionId == curriculumVersionId.Value || so.CurriculumVersionId == null))
             ?? throw new KeyNotFoundException("Subject offering not found.");
 
         var validRegistrationIds = await context.ExamRegistrations
