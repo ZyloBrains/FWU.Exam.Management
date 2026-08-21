@@ -206,12 +206,32 @@ public class ExamRegistrationsController(
 
         ViewBag.ShowActions = showActions;
         ViewBag.CanAdminApprove = userPerms.Contains("examregistration.approve");
+        ViewBag.CanEditSubjects = userPerms.Contains("examregistration.edit");
         ViewBag.AcademicYearId = academicYearId;
         ViewBag.LevelId = levelId;
         ViewBag.ExamScheduleId = examScheduleId;
         ViewBag.Search = search;
         ViewBag.Page = page;
         return PartialView("_StudentFormReview", form);
+    }
+
+    [HttpGet]
+    [RequirePermission("examregistration.edit")]
+    public async Task<IActionResult> StudentFormEditableSubjects(int id)
+    {
+        var model = await examRegistrationService.GetEditableSubjectsAsync(id);
+        if (model == null) return NotFound();
+
+        return PartialView("_StudentFormSubjectsEdit", model);
+    }
+
+    [HttpPost]
+    [RequirePermission("examregistration.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStudentFormSubjects(int id, List<int> subjectOfferingIds)
+    {
+        var (success, message) = await examRegistrationService.UpdateRegistrationSubjectsAsync(id, subjectOfferingIds);
+        return Json(new { success, message });
     }
 
     [HttpGet]

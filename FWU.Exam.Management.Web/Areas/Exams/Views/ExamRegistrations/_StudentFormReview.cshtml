@@ -3,6 +3,7 @@
 @{
     var showActions = ViewBag.ShowActions as bool? ?? true;
     var canAdminApprove = ViewBag.CanAdminApprove as bool? ?? false;
+    var canEditSubjects = (ViewBag.CanEditSubjects as bool? ?? false) && Model.CanEditSubjects;
     var academicYearId = ViewBag.AcademicYearId as int?;
     var levelId = ViewBag.LevelId as int?;
     var examScheduleId = ViewBag.ExamScheduleId as int?;
@@ -111,9 +112,18 @@
             </div>
 
             <div>
-                <h3 class="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2.5">
-                    <i class="fas fa-book text-blue-600 mr-2"></i>Subject Details
-                </h3>
+                <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2.5">
+                    <h3 class="text-sm font-bold text-gray-800">
+                        <i class="fas fa-book text-blue-600 mr-2"></i>Subject Details
+                    </h3>
+                    @if (showActions && canEditSubjects)
+                    {
+                        <button type="button" class="edit-subjects-btn inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+                                data-id="@Model.ExamRegistrationId" title="Correct the registered subjects for this form">
+                            <i class="fas fa-pen text-[10px]"></i> Edit Subjects
+                        </button>
+                    }
+                </div>
                 <div class="overflow-x-auto rounded-lg border border-gray-200">
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-50">

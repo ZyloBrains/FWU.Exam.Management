@@ -175,6 +175,8 @@
 
     <div id="reviewPanel" class="hidden"></div>
 
+    <div id="editSubjectsModal" class="hidden"></div>
+
     @if (hasCriteria)
     {
     <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
@@ -448,6 +450,74 @@
 
             $(document).on('click', '.close-review-panel', function () {
                 reviewPanel.addClass('hidden').html('');
+            });
+
+            var editSubjectsModal = $('#editSubjectsModal');
+
+            function closeEditSubjectsModal() {
+                editSubjectsModal.addClass('hidden').html('');
+            }
+
+            $(document).on('click', '.edit-subjects-btn', function () {
+                var id = $(this).data('id');
+                editSubjectsModal.removeClass('hidden').html('<div class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl border border-amber-200 shadow-sm px-10 py-8"><i class="fas fa-spinner fa-spin text-3xl text-amber-400"></i></div></div>');
+                $.get(tenantUrl('/Exams/ExamRegistrations/StudentFormEditableSubjects'), { id: id }, function (html) {
+                    editSubjectsModal.html(html);
+                }).fail(function () {
+                    editSubjectsModal.html('<div class="fixed inset-0 z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl border border-red-200 shadow-sm px-8 py-6 text-red-500 text-sm">Unable to load the subjects for this form.</div></div>');
+                });
+            });
+
+            $(document).on('click', '[data-close-subjects-modal]', function () {
+                closeEditSubjectsModal();
+            });
+
+            $(document).on('click', '.subject-row', function (e) {
+                if ($(e.target).is('input')) return;
+                var $cb = $(this).find('.subject-checkbox');
+                $cb.prop('checked', !$cb.prop('checked'));
+            });
+
+            function showToast(message, isSuccess) {
+                var $toast = $('<div class="fixed top-5 right-5 z-[60] max-w-sm px-4 py-3 rounded-lg shadow-lg text-sm font-medium flex items-center gap-2"></div>')
+                    .addClass(isSuccess ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white')
+                    .html('<i class="fas ' + (isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i><span></span>');
+                $toast.find('span').text(message);
+                $('body').append($toast);
+                setTimeout(function () { $toast.fadeOut(300, function () { $toast.remove(); }); }, 4000);
+            }
+
+            $(document).on('submit', '.edit-subjects-form', function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                if (!confirm('Update the registered subjects for this exam form? Removed subjects will be deactivated and new subjects will be registered.')) {
+                    return;
+                }
+
+                var $error = $form.find('.edit-subjects-error').addClass('hidden').text('');
+                var $saveBtn = $form.find('button[type="submit"]').prop('disabled', true);
+
+                $.post(tenantUrl('/Exams/ExamRegistrations/UpdateStudentFormSubjects'), $form.serialize())
+                    .done(function (response) {
+                        if (response.success) {
+                            closeEditSubjectsModal();
+                            showToast(response.message || 'Subjects updated successfully.', true);
+                            loadReview($form.find('input[name="id"]').val(), true);
+                        } else {
+                            $error.text(response.message || 'Unable to update subjects.').removeClass('hidden');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        var msg = 'Unable to update subjects.';
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res && res.message) msg = res.message;
+                        } catch (_) { }
+                        $error.text(msg).removeClass('hidden');
+                    })
+                    .always(function () {
+                        $saveBtn.prop('disabled', false);
+                    });
             });
         });
     </script>
