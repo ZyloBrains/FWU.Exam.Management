@@ -162,6 +162,15 @@ public class ExamRegistrationsController(
         return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
     }
 
+    [RequirePermission("examregistration.verify")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reject(int id, string? reason)
+    {
+        var (success, message) = await examRegistrationService.RejectExamRegistrationAsync(id, reason);
+        return Json(new { success, message });
+    }
+
     [RequirePermission("examregistration.view")]
     public async Task<IActionResult> StudentForms(int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1, int pageSize = 25)
     {
@@ -206,12 +215,33 @@ public class ExamRegistrationsController(
 
         ViewBag.ShowActions = showActions;
         ViewBag.CanAdminApprove = userPerms.Contains("examregistration.approve");
+        ViewBag.CanEditSubjects = userPerms.Contains("examregistration.edit");
+        ViewBag.CanReject = userPerms.Contains("examregistration.verify");
         ViewBag.AcademicYearId = academicYearId;
         ViewBag.LevelId = levelId;
         ViewBag.ExamScheduleId = examScheduleId;
         ViewBag.Search = search;
         ViewBag.Page = page;
         return PartialView("_StudentFormReview", form);
+    }
+
+    [HttpGet]
+    [RequirePermission("examregistration.edit")]
+    public async Task<IActionResult> StudentFormEditableSubjects(int id)
+    {
+        var model = await examRegistrationService.GetEditableSubjectsAsync(id);
+        if (model == null) return NotFound();
+
+        return PartialView("_StudentFormSubjectsEdit", model);
+    }
+
+    [HttpPost]
+    [RequirePermission("examregistration.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateStudentFormSubjects(int id, List<int> subjectOfferingIds)
+    {
+        var (success, message) = await examRegistrationService.UpdateRegistrationSubjectsAsync(id, subjectOfferingIds);
+        return Json(new { success, message });
     }
 
     [HttpGet]
