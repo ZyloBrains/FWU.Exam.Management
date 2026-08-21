@@ -1,11 +1,12 @@
-using FWU.Exam.Management.Domain.Entities.Exams;
+using FWU.Exam.Management.Application.DTOs;
 
 namespace FWU.Exam.Management.Application.Interfaces;
 
 public interface IExamCenterDistributionService
 {
-    Task AssignSymbolNumbersAsync(int examScheduleId);
     Task<int> DistributeStudentsAsync(int examScheduleId);
+    Task MoveStudentToCenterAsync(int registrationId, int examCenterId);
+    Task<List<DistributedStudentInfo>> GetDistributedStudentsAsync(int examScheduleId);
     Task ResetDistributionAsync(int examScheduleId);
     Task<int> GetRegisteredCountAsync(int examScheduleId);
     Task<int> GetAssignedCountAsync(int examScheduleId);

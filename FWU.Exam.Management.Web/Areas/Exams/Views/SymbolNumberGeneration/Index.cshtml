@@ -1,0 +1,211 @@
+@model SymbolNumberGenerationDto
+
+@{
+    ViewData["Title"] = "Symbol Number Generation";
+    var hasData = Model != null && Model.TotalRegistrations > 0;
+    var allAssigned = Model != null && Model.UnassignedCount == 0;
+}
+
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-hashtag text-indigo-600"></i>
+        </div>
+        <div>
+            @await Html.PartialAsync("_AlertMessages")
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Symbol Number Generation</h1>
+            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Generate sequential symbol numbers per program and college block.</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Select Exam Schedule</label>
+                <select name="examScheduleId" class="select2 w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">-- Select Schedule --</option>
+                    @if (ViewData["ExamScheduleId"] is SelectList scheduleList)
+                    {
+                        foreach (var item in scheduleList)
+                        {
+                            if (item.Selected)
+                            {
+                                <option value="@item.Value" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <i class="fas fa-search mr-1"></i> Load
+            </button>
+        </form>
+    </div>
+
+    @if (Model != null && Model.TotalRegistrations == 0)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <i class="fas fa-info-circle text-3xl text-gray-300 mb-3"></i>
+            <p class="text-sm text-gray-500">No verified registrations found for this schedule.</p>
+        </div>
+    }
+
+    @if (hasData)
+    {
+        var assignedPct = Model!.TotalRegistrations > 0 ? (int)Math.Round(Model.AssignedCount * 100.0 / Model.TotalRegistrations) : 0;
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xl sm:text-2xl font-bold text-gray-800">@Model.TotalRegistrations</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Students</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xl sm:text-2xl font-bold @(allAssigned ? "text-green-600" : "text-amber-600")">@Model.AssignedCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Assigned (@assignedPct%)</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xl sm:text-2xl font-bold text-purple-600">@Model.Blocks.Count</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">College Blocks</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Numbering Plan</h3>
+            <form method="get" asp-action="Index" asp-area="Exams" class="flex flex-col sm:flex-row gap-3 items-end mb-4">
+                <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                <div>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">Start Sequence</label>
+                    <input type="number" name="startSequence" min="1" value="@Model.NextStartSequence"
+                           class="w-40 px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <p class="text-xs text-gray-400 mt-1">Auto-detected from existing data &mdash; edit and click Preview.</p>
+                </div>
+                <button type="submit" class="px-4 py-2.5 bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors border border-gray-200">
+                    <i class="fas fa-eye mr-1"></i> Preview
+                </button>
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-200">
+                            <th class="py-2 pr-4">Program</th>
+                            <th class="py-2 pr-4">College</th>
+                            <th class="py-2 pr-4 text-center">Regular</th>
+                            <th class="py-2 pr-4 text-center">Supplementary</th>
+                            <th class="py-2 pr-4">Symbol Range</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var block in Model.Blocks)
+                        {
+                            <tr class="border-b border-gray-100">
+                                <td class="py-2 pr-4 font-medium text-gray-800">@block.ProgramName</td>
+                                <td class="py-2 pr-4 text-gray-700">@block.CollegeName</td>
+                                <td class="py-2 pr-4 text-center text-gray-700">@block.RegularCount</td>
+                                <td class="py-2 pr-4 text-center text-gray-700">@block.SupplementaryCount</td>
+                                <td class="py-2 pr-4 font-mono text-indigo-700">@block.FromSymbol &ndash; @block.ToSymbol</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (!allAssigned)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <i class="fas fa-magic text-4xl text-indigo-300 mb-3"></i>
+                <h3 class="text-base font-semibold text-gray-800 mb-1">Ready to Generate</h3>
+                <p class="text-xs text-gray-500 mb-4">
+                    Assign symbol numbers starting from <span class="font-mono font-semibold text-indigo-700">@SymbolNumberDefaults.Prefix@Model.NextStartSequence.ToString("0000")</span>
+                    following the plan above.
+                </p>
+                <form method="post" asp-action="Generate" asp-area="Exams">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                    <input type="hidden" name="startSequence" value="@Model.NextStartSequence" />
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                            onclick="return confirm('Generate symbol numbers for @Model.UnassignedCount student(s)?');">
+                        <i class="fas fa-cogs"></i> Auto Generate
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-green-200 p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-semibold text-green-800">All Symbol Numbers Assigned</div>
+                        <div class="text-xs text-green-600">Every verified student in this schedule has a symbol number. You can still correct individual numbers below.</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-4">Students (@Model.Students.Count)</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-200">
+                            <th class="py-2 pr-4">Symbol Number</th>
+                            <th class="py-2 pr-4">Student</th>
+                            <th class="py-2 pr-4">Reg. Number</th>
+                            <th class="py-2 pr-4">Program</th>
+                            <th class="py-2 pr-4">College</th>
+                            <th class="py-2 pr-4">Type</th>
+                            <th class="py-2 pr-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model.Students)
+                        {
+                            <tr class="border-b border-gray-100">
+                                <td class="py-2 pr-4">
+                                    <form method="post" asp-action="UpdateSymbolNumber" asp-area="Exams" class="flex items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="registrationId" value="@s.RegistrationId" />
+                                        <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                                        <input type="text" name="symbolNumber" value="@s.SymbolNumber" maxlength="50"
+                                               class="w-28 px-2 py-1 text-xs font-mono border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        <button type="submit" class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md border border-gray-200" title="Save">
+                                            <i class="fas fa-save"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="py-2 pr-4 font-medium text-gray-800">@s.StudentName</td>
+                                <td class="py-2 pr-4 text-gray-600">@s.RegistrationNumber</td>
+                                <td class="py-2 pr-4 text-gray-700">@s.ProgramName</td>
+                                <td class="py-2 pr-4 text-gray-700">@s.CollegeName</td>
+                                <td class="py-2 pr-4">
+                                    @if (s.IsSupplementary)
+                                    {
+                                        <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Supplementary</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Regular</span>
+                                    }
+                                </td>
+                                <td class="py-2 pr-4"></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(function () { $('.select2').select2({ minimumResultsForSearch: -1, width: 'resolve' }); });
+    </script>
+}

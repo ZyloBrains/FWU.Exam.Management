@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Exam Center Distribution";
     var isDone = Model?.AssignedCount > 0 && Model?.UnassignedCount == 0;
-    var hasData = Model != null && Model.TotalRegistrations > 0 && Model.Centers.Count > 0;
+    var hasData = Model != null && Model.TotalRegistrations > 0;
 }
 
 <div class="space-y-6">
@@ -14,7 +14,7 @@
         <div>
             @await Html.PartialAsync("_AlertMessages")
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Exam Center Distribution</h1>
-            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Assign symbol numbers and distribute students to exam centers.</p>
+            <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Distribute students to their college exam centers.</p>
         </div>
     </div>
 
@@ -54,111 +54,184 @@
         </div>
     }
 
-    @if (Model != null && Model.TotalRegistrations > 0 && Model.Centers.Count == 0)
+    @if (hasData && !Model!.SymbolNumbersAssigned)
     {
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-            <i class="fas fa-map-marker-alt text-3xl text-gray-300 mb-3"></i>
-            <p class="text-sm text-gray-500">No exam centers found. Create exam centers first.</p>
-            <a asp-action="Create" asp-controller="ExamCenters" asp-area="Exams" class="inline-flex items-center gap-1 mt-2 text-sm text-blue-600 hover:text-blue-700">
-                <i class="fas fa-plus"></i> Create Exam Center
+        <div class="bg-white rounded-xl shadow-sm border border-amber-200 p-6 text-center">
+            <i class="fas fa-hashtag text-3xl text-amber-300 mb-3"></i>
+            <p class="text-sm text-gray-600">Symbol numbers have not been generated yet for this schedule.</p>
+            <a asp-action="Index" asp-controller="SymbolNumberGeneration" asp-area="Exams" class="inline-flex items-center gap-1 mt-2 text-sm text-indigo-600 hover:text-indigo-700">
+                <i class="fas fa-hashtag"></i> Generate Symbol Numbers First
             </a>
         </div>
     }
 
     @if (hasData)
     {
+        var assignedPct = Model!.TotalRegistrations > 0 ? (int)Math.Round(Model.AssignedCount * 100.0 / Model.TotalRegistrations) : 0;
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-xl sm:text-2xl font-bold text-gray-800">@Model!.TotalRegistrations</div>
+                <div class="text-xl sm:text-2xl font-bold text-gray-800">@Model.TotalRegistrations</div>
                 <div class="text-xs sm:text-sm text-gray-500 mt-1">Students</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-xl sm:text-2xl font-bold @(isDone ? "text-green-600" : "text-amber-600")">@Model!.AssignedCount</div>
-                <div class="text-xs sm:text-sm text-gray-500 mt-1">Assigned</div>
+                <div class="text-xl sm:text-2xl font-bold @(isDone ? "text-green-600" : "text-amber-600")">@Model.AssignedCount</div>
+                <div class="text-xs sm:text-sm text-gray-500 mt-1">Assigned (@assignedPct%)</div>
             </div>
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <div class="text-xl sm:text-2xl font-bold text-purple-600">@Model!.Centers.Count</div>
+                <div class="text-xl sm:text-2xl font-bold text-purple-600">@Model.Centers.Count</div>
                 <div class="text-xs sm:text-sm text-gray-500 mt-1">Exam Centers</div>
             </div>
         </div>
+
+        @if (isDone)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-green-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-green-600"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-green-800">Distribution Complete</div>
+                            <div class="text-xs text-green-600">@Model.AssignedCount students distributed across @Model.Centers.Count centers.</div>
+                        </div>
+                    </div>
+                    <form method="post" asp-action="ResetDistribution" asp-area="Exams" onsubmit="return confirm('Reset all assignments?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                        <button type="submit" class="px-3 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-undo mr-1"></i> Reset
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+        else if (Model.SymbolNumbersAssigned)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <i class="fas fa-share-alt text-4xl text-blue-300 mb-3"></i>
+                <h3 class="text-base font-semibold text-gray-800 mb-1">Ready to Distribute</h3>
+                <p class="text-xs text-gray-500 mb-4">
+                    Each student will be assigned to their own college's exam center.
+                    Centers are created automatically for colleges that don't have one yet.
+                </p>
+                <form method="post" asp-action="Distribute" asp-area="Exams">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                            onclick="return confirm('Distribute @Model.TotalRegistrations student(s) to their college centers?');">
+                        <i class="fas fa-people-arrows"></i> Distribute Students
+                    </button>
+                </form>
+            </div>
+        }
+
+        @if (Model.Centers.Count > 0)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Centers</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    @foreach (var center in Model.Centers)
+                    {
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-purple-600 text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-semibold text-gray-800 truncate">@center.CenterCode</div>
+                                @if (!string.IsNullOrEmpty(center.CollegeName))
+                                {
+                                    <div class="text-xs text-gray-500 truncate">@center.CollegeName</div>
+                                }
+                                else if (center.VenueColleges.Count > 0)
+                                {
+                                    <div class="text-xs text-gray-500 truncate">@string.Join(", ", center.VenueColleges)</div>
+                                }
+                            </div>
+                            <span class="flex-shrink-0 text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
+                                @center.StudentCount
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.Students.Count > 0)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-sm font-semibold text-gray-700 mb-4">Students (@Model.Students.Count)</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-200">
+                                <th class="py-2 pr-4">Symbol Number</th>
+                                <th class="py-2 pr-4">College</th>
+                                <th class="py-2 pr-4">Type</th>
+                                <th class="py-2 pr-4">Current Center</th>
+                                <th class="py-2 pr-4">Move To</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in Model.Students)
+                            {
+                                <tr class="border-b border-gray-100">
+                                    <td class="py-2 pr-4 font-mono text-indigo-700">@s.SymbolNumber</td>
+                                    <td class="py-2 pr-4 text-gray-700">@s.CollegeName</td>
+                                    <td class="py-2 pr-4">
+                                        @if (s.IsSupplementary)
+                                        {
+                                            <span class="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Supp.</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Regular</span>
+                                        }
+                                    </td>
+                                    <td class="py-2 pr-4">
+                                        @if (!string.IsNullOrEmpty(s.ExamCenterCode))
+                                        {
+                                            <span class="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">@s.ExamCenterCode</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">Unassigned</span>
+                                        }
+                                    </td>
+                                    <td class="py-2 pr-4">
+                                        <form method="post" asp-action="MoveStudent" asp-area="Exams" class="flex items-center gap-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="registrationId" value="@s.RegistrationId" />
+                                            <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+                                            <select name="examCenterId" class="text-xs border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                                <option value="">-- Center --</option>
+                                                @foreach (var c in Model.Centers)
+                                                {
+                                                    if (c.ExamCenterId == s.ExamCenterId)
+                                                    {
+                                                        <option value="@c.ExamCenterId" selected>@c.CenterCode</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@c.ExamCenterId">@c.CenterCode</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <button type="submit" class="px-2 py-1 text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-md border border-purple-200" title="Move"
+                                                    onclick="return confirm('Move this student to the selected center?');">
+                                                <i class="fas fa-arrows-alt-h"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
     }
 </div>
-
-@if (hasData && isDone)
-{
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-check text-green-600"></i>
-                </div>
-                <div>
-                    <div class="text-sm font-semibold text-green-800">Distribution Complete</div>
-                    <div class="text-xs text-green-600">@Model!.AssignedCount students distributed across @Model!.Centers.Count centers.</div>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <form method="post" asp-action="AssignAndDistribute" asp-area="Exams" onsubmit="return confirm('Re-distribute students?');">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="examScheduleId" value="@Model!.ExamScheduleId" />
-                    <button type="submit" class="px-3 py-2 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors">
-                        <i class="fas fa-sync-alt mr-1"></i> Re-distribute
-                    </button>
-                </form>
-                <form method="post" asp-action="ResetDistribution" asp-area="Exams" onsubmit="return confirm('Reset all assignments?');">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="examScheduleId" value="@Model!.ExamScheduleId" />
-                    <button type="submit" class="px-3 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition-colors">
-                        <i class="fas fa-undo mr-1"></i> Reset
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-}
-
-@if (hasData && !isDone)
-{
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-        <i class="fas fa-share-alt text-4xl text-blue-300 mb-3"></i>
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Ready to Distribute</h3>
-        <p class="text-xs text-gray-500 mb-4">This will assign symbol numbers and distribute @Model!.TotalRegistrations students evenly across @Model!.Centers.Count centers.</p>
-        <form method="post" asp-action="AssignAndDistribute" asp-area="Exams">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="examScheduleId" value="@Model!.ExamScheduleId" />
-            <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                <i class="fas fa-magic"></i> Assign &amp; Distribute
-            </button>
-        </form>
-    </div>
-}
-
-@if (hasData && isDone)
-{
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 class="text-sm font-semibold text-gray-700 mb-4">Centers</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            @foreach (var center in Model!.Centers)
-            {
-                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-map-marker-alt text-purple-600 text-xs"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-xs font-semibold text-gray-800 truncate">@center.CenterCode</div>
-                        @if (center.VenueColleges.Count > 0)
-                        {
-                            <div class="text-xs text-gray-500 truncate">@string.Join(", ", center.VenueColleges)</div>
-                        }
-                    </div>
-                    <span class="flex-shrink-0 text-xs font-medium text-green-700 bg-green-100 px-2 py-1 rounded-full">
-                        @center.StudentCount
-                    </span>
-                </div>
-            }
-        </div>
-    </div>
-}
 
 @section Scripts {
     <script>
