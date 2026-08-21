@@ -405,12 +405,16 @@ public class SubjectOfferingsController : Controller
     }
 
     [RequirePermission("subjectofferings.edit")]
-    public async Task<IActionResult> Edit(int? id)
+    public async Task<IActionResult> Edit(int? id, int? programId, int? semesterId, int? curriculumVersionId)
     {
         if (id == null) return NotFound();
 
         var subjectOffering = await _subjectOfferingService.GetSubjectOfferingByIdAsync(id.Value);
         if (subjectOffering == null) return NotFound();
+
+        ViewBag.ReturnProgramId = programId;
+        ViewBag.ReturnSemesterId = semesterId;
+        ViewBag.ReturnCurriculumVersionId = curriculumVersionId;
 
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
@@ -422,7 +426,8 @@ public class SubjectOfferingsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsActive,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,SubjectCatalogId,ProgramId,SemesterId,CurriculumVersionId,IsActive,IsCompulsory,DisplayOrder,HasTheory,HasPractical,HasInternal,TheoryFullMarks,TheoryPassMarks,PracticalFullMarks,PracticalPassMarks,InternalTheoryFullMarks,InternalTheoryPassMarks")] SubjectOffering subjectOffering,
+        int? returnProgramId, int? returnSemesterId, int? returnCurriculumVersionId)
     {
         if (id != subjectOffering.Id) return NotFound();
 
@@ -484,8 +489,11 @@ public class SubjectOfferingsController : Controller
                 throw;
             }
             TempData["SuccessMessage"] = "Subject offering updated successfully!";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { programId = returnProgramId, semesterId = returnSemesterId, curriculumVersionId = returnCurriculumVersionId });
         }
+        ViewBag.ReturnProgramId = returnProgramId;
+        ViewBag.ReturnSemesterId = returnSemesterId;
+        ViewBag.ReturnCurriculumVersionId = returnCurriculumVersionId;
         var (subjectCatalogs, programs, semesters) = await _subjectOfferingService.GetSelectListsAsync(subjectOffering.SubjectCatalogId, subjectOffering.ProgramId, subjectOffering.SemesterId);
         ViewData["SubjectCatalogId"] = new SelectList(subjectCatalogs, "Id", "SubjectName", subjectOffering.SubjectCatalogId);
         ViewData["ProgramId"] = new SelectList(programs, "Id", "ProgramName", subjectOffering.ProgramId);
