@@ -13,6 +13,7 @@ public class ExamCenterDistributionDto
     public bool RollNumbersAssigned { get; set; }
     public int RollNumberCount { get; set; }
     public List<CenterDistributionInfo> Centers { get; set; } = [];
+    public List<DistributedStudentInfo> Students { get; set; } = [];
 }
 
 public class CenterDistributionInfo

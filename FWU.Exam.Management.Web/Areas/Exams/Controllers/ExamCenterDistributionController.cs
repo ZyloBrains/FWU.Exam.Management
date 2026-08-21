@@ -54,6 +54,7 @@ public class ExamCenterDistributionController(
                 {
                     ExamCenterId = center.Id,
                     CenterCode = center.Code,
+                    CollegeName = center.College?.Name,
                     VenueColleges = center.ExamCenterVenues?
                         .Select(ecv => ecv.College?.Name ?? "")
                         .Where(n => !string.IsNullOrEmpty(n))
@@ -61,6 +62,8 @@ public class ExamCenterDistributionController(
                     StudentCount = distributionCounts.GetValueOrDefault(center.Id, 0),
                 });
             }
+
+            dto.Students = await distributionService.GetDistributedStudentsAsync(examScheduleId.Value);
 
             return View(dto);
         }
@@ -71,11 +74,36 @@ public class ExamCenterDistributionController(
     [HttpPost]
     [RequirePermission("examcenters.edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AssignAndDistribute(int examScheduleId)
+    public async Task<IActionResult> Distribute(int examScheduleId)
     {
-        await distributionService.AssignSymbolNumbersAsync(examScheduleId);
-        var count = await distributionService.DistributeStudentsAsync(examScheduleId);
-        TempData["SuccessMessage"] = $"Symbol numbers assigned and {count} students distributed to exam centers!";
+        try
+        {
+            var count = await distributionService.DistributeStudentsAsync(examScheduleId);
+            TempData["SuccessMessage"] = $"{count} student(s) distributed to their college exam centers.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index), new { examScheduleId });
+    }
+
+    [HttpPost]
+    [RequirePermission("examcenters.edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MoveStudent(int registrationId, int examCenterId, int examScheduleId)
+    {
+        try
+        {
+            await distributionService.MoveStudentToCenterAsync(registrationId, examCenterId);
+            TempData["SuccessMessage"] = "Student moved to the selected exam center.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
         return RedirectToAction(nameof(Index), new { examScheduleId });
     }
 
