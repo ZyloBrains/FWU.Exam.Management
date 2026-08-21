@@ -61,7 +61,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         return ResolvePercentage(percentage, gradingScheme);
     }
 
-    public void AssignGrades(ExamSubjectResult result, SubjectOffering offering)
+    public void AssignGrades(ExamSubjectResult result, SubjectOffering offering, bool isSupplementary = false)
     {
         result.GradeLetterTheory = null;
         result.GradeLetterPractical = null;
@@ -96,7 +96,16 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
 
             var overall = CalculateGrade(totalMarks, offering);
             result.GradeLetter = overall.GradeLetter;
-            result.Remarks = overall.Remark;
+
+            if (isSupplementary)
+            {
+                var passing = IsStudentPassing(result.ObtainedMarksTheory, result.ObtainedMarksPractical, offering, true);
+                result.Remarks = passing ? "Pass" : "Fail";
+            }
+            else
+            {
+                result.Remarks = overall.Remark;
+            }
         }
     }
 
@@ -183,14 +192,17 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         return value;
     }
 
-    public bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering)
+    public bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering, bool isSupplementary = false)
     {
         if (offering.HasTheory && theoryMarks.HasValue && theoryMarks.Value < offering.TheoryPassMarks)
             return false;
 
-        if (offering.HasPractical && practicalMarks.HasValue && offering.PracticalPassMarks.HasValue
-            && practicalMarks.Value < offering.PracticalPassMarks.Value)
-            return false;
+        if (!isSupplementary)
+        {
+            if (offering.HasPractical && practicalMarks.HasValue && offering.PracticalPassMarks.HasValue
+                && practicalMarks.Value < offering.PracticalPassMarks.Value)
+                return false;
+        }
 
         return true;
     }
