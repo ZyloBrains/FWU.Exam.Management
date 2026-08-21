@@ -162,6 +162,15 @@ public class ExamRegistrationsController(
         return RedirectToAction(nameof(StudentForms), new { academicYearId, levelId, examScheduleId, search, page });
     }
 
+    [RequirePermission("examregistration.verify")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Reject(int id, string? reason)
+    {
+        var (success, message) = await examRegistrationService.RejectExamRegistrationAsync(id, reason);
+        return Json(new { success, message });
+    }
+
     [RequirePermission("examregistration.view")]
     public async Task<IActionResult> StudentForms(int? academicYearId, int? levelId, int? examScheduleId, string? search, int page = 1, int pageSize = 25)
     {
@@ -207,6 +216,7 @@ public class ExamRegistrationsController(
         ViewBag.ShowActions = showActions;
         ViewBag.CanAdminApprove = userPerms.Contains("examregistration.approve");
         ViewBag.CanEditSubjects = userPerms.Contains("examregistration.edit");
+        ViewBag.CanReject = userPerms.Contains("examregistration.verify");
         ViewBag.AcademicYearId = academicYearId;
         ViewBag.LevelId = levelId;
         ViewBag.ExamScheduleId = examScheduleId;

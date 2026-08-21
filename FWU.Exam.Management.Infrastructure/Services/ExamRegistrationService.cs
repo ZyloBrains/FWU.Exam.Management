@@ -148,6 +148,38 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
         }
     }
 
+    public async Task<(bool Success, string Message)> RejectExamRegistrationAsync(int id, string? reason)
+    {
+        reason = reason?.Trim();
+        if (string.IsNullOrEmpty(reason))
+            return (false, "A rejection reason is required.");
+
+        var examRegistration = await context.ExamRegistrations
+            .Where(er => er.Id == id && er.IsAppliedByStudent == true && er.IsActive)
+            .ApplyScope(userContext)
+            .FirstOrDefaultAsync();
+
+        if (examRegistration == null)
+            return (false, "Exam form not found.");
+
+        if (examRegistration.Status != RegistrationStatus.Pending && examRegistration.Status != RegistrationStatus.CollegeVerified)
+            return (false, "Only pending or college-verified forms can be rejected.");
+
+        var hasAdmitCard = await context.AdmitCards!
+            .AsNoTracking()
+            .AnyAsync(ac => ac.ExamRegistrationId == id && ac.IsActive);
+        if (hasAdmitCard)
+            return (false, "This form cannot be rejected because an admit card has already been generated.");
+
+        var username = await ResolveUsernameAsync() ?? "unknown";
+        reason = reason.Length > 150 ? reason[..150] : reason;
+        examRegistration.Remarks = $"[Rejected by {username} on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC] {reason}";
+        examRegistration.Status = RegistrationStatus.Rejected;
+
+        await context.SaveChangesAsync();
+        return (true, "Exam form rejected.");
+    }
+
     private async Task<string?> ResolveUsernameAsync()
     {
         if (string.IsNullOrEmpty(userContext.UserId)) return null;

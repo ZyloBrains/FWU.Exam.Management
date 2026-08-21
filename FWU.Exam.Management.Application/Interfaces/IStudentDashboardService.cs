@@ -15,6 +15,9 @@ public interface IStudentDashboardService
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
     Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId);
     Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId);
+    Task<bool> IsRejectedOnlyForScheduleAsync(int examScheduleId, string userId);
+    Task<string?> GetLatestRejectionReasonAsync(int examScheduleId, string userId);
+    Task<(bool Success, string Message)> ReapplyExamRegistrationAsync(int examScheduleId, string userId, int studentRegistrationId, List<int> subjectOfferingIds);
     Task<bool> HasExistingExamRegistrationAsync(int examScheduleId, string userId);
     Task<List<PaymentType>> GetActivePaymentTypesAsync();
     Task<List<ResultRecord>> GetResultRecordsAsync(string registrationNumber);

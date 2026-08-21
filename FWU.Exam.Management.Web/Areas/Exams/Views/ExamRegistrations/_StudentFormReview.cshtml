@@ -4,6 +4,7 @@
     var showActions = ViewBag.ShowActions as bool? ?? true;
     var canAdminApprove = ViewBag.CanAdminApprove as bool? ?? false;
     var canEditSubjects = (ViewBag.CanEditSubjects as bool? ?? false) && Model.CanEditSubjects;
+    var canReject = ViewBag.CanReject as bool? ?? false;
     var academicYearId = ViewBag.AcademicYearId as int?;
     var levelId = ViewBag.LevelId as int?;
     var examScheduleId = ViewBag.ExamScheduleId as int?;
@@ -54,6 +55,13 @@
                         <i class="fas fa-check-double text-xs"></i> Final Approve
                     </button>
                 </form>
+            }
+            @if (showActions && canReject && (isPending || isCollegeVerified))
+            {
+                <button type="button" class="reject-btn w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg shadow transition-colors"
+                        data-id="@Model.ExamRegistrationId" title="Reject this exam form">
+                    <i class="fas fa-ban text-xs"></i> Reject
+                </button>
             }
             <button type="button" class="close-review-panel w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors" title="Close">
                 <i class="fas fa-times"></i>
@@ -218,3 +226,46 @@
         </div>
     </div>
 </div>
+
+@if (showActions && canReject && (isPending || isCollegeVerified))
+{
+    <div id="rejectFormModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60" data-close-reject-modal></div>
+        <div class="relative bg-white rounded-xl shadow-2xl border border-gray-200 w-full max-w-md">
+            <div class="flex items-center justify-between gap-3 bg-red-600 border-b-4 border-red-400 px-5 py-4 rounded-t-xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-ban text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-white font-bold text-base">Reject Exam Form</h2>
+                        <p class="text-red-100 text-xs">@(Model.StudentName ?? "N/A") &middot; @(Model.RegistrationNumber ?? "-")</p>
+                    </div>
+                </div>
+                <button type="button" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white transition-colors" data-close-reject-modal title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form class="reject-form" asp-action="Reject" asp-area="Exams" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.ExamRegistrationId" />
+                <div class="px-5 py-4">
+                    <div class="reject-error hidden mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600"></div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Rejection reason <span class="text-red-500">*</span></label>
+                    <textarea name="reason" rows="3" required
+                              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none"
+                              placeholder="e.g. Invalid documents, wrong student details, payment issue..."></textarea>
+                    <p class="text-xs text-gray-500 mt-2">The student will be able to apply again for this schedule after rejection.</p>
+                </div>
+                <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                    <button type="button" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors" data-close-reject-modal>
+                        Cancel
+                    </button>
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg shadow transition-colors">
+                        <i class="fas fa-ban text-xs"></i> Reject Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

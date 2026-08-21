@@ -1,0 +1,158 @@
+@model FWU.Exam.Management.Web.ViewModels.ReapplyExamViewModel
+
+@{
+    ViewData["Title"] = "Re-apply Exam Form";
+}
+
+<div class="min-h-screen pb-24 sm:pb-6">
+    @await Html.PartialAsync("_AlertMessages")
+
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-red-700 to-red-800 mb-6 sm:mb-8">
+        <div class="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,white,transparent)]"></div>
+        <div class="absolute top-0 right-0 w-72 h-72 bg-red-400/10 rounded-full blur-3xl"></div>
+        <div class="relative px-5 py-6 sm:px-10 sm:py-10">
+            <div class="flex items-start gap-4">
+                <div class="h-14 w-14 sm:h-16 sm:w-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/20 shrink-0">
+                    <svg class="h-7 w-7 sm:h-8 sm:w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Re-apply Exam Form</h1>
+                    <p class="mt-1 text-red-200/80 text-sm sm:text-base truncate">@Model.ExamScheduleName</p>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @if (!string.IsNullOrWhiteSpace(Model.SemesterName))
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-sm rounded-lg text-xs font-medium text-white/90 border border-white/10">
+                                <i class="fas fa-layer-group text-red-200 text-[10px]"></i>
+                                @Model.SemesterName
+                            </span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.ExamTypeName))
+                        {
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-sm rounded-lg text-xs font-medium text-white/90 border border-white/10">
+                                <i class="fas fa-clipboard-list text-red-200 text-[10px]"></i>
+                                @Model.ExamTypeName
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.EndDateBs))
+            {
+                <div class="mt-4 ml-[4.5rem]">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/20 backdrop-blur-sm rounded-lg text-xs font-semibold text-white border border-red-400/30">
+                        <i class="fas fa-clock text-red-200"></i>
+                        Submission Deadline: @Model.EndDateBs BS
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="space-y-5 sm:space-y-6">
+        <!-- Rejection reason -->
+        <div class="rounded-2xl border-2 border-red-200 bg-red-50 p-4 sm:p-5 flex items-start gap-3">
+            <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center bg-red-100 text-red-600">
+                <i class="fas fa-ban"></i>
+            </div>
+            <div class="text-sm sm:text-base text-red-800">
+                <span class="font-semibold">Your previous exam form was rejected</span>
+                @if (!string.IsNullOrWhiteSpace(Model.RejectionReason))
+                {
+                    <p class="mt-1 text-xs sm:text-sm leading-relaxed"><span class="font-semibold">Reason:</span> @Model.RejectionReason</p>
+                }
+                <p class="mt-1 text-xs sm:text-sm opacity-80">Review your subjects below and resubmit your form.</p>
+            </div>
+        </div>
+
+        <!-- Already paid -->
+        <div class="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-4 sm:p-5 flex items-start gap-3">
+            <div class="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="text-sm sm:text-base text-emerald-800">
+                <span class="font-semibold">Payment already confirmed</span>
+                <p class="mt-0.5 text-xs sm:text-sm opacity-80">
+                    You have already paid <span class="font-bold">Rs. @Model.PaidAmount.ToString("N2")</span> for this exam.
+                    No additional payment is required &mdash; just confirm your subjects below.
+                </p>
+            </div>
+        </div>
+
+        <!-- Subject selection -->
+        <form asp-action="ApplyAgain" asp-route-examScheduleId="@Model.ExamScheduleId" method="post">
+            <input type="hidden" name="examScheduleId" value="@Model.ExamScheduleId" />
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20">
+                                <i class="fas fa-book text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-base sm:text-lg font-bold text-gray-900">Subject Selection</h2>
+                                <p class="text-xs sm:text-sm text-gray-500">@Model.SemesterName &mdash; previous selection is pre-ticked</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="divide-y divide-gray-100">
+                    @for (var i = 0; i < Model.Subjects.Count; i++)
+                    {
+                        var s = Model.Subjects[i];
+                        <li class="flex items-center gap-3 px-4 sm:px-6 py-3 hover:bg-gray-50 transition-colors">
+                            <input type="checkbox"
+                                   id="subject-@s.SubjectOfferingId"
+                                   name="selectedSubjectIds"
+                                   value="@s.SubjectOfferingId"
+                                   checked="@s.IsSelected"
+                                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                            <label for="subject-@s.SubjectOfferingId" class="flex-1 min-w-0 cursor-pointer">
+                                <span class="block text-sm font-medium text-gray-900 truncate">@s.SubjectName</span>
+                                <span class="block text-xs text-gray-500">
+                                    @s.SubjectCode
+                                    @if (s.IsCompulsory)
+                                    {
+                                        <span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">Compulsory</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(s.SubjectTypeName))
+                                    {
+                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">@s.SubjectTypeName</span>
+                                    }
+                                    @if (s.IsFailed)
+                                    {
+                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">Failed</span>
+                                    }
+                                </span>
+                            </label>
+                            <div class="shrink-0 flex items-center gap-2 text-[11px] text-gray-500">
+                                @if (s.HasTheory)
+                                {
+                                    <span class="inline-flex items-center gap-1"><i class="fas fa-file-alt text-blue-400"></i> Theory</span>
+                                }
+                                @if (s.HasPractical)
+                                {
+                                    <span class="inline-flex items-center gap-1"><i class="fas fa-flask text-purple-400"></i> Practical</span>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ul>
+
+                <div class="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
+                    <a asp-action="ExamForms"
+                       class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-sm shadow-blue-600/25">
+                        <i class="fas fa-paper-plane text-xs"></i>
+                        Resubmit Application
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

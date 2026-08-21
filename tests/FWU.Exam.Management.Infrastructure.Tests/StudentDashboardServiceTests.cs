@@ -2,6 +2,7 @@ using FWU.Exam.Management.Domain.Entities;
 using FWU.Exam.Management.Domain.Entities.Colleges;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Location;
+using FWU.Exam.Management.Domain.Entities.Payments;
 using FWU.Exam.Management.Domain.Entities.Semesters;
 using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
@@ -867,5 +868,142 @@ public class StudentDashboardServiceTests
         Assert.NotNull(reg);
         Assert.Equal(1, reg!.Id);
         Assert.Equal("REG1", reg.RegistrationNumber);
+    }
+
+    private static void SeedRejectedForm(AppDbContext ctx, bool withPayment = true)
+    {
+        TestData.SeedBase(ctx);
+        ctx.Users.Add(TestData.User(UserId, Email));
+        ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+        ctx.ExamSchedules.Add(TestData.Schedule(21, 1, TestData.Regular,
+            DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(1)), null));
+        ctx.ApplicationVouchers.Add(TestData.Voucher(1, 1, 21));
+
+        if (withPayment)
+        {
+            ctx.Set<PaymentType>().Add(new PaymentType { Id = 1, PaymentTypeName = "Online", IsActive = true });
+            ctx.PaymentRequestLogs.Add(new PaymentRequestLog
+            {
+                TenantId = TestData.TenantId,
+                PaymentRequestLogStatus = 1,
+                InvoiceNumber = "INV-1",
+                ForwardedTimestamp = DateTime.UtcNow,
+                FullName = "Test Student",
+                Amount = 1000,
+                FullRequestContent = "{}",
+                PaymentTypeId = 1,
+                StudentRegistrationId = 1,
+                ExamScheduleId = 21,
+                SelectedSubjectIds = "101"
+            });
+        }
+
+        var rejected = TestData.ExamRegistration(1, 21, 1);
+        rejected.Status = RegistrationStatus.Rejected;
+        rejected.Remarks = "[Rejected by admin on 2026-08-20 10:00 UTC] Wrong subject selected";
+        ctx.ExamRegistrations.Add(rejected);
+
+        var result = TestData.Result(1, 1, 101, TestData.Regular, null, 21);
+        result.GradeLetter = null;
+        result.IsSubmitted = false;
+        ctx.ExamSubjectResults.Add(result);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_RevivesSameForm_AndSyncsSubjectsAndLog()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.SubjectOfferings.Add(TestData.Offering(302, 1, TestData.ProgramId));
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 });
+
+        Assert.True(success, message);
+
+        var er = db.Context.ExamRegistrations!.Single(e => e.Id == 1);
+        Assert.Equal(RegistrationStatus.Pending, er.Status);
+        Assert.Contains("[Re-applied by", er.Remarks!);
+
+        var log = db.Context.PaymentRequestLogs!
+            .Single(l => l.ExamScheduleId == 21 && l.StudentRegistrationId == 1 && l.PaymentRequestLogStatus == 1);
+        Assert.Equal("302", log.SelectedSubjectIds);
+
+        var results = db.Context.ExamSubjectResults!.Where(r => r.ExamRegistrationId == 1).ToList();
+        Assert.False(results.Single(r => r.SubjectOfferingId == 101).IsActive);
+        Assert.True(results.Single(r => r.SubjectOfferingId == 302).IsActive);
+        Assert.Equal(2, results.Count);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_ReplacesRemarks_NeverAppends()
+    {
+        var longReason = new string('x', 200);
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.SubjectOfferings.Add(TestData.Offering(302, 1, TestData.ProgramId));
+            ctx.ExamRegistrations.Local.Single(e => e.Id == 1).Remarks =
+                $"[Rejected by admin on 2026-08-20 10:00 UTC] {longReason}";
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 302 });
+
+        Assert.True(success, message);
+        var remarks = db.Context.ExamRegistrations!.Single(e => e.Id == 1).Remarks!;
+        // Replacement semantics: only the re-applied marker remains, well under nvarchar(255).
+        Assert.DoesNotContain("Rejected by", remarks);
+        Assert.StartsWith("[Re-applied by", remarks);
+        Assert.True(remarks.Length <= 255);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_Blocked_WhenLiveFormExists()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            SeedRejectedForm(ctx);
+            ctx.ApplicationVouchers.Add(TestData.Voucher(2, 1, 21));
+            ctx.ExamRegistrations.Add(TestData.ExamRegistration(2, 21, 2));
+        });
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 101 });
+
+        Assert.False(success);
+        Assert.Contains("not rejected", message);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_Blocked_WithoutConfirmedPayment()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx => SeedRejectedForm(ctx, withPayment: false));
+        var service = CreateService(db);
+
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 101 });
+
+        Assert.False(success);
+        Assert.Contains("Payment has not been confirmed", message);
+    }
+
+    [Fact]
+    public async Task ReapplyExamRegistrationAsync_Blocked_ForOfferingOutsideSchedule()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx => SeedRejectedForm(ctx));
+        var service = CreateService(db);
+
+        // Offering 102 belongs to semester 2; the schedule covers semester 1.
+        var (success, message) = await service.ReapplyExamRegistrationAsync(
+            21, UserId, 1, new List<int> { 102 });
+
+        Assert.False(success);
+        Assert.Contains("not offered for this exam schedule", message);
     }
 }

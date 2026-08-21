@@ -489,6 +489,84 @@ public class ExamRegistrationServiceTests
         Assert.Contains("Payment", noPaymentMessage);
     }
 
+    [Fact]
+    public async Task RejectExamRegistrationAsync_RejectsPendingForm_AndRecordsReason()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var (success, message) = await service.RejectExamRegistrationAsync(1, "Invalid documents");
+
+        Assert.True(success, message);
+        var reg = db.Context.ExamRegistrations!.Single(r => r.Id == 1);
+        Assert.Equal(RegistrationStatus.Rejected, reg.Status);
+        Assert.Contains("Invalid documents", reg.Remarks);
+        Assert.Contains("[Rejected by", reg.Remarks);
+        Assert.Contains(AdminEmail, reg.Remarks);
+    }
+
+    [Fact]
+    public async Task RejectExamRegistrationAsync_RejectsCollegeVerifiedForm()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var (success, message) = await service.RejectExamRegistrationAsync(3, "Wrong student details");
+
+        Assert.True(success, message);
+        Assert.Equal(RegistrationStatus.Rejected, db.Context.ExamRegistrations!.Single(r => r.Id == 3).Status);
+    }
+
+    [Fact]
+    public async Task RejectExamRegistrationAsync_RequiresReason_AndBlocksFinalApprovedAndOtherCollege()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedForms);
+        var service = CreateService(db);
+
+        var (noReason, noReasonMessage) = await service.RejectExamRegistrationAsync(1, "   ");
+        Assert.False(noReason);
+        Assert.Contains("reason", noReasonMessage, StringComparison.OrdinalIgnoreCase);
+
+        var reg1 = await db.Context.ExamRegistrations!.SingleAsync(r => r.Id == 1);
+        reg1.Status = RegistrationStatus.AdminVerified;
+        await db.Context.SaveChangesAsync();
+
+        var (finalApproved, finalApprovedMessage) = await service.RejectExamRegistrationAsync(1, "test");
+        Assert.False(finalApproved);
+        Assert.Contains("pending or college-verified", finalApprovedMessage, StringComparison.OrdinalIgnoreCase);
+
+        var (otherCollege, otherCollegeMessage) = await service.RejectExamRegistrationAsync(2, "test");
+        Assert.False(otherCollege);
+        Assert.Equal("Exam form not found.", otherCollegeMessage);
+
+        // Nothing was changed by the failed attempts.
+        Assert.Equal(RegistrationStatus.AdminVerified, reg1.Status);
+        Assert.Equal(RegistrationStatus.Pending, db.Context.ExamRegistrations!.Single(r => r.Id == 2).Status);
+    }
+
+    [Fact]
+    public async Task RejectExamRegistrationAsync_Blocked_WhenAdmitCardExists()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(TestData.TenantId), SeedFormsWithExistingResult);
+        var service = CreateService(db);
+
+        db.Context.AdmitCards!.Add(new AdmitCard
+        {
+            TenantId = TestData.TenantId,
+            ExamRegistrationId = 1,
+            ExamScheduleId = 21,
+            AdmitCardNumber = "AC-1",
+            GeneratedDate = DateTime.UtcNow,
+            IsActive = true
+        });
+        await db.Context.SaveChangesAsync();
+
+        var (success, message) = await service.RejectExamRegistrationAsync(1, "test");
+        Assert.False(success);
+        Assert.Contains("admit card", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(RegistrationStatus.Pending, db.Context.ExamRegistrations!.Single(r => r.Id == 1).Status);
+    }
+
     private static void SeedFormsWithExistingResult(AppDbContext ctx)
     {
         SeedForms(ctx);

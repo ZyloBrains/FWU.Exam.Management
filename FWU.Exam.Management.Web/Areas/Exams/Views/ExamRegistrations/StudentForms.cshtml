@@ -519,6 +519,62 @@
                         $saveBtn.prop('disabled', false);
                     });
             });
+
+            // The modal lives inside the AJAX-loaded review panel, so it must be
+            // looked up at event time - a ready-time cache would always be empty.
+            function getRejectModal() {
+                return $('#rejectFormModal');
+            }
+
+            function closeRejectModal() {
+                getRejectModal().addClass('hidden').find('.reject-error').addClass('hidden').text('');
+            }
+
+            $(document).on('click', '.reject-btn', function () {
+                getRejectModal().removeClass('hidden').find('textarea[name="reason"]').val('').focus();
+            });
+
+            $(document).on('click', '[data-close-reject-modal]', function () {
+                closeRejectModal();
+            });
+
+            $(document).on('submit', '.reject-form', function (e) {
+                e.preventDefault();
+                var $form = $(this);
+                var reason = $('textarea[name="reason"]', $form).val().trim();
+                if (!reason) {
+                    $form.find('.reject-error').text('Please enter a rejection reason.').removeClass('hidden');
+                    return;
+                }
+                if (!confirm('Reject this exam form? The student will be able to apply again.')) {
+                    return;
+                }
+
+                var $error = $form.find('.reject-error').addClass('hidden').text('');
+                var $btn = $form.find('button[type="submit"]').prop('disabled', true);
+
+                $.post(tenantUrl('/Exams/ExamRegistrations/Reject'), $form.serialize())
+                    .done(function (response) {
+                        if (response.success) {
+                            closeRejectModal();
+                            showToast(response.message || 'Exam form rejected.', true);
+                            loadReview($form.find('input[name="id"]').val(), true);
+                        } else {
+                            $error.text(response.message || 'Unable to reject this form.').removeClass('hidden');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        var msg = 'Unable to reject this form.';
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            if (res && res.message) msg = res.message;
+                        } catch (_) { }
+                        $error.text(msg).removeClass('hidden');
+                    })
+                    .always(function () {
+                        $btn.prop('disabled', false);
+                    });
+            });
         });
     </script>
 }

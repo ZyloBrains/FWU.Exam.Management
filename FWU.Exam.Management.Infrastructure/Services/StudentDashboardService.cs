@@ -305,6 +305,214 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
                           && prl.PaymentRequestLogStatus == 1);
     }
 
+    public async Task<bool> IsRejectedOnlyForScheduleAsync(int examScheduleId, string userId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return false;
+
+        var statuses = await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => er.ExamScheduleId == examScheduleId
+                      && studentErIds.Contains(er.Id)
+                      && er.IsAppliedByStudent == true
+                      && er.IsActive)
+            .Select(er => er.Status)
+            .ToListAsync();
+
+        return statuses.Count > 0 && statuses.All(s => s == RegistrationStatus.Rejected);
+    }
+
+    public async Task<string?> GetLatestRejectionReasonAsync(int examScheduleId, string userId)
+    {
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return null;
+
+        var remarks = await context.ExamRegistrations!
+            .AsNoTracking()
+            .Where(er => er.ExamScheduleId == examScheduleId
+                      && studentErIds.Contains(er.Id)
+                      && er.IsAppliedByStudent == true
+                      && er.IsActive
+                      && er.Status == RegistrationStatus.Rejected)
+            .OrderByDescending(er => er.Id)
+            .Select(er => er.Remarks)
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(remarks)) return null;
+
+        var lastEntry = remarks
+            .Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .LastOrDefault(line => line.Contains("[Rejected by", StringComparison.OrdinalIgnoreCase));
+
+        if (lastEntry == null) return remarks.Trim();
+
+        var idx = lastEntry.IndexOf(']');
+        return idx >= 0 && idx + 1 < lastEntry.Length
+            ? lastEntry[(idx + 1)..].Trim()
+            : lastEntry;
+    }
+
+    public async Task<(bool Success, string Message)> ReapplyExamRegistrationAsync(
+        int examScheduleId, string userId, int studentRegistrationId, List<int> subjectOfferingIds)
+    {
+        var requestedIds = (subjectOfferingIds ?? [])
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        if (requestedIds.Count == 0)
+            return (false, "At least one subject must be selected.");
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0)
+            return (false, "No exam application found for this schedule.");
+
+        var registrations = await context.ExamRegistrations!
+            .Where(er => er.ExamScheduleId == examScheduleId
+                      && studentErIds.Contains(er.Id)
+                      && er.IsAppliedByStudent == true
+                      && er.IsActive)
+            .ToListAsync();
+
+        if (registrations.Any(er => er.Status != RegistrationStatus.Rejected))
+            return (false, "This exam form is not rejected.");
+
+        var target = registrations
+            .OrderByDescending(er => er.Id)
+            .First();
+
+        var hasAdmitCard = await context.AdmitCards!
+            .AsNoTracking()
+            .AnyAsync(ac => ac.ExamRegistrationId == target.Id && ac.IsActive);
+        if (hasAdmitCard)
+            return (false, "This form cannot be re-applied because an admit card already exists.");
+
+        var schedule = await context.ExamSchedules!
+            .Include(es => es.SemesterInstance!)
+                .ThenInclude(si => si.Semester)
+            .Include(es => es.ExamType)
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        if (schedule?.SemesterInstance == null)
+            return (false, "Exam schedule not found.");
+
+        var semesterNumber = schedule.SemesterInstance.Semester?.Number ?? 0;
+        var resolvedVersion = await CurriculumVersionResolver.ResolveAsync(
+            context, schedule.ProgramId, schedule.SemesterInstance.AcademicYearId);
+
+        var validOfferings = await context.SubjectOfferings!
+            .AsNoTracking()
+            .Where(so => requestedIds.Contains(so.Id)
+                      && so.ProgramId == schedule.ProgramId
+                      && so.Semester != null && so.Semester.Number == semesterNumber
+                      && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null))
+            .ToDictionaryAsync(so => so.Id);
+
+        if (validOfferings.Count != requestedIds.Count)
+            return (false, "One or more selected subjects are not offered for this exam schedule.");
+
+        var paymentLog = await context.PaymentRequestLogs!
+            .Where(prl => prl.ExamScheduleId == examScheduleId
+                       && prl.StudentRegistrationId == studentRegistrationId
+                       && prl.PaymentRequestLogStatus == 1)
+            .OrderByDescending(pl => pl.Id)
+            .FirstOrDefaultAsync();
+
+        if (paymentLog == null)
+            return (false, "Payment has not been confirmed for this form yet.");
+
+        var existingResults = await context.ExamSubjectResults!
+            .Where(esr => esr.ExamRegistrationId == target.Id)
+            .ToListAsync();
+
+        var activeByOffering = existingResults
+            .Where(esr => esr.IsActive)
+            .GroupBy(esr => esr.SubjectOfferingId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(esr => esr.Id).First());
+
+        var finalIds = validOfferings.Keys.ToHashSet();
+
+        foreach (var result in activeByOffering.Values.Where(r => !finalIds.Contains(r.SubjectOfferingId)))
+        {
+            result.IsActive = false;
+        }
+
+        HashSet<int>? previousScheduleIds = null;
+        if (target.IsSupplementary)
+        {
+            previousScheduleIds = await context.ExamSchedules!
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(es => es.IsActive
+                          && es.ProgramId == schedule.ProgramId
+                          && es.SemesterInstance!.SemesterId == schedule.SemesterInstance.SemesterId
+                          && es.Id != examScheduleId
+                          && es.ExamType != null
+                          && es.ExamType.Name != "Entrance")
+                .Select(es => es.Id)
+                .ToHashSetAsync();
+        }
+
+        foreach (var offeringId in finalIds.Where(id => !activeByOffering.ContainsKey(id)))
+        {
+            var offering = validOfferings[offeringId];
+
+            float? carriedPractical = null;
+            float? carriedPracticalInternal = null;
+            float? carriedTheoryInternal = null;
+
+            if (target.IsSupplementary && previousScheduleIds is { Count: > 0 })
+            {
+                var previousResult = await context.ExamSubjectResults!
+                    .AsNoTracking()
+                    .Where(esr => esr.SubjectOfferingId == offeringId
+                               && previousScheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                               && esr.ExamRegistration != null
+                               && esr.ExamRegistration.IsActive
+                               && esr.IsActive)
+                    .OrderByDescending(esr => esr.Id)
+                    .FirstOrDefaultAsync();
+
+                if (previousResult != null)
+                {
+                    carriedPractical = previousResult.ObtainedMarksPractical;
+                    carriedPracticalInternal = previousResult.ObtainedMarksPracticalInternal;
+                    carriedTheoryInternal = previousResult.ObtainedMarksTheoryInternal;
+                }
+            }
+
+            context.ExamSubjectResults!.Add(new ExamSubjectResult
+            {
+                TenantId = target.TenantId,
+                ExamRegistrationId = target.Id,
+                SubjectOfferingId = offeringId,
+                ExamScheduleId = examScheduleId,
+                ExamTypeId = schedule.ExamTypeId,
+                IsTheoryRegistered = offering.HasTheory,
+                IsPracticalRegistered = offering.HasPractical,
+                IsActive = true,
+                IsSubmitted = false,
+                IsSupplementary = target.IsSupplementary,
+                ObtainedMarksPractical = carriedPractical,
+                ObtainedMarksPracticalInternal = carriedPracticalInternal,
+                ObtainedMarksTheoryInternal = carriedTheoryInternal
+            });
+        }
+
+        var username = (await context.Users.FindAsync(userId))?.UserName ?? "student";
+        target.Remarks = $"[Re-applied by {username} on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC]";
+        target.Status = RegistrationStatus.Pending;
+        target.RegistrationDate = DateTime.UtcNow;
+
+        paymentLog.SelectedSubjectIds = string.Join(",", finalIds.OrderBy(id => id));
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("ReapplyExamRegistrationAsync: ExamRegistration {RegId} re-applied for scheduleId={ScheduleId}, userId={UserId}, subjects={SubjectCount}",
+            target.Id, examScheduleId, userId, finalIds.Count);
+
+        return (true, "Your exam form has been re-applied successfully.");
+    }
+
     public async Task<bool> HasExistingExamRegistrationAsync(int examScheduleId, string userId)
     {
         var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
@@ -313,7 +521,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .AsNoTracking()
             .AnyAsync(er => er.ExamScheduleId == examScheduleId
                          && studentErIds.Contains(er.Id)
-                         && er.IsAppliedByStudent == true);
+                         && er.IsAppliedByStudent == true
+                         && er.Status != RegistrationStatus.Rejected);
     }
 
     public async Task<List<PaymentType>> GetActivePaymentTypesAsync()
