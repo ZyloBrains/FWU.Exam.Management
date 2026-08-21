@@ -5,10 +5,12 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Permissions;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.Authorization;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -1283,6 +1285,7 @@ public class StudentDashboardController(
         await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds, paymentLog.StudentRegistrationId.Value);
     }
 
+    [RequirePermission(Permissions.StudentPortalMarksheet)]
     public async Task<IActionResult> MarksheetPrint(int? examScheduleId)
     {
         var user = await userManager.GetUserAsync(User);
@@ -1376,6 +1379,7 @@ public class StudentDashboardController(
     private static string? MarksheetSymbolNumber(ExamRegistration? er)
         => !string.IsNullOrEmpty(er?.ExamRollNumber) ? er.ExamRollNumber : er?.SymbolNumber;
 
+    [RequirePermission(Permissions.StudentPortalMarksheet)]
     public async Task<IActionResult> Marksheet()
     {
         var user = await userManager.GetUserAsync(User);
@@ -1474,6 +1478,7 @@ public class StudentDashboardController(
         return View(sorted);
     }
 
+    [RequirePermission(Permissions.RetotalingView)]
     public async Task<IActionResult> RetotalRequests()
     {
         var user = await userManager.GetUserAsync(User);
@@ -1504,6 +1509,7 @@ public class StudentDashboardController(
         return View(requests);
     }
 
+    [RequirePermission(Permissions.RetotalingView)]
     public async Task<IActionResult> RequestRetotal(int? examSubjectResultId)
     {
         var user = await userManager.GetUserAsync(User);
@@ -1543,6 +1549,7 @@ public class StudentDashboardController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission(Permissions.RetotalingView)]
     public async Task<IActionResult> SubmitRetotalRequest(int examSubjectResultId, string? reason)
     {
         var user = await userManager.GetUserAsync(User);

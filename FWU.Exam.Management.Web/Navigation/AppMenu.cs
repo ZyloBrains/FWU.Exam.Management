@@ -182,10 +182,12 @@ public static class AppMenu
             "text-pink-600", "bg-pink-100", "group-hover:bg-pink-200",
             [
                 M("Exam Forms", "fa-file-invoice", ["student.portal.examforms"], R("Students", "StudentDashboard", "ExamForms"), ["exam form", "form"]),
-                M("Marksheet", "fa-file-alt", ["student.portal.marksheet"], R("Students", "StudentDashboard", "Marksheet"), ["marksheet", "mark sheet", "result"]),
+                // Hidden for now - will be made visible to students later.
+                //M("Marksheet", "fa-file-alt", ["student.portal.marksheet"], R("Students", "StudentDashboard", "Marksheet"), ["marksheet", "mark sheet", "result"]),
                 M("Admit Cards", "fa-ticket-alt", ["admitcards.view"], R("Students", "StudentDashboard", "AdmitCards"), ["admit card", "hall ticket"]),
                 M("Payment History", "fa-credit-card", ["student.portal.payment"], R("Students", "StudentDashboard", "PaymentHistory"), ["payment", "history", "receipt"]),
-                M("Re-evaluation", "fa-redo-alt", ["retotaling.view"], R("Students", "StudentDashboard", "RetotalRequests"), ["retotal", "re-evaluation", "recheck"]),
+                // Hidden for now - depends on the Marksheet page for subject selection.
+                //M("Re-evaluation", "fa-redo-alt", ["retotaling.view"], R("Students", "StudentDashboard", "RetotalRequests"), ["retotal", "re-evaluation", "recheck"]),
             ],
             Landing: R(null, "Section", "StudentPortal"),
             RoleGate: Role.Student,
