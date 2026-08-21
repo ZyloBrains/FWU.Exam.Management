@@ -10,7 +10,7 @@ public interface IGradeCalculationService
     GradeResult CalculateTheoryGrade(float? theoryMarks, float? theoryInternalMarks, SubjectOffering offering, Domain.Entities.GradingScheme? gradingScheme = null);
     GradeResult CalculatePracticalGrade(float? practicalMarks, SubjectOffering offering, Domain.Entities.GradingScheme? gradingScheme = null);
     decimal? GetGradePointValue(string gradeLetter, int? gradeGroupId);
-    bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering);
+    bool IsStudentPassing(float? theoryMarks, float? practicalMarks, SubjectOffering offering, bool isSupplementary = false);
     float CalculateTotalMarks(float? theory, float? practical, float? theoryInternal, float? practicalInternal);
-    void AssignGrades(ExamSubjectResult result, SubjectOffering offering);
+    void AssignGrades(ExamSubjectResult result, SubjectOffering offering, bool isSupplementary = false);
 }

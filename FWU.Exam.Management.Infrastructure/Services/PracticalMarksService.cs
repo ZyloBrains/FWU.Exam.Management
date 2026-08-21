@@ -333,7 +333,7 @@ public class PracticalMarksService(
                 }
 
                 entity.ObtainedMarksPractical = student.Practical;
-                gradeCalculationService.AssignGrades(entity, subjectOffering);
+                gradeCalculationService.AssignGrades(entity, subjectOffering, entity.IsSupplementary);
 
                 if (dto.SubmitAll || student.IsSubmitted)
                 {
