@@ -9,12 +9,32 @@ namespace FWU.Exam.Management.Infrastructure.Services;
 
 public class GradeCalculationService(AppDbContext context) : IGradeCalculationService
 {
-    private static readonly ConcurrentDictionary<(int GroupId, string Grade), decimal?> GradePointCache = new();
+    private static readonly ConcurrentDictionary<(int SchemeId, string Grade), decimal?> GradePointCache = new();
+
+    public Domain.Entities.GradingScheme? ResolveSchemeForProgram(int programId, int? academicYearId = null)
+    {
+        var schemeId = context.GradingSchemePrograms
+            .AsNoTracking()
+            .Where(gsp => gsp.ProgramId == programId && gsp.IsActive)
+            .Where(gsp => gsp.AcademicYearId == null || gsp.AcademicYearId == academicYearId)
+            .OrderByDescending(gsp => gsp.AcademicYearId.HasValue)
+            .ThenByDescending(gsp => gsp.GradingSchemeId)
+            .Select(gsp => gsp.GradingSchemeId)
+            .FirstOrDefault();
+
+        if (schemeId == 0)
+            return null;
+
+        return context.GradingSchemes
+            .AsNoTracking()
+            .Include(s => s.GradeDefinitions)
+            .FirstOrDefault(s => s.Id == schemeId);
+    }
 
     public GradeResult CalculateGrade(float totalMarks, SubjectOffering subjectOffering, Domain.Entities.GradingScheme? gradingScheme = null)
     {
         if (gradingScheme == null)
-            gradingScheme = GetSchemeForOffering(subjectOffering);
+            gradingScheme = ResolveSchemeForProgram(subjectOffering.ProgramId);
 
         var theoryFull = subjectOffering.TheoryFullMarks ?? 0f;
         var practicalFull = subjectOffering.PracticalFullMarks ?? 0f;
@@ -40,7 +60,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         var percentage = (obtained / full) * 100f;
 
         if (gradingScheme == null)
-            gradingScheme = GetSchemeForOffering(offering);
+            gradingScheme = ResolveSchemeForProgram(offering.ProgramId);
 
         return ResolvePercentage(percentage, gradingScheme);
     }
@@ -56,7 +76,7 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         var percentage = (practicalMarks.Value / full) * 100f;
 
         if (gradingScheme == null)
-            gradingScheme = GetSchemeForOffering(offering);
+            gradingScheme = ResolveSchemeForProgram(offering.ProgramId);
 
         return ResolvePercentage(percentage, gradingScheme);
     }
@@ -109,36 +129,8 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         }
     }
 
-    private Domain.Entities.GradingScheme? GetSchemeForOffering(SubjectOffering subjectOffering)
-    {
-        return context.GradingSchemes
-            .Include(gs => gs.GradeDefinitions)
-            .Where(gs => gs.ProgramId == subjectOffering.ProgramId && gs.IsActive)
-            .OrderByDescending(gs => gs.GradeGroupId.HasValue)
-            .ThenBy(gs => gs.Id)
-            .FirstOrDefault();
-    }
-
     private GradeResult ResolvePercentage(float percentage, Domain.Entities.GradingScheme? gradingScheme)
     {
-        if (gradingScheme?.GradeGroupId.HasValue == true)
-        {
-            var obtainedMark = Math.Clamp((int)Math.Round(percentage), 0, 100);
-            var gradePoint = context.GradePoints
-                .FirstOrDefault(gp => gp.GradeGroupId == gradingScheme.GradeGroupId.Value && gp.ObtainedMark == obtainedMark);
-
-            if (gradePoint != null)
-            {
-                return new GradeResult
-                {
-                    GradeLetter = gradePoint.Grade,
-                    GradePoint = gradePoint.GradePointValue,
-                    IsPass = gradePoint.GradePointValue > 0,
-                    Remark = gradePoint.GradePointValue > 0 ? "Pass" : "Fail"
-                };
-            }
-        }
-
         if (gradingScheme?.GradeDefinitions != null && gradingScheme.GradeDefinitions.Count != 0)
         {
             var percentageDecimal = (decimal)percentage;
@@ -173,19 +165,18 @@ public class GradeCalculationService(AppDbContext context) : IGradeCalculationSe
         return new GradeResult { GradeLetter = "", GradePoint = 0m, IsPass = true, Remark = "N/A" };
     }
 
-    public decimal? GetGradePointValue(string gradeLetter, int? gradeGroupId)
+    public decimal? GetGradePointValue(string gradeLetter, Domain.Entities.GradingScheme gradingScheme)
     {
-        if (string.IsNullOrWhiteSpace(gradeLetter) || !gradeGroupId.HasValue)
+        if (string.IsNullOrWhiteSpace(gradeLetter) || gradingScheme?.GradeDefinitions == null)
             return null;
 
-        var key = (gradeGroupId.Value, gradeLetter);
+        var key = (gradingScheme.Id, gradeLetter);
         if (GradePointCache.TryGetValue(key, out var cached))
             return cached;
 
-        var value = context.GradePoints
-            .AsNoTracking()
-            .Where(gp => gp.GradeGroupId == gradeGroupId.Value && gp.Grade == gradeLetter)
-            .Select(gp => (decimal?)gp.GradePointValue)
+        var value = gradingScheme.GradeDefinitions
+            .Where(gd => gd.GradeLetter == gradeLetter)
+            .Select(gd => (decimal?)gd.GradePoint)
             .FirstOrDefault();
 
         GradePointCache[key] = value;

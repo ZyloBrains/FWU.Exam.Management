@@ -4,6 +4,7 @@ using FWU.Exam.Management.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FWU.Exam.Management.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820172725_RemoveGradeGroupFromGradingScheme")]
+    partial class RemoveGradeGroupFromGradingScheme
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1202,9 +1205,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<bool?>("IsAppliedByStudent")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsSupplementary")
-                        .HasColumnType("bit");
-
                     b.Property<int?>("ProgramsId")
                         .HasColumnType("int");
 
@@ -1528,9 +1528,6 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsSubmitted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsSupplementary")
                         .HasColumnType("bit");
 
                     b.Property<bool?>("IsTheoryRegistered")
@@ -3990,10 +3987,10 @@ namespace FWU.Exam.Management.Infrastructure.Migrations
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
 
-                    b.Property<float?>("TheoryFullMarks")
+                    b.Property<float>("TheoryFullMarks")
                         .HasColumnType("real");
 
-                    b.Property<float?>("TheoryPassMarks")
+                    b.Property<float>("TheoryPassMarks")
                         .HasColumnType("real");
 
                     b.HasKey("Id");

@@ -26,16 +26,14 @@
                     <p class="mt-1 text-gray-800 font-semibold">@Model.Name</p>
                 </div>
                 <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Program</p>
-                    <p class="mt-1 text-gray-800">@Model.Program?.ProgramName</p>
-                </div>
-                <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Academic Year</p>
-                    <p class="mt-1 text-gray-800">@Model.AcademicYear?.AcademicYearName</p>
-                </div>
-                <div>
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Grade Group</p>
-                    <p class="mt-1 text-gray-800">@(Model.GradeGroup?.GradeGroupName ?? "-")</p>
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Programs</p>
+                    <p class="mt-1 text-gray-800">
+                        @{
+                            var dPrograms = Model.ProgramAssignments?.Select(gsp => gsp.Program?.ProgramName ?? "") ?? Enumerable.Empty<string>();
+                            var dProgramList = string.Join(", ", dPrograms.Where(p => !string.IsNullOrEmpty(p)));
+                        }
+                        @(string.IsNullOrEmpty(dProgramList) ? "-" : dProgramList)
+                    </p>
                 </div>
                 <div>
                     <p class="text-xs sm:text-sm font-medium text-gray-600">Status</p>
