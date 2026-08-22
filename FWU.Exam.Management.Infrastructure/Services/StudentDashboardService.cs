@@ -112,8 +112,8 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
 
             if (isSupplementary)
             {
-                var hasFailed = await HasFailedSubjectsInSemesterAsync(userId, schedule.SemesterInstance!.SemesterId, student.ProgramId ?? 0);
-                if (!hasFailed)
+                var isEligible = await IsEligibleForReExamAsync(userId, schedule.SemesterInstance!.SemesterId, student.ProgramId ?? 0);
+                if (!isEligible)
                     continue;
             }
             filtered.Add(schedule);
@@ -883,6 +883,71 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         return failedIds.Count > 0;
     }
 
+    public async Task<bool> HasAnyExamResultsInSemesterAsync(string userId, int semesterId, int programId)
+    {
+        var scheduleIds = await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(es => es.IsActive
+                      && es.ProgramId == programId
+                      && es.SemesterInstance!.SemesterId == semesterId)
+            .Select(es => es.Id)
+            .ToListAsync();
+
+        if (scheduleIds.Count == 0) return false;
+
+        var studentErIds = await GetStudentExamRegistrationIdsAsync(userId);
+        if (studentErIds.Count == 0) return false;
+
+        return await context.ExamSubjectResults!
+            .AsNoTracking()
+            .Where(esr => scheduleIds.Contains(esr.ExamScheduleId ?? 0)
+                       && esr.IsActive
+                       && esr.ExamRegistration != null
+                       && esr.ExamRegistration.IsActive
+                       && studentErIds.Contains(esr.ExamRegistrationId))
+            .AnyAsync();
+    }
+
+    public async Task<bool> IsEligibleForReExamAsync(string userId, int semesterId, int programId)
+    {
+        // Students with recorded failures qualify normally. Students with no result
+        // history at all (legacy data not yet imported) are allowed through; the
+        // gate tightens automatically once real results exist.
+        if (await HasFailedSubjectsInSemesterAsync(userId, semesterId, programId))
+            return true;
+
+        return !await HasAnyExamResultsInSemesterAsync(userId, semesterId, programId);
+    }
+
+    public async Task<List<SubjectOffering>> GetFailedSubjectOfferingsForStudentAsync(int examScheduleId, string userId)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+
+        if (schedule == null) return [];
+
+        var instance = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => si.Id == schedule.SemesterInstanceId)
+            .Select(si => new { si.SemesterId })
+            .FirstOrDefaultAsync();
+        if (instance == null) return [];
+
+        var failedOfferingIds = await GetFailedSubjectOfferingIdsForSemesterAsync(userId, instance.SemesterId, schedule.ProgramId);
+        if (failedOfferingIds.Count == 0) return [];
+
+        return await context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+                .ThenInclude(sc => sc!.SubjectType)
+            .Where(so => failedOfferingIds.Contains(so.Id))
+            .OrderBy(so => so.DisplayOrder)
+            .ToListAsync();
+    }
+
     public async Task<List<int>> GetFailedSubjectOfferingIdsForSemesterAsync(string userId, int semesterId, int programId)
     {
         var scheduleIds = await context.ExamSchedules!
@@ -1005,8 +1070,10 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         "Supplementary", "Partial", "Chance", "Special Chance"
     };
 
-    public static bool IsReExamType(string? examTypeName) =>
+    public static bool IsReExamTypeStatic(string? examTypeName) =>
         !string.IsNullOrEmpty(examTypeName) && ReExamTypeNames.Contains(examTypeName);
+
+    public bool IsReExamType(string? examTypeName) => IsReExamTypeStatic(examTypeName);
 
     public async Task<int> CreatePaymentRequestLogWithSubjectsAsync(int examScheduleId, int studentRegistrationId, decimal amount, string paymentMethod, string invoiceNumber, List<int> subjectOfferingIds, string? fullName = null, string? email = null, string? mobileNumber = null, string? dateOfBirthAd = null, string? transactionUuid = null)
     {

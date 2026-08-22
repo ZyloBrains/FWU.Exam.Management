@@ -473,7 +473,10 @@ public class ExamRegistrationService(AppDbContext context, IUserContext userCont
             .Where(so => requestedIds.Contains(so.Id)
                       && so.ProgramId == schedule.ProgramId
                       && so.Semester != null && so.Semester.Number == semesterNumber
-                      && (resolvedVersion == null || so.CurriculumVersionId == resolvedVersion.Value || so.CurriculumVersionId == null))
+                      && (er.IsSupplementary
+                          || resolvedVersion == null
+                          || so.CurriculumVersionId == resolvedVersion.Value
+                          || so.CurriculumVersionId == null))
             .ToDictionaryAsync(so => so.Id);
 
         if (validOfferings.Count != requestedIds.Count)
