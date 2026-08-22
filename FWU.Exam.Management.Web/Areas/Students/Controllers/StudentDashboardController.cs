@@ -25,6 +25,7 @@ namespace FWU.Exam.Management.Web.Areas.Students.Controllers;
 [Authorize(Roles = Role.Student + "," + Role.SuperAdmin + "," + Role.FacultyAdmin)]
 public class StudentDashboardController(
     IStudentDashboardService dashboardService,
+    IAdmitCardService admitCardService,
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,
     INotificationService notificationService,
@@ -329,6 +330,27 @@ public class StudentDashboardController(
 
         var admitCards = await dashboardService.GetAdmitCardsForStudentAsync(user.Id, registration.Id);
         return View(admitCards);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Download(int? id)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        if (id == null) return NotFound();
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
+        if (registration == null) return NotFound();
+
+        var admitCard = await admitCardService.GetAdmitCardByIdForStudentAsync(id.Value, user.Id, registration.Id);
+        if (admitCard == null) return NotFound();
+
+        admitCard.IsDownloaded = true;
+        admitCard.DownloadedDate = DateTime.UtcNow;
+        await admitCardService.UpdateAdmitCardAsync(admitCard);
+
+        return View("~/Areas/Exams/Views/AdmitCards/PrintAdmitCard.cshtml", admitCard);
     }
 
     public async Task<IActionResult> PaymentHistory()
