@@ -5,10 +5,12 @@ using FWU.Exam.Management.Application.Interfaces;
 using FWU.Exam.Management.Domain.Constants;
 using FWU.Exam.Management.Domain.Entities.Exams;
 using FWU.Exam.Management.Domain.Entities.Payments;
+using FWU.Exam.Management.Domain.Entities.Permissions;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Domain.Extensions;
 using FWU.Exam.Management.Infrastructure;
 using FWU.Exam.Management.Infrastructure.Data.Models;
+using FWU.Exam.Management.Web.Authorization;
 using FWU.Exam.Management.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -290,9 +292,13 @@ public class StudentDashboardController(
 
         foreach (var schedule in schedules)
         {
-            var hasPaid = await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
+            var rejectedOnly = await dashboardService.IsRejectedOnlyForScheduleAsync(schedule.Id, user.Id);
+            var hasPaid = !rejectedOnly && await dashboardService.HasExistingPaymentAsync(schedule.Id, registration.Id);
             var hasAdmitCard = hasPaid && await dashboardService.HasAdmitCardForScheduleAsync(schedule.Id, user.Id, registration.Id);
             var admitCardId = hasAdmitCard ? await dashboardService.GetAdmitCardIdForScheduleAsync(schedule.Id, user.Id, registration.Id) : null;
+            var rejectionReason = rejectedOnly
+                ? await dashboardService.GetLatestRejectionReasonAsync(schedule.Id, user.Id)
+                : null;
 
             forms.Add(new ExamFormViewModel
             {
@@ -302,6 +308,8 @@ public class StudentDashboardController(
                 HasPaid = hasPaid,
                 HasAdmitCard = hasAdmitCard,
                 AdmitCardId = admitCardId,
+                IsRejected = rejectedOnly,
+                RejectionReason = rejectionReason,
                 EndDateBs = schedule.EndDateBs,
                 ExtendedDateBs = schedule.ExtendedDate.HasValue ? schedule.ExtendedDate.Value.ToString("yyyy-MM-dd") : null,
                 AdmissionCardReleaseDate = schedule.AdmissionCardReleaseDate
@@ -419,6 +427,14 @@ public class StudentDashboardController(
             return RedirectToAction(nameof(ExamForms));
         }
 
+        // Rejected forms keep the original confirmed payment; route students to the
+        // free re-apply flow instead of charging them again.
+        if (await IsRejectedWithConfirmedPaymentAsync(examScheduleId, user.Id, registration.Id))
+        {
+            TempData["ErrorMessage"] = "You have already paid for this exam form. Please use Apply Again to resubmit it.";
+            return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+        }
+
         var reExamTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Supplementary", "Partial", "Chance", "Special Chance" };
         var isSupplementary = !string.IsNullOrEmpty(schedule.ExamType?.Name) && reExamTypes.Contains(schedule.ExamType.Name);
         if (isSupplementary)
@@ -515,6 +531,170 @@ public class StudentDashboardController(
         return View(vm);
     }
 
+    private async Task<bool> IsRejectedWithConfirmedPaymentAsync(int examScheduleId, string userId, int studentRegistrationId)
+    {
+        if (!await dashboardService.IsRejectedOnlyForScheduleAsync(examScheduleId, userId))
+            return false;
+
+        return await dashboardService.HasExistingPaymentAsync(examScheduleId, studentRegistrationId);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ApplyAgain(int examScheduleId)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var missingFields = await GetMissingMandatoryProfileFieldsAsync(user);
+        if (missingFields.Count > 0)
+        {
+            TempData["ErrorMessage"] = "Please complete your mandatory profile details before filling an exam form.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
+        if (registration == null) return NotFound("Student registration not found.");
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        if (schedule == null) return NotFound("Exam schedule not found.");
+
+        if (schedule.SemesterInstance == null)
+        {
+            TempData["ErrorMessage"] = "Exam schedule configuration is incomplete. Please contact support.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        if (IsScheduleDeadlinePassed(schedule))
+        {
+            TempData["ErrorMessage"] = "The deadline for this exam form has passed.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        if (!await IsRejectedWithConfirmedPaymentAsync(examScheduleId, user.Id, registration.Id))
+            return RedirectToAction(nameof(PayExamFee), new { examScheduleId });
+
+        var admission = await dashboardService.GetStudentAdmissionByUserIdAsync(user.Id);
+        int programId;
+        if (admission != null)
+        {
+            programId = admission.ProgramsId;
+        }
+        else if (registration.ProgramId.HasValue)
+        {
+            programId = registration.ProgramId.Value;
+        }
+        else
+        {
+            return Forbid();
+        }
+
+        if (schedule.ProgramId != programId)
+            return Forbid();
+
+        var paidLog = await context.PaymentRequestLogs!.AsNoTracking()
+            .Where(prl => prl.ExamScheduleId == examScheduleId
+                       && prl.StudentRegistrationId == registration.Id
+                       && prl.PaymentRequestLogStatus == 1)
+            .OrderByDescending(pl => pl.Id)
+            .FirstOrDefaultAsync();
+
+        var preSelected = (paidLog?.SelectedSubjectIds ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => int.TryParse(s, out var id) ? id : 0)
+            .Where(id => id > 0)
+            .ToHashSet();
+
+        var subjects = await dashboardService.GetSubjectOfferingsForScheduleAsync(examScheduleId);
+        var practicalFee = await dashboardService.GetPracticalSubjectFeeForScheduleAsync(examScheduleId);
+        var failedSubjectIds = await dashboardService.GetFailedSubjectOfferingIdsForSemesterAsync(
+            user.Id, schedule.SemesterInstance.SemesterId, programId);
+        var failedSet = new HashSet<int>(failedSubjectIds);
+
+        var subjectList = subjects.Select(s => new SubjectFeeDetail
+        {
+            SubjectOfferingId = s.Id,
+            SubjectName = s.SubjectCatalog?.SubjectName,
+            SubjectCode = s.SubjectCatalog?.SubjectCode,
+            HasTheory = s.HasTheory,
+            HasPractical = s.HasPractical,
+            PracticalFee = s.HasPractical ? practicalFee : 0,
+            IsSelected = preSelected.Count > 0 ? preSelected.Contains(s.Id) : s.IsCompulsory,
+            IsFailed = failedSet.Contains(s.Id),
+            IsCompulsory = s.IsCompulsory,
+            SubjectTypeId = s.SubjectCatalog?.SubjectTypeId ?? 0,
+            SubjectTypeName = s.SubjectCatalog?.SubjectType?.Name
+        }).ToList();
+
+        var vm = new ReapplyExamViewModel
+        {
+            ExamScheduleId = examScheduleId,
+            ExamScheduleName = schedule.ExamScheduleName,
+            SemesterName = schedule.SemesterInstance?.Semester?.Name,
+            ExamTypeName = schedule.ExamType?.Name,
+            EndDateBs = schedule.EndDateBs,
+            PaidAmount = paidLog?.Amount ?? 0,
+            RejectionReason = await dashboardService.GetLatestRejectionReasonAsync(examScheduleId, user.Id),
+            Subjects = subjectList,
+            PreSelectedSubjectIds = preSelected
+        };
+
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplyAgain(int examScheduleId, List<int>? selectedSubjectIds)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
+        if (registration == null) return NotFound("Student registration not found.");
+
+        var schedule = await dashboardService.GetExamScheduleByIdAsync(examScheduleId);
+        if (schedule == null) return NotFound("Exam schedule not found.");
+
+        if (IsScheduleDeadlinePassed(schedule))
+        {
+            TempData["ErrorMessage"] = "The deadline for this exam form has passed.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        if (!await IsRejectedWithConfirmedPaymentAsync(examScheduleId, user.Id, registration.Id))
+        {
+            TempData["ErrorMessage"] = "This exam form cannot be re-applied.";
+            return RedirectToAction(nameof(ExamForms));
+        }
+
+        var subjectIds = (selectedSubjectIds ?? []).Where(id => id > 0).Distinct().ToList();
+        if (subjectIds.Count == 0)
+        {
+            TempData["ErrorMessage"] = "At least one subject must be selected.";
+            return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+        }
+
+        var selectionValidation = await ValidateSubjectSelectionAsync(examScheduleId, subjectIds);
+        if (!selectionValidation.Ok)
+        {
+            TempData["ErrorMessage"] = selectionValidation.Error;
+            return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+        }
+
+        var (success, message) = await dashboardService.ReapplyExamRegistrationAsync(
+            examScheduleId, user.Id, registration.Id, subjectIds);
+
+        if (!success)
+        {
+            logger.LogWarning("ApplyAgain failed for user={UserId}, scheduleId={ScheduleId}: {Message}", user.Id, examScheduleId, message);
+            TempData["ErrorMessage"] = message;
+            return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+        }
+
+        logger.LogInformation("Student {UserId} re-applied rejected exam form for scheduleId={ScheduleId}", user.Id, examScheduleId);
+        TempData["SuccessMessage"] = message;
+        return RedirectToAction(nameof(ExamForms));
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ProcessPayment(int examScheduleId, string paymentMethod, decimal amount, string? selectedSubjectIds)
@@ -531,6 +711,14 @@ public class StudentDashboardController(
 
         var registration = await dashboardService.GetStudentRegistrationByUserIdAsync(user.Id);
         if (registration == null) return NotFound("Student registration not found.");
+
+        // A rejected form keeps its original confirmed payment; never allow a second
+        // payment request for the same schedule.
+        if (await IsRejectedWithConfirmedPaymentAsync(examScheduleId, user.Id, registration.Id))
+        {
+            TempData["ErrorMessage"] = "You have already paid for this exam form. Please use Apply Again to resubmit it.";
+            return RedirectToAction(nameof(ApplyAgain), new { examScheduleId });
+        }
 
         var invoiceNumber = $"INV-{DateTime.Now:yyyyMMddHHmmss}-{registration.Id}";
         var subjectIds = string.IsNullOrEmpty(selectedSubjectIds)
@@ -1097,6 +1285,7 @@ public class StudentDashboardController(
         await dashboardService.CreateExamRegistrationAsync(paymentLog.ExamScheduleId, user.Id, paymentLog.Amount, subjectIds, paymentLog.StudentRegistrationId.Value);
     }
 
+    [RequirePermission(Permissions.StudentPortalMarksheet)]
     public async Task<IActionResult> MarksheetPrint(int? examScheduleId)
     {
         var user = await userManager.GetUserAsync(User);
@@ -1190,6 +1379,7 @@ public class StudentDashboardController(
     private static string? MarksheetSymbolNumber(ExamRegistration? er)
         => !string.IsNullOrEmpty(er?.ExamRollNumber) ? er.ExamRollNumber : er?.SymbolNumber;
 
+    [RequirePermission(Permissions.StudentPortalMarksheet)]
     public async Task<IActionResult> Marksheet()
     {
         var user = await userManager.GetUserAsync(User);
@@ -1288,6 +1478,7 @@ public class StudentDashboardController(
         return View(sorted);
     }
 
+    [RequirePermission(Permissions.RetotalingView)]
     public async Task<IActionResult> RetotalRequests()
     {
         var user = await userManager.GetUserAsync(User);
@@ -1318,6 +1509,7 @@ public class StudentDashboardController(
         return View(requests);
     }
 
+    [RequirePermission(Permissions.RetotalingView)]
     public async Task<IActionResult> RequestRetotal(int? examSubjectResultId)
     {
         var user = await userManager.GetUserAsync(User);
@@ -1357,6 +1549,7 @@ public class StudentDashboardController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequirePermission(Permissions.RetotalingView)]
     public async Task<IActionResult> SubmitRetotalRequest(int examSubjectResultId, string? reason)
     {
         var user = await userManager.GetUserAsync(User);

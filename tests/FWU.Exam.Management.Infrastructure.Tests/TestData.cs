@@ -155,6 +155,16 @@ public static class TestData
         IsActive = true
     };
 
+    public static AcademicYear AcademicYear(int id, string name) => new()
+    {
+        Id = id,
+        TenantId = TenantId,
+        AcademicYearCode = name,
+        AcademicYearName = name,
+        IsActive = true,
+        IsRunning = false
+    };
+
     public static Semester Semester(int id, int number) => new()
     {
         Id = id,

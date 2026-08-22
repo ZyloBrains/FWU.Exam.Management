@@ -38,6 +38,8 @@ public class ExamFormViewModel
     public bool HasPaid { get; set; }
     public bool HasAdmitCard { get; set; }
     public int? AdmitCardId { get; set; }
+    public bool IsRejected { get; set; }
+    public string? RejectionReason { get; set; }
     public string? EndDateBs { get; set; }
     public string? ExtendedDateBs { get; set; }
     public DateTime? AdmissionCardReleaseDate { get; set; }
@@ -46,6 +48,19 @@ public class ExamFormViewModel
 public class ExamFormsListViewModel
 {
     public List<ExamFormViewModel> ExamForms { get; set; } = new();
+}
+
+public class ReapplyExamViewModel
+{
+    public int ExamScheduleId { get; set; }
+    public string? ExamScheduleName { get; set; }
+    public string? SemesterName { get; set; }
+    public string? ExamTypeName { get; set; }
+    public string? EndDateBs { get; set; }
+    public decimal PaidAmount { get; set; }
+    public string? RejectionReason { get; set; }
+    public List<SubjectFeeDetail> Subjects { get; set; } = new();
+    public HashSet<int> PreSelectedSubjectIds { get; set; } = new();
 }
 
 public class SubjectFeeDetail

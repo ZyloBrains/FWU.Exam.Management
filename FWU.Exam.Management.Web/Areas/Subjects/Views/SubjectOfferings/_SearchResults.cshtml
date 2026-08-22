@@ -131,7 +131,11 @@
                                             <div class="flex items-center justify-end gap-1">
                                                 @if (HasPerm("subjectofferings.edit"))
                                                 {
-                                                    <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id" onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
+                                                    <a asp-action="Edit" asp-area="Subjects" asp-route-id="@item.Id"
+                                                       asp-route-programId="@(ViewBag.CurrentProgramId as int?)"
+                                                       asp-route-semesterId="@(ViewBag.CurrentSemesterId as int?)"
+                                                       asp-route-curriculumVersionId="@(ViewBag.CurrentCurriculumVersionId as int?)"
+                                                       onclick="event.stopPropagation()" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md" title="Edit">
                                                         <i class="fas fa-edit text-xs"></i>
                                                     </a>
                                                 }

@@ -31,14 +31,38 @@ public class ExamFormAdminDto
     public DateTime? VerifiedDate { get; set; }
     public bool CanApprove { get; set; }
     public bool CanAdminApprove { get; set; }
+    public bool CanEditSubjects { get; set; }
 }
 
 public class ExamFormSubjectDto
 {
+    public int SubjectOfferingId { get; set; }
     public string? Code { get; set; }
     public string? Name { get; set; }
     public bool Theory { get; set; }
     public bool Practical { get; set; }
+}
+
+public class ExamFormEditableSubjectsDto
+{
+    public int ExamRegistrationId { get; set; }
+    public string? StudentName { get; set; }
+    public string? RegistrationNumber { get; set; }
+    public string? ExamScheduleName { get; set; }
+    public string? ExamTypeName { get; set; }
+    public bool CanEdit { get; set; }
+    public string? NotEditableReason { get; set; }
+    public List<ExamFormSelectableSubjectDto> AvailableSubjects { get; set; } = [];
+}
+
+public class ExamFormSelectableSubjectDto
+{
+    public int SubjectOfferingId { get; set; }
+    public string? Code { get; set; }
+    public string? Name { get; set; }
+    public bool Theory { get; set; }
+    public bool Practical { get; set; }
+    public bool IsSelected { get; set; }
 }
 
 public class ExamFormsAdminResult

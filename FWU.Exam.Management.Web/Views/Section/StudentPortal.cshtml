@@ -40,6 +40,7 @@
         </a>
         }
 
+        @* Hidden for now - will be made visible to students later.
         @if (HasPerm("student.portal.marksheet"))
         {
         <a asp-area="Students" asp-controller="StudentDashboard" asp-action="Marksheet" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
@@ -54,6 +55,7 @@
             </div>
         </a>
         }
+        *@
 
         @if (HasPerm("admitcards.view"))
         {
@@ -85,6 +87,7 @@
         </a>
         }
 
+        @* Hidden for now - depends on the Marksheet page for subject selection.
         @if (HasPerm("retotaling.view"))
         {
         <a asp-area="Students" asp-controller="StudentDashboard" asp-action="RetotalRequests" class="group block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all duration-200">
@@ -99,5 +102,6 @@
             </div>
         </a>
         }
+        *@
     </div>
 </div>
