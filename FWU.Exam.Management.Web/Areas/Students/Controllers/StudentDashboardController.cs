@@ -519,11 +519,15 @@ public class StudentDashboardController(
         {
             // Re-exam forms: students with recorded failures get exactly those
             // subjects (their own curriculum version) pre-selected. Students with
-            // no result history yet choose freely from the schedule's offerings.
+            // no result history yet choose freely. Practicals are never offered:
+            // only theory-bearing subjects appear, and no practical fee applies.
             var failedOfferings = await dashboardService.GetFailedSubjectOfferingsForStudentAsync(examScheduleId, user.Id);
             var knownFailures = failedOfferings.Count > 0;
 
-            subjectList = (knownFailures ? failedOfferings.AsEnumerable() : subjects).Select(s => new SubjectFeeDetail
+            subjectList = (knownFailures
+                    ? failedOfferings.AsEnumerable()
+                    : subjects.Where(s => s.HasTheory))
+                .Select(s => new SubjectFeeDetail
             {
                 SubjectOfferingId = s.Id,
                 SubjectName = s.SubjectCatalog?.SubjectName,
@@ -663,6 +667,11 @@ public class StudentDashboardController(
             user.Id, schedule.SemesterInstance.SemesterId, programId);
         var failedSet = new HashSet<int>(failedSubjectIds);
 
+        // Re-exam forms list theory papers only and never charge practical fees.
+        var isReExamForm = dashboardService.IsReExamType(schedule.ExamType?.Name);
+        if (isReExamForm)
+            subjects = subjects.Where(s => s.HasTheory).ToList();
+
         var subjectList = subjects.Select(s => new SubjectFeeDetail
         {
             SubjectOfferingId = s.Id,
@@ -670,7 +679,7 @@ public class StudentDashboardController(
             SubjectCode = s.SubjectCatalog?.SubjectCode,
             HasTheory = s.HasTheory,
             HasPractical = s.HasPractical,
-            PracticalFee = s.HasPractical ? practicalFee : 0,
+            PracticalFee = !isReExamForm && s.HasPractical ? practicalFee : 0,
             IsSelected = preSelected.Count > 0 ? preSelected.Contains(s.Id) : s.IsCompulsory,
             IsFailed = failedSet.Contains(s.Id),
             IsCompulsory = s.IsCompulsory,
@@ -1298,8 +1307,9 @@ public class StudentDashboardController(
     // Re-exam forms draw subjects from the student's failed history, which may
     // reference offerings of an older curriculum version than the schedule
     // resolves to. Membership is therefore validated against every offering of
-    // the same program + semester number regardless of version, and the
-    // elective-group rule is skipped (students may sit only what they failed).
+    // the same program + semester number regardless of version; only theory
+    // papers are accepted (practicals were completed in the original attempt),
+    // and the elective-group rule is skipped (students may sit what they failed).
     private async Task<(bool Ok, string? Error)> ValidateReExamSubjectSelectionAsync(int examScheduleId, List<int> subjectIds)
     {
         if (subjectIds.Count == 0)
@@ -1314,7 +1324,8 @@ public class StudentDashboardController(
 
         var validIds = (await context.SubjectOfferings.AsNoTracking()
                 .Where(so => so.ProgramId == info.ProgramId
-                          && so.Semester != null && so.Semester.Number == info.SemesterNumber)
+                          && so.Semester != null && so.Semester.Number == info.SemesterNumber
+                          && so.HasTheory)
                 .Select(so => so.Id)
                 .ToListAsync())
             .ToHashSet();

@@ -939,11 +939,13 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         var failedOfferingIds = await GetFailedSubjectOfferingIdsForSemesterAsync(userId, instance.SemesterId, schedule.ProgramId);
         if (failedOfferingIds.Count == 0) return [];
 
+        // Re-exam forms cover theory papers only; practicals were completed in
+        // the original attempt, so pure-practical offerings are excluded.
         return await context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
                 .ThenInclude(sc => sc!.SubjectType)
-            .Where(so => failedOfferingIds.Contains(so.Id))
+            .Where(so => failedOfferingIds.Contains(so.Id) && so.HasTheory)
             .OrderBy(so => so.DisplayOrder)
             .ToListAsync();
     }
