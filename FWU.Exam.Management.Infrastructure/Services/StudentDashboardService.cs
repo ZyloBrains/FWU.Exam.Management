@@ -196,6 +196,62 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
             .OrderBy(so => so.DisplayOrder).ToListAsync();
     }
 
+    // Re-exam forms are taken by students of older cohorts than the schedule's
+    // academic year, so the free-selection list resolves from the STUDENT's
+    // batch curriculum version (StudentRegistration.AcademicYearId) instead of
+    // the schedule's. Fallback order: batch-version offerings → unversioned
+    // offerings → the schedule's own resolution.
+    public async Task<List<SubjectOffering>> GetReExamSelectableOfferingsAsync(int examScheduleId, string userId)
+    {
+        var schedule = await context.ExamSchedules!
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(es => es.Id == examScheduleId);
+        if (schedule == null) return [];
+
+        var instance = await context.SemesterInstances!
+            .AsNoTracking()
+            .Where(si => si.Id == schedule.SemesterInstanceId)
+            .Select(si => new { si.SemesterId })
+            .FirstOrDefaultAsync();
+        if (instance == null) return [];
+
+        var semesterNumber = await context.Semesters
+            .AsNoTracking()
+            .Where(s => s.Id == instance.SemesterId)
+            .Select(s => (int?)s.Number)
+            .FirstOrDefaultAsync();
+
+        var registration = await GetStudentRegistrationByUserIdAsync(userId);
+        var baseQuery = context.SubjectOfferings!
+            .AsNoTracking()
+            .Include(so => so.SubjectCatalog)
+                .ThenInclude(sc => sc!.SubjectType)
+            .Where(so => so.ProgramId == schedule.ProgramId
+                      && so.IsActive
+                      && so.Semester != null && so.Semester.Number == semesterNumber);
+
+        int? batchAcademicYearId = registration != null && registration.AcademicYearId > 0
+            ? registration.AcademicYearId
+            : null;
+        var batchVersionId = batchAcademicYearId.HasValue
+            ? await CurriculumVersionResolver.ResolveAsync(context, schedule.ProgramId, batchAcademicYearId.Value)
+            : null;
+
+        if (batchVersionId.HasValue)
+        {
+            var versioned = await baseQuery.Where(so => so.CurriculumVersionId == batchVersionId.Value)
+                .OrderBy(so => so.DisplayOrder).ToListAsync();
+            if (versioned.Count > 0) return versioned;
+        }
+
+        var unversioned = await baseQuery.Where(so => so.CurriculumVersionId == null)
+            .OrderBy(so => so.DisplayOrder).ToListAsync();
+        if (unversioned.Count > 0) return unversioned;
+
+        return await GetSubjectOfferingsForScheduleAsync(examScheduleId);
+    }
+
     public async Task<List<SubjectOffering>> GetSubjectOfferingsForStudentAsync(string userId, int programId)
     {
         var admission = await ResolveStudentAdmissionAsync(userId);

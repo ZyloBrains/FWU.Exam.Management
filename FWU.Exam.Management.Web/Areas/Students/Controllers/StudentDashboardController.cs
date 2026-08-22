@@ -508,14 +508,16 @@ public class StudentDashboardController(
         {
             // Re-exam forms: students with recorded failures get exactly those
             // subjects (their own curriculum version) pre-selected. Students with
-            // no result history yet choose freely. Practicals are never offered:
-            // only theory-bearing subjects appear, and no practical fee applies.
+            // no result history yet choose freely from THEIR batch curriculum.
+            // Practicals are never offered: only theory-bearing subjects appear,
+            // and no practical fee applies.
             var failedOfferings = await dashboardService.GetFailedSubjectOfferingsForStudentAsync(examScheduleId, user.Id);
             var knownFailures = failedOfferings.Count > 0;
 
             subjectList = (knownFailures
                     ? failedOfferings.AsEnumerable()
-                    : subjects.Where(s => s.HasTheory))
+                    : (await dashboardService.GetReExamSelectableOfferingsAsync(examScheduleId, user.Id)).AsEnumerable())
+                .Where(s => s.HasTheory)
                 .Select(s => new SubjectFeeDetail
             {
                 SubjectOfferingId = s.Id,
@@ -656,10 +658,13 @@ public class StudentDashboardController(
             user.Id, schedule.SemesterInstance.SemesterId, programId);
         var failedSet = new HashSet<int>(failedSubjectIds);
 
-        // Re-exam forms list theory papers only and never charge practical fees.
+        // Re-exam forms list theory papers from the student's own batch
+        // curriculum and never charge practical fees.
         var isReExamForm = dashboardService.IsReExamType(schedule.ExamType?.Name);
         if (isReExamForm)
-            subjects = subjects.Where(s => s.HasTheory).ToList();
+            subjects = (await dashboardService.GetReExamSelectableOfferingsAsync(examScheduleId, user.Id))
+                .Where(s => s.HasTheory)
+                .ToList();
 
         var subjectList = subjects.Select(s => new SubjectFeeDetail
         {

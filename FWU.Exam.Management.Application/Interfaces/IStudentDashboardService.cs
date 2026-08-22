@@ -13,6 +13,7 @@ public interface IStudentDashboardService
     Task<bool> IsScheduleVisibleToStudentAsync(StudentRegistration student, string userId, int examScheduleId);
     Task<StudentRegistration?> GetStudentRegistrationByUserIdAsync(string userId);
     Task<List<SubjectOffering>> GetSubjectOfferingsForScheduleAsync(int examScheduleId);
+    Task<List<SubjectOffering>> GetReExamSelectableOfferingsAsync(int examScheduleId, string userId);
     Task<decimal> GetExamFeeForScheduleAsync(int examScheduleId);
     Task<decimal> GetPracticalSubjectFeeForScheduleAsync(int examScheduleId);
     Task<bool> HasExistingPaymentAsync(int examScheduleId, int studentRegistrationId);

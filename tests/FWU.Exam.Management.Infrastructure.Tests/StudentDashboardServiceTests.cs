@@ -8,6 +8,7 @@ using FWU.Exam.Management.Domain.Entities.Students;
 using FWU.Exam.Management.Domain.Entities.Subjects;
 using FWU.Exam.Management.Domain.Enums;
 using FWU.Exam.Management.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -207,6 +208,117 @@ public class StudentDashboardServiceTests
         Assert.True(await service.IsScheduleVisibleToStudentAsync(student, UserId, 11));
         Assert.False(await service.IsScheduleVisibleToStudentAsync(student, UserId, 12));
         Assert.False(await service.IsScheduleVisibleToStudentAsync(student, UserId, 999));
+    }
+
+    [Fact]
+    public async Task GetReExamSelectableOfferingsAsync_UsesStudentBatchCurriculumVersion()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedCollegeForStandardTenant(ctx);
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            sr.AcademicYearId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+
+            ctx.AcademicYears.Add(TestData.AcademicYear(2, "2026"));
+            ctx.SemesterInstances.Add(new SemesterInstance { Id = 20, TenantId = TestData.TenantId, SemesterId = 2, AcademicYearId = 2, ProgramId = TestData.ProgramId });
+            ctx.CurriculumVersions.Add(new CurriculumVersion { Id = 90, TenantId = TestData.TenantId, Name = "Batch 2025", ProgramId = TestData.ProgramId, EffectiveAcademicYearId = 1, IsActive = true });
+            ctx.CurriculumVersions.Add(new CurriculumVersion { Id = 91, TenantId = TestData.TenantId, Name = "New 2026", ProgramId = TestData.ProgramId, EffectiveAcademicYearId = 2, IsActive = true });
+
+            ctx.SubjectOfferings.Add(new SubjectOffering { Id = 301, TenantId = TestData.TenantId, SubjectCatalogId = 1, ProgramId = TestData.ProgramId, SemesterId = 2, CurriculumVersionId = 90, IsActive = true, IsCompulsory = true, DisplayOrder = 1, HasTheory = true });
+            ctx.SubjectOfferings.Add(new SubjectOffering { Id = 302, TenantId = TestData.TenantId, SubjectCatalogId = 1, ProgramId = TestData.ProgramId, SemesterId = 2, CurriculumVersionId = 91, IsActive = true, IsCompulsory = true, DisplayOrder = 2, HasTheory = true });
+
+            ctx.ExamSchedules.Add(TestData.Schedule(30, 20, TestData.Partial, Future, null));
+        });
+
+        var service = CreateService(db);
+
+        var registration = await service.GetStudentRegistrationByUserIdAsync(UserId);
+        Assert.NotNull(registration);
+        Assert.Equal(1, registration!.AcademicYearId);
+
+        var resolved = await CurriculumVersionResolver.ResolveAsync(db.Context, TestData.ProgramId, registration.AcademicYearId);
+        Assert.Equal(90, resolved);
+
+        var offerings = await service.GetReExamSelectableOfferingsAsync(30, UserId);
+
+        var ids = offerings.Select(o => o.Id).ToList();
+        Assert.Contains(301, ids);          // student's batch version
+        Assert.DoesNotContain(302, ids);    // newer schedule-year version
+        Assert.DoesNotContain(102, ids);    // unversioned leftovers
+    }
+
+    [Fact]
+    public async Task GetReExamSelectableOfferingsAsync_FallsBackToUnversioned_WhenNoBatchVersionMatches()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedCollegeForStandardTenant(ctx);
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            sr.AcademicYearId = 1; // no curriculum version effective by this year
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+
+            ctx.AcademicYears.Add(TestData.AcademicYear(2, "2026"));
+            ctx.SemesterInstances.Add(new SemesterInstance { Id = 20, TenantId = TestData.TenantId, SemesterId = 2, AcademicYearId = 2, ProgramId = TestData.ProgramId });
+            ctx.CurriculumVersions.Add(new CurriculumVersion { Id = 91, TenantId = TestData.TenantId, Name = "New 2026", ProgramId = TestData.ProgramId, EffectiveAcademicYearId = 2, IsActive = true });
+            ctx.SubjectOfferings.Add(new SubjectOffering { Id = 302, TenantId = TestData.TenantId, SubjectCatalogId = 1, ProgramId = TestData.ProgramId, SemesterId = 2, CurriculumVersionId = 91, IsActive = true, IsCompulsory = true, DisplayOrder = 2, HasTheory = true });
+
+            ctx.ExamSchedules.Add(TestData.Schedule(30, 20, TestData.Partial, Future, null));
+        });
+
+        var service = CreateService(db);
+
+        var offerings = await service.GetReExamSelectableOfferingsAsync(30, UserId);
+
+        var ids = offerings.Select(o => o.Id).ToList();
+        Assert.Contains(102, ids);          // unversioned sem-2 offering
+        Assert.DoesNotContain(302, ids);    // newer version excluded
+    }
+
+    [Fact]
+    public async Task GetReExamSelectableOfferingsAsync_FallsBackToScheduleResolution_WhenBatchVersionHasNoOfferings()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedCollegeForStandardTenant(ctx);
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            var sr = TestData.StudentRegistration(1, Email);
+            sr.StudentAdmissionId = 1;
+            sr.AcademicYearId = 1;
+            ctx.StudentRegistrations.Add(sr);
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+
+            // Exclude SeedBase's unversioned sem-2 offering so both earlier
+            // fallback legs yield nothing and the schedule resolution applies.
+            // (Entities added in this lambda are not saved yet, so detach the
+            // tracked instance instead of issuing a database delete.)
+            var seedSem2Offering = ctx.ChangeTracker.Entries<SubjectOffering>()
+                .First(e => e.Entity.Id == 102);
+            seedSem2Offering.State = EntityState.Detached;
+
+            ctx.AcademicYears.Add(TestData.AcademicYear(2, "2026"));
+            ctx.SemesterInstances.Add(new SemesterInstance { Id = 20, TenantId = TestData.TenantId, SemesterId = 2, AcademicYearId = 2, ProgramId = TestData.ProgramId });
+            ctx.CurriculumVersions.Add(new CurriculumVersion { Id = 90, TenantId = TestData.TenantId, Name = "Batch 2025", ProgramId = TestData.ProgramId, EffectiveAcademicYearId = 1, IsActive = true });
+            ctx.CurriculumVersions.Add(new CurriculumVersion { Id = 91, TenantId = TestData.TenantId, Name = "New 2026", ProgramId = TestData.ProgramId, EffectiveAcademicYearId = 2, IsActive = true });
+            ctx.SubjectOfferings.Add(new SubjectOffering { Id = 302, TenantId = TestData.TenantId, SubjectCatalogId = 1, ProgramId = TestData.ProgramId, SemesterId = 2, CurriculumVersionId = 91, IsActive = true, IsCompulsory = true, DisplayOrder = 2, HasTheory = true });
+
+            ctx.ExamSchedules.Add(TestData.Schedule(30, 20, TestData.Partial, Future, null));
+        });
+
+        var service = CreateService(db);
+
+        var offerings = await service.GetReExamSelectableOfferingsAsync(30, UserId);
+
+        Assert.Equal([302], offerings.Select(o => o.Id).ToList());
     }
 
     [Fact]
