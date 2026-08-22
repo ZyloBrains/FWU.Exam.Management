@@ -8,8 +8,8 @@ namespace FWU.Exam.Management.Infrastructure.Tests;
 
 public class ExamScheduleServiceTests
 {
-    private static ExamScheduleService CreateService(TestDb db) =>
-        new(db.Context, new TestUserContext());
+    private static ExamScheduleService CreateService(TestDb db, TestTenantContext? tenantContext = null) =>
+        new(db.Context, new TestUserContext(), tenantContext ?? TestTenantContext.Standard());
 
     [Fact]
     public async Task DeleteExamScheduleAsync_DeletesSchedule_WhenNoRegistrationsOrResults()
@@ -204,5 +204,42 @@ public class ExamScheduleServiceTests
         var endBs = saved.EndDateBs!.Split('-').Select(int.Parse).ToArray();
         var endAd = NepaliDateConverter.BsToAd(endBs[0], endBs[1], endBs[2]);
         Assert.Equal(schedule.EndDate.Value, DateOnly.FromDateTime(endAd!.Value));
+    }
+
+    [Fact]
+    public async Task CreateExamScheduleAsync_Throws_WhenDuplicateCodeExistsInSameTenant()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
+        });
+
+        var service = CreateService(db);
+
+        var duplicate = TestData.Schedule(12, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(20)), null);
+        duplicate.ExamScheduleCode = "SCH11";
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateExamScheduleAsync(duplicate));
+        Assert.Contains("already exists", ex.Message);
+        Assert.False(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 12));
+    }
+
+    [Fact]
+    public async Task CreateExamScheduleAsync_Succeeds_WhenCodeIsUnique()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.ExamSchedules.Add(TestData.Schedule(11, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(10)), null));
+        });
+
+        var service = CreateService(db);
+
+        var schedule = TestData.Schedule(12, 1, TestData.Regular, DateOnly.FromDateTime(DateTime.UtcNow.AddDays(20)), null);
+
+        await service.CreateExamScheduleAsync(schedule);
+
+        Assert.True(await db.Context.ExamSchedules.AnyAsync(e => e.Id == 12 && e.TenantId == TestData.TenantId));
     }
 }
