@@ -259,6 +259,7 @@ public class StudentDashboardService(AppDbContext context, IUserContext userCont
         var query = context.SubjectOfferings!
             .AsNoTracking()
             .Include(so => so.SubjectCatalog)
+                .ThenInclude(sc => sc!.SubjectType)
             .Include(so => so.Semester)
             .Where(so => so.ProgramId == programId && so.IsActive);
 

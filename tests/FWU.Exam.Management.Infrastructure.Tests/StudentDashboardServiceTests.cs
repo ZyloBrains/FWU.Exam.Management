@@ -588,6 +588,38 @@ public class StudentDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetSubjectOfferingsForStudentAsync_IncludesSubjectTypeForElectiveGrouping()
+    {
+        using var db = new TestDb(TestTenantContext.Standard(), ctx =>
+        {
+            TestData.SeedBase(ctx);
+            ctx.Users.Add(TestData.User(UserId, Email));
+            ctx.StudentRegistrations.Add(TestData.StudentRegistration(1, Email));
+            ctx.StudentAdmissions.Add(TestData.Admission(1, UserId));
+            ctx.SemesterEnrollments.Add(TestData.Enrollment(1, 1, 2));
+
+            ctx.SubjectTypes.Add(new SubjectType { Id = 7, Code = "EL", Name = "Elective Group A", IsActive = true });
+            ctx.SubjectCatalogs.Add(new SubjectCatalog { Id = 2, TenantId = TestData.TenantId, SubjectCode = "EL1", SubjectName = "Elective One", SubjectTypeId = 7, IsActive = true });
+            var elective = TestData.Offering(210, 2, TestData.ProgramId);
+            elective.SubjectCatalogId = 2;
+            elective.IsCompulsory = false;
+            ctx.SubjectOfferings.Add(elective);
+        });
+        var service = CreateService(db);
+
+        var offerings = await service.GetSubjectOfferingsForStudentAsync(UserId, TestData.ProgramId);
+
+        Assert.Equal(2, offerings.Count);
+        Assert.All(offerings, o =>
+        {
+            Assert.NotNull(o.SubjectCatalog);
+            Assert.NotNull(o.SubjectCatalog!.SubjectType);
+        });
+        var electiveRow = Assert.Single(offerings.Where(o => !o.IsCompulsory));
+        Assert.Equal("Elective Group A", electiveRow.SubjectCatalog!.SubjectType!.Name);
+    }
+
+    [Fact]
     public async Task GetSubjectOfferingsForStudentAsync_ResolvesVersionByEnrolledSemesterAcademicYear()
     {
         using var db = new TestDb(TestTenantContext.Standard(), ctx =>
